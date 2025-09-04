@@ -58,13 +58,11 @@ const userSchema = new Schema({
   },
   deviceFingerprint: {
     type: String,
-    default: null,
-    index: true
+    default: null
   },
   telegramId: {
     type: String,
-    default: null,
-    index: true
+    default: null
   },
   twitterUsername: {
     type: String,
@@ -437,12 +435,10 @@ userSchema.index({ referredBy: 1 }); // For affiliate queries
 userSchema.index({ isFreeRaidProject: 1 }); // For free raid eligibility
 
 // Additional performance indexes
-userSchema.index({ username: 1 }); // For username lookups
-userSchema.index({ email: 1 }); // For email lookups
+// Note: username, email, and referralCode already have unique indexes from schema
 userSchema.index({ telegramId: 1 }); // For Telegram lookups
 userSchema.index({ twitterUsername: 1 }); // For Twitter username lookups
 userSchema.index({ facebookUsername: 1 }); // For Facebook username lookups
-userSchema.index({ referralCode: 1 }); // For referral code lookups
 userSchema.index({ points: -1 }); // For points-based sorting
 userSchema.index({ tokens: -1 }); // For token-based sorting
 userSchema.index({ createdAt: -1 }); // For registration date sorting

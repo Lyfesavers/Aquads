@@ -6,8 +6,7 @@ const horseRaceResultSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
   username: {
     type: String,
@@ -39,8 +38,7 @@ const horseRaceResultSchema = new Schema({
   // Race outcome
   won: {
     type: Boolean,
-    required: true,
-    index: true
+    required: true
   },
   payout: {
     type: Number,
@@ -89,8 +87,7 @@ const horseRaceResultSchema = new Schema({
   // Timestamps
   createdAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   }
 }, {
   // Add automatic timestamps

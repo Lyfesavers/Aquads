@@ -131,7 +131,7 @@ discountCodeSchema.statics.findValidCode = async function(code, applicableTo = n
 };
 
 // Performance indexes for common queries
-discountCodeSchema.index({ code: 1 }); // For code lookups (already unique)
+// Note: code field already has unique index from schema
 discountCodeSchema.index({ isActive: 1, validUntil: 1 }); // For valid codes
 discountCodeSchema.index({ applicableTo: 1, isActive: 1 }); // For applicable codes
 discountCodeSchema.index({ createdBy: 1, createdAt: -1 }); // For creator's codes

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const LeaderboardEntrySchema = new mongoose.Schema(
   {
-    game: { type: String, required: true, index: true },
+    game: { type: String, required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     username: { type: String, default: 'Guest' },
     result: { type: String, enum: ['Win', 'Loss', 'Draw'], required: true },
