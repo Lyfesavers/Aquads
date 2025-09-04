@@ -27,7 +27,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   useEffect(() => {
     if (!service || !service._id) {
-      console.error('ServiceReviews: service or service._id is missing:', service);
       return;
     }
     fetchReviews();
@@ -53,7 +52,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       setCanReview(data.canReview);
       setInteractionDate(data.interactionDate);
     } catch (error) {
-      console.error('Error checking review eligibility:', error);
       setCanReview(false);
     }
     */
@@ -62,7 +60,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
   const fetchReviews = async () => {
     try {
       if (!service || !service._id) {
-        console.error('fetchReviews: service or service._id is missing:', service);
         return;
       }
       setIsLoading(true);
@@ -102,7 +99,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         }
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
       setError('Failed to load reviews');
     } finally {
       setIsLoading(false);
@@ -150,7 +146,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       setIsVerified(true);
       showNotification('Secret code verified successfully!', 'success');
     } catch (error) {
-      console.error('Error verifying Secret code:', error);
       showNotification(error.message || 'Failed to verify Secret code', 'error');
       setIsVerified(false);
     } finally {
@@ -212,13 +207,19 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       showNotification('Review submitted successfully!', 'success');
       
       // Call the update callback if provided
-      if (onReviewsUpdate) onReviewsUpdate();
+      if (onReviewsUpdate) {
+        const updatedService = {
+          ...service,
+          rating: (newTotal / (reviews.length + 1)),
+          reviews: reviews.length + 1
+        };
+        onReviewsUpdate(updatedService);
+      }
       
       setIsVerified(false); // Reset verification
-    } catch (error) {
-      setError(error.message);
-      console.error('Error submitting review:', error);
-    } finally {
+         } catch (error) {
+       setError(error.message);
+     } finally {
       setIsSubmitting(false); // Reset submitting state regardless of outcome
     }
   };

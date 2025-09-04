@@ -33,11 +33,10 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
           refreshBookings(); // Refresh the bookings list
         }
       }
-    } catch (error) {
-      console.error('Unlock lead error:', error);
-      const message = error.response?.data?.error || error.response?.data?.message || 'Failed to unlock lead';
-      showNotification(message, 'error');
-    } finally {
+         } catch (error) {
+       const message = error.response?.data?.error || error.response?.data?.message || 'Failed to unlock lead';
+       showNotification(message, 'error');
+     } finally {
       setUnlockingBooking(null);
     }
   };
@@ -106,11 +105,10 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                 requirements: bookingToAccept.requirements || 'No specific requirements'
               }
             );
-            console.log('Buyer acceptance email sent successfully');
-          } catch (emailError) {
-            console.error('Failed to send buyer acceptance email:', emailError);
-            // Don't show error to user since booking was successful
-          }
+            
+                     } catch (emailError) {
+             // Don't show error to user since booking was successful
+           }
         }
         
         setShowAcceptConfirmation(false);
@@ -137,11 +135,8 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => {
-                console.log('BookingManagement: Leave Review clicked for service:', booking.serviceId);
                 if (booking.serviceId) {
                   onShowReviews(booking.serviceId, booking, false);
-                } else {
-                  console.error('BookingManagement: No serviceId found in booking:', booking);
                 }
               }}
               className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30"
@@ -229,12 +224,6 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     <>
       <div className="space-y-4">
         {bookings.map((booking) => {
-          console.log('BookingManagement: Rendering booking:', {
-            id: booking._id,
-            serviceId: booking.serviceId,
-            serviceTitle: booking.serviceId?.title,
-            status: booking.status
-          });
           const isSeller = booking.sellerId?._id === currentUser.userId;
           const isLocked = isSeller && !booking.isUnlocked;
           
@@ -325,15 +314,14 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                   
                   {/* View service reviews button */}
                   {booking.serviceId && (
-                    <button
-                      onClick={() => {
-                        console.log('BookingManagement: View Reviews clicked for service:', booking.serviceId);
-                        onShowReviews(booking.serviceId, null, true);
-                      }}
-                      className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
-                    >
-                      <span className="mr-1">⭐</span> View Reviews
-                    </button>
+                                <button
+              onClick={() => {
+                onShowReviews(booking.serviceId, null, true);
+              }}
+              className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
+            >
+              <span className="mr-1">⭐</span> View Reviews
+            </button>
                   )}
                 </div>
               </div>

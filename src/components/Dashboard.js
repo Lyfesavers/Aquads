@@ -329,11 +329,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         const data = await response.json();
         setAffiliateAnalytics(data);
       } else {
-        console.error('Failed to fetch affiliate analytics');
         showNotification('Failed to fetch affiliate analytics', 'error');
       }
     } catch (error) {
-      console.error('Error fetching affiliate analytics:', error);
       showNotification('Error fetching affiliate analytics', 'error');
     } finally {
       setLoadingAnalytics(false);
@@ -662,16 +660,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleShowReviews = (service, booking = null, viewOnly = false) => {
-    console.log('Dashboard: handleShowReviews called with:', {
-      service,
-      serviceId: service?._id,
-      serviceTitle: service?.title,
-      booking,
-      viewOnly
-    });
-
     if (!service || !service._id) {
-      console.error('Dashboard: Invalid service object:', service);
       return;
     }
 
@@ -679,12 +668,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedBooking(booking);
     setSelectedViewOnly(viewOnly);
     setShowReviews(true);
-
-    console.log('Dashboard: State updated:', {
-      showReviews: true,
-      selectedService: service,
-      selectedViewOnly: viewOnly
-    });
   };
 
   const handleCloseReviews = () => {
