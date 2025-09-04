@@ -48,9 +48,6 @@ blogSchema.pre('save', function(next) {
   next();
 });
 
-// Add database indexes for better query performance
-blogSchema.index({ createdAt: -1 }); // For main blogs query (newest first)
-blogSchema.index({ author: 1, createdAt: -1 }); // For author's blogs
-blogSchema.index({ title: 'text', content: 'text' }); // For text search
+
 
 module.exports = mongoose.model('Blog', blogSchema); 

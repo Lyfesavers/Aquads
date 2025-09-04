@@ -45,11 +45,6 @@ const tokenSchema = new mongoose.Schema({
   }
 });
 
-// Add database indexes for better query performance
-tokenSchema.index({ symbol: 1 }); // For symbol lookups
-tokenSchema.index({ marketCap: -1 }); // For market cap sorting
-tokenSchema.index({ priceChangePercentage24h: -1 }); // For price change sorting
-tokenSchema.index({ lastUpdated: -1 }); // For recent updates
-tokenSchema.index({ marketCapRank: 1 }); // For market cap ranking
+
 
 module.exports = mongoose.model('Token', tokenSchema); 

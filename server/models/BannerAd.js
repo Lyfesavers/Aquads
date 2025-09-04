@@ -51,10 +51,6 @@ const bannerAdSchema = new mongoose.Schema({
   rejectionReason: String
 });
 
-// Add database indexes for better query performance
-bannerAdSchema.index({ status: 1, createdAt: -1 }); // For main banner ads query
-bannerAdSchema.index({ owner: 1, createdAt: -1 }); // For user's banner ads
-bannerAdSchema.index({ status: 1, expiresAt: 1 }); // For active/expired queries
-bannerAdSchema.index({ paymentChain: 1, status: 1 }); // For blockchain filtering
+
 
 module.exports = mongoose.model('BannerAd', bannerAdSchema); 

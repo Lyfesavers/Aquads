@@ -163,11 +163,6 @@ facebookRaidSchema.pre('save', function(next) {
   next();
 });
 
-// Add database indexes for better query performance
-facebookRaidSchema.index({ active: 1, createdAt: -1 }); // For the main raids query
-facebookRaidSchema.index({ createdBy: 1 }); // For user lookups
-facebookRaidSchema.index({ paymentStatus: 1 }); // For payment status queries
-facebookRaidSchema.index({ 'completions.userId': 1 }); // For completion lookups
-facebookRaidSchema.index({ 'completions.approvalStatus': 1 }); // For pending completions
+
 
 module.exports = mongoose.model('FacebookRaid', facebookRaidSchema);
