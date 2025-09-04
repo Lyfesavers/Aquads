@@ -73,7 +73,7 @@ invoiceSchema.pre('save', function(next) {
 });
 
 
-invoiceSchema.index({ invoiceNumber: 1 }); // For invoice number lookups
+// Note: invoiceNumber already has unique index from schema
 
 // Add performance indexes for common queries
 invoiceSchema.index({ sellerId: 1 }); // For seller's invoices
