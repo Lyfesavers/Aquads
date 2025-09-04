@@ -78,4 +78,11 @@ const tokenPurchaseSchema = new mongoose.Schema({
   }
 });
 
+// Add database indexes for better query performance
+tokenPurchaseSchema.index({ userId: 1, createdAt: -1 }); // For user's purchases
+tokenPurchaseSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
+tokenPurchaseSchema.index({ approvedBy: 1, createdAt: -1 }); // For admin approval queries
+tokenPurchaseSchema.index({ paymentMethod: 1, status: 1 }); // For payment method filtering
+tokenPurchaseSchema.index({ paymentChain: 1, status: 1 }); // For blockchain filtering
+
 module.exports = mongoose.model('TokenPurchase', tokenPurchaseSchema); 

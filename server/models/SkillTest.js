@@ -84,4 +84,10 @@ skillTestSchema.pre('save', function(next) {
   next();
 });
 
+// Add database indexes for better query performance
+skillTestSchema.index({ isActive: 1, category: 1 }); // For active tests by category
+skillTestSchema.index({ difficulty: 1, isActive: 1 }); // For difficulty-based queries
+skillTestSchema.index({ createdAt: -1 }); // For newest tests
+skillTestSchema.index({ title: 'text', description: 'text' }); // For text search
+
 module.exports = mongoose.model('SkillTest', skillTestSchema);

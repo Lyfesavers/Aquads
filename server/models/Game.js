@@ -62,4 +62,11 @@ const gameSchema = new mongoose.Schema({
 // Add index for queries
 gameSchema.index({ title: 'text', description: 'text', projectName: 'text', tags: 'text' });
 
+// Add additional indexes for better query performance
+gameSchema.index({ status: 1, createdAt: -1 }); // For main games query
+gameSchema.index({ owner: 1, createdAt: -1 }); // For user's games
+gameSchema.index({ category: 1, status: 1 }); // For category filtering
+gameSchema.index({ blockchain: 1, status: 1 }); // For blockchain filtering
+gameSchema.index({ votes: -1, status: 1 }); // For vote-based sorting
+
 module.exports = mongoose.model('Game', gameSchema); 

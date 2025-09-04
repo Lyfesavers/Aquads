@@ -29,4 +29,11 @@ const jobSchema = new mongoose.Schema({
   }
 });
 
+// Add database indexes for better query performance
+jobSchema.index({ status: 1, createdAt: -1 }); // For main jobs query
+jobSchema.index({ owner: 1 }); // For user's jobs
+jobSchema.index({ jobType: 1, status: 1 }); // For job type filtering
+jobSchema.index({ payAmount: -1, status: 1 }); // For pay amount sorting
+jobSchema.index({ title: 'text', description: 'text' }); // For text search
+
 module.exports = mongoose.model('Job', jobSchema);

@@ -88,4 +88,9 @@ notificationSchema.statics.getUnreadCount = async function(userId) {
 // Check if model exists before creating a new one
 const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
 
+// Add additional indexes for better query performance
+notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 }); // For user's unread notifications
+notificationSchema.index({ type: 1, createdAt: -1 }); // For type-based queries
+notificationSchema.index({ relatedModel: 1, relatedId: 1 }); // For related object queries
+
 module.exports = Notification; 

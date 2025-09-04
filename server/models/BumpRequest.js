@@ -47,4 +47,10 @@ const bumpRequestSchema = new mongoose.Schema({
   }
 });
 
+// Add database indexes for better query performance
+bumpRequestSchema.index({ status: 1, createdAt: -1 }); // For main bump requests query
+bumpRequestSchema.index({ owner: 1, createdAt: -1 }); // For user's bump requests
+bumpRequestSchema.index({ adId: 1, status: 1 }); // For ad-specific bump requests
+bumpRequestSchema.index({ processedBy: 1, createdAt: -1 }); // For admin processing queries
+
 module.exports = mongoose.model('BumpRequest', bumpRequestSchema); 
