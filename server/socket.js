@@ -44,6 +44,7 @@ function init(server) {
 
           // Join user to their own room for direct messages
           socket.join(`user_${userData.userId}`);
+          console.log(`User ${userData.userId} joined room: user_${userData.userId}`);
 
           // Broadcast user online status to all clients
           socket.broadcast.emit('userStatusChanged', {
