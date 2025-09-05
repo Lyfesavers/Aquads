@@ -18,6 +18,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs', 'workshop'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -63,6 +64,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
 
   const fetchBlogs = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/blogs`);
       if (response.ok) {
@@ -71,6 +74,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       }
     } catch (error) {
       setError('Failed to fetch blogs');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -659,12 +664,21 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               </div>
             )}
             
-            <BlogList
-              blogs={blogs}
-              currentUser={currentUser}
-              onEditBlog={handleBlogEdit}
-              onDeleteBlog={handleDeleteBlog}
-            />
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
+                  <p className="text-gray-400 text-sm">Loading blog posts...</p>
+                </div>
+              </div>
+            ) : (
+              <BlogList
+                blogs={blogs}
+                currentUser={currentUser}
+                onEditBlog={handleBlogEdit}
+                onDeleteBlog={handleDeleteBlog}
+              />
+            )}
           </div>
         )}
 

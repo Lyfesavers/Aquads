@@ -272,7 +272,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         }
 
         // Navigate back to blog list after successful deletion
-        navigate('/how-to');
+        navigate('/learn');
       } catch (error) {
         alert(error.message || 'Failed to delete blog. Please try again.');
       }
@@ -700,7 +700,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         {/* Navigation */}
         <nav className="mb-8">
           <Link
-            to="/how-to"
+            to="/learn"
             className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-2"
           >
             <FaArrowLeft />
