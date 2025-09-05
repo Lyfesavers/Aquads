@@ -48,27 +48,41 @@ router.get('/', async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
-    // Add review data to each service (fixes N+1 problem)
-    const servicesWithReviews = await Promise.all(services.map(async (service) => {
-      try {
-        const reviews = await ServiceReview.find({ serviceId: service._id });
-        const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating), 0);
-        const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
-        
-        return {
-          ...service.toObject(),
-          rating: avgRating,
-          reviews: reviews.length
-        };
-      } catch (error) {
-        console.error(`Error fetching reviews for service ${service._id}:`, error);
-        return {
-          ...service.toObject(),
-          rating: 0,
-          reviews: 0
-        };
+    // Get service IDs for batch review query
+    const serviceIds = services.map(service => service._id);
+
+    // Fetch all reviews for these services in a single query (fixes N+1 problem)
+    const reviewAggregation = await ServiceReview.aggregate([
+      {
+        $match: { serviceId: { $in: serviceIds } }
+      },
+      {
+        $group: {
+          _id: '$serviceId',
+          avgRating: { $avg: '$rating' },
+          reviewCount: { $sum: 1 }
+        }
       }
-    }));
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = {};
+    reviewAggregation.forEach(review => {
+      reviewMap[review._id.toString()] = {
+        rating: Math.round(review.avgRating * 10) / 10, // Round to 1 decimal
+        reviews: review.reviewCount
+      };
+    });
+
+    // Add review data to each service efficiently
+    const servicesWithReviews = services.map(service => {
+      const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
+      return {
+        ...service.toObject(),
+        rating: reviewData.rating,
+        reviews: reviewData.reviews
+      };
+    });
 
     const total = await Service.countDocuments(query);
 

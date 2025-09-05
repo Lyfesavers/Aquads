@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
+const compression = require('compression');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
@@ -70,6 +71,20 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Add compression middleware for better performance
+app.use(compression({
+  level: 6, // Compression level (1-9, 6 is good balance)
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: (req, res) => {
+    // Don't compress if the request includes a no-transform directive
+    if (req.headers['cache-control'] && req.headers['cache-control'].includes('no-transform')) {
+      return false;
+    }
+    // Use compression for all other responses
+    return compression.filter(req, res);
+  }
+}));
+
 // Add CORS headers middleware
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://www.aquads.xyz');
@@ -85,6 +100,19 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Add caching middleware for API responses
+app.use('/api', (req, res, next) => {
+  // Set cache headers for GET requests
+  if (req.method === 'GET') {
+    // Cache for 5 minutes for most API responses
+    res.set('Cache-Control', 'public, max-age=300');
+  } else {
+    // No cache for POST, PUT, DELETE requests
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 
 // Create uploads directory if it doesn't exist
 // Ensure both the uploads and uploads/bookings directories exist
@@ -149,12 +177,20 @@ const limiter = rateLimit({
 app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
-// Connect to MongoDB
+// Connect to MongoDB with optimized settings
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
-  socketTimeoutMS: 45000 // Close sockets after 45s
+  serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  bufferMaxEntries: 0, // Disable mongoose buffering
+  bufferCommands: false, // Disable mongoose buffering
+  maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+  connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+  heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
+  retryWrites: true, // Retry failed writes
+  retryReads: true // Retry failed reads
 }).then(() => {
-  console.log('Connected to MongoDB');
+  console.log('Connected to MongoDB with optimized settings');
   // Initialize skill tests if they don't exist
   initializeSkillTests();
 }).catch(err => {
@@ -450,6 +486,7 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
 });
+
 
 // Update user profile
 app.put('/api/users/profile', auth, async (req, res) => {
