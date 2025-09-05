@@ -154,7 +154,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-yellow-400">
         <div className="fixed inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
           <div className="tech-lines"></div>
@@ -173,7 +173,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
 
   if (error || !service) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-yellow-400">
         <div className="fixed inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
           <div className="tech-lines"></div>
@@ -187,7 +187,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
             <p className="text-gray-400 mb-6">The service you're looking for doesn't exist or has been removed.</p>
             <button
               onClick={() => navigate('/marketplace')}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors"
+              className="bg-indigo-600 hover:bg-indigo-700 text-yellow-400 px-6 py-3 rounded-lg transition-colors"
             >
               Back to Marketplace
             </button>
@@ -207,7 +207,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         {service.image && <meta property="og:image" content={service.image} />}
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-yellow-400">
         {/* Fixed Background */}
         <div className="fixed inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
@@ -234,7 +234,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
               <div className="md:hidden">
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="text-gray-300 hover:text-white p-3 rounded-md"
+                  className="text-gray-300 hover:text-yellow-400 p-3 rounded-md"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {isMobileMenuOpen ? (
@@ -251,31 +251,31 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 {/* Main Navigation - Smaller buttons */}
                                  <Link
                    to="/marketplace"
-                   className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                   className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                  >
                    Freelancer Hub
                  </Link>
                 <Link
                   to="/games"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                 >
                   Games
                 </Link>
                 <button
                   onClick={openMintFunnelPlatform}
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                 >
                   Paid Ads
                 </button>
                 <Link
                   to="/learn"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                 >
                   Learn
                 </Link>
                 <Link
                   to="/freelancer-benefits"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                 >
                   Benefits
                 </Link>
@@ -288,7 +288,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                     <div className="relative user-dropdown">
                       <button 
                         onClick={() => setShowUserDropdown(!showUserDropdown)}
-                        className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                        className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                       >
                         <span className="mr-1">{currentUser.username}</span>
                         <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
@@ -305,7 +305,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 setShowDashboard(true);
                                 setShowUserDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                             >
                               📊 Dashboard
                             </button>
@@ -314,7 +314,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 setShowCreateModal(true);
                                 setShowUserDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                             >
                               ➕ List Service
                             </button>
@@ -323,7 +323,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 setShowBannerModal(true);
                                 setShowUserDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                             >
                               🎨 Create Banner Ad
                             </button>
@@ -332,7 +332,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 setShowProfileModal(true);
                                 setShowUserDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                             >
                               ⚙️ Edit Profile
                             </button>
@@ -342,7 +342,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 onLogout();
                                 setShowUserDropdown(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-red-600/50 transition-colors"
                             >
                               🚪 Logout
                             </button>
@@ -375,31 +375,31 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
               <div className="flex flex-col space-y-2">
                                  <Link
                    to="/marketplace"
-                   className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                   className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                  >
                    Freelancer Hub
                  </Link>
                 <Link
                   to="/games"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                 >
                   GameHub
                 </Link>
                 <button
                   onClick={openMintFunnelPlatform}
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                 >
                   Paid Ads
                 </button>
                 <Link
                   to="/learn"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                 >
                   Learn
                 </Link>
                 <Link
                   to="/freelancer-benefits"
-                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                  className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                 >
                   Benefits
                 </Link>
@@ -414,7 +414,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         setShowDashboard(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Dashboard
                     </button>
@@ -423,7 +423,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         setShowCreateModal(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       List Service
                     </button>
@@ -432,7 +432,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         setShowBannerModal(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Create Banner Ad
                     </button>
@@ -441,7 +441,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         setShowProfileModal(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Edit Profile
                     </button>
@@ -450,7 +450,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         onLogout();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Logout
                     </button>
@@ -462,7 +462,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         handleLoginClick();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Login
                     </button>
@@ -471,7 +471,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         handleCreateAccountClick();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       Create Account
                     </button>
@@ -505,7 +505,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 />
                 {service.isPremium && (
                   <div className="absolute top-4 right-4">
-                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-400 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
                       <FaCrown />
                       <span className="font-semibold">Premium</span>
                     </div>
@@ -565,7 +565,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                   </h2>
                   <button
                     onClick={() => setShowReviews(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors"
                   >
                     View All Reviews
                   </button>
@@ -618,7 +618,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                         {service.seller?.username}
                       </h3>
                       {service.isPremium && (
-                        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-2 py-1 rounded-full text-xs">
+                        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-400 px-2 py-1 rounded-full text-xs">
                           <FaCheck />
                           verified
                         </span>

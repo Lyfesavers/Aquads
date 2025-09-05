@@ -245,7 +245,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
 
   return (
-    <div className="h-screen overflow-y-auto bg-gray-900 text-white">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-yellow-400">
       <Helmet>
         <title>How To Guide - Aquads</title>
         <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
@@ -271,7 +271,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
+                className="text-gray-300 hover:text-yellow-400 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
               >
                 <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
@@ -288,31 +288,31 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Freelancer
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Games
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Why List?
               </Link>
@@ -323,7 +323,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   <div className="relative user-dropdown">
                     <button 
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       <span className="mr-1 truncate max-w-16 lg:max-w-none">{currentUser.username}</span>
                       <svg className={`w-3 h-3 lg:w-4 lg:h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
@@ -340,7 +340,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                navigate('/');
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🏠 Back to Main
                            </button>
@@ -349,7 +349,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                setShowDashboard(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              📊 Dashboard
                            </button>
@@ -358,7 +358,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                setShowCreateModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              ➕ List Project
                            </button>
@@ -367,7 +367,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                setShowBannerModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Create Banner Ad
                            </button>
@@ -376,7 +376,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                setShowProfileModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              ⚙️ Edit Profile
                            </button>
@@ -386,7 +386,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                                onLogout();
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-red-600/50 transition-colors"
                            >
                              🚪 Logout
                            </button>
@@ -547,8 +547,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('videos')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'videos'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-blue-500 text-yellow-400'
+                  : 'text-gray-400 hover:text-yellow-400'
               }`}
             >
               Video Tutorials
@@ -557,8 +557,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('tests')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'tests'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-blue-500 text-yellow-400'
+                  : 'text-gray-400 hover:text-yellow-400'
               }`}
             >
               Skills Tests
@@ -567,8 +567,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('blogs')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'blogs'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-blue-500 text-yellow-400'
+                  : 'text-gray-400 hover:text-yellow-400'
               }`}
             >
               Blog Posts
@@ -577,8 +577,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('workshop')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'workshop'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-yellow-400'
+                  : 'text-gray-400 hover:text-yellow-400'
               }`}
             >
               🎓 Freelancer Workshop
@@ -589,7 +589,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {/* Content based on active tab */}
         {activeTab === 'videos' && (
           <div className="mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-white">Video Tutorials</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-yellow-400">Video Tutorials</h2>
             <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
               {videoError ? (
                 <div className="flex items-center justify-center h-full text-gray-400 p-4 text-center">
@@ -619,11 +619,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {activeTab === 'blogs' && (
           <div className="mt-12 sm:mt-16" ref={blogListRef}>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Community Blog Posts</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-yellow-400">Community Blog Posts</h2>
               {currentUser && currentUser.isAdmin ? (
                 <button
                   onClick={() => setShowCreateBlogModal(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
+                  className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Blog Post
                 </button>
@@ -646,7 +646,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                     // Navigate to the main page with "showCreateAccount=true" parameter
                     window.location.href = `/?showCreateAccount=true${refCode ? `&ref=${refCode}` : ''}`;
                   }}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
+                  className="bg-green-500 hover:bg-green-600 text-yellow-400 px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Account
                 </button>

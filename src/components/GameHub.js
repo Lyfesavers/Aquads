@@ -231,7 +231,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
   };
   
   return (
-    <div className="h-screen overflow-y-auto bg-gray-900 text-white">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-yellow-400">
       {/* Navigation - Same as main page */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,7 +251,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
             <div className="md:hidden">
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
-                className="text-gray-300 hover:text-white p-2"
+                className="text-gray-300 hover:text-yellow-400 p-2"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {filterOpen ? (
@@ -268,31 +268,31 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
               {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Freelancer
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Games
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Why List?
               </Link>
@@ -305,7 +305,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                   <div className="relative user-dropdown">
                     <button 
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       <span className="mr-1">{currentUser.username}</span>
                       <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
@@ -322,7 +322,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                                setShowDashboard(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              📊 Dashboard
                            </button>
@@ -331,7 +331,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                                setShowProjectModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              ➕ List Project
                            </button>
@@ -340,7 +340,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                                setShowBannerModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Create Banner Ad
                            </button>
@@ -349,7 +349,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                                setShowCreateModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              🎮 Create Game
                            </button>
@@ -359,7 +359,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                                onLogout();
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-red-600/50 transition-colors"
                            >
                              🚪 Logout
                            </button>
@@ -372,13 +372,13 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 <>
                   <button
                     onClick={handleLoginClick}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Login
                   </button>
                   <button
                     onClick={handleCreateAccountClick}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Account
                   </button>
@@ -392,31 +392,31 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
             <div className="flex flex-col space-y-2">
               <Link
                 to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Freelancer Hub
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 GameHub
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Why List?
               </Link>
@@ -428,7 +428,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                        setShowDashboard(true);
                        setFilterOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                    >
                      Dashboard
                    </button>
@@ -437,7 +437,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                        setShowProjectModal(true);
                        setFilterOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                    >
                      List Project
                    </button>
@@ -446,7 +446,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                        setShowBannerModal(true);
                        setFilterOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                    >
                      Create Banner Ad
                    </button>
@@ -455,7 +455,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                        setShowCreateModal(true);
                        setFilterOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                    >
                      Create Game
                    </button>
@@ -464,7 +464,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                        onLogout();
                        setFilterOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                    >
                      Logout
                    </button>
@@ -476,7 +476,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                       handleLoginClick();
                       setFilterOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                   >
                     Login
                   </button>
@@ -485,7 +485,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                       handleCreateAccountClick();
                       setFilterOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
                   >
                     Create Account
                   </button>
@@ -521,20 +521,20 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 placeholder="Search for games..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-800 text-white border border-gray-700 rounded-l-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-gray-800 text-yellow-400 border border-gray-700 rounded-l-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="absolute right-20 text-gray-400 hover:text-white"
+                  className="absolute right-20 text-gray-400 hover:text-yellow-400"
                 >
                   <FaTimes />
                 </button>
               )}
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg flex items-center"
+                className="bg-blue-600 hover:bg-blue-700 text-yellow-400 px-6 py-3 rounded-r-lg flex items-center"
               >
                 <FaSearch className="mr-2" />
                 Search
@@ -552,7 +552,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
             <div className="flex items-center mb-4 md:mb-0">
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
-                className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded mr-4"
+                className="flex items-center bg-gray-700 hover:bg-gray-600 text-yellow-400 px-4 py-2 rounded mr-4"
               >
                 <FaFilter className="mr-2" />
                 Filters
@@ -563,7 +563,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 <select
                   value={filters.sort}
                   onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-gray-700 text-yellow-400 border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {SORT_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -588,7 +588,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-gray-700 text-yellow-400 border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {CATEGORY_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -603,7 +603,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 <select
                   value={filters.blockchain}
                   onChange={(e) => handleFilterChange('blockchain', e.target.value)}
-                  className="w-full bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-gray-700 text-yellow-400 border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {BLOCKCHAIN_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -618,7 +618,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                 <select
                   value={filters.sort}
                   onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="w-full bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-gray-700 text-yellow-400 border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {SORT_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -633,7 +633,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
         
         {/* Error message - Updated to be more appealing */}
         {error && (
-          <div className="bg-gradient-to-r from-blue-900/60 to-purple-900/60 text-white p-8 rounded-lg mb-6 border border-blue-500/50 text-center">
+          <div className="bg-gradient-to-r from-blue-900/60 to-purple-900/60 text-yellow-400 p-8 rounded-lg mb-6 border border-blue-500/50 text-center">
             <FaGamepad className="text-6xl text-blue-400 mx-auto mb-6" />
             <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">Coming Soon!</h3>
             <p className="text-xl text-gray-300 mb-6 max-w-2xl mx-auto">{error}</p>
@@ -673,7 +673,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                       sort: 'votes',
                     });
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 hover:bg-blue-700 text-yellow-400 px-4 py-2 rounded"
                 >
                   Clear Filters
                 </button>

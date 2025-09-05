@@ -318,7 +318,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-gray-900 text-yellow-400">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-700 rounded w-1/4 mb-8"></div>
@@ -338,14 +338,14 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
 
   if (error || !blog) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-gray-900 text-yellow-400">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Blog Not Found</h1>
             <p className="text-gray-400 mb-8">{error || 'The blog post you\'re looking for doesn\'t exist.'}</p>
             <Link
               to="/learn"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
+              className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <FaArrowLeft />
               Back to Blog List
@@ -360,7 +360,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
   const plainTextContent = extractPlainText(blog.content);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-yellow-400">
       <Helmet>
         <title>{blog.title} - Aquads Blog</title>
         <meta name="description" content={plainTextContent} />
@@ -435,7 +435,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-2"
+                className="text-gray-300 hover:text-yellow-400 p-2"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
@@ -452,31 +452,31 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Freelancer
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Games
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Why List?
               </Link>
@@ -487,7 +487,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                   <div className="relative user-dropdown">
                     <button 
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       <span className="mr-1">{currentUser.username}</span>
                       <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
@@ -504,7 +504,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                navigate('/');
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🏠 Back to Main
                            </button>
@@ -513,7 +513,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                setShowDashboard(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              📊 Dashboard
                            </button>
@@ -522,7 +522,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                setShowCreateModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              ➕ List Project
                            </button>
@@ -531,7 +531,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                setShowBannerModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Create Banner Ad
                            </button>
@@ -540,7 +540,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                setShowProfileModal(true);
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              ⚙️ Edit Profile
                            </button>
@@ -550,7 +550,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                                onLogout();
                                setShowUserDropdown(false);
                              }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-red-600/50 transition-colors"
                            >
                              🚪 Logout
                            </button>
@@ -583,31 +583,31 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <div className="flex flex-col space-y-2">
               <Link
                 to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Freelancer Hub
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 GameHub
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Why List?
               </Link>
@@ -619,7 +619,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        navigate('/');
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      Back to Main
                    </button>
@@ -628,7 +628,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        setShowDashboard(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      📊 Dashboard
                    </button>
@@ -637,7 +637,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        setShowCreateModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      ➕ List Project
                    </button>
@@ -646,7 +646,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        setShowBannerModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      🎨 Create Banner Ad
                    </button>
@@ -655,7 +655,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        setShowProfileModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      ⚙️ Edit Profile
                    </button>
@@ -664,7 +664,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                        onLogout();
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                    >
                      Logout
                    </button>
@@ -676,7 +676,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                       setShowLoginModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Login
                   </button>
@@ -685,7 +685,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                       setShowCreateAccountModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Account
                   </button>
@@ -737,7 +737,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 />
               </div>
               <div>
-                <div className="font-medium text-white">{blog.authorUsername}</div>
+                <div className="font-medium text-yellow-400">{blog.authorUsername}</div>
                 <div className="text-sm">Author</div>
               </div>
             </div>
@@ -757,7 +757,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
           <div className="flex items-center gap-4 mb-8">
             <button
               onClick={handleShare}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+              className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <FaShare />
               Share
@@ -767,14 +767,14 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               <>
                 <button
                   onClick={handleEdit}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                  className="bg-gray-600 hover:bg-gray-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
                   <FaEdit />
                   Edit
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                  className="bg-red-600 hover:bg-red-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
                   <FaTrash />
                   Delete

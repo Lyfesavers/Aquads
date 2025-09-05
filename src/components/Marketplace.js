@@ -949,31 +949,31 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
               {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Home
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Games
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Benefits
               </Link>
@@ -986,7 +986,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                   <div className="relative user-dropdown">
                     <button 
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
                       <span className="mr-1">{currentUser.username}</span>
                       <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
@@ -1053,13 +1053,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 <>
                   <button
                     onClick={handleLoginClick}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Login
                   </button>
                   <button
                     onClick={handleCreateAccountClick}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.2 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.2 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Account
                   </button>
@@ -1073,31 +1073,31 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             <div className="flex flex-col space-y-2">
               <Link
                 to="/"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Home
               </Link>
               <Link
                 to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 GameHub
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-white"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Benefits
               </Link>
@@ -1112,7 +1112,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       setShowDashboard(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Dashboard
                   </button>
@@ -1121,7 +1121,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       setShowCreateModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     List Service
                   </button>
@@ -1130,7 +1130,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       setShowBannerModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Banner Ad
                   </button>
@@ -1139,7 +1139,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       setShowProfileModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Edit Profile
                   </button>
@@ -1148,7 +1148,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       onLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Logout
                   </button>
@@ -1160,7 +1160,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       handleLoginClick();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Login
                   </button>
@@ -1169,7 +1169,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       handleCreateAccountClick();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Account
                   </button>
