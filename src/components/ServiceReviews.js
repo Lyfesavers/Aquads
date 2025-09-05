@@ -5,7 +5,7 @@ import { FaSpinner } from 'react-icons/fa';
 
 const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate, viewOnly = false }) => {
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '', referralCode: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -13,6 +13,10 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
   const [totalReviews, setTotalReviews] = useState(0);
   const [canReview, setCanReview] = useState(false);
   const [interactionDate, setInteractionDate] = useState(null);
+  const [userBookings, setUserBookings] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   const validateReviewLength = (text) => {
     if (!text) return false;
@@ -35,14 +39,22 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   const checkReviewEligibility = async () => {
     try {
-      const response = await fetch(`${API_URL}/service-reviews/${service._id}/eligibility`, {
+      const response = await fetch(`${API_URL}/service-reviews/${service._id}/bookings`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
-      const data = await response.json();
-      setCanReview(data.canReview);
-      setInteractionDate(new Date().toISOString());
+      const bookings = await response.json();
+      setUserBookings(bookings);
+      
+      // Check if user has any completed bookings that haven't been reviewed
+      const unreviewedBookings = bookings.filter(booking => !booking.isReviewed);
+      setCanReview(unreviewedBookings.length > 0);
+      
+      if (unreviewedBookings.length > 0) {
+        setSelectedBookingId(unreviewedBookings[0]._id);
+        setInteractionDate(unreviewedBookings[0].completedAt);
+      }
     } catch (error) {
       console.error('Error checking review eligibility:', error);
       setCanReview(false);
@@ -109,6 +121,41 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
     return () => clearInterval(pollInterval);
   }, [service?._id]);
 
+  const verifyReferralCode = async () => {
+    if (!newReview.referralCode.trim()) {
+      showNotification('Please enter your Secret code', 'error');
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await fetch(`${API_URL}/users/verify-referral`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          username: currentUser.username,
+          referralCode: newReview.referralCode
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid Secret code');
+      }
+
+      setIsVerified(true);
+      showNotification('Secret code verified successfully!', 'success');
+    } catch (error) {
+      showNotification(error.message || 'Failed to verify Secret code', 'error');
+      setIsVerified(false);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -135,6 +182,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         },
         body: JSON.stringify({
           serviceId: service._id,
+          bookingId: selectedBookingId,
           rating: newReview.rating,
           comment: newReview.comment
         })
@@ -151,7 +199,11 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       setReviews(prevReviews => [savedReview, ...prevReviews]);
       
       // Reset the form
-      setNewReview({ rating: 5, comment: '' });
+      setNewReview({ rating: 5, comment: '', referralCode: '' });
+      setSelectedBookingId(null);
+      
+      // Refresh eligibility to update available bookings
+      await checkReviewEligibility();
       
       // Update totals
       setTotalReviews(prev => prev + 1);
@@ -173,6 +225,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         onReviewsUpdate(updatedService);
       }
       
+      setIsVerified(false); // Reset verification
          } catch (error) {
        setError(error.message);
      } finally {
@@ -211,55 +264,108 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
               <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
                 
-                <div className="mb-4">
-                  <label className="block mb-2">Rating</label>
-                  <div className="flex gap-2">
-                    {[5, 4, 3, 2, 1].map(num => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
-                        className={`p-2 rounded ${
-                          newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
-                        }`}
-                      >
-                        {num} ★
-                      </button>
-                    ))}
+                {/* Booking Selection */}
+                {userBookings.filter(booking => !booking.isReviewed).length > 1 && (
+                  <div className="mb-4">
+                    <label className="block mb-2">Select Booking to Review</label>
+                    <select
+                      value={selectedBookingId || ''}
+                      onChange={(e) => {
+                        setSelectedBookingId(e.target.value);
+                        const selectedBooking = userBookings.find(b => b._id === e.target.value);
+                        if (selectedBooking) {
+                          setInteractionDate(selectedBooking.completedAt);
+                        }
+                      }}
+                      className="w-full bg-gray-700 rounded p-2"
+                    >
+                      {userBookings
+                        .filter(booking => !booking.isReviewed)
+                        .map(booking => (
+                          <option key={booking._id} value={booking._id}>
+                            Booking completed on {new Date(booking.completedAt).toLocaleDateString()}
+                          </option>
+                        ))}
+                    </select>
                   </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
-                  <textarea
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
-                    className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
-                    placeholder="Please write at least 3 sentences or lines describing your experience with this service..."
-                    required
-                  />
-                  <div className="mt-2 text-sm text-gray-400">
-                    {validateReviewLength(newReview.comment) ? (
-                      <span className="text-green-400">✓ Review length requirement met</span>
-                    ) : (
-                      <span>Write at least 3 sentences or lines</span>
-                    )}
-                  </div>
-                </div>
+                )}
                 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <FaSpinner className="animate-spin mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Review'
-                  )}
-                </button>
+                {!isVerified ? (
+                  <div className="mb-4">
+                    <label className="block mb-2">Enter Your Secret Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newReview.referralCode}
+                        onChange={(e) => setNewReview(prev => ({ ...prev, referralCode: e.target.value }))}
+                        className="flex-1 bg-gray-700 rounded p-2"
+                        placeholder="Your Secret code"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={verifyReferralCode}
+                        disabled={isVerifying}
+                        className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
+                      >
+                        {isVerifying ? 'Verifying...' : 'Verify'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4">
+                      <label className="block mb-2">Rating</label>
+                      <div className="flex gap-2">
+                        {[5, 4, 3, 2, 1].map(num => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
+                            className={`p-2 rounded ${
+                              newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
+                            }`}
+                          >
+                            {num} ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
+                      <textarea
+                        value={newReview.comment}
+                        onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                        className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
+                        placeholder="Please write at least 3 sentences or lines describing your experience with this service..."
+                        required
+                      />
+                      <div className="mt-2 text-sm text-gray-400">
+                        {validateReviewLength(newReview.comment) ? (
+                          <span className="text-green-400">✓ Review length requirement met</span>
+                        ) : (
+                          <span>Write at least 3 sentences or lines</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      onClick={handleSubmitReview}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <FaSpinner className="animate-spin mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Review'
+                      )}
+                    </button>
+                  </>
+                )}
               </form>
             )}
           </>

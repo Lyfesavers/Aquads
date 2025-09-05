@@ -24,8 +24,8 @@ router.get('/:serviceId', async (req, res) => {
   }
 });
 
-// Check if user can review a service (has completed bookings)
-router.get('/:serviceId/eligibility', auth, async (req, res) => {
+// Get user's completed bookings for a service (for review selection)
+router.get('/:serviceId/bookings', auth, async (req, res) => {
   try {
     const serviceId = req.params.serviceId;
     const userId = req.user.userId;
@@ -37,31 +37,77 @@ router.get('/:serviceId/eligibility', auth, async (req, res) => {
       status: 'completed'
     }).sort({ completedAt: -1 });
 
-    res.json({
-      canReview: completedBookings.length > 0,
-      completedBookings: completedBookings.length
-    });
+    // Check which bookings have already been reviewed
+    const reviewedBookingIds = await ServiceReview.find({
+      serviceId: serviceId,
+      userId: userId,
+      bookingId: { $exists: true } // Only get reviews with bookingId
+    }).distinct('bookingId');
+
+    // Add review status to each booking
+    const bookingsWithReviewStatus = completedBookings.map(booking => ({
+      ...booking.toObject(),
+      isReviewed: reviewedBookingIds.includes(booking._id.toString())
+    }));
+
+    res.json(bookingsWithReviewStatus);
   } catch (error) {
-    console.error('Error checking review eligibility:', error);
-    res.status(500).json({ error: 'Failed to check review eligibility' });
+    console.error('Error fetching user bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch user bookings' });
   }
 });
 
 // Add a new review
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { serviceId, rating, comment } = req.body;
+    const { serviceId, bookingId, rating, comment } = req.body;
     
     if (!serviceId || !rating || !comment) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Allow multiple reviews per service - no restriction
+    // If bookingId is provided, validate the booking-based review
+    if (bookingId) {
+      // Validate that the booking exists, is completed, and belongs to the user
+      const booking = await Booking.findOne({
+        _id: bookingId,
+        serviceId: serviceId,
+        buyerId: req.user.userId,
+        status: 'completed'
+      });
+
+      if (!booking) {
+        return res.status(400).json({ 
+          error: 'No completed booking found for this service. You can only review services you have completed.' 
+        });
+      }
+
+      // Check if this booking has already been reviewed
+      const existingReview = await ServiceReview.findOne({
+        bookingId: bookingId
+      });
+
+      if (existingReview) {
+        return res.status(400).json({ error: 'You have already reviewed this booking' });
+      }
+    } else {
+      // Legacy review system - check if user already reviewed this service
+      const existingReview = await ServiceReview.findOne({
+        serviceId,
+        userId: req.user.userId,
+        bookingId: { $exists: false } // Only check reviews without bookingId
+      });
+
+      if (existingReview) {
+        return res.status(400).json({ error: 'You have already reviewed this service' });
+      }
+    }
 
     const review = new ServiceReview({
       serviceId,
       userId: req.user.userId,
       username: req.user.username,
+      bookingId: bookingId || undefined, // Only include if provided
       rating: Number(rating),
       comment: comment.trim()
     });

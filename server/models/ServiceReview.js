@@ -15,6 +15,11 @@ const serviceReviewSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Booking',
+    required: false
+  },
   rating: {
     type: Number,
     required: true,
@@ -31,7 +36,11 @@ const serviceReviewSchema = new mongoose.Schema({
   }
 });
 
-// Allow multiple reviews per service per user
+// Ensure one review per booking (sparse index - only applies to reviews with bookingId)
+serviceReviewSchema.index({ bookingId: 1 }, { unique: true, sparse: true });
+
+// Keep the old unique index for backward compatibility (only applies to reviews without bookingId)
+serviceReviewSchema.index({ serviceId: 1, userId: 1 }, { unique: true, partialFilterExpression: { bookingId: { $exists: false } } });
 
 // Performance indexes for better query performance
 serviceReviewSchema.index({ serviceId: 1, createdAt: -1 }); // For service reviews by date
