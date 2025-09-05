@@ -271,7 +271,8 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
 
     const booking = await Booking.findById(bookingId)
       .populate('serviceId')
-      .populate('sellerId', 'username');
+      .populate('sellerId', 'username email')
+      .populate('buyerId', 'username email');
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
@@ -320,6 +321,12 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     booking.tokensSpent = tokensRequired;
     await booking.save();
 
+    // Get the updated booking with populated data for socket emission
+    const updatedBooking = await Booking.findById(booking._id)
+      .populate('serviceId')
+      .populate('sellerId', 'username email')
+      .populate('buyerId', 'username email');
+
     // Emit socket event for real-time updates
     const { getIO } = require('../socket');
     const io = getIO();
@@ -327,19 +334,13 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
       // Emit to the seller's room
       io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
         type: 'unlocked',
-        booking: {
-          ...booking.toObject(),
-          isUnlocked: true
-        }
+        booking: updatedBooking
       });
       
       // Emit to the buyer's room
       io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
         type: 'unlocked',
-        booking: {
-          ...booking.toObject(),
-          isUnlocked: true
-        }
+        booking: updatedBooking
       });
     }
 
