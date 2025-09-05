@@ -31,8 +31,7 @@ const serviceReviewSchema = new mongoose.Schema({
   }
 });
 
-// Ensure one review per service per user
-serviceReviewSchema.index({ serviceId: 1, userId: 1 }, { unique: true });
+// Allow multiple reviews per service per user
 
 // Performance indexes for better query performance
 serviceReviewSchema.index({ serviceId: 1, createdAt: -1 }); // For service reviews by date
