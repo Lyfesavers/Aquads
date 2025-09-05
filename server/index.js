@@ -54,7 +54,7 @@ setInterval(async () => {
     );
     
     if (result.modifiedCount > 0) {
-      console.log(`Set ${result.modifiedCount} inactive users as offline`);
+      // Set inactive users as offline
     }
   } catch (error) {
     console.error('Error in user cleanup task:', error);
@@ -123,22 +123,19 @@ try {
   // Create parent uploads directory if it doesn't exist
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created main uploads directory:', uploadsDir);
   }
   
   // Create bookings subdirectory if it doesn't exist
   if (!fs.existsSync(bookingsDir)) {
     fs.mkdirSync(bookingsDir, { recursive: true });
-    console.log('Created bookings uploads directory:', bookingsDir);
   }
   
   // Make sure permissions are set correctly (for Linux/Unix systems)
   try {
     fs.chmodSync(uploadsDir, 0o755);
     fs.chmodSync(bookingsDir, 0o755);
-    console.log('Set directory permissions');
   } catch (permError) {
-    console.log('Note: Could not set directory permissions. This is normal on Windows.');
+    // Note: Could not set directory permissions. This is normal on Windows.
   }
 } catch (error) {
   console.error('Error creating upload directories:', error);
@@ -177,18 +174,11 @@ const limiter = rateLimit({
 app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
-// Connect to MongoDB with optimized settings
+// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-  connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
-  heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
-  retryWrites: true, // Retry failed writes
-  retryReads: true // Retry failed reads
+  serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
+  socketTimeoutMS: 45000 // Close sockets after 45s
 }).then(() => {
-  console.log('Connected to MongoDB with optimized settings');
   // Initialize skill tests if they don't exist
   initializeSkillTests();
 }).catch(err => {
@@ -203,12 +193,12 @@ mongoose.connection.on('error', err => {
 
 // Add reconnect handler
 mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected, attempting to reconnect...');
+  // MongoDB disconnected, attempting to reconnect...
 });
 
 // Add connection monitoring
 mongoose.connection.on('connected', () => {
-  console.log('Mongoose connected to MongoDB');
+  // Mongoose connected to MongoDB
 });
 
 // Graceful shutdown
@@ -567,8 +557,6 @@ const logger = winston.createLogger({
   ]
 });
 
-// Add this to see if server is starting
-console.log('Starting server...');
 
 // Apply rate limiter BEFORE starting server
 const apiLimiter = rateLimit({
@@ -582,8 +570,6 @@ app.use('/api', apiLimiter);
 // THEN start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  
   // Start Telegram bot (fire-and-forget)
   telegramService.startBot();
 });
