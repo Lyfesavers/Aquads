@@ -266,6 +266,7 @@ router.get('/admin/pending', auth, async (req, res) => {
 // Unlock booking with tokens
 router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async (req, res) => {
   try {
+    console.log('Booking unlock endpoint called');
     const { bookingId } = req.params;
     const tokensRequired = 2; // 2 tokens to unlock 1 lead
 

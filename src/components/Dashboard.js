@@ -185,8 +185,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       });
 
       const handleBookingUpdate = (data) => {
-        console.log('Received booking update:', data);
-        
         if (data.type === 'created') {
           // Add new booking to the list
           setBookings(prevBookings => [data.booking, ...prevBookings]);

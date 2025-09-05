@@ -57,6 +57,7 @@ const upload = multer({
 // Create a booking
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
+    console.log('Booking creation endpoint called');
     const { serviceId, requirements } = req.body;
 
     // Find the service
