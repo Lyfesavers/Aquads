@@ -266,7 +266,6 @@ router.get('/admin/pending', auth, async (req, res) => {
 // Unlock booking with tokens
 router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async (req, res) => {
   try {
-    console.log('Booking unlock endpoint called');
     const { bookingId } = req.params;
     const tokensRequired = 2; // 2 tokens to unlock 1 lead
 
@@ -329,28 +328,20 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
       .populate('buyerId', 'username email');
 
     // Emit socket event for real-time updates
-    try {
-      const { getIO } = require('../socket');
-      const io = getIO();
-      if (io) {
-        console.log('Emitting booking unlock socket events');
-        // Emit to the seller's room
-        io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
-          type: 'unlocked',
-          booking: updatedBooking
-        });
-        
-        // Emit to the buyer's room
-        io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
-          type: 'unlocked',
-          booking: updatedBooking
-        });
-        console.log('Booking unlock socket events emitted successfully');
-      } else {
-        console.log('Socket.io not available for booking unlock');
-      }
-    } catch (error) {
-      console.error('Error emitting booking unlock socket events:', error);
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      // Emit to the seller's room
+      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
+        type: 'unlocked',
+        booking: updatedBooking
+      });
+      
+      // Emit to the buyer's room
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
+        type: 'unlocked',
+        booking: updatedBooking
+      });
     }
 
     res.json({

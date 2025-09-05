@@ -177,15 +177,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Socket listener for real-time booking updates
   useEffect(() => {
-    console.log('Dashboard socket setup:', {
-      hasSocket: !!socket,
-      isConnected: socket?.connected,
-      hasCurrentUser: !!currentUser,
-      userId: currentUser?.userId
-    });
-    
     if (socket && currentUser) {
-      console.log('Joining user room:', `user_${currentUser.userId}`);
       // Join user's room for direct updates
       socket.emit('userOnline', {
         userId: currentUser.userId,
@@ -193,13 +185,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       });
 
       const handleBookingUpdate = (data) => {
-        console.log('Dashboard received booking update:', data);
         if (data.type === 'created') {
-          console.log('Adding new booking to dashboard');
           // Add new booking to the list
           setBookings(prevBookings => [data.booking, ...prevBookings]);
         } else {
-          console.log('Updating existing booking in dashboard');
           // Update existing booking
           setBookings(prevBookings => 
             prevBookings.map(booking => 
@@ -982,8 +971,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleTokenPurchaseComplete = () => {
-    // Refresh bookings after token purchase
-    fetchBookings();
+    // Socket updates will handle real-time booking updates
+    // No need to fetch bookings manually
   };
 
   const fetchPendingTokenPurchases = async () => {

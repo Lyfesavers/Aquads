@@ -57,7 +57,6 @@ const upload = multer({
 // Create a booking
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    console.log('Booking creation endpoint called');
     const { serviceId, requirements } = req.body;
 
     // Find the service
@@ -118,28 +117,20 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       .populate('buyerId', 'username email');
 
     // Emit socket event for real-time updates
-    try {
-      const { getIO } = require('../socket');
-      const io = getIO();
-      if (io) {
-        console.log('Emitting booking creation socket events');
-        // Emit to the seller's room
-        io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
-          type: 'created',
-          booking: populatedBooking
-        });
-        
-        // Emit to the buyer's room
-        io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
-          type: 'created',
-          booking: populatedBooking
-        });
-        console.log('Booking creation socket events emitted successfully');
-      } else {
-        console.log('Socket.io not available for booking creation');
-      }
-    } catch (error) {
-      console.error('Error emitting booking creation socket events:', error);
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      // Emit to the seller's room
+      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
+        type: 'created',
+        booking: populatedBooking
+      });
+      
+      // Emit to the buyer's room
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
+        type: 'created',
+        booking: populatedBooking
+      });
     }
 
     res.status(201).json(populatedBooking);
