@@ -101,13 +101,6 @@ const NotificationBell = ({ currentUser }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
   
-  // Use effect to try alternate paths on initial load with dependency
-  useEffect(() => {
-    if (currentUser && currentUser.token) {
-      debouncedFetchNotifications();
-    }
-  }, [currentUser, debouncedFetchNotifications]);
-
   // Mark notification as read
   const markAsRead = async (notificationId) => {
     if (!currentUser || !currentUser.token || !apiAvailable) return;
@@ -158,13 +151,18 @@ const NotificationBell = ({ currentUser }) => {
         });
         
         if (response.ok) {
+          const data = await response.json();
           setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
           setUnreadCount(0);
           success = true;
           
+          console.log(`✅ Marked all notifications as read: ${data.modifiedCount || 'unknown'} notifications`);
+          
           // Remember the working path for future requests
           window.WORKING_MARK_ALL_READ_PATH = path;
           break;
+        } else {
+          console.log(`❌ Failed to mark all as read from: ${path} (Status: ${response.status})`);
         }
       } catch (error) {
         // Continue to next path
@@ -182,7 +180,7 @@ const NotificationBell = ({ currentUser }) => {
         const markReadPath = `${basePath}/${notification._id}/read`;
         
         try {
-          await fetch(markReadPath, {
+          const response = await fetch(markReadPath, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${currentUser.token}`,
@@ -190,8 +188,14 @@ const NotificationBell = ({ currentUser }) => {
             },
             body: JSON.stringify({ isRead: true })
           });
+          
+          if (response.ok) {
+            console.log(`✅ Marked notification as read: ${notification._id}`);
+          } else {
+            console.log(`❌ Failed to mark notification as read: ${response.status}`);
+          }
         } catch (error) {
-          // Continue even if this fails
+          console.log(`❌ Error marking notification as read:`, error);
         }
         
         // Update local state
@@ -333,11 +337,11 @@ const NotificationBell = ({ currentUser }) => {
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
         })
-        .catch(error => {});
-      } else {
-        // Otherwise try all paths again
-        tryFetchNotifications();
+        .catch(error => {
+          // Silent error handling for polling
+        });
       }
+      // Don't call tryFetchNotifications here to avoid duplicate calls
     }, 30000);
     
     return () => clearInterval(pollingInterval);
