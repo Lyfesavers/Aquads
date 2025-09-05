@@ -41,12 +41,12 @@ const NotificationBell = ({ currentUser }) => {
     
     hasAttemptedFetch.current = true;
     
-    // Add the new alternate path
+    // Try the main notifications endpoint first, then fallback to booking endpoint
     const possiblePaths = [
-      `${API_URL}/notifications`,
+      `${API_URL}/notifications`,              // Main endpoint (now fixed)
+      `${API_URL}/bookings/user-notifications`, // Fallback endpoint
       `${API_URL}/api/notifications`,
       `/api/notifications`,
-      `${API_URL}/bookings/user-notifications`, // Add this new path
       `${window.location.origin}/api/notifications`
     ];
     
@@ -65,7 +65,10 @@ const NotificationBell = ({ currentUser }) => {
           
           // Store the working path for future use
           window.WORKING_NOTIFICATION_PATH = path;
+          console.log(`✅ Notifications loaded successfully from: ${path}`);
           return;
+        } else {
+          console.log(`❌ Failed to load notifications from: ${path} (Status: ${response.status})`);
         }
       } catch (error) {
         // Continue to next path
@@ -174,9 +177,9 @@ const NotificationBell = ({ currentUser }) => {
     try {
       // Try to mark the notification as read
       if (!notification.isRead) {
-        // Use the working notification path if available
-        const basePath = window.WORKING_NOTIFICATION_PATH || `${API_URL}/bookings/user-notifications`;
-        const markReadPath = `${basePath}/${notification._id}`;
+        // Use the working notification path if available, prioritize main endpoint
+        const basePath = window.WORKING_NOTIFICATION_PATH || `${API_URL}/notifications`;
+        const markReadPath = `${basePath}/${notification._id}/read`;
         
         try {
           await fetch(markReadPath, {
