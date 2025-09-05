@@ -165,6 +165,11 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       return;
     }
 
+    if (!selectedBookingId) {
+      setError('Please select a booking to review');
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true); // Set submitting state to true
 

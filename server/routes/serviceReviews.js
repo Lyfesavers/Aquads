@@ -66,53 +66,58 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // If bookingId is provided, validate the booking-based review
-    if (bookingId) {
-      // Validate that the booking exists, is completed, and belongs to the user
-      const booking = await Booking.findOne({
-        _id: bookingId,
-        serviceId: serviceId,
-        buyerId: req.user.userId,
-        status: 'completed'
+    // For new reviews, bookingId is required
+    if (!bookingId) {
+      return res.status(400).json({ 
+        error: 'Booking ID is required. Please select a completed booking to review.' 
       });
+    }
 
-      if (!booking) {
-        return res.status(400).json({ 
-          error: 'No completed booking found for this service. You can only review services you have completed.' 
-        });
-      }
+    // Validate that the booking exists, is completed, and belongs to the user
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      serviceId: serviceId,
+      buyerId: req.user.userId,
+      status: 'completed'
+    });
 
-      // Check if this booking has already been reviewed
-      const existingReview = await ServiceReview.findOne({
-        bookingId: bookingId
+    if (!booking) {
+      return res.status(400).json({ 
+        error: 'No completed booking found for this service. You can only review services you have completed.' 
       });
+    }
 
-      if (existingReview) {
-        return res.status(400).json({ error: 'You have already reviewed this booking' });
-      }
-    } else {
-      // Legacy review system - check if user already reviewed this service
-      const existingReview = await ServiceReview.findOne({
-        serviceId,
-        userId: req.user.userId,
-        bookingId: { $exists: false } // Only check reviews without bookingId
-      });
+    // Check if this booking has already been reviewed
+    const existingReview = await ServiceReview.findOne({
+      bookingId: bookingId
+    });
 
-      if (existingReview) {
-        return res.status(400).json({ error: 'You have already reviewed this service' });
-      }
+    if (existingReview) {
+      return res.status(400).json({ error: 'You have already reviewed this booking' });
     }
 
     const review = new ServiceReview({
       serviceId,
       userId: req.user.userId,
       username: req.user.username,
-      bookingId: bookingId || undefined, // Only include if provided
+      bookingId: bookingId,
       rating: Number(rating),
       comment: comment.trim()
     });
 
-    const savedReview = await review.save();
+    let savedReview;
+    
+    try {
+      savedReview = await review.save();
+    } catch (error) {
+      // Handle duplicate key error from old unique index
+      if (error.code === 11000 && error.keyPattern && error.keyPattern.serviceId && error.keyPattern.userId) {
+        return res.status(400).json({ 
+          error: 'You have already reviewed this service. Please use the new booking-based review system for multiple reviews.' 
+        });
+      }
+      throw error; // Re-throw if it's a different error
+    }
 
     // Update service rating, review count, and badge
     const allReviews = await ServiceReview.find({ serviceId });
