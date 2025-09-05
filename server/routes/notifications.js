@@ -16,16 +16,60 @@ router.get('/', auth, async (req, res) => {
     try {
       NotificationModel = mongoose.model('Notification');
     } catch (error) {
-      // If model doesn't exist, define it here (same as booking endpoint)
+      // If model doesn't exist, define it here (exact same as main model)
       const notificationSchema = new mongoose.Schema({
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        type: { type: String, required: true },
-        message: { type: String, required: true },
-        link: { type: String },
-        relatedId: { type: mongoose.Schema.Types.ObjectId },
-        relatedModel: { type: String },
-        isRead: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now }
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        type: {
+          type: String,
+          enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund'],
+          required: true
+        },
+        message: {
+          type: String,
+          required: true
+        },
+        link: {
+          type: String,
+          default: null
+        },
+        relatedId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: 'relatedModel',
+          default: null
+        },
+        relatedModel: {
+          type: String,
+          enum: ['Booking', 'BookingMessage', 'Service', 'ServiceReview', 'TwitterRaid', 'FacebookRaid', null],
+          default: null
+        },
+        isRead: {
+          type: Boolean,
+          default: false
+        },
+        emailTrigger: {
+          type: {
+            type: String,
+            enum: ['buyer_acceptance']
+          },
+          buyerEmail: String,
+          bookingDetails: {
+            buyerUsername: String,
+            serviceTitle: String,
+            bookingId: String,
+            price: Number,
+            currency: String,
+            sellerUsername: String,
+            requirements: String
+          }
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
       });
       
       NotificationModel = mongoose.model('Notification', notificationSchema);
@@ -53,16 +97,60 @@ router.get('/unread-count', auth, async (req, res) => {
     try {
       NotificationModel = mongoose.model('Notification');
     } catch (error) {
-      // If model doesn't exist, define it here
+      // If model doesn't exist, define it here (exact same as main model)
       const notificationSchema = new mongoose.Schema({
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        type: { type: String, required: true },
-        message: { type: String, required: true },
-        link: { type: String },
-        relatedId: { type: mongoose.Schema.Types.ObjectId },
-        relatedModel: { type: String },
-        isRead: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now }
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        type: {
+          type: String,
+          enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund'],
+          required: true
+        },
+        message: {
+          type: String,
+          required: true
+        },
+        link: {
+          type: String,
+          default: null
+        },
+        relatedId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: 'relatedModel',
+          default: null
+        },
+        relatedModel: {
+          type: String,
+          enum: ['Booking', 'BookingMessage', 'Service', 'ServiceReview', 'TwitterRaid', 'FacebookRaid', null],
+          default: null
+        },
+        isRead: {
+          type: Boolean,
+          default: false
+        },
+        emailTrigger: {
+          type: {
+            type: String,
+            enum: ['buyer_acceptance']
+          },
+          buyerEmail: String,
+          bookingDetails: {
+            buyerUsername: String,
+            serviceTitle: String,
+            bookingId: String,
+            price: Number,
+            currency: String,
+            sellerUsername: String,
+            requirements: String
+          }
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
       });
       
       NotificationModel = mongoose.model('Notification', notificationSchema);
@@ -92,16 +180,60 @@ router.patch('/:id/read', auth, async (req, res) => {
     try {
       NotificationModel = mongoose.model('Notification');
     } catch (error) {
-      // If model doesn't exist, define it here
+      // If model doesn't exist, define it here (exact same as main model)
       const notificationSchema = new mongoose.Schema({
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        type: { type: String, required: true },
-        message: { type: String, required: true },
-        link: { type: String },
-        relatedId: { type: mongoose.Schema.Types.ObjectId },
-        relatedModel: { type: String },
-        isRead: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now }
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        type: {
+          type: String,
+          enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund'],
+          required: true
+        },
+        message: {
+          type: String,
+          required: true
+        },
+        link: {
+          type: String,
+          default: null
+        },
+        relatedId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: 'relatedModel',
+          default: null
+        },
+        relatedModel: {
+          type: String,
+          enum: ['Booking', 'BookingMessage', 'Service', 'ServiceReview', 'TwitterRaid', 'FacebookRaid', null],
+          default: null
+        },
+        isRead: {
+          type: Boolean,
+          default: false
+        },
+        emailTrigger: {
+          type: {
+            type: String,
+            enum: ['buyer_acceptance']
+          },
+          buyerEmail: String,
+          bookingDetails: {
+            buyerUsername: String,
+            serviceTitle: String,
+            bookingId: String,
+            price: Number,
+            currency: String,
+            sellerUsername: String,
+            requirements: String
+          }
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
       });
       
       NotificationModel = mongoose.model('Notification', notificationSchema);
@@ -136,16 +268,60 @@ router.patch('/mark-all-read', auth, async (req, res) => {
     try {
       NotificationModel = mongoose.model('Notification');
     } catch (error) {
-      // If model doesn't exist, define it here
+      // If model doesn't exist, define it here (exact same as main model)
       const notificationSchema = new mongoose.Schema({
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        type: { type: String, required: true },
-        message: { type: String, required: true },
-        link: { type: String },
-        relatedId: { type: mongoose.Schema.Types.ObjectId },
-        relatedModel: { type: String },
-        isRead: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now }
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        type: {
+          type: String,
+          enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund'],
+          required: true
+        },
+        message: {
+          type: String,
+          required: true
+        },
+        link: {
+          type: String,
+          default: null
+        },
+        relatedId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: 'relatedModel',
+          default: null
+        },
+        relatedModel: {
+          type: String,
+          enum: ['Booking', 'BookingMessage', 'Service', 'ServiceReview', 'TwitterRaid', 'FacebookRaid', null],
+          default: null
+        },
+        isRead: {
+          type: Boolean,
+          default: false
+        },
+        emailTrigger: {
+          type: {
+            type: String,
+            enum: ['buyer_acceptance']
+          },
+          buyerEmail: String,
+          bookingDetails: {
+            buyerUsername: String,
+            serviceTitle: String,
+            bookingId: String,
+            price: Number,
+            currency: String,
+            sellerUsername: String,
+            requirements: String
+          }
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
       });
       
       NotificationModel = mongoose.model('Notification', notificationSchema);
