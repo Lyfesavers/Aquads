@@ -250,7 +250,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
 
   return (
-    <div className="h-screen overflow-y-auto bg-gray-900 text-yellow-400">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
         <title>How To Guide - Aquads</title>
         <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
@@ -552,8 +552,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('videos')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'videos'
-                  ? 'bg-blue-500 text-yellow-400'
-                  : 'text-gray-400 hover:text-yellow-400'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Video Tutorials
@@ -562,8 +562,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('tests')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'tests'
-                  ? 'bg-blue-500 text-yellow-400'
-                  : 'text-gray-400 hover:text-yellow-400'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Skills Tests
@@ -572,8 +572,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('blogs')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'blogs'
-                  ? 'bg-blue-500 text-yellow-400'
-                  : 'text-gray-400 hover:text-yellow-400'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Blog Posts
@@ -582,8 +582,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onClick={() => setActiveTab('workshop')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'workshop'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-yellow-400'
-                  : 'text-gray-400 hover:text-yellow-400'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               🎓 Freelancer Workshop
@@ -594,7 +594,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {/* Content based on active tab */}
         {activeTab === 'videos' && (
           <div className="mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-yellow-400">Video Tutorials</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-blue-400">Video Tutorials</h2>
             <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
               {videoError ? (
                 <div className="flex items-center justify-center h-full text-gray-400 p-4 text-center">
@@ -624,11 +624,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {activeTab === 'blogs' && (
           <div className="mt-12 sm:mt-16" ref={blogListRef}>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-yellow-400">Community Blog Posts</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Community Blog Posts</h2>
               {currentUser && currentUser.isAdmin ? (
                 <button
                   onClick={() => setShowCreateBlogModal(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-4 py-2 rounded transition-colors text-sm font-medium"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Blog Post
                 </button>
@@ -651,7 +651,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                     // Navigate to the main page with "showCreateAccount=true" parameter
                     window.location.href = `/?showCreateAccount=true${refCode ? `&ref=${refCode}` : ''}`;
                   }}
-                  className="bg-green-500 hover:bg-green-600 text-yellow-400 px-4 py-2 rounded transition-colors text-sm font-medium"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Account
                 </button>
