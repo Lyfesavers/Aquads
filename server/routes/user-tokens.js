@@ -270,16 +270,14 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     const tokensRequired = 2; // 2 tokens to unlock 1 lead
 
     const booking = await Booking.findById(bookingId)
-      .populate('serviceId')
-      .populate('sellerId', 'username email')
-      .populate('buyerId', 'username email');
+      .populate('serviceId');
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
     // Check if user is the seller
-    if (booking.sellerId._id.toString() !== req.user.userId) {
+    if (booking.sellerId.toString() !== req.user.userId) {
       return res.status(403).json({ error: 'Only the seller can unlock this booking' });
     }
 
@@ -331,14 +329,13 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     const { getIO } = require('../socket');
     const io = getIO();
     if (io) {
-      // Emit to the seller's room
-      io.to(`user_${updatedBooking.sellerId._id}`).emit('bookingUpdated', {
+      // Use the original booking IDs (not populated objects) for consistent room naming
+      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
         type: 'unlocked',
         booking: updatedBooking
       });
       
-      // Emit to the buyer's room
-      io.to(`user_${updatedBooking.buyerId._id}`).emit('bookingUpdated', {
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
         type: 'unlocked',
         booking: updatedBooking
       });
