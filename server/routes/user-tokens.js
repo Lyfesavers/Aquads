@@ -329,7 +329,7 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     const { getIO } = require('../socket');
     const io = getIO();
     if (io) {
-      // Use the original booking IDs (not populated objects) for consistent room naming
+      // Use the same pattern as status update route
       io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
         type: 'unlocked',
         booking: updatedBooking
