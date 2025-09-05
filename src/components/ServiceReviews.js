@@ -13,8 +13,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
   const [totalReviews, setTotalReviews] = useState(0);
   const [canReview, setCanReview] = useState(false);
   const [interactionDate, setInteractionDate] = useState(null);
-  const [availableBookings, setAvailableBookings] = useState([]);
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
@@ -38,23 +36,25 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
   }, [service?._id, currentUser]);
 
   const checkReviewEligibility = async () => {
+    // Temporary: Allow reviews without backend check
+    setCanReview(true);
+    setInteractionDate(new Date().toISOString());
+    
+    // TODO: Uncomment when backend endpoint is implemented
+    /*
     try {
-      const response = await fetch(`${API_URL}/service-reviews/${service._id}/eligibility`, {
+      const response = await fetch(`${API_URL}/service-interactions/${service._id}/check`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       const data = await response.json();
       setCanReview(data.canReview);
-      setAvailableBookings(data.availableBookings || []);
-      if (data.availableBookings && data.availableBookings.length > 0) {
-        setInteractionDate(data.availableBookings[0].completedAt);
-        setSelectedBookingId(data.availableBookings[0].bookingId);
-      }
+      setInteractionDate(data.interactionDate);
     } catch (error) {
-      console.error('Error checking review eligibility:', error);
       setCanReview(false);
     }
+    */
   };
 
   const fetchReviews = async () => {
@@ -178,7 +178,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         },
         body: JSON.stringify({
           serviceId: service._id,
-          bookingId: selectedBookingId,
           rating: newReview.rating,
           comment: newReview.comment
         })
@@ -196,7 +195,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       
       // Reset the form
       setNewReview({ rating: 5, comment: '', referralCode: '' });
-      setSelectedBookingId(null);
       
       // Update totals
       setTotalReviews(prev => prev + 1);
@@ -217,9 +215,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         };
         onReviewsUpdate(updatedService);
       }
-      
-      // Refresh eligibility to update available bookings
-      await checkReviewEligibility();
       
       setIsVerified(false); // Reset verification
          } catch (error) {
@@ -301,25 +296,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
                         ))}
                       </div>
                     </div>
-
-                    {availableBookings.length > 1 && (
-                      <div className="mb-4">
-                        <label className="block mb-2">Select Booking to Review</label>
-                        <select
-                          value={selectedBookingId || ''}
-                          onChange={(e) => setSelectedBookingId(e.target.value)}
-                          className="w-full bg-gray-700 rounded p-2"
-                          required
-                        >
-                          <option value="">Choose a booking...</option>
-                          {availableBookings.map(booking => (
-                            <option key={booking.bookingId} value={booking.bookingId}>
-                              Booking completed on {new Date(booking.completedAt).toLocaleDateString()} - {booking.price} {booking.currency}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
                     <div className="mb-4">
                       <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
                       <textarea

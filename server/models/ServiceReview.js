@@ -6,11 +6,6 @@ const serviceReviewSchema = new mongoose.Schema({
     ref: 'Service',
     required: true
   },
-  bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: false // Made optional for backward compatibility with existing reviews
-  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -36,17 +31,13 @@ const serviceReviewSchema = new mongoose.Schema({
   }
 });
 
-// Ensure one review per completed booking (for new reviews with bookingId)
-serviceReviewSchema.index({ bookingId: 1 }, { unique: true, sparse: true });
-
-// Ensure one review per service per user (for legacy reviews without bookingId)
-serviceReviewSchema.index({ serviceId: 1, userId: 1 }, { unique: true, partialFilterExpression: { bookingId: { $exists: false } } });
+// Ensure one review per service per user
+serviceReviewSchema.index({ serviceId: 1, userId: 1 }, { unique: true });
 
 // Performance indexes for better query performance
 serviceReviewSchema.index({ serviceId: 1, createdAt: -1 }); // For service reviews by date
 serviceReviewSchema.index({ userId: 1, createdAt: -1 }); // For user's reviews
 serviceReviewSchema.index({ rating: 1 }); // For rating-based queries
 serviceReviewSchema.index({ serviceId: 1, rating: 1 }); // For service rating aggregation
-serviceReviewSchema.index({ bookingId: 1, createdAt: -1 }); // For booking-specific reviews
 
 module.exports = mongoose.model('ServiceReview', serviceReviewSchema); 
