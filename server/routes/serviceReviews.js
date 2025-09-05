@@ -3,6 +3,7 @@ const router = express.Router();
 const ServiceReview = require('../models/ServiceReview');
 const Service = require('../models/Service');
 const User = require('../models/User');
+const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { awardAffiliateReviewPoints } = require('./points');
