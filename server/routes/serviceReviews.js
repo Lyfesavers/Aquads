@@ -23,6 +23,29 @@ router.get('/:serviceId', async (req, res) => {
   }
 });
 
+// Check if user can review a service (has completed bookings)
+router.get('/:serviceId/eligibility', auth, async (req, res) => {
+  try {
+    const serviceId = req.params.serviceId;
+    const userId = req.user.userId;
+
+    // Find completed bookings for this service by this user
+    const completedBookings = await Booking.find({
+      serviceId: serviceId,
+      buyerId: userId,
+      status: 'completed'
+    }).sort({ completedAt: -1 });
+
+    res.json({
+      canReview: completedBookings.length > 0,
+      completedBookings: completedBookings.length
+    });
+  } catch (error) {
+    console.error('Error checking review eligibility:', error);
+    res.status(500).json({ error: 'Failed to check review eligibility' });
+  }
+});
+
 // Add a new review
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
@@ -32,15 +55,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if user already reviewed this service
-    const existingReview = await ServiceReview.findOne({
-      serviceId,
-      userId: req.user.userId
-    });
-
-    if (existingReview) {
-      return res.status(400).json({ error: 'You have already reviewed this service' });
-    }
+    // Allow multiple reviews per service - no restriction
 
     const review = new ServiceReview({
       serviceId,
