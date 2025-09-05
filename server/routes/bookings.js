@@ -121,13 +121,13 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     const io = getIO();
     if (io) {
       // Emit to the seller's room
-      io.to(`user_${service.seller._id}`).emit('bookingUpdated', {
+      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
         type: 'created',
         booking: populatedBooking
       });
       
       // Emit to the buyer's room
-      io.to(`user_${req.user.userId}`).emit('bookingUpdated', {
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
         type: 'created',
         booking: populatedBooking
       });
