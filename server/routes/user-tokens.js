@@ -332,13 +332,13 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     const io = getIO();
     if (io) {
       // Emit to the seller's room
-      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
+      io.to(`user_${updatedBooking.sellerId._id}`).emit('bookingUpdated', {
         type: 'unlocked',
         booking: updatedBooking
       });
       
       // Emit to the buyer's room
-      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
+      io.to(`user_${updatedBooking.buyerId._id}`).emit('bookingUpdated', {
         type: 'unlocked',
         booking: updatedBooking
       });
