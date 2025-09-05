@@ -52,8 +52,8 @@ export const ExampleNavBarWithNotifications = ({ currentUser, ...props }) => {
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <button className="px-4 py-2 bg-blue-500 rounded">Login</button>
-              <button className="px-4 py-2 bg-gray-700 rounded">Register</button>
+              <button className="px-4 py-2 bg-gray-700/90 hover:bg-gray-600/90 rounded text-yellow-400">Login</button>
+              <button className="px-4 py-2 bg-gray-700/90 hover:bg-gray-600/90 rounded text-yellow-400">Register</button>
             </div>
           )}
         </div>

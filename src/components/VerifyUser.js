@@ -52,7 +52,7 @@ const VerifyUser = () => {
             </div>
             <Link 
               to="/"
-              className="flex items-center px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg transition-colors"
+              className="flex items-center px-4 py-2 bg-gray-700/90 hover:bg-gray-600/90 border border-gray-600/30 rounded-lg transition-colors text-yellow-400"
             >
               <FaArrowLeft className="mr-2" />
               Back to Main

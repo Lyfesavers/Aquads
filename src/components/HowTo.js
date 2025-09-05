@@ -399,13 +399,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 <>
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Login
                   </button>
                   <button
                     onClick={() => setShowCreateAccountModal(true)}
-                    className="bg-green-500/80 hover:bg-green-600/80 px-2 lg:px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                   >
                     Create Account
                   </button>
@@ -415,35 +415,35 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           </div>
 
           {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-3 z-[200000] relative`}>
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-3 z-[200000] relative bg-black`}>
             <div className="flex flex-col space-y-3">
               <Link
                 to="/marketplace"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
                 Freelancer Hub
               </Link>
               <Link
                 to="/games"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
                 GameHub
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
                 Paid Ads
               </button>
               <Link
                 to="/learn"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
                 Learn
               </Link>
               <Link
                 to="/why-list"
-                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
                 Why List?
               </Link>
@@ -455,7 +455,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        navigate('/');
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      Back to Main
                    </button>
@@ -464,7 +464,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowDashboard(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      📊 Dashboard
                    </button>
@@ -473,7 +473,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowCreateModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      ➕ List Project
                    </button>
@@ -482,7 +482,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowBannerModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      🎨 Create Banner Ad
                    </button>
@@ -491,7 +491,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowProfileModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      ⚙️ Edit Profile
                    </button>
@@ -500,7 +500,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        onLogout();
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                    >
                      Logout
                    </button>
@@ -512,7 +512,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                       setShowLoginModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                   >
                     Login
                   </button>
@@ -521,7 +521,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                       setShowCreateAccountModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
                   >
                     Create Account
                   </button>
