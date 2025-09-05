@@ -187,12 +187,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const handleBookingUpdate = (data) => {
         console.log('Received booking update:', data);
         
-        // Update the bookings state with the new booking data
-        setBookings(prevBookings => 
-          prevBookings.map(booking => 
-            booking._id === data.booking._id ? data.booking : booking
-          )
-        );
+        if (data.type === 'created') {
+          // Add new booking to the list
+          setBookings(prevBookings => [data.booking, ...prevBookings]);
+        } else {
+          // Update existing booking
+          setBookings(prevBookings => 
+            prevBookings.map(booking => 
+              booking._id === data.booking._id ? data.booking : booking
+            )
+          );
+        }
       };
 
       socket.on('bookingUpdated', handleBookingUpdate);

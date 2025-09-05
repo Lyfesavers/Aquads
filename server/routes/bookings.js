@@ -116,6 +116,23 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       .populate('sellerId', 'username email')
       .populate('buyerId', 'username email');
 
+    // Emit socket event for real-time updates
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      // Emit to the seller's room
+      io.to(`user_${service.seller._id}`).emit('bookingUpdated', {
+        type: 'created',
+        booking: populatedBooking
+      });
+      
+      // Emit to the buyer's room
+      io.to(`user_${req.user.userId}`).emit('bookingUpdated', {
+        type: 'created',
+        booking: populatedBooking
+      });
+    }
+
     res.status(201).json(populatedBooking);
   } catch (error) {
     res.status(500).json({ error: error.message });
