@@ -320,6 +320,29 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     booking.tokensSpent = tokensRequired;
     await booking.save();
 
+    // Emit socket event for real-time updates
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      // Emit to the seller's room
+      io.to(`user_${booking.sellerId._id}`).emit('bookingUpdated', {
+        type: 'unlocked',
+        booking: {
+          ...booking.toObject(),
+          isUnlocked: true
+        }
+      });
+      
+      // Emit to the buyer's room
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
+        type: 'unlocked',
+        booking: {
+          ...booking.toObject(),
+          isUnlocked: true
+        }
+      });
+    }
+
     res.json({
       success: true,
       newBalance: user.tokens,

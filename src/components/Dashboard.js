@@ -10,6 +10,7 @@ import CreateJobModal from './CreateJobModal';
 import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 import AdminDiscountCodes from './AdminDiscountCodes';
+import useSocket from '../hooks/useSocket';
 import logger from '../utils/logger';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
@@ -41,6 +42,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [userJobs, setUserJobs] = useState([]);
   const [vipUsername, setVipUsername] = useState('');
   const [freeRaidUsername, setFreeRaidUsername] = useState('');
+
+  // Socket connection for real-time updates
+  const { socket, isConnected } = useSocket(process.env.REACT_APP_API_URL);
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
@@ -170,6 +174,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchBookings();
     }
   }, [currentUser]);
+
+  // Socket listener for real-time booking updates
+  useEffect(() => {
+    if (socket && currentUser) {
+      // Join user's room for direct updates
+      socket.emit('userOnline', {
+        userId: currentUser.userId,
+        username: currentUser.username
+      });
+
+      const handleBookingUpdate = (data) => {
+        console.log('Received booking update:', data);
+        
+        // Update the bookings state with the new booking data
+        setBookings(prevBookings => 
+          prevBookings.map(booking => 
+            booking._id === data.booking._id ? data.booking : booking
+          )
+        );
+      };
+
+      socket.on('bookingUpdated', handleBookingUpdate);
+
+      return () => {
+        socket.off('bookingUpdated', handleBookingUpdate);
+      };
+    }
+  }, [socket, currentUser]);
 
   useEffect(() => {
     if (currentUser?.token) {

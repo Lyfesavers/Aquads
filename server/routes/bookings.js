@@ -283,12 +283,27 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
       }
     );
 
-
-
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
       .populate('sellerId', 'username email')
       .populate('buyerId', 'username email');
+
+    // Emit socket event for real-time updates
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      // Emit to the seller's room
+      io.to(`user_${booking.sellerId}`).emit('bookingUpdated', {
+        type: 'status_change',
+        booking: updatedBooking
+      });
+      
+      // Emit to the buyer's room
+      io.to(`user_${booking.buyerId}`).emit('bookingUpdated', {
+        type: 'status_change',
+        booking: updatedBooking
+      });
+    }
 
     res.json(updatedBooking);
   } catch (error) {
