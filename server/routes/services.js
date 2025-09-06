@@ -74,15 +74,25 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // Add review data to each service efficiently
-    const servicesWithReviews = services.map(service => {
+    // Add review data and completion rate to each service efficiently
+    const servicesWithReviews = await Promise.all(services.map(async (service) => {
       const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
+      
+      // Calculate completion rate for each service
+      const contactCount = await Booking.countDocuments({ serviceId: service._id });
+      const bookingCount = await Booking.countDocuments({ 
+        serviceId: service._id, 
+        status: { $in: ['completed', 'confirmed'] } 
+      });
+      const completionRate = contactCount > 0 ? Math.round((bookingCount / contactCount) * 100) : 0;
+
       return {
         ...service.toObject(),
         rating: reviewData.rating,
-        reviews: reviewData.reviews
+        reviews: reviewData.reviews,
+        completionRate: completionRate
       };
-    });
+    }));
 
     const total = await Service.countDocuments(query);
 
