@@ -455,7 +455,15 @@ const NotificationBell = ({ currentUser }) => {
     return () => clearInterval(pollingInterval);
   }, [currentUser, apiAvailable, tryFetchNotifications]);
 
-
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup any pending operations
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Don't render if user is not logged in or if API is not available
   if (!currentUser || !currentUser.token || !apiAvailable) {
@@ -588,16 +596,6 @@ const NotificationBell = ({ currentUser }) => {
     </div>
   );
 };
-
-// Cleanup on unmount
-useEffect(() => {
-  return () => {
-    // Cleanup any pending operations
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-    }
-  };
-}, []);
 
 // Export as memoized component to prevent unnecessary re-renders
 export default memo(NotificationBell); 
