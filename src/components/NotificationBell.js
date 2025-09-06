@@ -160,6 +160,28 @@ const NotificationBell = ({ currentUser }) => {
           
           // Remember the working path for future requests
           window.WORKING_MARK_ALL_READ_PATH = path;
+          
+          // Force a fresh fetch after a short delay to ensure backend sync
+          setTimeout(() => {
+            if (window.WORKING_NOTIFICATION_PATH) {
+              fetch(window.WORKING_NOTIFICATION_PATH, {
+                headers: { 'Authorization': `Bearer ${currentUser.token}` }
+              })
+              .then(response => response.ok ? response.json() : null)
+              .then(data => {
+                if (data) {
+                  setNotifications(data);
+                  const unread = data.filter(note => !note.isRead).length;
+                  setUnreadCount(unread);
+                  console.log('🔄 Refreshed notifications after mark-all-read');
+                }
+              })
+              .catch(error => {
+                console.log('❌ Failed to refresh notifications after mark-all-read:', error);
+              });
+            }
+          }, 1000); // 1 second delay to allow backend to process
+          
           break;
         } else {
           console.log(`❌ Failed to mark all as read from: ${path} (Status: ${response.status})`);
@@ -213,13 +235,35 @@ const NotificationBell = ({ currentUser }) => {
         
         if (!markReadSuccess) {
           console.log(`❌ Failed to mark notification as read via any endpoint: ${notification._id}`);
+          return; // Don't update local state if backend update failed
         }
         
-        // Update local state
+        // Only update local state if backend update was successful
         setNotifications(prev => 
           prev.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        // Force a fresh fetch after a short delay to ensure backend sync
+        setTimeout(() => {
+          if (window.WORKING_NOTIFICATION_PATH) {
+            fetch(window.WORKING_NOTIFICATION_PATH, {
+              headers: { 'Authorization': `Bearer ${currentUser.token}` }
+            })
+            .then(response => response.ok ? response.json() : null)
+            .then(data => {
+              if (data) {
+                setNotifications(data);
+                const unread = data.filter(note => !note.isRead).length;
+                setUnreadCount(unread);
+                console.log('🔄 Refreshed notifications after mark-as-read');
+              }
+            })
+            .catch(error => {
+              console.log('❌ Failed to refresh notifications after mark-as-read:', error);
+            });
+          }
+        }, 1000); // 1 second delay to allow backend to process
       }
       
       // Extract the booking ID from the notification data if available
@@ -350,7 +394,27 @@ const NotificationBell = ({ currentUser }) => {
           throw new Error('Polling failed');
         })
         .then(data => {
-          setNotifications(data);
+          // Only update state if we don't have recent local changes
+          setNotifications(prevNotifications => {
+            // Check if any local notifications have been marked as read recently
+            const hasRecentLocalChanges = prevNotifications.some(prevNote => {
+              const serverNote = data.find(serverNote => serverNote._id === prevNote._id);
+              return serverNote && prevNote.isRead && !serverNote.isRead;
+            });
+            
+            // If we have recent local changes, merge them with server data
+            if (hasRecentLocalChanges) {
+              return data.map(serverNote => {
+                const localNote = prevNotifications.find(prevNote => prevNote._id === serverNote._id);
+                // Keep local read status if it's more recent
+                return localNote && localNote.isRead ? { ...serverNote, isRead: true } : serverNote;
+              });
+            }
+            
+            // No recent local changes, use server data
+            return data;
+          });
+          
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
         })
