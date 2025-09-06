@@ -1015,7 +1015,7 @@ router.get('/user-notifications', auth, async (req, res) => {
 });
 
 // Add mark-all-read endpoint
-router.patch('/user-notifications/mark-all-read', auth, requireEmailVerification, async (req, res) => {
+router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
   
@@ -1056,7 +1056,7 @@ router.patch('/user-notifications/mark-all-read', auth, requireEmailVerification
 });
 
 // Add route to mark individual notification as read
-router.patch('/user-notifications/:id', auth, requireEmailVerification, async (req, res) => {
+router.patch('/user-notifications/:id', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const notificationId = req.params.id;

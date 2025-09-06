@@ -175,27 +175,44 @@ const NotificationBell = ({ currentUser }) => {
     try {
       // Try to mark the notification as read
       if (!notification.isRead) {
-        // Use the working notification path if available, prioritize main endpoint
-        const basePath = window.WORKING_NOTIFICATION_PATH || `${API_URL}/notifications`;
-        const markReadPath = `${basePath}/${notification._id}/read`;
+        // Try both mark-as-read endpoints (same pattern as fetching)
+        const markReadPaths = [
+          `${API_URL}/notifications/${notification._id}/read`,           // Main endpoint
+          `${API_URL}/bookings/user-notifications/${notification._id}`,  // Booking endpoint
+          `${API_URL}/api/notifications/${notification._id}/read`,
+          `${API_URL}/api/bookings/user-notifications/${notification._id}`,
+          `/api/notifications/${notification._id}/read`,
+          `/api/bookings/user-notifications/${notification._id}`
+        ];
         
-        try {
-          const response = await fetch(markReadPath, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${currentUser.token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ isRead: true })
-          });
-          
-          if (response.ok) {
-            console.log(`✅ Marked notification as read: ${notification._id}`);
-          } else {
-            console.log(`❌ Failed to mark notification as read: ${response.status}`);
+        let markReadSuccess = false;
+        for (const markReadPath of markReadPaths) {
+          try {
+            const response = await fetch(markReadPath, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${currentUser.token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ isRead: true })
+            });
+            
+            if (response.ok) {
+              const responseData = await response.json();
+              console.log(`✅ Marked notification as read: ${notification._id} via ${markReadPath}`, responseData);
+              markReadSuccess = true;
+              break;
+            } else {
+              const errorData = await response.text();
+              console.log(`❌ Failed to mark notification as read via ${markReadPath} (Status: ${response.status})`, errorData);
+            }
+          } catch (error) {
+            console.log(`❌ Error marking notification as read via ${markReadPath}:`, error);
           }
-        } catch (error) {
-          console.log(`❌ Error marking notification as read:`, error);
+        }
+        
+        if (!markReadSuccess) {
+          console.log(`❌ Failed to mark notification as read via any endpoint: ${notification._id}`);
         }
         
         // Update local state
@@ -342,7 +359,7 @@ const NotificationBell = ({ currentUser }) => {
         });
       }
       // Don't call tryFetchNotifications here to avoid duplicate calls
-    }, 30000);
+    }, 60000); // Poll every 60 seconds (reduced frequency for better performance)
     
     return () => clearInterval(pollingInterval);
   }, [currentUser, apiAvailable, tryFetchNotifications]);

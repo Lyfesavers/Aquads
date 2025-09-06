@@ -29,9 +29,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
 
       if (response.data.success) {
         showNotification(`Lead unlocked successfully! (${response.data.tokensSpent} tokens spent)`, 'success');
-        if (refreshBookings) {
-          refreshBookings(); // Refresh the bookings list
-        }
+        // Note: Socket event will handle the state update, no need to refresh manually
       }
          } catch (error) {
        const message = error.response?.data?.error || error.response?.data?.message || 'Failed to unlock lead';
