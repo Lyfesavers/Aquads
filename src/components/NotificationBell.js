@@ -25,6 +25,8 @@ const NotificationBell = ({ currentUser }) => {
   const [showReadNotifications, setShowReadNotifications] = useState(false); // New state for toggle
   const dropdownRef = useRef(null);
   const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
+  const isMarkingAllRead = useRef(false); // Prevent duplicate mark-all-read calls
+  const refreshTimeoutRef = useRef(null); // Track refresh timeout
 
   // Check if we have a user and token before trying to fetch
   useEffect(() => {
@@ -131,6 +133,14 @@ const NotificationBell = ({ currentUser }) => {
   const markAllAsRead = async () => {
     if (!currentUser || !currentUser.token) return;
     
+    // Prevent duplicate calls
+    if (isMarkingAllRead.current) {
+      console.log('⏳ Mark-all-read already in progress, skipping duplicate call');
+      return;
+    }
+    
+    isMarkingAllRead.current = true;
+    
     // Try different possible paths for marking all as read
     const possibleMarkAllReadPaths = [
       `${API_URL}/notifications/mark-all-read`,
@@ -162,7 +172,12 @@ const NotificationBell = ({ currentUser }) => {
           window.WORKING_MARK_ALL_READ_PATH = path;
           
           // Force a fresh fetch after a short delay to ensure backend sync
-          setTimeout(() => {
+          // Clear any existing timeout first
+          if (refreshTimeoutRef.current) {
+            clearTimeout(refreshTimeoutRef.current);
+          }
+          
+          refreshTimeoutRef.current = setTimeout(() => {
             if (window.WORKING_NOTIFICATION_PATH) {
               fetch(window.WORKING_NOTIFICATION_PATH, {
                 headers: { 'Authorization': `Bearer ${currentUser.token}` }
@@ -180,6 +195,7 @@ const NotificationBell = ({ currentUser }) => {
                 console.log('❌ Failed to refresh notifications after mark-all-read:', error);
               });
             }
+            refreshTimeoutRef.current = null;
           }, 1000); // 1 second delay to allow backend to process
           
           break;
@@ -190,6 +206,11 @@ const NotificationBell = ({ currentUser }) => {
         // Continue to next path
       }
     }
+    
+    // Reset the flag after a delay to allow for any pending operations
+    setTimeout(() => {
+      isMarkingAllRead.current = false;
+    }, 2000);
   };
   
   // Add a function to handle notification clicks
@@ -245,7 +266,12 @@ const NotificationBell = ({ currentUser }) => {
         setUnreadCount(prev => Math.max(0, prev - 1));
         
         // Force a fresh fetch after a short delay to ensure backend sync
-        setTimeout(() => {
+        // Clear any existing timeout first
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
+        
+        refreshTimeoutRef.current = setTimeout(() => {
           if (window.WORKING_NOTIFICATION_PATH) {
             fetch(window.WORKING_NOTIFICATION_PATH, {
               headers: { 'Authorization': `Bearer ${currentUser.token}` }
@@ -263,6 +289,7 @@ const NotificationBell = ({ currentUser }) => {
               console.log('❌ Failed to refresh notifications after mark-as-read:', error);
             });
           }
+          refreshTimeoutRef.current = null;
         }, 1000); // 1 second delay to allow backend to process
       }
       
@@ -561,6 +588,16 @@ const NotificationBell = ({ currentUser }) => {
     </div>
   );
 };
+
+// Cleanup on unmount
+useEffect(() => {
+  return () => {
+    // Cleanup any pending operations
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+  };
+}, []);
 
 // Export as memoized component to prevent unnecessary re-renders
 export default memo(NotificationBell); 
