@@ -330,29 +330,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
-      // Refresh affiliate info when new earning is created
+      // Refresh affiliate info when new earning is created or points are awarded
       if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
         fetchAffiliateInfo();
       }
     };
     socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
 
-    // Handle points updates (when raid is approved and points are awarded)
-    const handlePointsUpdate = (data) => {
-      if (data.type === 'points_awarded' && 
-          (currentUser?.userId === data.userId || currentUser?.id === data.userId)) {
-        // Refresh affiliate info to update points display
-        fetchAffiliateInfo();
-      }
-    };
-    socket.on('tokensUpdated', handlePointsUpdate);
-
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
       socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
       socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
-      socket.off('tokensUpdated', handlePointsUpdate);
     };
   }, [socket, currentUser]);
 

@@ -8,7 +8,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitTokenUpdate } = require('../socket');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
@@ -685,8 +685,9 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
       await user.save();
       
       // Emit real-time update for points awarded
-      emitTokenUpdate('points_awarded', {
-        userId: completion.userId,
+      emitAffiliateEarningUpdate({
+        affiliateId: completion.userId,
+        type: 'points_awarded',
         pointsAwarded: points,
         newTotalPoints: user.points,
         reason: `Twitter raid approved: ${raid.title}`
