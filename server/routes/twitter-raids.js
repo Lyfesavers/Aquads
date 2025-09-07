@@ -751,7 +751,7 @@ router.get('/completions/pending', auth, async (req, res) => {
     })
     .populate('completions.userId', 'username email')
     .populate('createdBy', 'username')
-    .sort({ 'completions.completedAt': -1 });
+    .sort({ createdAt: -1 });
 
     // Extract pending completions with raid info
     const pendingCompletions = [];
