@@ -287,6 +287,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   useEffect(() => {
     if (currentUser?.isAdmin) {
+      // Initial load of existing pending completions (one-time only)
+      // After this, all updates will be handled by socket events
       fetchPendingTwitterRaids();
       fetchPendingFacebookRaids();
     }
@@ -316,12 +318,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       );
     };
 
+    const handleNewTwitterRaidCompletion = (data) => {
+      console.log('New Twitter raid completion:', data);
+      // Add the new completion to the pending list immediately
+      setPendingTwitterRaids(prev => [...prev, data]);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+    socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
       socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+      socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     };
   }, [socket, currentUser]);
 

@@ -8,10 +8,53 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitTwitterRaidApproved, emitTwitterRaidRejected } = require('../socket');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
+
+// Helper function to calculate user trust score
+async function calculateUserTrustScore(userId) {
+  try {
+    const allRaidsWithCompletions = await TwitterRaid.find({
+      'completions.userId': new mongoose.Types.ObjectId(userId)
+    })
+    .select('completions')
+    .lean();
+
+    let totalCompletions = 0;
+    let approvedCompletions = 0;
+
+    allRaidsWithCompletions.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.userId && completion.userId.toString() === userId && 
+            completion.approvalStatus !== 'pending') {
+          totalCompletions++;
+          if (completion.approvalStatus === 'approved') {
+            approvedCompletions++;
+          }
+        }
+      });
+    });
+
+    return {
+      totalCompletions,
+      approvedCompletions,
+      approvalRate: totalCompletions > 0 ? (approvedCompletions / totalCompletions) * 100 : 0,
+      trustLevel: totalCompletions === 0 ? 'new' : 
+                 (approvedCompletions / totalCompletions) >= 0.85 ? 'high' :
+                 (approvedCompletions / totalCompletions) >= 0.65 ? 'medium' : 'low'
+    };
+  } catch (error) {
+    console.error('Error calculating trust score:', error);
+    return {
+      totalCompletions: 0,
+      approvedCompletions: 0,
+      approvalRate: 0,
+      trustLevel: 'new'
+    };
+  }
+}
 
 // Webhook endpoint for receiving Telegram bot updates
 router.post('/telegram-webhook', async (req, res) => {
@@ -551,6 +594,29 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       // Save the raid with the pending completion
       await raid.save();
       
+      // Calculate trust score for the new completion
+      const userTrustScore = await calculateUserTrustScore(userId);
+      
+      emitNewTwitterRaidCompletion({
+        completionId: raid.completions[raid.completions.length - 1]._id,
+        raidId: raid._id,
+        raidTitle: raid.title,
+        raidTweetUrl: raid.tweetUrl,
+        pointsAmount: raid.points || 50,
+        user: {
+          _id: userId,
+          username: user.username,
+          email: user.email
+        },
+        twitterUsername: cleanUsername,
+        verificationMethod: verificationMethod,
+        verificationNote: verificationNote,
+        iframeVerified: iframeVerified || false,
+        completedAt: new Date(),
+        ipAddress: ipAddress,
+        trustScore: userTrustScore
+      });
+      
       const successResponse = {
         success: true,
         message: `Twitter raid submitted successfully! Your submission is pending admin approval.`,
@@ -739,26 +805,7 @@ router.get('/completions/pending', auth, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can view pending completions' });
     }
 
-    // Test different query approaches to find the issue
-    console.log('Testing query approaches...');
-    
-    // Test 1: Simple query to see all raids
-    const allRaids = await TwitterRaid.find({}).lean();
-    console.log(`Total raids in database: ${allRaids.length}`);
-    
-    // Test 2: Check if any raids have completions
-    const raidsWithCompletions = await TwitterRaid.find({
-      'completions.0': { $exists: true }
-    }).lean();
-    console.log(`Raids with completions: ${raidsWithCompletions.length}`);
-    
-    // Test 3: Check for pending completions with different query
-    const raidsWithPending = await TwitterRaid.find({
-      'completions.approvalStatus': 'pending'
-    }).lean();
-    console.log(`Raids with pending (old query): ${raidsWithPending.length}`);
-    
-    // Test 4: $elemMatch query
+    // Get raids with pending completions using optimized query
     const raids = await TwitterRaid.find({
       completions: {
         $elemMatch: {
@@ -769,14 +816,6 @@ router.get('/completions/pending', auth, async (req, res) => {
     .populate('completions.userId', 'username email')
     .populate('createdBy', 'username')
     .lean();
-    
-    console.log(`Found ${raids.length} raids with pending completions (elemMatch)`);
-    
-    // Debug: Show sample data if we have raids
-    if (raidsWithCompletions.length > 0) {
-      const sampleRaid = raidsWithCompletions[0];
-      console.log('Sample raid completions:', JSON.stringify(sampleRaid.completions, null, 2));
-    }
 
     // Extract pending completions with raid info
     const pendingCompletions = [];
@@ -879,8 +918,6 @@ router.get('/completions/pending', auth, async (req, res) => {
       return aPriority - bPriority;
     });
 
-    console.log(`Returning ${pendingCompletions.length} pending completions`);
-    
     res.json({
       success: true,
       pendingCompletions,
