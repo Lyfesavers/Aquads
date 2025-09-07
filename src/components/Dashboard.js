@@ -316,12 +316,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       );
     };
 
+    const handleNewTwitterRaidCompletion = (data) => {
+      console.log('New Twitter raid completion:', data);
+      // Refresh the pending completions list to show the new completion
+      fetchPendingTwitterRaids();
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+    socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
       socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+      socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     };
   }, [socket, currentUser]);
 
