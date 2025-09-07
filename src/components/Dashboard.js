@@ -1240,6 +1240,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+
   // Add these functions to handle Twitter raid completion approvals and rejections
   const handleApproveTwitterRaid = async (completion) => {
     try {

@@ -574,7 +574,7 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
   }
 });
 
-// Admin endpoint to approve a completion - OPTIMIZED VERSION
+// Admin endpoint to approve a completion
 router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
   try {
     // Basic validation
@@ -584,82 +584,50 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
 
     const { raidId, completionId } = req.params;
     
-    // Use atomic operations for better performance - single DB operation
-    const result = await TwitterRaid.findOneAndUpdate(
-      { 
-        _id: raidId,
-        'completions._id': completionId,
-        'completions.approvalStatus': 'pending' // Ensure it's still pending
-      },
-      {
-        $set: {
-          'completions.$.approvalStatus': 'approved',
-          'completions.$.approvedBy': req.user.id,
-          'completions.$.approvedAt': new Date(),
-          'completions.$.pointsAwarded': true
-        }
-      },
-      { new: true }
-    );
-
-    if (!result) {
-      return res.status(404).json({ error: 'Raid or completion not found, or already processed' });
+    // Find the raid
+    const raid = await TwitterRaid.findById(raidId);
+    if (!raid) {
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    // Find the completion to get user ID and points
-    const completion = result.completions.find(c => c._id.toString() === completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    const points = result.points || 50;
+    // Update completion
+    completion.approvalStatus = 'approved';
+    completion.approvedBy = req.user.id;
+    completion.approvedAt = new Date();
+    completion.pointsAwarded = true;
 
-    // Update user points atomically - single DB operation
-    const userUpdatePromise = User.findByIdAndUpdate(
-      completion.userId,
-      {
-        $inc: { points: points },
-        $set: { lastActivity: new Date() },
-        $push: {
-          pointsHistory: {
-            amount: points,
-            reason: `Twitter raid approved: ${result.title}`,
-            socialRaidId: result._id,
-            createdAt: new Date()
-          }
-        }
-      },
-      { new: true }
-    );
+    // Award points to user
+    const user = await User.findById(completion.userId);
+    if (user) {
+      const points = raid.points || 50;
+      user.points = (user.points || 0) + points;
+      user.lastActivity = new Date(); // Update activity when points are awarded
+      user.pointsHistory.push({
+        amount: points,
+        reason: `Twitter raid approved: ${raid.title}`,
+        socialRaidId: raid._id,
+        createdAt: new Date()
+      });
+      await user.save();
+         }
 
-    // Create notification in parallel (non-blocking)
-    const notificationPromise = new Notification({
-      userId: completion.userId,
-      type: 'status',
-      message: `Your Twitter raid submission for "${result.title}" was approved! You earned ${points} points.`,
-      link: '/dashboard',
-      relatedId: raidId,
-      relatedModel: 'TwitterRaid'
-    }).save().catch(err => {
-      // Log but don't fail the request
-      console.error('Notification creation failed:', err);
-    });
-
-    // Wait for user update to complete
-    await userUpdatePromise;
+    await raid.save({ validateBeforeSave: false });
 
     // Emit real-time update to all connected clients
     emitTwitterRaidApproved({
       completionId: completion._id,
-      raidId: result._id,
-      raidTitle: result.title,
+      raidId: raid._id,
+      raidTitle: raid.title,
       userId: completion.userId,
       approvedBy: req.user.id,
       approvedAt: completion.approvedAt
     });
-
-    // Don't wait for notification - respond immediately
-    notificationPromise;
 
     res.json({
       success: true,
@@ -671,7 +639,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
   }
 });
 
-// Admin endpoint to reject a completion - OPTIMIZED VERSION
+// Admin endpoint to reject a completion
 router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
   try {
     // Basic validation
@@ -682,61 +650,58 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     const { raidId, completionId } = req.params;
     const { rejectionReason } = req.body;
     
-    // Use atomic operations for better performance - single DB operation
-    const result = await TwitterRaid.findOneAndUpdate(
-      { 
-        _id: raidId,
-        'completions._id': completionId,
-        'completions.approvalStatus': 'pending' // Ensure it's still pending
-      },
-      {
-        $set: {
-          'completions.$.approvalStatus': 'rejected',
-          'completions.$.approvedBy': req.user.id,
-          'completions.$.approvedAt': new Date(),
-          'completions.$.rejectionReason': rejectionReason || 'No reason provided',
-          'completions.$.pointsAwarded': false
-        }
-      },
-      { new: true }
-    );
-
-    if (!result) {
-      return res.status(404).json({ error: 'Raid or completion not found, or already processed' });
+    // Find the raid
+    const raid = await TwitterRaid.findById(raidId);
+    if (!raid) {
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    // Find the completion to get user ID
-    const completion = result.completions.find(c => c._id.toString() === completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    // Create notification in parallel (non-blocking)
-    const notificationPromise = new Notification({
-      userId: completion.userId,
-      type: 'status',
-      message: `Your Twitter raid submission for "${result.title}" was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
-      link: '/dashboard',
-      relatedId: raidId,
-      relatedModel: 'TwitterRaid'
-    }).save().catch(err => {
-      // Log but don't fail the request
-      console.error('Notification creation failed:', err);
-    });
+    // Update completion
+    completion.approvalStatus = 'rejected';
+    completion.approvedBy = req.user.id;
+    completion.approvedAt = new Date();
+    completion.rejectionReason = rejectionReason || 'No reason provided';
+    completion.pointsAwarded = false;
+
+    await raid.save({ validateBeforeSave: false });
+
+    // Send notification to the user about the rejection
+    try {
+      const userId = completion.userId;
+      const reason = rejectionReason || 'No reason provided';
+      const notificationMessage = `Your Twitter raid submission for "${raid.title}" was rejected. Reason: ${reason}`;
+      
+      const notification = new Notification({
+        userId: userId,
+        type: 'status',
+        message: notificationMessage,
+        link: '/dashboard',
+        relatedId: raidId,
+        relatedModel: 'TwitterRaid'
+      });
+      
+      await notification.save();
+  
+    } catch (notificationError) {
+      // Continue execution even if notification fails
+    }
 
     // Emit real-time update to all connected clients
     emitTwitterRaidRejected({
       completionId: completion._id,
-      raidId: result._id,
-      raidTitle: result.title,
+      raidId: raid._id,
+      raidTitle: raid.title,
       userId: completion.userId,
       rejectedBy: req.user.id,
       rejectedAt: completion.approvedAt,
       rejectionReason: rejectionReason || 'No reason provided'
     });
-
-    // Don't wait for notification - respond immediately
-    notificationPromise;
 
     res.json({
       success: true,
