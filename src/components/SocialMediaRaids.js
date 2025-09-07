@@ -626,12 +626,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         setSuccess(data.message || 'Task submitted for admin approval! Points will be awarded after verification.');
         showNotification(data.message || 'Twitter raid submitted successfully! Pending admin approval.', 'success');
         
-        // Step 3: After a brief delay, reset selected raid and fetch new data
-        setTimeout(() => {
-          setSelectedRaid(null);
-          // Don't reset Twitter username - keep it for next raid
-          fetchRaids();
-        }, 50);
+        // Step 3: Reset selected raid and fetch new data immediately
+        setSelectedRaid(null);
+        // Don't reset Twitter username - keep it for next raid
+        fetchRaids();
       } catch (networkError) {
         setError(networkError.message || 'Network error. Please try again.');
         setSubmitting(false);

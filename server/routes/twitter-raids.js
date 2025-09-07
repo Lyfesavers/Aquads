@@ -41,7 +41,8 @@ router.get('/', async (req, res) => {
   try {
     const raids = await TwitterRaid.find({ active: true })
       .sort({ createdAt: -1 })
-      .populate('createdBy', 'username');
+      .populate('createdBy', 'username')
+      .select('-completions'); // Exclude completions array for faster loading
     
     res.json(raids);
   } catch (error) {
