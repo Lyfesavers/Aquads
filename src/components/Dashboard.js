@@ -318,8 +318,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleNewTwitterRaidCompletion = (data) => {
       console.log('New Twitter raid completion:', data);
-      // Refresh the pending completions list to show the new completion
-      fetchPendingTwitterRaids();
+      // Add the new completion directly to the existing list
+      setPendingTwitterRaids(prev => {
+        // Check if completion already exists to avoid duplicates
+        const exists = prev.some(completion => completion.completionId === data.completionId);
+        if (exists) return prev;
+        
+        // Add new completion to the beginning of the list
+        const newCompletion = {
+          completionId: data.completionId,
+          raidId: data.raidId,
+          raidTitle: data.raidTitle,
+          userId: data.userId,
+          twitterUsername: data.twitterUsername,
+          completedAt: data.completedAt,
+          approvalStatus: 'pending'
+        };
+        
+        return [newCompletion, ...prev];
+      });
     };
 
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
