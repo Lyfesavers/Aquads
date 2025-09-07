@@ -329,10 +329,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           completionId: data.completionId,
           raidId: data.raidId,
           raidTitle: data.raidTitle,
-          userId: data.userId,
+          raidTweetUrl: data.raidTweetUrl || '',
+          pointsAmount: data.pointsAmount || 50,
+          user: { _id: data.userId, username: data.twitterUsername },
           twitterUsername: data.twitterUsername,
+          verificationMethod: data.verificationMethod || 'manual',
+          verificationNote: data.verificationNote || '',
+          iframeVerified: data.iframeVerified || false,
           completedAt: data.completedAt,
-          approvalStatus: 'pending'
+          ipAddress: data.ipAddress || '',
+          trustScore: {
+            totalCompletions: 0,
+            approvedCompletions: 0,
+            approvalRate: 0,
+            trustLevel: 'new'
+          }
         };
         
         return [newCompletion, ...prev];

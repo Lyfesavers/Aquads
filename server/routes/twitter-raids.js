@@ -551,13 +551,20 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       
       // Emit real-time update to all connected admin clients
       const { emitNewTwitterRaidCompletion } = require('../socket');
+      const newCompletion = raid.completions[raid.completions.length - 1];
       emitNewTwitterRaidCompletion({
-        completionId: raid.completions[raid.completions.length - 1]._id,
+        completionId: newCompletion._id,
         raidId: raid._id,
         raidTitle: raid.title,
+        raidTweetUrl: raid.tweetUrl,
+        pointsAmount: raid.points || 50,
         userId: userId,
         twitterUsername: cleanUsername,
-        completedAt: new Date()
+        verificationMethod: verificationMethod,
+        verificationNote: verificationNote,
+        iframeVerified: iframeVerified || false,
+        completedAt: newCompletion.completedAt,
+        ipAddress: ipAddress
       });
       
       // Success response - indicate pending approval
