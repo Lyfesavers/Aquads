@@ -684,19 +684,14 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
       });
       await user.save();
       
-      // Emit real-time update for points awarded
-      console.log('🎯 Emitting affiliate earning update for points awarded:', {
-        affiliateId: completion.userId,
-        pointsAwarded: points,
-        newTotalPoints: user.points
-      });
-      emitAffiliateEarningUpdate({
-        affiliateId: completion.userId,
-        type: 'points_awarded',
-        pointsAwarded: points,
-        newTotalPoints: user.points,
-        reason: `Twitter raid approved: ${raid.title}`
-      });
+        // Emit real-time update for points awarded
+        emitAffiliateEarningUpdate({
+          affiliateId: completion.userId,
+          type: 'points_awarded',
+          pointsAwarded: points,
+          newTotalPoints: user.points,
+          reason: `Twitter raid approved: ${raid.title}`
+        });
          }
 
     await raid.save({ validateBeforeSave: false });

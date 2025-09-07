@@ -26,10 +26,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [pointsInfo, setPointsInfo] = useState(null);
   const [lastSocketPointsUpdate, setLastSocketPointsUpdate] = useState(null);
 
-  // Debug: Log when pointsInfo changes
-  useEffect(() => {
-    console.log('🎯 PointsInfo state updated:', pointsInfo?.points);
-  }, [pointsInfo]);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
 
@@ -336,13 +332,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
-      console.log('🎯 Received affiliate earning update:', data);
       // Update points directly from socket data for real-time updates
       if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
-        console.log('🎯 User ID matches, updating points directly from socket');
-        console.log('🎯 Current points before update:', pointsInfo?.points);
-        console.log('🎯 New points from socket:', data.newTotalPoints);
-        
         // Update points directly from socket data
         if (data.newTotalPoints !== undefined) {
           setPointsInfo(prev => {
@@ -363,7 +354,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             }
           });
           setLastSocketPointsUpdate(Date.now());
-          console.log('🎯 Points updated directly from socket to:', data.newTotalPoints);
         }
         
         // Only refresh affiliate info for non-points data (affiliate count, commission rate, etc.)
@@ -371,11 +361,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         if (data.type !== 'points_awarded') {
           fetchAffiliateInfo();
         }
-      } else {
-        console.log('🎯 User ID does not match:', {
-          currentUserId: currentUser?.userId || currentUser?.id,
-          dataAffiliateId: data.affiliateId
-        });
       }
     };
     socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
@@ -433,12 +418,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       if (pointsResponse.ok) {
         const data = await pointsResponse.json();
-        console.log('🎯 Points API response:', data);
         
         // Don't override points if we recently got a socket update (within last 5 seconds)
         const timeSinceLastSocketUpdate = lastSocketPointsUpdate ? Date.now() - lastSocketPointsUpdate : Infinity;
         if (timeSinceLastSocketUpdate < 5000) {
-          console.log('🎯 Skipping API points update - recent socket update detected');
           // Only update non-points data
           setPointsInfo(prev => ({
             ...data,
