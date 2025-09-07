@@ -330,9 +330,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
+      console.log('🎯 Received affiliate earning update:', data);
       // Refresh affiliate info when new earning is created or points are awarded
       if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
+        console.log('🎯 User ID matches, refreshing affiliate info');
         fetchAffiliateInfo();
+      } else {
+        console.log('🎯 User ID does not match:', {
+          currentUserId: currentUser?.userId || currentUser?.id,
+          dataAffiliateId: data.affiliateId
+        });
       }
     };
     socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
