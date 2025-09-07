@@ -24,6 +24,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [rejectionReason, setRejectionReason] = useState('');
   const [affiliateInfo, setAffiliateInfo] = useState(null);
   const [pointsInfo, setPointsInfo] = useState(null);
+
+  // Debug: Log when pointsInfo changes
+  useEffect(() => {
+    console.log('🎯 PointsInfo state updated:', pointsInfo?.points);
+  }, [pointsInfo]);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
 
@@ -331,9 +336,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
       console.log('🎯 Received affiliate earning update:', data);
-      // Refresh affiliate info when new earning is created or points are awarded
+      // Update points directly from socket data for real-time updates
       if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
-        console.log('🎯 User ID matches, refreshing affiliate info');
+        console.log('🎯 User ID matches, updating points directly from socket');
+        console.log('🎯 Current points before update:', pointsInfo?.points);
+        console.log('🎯 New points from socket:', data.newTotalPoints);
+        
+        // Update points directly from socket data
+        if (data.newTotalPoints !== undefined && pointsInfo) {
+          setPointsInfo(prev => ({
+            ...prev,
+            points: data.newTotalPoints
+          }));
+        }
+        
+        // Also refresh affiliate info for other data
         fetchAffiliateInfo();
       } else {
         console.log('🎯 User ID does not match:', {
@@ -397,6 +414,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       if (pointsResponse.ok) {
         const data = await pointsResponse.json();
+        console.log('🎯 Points API response:', data);
         setPointsInfo(data);
       }
 
