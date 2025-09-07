@@ -158,6 +158,11 @@ twitterRaidSchema.pre('save', function(next) {
   next();
 });
 
-
+// Add database indexes for performance optimization
+twitterRaidSchema.index({ 'completions.approvalStatus': 1 }); // For finding pending completions
+twitterRaidSchema.index({ 'completions.userId': 1 }); // For trust score calculations
+twitterRaidSchema.index({ 'completions.completedAt': -1 }); // For sorting by completion date
+twitterRaidSchema.index({ createdAt: -1 }); // For general sorting
+twitterRaidSchema.index({ active: 1 }); // For finding active raids
 
 module.exports = mongoose.model('TwitterRaid', twitterRaidSchema); 

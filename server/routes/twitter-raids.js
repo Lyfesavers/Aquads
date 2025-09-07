@@ -771,12 +771,14 @@ router.get('/completions/pending', auth, async (req, res) => {
     console.log(`[${new Date().toISOString()}] 📊 Step 1: Querying raids with pending completions...`);
     const queryStartTime = Date.now();
     
+    // Optimized query - only get raids that actually have pending completions
     const raids = await TwitterRaid.find({
       'completions.approvalStatus': 'pending'
     })
     .populate('completions.userId', 'username email')
     .populate('createdBy', 'username')
-    .sort({ createdAt: -1 });
+    .sort({ 'completions.completedAt': -1 }) // Sort by completion date instead of creation date
+    .lean(); // Use lean() for better performance since we don't need full Mongoose documents
     
     const queryEndTime = Date.now();
     console.log(`[${new Date().toISOString()}] ✅ Step 1 Complete: Found ${raids.length} raids with pending completions (${queryEndTime - queryStartTime}ms)`);
@@ -813,7 +815,9 @@ router.get('/completions/pending', auth, async (req, res) => {
         
         const allRaidsWithCompletions = await TwitterRaid.find({
           'completions.userId': { $in: Array.from(userIds).map(id => new mongoose.Types.ObjectId(id)) }
-        }).select('completions');
+        })
+        .select('completions')
+        .lean(); // Use lean() for better performance
         
         const trustQueryEndTime = Date.now();
         console.log(`[${new Date().toISOString()}] ✅ Step 3a Complete: Found ${allRaidsWithCompletions.length} raids with completions (${trustQueryEndTime - trustQueryStartTime}ms)`);
