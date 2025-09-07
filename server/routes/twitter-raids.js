@@ -771,14 +771,70 @@ router.get('/completions/pending', auth, async (req, res) => {
     console.log(`[${new Date().toISOString()}] 📊 Step 1: Querying raids with pending completions...`);
     const queryStartTime = Date.now();
     
-    // Optimized query - only get raids that actually have pending completions
-    const raids = await TwitterRaid.find({
-      'completions.approvalStatus': 'pending'
-    })
-    .populate('completions.userId', 'username email')
-    .populate('createdBy', 'username')
-    .sort({ 'completions.completedAt': -1 }) // Sort by completion date instead of creation date
-    .lean(); // Use lean() for better performance since we don't need full Mongoose documents
+    // Use aggregation pipeline for much better performance
+    const raids = await TwitterRaid.aggregate([
+      // Match raids that have pending completions
+      {
+        $match: {
+          'completions.approvalStatus': 'pending'
+        }
+      },
+      // Unwind the completions array to work with individual completions
+      {
+        $unwind: '$completions'
+      },
+      // Match only pending completions
+      {
+        $match: {
+          'completions.approvalStatus': 'pending'
+        }
+      },
+      // Lookup user information
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'completions.userId',
+          foreignField: '_id',
+          as: 'completionUser'
+        }
+      },
+      // Lookup raid creator information
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'raidCreator'
+        }
+      },
+      // Project the fields we need
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          tweetUrl: 1,
+          points: 1,
+          createdAt: 1,
+          'completions._id': 1,
+          'completions.userId': 1,
+          'completions.twitterUsername': 1,
+          'completions.verificationMethod': 1,
+          'completions.verificationNote': 1,
+          'completions.iframeVerified': 1,
+          'completions.completedAt': 1,
+          'completions.ipAddress': 1,
+          'completionUser.username': 1,
+          'completionUser.email': 1,
+          'raidCreator.username': 1
+        }
+      },
+      // Sort by completion date
+      {
+        $sort: {
+          'completions.completedAt': -1
+        }
+      }
+    ]);
     
     const queryEndTime = Date.now();
     console.log(`[${new Date().toISOString()}] ✅ Step 1 Complete: Found ${raids.length} raids with pending completions (${queryEndTime - queryStartTime}ms)`);
@@ -792,11 +848,9 @@ router.get('/completions/pending', auth, async (req, res) => {
     
     const userIds = new Set();
     raids.forEach(raid => {
-      raid.completions.forEach(completion => {
-        if (completion.approvalStatus === 'pending' && completion.userId) {
-          userIds.add(completion.userId._id.toString());
-        }
-      });
+      if (raid.completions && raid.completions.userId) {
+        userIds.add(raid.completions.userId.toString());
+      }
     });
     
     const userIdExtractionEndTime = Date.now();
@@ -872,33 +926,35 @@ router.get('/completions/pending', auth, async (req, res) => {
     const responseBuildStartTime = Date.now();
     
     raids.forEach(raid => {
-      raid.completions.forEach(completion => {
-        if (completion.approvalStatus === 'pending') {
-          const userId = completion.userId ? completion.userId._id.toString() : null;
-          const trustScore = userId ? userTrustScores[userId] : null;
-          
-          pendingCompletions.push({
-            completionId: completion._id,
-            raidId: raid._id,
-            raidTitle: raid.title,
-            raidTweetUrl: raid.tweetUrl,
-            pointsAmount: raid.points || 50,
-            user: completion.userId,
-            twitterUsername: completion.twitterUsername,
-            verificationMethod: completion.verificationMethod,
-            verificationNote: completion.verificationNote,
-            iframeVerified: completion.iframeVerified,
-            completedAt: completion.completedAt,
-            ipAddress: completion.ipAddress,
-            trustScore: trustScore || {
-              totalCompletions: 0,
-              approvedCompletions: 0,
-              approvalRate: 0,
-              trustLevel: 'new'
-            }
-          });
-        }
-      });
+      if (raid.completions && raid.completions.approvalStatus === 'pending') {
+        const userId = raid.completions.userId ? raid.completions.userId.toString() : null;
+        const trustScore = userId ? userTrustScores[userId] : null;
+        
+        pendingCompletions.push({
+          completionId: raid.completions._id,
+          raidId: raid._id,
+          raidTitle: raid.title,
+          raidTweetUrl: raid.tweetUrl,
+          pointsAmount: raid.points || 50,
+          user: {
+            _id: raid.completions.userId,
+            username: raid.completionUser?.[0]?.username || 'Unknown',
+            email: raid.completionUser?.[0]?.email || ''
+          },
+          twitterUsername: raid.completions.twitterUsername,
+          verificationMethod: raid.completions.verificationMethod,
+          verificationNote: raid.completions.verificationNote,
+          iframeVerified: raid.completions.iframeVerified,
+          completedAt: raid.completions.completedAt,
+          ipAddress: raid.completions.ipAddress,
+          trustScore: trustScore || {
+            totalCompletions: 0,
+            approvedCompletions: 0,
+            approvalRate: 0,
+            trustLevel: 'new'
+          }
+        });
+      }
     });
 
     console.log(`[${new Date().toISOString()}] 📊 Step 5: Sorting completions by trust level...`);

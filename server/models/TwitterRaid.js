@@ -158,11 +158,15 @@ twitterRaidSchema.pre('save', function(next) {
   next();
 });
 
-// Add database indexes for performance optimization
-twitterRaidSchema.index({ 'completions.approvalStatus': 1 }); // For finding pending completions
-twitterRaidSchema.index({ 'completions.userId': 1 }); // For trust score calculations
-twitterRaidSchema.index({ 'completions.completedAt': -1 }); // For sorting by completion date
-twitterRaidSchema.index({ createdAt: -1 }); // For general sorting
-twitterRaidSchema.index({ active: 1 }); // For finding active raids
+// Add database indexes for performance optimization (only if not already defined)
+if (!twitterRaidSchema.indexes().some(index => index[0]['completions.approvalStatus'])) {
+  twitterRaidSchema.index({ 'completions.approvalStatus': 1 }); // For finding pending completions
+}
+if (!twitterRaidSchema.indexes().some(index => index[0]['completions.userId'])) {
+  twitterRaidSchema.index({ 'completions.userId': 1 }); // For trust score calculations
+}
+if (!twitterRaidSchema.indexes().some(index => index[0]['completions.completedAt'])) {
+  twitterRaidSchema.index({ 'completions.completedAt': -1 }); // For sorting by completion date
+}
 
 module.exports = mongoose.model('TwitterRaid', twitterRaidSchema); 
