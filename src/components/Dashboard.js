@@ -1260,21 +1260,35 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Add this function to fetch pending Twitter raid completions
   const fetchPendingTwitterRaids = async () => {
+    const startTime = Date.now();
+    console.log(`[${new Date().toISOString()}] 🔍 Frontend: Starting fetchPendingTwitterRaids`);
+    
     setLoadingTwitterRaids(true);
     try {
+      console.log(`[${new Date().toISOString()}] 📡 Frontend: Making API call to /twitter-raids/completions/pending`);
+      const apiCallStartTime = Date.now();
+      
       const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
+      const apiCallEndTime = Date.now();
+      console.log(`[${new Date().toISOString()}] 📡 Frontend: API call completed (${apiCallEndTime - apiCallStartTime}ms), status: ${response.status}`);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch pending completions');
       }
       
       const data = await response.json();
+      const totalTime = Date.now() - startTime;
+      console.log(`[${new Date().toISOString()}] ✅ Frontend: fetchPendingTwitterRaids completed (${totalTime}ms), received ${data.pendingCompletions?.length || 0} completions`);
+      
       setPendingTwitterRaids(data.pendingCompletions || []);
     } catch (error) {
+      const totalTime = Date.now() - startTime;
+      console.error(`[${new Date().toISOString()}] ❌ Frontend: fetchPendingTwitterRaids failed after ${totalTime}ms:`, error);
       setPendingTwitterRaids([]);
     } finally {
       setLoadingTwitterRaids(false);
