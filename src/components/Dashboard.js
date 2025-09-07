@@ -290,7 +290,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingTwitterRaids();
       fetchPendingFacebookRaids();
     }
-  }, [currentUser]);
+  }, [currentUser?.isAdmin]); // Only run when isAdmin changes, not when currentUser changes
 
   // Add Socket.io listeners for real-time updates
   useEffect(() => {
