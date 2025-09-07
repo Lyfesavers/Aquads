@@ -42,59 +42,27 @@ router.get('/', async (req, res) => {
     // Get user ID safely (works for both authenticated and non-authenticated users)
     const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
     
-    // First, get raids without completions for speed
+    // Load raids with only essential completion data for speed
     const raids = await TwitterRaid.find({ active: true })
       .sort({ createdAt: -1 })
       .populate('createdBy', 'username')
-      .select('tweetId tweetUrl title description points createdBy active createdAt');
+      .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus');
     
-    // If user is logged in, get their completion status efficiently
-    let userCompletions = new Set();
-    if (userId) {
-      const userCompletedRaids = await TwitterRaid.find(
-        { 
-          active: true,
-          'completions.userId': userId 
-        },
-        { _id: 1 }
-      );
-      userCompletions = new Set(userCompletedRaids.map(raid => raid._id.toString()));
-    }
-    
-    // Get completion counts efficiently using aggregation
-    const completionCounts = await TwitterRaid.aggregate([
-      { $match: { active: true } },
-      {
-        $project: {
-          _id: 1,
-          completionCount: {
-            $size: {
-              $filter: {
-                input: '$completions',
-                cond: { $eq: ['$$this.approvalStatus', 'approved'] }
-              }
-            }
-          }
-        }
-      }
-    ]);
-    
-    // Create a map for quick lookup
-    const countMap = {};
-    completionCounts.forEach(raid => {
-      countMap[raid._id.toString()] = raid.completionCount;
+    // Process raids to add count and user completion status
+    const processedRaids = raids.map(raid => {
+      const approvedCompletions = raid.completions.filter(c => c.approvalStatus === 'approved');
+      const userCompleted = userId ? raid.completions.some(c => 
+        c.userId && c.userId.toString() === userId.toString()
+      ) : false;
+      
+      return {
+        ...raid.toObject(),
+        completionCount: approvedCompletions.length,
+        userCompleted: userCompleted
+      };
     });
     
-    // Combine the data efficiently
-    const raidsWithCounts = raids.map(raid => ({
-      ...raid.toObject(),
-      completionCount: countMap[raid._id.toString()] || 0,
-      userCompleted: userCompletions.has(raid._id.toString()),
-      // Create a minimal completions array for frontend compatibility
-      completions: Array.from({ length: countMap[raid._id.toString()] || 0 }, () => ({}))
-    }));
-    
-    res.json(raidsWithCounts);
+    res.json(processedRaids);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch Twitter raids' });
   }
