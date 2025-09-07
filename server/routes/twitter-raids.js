@@ -683,6 +683,14 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
         createdAt: new Date()
       });
       await user.save();
+      
+      // Emit real-time update for points awarded
+      emitTokenUpdate('points_awarded', {
+        userId: completion.userId,
+        pointsAwarded: points,
+        newTotalPoints: user.points,
+        reason: `Twitter raid approved: ${raid.title}`
+      });
          }
 
     await raid.save({ validateBeforeSave: false });
