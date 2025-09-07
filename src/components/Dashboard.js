@@ -348,10 +348,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             ...prev,
             points: data.newTotalPoints
           }));
+          console.log('🎯 Points updated directly from socket to:', data.newTotalPoints);
         }
         
-        // Also refresh affiliate info for other data
-        fetchAffiliateInfo();
+        // Only refresh affiliate info for non-points data (affiliate count, commission rate, etc.)
+        // Don't call fetchAffiliateInfo() as it will override the socket points with stale API data
+        if (data.type !== 'points_awarded') {
+          fetchAffiliateInfo();
+        }
       } else {
         console.log('🎯 User ID does not match:', {
           currentUserId: currentUser?.userId || currentUser?.id,
