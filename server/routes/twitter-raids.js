@@ -39,10 +39,68 @@ const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 // Get all active Twitter raids
 router.get('/', async (req, res) => {
   try {
-    const raids = await TwitterRaid.find({ active: true })
-      .sort({ createdAt: -1 })
-      .populate('createdBy', 'username')
-      .select('-completions'); // Exclude completions array for faster loading
+    // Get user ID safely (works for both authenticated and non-authenticated users)
+    const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
+    
+    // Use aggregation to get raids with completion counts efficiently
+    const raids = await TwitterRaid.aggregate([
+      { $match: { active: true } },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'createdBy',
+          pipeline: [{ $project: { username: 1 } }]
+        }
+      },
+      {
+        $addFields: {
+          createdBy: { $arrayElemAt: ['$createdBy', 0] },
+          completionCount: {
+            $size: {
+              $filter: {
+                input: '$completions',
+                cond: { $eq: ['$$this.approvalStatus', 'approved'] }
+              }
+            }
+          },
+          userCompleted: userId ? {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: '$completions',
+                    cond: {
+                      $and: [
+                        { $eq: ['$$this.userId', { $toObjectId: userId }] },
+                        { $ne: ['$$this.userId', null] }
+                      ]
+                    }
+                  }
+                }
+              },
+              0
+            ]
+          } : false
+        }
+      },
+      {
+        $project: {
+          tweetId: 1,
+          tweetUrl: 1,
+          title: 1,
+          description: 1,
+          points: 1,
+          createdBy: 1,
+          active: 1,
+          createdAt: 1,
+          completionCount: 1,
+          userCompleted: 1
+        }
+      }
+    ]);
     
     res.json(raids);
   } catch (error) {
