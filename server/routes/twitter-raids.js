@@ -96,8 +96,16 @@ router.get('/', async (req, res) => {
           createdBy: 1,
           active: 1,
           createdAt: 1,
-          completionCount: 1,
-          userCompleted: 1
+          completions: {
+            $map: {
+              input: '$completions',
+              as: 'completion',
+              in: {
+                userId: '$$completion.userId',
+                approvalStatus: '$$completion.approvalStatus'
+              }
+            }
+          }
         }
       }
     ]);
