@@ -187,12 +187,6 @@ function emitTwitterRaidRejected(completionData) {
   }
 }
 
-function emitNewTwitterRaidCompletion(completionData) {
-  if (io) {
-    io.emit('newTwitterRaidCompletion', completionData);
-  }
-}
-
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -203,6 +197,5 @@ module.exports = {
   getConnectedUsers,
   connectedUsers,
   emitTwitterRaidApproved,
-  emitTwitterRaidRejected,
-  emitNewTwitterRaidCompletion
+  emitTwitterRaidRejected
 }; 
