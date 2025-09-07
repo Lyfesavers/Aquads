@@ -318,8 +318,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleNewTwitterRaidCompletion = (data) => {
       console.log('New Twitter raid completion:', data);
-      // Refresh the pending completions list to show the new completion
-      fetchPendingTwitterRaids();
+      // Add a small delay to ensure database transaction is committed
+      setTimeout(() => {
+        console.log('Refreshing pending completions after new completion...');
+        fetchPendingTwitterRaidsWithRetry(data.completionId);
+      }, 500); // 500ms delay to ensure database consistency
+    };
+
+    // Helper function to retry fetching if the new completion isn't found
+    const fetchPendingTwitterRaidsWithRetry = async (expectedCompletionId, retryCount = 0) => {
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second between retries
+      
+      try {
+        const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch pending completions');
+        }
+        
+        const data = await response.json();
+        const completions = data.pendingCompletions || [];
+        
+        // Check if our expected completion is in the results
+        const foundCompletion = completions.find(c => c.completionId === expectedCompletionId);
+        
+        if (foundCompletion) {
+          console.log('✅ New completion found in pending list!');
+          setPendingTwitterRaids(completions);
+        } else if (retryCount < maxRetries) {
+          console.log(`⏳ Completion not found yet, retrying... (${retryCount + 1}/${maxRetries})`);
+          setTimeout(() => {
+            fetchPendingTwitterRaidsWithRetry(expectedCompletionId, retryCount + 1);
+          }, retryDelay);
+        } else {
+          console.log('⚠️ Max retries reached, updating with current results');
+          setPendingTwitterRaids(completions);
+        }
+      } catch (error) {
+        console.error('Error fetching pending completions with retry:', error);
+        if (retryCount < maxRetries) {
+          setTimeout(() => {
+            fetchPendingTwitterRaidsWithRetry(expectedCompletionId, retryCount + 1);
+          }, retryDelay);
+        }
+      } finally {
+        setLoadingTwitterRaids(false);
+      }
     };
 
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
