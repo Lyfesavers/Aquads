@@ -42,22 +42,31 @@ router.get('/', async (req, res) => {
     // Get user ID safely (works for both authenticated and non-authenticated users)
     const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
     
-    // Use aggregation to get raids with completion counts efficiently
-    const raids = await TwitterRaid.aggregate([
+    // First, get raids without completions for speed
+    const raids = await TwitterRaid.find({ active: true })
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'username')
+      .select('tweetId tweetUrl title description points createdBy active createdAt');
+    
+    // If user is logged in, get their completion status efficiently
+    let userCompletions = new Set();
+    if (userId) {
+      const userCompletedRaids = await TwitterRaid.find(
+        { 
+          active: true,
+          'completions.userId': userId 
+        },
+        { _id: 1 }
+      );
+      userCompletions = new Set(userCompletedRaids.map(raid => raid._id.toString()));
+    }
+    
+    // Get completion counts efficiently using aggregation
+    const completionCounts = await TwitterRaid.aggregate([
       { $match: { active: true } },
-      { $sort: { createdAt: -1 } },
       {
-        $lookup: {
-          from: 'users',
-          localField: 'createdBy',
-          foreignField: '_id',
-          as: 'createdBy',
-          pipeline: [{ $project: { username: 1 } }]
-        }
-      },
-      {
-        $addFields: {
-          createdBy: { $arrayElemAt: ['$createdBy', 0] },
+        $project: {
+          _id: 1,
           completionCount: {
             $size: {
               $filter: {
@@ -65,52 +74,27 @@ router.get('/', async (req, res) => {
                 cond: { $eq: ['$$this.approvalStatus', 'approved'] }
               }
             }
-          },
-          userCompleted: userId ? {
-            $gt: [
-              {
-                $size: {
-                  $filter: {
-                    input: '$completions',
-                    cond: {
-                      $and: [
-                        { $eq: ['$$this.userId', { $toObjectId: userId }] },
-                        { $ne: ['$$this.userId', null] }
-                      ]
-                    }
-                  }
-                }
-              },
-              0
-            ]
-          } : false
-        }
-      },
-      {
-        $project: {
-          tweetId: 1,
-          tweetUrl: 1,
-          title: 1,
-          description: 1,
-          points: 1,
-          createdBy: 1,
-          active: 1,
-          createdAt: 1,
-          completions: {
-            $map: {
-              input: '$completions',
-              as: 'completion',
-              in: {
-                userId: '$$completion.userId',
-                approvalStatus: '$$completion.approvalStatus'
-              }
-            }
           }
         }
       }
     ]);
     
-    res.json(raids);
+    // Create a map for quick lookup
+    const countMap = {};
+    completionCounts.forEach(raid => {
+      countMap[raid._id.toString()] = raid.completionCount;
+    });
+    
+    // Combine the data efficiently
+    const raidsWithCounts = raids.map(raid => ({
+      ...raid.toObject(),
+      completionCount: countMap[raid._id.toString()] || 0,
+      userCompleted: userCompletions.has(raid._id.toString()),
+      // Create a minimal completions array for frontend compatibility
+      completions: Array.from({ length: countMap[raid._id.toString()] || 0 }, () => ({}))
+    }));
+    
+    res.json(raidsWithCounts);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch Twitter raids' });
   }
