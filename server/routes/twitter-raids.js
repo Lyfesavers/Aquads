@@ -751,6 +751,8 @@ router.get('/completions/pending', auth, async (req, res) => {
     .populate('createdBy', 'username')
     .lean();
     
+    console.log(`Found ${raids.length} raids with pending completions`);
+    
 
     // Extract pending completions with raid info
     const pendingCompletions = [];
@@ -853,6 +855,8 @@ router.get('/completions/pending', auth, async (req, res) => {
       return aPriority - bPriority;
     });
 
+    console.log(`Returning ${pendingCompletions.length} pending completions`);
+    
     res.json({
       success: true,
       pendingCompletions,
