@@ -174,6 +174,19 @@ function getConnectedUsers() {
   return Array.from(connectedUsers.values());
 }
 
+// Utility functions to emit Twitter raid events
+function emitTwitterRaidApproved(completionData) {
+  if (io) {
+    io.emit('twitterRaidCompletionApproved', completionData);
+  }
+}
+
+function emitTwitterRaidRejected(completionData) {
+  if (io) {
+    io.emit('twitterRaidCompletionRejected', completionData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -182,5 +195,7 @@ module.exports = {
   getOnlineUsersCount,
   isUserOnline,
   getConnectedUsers,
-  connectedUsers
+  connectedUsers,
+  emitTwitterRaidApproved,
+  emitTwitterRaidRejected
 }; 

@@ -8,6 +8,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
@@ -619,6 +620,16 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
 
     await raid.save({ validateBeforeSave: false });
 
+    // Emit real-time update to all connected clients
+    emitTwitterRaidApproved({
+      completionId: completion._id,
+      raidId: raid._id,
+      raidTitle: raid.title,
+      userId: completion.userId,
+      approvedBy: req.user.id,
+      approvedAt: completion.approvedAt
+    });
+
     res.json({
       success: true,
       message: 'Completion approved successfully'
@@ -681,6 +692,17 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     } catch (notificationError) {
       // Continue execution even if notification fails
     }
+
+    // Emit real-time update to all connected clients
+    emitTwitterRaidRejected({
+      completionId: completion._id,
+      raidId: raid._id,
+      raidTitle: raid.title,
+      userId: completion.userId,
+      rejectedBy: req.user.id,
+      rejectedAt: completion.approvedAt,
+      rejectionReason: rejectionReason || 'No reason provided'
+    });
 
     res.json({
       success: true,

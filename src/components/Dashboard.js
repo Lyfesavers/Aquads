@@ -292,6 +292,39 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser]);
 
+  // Add Socket.io listeners for real-time updates
+  useEffect(() => {
+    if (!socket || !currentUser?.isAdmin) return;
+
+    const handleTwitterRaidApproved = (data) => {
+      console.log('Twitter raid approved:', data);
+      // Remove the approved completion from the pending list
+      setPendingTwitterRaids(prev => 
+        prev.filter(completion => 
+          completion.completionId !== data.completionId
+        )
+      );
+    };
+
+    const handleTwitterRaidRejected = (data) => {
+      console.log('Twitter raid rejected:', data);
+      // Remove the rejected completion from the pending list
+      setPendingTwitterRaids(prev => 
+        prev.filter(completion => 
+          completion.completionId !== data.completionId
+        )
+      );
+    };
+
+    socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
+    socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+
+    return () => {
+      socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
+      socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
+    };
+  }, [socket, currentUser]);
+
   useEffect(() => {
     if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchPendingBubbleListings();
@@ -1257,9 +1290,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
       
       const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingTwitterRaids();
       alert(result.message || 'Completion approved successfully!');
     } catch (error) {
       alert('Error approving completion: ' + error.message);
@@ -1291,9 +1321,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
       
       const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingTwitterRaids();
       setShowTwitterRaidRejectModal(false);
       alert(result.message || 'Completion rejected successfully!');
     } catch (error) {
