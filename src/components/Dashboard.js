@@ -318,57 +318,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleNewTwitterRaidCompletion = (data) => {
       console.log('New Twitter raid completion:', data);
-      // Add a small delay to ensure database transaction is committed
-      setTimeout(() => {
-        console.log('Refreshing pending completions after new completion...');
-        fetchPendingTwitterRaidsWithRetry(data.completionId);
-      }, 500); // 500ms delay to ensure database consistency
-    };
-
-    // Helper function to retry fetching if the new completion isn't found
-    const fetchPendingTwitterRaidsWithRetry = async (expectedCompletionId, retryCount = 0) => {
-      const maxRetries = 3;
-      const retryDelay = 1000; // 1 second between retries
-      
-      try {
-        const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch pending completions');
-        }
-        
-        const data = await response.json();
-        const completions = data.pendingCompletions || [];
-        
-        // Check if our expected completion is in the results
-        const foundCompletion = completions.find(c => c.completionId === expectedCompletionId);
-        
-        if (foundCompletion) {
-          console.log('✅ New completion found in pending list!');
-          setPendingTwitterRaids(completions);
-        } else if (retryCount < maxRetries) {
-          console.log(`⏳ Completion not found yet, retrying... (${retryCount + 1}/${maxRetries})`);
-          setTimeout(() => {
-            fetchPendingTwitterRaidsWithRetry(expectedCompletionId, retryCount + 1);
-          }, retryDelay);
-        } else {
-          console.log('⚠️ Max retries reached, updating with current results');
-          setPendingTwitterRaids(completions);
-        }
-      } catch (error) {
-        console.error('Error fetching pending completions with retry:', error);
-        if (retryCount < maxRetries) {
-          setTimeout(() => {
-            fetchPendingTwitterRaidsWithRetry(expectedCompletionId, retryCount + 1);
-          }, retryDelay);
-        }
-      } finally {
-        setLoadingTwitterRaids(false);
-      }
+      // Refresh the pending completions list to show the new completion
+      fetchPendingTwitterRaids();
     };
 
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -1309,35 +1260,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Add this function to fetch pending Twitter raid completions
   const fetchPendingTwitterRaids = async () => {
-    const startTime = Date.now();
-    console.log(`[${new Date().toISOString()}] 🔍 Frontend: Starting fetchPendingTwitterRaids`);
-    
     setLoadingTwitterRaids(true);
     try {
-      console.log(`[${new Date().toISOString()}] 📡 Frontend: Making API call to /twitter-raids/completions/pending`);
-      const apiCallStartTime = Date.now();
-      
       const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
-      const apiCallEndTime = Date.now();
-      console.log(`[${new Date().toISOString()}] 📡 Frontend: API call completed (${apiCallEndTime - apiCallStartTime}ms), status: ${response.status}`);
-      
       if (!response.ok) {
         throw new Error('Failed to fetch pending completions');
       }
       
       const data = await response.json();
-      const totalTime = Date.now() - startTime;
-      console.log(`[${new Date().toISOString()}] ✅ Frontend: fetchPendingTwitterRaids completed (${totalTime}ms), received ${data.pendingCompletions?.length || 0} completions`);
-      
       setPendingTwitterRaids(data.pendingCompletions || []);
     } catch (error) {
-      const totalTime = Date.now() - startTime;
-      console.error(`[${new Date().toISOString()}] ❌ Frontend: fetchPendingTwitterRaids failed after ${totalTime}ms:`, error);
       setPendingTwitterRaids([]);
     } finally {
       setLoadingTwitterRaids(false);

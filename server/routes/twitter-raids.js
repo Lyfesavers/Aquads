@@ -412,9 +412,6 @@ const verifyTweetUrl = async (tweetUrl) => {
 
 // Complete a Twitter raid with rate limiting
 router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimit, async (req, res) => {
-  const startTime = Date.now();
-  console.log(`[${new Date().toISOString()}] 🎯 Starting Twitter raid completion for raid ID: ${req.params.id}`);
-  
   try {
     const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
@@ -544,7 +541,6 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         completedAt: new Date()
       };
       
-      console.log(`[${new Date().toISOString()}] 🔍 Debug: Adding completion with status:`, newCompletion.approvalStatus);
       raid.completions.push(newCompletion);
       
       // Update user's last activity for accurate fraud detection
@@ -553,22 +549,9 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       });
       
       // Save the raid with the pending completion
-      console.log(`[${new Date().toISOString()}] 💾 Saving raid with new completion...`);
-      const saveStartTime = Date.now();
-      
       await raid.save();
       
-      const saveEndTime = Date.now();
-      console.log(`[${new Date().toISOString()}] ✅ Raid saved successfully (${saveEndTime - saveStartTime}ms)`);
-      
-      // Debug: Verify what was actually saved
-      const savedRaid = await TwitterRaid.findById(raid._id);
-      const savedCompletion = savedRaid.completions[savedRaid.completions.length - 1];
-      console.log(`[${new Date().toISOString()}] 🔍 Debug: Saved completion status:`, savedCompletion.approvalStatus);
-      console.log(`[${new Date().toISOString()}] 🔍 Debug: Saved completion ID:`, savedCompletion._id);
-      
       // Emit real-time update to all connected admin clients
-      console.log(`[${new Date().toISOString()}] 📡 Emitting new completion event...`);
       const { emitNewTwitterRaidCompletion } = require('../socket');
       emitNewTwitterRaidCompletion({
         completionId: raid.completions[raid.completions.length - 1]._id,
@@ -578,12 +561,6 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         twitterUsername: cleanUsername,
         completedAt: new Date()
       });
-      
-      console.log(`[${new Date().toISOString()}] ✅ Event emitted successfully`);
-      
-      // Success response - indicate pending approval
-      const totalTime = Date.now() - startTime;
-      console.log(`[${new Date().toISOString()}] 🎉 COMPLETION SUCCESS: Total time ${totalTime}ms`);
       
       const successResponse = {
         success: true,
@@ -595,8 +572,6 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       
       res.json(successResponse);
     } catch (error) {
-      const totalTime = Date.now() - startTime;
-      console.error(`[${new Date().toISOString()}] ❌ COMPLETION INNER ERROR after ${totalTime}ms:`, error);
       let errorMessage = 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error');
       res.status(500).json({ 
         error: errorMessage,
@@ -604,8 +579,6 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       });
     }
   } catch (error) {
-    const totalTime = Date.now() - startTime;
-    console.error(`[${new Date().toISOString()}] ❌ COMPLETION OUTER ERROR after ${totalTime}ms:`, error);
     let errorMessage = 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error');
     res.status(500).json({ 
       error: errorMessage,
@@ -777,90 +750,23 @@ router.get('/completions/pending', auth, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can view pending completions' });
     }
 
-    console.log(`[${new Date().toISOString()}] 📊 Step 1: Querying raids with pending completions...`);
-    const queryStartTime = Date.now();
-    
-    // Debug: First check what's actually in the database
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Checking all raids with any completions...`);
-    const allRaids = await TwitterRaid.find({}).lean();
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Found ${allRaids.length} total raids`);
-    
-    let totalCompletions = 0;
-    let pendingCompletionsCount = 0;
-    allRaids.forEach(raid => {
-      if (raid.completions && raid.completions.length > 0) {
-        totalCompletions += raid.completions.length;
-        raid.completions.forEach(completion => {
-          if (completion.approvalStatus === 'pending') {
-            pendingCompletionsCount++;
-            console.log(`[${new Date().toISOString()}] 🔍 Debug: Found pending completion:`, {
-              completionId: completion._id,
-              approvalStatus: completion.approvalStatus,
-              userId: completion.userId,
-              twitterUsername: completion.twitterUsername
-            });
-          }
-        });
-      }
-    });
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Total completions: ${totalCompletions}, Pending: ${pendingCompletionsCount}`);
-
-    // Test different query approaches to find the issue
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Testing query approaches...`);
-    
-    // Approach 1: Simple query
-    const raids1 = await TwitterRaid.find({
-      'completions.approvalStatus': 'pending'
-    }).lean();
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Approach 1 (simple): Found ${raids1.length} raids`);
-    
-    // Approach 2: Query with $elemMatch
-    const raids2 = await TwitterRaid.find({
+    // Get raids with pending completions using optimized query
+    const raids = await TwitterRaid.find({
       completions: {
         $elemMatch: {
           approvalStatus: 'pending'
         }
       }
-    }).lean();
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Approach 2 ($elemMatch): Found ${raids2.length} raids`);
+    })
+    .populate('completions.userId', 'username email')
+    .populate('createdBy', 'username')
+    .lean();
     
-    // Approach 3: Query specific raid ID
-    const specificRaid = await TwitterRaid.findById('68bcf51b111a158b798a2931').lean();
-    console.log(`[${new Date().toISOString()}] 🔍 Debug: Specific raid completions:`, specificRaid?.completions?.length || 0);
-    if (specificRaid?.completions) {
-      specificRaid.completions.forEach((comp, index) => {
-        console.log(`[${new Date().toISOString()}] 🔍 Debug: Completion ${index}: status=${comp.approvalStatus}, id=${comp._id}`);
-      });
-    }
-    
-    // Use the working approach and populate the data
-    let raids = raids2.length > 0 ? raids2 : raids1;
-    
-    // Populate user data for the raids we found
-    if (raids.length > 0) {
-      raids = await TwitterRaid.find({
-        _id: { $in: raids.map(r => r._id) }
-      })
-      .populate('completions.userId', 'username email')
-      .populate('createdBy', 'username')
-      .lean();
-    }
-    
-    const queryEndTime = Date.now();
-    console.log(`[${new Date().toISOString()}] ✅ Step 1 Complete: Found ${raids.length} raids with pending completions (${queryEndTime - queryStartTime}ms)`);
-    
-    // Debug: Log the first result to see the structure
-    if (raids.length > 0) {
-      console.log(`[${new Date().toISOString()}] 🔍 Debug: First raid structure:`, JSON.stringify(raids[0], null, 2));
-    }
 
     // Extract pending completions with raid info
     const pendingCompletions = [];
     
     // Get all user IDs for trust score calculation
-    console.log(`[${new Date().toISOString()}] 📊 Step 2: Extracting user IDs for trust score calculation...`);
-    const userIdExtractionStartTime = Date.now();
-    
     const userIds = new Set();
     raids.forEach(raid => {
       raid.completions.forEach(completion => {
@@ -869,34 +775,17 @@ router.get('/completions/pending', auth, async (req, res) => {
         }
       });
     });
-    
-    const userIdExtractionEndTime = Date.now();
-    console.log(`[${new Date().toISOString()}] ✅ Step 2 Complete: Found ${userIds.size} unique users (${userIdExtractionEndTime - userIdExtractionStartTime}ms)`);
 
-    // Calculate trust scores using optimized database query (much faster than before)
+    // Calculate trust scores using optimized database query
     const userTrustScores = {};
     if (userIds.size > 0) {
-      console.log(`[${new Date().toISOString()}] 📊 Step 3: Calculating trust scores for ${userIds.size} users...`);
-      const trustScoreStartTime = Date.now();
-      
       try {
-        // Get all raids with completions by our users in one query
-        console.log(`[${new Date().toISOString()}] 📊 Step 3a: Querying all raids with completions by our users...`);
-        const trustQueryStartTime = Date.now();
-        
         const allRaidsWithCompletions = await TwitterRaid.find({
           'completions.userId': { $in: Array.from(userIds).map(id => new mongoose.Types.ObjectId(id)) }
         })
         .select('completions')
-        .lean(); // Use lean() for better performance
-        
-        const trustQueryEndTime = Date.now();
-        console.log(`[${new Date().toISOString()}] ✅ Step 3a Complete: Found ${allRaidsWithCompletions.length} raids with completions (${trustQueryEndTime - trustQueryStartTime}ms)`);
+        .lean();
 
-        // Calculate trust scores efficiently
-        console.log(`[${new Date().toISOString()}] 📊 Step 3b: Calculating trust scores in JavaScript...`);
-        const calculationStartTime = Date.now();
-        
         userIds.forEach(userId => {
           let totalCompletions = 0;
           let approvedCompletions = 0;
@@ -922,9 +811,6 @@ router.get('/completions/pending', auth, async (req, res) => {
                        (approvedCompletions / totalCompletions) >= 0.65 ? 'medium' : 'low'
           };
         });
-        
-        const calculationEndTime = Date.now();
-        console.log(`[${new Date().toISOString()}] ✅ Step 3b Complete: Calculated trust scores for ${userIds.size} users (${calculationEndTime - calculationStartTime}ms)`);
       } catch (error) {
         console.error('Error calculating trust scores:', error);
         // Fallback to empty trust scores if query fails
@@ -938,9 +824,6 @@ router.get('/completions/pending', auth, async (req, res) => {
         });
       }
     }
-    
-    console.log(`[${new Date().toISOString()}] 📊 Step 4: Building response data...`);
-    const responseBuildStartTime = Date.now();
     
     raids.forEach(raid => {
       // Process each completion in the raid
@@ -973,9 +856,6 @@ router.get('/completions/pending', auth, async (req, res) => {
       });
     });
 
-    console.log(`[${new Date().toISOString()}] 📊 Step 5: Sorting completions by trust level...`);
-    const sortStartTime = Date.now();
-    
     // Sort by trust level priority: high -> medium -> new -> low
     const trustLevelPriority = { 'high': 0, 'medium': 1, 'new': 2, 'low': 3 };
     pendingCompletions.sort((a, b) => {
@@ -983,15 +863,6 @@ router.get('/completions/pending', auth, async (req, res) => {
       const bPriority = trustLevelPriority[b.trustScore.trustLevel];
       return aPriority - bPriority;
     });
-    
-    const sortEndTime = Date.now();
-    console.log(`[${new Date().toISOString()}] ✅ Step 5 Complete: Sorted ${pendingCompletions.length} completions (${sortEndTime - sortStartTime}ms)`);
-    
-    const responseBuildEndTime = Date.now();
-    const totalTime = Date.now() - startTime;
-    
-    console.log(`[${new Date().toISOString()}] ✅ Step 4 Complete: Built response data (${responseBuildEndTime - responseBuildStartTime}ms)`);
-    console.log(`[${new Date().toISOString()}] 🎉 API CALL COMPLETE: Total time ${totalTime}ms, returning ${pendingCompletions.length} pending completions`);
 
     res.json({
       success: true,
@@ -1000,8 +871,7 @@ router.get('/completions/pending', auth, async (req, res) => {
     });
 
   } catch (error) {
-    const totalTime = Date.now() - startTime;
-    console.error(`[${new Date().toISOString()}] ❌ API CALL FAILED after ${totalTime}ms:`, error);
+    console.error('Error fetching pending completions:', error);
     res.status(500).json({ error: 'Failed to fetch pending completions' });
   }
 });
