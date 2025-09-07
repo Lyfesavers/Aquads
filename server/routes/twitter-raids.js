@@ -766,85 +766,53 @@ router.get('/completions/pending', auth, async (req, res) => {
       });
     });
 
-    // Calculate trust scores using database aggregation (much faster)
+    // Calculate trust scores using optimized database query (much faster than before)
     const userTrustScores = {};
     if (userIds.size > 0) {
-      const trustScoreResults = await TwitterRaid.aggregate([
-        // Match raids that have completions by our users
-        {
-          $match: {
-            'completions.userId': { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) }
-          }
-        },
-        // Unwind completions array
-        { $unwind: '$completions' },
-        // Match only non-pending completions
-        {
-          $match: {
-            'completions.approvalStatus': { $ne: 'pending' }
-          }
-        },
-        // Group by user and calculate stats
-        {
-          $group: {
-            _id: '$completions.userId',
-            totalCompletions: { $sum: 1 },
-            approvedCompletions: {
-              $sum: {
-                $cond: [{ $eq: ['$completions.approvalStatus', 'approved'] }, 1, 0]
-              }
-            }
-          }
-        },
-        // Add calculated fields
-        {
-          $addFields: {
-            approvalRate: {
-              $multiply: [
-                { $divide: ['$approvedCompletions', '$totalCompletions'] },
-                100
-              ]
-            },
-            trustLevel: {
-              $switch: {
-                branches: [
-                  {
-                    case: { $gte: [{ $divide: ['$approvedCompletions', '$totalCompletions'] }, 0.85] },
-                    then: 'high'
-                  },
-                  {
-                    case: { $gte: [{ $divide: ['$approvedCompletions', '$totalCompletions'] }, 0.65] },
-                    then: 'medium'
-                  }
-                ],
-                default: 'low'
-              }
-            }
-          }
-        }
-      ]);
+      try {
+        // Get all raids with completions by our users in one query
+        const allRaidsWithCompletions = await TwitterRaid.find({
+          'completions.userId': { $in: Array.from(userIds).map(id => new mongoose.Types.ObjectId(id)) }
+        }).select('completions');
 
-      // Convert aggregation results to the same format
-      trustScoreResults.forEach(result => {
-        userTrustScores[result._id.toString()] = {
-          totalCompletions: result.totalCompletions,
-          approvedCompletions: result.approvedCompletions,
-          approvalRate: result.approvalRate,
-          trustLevel: result.trustLevel
-        };
-      });
+        // Calculate trust scores efficiently
+        userIds.forEach(userId => {
+          let totalCompletions = 0;
+          let approvedCompletions = 0;
 
-      // Add 'new' users (users with no completions)
-      userIds.forEach(userId => {
-        if (!userTrustScores[userId]) {
+          allRaidsWithCompletions.forEach(raid => {
+            raid.completions.forEach(completion => {
+              if (completion.userId && completion.userId.toString() === userId && 
+                  completion.approvalStatus !== 'pending') {
+                totalCompletions++;
+                if (completion.approvalStatus === 'approved') {
+                  approvedCompletions++;
+                }
+              }
+            });
+          });
+
+          userTrustScores[userId] = {
+            totalCompletions,
+            approvedCompletions,
+            approvalRate: totalCompletions > 0 ? (approvedCompletions / totalCompletions) * 100 : 0,
+            trustLevel: totalCompletions === 0 ? 'new' : 
+                       (approvedCompletions / totalCompletions) >= 0.85 ? 'high' :
+                       (approvedCompletions / totalCompletions) >= 0.65 ? 'medium' : 'low'
+          };
+        });
+      } catch (error) {
+        console.error('Error calculating trust scores:', error);
+        // Fallback to empty trust scores if query fails
+        userIds.forEach(userId => {
           userTrustScores[userId] = {
             totalCompletions: 0,
             approvedCompletions: 0,
             approvalRate: 0,
             trustLevel: 'new'
           };
-        }
-      });
+        });
+      }
     }
     
     raids.forEach(raid => {
