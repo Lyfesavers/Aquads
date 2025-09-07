@@ -184,8 +184,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchRaids();
-    // Load Twitter widget script
-    loadTwitterWidgetScript();
     // Fetch user points from API
     fetchUserPoints();
     
@@ -229,22 +227,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   }, [tweetUrl]);
 
-  const loadTwitterWidgetScript = () => {
-    // Skip if already loaded or if we've already tried loading it
-    if (window.twttrLoaded) return;
-    
-    try {
-      window.twttrLoaded = true;
-      const script = document.createElement('script');
-      script.src = 'https://platform.twitter.com/widgets.js';
-      script.async = true;
-      script.onload = () => {};
-      script.onerror = () => {};
-      document.body.appendChild(script);
-    } catch (error) {
-      // Error handling
-    }
-  };
+  // Twitter widgets script loading removed - not needed for current functionality
 
   const extractTweetId = (url) => {
     if (!url) return null;
