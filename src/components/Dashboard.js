@@ -290,7 +290,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingTwitterRaids();
       fetchPendingFacebookRaids();
     }
-  }, [currentUser?.isAdmin]); // Only run when isAdmin changes, not when currentUser changes
+  }, [currentUser]);
 
   // Add Socket.io listeners for real-time updates
   useEffect(() => {
@@ -318,36 +318,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleNewTwitterRaidCompletion = (data) => {
       console.log('New Twitter raid completion:', data);
-      // Add the new completion directly to the existing list
-      setPendingTwitterRaids(prev => {
-        // Check if completion already exists to avoid duplicates
-        const exists = prev.some(completion => completion.completionId === data.completionId);
-        if (exists) return prev;
-        
-        // Add new completion to the beginning of the list
-        const newCompletion = {
-          completionId: data.completionId,
-          raidId: data.raidId,
-          raidTitle: data.raidTitle,
-          raidTweetUrl: data.raidTweetUrl || '',
-          pointsAmount: data.pointsAmount || 50,
-          user: { _id: data.userId, username: data.twitterUsername },
-          twitterUsername: data.twitterUsername,
-          verificationMethod: data.verificationMethod || 'manual',
-          verificationNote: data.verificationNote || '',
-          iframeVerified: data.iframeVerified || false,
-          completedAt: data.completedAt,
-          ipAddress: data.ipAddress || '',
-          trustScore: {
-            totalCompletions: 0,
-            approvedCompletions: 0,
-            approvalRate: 0,
-            trustLevel: 'new'
-          }
-        };
-        
-        return [newCompletion, ...prev];
-      });
+      // Refresh the pending completions list to show the new completion
+      fetchPendingTwitterRaids();
     };
 
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
