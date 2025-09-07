@@ -551,6 +551,17 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       // Save the raid with the pending completion
       await raid.save();
       
+      // Emit real-time update to all connected admin clients
+      const { emitNewTwitterRaidCompletion } = require('../socket');
+      emitNewTwitterRaidCompletion({
+        completionId: raid.completions[raid.completions.length - 1]._id,
+        raidId: raid._id,
+        raidTitle: raid.title,
+        userId: userId,
+        twitterUsername: cleanUsername,
+        completedAt: new Date()
+      });
+      
       const successResponse = {
         success: true,
         message: `Twitter raid submitted successfully! Your submission is pending admin approval.`,
