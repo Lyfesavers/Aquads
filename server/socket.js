@@ -123,6 +123,15 @@ function init(server) {
     socket.on('leaderboardUpdate', (data) => {
       socket.broadcast.emit('leaderboardUpdated', data);
     });
+
+    // Twitter raid completion approval/rejection events
+    socket.on('twitterRaidApproved', (data) => {
+      socket.broadcast.emit('twitterRaidCompletionApproved', data);
+    });
+
+    socket.on('twitterRaidRejected', (data) => {
+      socket.broadcast.emit('twitterRaidCompletionRejected', data);
+    });
   });
   
   return io;
@@ -154,6 +163,24 @@ function emitTokenUpdate(type, tokens) {
   io.emit('tokensUpdated', { type, tokens });
 }
 
+// Utility function to emit Twitter raid completion approval
+function emitTwitterRaidApproved(completionData) {
+  if (!io) {
+    return;
+  }
+  
+  io.emit('twitterRaidCompletionApproved', completionData);
+}
+
+// Utility function to emit Twitter raid completion rejection
+function emitTwitterRaidRejected(completionData) {
+  if (!io) {
+    return;
+  }
+  
+  io.emit('twitterRaidCompletionRejected', completionData);
+}
+
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -179,6 +206,8 @@ module.exports = {
   getIO: () => getIO(),
   emitAdUpdate,
   emitTokenUpdate,
+  emitTwitterRaidApproved,
+  emitTwitterRaidRejected,
   getOnlineUsersCount,
   isUserOnline,
   getConnectedUsers,

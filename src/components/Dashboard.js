@@ -198,10 +198,33 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         }
       };
 
+      // Handle Twitter raid completion approval/rejection updates
+      const handleTwitterRaidApproved = (data) => {
+        // Remove the approved completion from pending list
+        setPendingTwitterRaids(prevRaids => 
+          prevRaids.filter(raid => 
+            !(raid.completionId === data.completionId && raid.raidId === data.raidId)
+          )
+        );
+      };
+
+      const handleTwitterRaidRejected = (data) => {
+        // Remove the rejected completion from pending list
+        setPendingTwitterRaids(prevRaids => 
+          prevRaids.filter(raid => 
+            !(raid.completionId === data.completionId && raid.raidId === data.raidId)
+          )
+        );
+      };
+
       socket.on('bookingUpdated', handleBookingUpdate);
+      socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
+      socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
 
       return () => {
         socket.off('bookingUpdated', handleBookingUpdate);
+        socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
+        socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
       };
     }
   }, [socket, currentUser]);
@@ -1242,6 +1265,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Add these functions to handle Twitter raid completion approvals and rejections
   const handleApproveTwitterRaid = async (completion) => {
+    // Optimistic UI update - remove from list immediately
+    const originalRaids = [...pendingTwitterRaids];
+    setPendingTwitterRaids(prevRaids => 
+      prevRaids.filter(raid => 
+        !(raid.completionId === completion.completionId && raid.raidId === completion.raidId)
+      )
+    );
+
     try {
       const response = await fetch(`${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
         method: 'POST',
@@ -1257,11 +1288,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
       
       const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingTwitterRaids();
       alert(result.message || 'Completion approved successfully!');
     } catch (error) {
+      // Revert optimistic update on error
+      setPendingTwitterRaids(originalRaids);
       alert('Error approving completion: ' + error.message);
     }
   };
@@ -1275,6 +1305,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const handleRejectTwitterRaid = async () => {
     try {
       if (!selectedTwitterRaid) return;
+      
+      // Optimistic UI update - remove from list immediately
+      const originalRaids = [...pendingTwitterRaids];
+      setPendingTwitterRaids(prevRaids => 
+        prevRaids.filter(raid => 
+          !(raid.completionId === selectedTwitterRaid.completionId && raid.raidId === selectedTwitterRaid.raidId)
+        )
+      );
       
       const response = await fetch(`${API_URL}/twitter-raids/${selectedTwitterRaid.raidId}/completions/${selectedTwitterRaid.completionId}/reject`, {
         method: 'POST',
@@ -1291,12 +1329,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
       
       const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingTwitterRaids();
       setShowTwitterRaidRejectModal(false);
       alert(result.message || 'Completion rejected successfully!');
     } catch (error) {
+      // Revert optimistic update on error
+      setPendingTwitterRaids(originalRaids);
       alert('Error rejecting completion: ' + error.message);
     }
   };
