@@ -24,6 +24,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [rejectionReason, setRejectionReason] = useState('');
   const [affiliateInfo, setAffiliateInfo] = useState(null);
   const [pointsInfo, setPointsInfo] = useState(null);
+  const [lastSocketPointsUpdate, setLastSocketPointsUpdate] = useState(null);
 
   // Debug: Log when pointsInfo changes
   useEffect(() => {
@@ -348,6 +349,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             ...prev,
             points: data.newTotalPoints
           }));
+          setLastSocketPointsUpdate(Date.now());
           console.log('🎯 Points updated directly from socket to:', data.newTotalPoints);
         }
         
@@ -419,7 +421,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (pointsResponse.ok) {
         const data = await pointsResponse.json();
         console.log('🎯 Points API response:', data);
-        setPointsInfo(data);
+        
+        // Don't override points if we recently got a socket update (within last 5 seconds)
+        const timeSinceLastSocketUpdate = lastSocketPointsUpdate ? Date.now() - lastSocketPointsUpdate : Infinity;
+        if (timeSinceLastSocketUpdate < 5000) {
+          console.log('🎯 Skipping API points update - recent socket update detected');
+          // Only update non-points data
+          setPointsInfo(prev => ({
+            ...data,
+            points: prev?.points || data.points
+          }));
+        } else {
+          setPointsInfo(data);
+        }
       }
 
       if (freeRaidResponse.ok) {
