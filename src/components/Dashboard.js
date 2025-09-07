@@ -344,11 +344,24 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         console.log('🎯 New points from socket:', data.newTotalPoints);
         
         // Update points directly from socket data
-        if (data.newTotalPoints !== undefined && pointsInfo) {
-          setPointsInfo(prev => ({
-            ...prev,
-            points: data.newTotalPoints
-          }));
+        if (data.newTotalPoints !== undefined) {
+          setPointsInfo(prev => {
+            if (prev) {
+              // Update existing pointsInfo
+              return {
+                ...prev,
+                points: data.newTotalPoints
+              };
+            } else {
+              // Create new pointsInfo if it doesn't exist
+              return {
+                points: data.newTotalPoints,
+                pointsHistory: [],
+                giftCardRedemptions: [],
+                powerUps: {}
+              };
+            }
+          });
           setLastSocketPointsUpdate(Date.now());
           console.log('🎯 Points updated directly from socket to:', data.newTotalPoints);
         }
