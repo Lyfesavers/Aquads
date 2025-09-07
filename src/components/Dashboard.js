@@ -328,10 +328,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
 
+    // Handle affiliate earning updates
+    const handleAffiliateEarningUpdate = (data) => {
+      // Refresh affiliate info when new earning is created
+      if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
+        fetchAffiliateInfo();
+      }
+    };
+    socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
       socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
+      socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
     };
   }, [socket, currentUser]);
 

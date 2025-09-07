@@ -14,6 +14,7 @@ const TokenPurchase = require('../models/TokenPurchase');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calculateAdvancedFraudScore } = require('../utils/fraudDetection');
+const { emitAffiliateEarningUpdate } = require('../socket');
 
 // Get affiliate earnings from ads
 router.get('/earnings', auth, async (req, res) => {
@@ -91,6 +92,17 @@ router.post('/record-ad-commission', auth, async (req, res) => {
     });
     
     await earning.save();
+    
+    // Emit real-time update for affiliate earning
+    emitAffiliateEarningUpdate({
+      affiliateId: req.user.userId,
+      earningId: earning._id,
+      commissionEarned: earning.commissionEarned,
+      adAmount: earning.adAmount,
+      commissionRate: earning.commissionRate,
+      createdAt: earning.createdAt
+    });
+    
     res.status(201).json(earning);
   } catch (error) {
     console.error('Error recording ad commission:', error);

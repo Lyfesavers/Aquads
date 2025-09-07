@@ -10,6 +10,7 @@ const { createNotification } = require('./notifications');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
+const { emitAffiliateEarningUpdate } = require('../socket');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -120,6 +121,16 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
         if (referringUser) {
           // Add new user to referrer's affiliates list
           await referringUser.addAffiliate(user._id);
+          
+          // Emit real-time update for affiliate count change
+          emitAffiliateEarningUpdate({
+            affiliateId: referringUser._id,
+            type: 'newAffiliate',
+            affiliateCount: referringUser.affiliateCount,
+            newAffiliateId: user._id,
+            newAffiliateUsername: user.username
+          });
+          
           // Points will be awarded after email verification
 
           

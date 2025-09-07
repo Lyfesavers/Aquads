@@ -193,6 +193,12 @@ function emitNewTwitterRaidCompletion(completionData) {
   }
 }
 
+function emitAffiliateEarningUpdate(affiliateData) {
+  if (io) {
+    io.emit('affiliateEarningUpdate', affiliateData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -204,5 +210,6 @@ module.exports = {
   connectedUsers,
   emitTwitterRaidApproved,
   emitTwitterRaidRejected,
-  emitNewTwitterRaidCompletion
+  emitNewTwitterRaidCompletion,
+  emitAffiliateEarningUpdate
 }; 
