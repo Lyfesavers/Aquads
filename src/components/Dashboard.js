@@ -305,7 +305,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       // Remove the approved completion from the pending list
       setPendingTwitterRaids(prev => 
         prev.filter(completion => 
-          completion.completionId !== data.completionId
+          completion.completionId.toString() !== data.completionId.toString()
         )
       );
     };
@@ -315,7 +315,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       // Remove the rejected completion from the pending list
       setPendingTwitterRaids(prev => 
         prev.filter(completion => 
-          completion.completionId !== data.completionId
+          completion.completionId.toString() !== data.completionId.toString()
         )
       );
     };
