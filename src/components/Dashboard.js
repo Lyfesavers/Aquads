@@ -277,7 +277,67 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser, socket]);
 
-  // Add Socket.io listeners for real-time updates
+  // Add Socket.io listeners for affiliate data (ALL USERS)
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const handleAffiliateInfoLoaded = (data) => {
+      setAffiliateInfo(data.affiliateInfo);
+      setPointsInfo(data.pointsInfo);
+      setAffiliateEarnings(data.detailedEarnings);
+      setEarningsSummary(data.earningsSummary);
+      setFreeRaidEligibility(data.freeRaidEligibility);
+      setIsLoadingAffiliates(false);
+    };
+
+    const handleAffiliateInfoError = (error) => {
+      setIsLoadingAffiliates(false);
+      setIsLoadingMainTab(false); // Stop main tab loading even if affiliate data fails
+    };
+
+    // Handle affiliate earning updates
+    const handleAffiliateEarningUpdate = (data) => {
+      // Update points directly from socket data for real-time updates
+      if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
+        // Update points directly from socket data
+        if (data.newTotalPoints !== undefined) {
+          setPointsInfo(prev => {
+            if (prev) {
+              // Update existing pointsInfo
+              return {
+                ...prev,
+                points: data.newTotalPoints
+              };
+            } else {
+              // Create new pointsInfo if it doesn't exist
+              return {
+                points: data.newTotalPoints,
+                pointsHistory: [],
+                giftCardRedemptions: [],
+                powerUps: {}
+              };
+            }
+          });
+          setLastSocketPointsUpdate(Date.now());
+        }
+        
+        // For non-points data updates, we could emit a socket event to refresh affiliate info
+        // But for now, we'll rely on the existing socket-based affiliate info loading
+      }
+    };
+
+    socket.on('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+    socket.on('affiliateInfoError', handleAffiliateInfoError);
+    socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+
+    return () => {
+      socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+      socket.off('affiliateInfoError', handleAffiliateInfoError);
+      socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+    };
+  }, [socket, currentUser]);
+
+  // Add Socket.io listeners for admin-only features
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
 
@@ -313,59 +373,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setLoadingTwitterRaids(false);
     };
 
-    const handleAffiliateInfoLoaded = (data) => {
-      setAffiliateInfo(data.affiliateInfo);
-      setPointsInfo(data.pointsInfo);
-      setAffiliateEarnings(data.detailedEarnings);
-      setEarningsSummary(data.earningsSummary);
-      setFreeRaidEligibility(data.freeRaidEligibility);
-      setIsLoadingAffiliates(false);
-    };
-
-    const handleAffiliateInfoError = (error) => {
-      setIsLoadingAffiliates(false);
-      setIsLoadingMainTab(false); // Stop main tab loading even if affiliate data fails
-    };
-
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     socket.on('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
-    socket.on('affiliateInfoLoaded', handleAffiliateInfoLoaded);
-    socket.on('affiliateInfoError', handleAffiliateInfoError);
-
-    // Handle affiliate earning updates
-    const handleAffiliateEarningUpdate = (data) => {
-      // Update points directly from socket data for real-time updates
-      if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
-        // Update points directly from socket data
-        if (data.newTotalPoints !== undefined) {
-          setPointsInfo(prev => {
-            if (prev) {
-              // Update existing pointsInfo
-              return {
-                ...prev,
-                points: data.newTotalPoints
-              };
-            } else {
-              // Create new pointsInfo if it doesn't exist
-              return {
-                points: data.newTotalPoints,
-                pointsHistory: [],
-                giftCardRedemptions: [],
-                powerUps: {}
-              };
-            }
-          });
-          setLastSocketPointsUpdate(Date.now());
-        }
-        
-        // For non-points data updates, we could emit a socket event to refresh affiliate info
-        // But for now, we'll rely on the existing socket-based affiliate info loading
-      }
-    };
-    socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -373,9 +385,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
       socket.off('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
-      socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
-      socket.off('affiliateInfoError', handleAffiliateInfoError);
-      socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
     };
   }, [socket, currentUser]);
 
