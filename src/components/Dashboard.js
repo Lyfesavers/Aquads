@@ -288,13 +288,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser?.isAdmin) {
-      // Initial load of existing pending completions (one-time only)
-      // After this, all updates will be handled by socket events
-      fetchPendingTwitterRaids();
+    if (currentUser?.isAdmin && socket) {
+      // Request pending completions via socket instead of API call
+      socket.emit('requestPendingCompletions', {
+        isAdmin: currentUser.isAdmin,
+        userId: currentUser.userId || currentUser.id
+      });
       fetchPendingFacebookRaids();
     }
-  }, [currentUser]);
+  }, [currentUser, socket]);
 
   // Add Socket.io listeners for real-time updates
   useEffect(() => {
@@ -326,9 +328,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPendingTwitterRaids(prev => [...prev, data]);
     };
 
+    const handlePendingCompletionsLoaded = (data) => {
+      console.log('Pending completions loaded via socket:', data);
+      setPendingTwitterRaids(data.pendingCompletions);
+      setLoadingTwitterRaids(false);
+    };
+
+    const handlePendingCompletionsError = (error) => {
+      console.error('Error loading pending completions:', error);
+      setLoadingTwitterRaids(false);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
+    socket.on('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
+    socket.on('pendingCompletionsError', handlePendingCompletionsError);
 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
@@ -369,6 +384,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
       socket.off('twitterRaidCompletionRejected', handleTwitterRaidRejected);
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
+      socket.off('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
+      socket.off('pendingCompletionsError', handlePendingCompletionsError);
       socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
     };
   }, [socket, currentUser]);
@@ -1309,28 +1326,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedAdForBump(null);
   };
 
-  // Add this function to fetch pending Twitter raid completions
-  const fetchPendingTwitterRaids = async () => {
-    setLoadingTwitterRaids(true);
-    try {
-      const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch pending completions');
-      }
-      
-      const data = await response.json();
-      setPendingTwitterRaids(data.pendingCompletions || []);
-    } catch (error) {
-      setPendingTwitterRaids([]);
-    } finally {
-      setLoadingTwitterRaids(false);
-    }
-  };
 
   // Add these functions to handle Twitter raid completion approvals and rejections
   const handleApproveTwitterRaid = async (completion) => {

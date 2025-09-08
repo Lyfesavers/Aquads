@@ -17,6 +17,68 @@ function init(server) {
   // Add socket event handlers
   io.on('connection', (socket) => {
 
+    // Handle admin requesting pending completions
+    socket.on('requestPendingCompletions', async (userData) => {
+      if (userData && userData.isAdmin) {
+        try {
+          const TwitterRaid = require('./models/TwitterRaid');
+          const mongoose = require('mongoose');
+          
+          // Get raids with pending completions
+          const raids = await TwitterRaid.find({
+            completions: {
+              $elemMatch: {
+                approvalStatus: 'pending'
+              }
+            }
+          })
+          .populate('completions.userId', 'username email')
+          .populate('createdBy', 'username')
+          .lean();
+
+          // Extract pending completions with raid info
+          const pendingCompletions = [];
+          
+          raids.forEach(raid => {
+            raid.completions.forEach(completion => {
+              if (completion.approvalStatus === 'pending') {
+                pendingCompletions.push({
+                  completionId: completion._id,
+                  raidId: raid._id,
+                  raidTitle: raid.title,
+                  raidTweetUrl: raid.tweetUrl,
+                  pointsAmount: raid.points || 50,
+                  user: completion.userId,
+                  twitterUsername: completion.twitterUsername,
+                  verificationMethod: completion.verificationMethod,
+                  verificationNote: completion.verificationNote,
+                  iframeVerified: completion.iframeVerified,
+                  completedAt: completion.completedAt,
+                  ipAddress: completion.ipAddress,
+                  trustScore: {
+                    totalCompletions: 0,
+                    approvedCompletions: 0,
+                    approvalRate: 0,
+                    trustLevel: 'new'
+                  }
+                });
+              }
+            });
+          });
+
+          // Send all pending completions to this admin
+          socket.emit('pendingCompletionsLoaded', {
+            pendingCompletions,
+            total: pendingCompletions.length
+          });
+          
+        } catch (error) {
+          console.error('Error fetching pending completions for admin:', error);
+          socket.emit('pendingCompletionsError', { error: 'Failed to fetch pending completions' });
+        }
+      }
+    });
+
     // Handle user authentication and online status
     socket.on('userOnline', async (userData) => {
       if (userData && userData.userId) {
