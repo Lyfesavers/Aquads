@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
+import { socket } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -200,7 +201,50 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   }, [currentUser]);
 
+  // Socket event listeners for real-time raid updates
+  useEffect(() => {
+    if (!socket) return;
 
+    const handleRaidCompletionCountUpdated = (data) => {
+      setRaids(prevRaids => {
+        return prevRaids.map(raid => {
+          if (raid._id === data.raidId) {
+            let newCompletionCount = raid.completionCount || 0;
+            let newUserCompleted = raid.userCompleted || false;
+            
+            if (data.type === 'approved') {
+              // Increment completion count when approved
+              newCompletionCount += 1;
+            } else if (data.type === 'rejected') {
+              // Don't change completion count for rejected (it was never counted)
+            } else if (data.type === 'submitted') {
+              // Don't change completion count for submitted (pending approval)
+              // But mark as user completed if it's the current user
+              if (currentUser && data.userId) {
+                const currentUserId = currentUser.userId || currentUser.id || currentUser._id;
+                if (currentUserId && currentUserId.toString() === data.userId.toString()) {
+                  newUserCompleted = true;
+                }
+              }
+            }
+            
+            return {
+              ...raid,
+              completionCount: newCompletionCount,
+              userCompleted: newUserCompleted
+            };
+          }
+          return raid;
+        });
+      });
+    };
+
+    socket.on('raidCompletionCountUpdated', handleRaidCompletionCountUpdated);
+
+    return () => {
+      socket.off('raidCompletionCountUpdated', handleRaidCompletionCountUpdated);
+    };
+  }, [socket, currentUser]);
 
   useEffect(() => {
     // When tweet URL changes, try to embed it

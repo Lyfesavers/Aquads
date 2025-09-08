@@ -240,18 +240,37 @@ function getConnectedUsers() {
 function emitTwitterRaidApproved(completionData) {
   if (io) {
     io.emit('twitterRaidCompletionApproved', completionData);
+    // Also emit raid update for main page
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'approved',
+      completionId: completionData.completionId
+    });
   }
 }
 
 function emitTwitterRaidRejected(completionData) {
   if (io) {
     io.emit('twitterRaidCompletionRejected', completionData);
+    // Also emit raid update for main page
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'rejected',
+      completionId: completionData.completionId
+    });
   }
 }
 
 function emitNewTwitterRaidCompletion(completionData) {
   if (io) {
     io.emit('newTwitterRaidCompletion', completionData);
+    // Also emit raid update for main page
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'submitted',
+      completionId: completionData.completionId,
+      userId: completionData.user._id
+    });
   }
 }
 
