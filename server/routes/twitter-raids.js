@@ -806,9 +806,6 @@ router.get('/test-bot', auth, async (req, res) => {
 });
 
 router.get('/completions/pending', auth, async (req, res) => {
-  const startTime = Date.now();
-  console.log(`[${new Date().toISOString()}] 🔍 Starting pending completions API call`);
-  
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Only admins can view pending completions' });

@@ -303,7 +303,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!socket || !currentUser?.isAdmin) return;
 
     const handleTwitterRaidApproved = (data) => {
-      console.log('Twitter raid approved:', data);
       // Remove the approved completion from the pending list
       setPendingTwitterRaids(prev => 
         prev.filter(completion => 
@@ -313,7 +312,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
 
     const handleTwitterRaidRejected = (data) => {
-      console.log('Twitter raid rejected:', data);
       // Remove the rejected completion from the pending list
       setPendingTwitterRaids(prev => 
         prev.filter(completion => 
@@ -323,19 +321,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
 
     const handleNewTwitterRaidCompletion = (data) => {
-      console.log('New Twitter raid completion:', data);
       // Add the new completion to the pending list immediately
       setPendingTwitterRaids(prev => [...prev, data]);
     };
 
     const handlePendingCompletionsLoaded = (data) => {
-      console.log('Pending completions loaded via socket:', data);
       setPendingTwitterRaids(data.pendingCompletions);
       setLoadingTwitterRaids(false);
     };
 
     const handlePendingCompletionsError = (error) => {
-      console.error('Error loading pending completions:', error);
       setLoadingTwitterRaids(false);
     };
 
