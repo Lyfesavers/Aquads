@@ -112,13 +112,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [initialActiveTab]);
   
-  // Simulate loading for main dashboard tab
+  // Set loading to false when affiliate data is loaded
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (affiliateInfo && pointsInfo) {
       setIsLoadingMainTab(false);
-    }, 1000); // Show loading for 1 second
+    }
+  }, [affiliateInfo, pointsInfo]);
+
+  // Fallback timeout to prevent infinite loading (10 seconds max)
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      setIsLoadingMainTab(false);
+    }, 10000);
     
-    return () => clearTimeout(timer);
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   // Fetch bump requests and banner ads when dashboard opens
@@ -317,6 +324,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleAffiliateInfoError = (error) => {
       setIsLoadingAffiliates(false);
+      setIsLoadingMainTab(false); // Stop main tab loading even if affiliate data fails
     };
 
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
