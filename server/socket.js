@@ -35,18 +35,29 @@ function init(server) {
             return;
           }
           
-          // Calculate affiliate earnings summary
-          const earningsSummary = await AffiliateEarning.aggregate([
-            { $match: { affiliateId: new mongoose.Types.ObjectId(userId) } },
-            {
-              $group: {
-                _id: null,
-                totalEarnings: { $sum: '$commissionEarned' },
-                totalAds: { $sum: 1 },
-                totalAmount: { $sum: '$adAmount' }
-              }
-            }
-          ]);
+          // Calculate affiliate earnings summary (matching the original API format)
+          const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(userId) }).lean();
+          const currentRate = await AffiliateEarning.calculateCommissionRate(userId) || 0.10;
+          
+          // Calculate totals
+          const totalAdRevenue = earnings.reduce((sum, e) => sum + (e.adAmount || 0), 0);
+          const totalEarned = earnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          const pendingAmount = earnings
+            .filter(e => e?.status === 'pending')
+            .reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          
+          const earningsSummary = {
+            totalEarned: totalEarned || 0,
+            pendingAmount: pendingAmount || 0,
+            totalAdRevenue: totalAdRevenue || 0,
+            currentRate: currentRate || 0.10,
+            isVipAffiliate: user.isVipAffiliate || false,
+            nextTier: currentRate < 0.20 ? {
+              rate: currentRate === 0.10 ? 0.15 : 0.20,
+              amountNeeded: currentRate === 0.10 ? 5000 : 25000,
+              progress: totalAdRevenue || 0
+            } : null
+          };
           
           // Calculate detailed earnings
           const detailedEarnings = await AffiliateEarning.find({ affiliateId: userId })
@@ -74,7 +85,7 @@ function init(server) {
               giftCardRedemptions: user.giftCardRedemptions || [],
               powerUps: user.powerUps || {}
             },
-            earningsSummary: earningsSummary[0] || { totalEarnings: 0, totalAds: 0, totalAmount: 0 },
+            earningsSummary: earningsSummary,
             detailedEarnings: detailedEarnings,
             freeRaidEligibility: freeRaidEligibility
           };
