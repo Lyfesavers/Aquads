@@ -138,10 +138,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser?.token) {
-      fetchAffiliateInfo();
+    if (currentUser?.token && socket) {
+      // Request affiliate info via socket instead of API call
+      socket.emit('requestAffiliateInfo', {
+        userId: currentUser.userId || currentUser.id || currentUser._id
+      });
     }
-  }, [currentUser]);
+  }, [currentUser, socket]);
 
   useEffect(() => {
     if (currentUser?.isAdmin) {
@@ -208,37 +211,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [socket, currentUser]);
 
-  useEffect(() => {
-    if (currentUser?.token) {
-      // Fetch affiliate earnings summary
-      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/summary`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          setEarningsSummary(data);
-        })
-        .catch(error => {
-          // Error fetching earnings summary
-        });
-
-      // Fetch detailed earnings
-      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/earnings`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          setAffiliateEarnings(data);
-        })
-        .catch(error => {
-          // Error fetching affiliate earnings
-        });
-    }
-  }, [currentUser]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -334,11 +306,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setLoadingTwitterRaids(false);
     };
 
+    const handleAffiliateInfoLoaded = (data) => {
+      setAffiliateInfo(data.affiliateInfo);
+      setPointsInfo(data.pointsInfo);
+      setAffiliateEarnings(data.detailedEarnings);
+      setEarningsSummary(data.earningsSummary);
+      setFreeRaidEligibility(data.freeRaidEligibility);
+      setIsLoadingAffiliates(false);
+    };
+
+    const handleAffiliateInfoError = (error) => {
+      setIsLoadingAffiliates(false);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     socket.on('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
+    socket.on('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+    socket.on('affiliateInfoError', handleAffiliateInfoError);
 
     // Handle affiliate earning updates
     const handleAffiliateEarningUpdate = (data) => {
@@ -366,11 +353,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setLastSocketPointsUpdate(Date.now());
         }
         
-        // Only refresh affiliate info for non-points data (affiliate count, commission rate, etc.)
-        // Don't call fetchAffiliateInfo() as it will override the socket points with stale API data
-        if (data.type !== 'points_awarded') {
-          fetchAffiliateInfo();
-        }
+        // For non-points data updates, we could emit a socket event to refresh affiliate info
+        // But for now, we'll rely on the existing socket-based affiliate info loading
       }
     };
     socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
@@ -381,6 +365,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
       socket.off('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
+      socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+      socket.off('affiliateInfoError', handleAffiliateInfoError);
       socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
     };
   }, [socket, currentUser]);
@@ -401,59 +387,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
 
 
-  const fetchAffiliateInfo = async () => {
-    try {
-      const currentId = currentUser?.userId || currentUser?.id || currentUser?._id;
-      
-      const [affiliateResponse, pointsResponse, freeRaidResponse] = await Promise.all([
-        fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
-        }),
-        fetch(`${process.env.REACT_APP_API_URL}/api/points/my-points`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
-        }),
-        fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/free-raid-project/${currentId}`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
-        })
-      ]);
-
-      if (affiliateResponse.ok) {
-        const data = await affiliateResponse.json();
-        setAffiliateInfo(data);
-      }
-
-      if (pointsResponse.ok) {
-        const data = await pointsResponse.json();
-        
-        // Don't override points if we recently got a socket update (within last 5 seconds)
-        const timeSinceLastSocketUpdate = lastSocketPointsUpdate ? Date.now() - lastSocketPointsUpdate : Infinity;
-        if (timeSinceLastSocketUpdate < 5000) {
-          // Only update non-points data
-          setPointsInfo(prev => ({
-            ...data,
-            points: prev?.points || data.points
-          }));
-        } else {
-          setPointsInfo(data);
-        }
-      }
-
-      if (freeRaidResponse.ok) {
-        const data = await freeRaidResponse.json();
-        setFreeRaidEligibility(data.eligibility);
-      }
-    } catch (error) {
-      // Error fetching affiliate info
-    } finally {
-      setIsLoadingAffiliates(false);
-    }
-  };
 
   const fetchAffiliateAnalytics = async () => {
     setLoadingAnalytics(true);
@@ -496,8 +429,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error(data.error || 'Failed to redeem points');
       }
 
-      // Refresh points info after redemption
-      fetchAffiliateInfo();
+      // Refresh points info after redemption via socket
+      socket.emit('requestAffiliateInfo', {
+        userId: currentUser.userId || currentUser.id || currentUser._id
+      });
       alert('Redemption request submitted successfully! Our team will process your request soon.');
     } catch (error) {
       setRedeemError(error.message);

@@ -17,6 +17,77 @@ function init(server) {
   // Add socket event handlers
   io.on('connection', (socket) => {
 
+    // Handle user requesting affiliate info
+    socket.on('requestAffiliateInfo', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const User = require('./models/User');
+          const AffiliateEarning = require('./models/AffiliateEarning');
+          const mongoose = require('mongoose');
+          
+          const userId = userData.userId;
+          
+          // Fetch affiliate info
+          const user = await User.findById(userId).select('affiliateCode referredBy referredUsers affiliateCount commissionRate isVipAffiliate freeRaidProjectEligibility points pointsHistory giftCardRedemptions powerUps');
+          
+          if (!user) {
+            socket.emit('affiliateInfoError', { error: 'User not found' });
+            return;
+          }
+          
+          // Calculate affiliate earnings summary
+          const earningsSummary = await AffiliateEarning.aggregate([
+            { $match: { affiliateId: new mongoose.Types.ObjectId(userId) } },
+            {
+              $group: {
+                _id: null,
+                totalEarnings: { $sum: '$commissionEarned' },
+                totalAds: { $sum: 1 },
+                totalAmount: { $sum: '$adAmount' }
+              }
+            }
+          ]);
+          
+          // Calculate detailed earnings
+          const detailedEarnings = await AffiliateEarning.find({ affiliateId: userId })
+            .populate('referredUserId', 'username email')
+            .populate('adId', 'title')
+            .sort({ createdAt: -1 })
+            .limit(50);
+          
+          // Calculate free raid eligibility
+          const freeRaidEligibility = user.checkFreeRaidEligibility ? user.checkFreeRaidEligibility() : { eligible: false, reason: 'Not available' };
+          
+          const affiliateData = {
+            affiliateInfo: {
+              affiliateCode: user.affiliateCode,
+              referredBy: user.referredBy,
+              referredUsers: user.referredUsers || [],
+              affiliateCount: user.affiliateCount || 0,
+              commissionRate: user.commissionRate || 0,
+              isVipAffiliate: user.isVipAffiliate || false,
+              freeRaidProjectEligibility: user.freeRaidProjectEligibility || false
+            },
+            pointsInfo: {
+              points: user.points || 0,
+              pointsHistory: user.pointsHistory || [],
+              giftCardRedemptions: user.giftCardRedemptions || [],
+              powerUps: user.powerUps || {}
+            },
+            earningsSummary: earningsSummary[0] || { totalEarnings: 0, totalAds: 0, totalAmount: 0 },
+            detailedEarnings: detailedEarnings,
+            freeRaidEligibility: freeRaidEligibility
+          };
+          
+          socket.emit('affiliateInfoLoaded', affiliateData);
+          
+        } catch (error) {
+          console.error('Error fetching affiliate info:', error);
+          socket.emit('affiliateInfoError', { error: 'Failed to fetch affiliate info' });
+        }
+      }
+    });
+
     // Handle admin requesting pending completions
     socket.on('requestPendingCompletions', async (userData) => {
       if (userData && userData.isAdmin) {
