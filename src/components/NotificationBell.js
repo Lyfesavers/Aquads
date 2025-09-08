@@ -67,10 +67,7 @@ const NotificationBell = ({ currentUser }) => {
           
           // Store the working path for future use
           window.WORKING_NOTIFICATION_PATH = path;
-          console.log(`✅ Notifications loaded successfully from: ${path}`);
           return;
-        } else {
-          console.log(`❌ Failed to load notifications from: ${path} (Status: ${response.status})`);
         }
       } catch (error) {
         // Continue to next path
@@ -135,7 +132,6 @@ const NotificationBell = ({ currentUser }) => {
     
     // Prevent duplicate calls
     if (isMarkingAllRead.current) {
-      console.log('⏳ Mark-all-read already in progress, skipping duplicate call');
       return;
     }
     
@@ -166,7 +162,6 @@ const NotificationBell = ({ currentUser }) => {
           setUnreadCount(0);
           success = true;
           
-          console.log(`✅ Marked all notifications as read: ${data.modifiedCount || 'unknown'} notifications`);
           
           // Remember the working path for future requests
           window.WORKING_MARK_ALL_READ_PATH = path;
@@ -188,11 +183,9 @@ const NotificationBell = ({ currentUser }) => {
                   setNotifications(data);
                   const unread = data.filter(note => !note.isRead).length;
                   setUnreadCount(unread);
-                  console.log('🔄 Refreshed notifications after mark-all-read');
                 }
               })
               .catch(error => {
-                console.log('❌ Failed to refresh notifications after mark-all-read:', error);
               });
             }
             refreshTimeoutRef.current = null;
@@ -200,7 +193,6 @@ const NotificationBell = ({ currentUser }) => {
           
           break;
         } else {
-          console.log(`❌ Failed to mark all as read from: ${path} (Status: ${response.status})`);
         }
       } catch (error) {
         // Continue to next path
@@ -242,20 +234,16 @@ const NotificationBell = ({ currentUser }) => {
             
             if (response.ok) {
               const responseData = await response.json();
-              console.log(`✅ Marked notification as read: ${notification._id} via ${markReadPath}`, responseData);
               markReadSuccess = true;
               break;
             } else {
               const errorData = await response.text();
-              console.log(`❌ Failed to mark notification as read via ${markReadPath} (Status: ${response.status})`, errorData);
             }
           } catch (error) {
-            console.log(`❌ Error marking notification as read via ${markReadPath}:`, error);
           }
         }
         
         if (!markReadSuccess) {
-          console.log(`❌ Failed to mark notification as read via any endpoint: ${notification._id}`);
           return; // Don't update local state if backend update failed
         }
         
@@ -282,11 +270,9 @@ const NotificationBell = ({ currentUser }) => {
                 setNotifications(data);
                 const unread = data.filter(note => !note.isRead).length;
                 setUnreadCount(unread);
-                console.log('🔄 Refreshed notifications after mark-as-read');
               }
             })
             .catch(error => {
-              console.log('❌ Failed to refresh notifications after mark-as-read:', error);
             });
           }
           refreshTimeoutRef.current = null;
