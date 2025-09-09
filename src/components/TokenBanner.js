@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import logger from '../utils/logger';
 import Modal from './Modal';
+import './TokenBanner.css';
 
 // Move formatting functions outside component to prevent recreation on each render
 const formatVolume = (volume) => {
@@ -313,7 +314,7 @@ const TokenBanner = () => {
 
   return (
     <>
-      <div className="relative h-12 bg-gray-800">
+      <div className="relative h-12 bg-gray-800 token-banner-container">
         {/* View All Tokens Button */}
         <button
           onClick={() => setShowTokenModal(true)}

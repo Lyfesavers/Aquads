@@ -1,0 +1,43 @@
+/* TokenBanner Scroll Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 480s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* Token Banner Container Styles */
+.token-banner-container {
+  position: relative;
+}
+
+.token-banner-container::before,
+.token-banner-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.token-banner-container::before {
+  left: 0;
+  background: linear-gradient(to right, rgb(17, 24, 39), transparent);
+}
+
+.token-banner-container::after {
+  right: 0;
+  background: linear-gradient(to left, rgb(17, 24, 39), transparent);
+}
