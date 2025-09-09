@@ -11,9 +11,9 @@
 .animate-scroll {
   animation: scroll 480s linear infinite;
   will-change: transform;
-  transform: translateZ(0);
   backface-visibility: hidden;
-  perspective: 1000px;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 .animate-scroll:hover {
@@ -24,7 +24,6 @@
 .token-banner-container {
   position: relative;
   will-change: auto;
-  transform: translateZ(0);
   contain: layout style paint;
 }
 
@@ -38,7 +37,6 @@
   z-index: 0;
   pointer-events: none;
   will-change: auto;
-  transform: translateZ(0);
 }
 
 .token-banner-container::before {
@@ -56,9 +54,7 @@
   .animate-scroll {
     animation: scroll 360s linear infinite; /* Slightly faster for desktop */
     will-change: transform;
-    transform: translateZ(0);
     backface-visibility: hidden;
-    perspective: 1000px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
