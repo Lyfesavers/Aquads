@@ -1379,28 +1379,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             >
               <div 
                 className={`bg-gray-800/50 rounded-lg p-4 border relative ${
-                  isPendingPaid
-                    ? 'border-yellow-500/30 opacity-75 cursor-not-allowed'
-                    : isSelected
-                      ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] cursor-pointer rounded-b-none' 
-                      : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md cursor-pointer'
+                  isSelected
+                    ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] cursor-pointer rounded-b-none' 
+                    : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md cursor-pointer'
                 }`}
                 style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
-                onClick={() => isPendingPaid ? 
-                  showNotification('This raid is pending admin approval', 'warning') : 
-                  handleRaidClick(raid)}
+                onClick={() => handleRaidClick(raid)}
               >
-                {/* If raid is pending, add an overlay warning message */}
-                {isPendingPaid && (
-                  <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
-                    <div className="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      Awaiting Approval
-                    </div>
-                  </div>
-                )}
 
                 {/* Admin Delete Button */}
                 {currentUser?.isAdmin && (
