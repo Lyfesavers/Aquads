@@ -47,7 +47,6 @@ import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
-import RippleEffect from './components/RippleEffect';
 import useUserPresence from './hooks/useUserPresence';
 
 import ProjectInfo from './components/ProjectInfo';
@@ -2586,7 +2585,6 @@ function App() {
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
-      <RippleEffect />
       <Router>
         <NavigationListener 
           onNavigate={() => {
