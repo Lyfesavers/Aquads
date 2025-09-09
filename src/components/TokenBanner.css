@@ -10,6 +10,10 @@
 
 .animate-scroll {
   animation: scroll 480s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .animate-scroll:hover {
@@ -19,6 +23,9 @@
 /* Token Banner Container Styles */
 .token-banner-container {
   position: relative;
+  will-change: auto;
+  transform: translateZ(0);
+  contain: layout style paint;
 }
 
 .token-banner-container::before,
@@ -30,6 +37,8 @@
   width: 50px;
   z-index: 0;
   pointer-events: none;
+  will-change: auto;
+  transform: translateZ(0);
 }
 
 .token-banner-container::before {
@@ -40,4 +49,30 @@
 .token-banner-container::after {
   right: 0;
   background: linear-gradient(to left, rgb(17, 24, 39), transparent);
+}
+
+/* Desktop Performance Optimizations */
+@media (min-width: 769px) {
+  .animate-scroll {
+    animation: scroll 360s linear infinite; /* Slightly faster for desktop */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .token-banner-container {
+    contain: layout style paint;
+    will-change: auto;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll {
+    animation: none;
+    transform: translateX(0);
+  }
 }
