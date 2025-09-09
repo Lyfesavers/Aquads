@@ -120,55 +120,6 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-// Create a new paid Facebook raid (users)
-router.post('/paid', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { postUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
-
-    if (!postUrl || !title || !description || !txSignature) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Extract post ID from URL
-    const postId = extractFacebookPostId(postUrl);
-    if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
-    }
-
-    // Create the raid with pending payment status
-    const raid = new FacebookRaid({
-      postId,
-      postUrl,
-      title,
-      description,
-      points: 50, // Fixed points for paid raids
-      createdBy: req.user.id,
-      isPaid: true,
-      paymentStatus: 'pending',
-      txSignature,
-      paymentChain,
-      chainSymbol,
-      chainAddress,
-      active: true // Ensure the raid is active even if payment is pending
-    });
-
-    await raid.save();
-    
-    // Send Telegram notification
-    telegramService.sendRaidNotification({
-      postUrl: raid.postUrl,
-      points: raid.points,
-      title: raid.title,
-      description: raid.description,
-      platform: 'Facebook'
-    });
-    
-    res.status(201).json(raid);
-  } catch (error) {
-    console.error('Error creating paid Facebook raid:', error);
-    res.status(500).json({ error: 'Failed to create Facebook raid' });
-  }
-});
 
 // Create a new Facebook raid using affiliate points (users)
 router.post('/points', auth, requireEmailVerification, async (req, res) => {

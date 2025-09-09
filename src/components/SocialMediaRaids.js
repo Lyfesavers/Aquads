@@ -455,11 +455,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const handleRaidClick = (raid) => {
-    // Don't allow interaction with pending raids
-    if (raid.isPaid && raid.paymentStatus === 'pending') {
-      showNotification('This raid is pending admin approval', 'warning');
-      return;
-    }
     
     setSelectedRaid(raid);
     
@@ -1003,80 +998,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Admin function to approve a pending paid raid
-  const handleApproveRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can approve raids', 'error');
-      return;
-    }
-    
-    try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to approve raid');
-      }
-      
-      const result = await response.json();
-      showNotification(result.message || 'Raid approved successfully!', 'success');
-      
-      // Refresh raids list
-      fetchRaids();
-    } catch (error) {
-      showNotification(error.message || 'Failed to approve raid', 'error');
-    }
-  };
-  
-  // Admin function to reject a pending paid raid
-  const handleRejectRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can reject raids', 'error');
-      return;
-    }
-    
-    // Prompt for rejection reason
-    const reason = prompt('Enter reason for rejection:');
-    if (reason === null) return; // User cancelled
-    
-    try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({ rejectionReason: reason })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reject raid');
-      }
-      
-      const result = await response.json();
-      showNotification(result.message || 'Raid rejected', 'success');
-      
-      // Refresh raids list
-      fetchRaids();
-    } catch (error) {
-      showNotification(error.message || 'Failed to reject raid', 'error');
-    }
-  };
 
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
 
-  // Update the safeSelectedRaid check to also verify that raids are not pending
-  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) && 
-    !(selectedRaid.isPaid && selectedRaid.paymentStatus === 'pending') ? selectedRaid : null;
+  // Update the safeSelectedRaid check
+  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) ? selectedRaid : null;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
@@ -1408,7 +1336,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {raids.map(raid => {
             const isSelected = safeSelectedRaid?._id === raid._id;
-            const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
             
             // Check if user completed this raid (with multiple fallbacks)
             let userCompleted = false;
@@ -1502,21 +1429,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div>
                     <div className="flex items-center mb-1">
                       <h3 className="text-white font-bold mr-2">{raid.title}</h3>
-                      {raid.isPaid && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          raid.paymentStatus === 'approved' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : raid.paymentStatus === 'pending' 
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {raid.paymentStatus === 'approved' 
-                            ? 'Paid' 
-                            : raid.paymentStatus === 'pending' 
-                              ? 'Payment Pending' 
-                              : 'Payment Rejected'}
-                        </span>
-                      )}
                     </div>
                     <p className="text-gray-400 text-sm">
                       Created by: {raid.createdBy?.username || 'Admin'}
@@ -1560,35 +1472,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
                 </div>
                 
-                {/* Admin Approval Buttons for Pending Paid Raids */}
-                {currentUser?.isAdmin && raid.isPaid && raid.paymentStatus === 'pending' && (
-                  <div className="mt-3 pt-3 border-t border-gray-700 flex space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApproveRaid(raid._id);
-                      }}
-                      className="bg-green-600/20 hover:bg-green-600/40 text-green-400 px-2 py-1 rounded text-sm flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Approve
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRejectRaid(raid._id);
-                      }}
-                      className="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-2 py-1 rounded text-sm flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Reject
-                    </button>
-                  </div>
-                )}
                 
                 {/* Completions */}
                 {raid.completions && raid.completions.length > 0 && (
@@ -1630,11 +1513,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         </svg>
                       </a>
                       
-                      {safeSelectedRaid.isPaid && (
-                        <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs inline-block">
-                          Paid Raid
-                        </span>
-                      )}
                     </div>
                     
                     {/* Interactive section with tabs for better organization */}

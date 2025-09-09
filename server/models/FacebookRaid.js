@@ -27,32 +27,6 @@ const facebookRaidSchema = new Schema({
     ref: 'User',
     required: true
   },
-  // Payment related fields
-  isPaid: {
-    type: Boolean,
-    default: false
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
-  },
-  txSignature: {
-    type: String,
-    default: null
-  },
-  paymentChain: {
-    type: String,
-    default: null
-  },
-  chainSymbol: {
-    type: String,
-    default: null
-  },
-  chainAddress: {
-    type: String,
-    default: null
-  },
   // Points payment related fields
   paidWithPoints: {
     type: Boolean,
@@ -140,8 +114,6 @@ const facebookRaidSchema = new Schema({
 facebookRaidSchema.index({ active: 1, createdAt: -1 }); // For main raids listing
 facebookRaidSchema.index({ createdBy: 1 }); // For user's raids
 facebookRaidSchema.index({ postId: 1 }); // For post ID lookups
-facebookRaidSchema.index({ paymentStatus: 1 }); // For payment status filtering
-facebookRaidSchema.index({ isPaid: 1 }); // For paid/unpaid filtering
 facebookRaidSchema.index({ 'completions.userId': 1 }); // For user completion lookups
 facebookRaidSchema.index({ 'completions.verified': 1 }); // For verified completions
 facebookRaidSchema.index({ 'completions.approvalStatus': 1 }); // For approval status filtering

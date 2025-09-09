@@ -27,32 +27,6 @@ const twitterRaidSchema = new Schema({
     ref: 'User',
     required: true
   },
-  // Payment related fields
-  isPaid: {
-    type: Boolean,
-    default: false
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
-  },
-  txSignature: {
-    type: String,
-    default: null
-  },
-  paymentChain: {
-    type: String,
-    default: null
-  },
-  chainSymbol: {
-    type: String,
-    default: null
-  },
-  chainAddress: {
-    type: String,
-    default: null
-  },
   // Points payment related fields
   paidWithPoints: {
     type: Boolean,
@@ -140,8 +114,6 @@ const twitterRaidSchema = new Schema({
 twitterRaidSchema.index({ active: 1, createdAt: -1 }); // For main raids listing
 twitterRaidSchema.index({ createdBy: 1 }); // For user's raids
 twitterRaidSchema.index({ tweetId: 1 }); // For tweet ID lookups
-twitterRaidSchema.index({ paymentStatus: 1 }); // For payment status filtering
-twitterRaidSchema.index({ isPaid: 1 }); // For paid/unpaid filtering
 twitterRaidSchema.index({ 'completions.verified': 1 }); // For verified completions
 
 // Extract tweet ID from URL if only URL is provided
