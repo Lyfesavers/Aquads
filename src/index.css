@@ -747,22 +747,6 @@ body {
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
 }
 
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-scroll {
-  animation: scroll 480s linear infinite;
-}
-
-.animate-scroll:hover {
-  animation-play-state: paused;
-}
 
 /* Add this if you want a gradient fade effect on the sides */
 .token-banner-container {
@@ -1750,22 +1734,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
 }
 
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-scroll {
-  animation: scroll 480s linear infinite;
-}
-
-.animate-scroll:hover {
-  animation-play-state: paused;
-}
 
 /* Add this if you want a gradient fade effect on the sides */
 .token-banner-container {
@@ -2751,22 +2719,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
 }
 
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-scroll {
-  animation: scroll 480s linear infinite;
-}
-
-.animate-scroll:hover {
-  animation-play-state: paused;
-}
 
 /* Add this if you want a gradient fade effect on the sides */
 .token-banner-container {
@@ -4024,5 +3976,19 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   animation: tooltip-fade-in 0.2s ease-out;
 }
 
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
 
+.animate-scroll {
+  animation: scroll 480s linear infinite;
+}
 
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
