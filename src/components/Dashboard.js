@@ -1995,6 +1995,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
                       <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 50 points for completing social media raids</p>
+                      <p>• Earn 100 points for hosting X spaces for 1 hour minimum and speaking about Aquads and its features</p>
                       <p>• Earn 20 points for each new affiliate</p>
                       <p>• Earn 50 points for each game vote in the gamehub</p>
                       <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
