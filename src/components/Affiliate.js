@@ -206,7 +206,7 @@ const Affiliate = () => {
                           <span className="text-green-400 font-bold">50 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
-                          <span className="text-gray-300">Hosting X spaces (1hr min, discuss Aquads)</span>
+                          <span className="text-gray-300">Hosting X spaces (1hr min, discuss Aquads, recorded)</span>
                           <span className="text-green-400 font-bold">100 pts</span>
                         </div>
                       </div>
