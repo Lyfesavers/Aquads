@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { emitAdEvent } = require('../middleware/socketEmitter');
+const { emitBumpRequestUpdate } = require('../socket');
 const BumpRequest = require('../models/BumpRequest');
 const Ad = require('../models/Ad');
 const User = require('../models/User');
@@ -73,6 +74,10 @@ router.post('/', async (req, res) => {
     });
 
     const savedRequest = await bumpRequest.save();
+    
+    // Emit socket event for new bump request
+    emitBumpRequestUpdate('create', savedRequest);
+    
     res.status(201).json(savedRequest);
   } catch (error) {
     console.error('Error creating bump request:', error);
@@ -177,6 +182,9 @@ router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
       console.error('Error recording affiliate commission:', commissionError);
     }
 
+    // Emit socket event for approved bump request
+    emitBumpRequestUpdate('approve', bumpRequest);
+
     res.json({ bumpRequest, ad });
   } catch (error) {
     console.error('Error approving bump request:', error);
@@ -226,6 +234,9 @@ router.post('/reject', auth, emitAdEvent('update'), async (req, res) => {
     if (!ad) {
       return res.status(404).json({ error: 'Ad not found. The bump request exists but the ad may have been deleted.' });
     }
+
+    // Emit socket event for rejected bump request
+    emitBumpRequestUpdate('reject', bumpRequest);
 
     res.json({ bumpRequest, ad });
   } catch (error) {

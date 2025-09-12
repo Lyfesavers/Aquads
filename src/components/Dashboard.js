@@ -337,6 +337,38 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
   }, [socket, currentUser]);
 
+  // Socket listeners for bump request updates
+  useEffect(() => {
+    if (!socket || !currentUser?.isAdmin) return;
+
+    const handleBumpRequestUpdate = (data) => {
+      const { type, bumpRequest } = data;
+      
+      if (type === 'create') {
+        // Add new bump request to the list
+        setBumpRequests(prevRequests => {
+          // Check if it already exists to avoid duplicates
+          const exists = prevRequests.some(req => req._id === bumpRequest._id);
+          if (!exists) {
+            return [bumpRequest, ...prevRequests];
+          }
+          return prevRequests;
+        });
+      } else if (type === 'approve' || type === 'reject') {
+        // Remove processed bump request from the list
+        setBumpRequests(prevRequests => 
+          prevRequests.filter(req => req._id !== bumpRequest._id)
+        );
+      }
+    };
+
+    socket.on('bumpRequestUpdated', handleBumpRequestUpdate);
+
+    return () => {
+      socket.off('bumpRequestUpdated', handleBumpRequestUpdate);
+    };
+  }, [socket, currentUser]);
+
   // Add Socket.io listeners for admin-only features
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
@@ -488,10 +520,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         
         const result = await response.json();
         
-        // Refresh the bump requests data
-        const updatedBumpRequests = await fetchBumpRequests();
-        setBumpRequests(updatedBumpRequests);
-        
+        // Socket event will automatically update the bump requests list
         setShowRejectModal(false);
         setRejectReason('');
         setSelectedBumpRequest(null);
@@ -524,10 +553,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       const result = await response.json();
       
-      // Refresh the bump requests data
-      const updatedBumpRequests = await fetchBumpRequests();
-      setBumpRequests(updatedBumpRequests);
-      
+      // Socket event will automatically update the bump requests list
       alert(result.message || 'Bump request approved successfully!');
     } catch (error) {
       alert('Error approving bump request: ' + error.message);

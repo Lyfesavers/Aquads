@@ -368,6 +368,15 @@ function emitTokenUpdate(type, tokens) {
   io.emit('tokensUpdated', { type, tokens });
 }
 
+// Utility function to emit bump request updates
+function emitBumpRequestUpdate(type, bumpRequest) {
+  if (!io) {
+    return;
+  }
+  
+  io.emit('bumpRequestUpdated', { type, bumpRequest });
+}
+
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -437,6 +446,7 @@ module.exports = {
   getIO: () => getIO(),
   emitAdUpdate,
   emitTokenUpdate,
+  emitBumpRequestUpdate,
   getOnlineUsersCount,
   isUserOnline,
   getConnectedUsers,
