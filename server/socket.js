@@ -99,6 +99,28 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending bump requests
+    socket.on('requestPendingBumpRequests', async (userData) => {
+      if (userData && userData.isAdmin) {
+        try {
+          const BumpRequest = require('./models/BumpRequest');
+          
+          // Get all pending bump requests
+          const bumpRequests = await BumpRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
+          
+          // Send all pending bump requests to this admin
+          socket.emit('pendingBumpRequestsLoaded', {
+            bumpRequests,
+            total: bumpRequests.length
+          });
+          
+        } catch (error) {
+          console.error('Error fetching pending bump requests for admin:', error);
+          socket.emit('pendingBumpRequestsError', { error: 'Failed to fetch pending bump requests' });
+        }
+      }
+    });
+
     // Handle admin requesting pending completions
     socket.on('requestPendingCompletions', async (userData) => {
       if (userData && userData.isAdmin) {
@@ -371,11 +393,9 @@ function emitTokenUpdate(type, tokens) {
 // Utility function to emit bump request updates
 function emitBumpRequestUpdate(type, bumpRequest) {
   if (!io) {
-    console.log('Socket.io not initialized, cannot emit bump request update');
     return;
   }
   
-  console.log(`Emitting bumpRequestUpdated event: type=${type}, bumpRequestId=${bumpRequest._id}`);
   io.emit('bumpRequestUpdated', { type, bumpRequest });
 }
 
