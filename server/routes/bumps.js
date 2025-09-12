@@ -76,6 +76,7 @@ router.post('/', async (req, res) => {
     const savedRequest = await bumpRequest.save();
     
     // Emit socket event for new bump request
+    console.log('Emitting bumpRequestUpdated event for new bump request:', savedRequest._id);
     emitBumpRequestUpdate('create', savedRequest);
     
     res.status(201).json(savedRequest);

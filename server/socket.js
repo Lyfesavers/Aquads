@@ -371,9 +371,11 @@ function emitTokenUpdate(type, tokens) {
 // Utility function to emit bump request updates
 function emitBumpRequestUpdate(type, bumpRequest) {
   if (!io) {
+    console.log('Socket.io not initialized, cannot emit bump request update');
     return;
   }
   
+  console.log(`Emitting bumpRequestUpdated event: type=${type}, bumpRequestId=${bumpRequest._id}`);
   io.emit('bumpRequestUpdated', { type, bumpRequest });
 }
 

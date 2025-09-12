@@ -131,12 +131,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
     if (currentUser?.isAdmin) {
+      console.log('Fetching initial bump requests for admin');
       fetchBumpRequests()
         .then(data => {
+          console.log('Initial bump requests fetched:', data);
           setBumpRequests(data);
         })
         .catch(error => {
-          // Error fetching bump requests
+          console.error('Error fetching initial bump requests:', error);
         });
 
       // Fetch banner ads
@@ -339,22 +341,32 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Socket listeners for bump request updates
   useEffect(() => {
+    console.log('Setting up bump request socket listeners:', { 
+      hasSocket: !!socket, 
+      isAdmin: currentUser?.isAdmin,
+      socketConnected: socket?.connected
+    });
     if (!socket || !currentUser?.isAdmin) return;
 
     const handleBumpRequestUpdate = (data) => {
+      console.log('Received bumpRequestUpdated event:', data);
       const { type, bumpRequest } = data;
       
       if (type === 'create') {
+        console.log('Adding new bump request:', bumpRequest);
         // Add new bump request to the list
         setBumpRequests(prevRequests => {
           // Check if it already exists to avoid duplicates
           const exists = prevRequests.some(req => req._id === bumpRequest._id);
           if (!exists) {
+            console.log('Adding bump request to list');
             return [bumpRequest, ...prevRequests];
           }
+          console.log('Bump request already exists, not adding');
           return prevRequests;
         });
       } else if (type === 'approve' || type === 'reject') {
+        console.log('Removing processed bump request:', bumpRequest);
         // Remove processed bump request from the list
         setBumpRequests(prevRequests => 
           prevRequests.filter(req => req._id !== bumpRequest._id)
