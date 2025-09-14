@@ -1377,16 +1377,17 @@
 /* Mobile responsive adjustments for search */
 @media (max-width: 768px) {
   .search-results-dropdown {
-    max-height: 300px;
-    min-width: 250px;
-    overflow-y: auto;
     position: fixed;
-    top: auto;
+    top: 0;
+    left: 0;
+    right: 0;
     bottom: 0;
-    left: 10px;
-    right: 10px;
-    max-height: 50vh;
-    border-radius: 12px 12px 0 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    z-index: 9999;
+    overflow-y: auto;
   }
   
   .search-result-item {
@@ -1427,15 +1428,17 @@
 
 @media (max-width: 480px) {
   .search-results-dropdown {
-    max-height: 250px;
-    overflow-y: auto;
     position: fixed;
-    top: auto;
+    top: 0;
+    left: 0;
+    right: 0;
     bottom: 0;
-    left: 5px;
-    right: 5px;
-    max-height: 40vh;
-    border-radius: 12px 12px 0 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    z-index: 9999;
+    overflow-y: auto;
   }
   
   .search-result-item {
