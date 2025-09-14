@@ -1379,6 +1379,7 @@
   .search-results-dropdown {
     max-height: 300px;
     min-width: 250px;
+    overflow-y: auto;
   }
   
   .search-result-item {
@@ -1420,6 +1421,7 @@
 @media (max-width: 480px) {
   .search-results-dropdown {
     max-height: 250px;
+    overflow-y: auto;
   }
   
   .search-result-item {
