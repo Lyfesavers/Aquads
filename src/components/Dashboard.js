@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, fetchPendingIdVerifications, approveIdVerification, rejectIdVerification } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -495,7 +495,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingBubbleListings();
       fetchPendingTokenPurchases();
       fetchPendingServicesData();
-      requestPendingIdVerifications();
+      fetchPendingIdVerificationsData();
     }
   }, [currentUser, activeTab]);
 
@@ -1923,31 +1923,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  // ID Verification functions - Socket-based loading
-  const requestPendingIdVerifications = () => {
-    if (!currentUser?.isAdmin || !socket) return;
-    setIsLoadingIdVerifications(true);
-    socket.emit('requestPendingIdVerifications', {
-      userId: currentUser.userId || currentUser.id || currentUser._id
-    });
+  // ID Verification functions - API-based loading
+  const fetchPendingIdVerificationsData = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      setIsLoadingIdVerifications(true);
+      const data = await fetchPendingIdVerifications();
+      setPendingIdVerifications(data);
+    } catch (error) {
+      showNotification('Failed to fetch pending ID verifications', 'error');
+    } finally {
+      setIsLoadingIdVerifications(false);
+    }
   };
 
   const handleApproveIdVerification = async (userId) => {
     try {
-      const response = await fetch(`/api/users/${userId}/approve-id-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to approve ID verification');
-      }
-      
+      await approveIdVerification(userId);
       showNotification('ID verification approved successfully', 'success');
-      // Real-time updates handled by socket events
+      fetchPendingIdVerificationsData(); // Refresh the list
     } catch (error) {
       showNotification('Failed to approve ID verification', 'error');
     }
@@ -1959,29 +1953,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleRejectIdVerification = async () => {
-    if (!selectedIdVerificationForRejection) return;
+    if (!selectedIdVerificationForRejection || !idVerificationRejectionReason.trim()) {
+      showNotification('Please provide a reason for rejection', 'error');
+      return;
+    }
     
     try {
-      const response = await fetch(`/api/users/${selectedIdVerificationForRejection._id}/reject-id-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          rejectionReason: idVerificationRejectionReason
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to reject ID verification');
-      }
-      
+      await rejectIdVerification(selectedIdVerificationForRejection._id, idVerificationRejectionReason);
       showNotification('ID verification rejected successfully', 'success');
       setShowRejectIdVerificationModal(false);
       setSelectedIdVerificationForRejection(null);
       setIdVerificationRejectionReason('');
-      // Real-time updates handled by socket events
+      fetchPendingIdVerificationsData(); // Refresh the list
     } catch (error) {
       showNotification('Failed to reject ID verification', 'error');
     }
