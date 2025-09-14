@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Modal from './Modal';
-import { updateUserProfile, startIdVerification } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaCheck } from 'react-icons/fa';
+import { updateUserProfile } from '../services/api';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
-import useSocket from '../hooks/useSocket';
 
 // Country options for dropdown
 const COUNTRIES = [
@@ -256,7 +255,6 @@ const COUNTRIES = [
 ];
 
 const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
-  const { socket } = useSocket();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     username: currentUser?.username || '',
@@ -281,62 +279,6 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
       setTimeout(() => setError(''), 3000);
     }
   };
-
-  // Socket listeners for real-time ID verification updates
-  useEffect(() => {
-    if (!socket || !currentUser) return;
-
-    const handleIdVerificationStatusUpdate = (data) => {
-      // Only update if this is for the current user
-      if (data.userId === currentUser._id || data.userId === currentUser.id) {
-        // Update the current user's ID verification status
-        const updatedUser = {
-          ...currentUser,
-          idVerification: data.verification
-        };
-        onProfileUpdate(updatedUser);
-        
-        // Show notification based on status
-        if (data.verification.status === 'verified') {
-          showNotification('🎉 Your ID verification has been approved! You now have the "ID Verified" badge.', 'success');
-        } else if (data.verification.status === 'rejected') {
-          showNotification(`❌ Your ID verification was rejected. Reason: ${data.verification.rejectionReason || 'Verification failed to meet requirements'}. You can try again.`, 'error');
-        }
-      }
-    };
-
-    const handleIdVerificationApproved = (data) => {
-      if (data.userId === currentUser._id || data.userId === currentUser.id) {
-        const updatedUser = {
-          ...currentUser,
-          idVerification: data.verification
-        };
-        onProfileUpdate(updatedUser);
-        showNotification('🎉 Your ID verification has been approved! You now have the "ID Verified" badge.', 'success');
-      }
-    };
-
-    const handleIdVerificationRejected = (data) => {
-      if (data.userId === currentUser._id || data.userId === currentUser.id) {
-        const updatedUser = {
-          ...currentUser,
-          idVerification: data.verification
-        };
-        onProfileUpdate(updatedUser);
-        showNotification(`❌ Your ID verification was rejected. Reason: ${data.verification.rejectionReason || 'Verification failed to meet requirements'}. You can try again.`, 'error');
-      }
-    };
-
-    socket.on('idVerificationStatusUpdate', handleIdVerificationStatusUpdate);
-    socket.on('idVerificationApproved', handleIdVerificationApproved);
-    socket.on('idVerificationRejected', handleIdVerificationRejected);
-
-    return () => {
-      socket.off('idVerificationStatusUpdate', handleIdVerificationStatusUpdate);
-      socket.off('idVerificationApproved', handleIdVerificationApproved);
-      socket.off('idVerificationRejected', handleIdVerificationRejected);
-    };
-  }, [socket, currentUser, onProfileUpdate]);
 
   // Clear notifications when switching tabs
   const handleTabChange = (tab) => {
@@ -372,23 +314,6 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
     } else {
       setPreviewUrl('');
       setError('');
-    }
-  };
-
-  const handleStartIdVerification = async () => {
-    try {
-      const data = await startIdVerification();
-      
-      // Open Stripe verification in new tab
-      if (data.verificationUrl) {
-        window.open(data.verificationUrl, '_blank');
-        showNotification('ID verification started! Complete the process and wait for admin approval.', 'success');
-      } else {
-        throw new Error('No verification URL received from server');
-      }
-    } catch (error) {
-      console.error('ID verification error:', error);
-      showNotification(`Failed to start ID verification: ${error.message}`, 'error');
     }
   };
 
@@ -508,83 +433,6 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ID Verification Section */}
-      <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <FaFileAlt className="text-green-400" />
-          ID Verification
-        </h3>
-        
-        
-        {(!currentUser?.idVerification || currentUser?.idVerification?.status === 'not_started') && (
-          <div className="space-y-3">
-            <p className="text-gray-300 text-sm">
-              Verify your identity to get the "ID Verified" badge and improve your risk score.
-            </p>
-            <button
-              type="button"
-              onClick={handleStartIdVerification}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Start ID Verification
-            </button>
-          </div>
-        )}
-
-        {currentUser?.idVerification?.status === 'pending' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-yellow-400">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="font-medium">Verification Pending</span>
-            </div>
-            <p className="text-gray-300 text-sm">
-              Your ID verification is being reviewed by our admin team. This usually takes 24-48 hours.
-            </p>
-          </div>
-        )}
-
-        {currentUser?.idVerification?.status === 'verified' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-green-400">
-              <FaCheck className="text-green-400" />
-              <span className="font-medium">ID Verified</span>
-            </div>
-            <p className="text-gray-300 text-sm">
-              Your identity has been verified. You now have the "ID Verified" badge.
-            </p>
-            {currentUser?.idVerification?.verifiedAt && (
-              <p className="text-gray-400 text-xs">
-                Verified on: {new Date(currentUser.idVerification.verifiedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        )}
-
-        {currentUser?.idVerification?.status === 'rejected' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-red-400">
-              <FaTimes className="text-red-400" />
-              <span className="font-medium">Verification Rejected</span>
-            </div>
-            <p className="text-gray-300 text-sm">
-              Your ID verification was rejected. You can try again.
-            </p>
-            {currentUser?.idVerification?.rejectionReason && (
-              <p className="text-gray-400 text-xs">
-                Reason: {currentUser.idVerification.rejectionReason}
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={handleStartIdVerification}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

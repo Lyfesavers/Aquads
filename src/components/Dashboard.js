@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, fetchPendingIdVerifications, approveIdVerification, rejectIdVerification } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -77,13 +77,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [showRejectServiceModal, setShowRejectServiceModal] = useState(false);
   const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
-  
-  // ID Verification states
-  const [pendingIdVerifications, setPendingIdVerifications] = useState([]);
-  const [isLoadingIdVerifications, setIsLoadingIdVerifications] = useState(false);
-  const [showRejectIdVerificationModal, setShowRejectIdVerificationModal] = useState(false);
-  const [selectedIdVerificationForRejection, setSelectedIdVerificationForRejection] = useState(null);
-  const [idVerificationRejectionReason, setIdVerificationRejectionReason] = useState('');
   const [serviceRejectionReason, setServiceRejectionReason] = useState('');
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
@@ -419,44 +412,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error loading initial bump requests via socket:', error);
     };
 
-    // ID Verification socket handlers
-    const handleIdVerificationApproved = (data) => {
-      // Remove the approved verification from the pending list
-      setPendingIdVerifications(prev => 
-        prev.filter(verification => 
-          verification._id.toString() !== data.userId.toString()
-        )
-      );
-    };
-
-    const handleIdVerificationRejected = (data) => {
-      // Remove the rejected verification from the pending list
-      setPendingIdVerifications(prev => 
-        prev.filter(verification => 
-          verification._id.toString() !== data.userId.toString()
-        )
-      );
-    };
-
-    const handleAdminIdVerificationUpdate = (data) => {
-      // Update the pending list when verification status changes
-      setPendingIdVerifications(prev => 
-        prev.filter(verification => 
-          verification._id.toString() !== data.userId.toString()
-        )
-      );
-    };
-
-    const handlePendingIdVerificationsLoaded = (data) => {
-      setPendingIdVerifications(data.pendingVerifications);
-      setIsLoadingIdVerifications(false);
-    };
-
-    const handlePendingIdVerificationsError = (error) => {
-      setIsLoadingIdVerifications(false);
-      showNotification('Failed to load pending ID verifications', 'error');
-    };
-
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
@@ -464,13 +419,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
     socket.on('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
     socket.on('pendingBumpRequestsError', handlePendingBumpRequestsError);
-    
-    // ID Verification socket listeners
-    socket.on('idVerificationApproved', handleIdVerificationApproved);
-    socket.on('idVerificationRejected', handleIdVerificationRejected);
-    socket.on('adminIdVerificationUpdate', handleAdminIdVerificationUpdate);
-    socket.on('pendingIdVerificationsLoaded', handlePendingIdVerificationsLoaded);
-    socket.on('pendingIdVerificationsError', handlePendingIdVerificationsError);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -480,13 +428,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
       socket.off('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
       socket.off('pendingBumpRequestsError', handlePendingBumpRequestsError);
-      
-      // ID Verification socket cleanup
-      socket.off('idVerificationApproved', handleIdVerificationApproved);
-      socket.off('idVerificationRejected', handleIdVerificationRejected);
-      socket.off('adminIdVerificationUpdate', handleAdminIdVerificationUpdate);
-      socket.off('pendingIdVerificationsLoaded', handlePendingIdVerificationsLoaded);
-      socket.off('pendingIdVerificationsError', handlePendingIdVerificationsError);
     };
   }, [socket, currentUser]);
 
@@ -495,7 +436,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingBubbleListings();
       fetchPendingTokenPurchases();
       fetchPendingServicesData();
-      fetchPendingIdVerificationsData();
     }
   }, [currentUser, activeTab]);
 
@@ -1923,53 +1863,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  // ID Verification functions - API-based loading
-  const fetchPendingIdVerificationsData = async () => {
-    if (!currentUser?.isAdmin) return;
-    try {
-      setIsLoadingIdVerifications(true);
-      const data = await fetchPendingIdVerifications();
-      setPendingIdVerifications(data);
-    } catch (error) {
-      showNotification('Failed to fetch pending ID verifications', 'error');
-    } finally {
-      setIsLoadingIdVerifications(false);
-    }
-  };
-
-  const handleApproveIdVerification = async (userId) => {
-    try {
-      await approveIdVerification(userId);
-      showNotification('ID verification approved successfully', 'success');
-      fetchPendingIdVerificationsData(); // Refresh the list
-    } catch (error) {
-      showNotification('Failed to approve ID verification', 'error');
-    }
-  };
-
-  const openIdVerificationRejectModal = (verification) => {
-    setSelectedIdVerificationForRejection(verification);
-    setShowRejectIdVerificationModal(true);
-  };
-
-  const handleRejectIdVerification = async () => {
-    if (!selectedIdVerificationForRejection || !idVerificationRejectionReason.trim()) {
-      showNotification('Please provide a reason for rejection', 'error');
-      return;
-    }
-    
-    try {
-      await rejectIdVerification(selectedIdVerificationForRejection._id, idVerificationRejectionReason);
-      showNotification('ID verification rejected successfully', 'success');
-      setShowRejectIdVerificationModal(false);
-      setSelectedIdVerificationForRejection(null);
-      setIdVerificationRejectionReason('');
-      fetchPendingIdVerificationsData(); // Refresh the list
-    } catch (error) {
-      showNotification('Failed to reject ID verification', 'error');
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -2764,24 +2657,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       </span>
                     )}
                   </button>
-
-                  <button
-                    onClick={() => setActiveAdminSection('idVerifications')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'idVerifications' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingIdVerifications.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-cyan-900/30 border-l-4 border-cyan-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🆔 ID Verifications
-                    {pendingIdVerifications.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyan-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingIdVerifications.length}
-                      </span>
-                    )}
-                  </button>
                   
                   <button
                     onClick={() => {
@@ -3397,106 +3272,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
 
-                {activeAdminSection === 'idVerifications' && (
-                  <div>
-                    <h3 className="text-2xl font-semibold text-white mb-6">ID Verification Approvals</h3>
-                    {isLoadingIdVerifications ? (
-                      <div className="text-center py-8">
-                        <div className="spinner"></div>
-                        <p className="mt-2 text-gray-400">Loading pending ID verifications...</p>
-                      </div>
-                    ) : pendingIdVerifications.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
-                        No pending ID verifications to approve
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {pendingIdVerifications.map(verification => (
-                          <div key={verification._id} className="bg-gray-700 rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <img 
-                                    src={verification.image || 'https://i.imgur.com/6VBx3io.png'} 
-                                    alt={verification.username}
-                                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-600"
-                                    onError={(e) => {
-                                      e.target.src = 'https://i.imgur.com/6VBx3io.png';
-                                    }}
-                                  />
-                                  <div>
-                                    <h4 className="font-medium text-white text-lg">{verification.username}</h4>
-                                    <p className="text-sm text-gray-400">
-                                      User Type: <span className="text-blue-400 capitalize">{verification.userType}</span>
-                                    </p>
-                                    {verification.email && (
-                                      <p className="text-sm text-gray-400">
-                                        Email: <span className="text-gray-300">{verification.email}</span>
-                                      </p>
-                                    )}
-                                    {verification.country && (
-                                      <p className="text-sm text-gray-400">
-                                        Country: <span className="text-gray-300">{verification.country}</span>
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                <div className="bg-gray-600 p-3 rounded-lg mb-3">
-                                  <p className="text-sm text-gray-300">
-                                    <span className="font-medium text-gray-200">Verification Link:</span>
-                                    <br />
-                                    <a 
-                                      href={verification.idVerification.stripeVerificationUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-400 hover:text-blue-300 underline break-all"
-                                    >
-                                      {verification.idVerification.stripeVerificationUrl}
-                                    </a>
-                                  </p>
-                                  <p className="text-sm text-gray-400 mt-2">
-                                    Submitted: <span className="text-gray-300">
-                                      {new Date(verification.idVerification.submittedAt).toLocaleString()}
-                                    </span>
-                                  </p>
-                                  <p className="text-sm text-gray-400">
-                                    Account Created: <span className="text-gray-300">
-                                      {new Date(verification.createdAt).toLocaleString()}
-                                    </span>
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Action Buttons */}
-                              <div className="flex gap-2 ml-4">
-                                <button
-                                  onClick={() => handleApproveIdVerification(verification._id)}
-                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => openIdVerificationRejectModal(verification)}
-                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  Reject
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {activeAdminSection === 'affiliates' && (
                   <div>
                     <div className="flex justify-between items-center mb-6">
@@ -4070,44 +3845,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               </button>
               <button
                 onClick={handleRejectService}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
-              >
-                Confirm Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ID Verification Rejection Modal */}
-      {showRejectIdVerificationModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-lg">
-            <h3 className="text-xl font-bold mb-4">Reject ID Verification</h3>
-            <p className="mb-4 text-gray-300">
-              You are about to reject the ID verification for user "{selectedIdVerificationForRejection?.username}". 
-              Please provide a reason for rejection:
-            </p>
-            <textarea
-              value={idVerificationRejectionReason}
-              onChange={(e) => setIdVerificationRejectionReason(e.target.value)}
-              placeholder="Enter rejection reason (optional)"
-              className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-              rows={4}
-            ></textarea>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowRejectIdVerificationModal(false);
-                  setSelectedIdVerificationForRejection(null);
-                  setIdVerificationRejectionReason('');
-                }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRejectIdVerification}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
               >
                 Confirm Reject

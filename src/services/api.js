@@ -1308,52 +1308,6 @@ export const rejectAd = async (adId, rejectionReason) => {
   return await response.json();
 };
 
-// ID Verification API functions
-export const startIdVerification = async () => {
-  const response = await fetch(`${API_URL}/users/start-id-verification`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    }
-  });
-  if (!response.ok) throw new Error('Failed to start ID verification');
-  return await response.json();
-};
-
-export const fetchPendingIdVerifications = async () => {
-  const response = await fetch(`${API_URL}/users/pending-id-verifications`, {
-    headers: getAuthHeader()
-  });
-  if (!response.ok) throw new Error('Failed to fetch pending ID verifications');
-  return await response.json();
-};
-
-export const approveIdVerification = async (userId) => {
-  const response = await fetch(`${API_URL}/users/${userId}/approve-id-verification`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    }
-  });
-  if (!response.ok) throw new Error('Failed to approve ID verification');
-  return await response.json();
-};
-
-export const rejectIdVerification = async (userId, rejectionReason) => {
-  const response = await fetch(`${API_URL}/users/${userId}/reject-id-verification`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    },
-    body: JSON.stringify({ rejectionReason })
-  });
-  if (!response.ok) throw new Error('Failed to reject ID verification');
-  return await response.json();
-};
-
 // Simple connectivity test for mobile
 export const testConnectivity = async () => {
   try {

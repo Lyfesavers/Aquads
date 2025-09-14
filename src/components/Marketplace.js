@@ -513,18 +513,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     );
     if (hasCV) totalScore += 10;
 
-    // Factor 4: Account Verification (5% weight - REDUCED to make room for ID verification)
+    // Factor 4: Account Verification (5% weight)
     let verificationScore = 0;
-    if (seller?.userType === 'freelancer') verificationScore += 2;
-    if (service?.isPremium) verificationScore += 3;
+    if (seller?.userType === 'freelancer') verificationScore += 2.5;
+    if (service?.isPremium) verificationScore += 2.5;
     totalScore += verificationScore;
 
-    // Factor 5: ID Verification (10% weight - NEW SEPARATE FACTOR)
-    if (seller?.idVerification?.status === 'verified') {
-      totalScore += 10; // 10% of total score
-    }
-
-    // Factor 6: Skill Badges (5% weight)
+    // Factor 5: Skill Badges (5% weight)
     const skillBadges = seller?.skillBadges || [];
     if (skillBadges.length >= 3) {
       totalScore += 5;
@@ -1361,11 +1356,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           />
                           <ServiceBadgeComponent badge={service.badge} />
                           {service.isPremium && <PremiumBadge />}
-                          {service.seller?.idVerification?.status === 'verified' && (
-                            <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
-                              🆔 ID Verified
-                            </div>
-                          )}
                           {currentUser && service.seller?.username === currentUser.username && (
                             <div className="absolute top-2 right-2 flex gap-2 z-[200000]">
                               {!service.isPremium && (
