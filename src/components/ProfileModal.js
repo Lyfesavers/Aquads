@@ -550,6 +550,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
               Verify your identity to get the "ID Verified" badge and improve your risk score.
             </p>
             <button
+              type="button"
               onClick={handleStartIdVerification}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
@@ -602,6 +603,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
               </p>
             )}
             <button
+              type="button"
               onClick={handleStartIdVerification}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
