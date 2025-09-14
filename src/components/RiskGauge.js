@@ -89,29 +89,40 @@ const RiskGauge = ({
       factors.push({ factor: 'No CV/incomplete profile', impact: 'negative', points: 0, maxPoints: cvWeight });
     }
 
-    // Factor 4: Account Verification (5% weight - REDUCED from 10%)
+    // Factor 4: Account Verification (5% weight - REDUCED to make room for ID verification)
     const verificationWeight = 5;
     maxPossibleScore += verificationWeight;
     let verificationScore = 0;
     
     if (seller?.userType === 'freelancer') {
-      verificationScore += verificationWeight * 0.5;
+      verificationScore += verificationWeight * 0.4;
     }
     
     if (service?.isPremium) {
-      verificationScore += verificationWeight * 0.5;
+      verificationScore += verificationWeight * 0.6;
     }
     
     totalScore += verificationScore;
     if (verificationScore === verificationWeight) {
-      factors.push({ factor: 'Fully verified account', impact: 'positive', points: verificationScore, maxPoints: verificationWeight });
+      factors.push({ factor: 'Fully verified account (Premium)', impact: 'positive', points: verificationScore, maxPoints: verificationWeight });
     } else if (verificationScore > 0) {
-      factors.push({ factor: 'Partially verified account', impact: 'neutral', points: verificationScore, maxPoints: verificationWeight });
+      factors.push({ factor: 'Partially verified account', impact: 'neutral', points: verificationScore, maxPossibleScore: verificationWeight });
     } else {
       factors.push({ factor: 'Unverified account', impact: 'negative', points: 0, maxPoints: verificationWeight });
     }
 
-    // Factor 5: Skill Badges (5% weight - REDUCED from 10%)
+    // Factor 5: ID Verification (10% weight - NEW SEPARATE FACTOR)
+    const idVerificationWeight = 10;
+    maxPossibleScore += idVerificationWeight;
+    
+    if (seller?.idVerification?.status === 'verified') {
+      totalScore += idVerificationWeight;
+      factors.push({ factor: 'ID Verified', impact: 'positive', points: idVerificationWeight, maxPoints: idVerificationWeight });
+    } else {
+      factors.push({ factor: 'ID Not Verified', impact: 'negative', points: 0, maxPoints: idVerificationWeight });
+    }
+
+    // Factor 6: Skill Badges (5% weight - REDUCED from 10%)
     const skillWeight = 5;
     maxPossibleScore += skillWeight;
     

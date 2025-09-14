@@ -234,6 +234,23 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
+  // ID Verification
+  idVerification: {
+    status: {
+      type: String,
+      enum: ['not_started', 'pending', 'verified', 'rejected'],
+      default: 'not_started'
+    },
+    stripeVerificationUrl: String, // Store the verification link
+    submittedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rejectionReason: String,
+    verificationNotes: String
+  },
   // CV Data
   cv: {
     fullName: {
@@ -433,6 +450,7 @@ userSchema.index({ userType: 1 }); // For user type filtering
 userSchema.index({ isOnline: 1, lastActivity: 1 }); // For online status queries
 userSchema.index({ referredBy: 1 }); // For affiliate queries
 userSchema.index({ isFreeRaidProject: 1 }); // For free raid eligibility
+userSchema.index({ 'idVerification.status': 1 }); // For ID verification queries
 
 // Additional performance indexes
 // Note: username, email, and referralCode already have unique indexes from schema

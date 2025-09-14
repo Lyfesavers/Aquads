@@ -308,6 +308,33 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending ID verifications
+    socket.on('requestPendingIdVerifications', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const User = require('./models/User');
+          
+          // Check if user is admin
+          const adminUser = await User.findById(userData.userId);
+          if (!adminUser || !adminUser.isAdmin) {
+            socket.emit('pendingIdVerificationsError', { error: 'Admin access required' });
+            return;
+          }
+
+          // Fetch pending ID verifications
+          const pendingVerifications = await User.find({
+            'idVerification.status': 'pending'
+          }).select('username email userType idVerification createdAt country image');
+
+          socket.emit('pendingIdVerificationsLoaded', { 
+            pendingVerifications 
+          });
+        } catch (error) {
+          socket.emit('pendingIdVerificationsError', { error: 'Failed to fetch pending ID verifications' });
+        }
+      }
+    });
+
     socket.on('error', (error) => {
       // Silent error handling
     });
@@ -463,6 +490,41 @@ function emitAffiliateEarningUpdate(affiliateData) {
   }
 }
 
+// ID Verification socket events
+function emitIdVerificationStatusUpdate(userId, verificationData) {
+  if (io) {
+    // Emit to specific user
+    io.emit('idVerificationStatusUpdate', {
+      userId,
+      verification: verificationData
+    });
+    
+    // Emit to admins for dashboard updates
+    io.emit('adminIdVerificationUpdate', {
+      userId,
+      verification: verificationData
+    });
+  }
+}
+
+function emitIdVerificationApproved(userId, verificationData) {
+  if (io) {
+    io.emit('idVerificationApproved', {
+      userId,
+      verification: verificationData
+    });
+  }
+}
+
+function emitIdVerificationRejected(userId, verificationData) {
+  if (io) {
+    io.emit('idVerificationRejected', {
+      userId,
+      verification: verificationData
+    });
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -476,5 +538,8 @@ module.exports = {
   emitTwitterRaidApproved,
   emitTwitterRaidRejected,
   emitNewTwitterRaidCompletion,
-  emitAffiliateEarningUpdate
+  emitAffiliateEarningUpdate,
+  emitIdVerificationStatusUpdate,
+  emitIdVerificationApproved,
+  emitIdVerificationRejected
 }; 

@@ -623,6 +623,11 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                           verified
                         </span>
                       )}
+                      {service.seller?.idVerification?.status === 'verified' && (
+                        <span className="inline-flex items-center gap-1 bg-gradient-to-r from-green-400 to-green-600 text-green-400 px-2 py-1 rounded-full text-xs">
+                          🆔 ID Verified
+                        </span>
+                      )}
                     </div>
                     {service.seller?.country && (
                       <div className="flex items-center gap-2 text-gray-400">
