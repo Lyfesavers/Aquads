@@ -857,10 +857,10 @@
   }
   
   .aquads-logo-clickable {
-    /* Mobile logo styling - smaller size and adjusted positioning */
-    width: 60px !important;
-    height: 60px !important;
+    /* Mobile logo styling - maintain aspect ratio, just adjust margin */
     margin-bottom: 4px;
+    max-width: 60px;
+    height: auto;
   }
   
   .banner-container {
