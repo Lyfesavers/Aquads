@@ -1233,6 +1233,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       {/* Search Results Dropdown */}
                       {showSearchResults && (
                         <div className="search-results-dropdown">
+                          {/* Close button for mobile full screen */}
+                          <button 
+                            className="search-close-button"
+                            onClick={() => setShowSearchResults(false)}
+                            aria-label="Close search results"
+                          >
+                            ×
+                          </button>
+                          
                           {isSearching ? (
                             <div className="search-loading">
                               <div className="loading-spinner"></div>
