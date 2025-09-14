@@ -376,7 +376,10 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
   };
 
   const handleStartIdVerification = async () => {
+    console.log('ID verification button clicked');
     try {
+      console.log('Starting ID verification for user:', currentUser?.username);
+      
       // Call API to start ID verification
       const response = await fetch('/api/users/start-id-verification', {
         method: 'POST',
@@ -386,18 +389,27 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
         }
       });
 
+      console.log('API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to start ID verification');
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        throw new Error(`Failed to start ID verification: ${errorData.error || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      console.log('API response data:', data);
       
       // Open Stripe verification in new tab
-      window.open(data.verificationUrl, '_blank');
-      
-      showNotification('ID verification started! Complete the process and wait for admin approval.', 'success');
+      if (data.verificationUrl) {
+        window.open(data.verificationUrl, '_blank');
+        showNotification('ID verification started! Complete the process and wait for admin approval.', 'success');
+      } else {
+        throw new Error('No verification URL received from server');
+      }
     } catch (error) {
-      showNotification('Failed to start ID verification. Please try again.', 'error');
+      console.error('ID verification error:', error);
+      showNotification(`Failed to start ID verification: ${error.message}`, 'error');
     }
   };
 
@@ -526,7 +538,12 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
           ID Verification
         </h3>
         
-        {currentUser?.idVerification?.status === 'not_started' && (
+        {/* Debug info - remove this after testing */}
+        <div className="text-xs text-gray-500 mb-2">
+          Debug: ID Verification Status: {currentUser?.idVerification?.status || 'undefined'}
+        </div>
+        
+        {(!currentUser?.idVerification || currentUser?.idVerification?.status === 'not_started') && (
           <div className="space-y-3">
             <p className="text-gray-300 text-sm">
               Verify your identity to get the "ID Verified" badge and improve your risk score.
