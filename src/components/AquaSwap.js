@@ -243,7 +243,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             liquidityUsd: pair.liquidity?.usd || 0,
             priceChange24h: pair.priceChange?.h24 || 0,
             logo: pair.info?.imageUrl,
-            url: pair.url
+            url: pair.url,
+            // Add paired token information
+            quoteToken: {
+              name: pair.quoteToken.name,
+              symbol: pair.quoteToken.symbol,
+              address: pair.quoteToken.address
+            },
+            // Create trading pair display string
+            tradingPair: `${pair.baseToken.symbol}/${pair.quoteToken.symbol}`
           }));
 
         setSearchResults(processedResults);
@@ -1252,6 +1260,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                                     <div className="result-token-details">
                                       <div className="result-token-name">
                                         {result.name} ({result.symbol})
+                                      </div>
+                                      <div className="result-token-pair">
+                                        {result.tradingPair}
                                       </div>
                                       <div className="result-token-chain">
                                         {result.dexId} on {result.chainId}

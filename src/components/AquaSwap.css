@@ -857,7 +857,10 @@
   }
   
   .aquads-logo-clickable {
-    /* Mobile logo styling */
+    /* Mobile logo styling - smaller size and adjusted positioning */
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 4px;
   }
   
   .banner-container {
@@ -1307,6 +1310,20 @@
   text-overflow: ellipsis;
 }
 
+.result-token-pair {
+  font-size: 0.8rem;
+  color: #00d4ff;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(0, 212, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  max-width: fit-content;
+}
+
 .result-token-chain {
   font-size: 0.75rem;
   color: #9ca3af;
@@ -1376,6 +1393,11 @@
   
   .result-token-name {
     font-size: 0.85rem;
+  }
+  
+  .result-token-pair {
+    font-size: 0.75rem;
+    padding: 1px 4px;
   }
   
   .result-token-chain {
