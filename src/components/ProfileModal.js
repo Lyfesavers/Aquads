@@ -3,7 +3,7 @@ import Modal from './Modal';
 import { updateUserProfile } from '../services/api';
 import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaCheck } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
-import { useSocket } from '../hooks/useSocket';
+import useSocket from '../hooks/useSocket';
 
 // Country options for dropdown
 const COUNTRIES = [
