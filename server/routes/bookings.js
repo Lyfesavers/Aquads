@@ -1216,13 +1216,14 @@ async function fixCompletedBookingsWatermarks() {
     // Check if we've already run this fix (using a simple flag file)
     const flagFilePath = path.join(__dirname, '../uploads/bookings/.watermark-fix-completed');
     
-    try {
-      await fs.access(flagFilePath);
-      console.log('Watermark fix already completed, skipping...');
-      return;
-    } catch (error) {
-      // Flag file doesn't exist, continue with the fix
-    }
+    // Temporarily disable the flag check to re-run the improved fix
+    // try {
+    //   await fs.access(flagFilePath);
+    //   console.log('Watermark fix already completed, skipping...');
+    //   return;
+    // } catch (error) {
+    //   // Flag file doesn't exist, continue with the fix
+    // }
 
     console.log('🔧 Running one-time watermark fix for completed bookings...');
 
@@ -1255,26 +1256,55 @@ async function fixCompletedBookingsWatermarks() {
               // Get the original filename (remove 'watermarked-' prefix)
               const originalFilename = message.attachment.replace('/uploads/bookings/watermarked-', '');
               const watermarkedFilePath = path.join(__dirname, '../uploads/bookings', `watermarked-${originalFilename}`);
-              const originalFilePath = path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`);
               
-              // Check if both files exist
-              try {
-                await fs.access(watermarkedFilePath);
-                await fs.access(originalFilePath);
-                
-                // Replace the watermarked file with the original file
-                await fs.copyFile(originalFilePath, watermarkedFilePath);
-                
-                // Update the message to point to the original file
-                await BookingMessage.findByIdAndUpdate(message._id, {
-                  attachment: `/uploads/bookings/${originalFilename}`,
-                  isWatermarked: false
-                });
-                
-                totalFixed++;
-                console.log(`✅ Fixed message ${message._id} for booking ${booking._id}`);
-              } catch (fileError) {
-                console.log(`⚠️ File not found for message ${message._id}, updating flag only`);
+              // Try multiple possible locations for the original file
+              const possibleOriginalPaths = [
+                path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`), // New system
+                path.join(__dirname, '../uploads/bookings', originalFilename), // Old system - original in main folder
+                path.join(__dirname, '../uploads/bookings', `original-${originalFilename}`) // Alternative old system
+              ];
+              
+              let originalFilePath = null;
+              let foundOriginal = false;
+              
+              // Check which original file exists
+              for (const possiblePath of possibleOriginalPaths) {
+                try {
+                  await fs.access(possiblePath);
+                  originalFilePath = possiblePath;
+                  foundOriginal = true;
+                  console.log(`📁 Found original file at: ${possiblePath}`);
+                  break;
+                } catch (error) {
+                  // Continue to next possible path
+                }
+              }
+              
+              if (foundOriginal) {
+                try {
+                  await fs.access(watermarkedFilePath);
+                  
+                  // Replace the watermarked file with the original file
+                  await fs.copyFile(originalFilePath, watermarkedFilePath);
+                  
+                  // Update the message to point to the original file
+                  await BookingMessage.findByIdAndUpdate(message._id, {
+                    attachment: `/uploads/bookings/${originalFilename}`,
+                    isWatermarked: false
+                  });
+                  
+                  totalFixed++;
+                  console.log(`✅ Fixed message ${message._id} for booking ${booking._id}`);
+                } catch (fileError) {
+                  console.log(`⚠️ Watermarked file not found for message ${message._id}, updating flag only`);
+                  // Still update the flag even if file replacement fails
+                  await BookingMessage.findByIdAndUpdate(message._id, {
+                    isWatermarked: false
+                  });
+                  totalFixed++;
+                }
+              } else {
+                console.log(`⚠️ No original file found for message ${message._id}, updating flag only`);
                 // Still update the flag even if file replacement fails
                 await BookingMessage.findByIdAndUpdate(message._id, {
                   isWatermarked: false
