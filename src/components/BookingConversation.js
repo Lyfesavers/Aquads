@@ -698,10 +698,28 @@ This email was sent through Aquads platform for project delivery.
     // Create mailto link
     const mailtoLink = `mailto:${booking.buyerId.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
     
-    // Open email client
-    window.open(mailtoLink);
-    
-    showNotification('Email template opened in your default email client', 'success');
+    // Try multiple methods to open email client
+    try {
+      // Method 1: Direct window.location (most reliable)
+      window.location.href = mailtoLink;
+      
+      showNotification('Opening email client...', 'success');
+    } catch (error) {
+      // Method 2: Fallback with window.open
+      try {
+        window.open(mailtoLink, '_self');
+        showNotification('Opening email client...', 'success');
+      } catch (e) {
+        // Method 3: Create temporary link and click it
+        const tempLink = document.createElement('a');
+        tempLink.href = mailtoLink;
+        tempLink.style.display = 'none';
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        showNotification('Opening email client...', 'success');
+      }
+    }
   };
 
   // Render message content including any attachments
@@ -1412,6 +1430,7 @@ This email was sent through Aquads platform for project delivery.
           onSendMessage={handleSendInvoiceMessage}
         />
       )}
+
     </div>
   );
 };
