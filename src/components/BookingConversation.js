@@ -667,10 +667,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       
       return {
         original: attachment,
-        relative: `/uploads/bookings/${filename}?bookingId=${booking._id}`,
-        fullRelative: `${baseUrl}/uploads/bookings/${filename}?bookingId=${booking._id}`,
-        apiEndpoint: `${API_URL}/bookings/uploads/${filename}?bookingId=${booking._id}`,
-        directEndpoint: `${baseUrl}/uploads/bookings/${filename}?bookingId=${booking._id}`,
+        relative: `/uploads/bookings/${filename}`,
+        fullRelative: `${baseUrl}/uploads/bookings/${filename}`,
+        apiEndpoint: `${API_URL}/bookings/uploads/${filename}`,
+        directEndpoint: `${baseUrl}/uploads/bookings/${filename}`,
         queryParam: `${API_URL}/bookings/file?filename=${filename}&bookingId=${booking._id}`
       };
     };

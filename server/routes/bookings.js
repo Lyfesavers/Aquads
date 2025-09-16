@@ -240,78 +240,19 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
         }
         booking.completedAt = new Date();
         
-        // Update all watermarked messages to remove watermark flag and replace files when booking is completed
+        // Update all watermarked messages to remove watermark flag when booking is completed
         try {
           const BookingMessage = require('../models/BookingMessage');
-          const fs = require('fs').promises;
-          
-          // Get all watermarked messages for this booking
-          const watermarkedMessages = await BookingMessage.find({
-            bookingId: booking._id,
-            isWatermarked: true
-          });
-          
-          // Process each watermarked message
-          for (const message of watermarkedMessages) {
-            if (message.attachment && message.attachment.includes('watermarked-')) {
-              try {
-                // Get the original filename (remove 'watermarked-' prefix)
-                const originalFilename = message.attachment.replace('/uploads/bookings/watermarked-', '');
-                const watermarkedFilePath = path.join(__dirname, '../uploads/bookings', `watermarked-${originalFilename}`);
-                
-                // Try multiple possible locations for the original file
-                const possibleOriginalPaths = [
-                  path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`), // New system
-                  path.join(__dirname, '../uploads/bookings', originalFilename), // Old system - original in main folder
-                  path.join(__dirname, '../uploads/bookings', `original-${originalFilename}`) // Alternative old system
-                ];
-                
-                let originalFilePath = null;
-                let foundOriginal = false;
-                
-                // Check which original file exists
-                for (const possiblePath of possibleOriginalPaths) {
-                  try {
-                    await fs.access(possiblePath);
-                    originalFilePath = possiblePath;
-                    foundOriginal = true;
-                    console.log(`📁 Found original file at: ${possiblePath}`);
-                    break;
-                  } catch (error) {
-                    // Continue to next possible path
-                  }
-                }
-                
-                if (foundOriginal) {
-                  // Just update the database flag - the file serving logic will handle serving the original file
-                  await BookingMessage.findByIdAndUpdate(message._id, {
-                    isWatermarked: false
-                  });
-                  
-                  console.log(`✅ Updated watermark flag for message ${message._id} - original file available at: ${originalFilePath}`);
-                } else {
-                  console.log(`⚠️ No original file found for message ${message._id}, updating flag only`);
-                  // Still update the flag even if no original file exists
-                  await BookingMessage.findByIdAndUpdate(message._id, {
-                    isWatermarked: false
-                  });
-                }
-              } catch (messageError) {
-                console.error(`Error processing message ${message._id}:`, messageError);
-                // Still update the flag even if file processing fails
-                await BookingMessage.findByIdAndUpdate(message._id, {
-                  isWatermarked: false
-                });
-              }
-            } else {
-              // For messages without watermarked files, just update the flag
-              await BookingMessage.findByIdAndUpdate(message._id, {
-                isWatermarked: false
-              });
+          await BookingMessage.updateMany(
+            { 
+              bookingId: booking._id, 
+              isWatermarked: true 
+            },
+            { 
+              $set: { isWatermarked: false } 
             }
-          }
-          
-          console.log(`Updated watermark flags and files for completed booking ${booking._id}`);
+          );
+          console.log(`Updated watermark flags for completed booking ${booking._id}`);
         } catch (watermarkUpdateError) {
           console.error('Error updating watermark flags:', watermarkUpdateError);
           // Don't fail the booking completion if watermark update fails
@@ -757,42 +698,10 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
 });
 
 // Add a new route to serve static files from uploads folder
-router.get('/uploads/:filename', async (req, res) => {
+router.get('/uploads/:filename', (req, res) => {
   try {
-    const filename = req.params.filename;
-    const bookingId = req.query.bookingId;
-    
     // Use absolute path for file access
-    let filePath = path.resolve(__dirname, '../uploads/bookings', filename);
-    
-    // If this is a watermarked file and we have a bookingId, check if booking is completed
-    if (filename.startsWith('watermarked-') && bookingId) {
-      try {
-        const Booking = require('../models/Booking');
-        const booking = await Booking.findById(bookingId);
-        
-        if (booking && booking.status === 'completed') {
-          // Try to serve the original file instead
-          const originalFilename = filename.replace('watermarked-', '');
-          const possibleOriginalPaths = [
-            path.resolve(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`),
-            path.resolve(__dirname, '../uploads/bookings', originalFilename),
-            path.resolve(__dirname, '../uploads/bookings', `original-${originalFilename}`)
-          ];
-          
-          for (const possiblePath of possibleOriginalPaths) {
-            if (fs.existsSync(possiblePath)) {
-              filePath = possiblePath;
-              console.log(`📁 Serving original file from: ${possiblePath}`);
-              break;
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error checking booking status:', err);
-        // Continue with watermarked file if error
-      }
-    }
+    const filePath = path.resolve(__dirname, '../uploads/bookings', req.params.filename);
 
     
     if (!fs.existsSync(filePath)) {
@@ -801,7 +710,7 @@ router.get('/uploads/:filename', async (req, res) => {
     }
     
     // Set correct content type based on file extension
-    const ext = path.extname(filename).toLowerCase();
+    const ext = path.extname(req.params.filename).toLowerCase();
     if (ext === '.jpg' || ext === '.jpeg') {
       res.set('Content-Type', 'image/jpeg');
     } else if (ext === '.png') {
@@ -974,32 +883,9 @@ router.get('/file', async (req, res) => {
     let filePath;
     
     if (useOriginalFile) {
-      // If booking is completed, try to serve the original file
-      const originalFilename = sanitizedFilename.replace('watermarked-', '');
-      
-      // Try multiple possible locations for the original file
-      const possibleOriginalPaths = [
-        path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`), // New system
-        path.join(__dirname, '../uploads/bookings', originalFilename), // Fixed files (from our fix script)
-        path.join(__dirname, '../uploads/bookings', `original-${originalFilename}`) // Alternative old system
-      ];
-      
-      let foundOriginal = false;
-      for (const possiblePath of possibleOriginalPaths) {
-        if (fs.existsSync(possiblePath)) {
-          filePath = possiblePath;
-          foundOriginal = true;
-          console.log(`📁 Serving original file from: ${possiblePath}`);
-          break;
-        }
-      }
-      
-      if (!foundOriginal) {
-        // If no original found, fall back to the watermarked file
-        // This shouldn't happen after our fix script runs, but just in case
-        filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
-        console.log(`⚠️ No original file found, serving watermarked file: ${filePath}`);
-      }
+      // If booking is completed, serve the original file
+      const originalFilename = 'original-' + sanitizedFilename.replace('watermarked-', '');
+      filePath = path.join(__dirname, '../uploads/bookings/originals', originalFilename);
   
     } else {
       // Otherwise serve the requested file (watermarked or regular)
@@ -1273,157 +1159,5 @@ router.get('/notification/:id', auth, async (req, res) => {
     res.redirect('/dashboard');
   }
 });
-
-// One-time watermark fix function (runs automatically on server startup)
-async function fixCompletedBookingsWatermarks() {
-  try {
-    const Booking = require('../models/Booking');
-    const BookingMessage = require('../models/BookingMessage');
-    const fs = require('fs').promises;
-    const path = require('path');
-
-    // Check if we've already run this fix (using a simple flag file)
-    const flagFilePath = path.join(__dirname, '../uploads/bookings/.watermark-fix-completed');
-    
-    // Temporarily disable the flag check to re-run the improved fix
-    // try {
-    //   await fs.access(flagFilePath);
-    //   console.log('Watermark fix already completed, skipping...');
-    //   return;
-    // } catch (error) {
-    //   // Flag file doesn't exist, continue with the fix
-    // }
-
-    console.log('🔧 Running one-time watermark fix for completed bookings...');
-
-    // Find all completed bookings
-    const completedBookings = await Booking.find({ status: 'completed' });
-    
-    let totalProcessed = 0;
-    let totalFixed = 0;
-    let errors = [];
-
-    console.log(`Found ${completedBookings.length} completed bookings to process`);
-
-    for (const booking of completedBookings) {
-      try {
-        // Get all watermarked messages for this booking
-        const watermarkedMessages = await BookingMessage.find({
-          bookingId: booking._id,
-          isWatermarked: true
-        });
-
-        if (watermarkedMessages.length > 0) {
-          console.log(`Processing booking ${booking._id} with ${watermarkedMessages.length} watermarked messages`);
-        }
-
-        for (const message of watermarkedMessages) {
-          totalProcessed++;
-          
-          if (message.attachment && message.attachment.includes('watermarked-')) {
-            try {
-              // Get the original filename (remove 'watermarked-' prefix)
-              const originalFilename = message.attachment.replace('/uploads/bookings/watermarked-', '');
-              const watermarkedFilePath = path.join(__dirname, '../uploads/bookings', `watermarked-${originalFilename}`);
-              
-              // Try multiple possible locations for the original file
-              const possibleOriginalPaths = [
-                path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`), // New system
-                path.join(__dirname, '../uploads/bookings', originalFilename), // Old system - original in main folder
-                path.join(__dirname, '../uploads/bookings', `original-${originalFilename}`) // Alternative old system
-              ];
-              
-              let originalFilePath = null;
-              let foundOriginal = false;
-              
-              // Check which original file exists
-              for (const possiblePath of possibleOriginalPaths) {
-                try {
-                  await fs.access(possiblePath);
-                  originalFilePath = possiblePath;
-                  foundOriginal = true;
-                  console.log(`📁 Found original file at: ${possiblePath}`);
-                  break;
-                } catch (error) {
-                  // Continue to next possible path
-                }
-              }
-              
-              if (foundOriginal) {
-                // Just update the database flag - the file serving logic will handle serving the original file
-                await BookingMessage.findByIdAndUpdate(message._id, {
-                  isWatermarked: false
-                });
-                
-                totalFixed++;
-                console.log(`✅ Updated watermark flag for message ${message._id} - original file available at: ${originalFilePath}`);
-              } else {
-                // No original file found - this means the original was never saved
-                // For completed bookings, we'll rename the watermarked file to remove the prefix
-                // This way the URL will show the image without "watermarked-" prefix
-                try {
-                  await fs.access(watermarkedFilePath);
-                  
-                  const finalFilePath = path.join(__dirname, '../uploads/bookings', originalFilename);
-                  
-                  // Copy watermarked file to final location (without watermarked- prefix)
-                  await fs.copyFile(watermarkedFilePath, finalFilePath);
-                  
-                  // Update the message to point to the final file
-                  await BookingMessage.findByIdAndUpdate(message._id, {
-                    attachment: `/uploads/bookings/${originalFilename}`,
-                    isWatermarked: false
-                  });
-                  
-                  totalFixed++;
-                  console.log(`✅ Renamed watermarked file for message ${message._id} for booking ${booking._id}`);
-                } catch (fileError) {
-                  console.log(`⚠️ Watermarked file not found for message ${message._id}, updating flag only`);
-                  // Still update the flag even if file renaming fails
-                  await BookingMessage.findByIdAndUpdate(message._id, {
-                    isWatermarked: false
-                  });
-                  totalFixed++;
-                }
-              }
-            } catch (messageError) {
-              console.error(`❌ Error processing message ${message._id}:`, messageError);
-              errors.push(`Message ${message._id}: ${messageError.message}`);
-              // Still update the flag even if file processing fails
-              await BookingMessage.findByIdAndUpdate(message._id, {
-                isWatermarked: false
-              });
-              totalFixed++;
-            }
-          } else {
-            // For messages without watermarked files, just update the flag
-            await BookingMessage.findByIdAndUpdate(message._id, {
-              isWatermarked: false
-            });
-            totalFixed++;
-          }
-        }
-      } catch (bookingError) {
-        console.error(`❌ Error processing booking ${booking._id}:`, bookingError);
-        errors.push(`Booking ${booking._id}: ${bookingError.message}`);
-      }
-    }
-
-    // Create flag file to indicate completion
-    await fs.writeFile(flagFilePath, `Watermark fix completed at ${new Date().toISOString()}\nProcessed: ${totalProcessed}, Fixed: ${totalFixed}, Errors: ${errors.length}`);
-
-    console.log(`✅ Watermark fix completed! Processed: ${totalProcessed}, Fixed: ${totalFixed}, Errors: ${errors.length}`);
-    
-    if (errors.length > 0) {
-      console.log('Errors encountered:', errors);
-    }
-
-  } catch (error) {
-    console.error('❌ Error in watermark fix:', error);
-  }
-}
-
-// Run the fix when this module is loaded (server startup)
-fixCompletedBookingsWatermarks();
 
 module.exports = router; 
