@@ -862,8 +862,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2 relative">
-            {msg.isWatermarked ? (
-              // Use watermarked image renderer for watermarked images
+            {msg.isWatermarked && booking.status !== 'completed' ? (
+              // Use watermarked image renderer for watermarked images (only if booking not completed)
               <WatermarkedImage 
                 sourceUrl={getBestImageUrl()} 
                 applyWatermark={applyWatermarkToImage}
@@ -872,7 +872,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 generateAttachmentUrls={() => generateAttachmentUrls(msg.attachment)}
               />
             ) : (
-              // Use regular image for non-watermarked images
+              // Use regular image for non-watermarked images or completed bookings
               <img 
                 src={getBestImageUrl()} 
                 alt={msg.attachmentName || "Attachment"}
@@ -918,7 +918,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
               <span>{msg.attachmentName || "Image attachment"}</span>
               <div className="flex items-center">
-                {msg.isWatermarked && (
+                {msg.isWatermarked && booking.status !== 'completed' && (
                   <span className="text-yellow-400 font-semibold text-xs mr-2">
                     Watermarked preview
                   </span>
@@ -929,8 +929,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   onClick={(e) => {
                     e.preventDefault();
                     
-                    if (msg.isWatermarked) {
-                      // For watermarked images, we need to apply the watermark to the full-size image
+                    if (msg.isWatermarked && booking.status !== 'completed') {
+                      // For watermarked images, we need to apply the watermark to the full-size image (only if booking not completed)
                       applyWatermarkToImage(getBestImageUrl(), (watermarkedDataUrl) => {
                         if (watermarkedDataUrl) {
                           const newWindow = window.open();

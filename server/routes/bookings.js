@@ -239,6 +239,24 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
           return res.status(400).json({ error: 'Booking must be confirmed before completion' });
         }
         booking.completedAt = new Date();
+        
+        // Update all watermarked messages to remove watermark flag when booking is completed
+        try {
+          const BookingMessage = require('../models/BookingMessage');
+          await BookingMessage.updateMany(
+            { 
+              bookingId: booking._id, 
+              isWatermarked: true 
+            },
+            { 
+              $set: { isWatermarked: false } 
+            }
+          );
+          console.log(`Updated watermark flags for completed booking ${booking._id}`);
+        } catch (watermarkUpdateError) {
+          console.error('Error updating watermark flags:', watermarkUpdateError);
+          // Don't fail the booking completion if watermark update fails
+        }
         break;
 
       case 'accepted_by_seller':
