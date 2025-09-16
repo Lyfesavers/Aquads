@@ -651,34 +651,32 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       return;
     }
 
-    // Create professional email template with Aquads branding
+    // Create simple email template (similar to jobs feature)
     const subject = `Work Delivery - ${booking.serviceId?.title || 'Your Project'} - Booking #${booking._id.substring(0, 6)}`;
     
     const emailBody = `Dear ${booking.buyerName || 'Valued Client'},
 
 I hope this email finds you well. I'm writing to deliver the completed work for your booking on Aquads.
 
-📋 BOOKING DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Service: ${booking.serviceId?.title || 'N/A'}
-• Booking ID: #${booking._id.substring(0, 6)}
-• Amount: ${booking.price} ${booking.currency}
-• Freelancer: ${currentUser.username}
-• Date: ${new Date().toLocaleDateString()}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOOKING DETAILS:
+- Service: ${booking.serviceId?.title || 'N/A'}
+- Booking ID: #${booking._id.substring(0, 6)}
+- Amount: ${booking.price} ${booking.currency}
+- Freelancer: ${currentUser.username}
+- Date: ${new Date().toLocaleDateString()}
 
-📎 DELIVERABLES:
+DELIVERABLES:
 Please find the completed work attached to this email. The files include all the deliverables as discussed in our project requirements.
 
-${booking.requirements ? `\n📝 ORIGINAL REQUIREMENTS:\n"${booking.requirements}"\n` : ''}
+${booking.requirements ? `ORIGINAL REQUIREMENTS:\n"${booking.requirements}"\n` : ''}
 
-✅ NEXT STEPS:
+NEXT STEPS:
 1. Please review the attached files
 2. If you need any revisions, please respond through the Aquads platform
 3. Once satisfied, please pay your invoice provided the messaging system on Aquads.
 4. Your feedback and review would be greatly appreciated
 
-💬 COMMUNICATION:
+COMMUNICATION:
 For any questions or revision requests, please continue our conversation through the Aquads platform to maintain secure communication and project history.
 
 Thank you for choosing Aquads for your project. It has been a pleasure working with you!
@@ -686,22 +684,46 @@ Thank you for choosing Aquads for your project. It has been a pleasure working w
 Best regards,
 ${currentUser.username}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 AQUADS - Your Trusted Freelancing Platform
-🌐 Website: https://aquads.xyz
-💼 Professional freelancing services with secure transactions
-🔒 Safe, secure, and reliable project management
+---
+AQUADS - Your Trusted Freelancing Platform
+Website: https://aquads.xyz
+Professional freelancing services with secure transactions
+Safe, secure, and reliable project management
 
-This email was sent through Aquads platform for project delivery.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+This email was sent through Aquads platform for project delivery.`;
 
     // Create mailto link (using same method as working jobs email feature)
     const mailtoLink = `mailto:${booking.buyerId.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
     
-    // Use the exact same method as the working jobs email feature
-    window.location.href = mailtoLink;
+    // Debug: Log the mailto link to console
+    console.log('Generated mailto link:', mailtoLink);
+    console.log('Buyer email:', booking.buyerId.email);
+    console.log('Mailto link length:', mailtoLink.length);
     
-    showNotification('Opening email client...', 'success');
+    // Try the working method first
+    try {
+      window.location.href = mailtoLink;
+      console.log('Successfully set window.location.href');
+      showNotification('Opening email client...', 'success');
+    } catch (error) {
+      console.error('Error with window.location.href:', error);
+      
+      // Fallback: Try creating a temporary link and clicking it
+      try {
+        const tempLink = document.createElement('a');
+        tempLink.href = mailtoLink;
+        tempLink.target = '_self';
+        tempLink.style.display = 'none';
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        console.log('Successfully clicked temporary link');
+        showNotification('Opening email client...', 'success');
+      } catch (fallbackError) {
+        console.error('Error with temporary link:', fallbackError);
+        showNotification('Unable to open email client. Please check your default email settings.', 'error');
+      }
+    }
   };
 
   // Render message content including any attachments
