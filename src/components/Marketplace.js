@@ -27,7 +27,6 @@ import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
-import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
 const CountryFlag = ({ countryCode }) => {
