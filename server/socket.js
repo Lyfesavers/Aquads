@@ -121,6 +121,37 @@ function init(server) {
       }
     });
 
+    // Handle user requesting their bookings data
+    socket.on('requestUserBookings', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const Booking = require('./models/Booking');
+          
+          // Get bookings for the user (both as buyer and seller)
+          const bookings = await Booking.find({
+            $or: [
+              { buyerId: userData.userId },
+              { sellerId: userData.userId }
+            ]
+          })
+          .populate('serviceId')
+          .populate('sellerId', 'username email')
+          .populate('buyerId', 'username email')
+          .sort({ createdAt: -1 });
+
+          // Send bookings data to the user
+          socket.emit('userBookingsLoaded', {
+            bookings,
+            total: bookings.length
+          });
+          
+        } catch (error) {
+          console.error('Error fetching user bookings:', error);
+          socket.emit('userBookingsError', { error: 'Failed to fetch bookings' });
+        }
+      }
+    });
+
     // Handle admin requesting pending completions
     socket.on('requestPendingCompletions', async (userData) => {
       if (userData && userData.isAdmin) {

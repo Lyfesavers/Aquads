@@ -172,13 +172,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser]);
 
+  // Request initial bookings data via socket (like raids system)
   useEffect(() => {
-    if (currentUser) {
-      fetchBookings();
+    if (currentUser && socket) {
+      // Request bookings data via socket instead of API call
+      socket.emit('requestUserBookings', {
+        userId: currentUser.userId
+      });
     }
-  }, [currentUser]);
+  }, [currentUser, socket]);
 
-  // Socket listener for real-time booking updates
+  // Socket listener for real-time booking updates and initial data
   useEffect(() => {
     if (socket && currentUser) {
       // Join user's room for direct updates
@@ -201,10 +205,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         }
       };
 
+      const handleUserBookingsLoaded = (data) => {
+        // Set initial bookings data from socket
+        setBookings(data.bookings);
+      };
+
+      const handleUserBookingsError = (error) => {
+        console.error('Error loading bookings via socket:', error);
+        // Fallback to empty array on error
+        setBookings([]);
+      };
+
+      // Listen for socket events
       socket.on('bookingUpdated', handleBookingUpdate);
+      socket.on('userBookingsLoaded', handleUserBookingsLoaded);
+      socket.on('userBookingsError', handleUserBookingsError);
 
       return () => {
         socket.off('bookingUpdated', handleBookingUpdate);
+        socket.off('userBookingsLoaded', handleUserBookingsLoaded);
+        socket.off('userBookingsError', handleUserBookingsError);
       };
     }
   }, [socket, currentUser]);
@@ -737,6 +757,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
 
 
+  // Keep fetchBookings for manual refresh only (not automatic loading)
   const fetchBookings = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings/my-bookings`, {
@@ -748,6 +769,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const data = await response.json();
       setBookings(data);
     } catch (error) {
+      console.error('Error fetching bookings:', error);
       // Error fetching bookings
     }
   };
