@@ -644,6 +644,66 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     setShowInvoiceModal(true);
   };
 
+  // Handle sending email to buyer with completed work
+  const handleSendEmail = () => {
+    if (!booking || !booking.buyerId?.email) {
+      showNotification('Unable to send email: buyer email not available', 'error');
+      return;
+    }
+
+    // Create professional email template with Aquads branding
+    const subject = `Work Delivery - ${booking.serviceId?.title || 'Your Project'} - Booking #${booking._id.substring(0, 6)}`;
+    
+    const emailBody = `Dear ${booking.buyerName || 'Valued Client'},
+
+I hope this email finds you well. I'm writing to deliver the completed work for your booking on Aquads.
+
+📋 BOOKING DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Service: ${booking.serviceId?.title || 'N/A'}
+• Booking ID: #${booking._id.substring(0, 6)}
+• Amount: ${booking.price} ${booking.currency}
+• Freelancer: ${currentUser.username}
+• Date: ${new Date().toLocaleDateString()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📎 DELIVERABLES:
+Please find the completed work attached to this email. The files include all the deliverables as discussed in our project requirements.
+
+${booking.requirements ? `\n📝 ORIGINAL REQUIREMENTS:\n"${booking.requirements}"\n` : ''}
+
+✅ NEXT STEPS:
+1. Please review the attached files
+2. If you need any revisions, please respond through the Aquads platform
+3. Once satisfied, please pay your invoice provided the messaging system on Aquads.
+4. Your feedback and review would be greatly appreciated
+
+💬 COMMUNICATION:
+For any questions or revision requests, please continue our conversation through the Aquads platform to maintain secure communication and project history.
+
+Thank you for choosing Aquads for your project. It has been a pleasure working with you!
+
+Best regards,
+${currentUser.username}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌊 AQUADS - Your Trusted Freelancing Platform
+🌐 Website: https://aquads.xyz
+💼 Professional freelancing services with secure transactions
+🔒 Safe, secure, and reliable project management
+
+This email was sent through Aquads platform for project delivery.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    // Create mailto link
+    const mailtoLink = `mailto:${booking.buyerId.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Open email client
+    window.open(mailtoLink);
+    
+    showNotification('Email template opened in your default email client', 'success');
+  };
+
   // Render message content including any attachments
   const renderMessageContent = (msg) => {
     if (!msg) return null;
@@ -1312,14 +1372,21 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             </div>
           </form>
           
-          {/* Add invoice button for sellers when booking is confirmed */}
+          {/* Add invoice and email buttons for sellers when booking is confirmed */}
           {isSeller && booking && booking.status === 'confirmed' && (
-            <div className="mb-3">
+            <div className="mb-3 flex gap-2">
               <button
                 onClick={handleCreateInvoice}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm flex items-center"
               >
                 <span className="mr-1">📝</span> Create Invoice
+              </button>
+              <button
+                onClick={handleSendEmail}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm flex items-center"
+                title="Send completed work via email"
+              >
+                <span className="mr-1">📧</span> Send Email
               </button>
             </div>
           )}
