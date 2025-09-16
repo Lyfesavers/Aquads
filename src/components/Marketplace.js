@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
-import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob, refreshJob } from '../services/api';
+import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob, refreshJob, socket } from '../services/api';
 import { API_URL } from '../services/api';
+import logger from '../utils/logger';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
 import CreateBannerModal from './CreateBannerModal';
@@ -462,6 +463,28 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     logger.log('Current user:', currentUser);
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
+
+  // Socket connection for real-time booking updates
+  useEffect(() => {
+    if (socket && currentUser) {
+      // Join user's room for direct updates
+      socket.emit('userOnline', {
+        userId: currentUser.userId,
+        username: currentUser.username
+      });
+
+      const handleBookingUpdate = (data) => {
+        // Handle booking updates if needed (for future features)
+        console.log('Marketplace received booking update:', data);
+      };
+
+      socket.on('bookingUpdated', handleBookingUpdate);
+
+      return () => {
+        socket.off('bookingUpdated', handleBookingUpdate);
+      };
+    }
+  }, [socket, currentUser]);
 
   // Helper function to calculate trust score (reusing RiskGauge logic)
   const calculateTrustScore = (service, seller, completionRate = null) => {
