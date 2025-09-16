@@ -695,31 +695,13 @@ ${currentUser.username}
 This email was sent through Aquads platform for project delivery.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
-    // Create mailto link
+    // Create mailto link (using same method as working jobs email feature)
     const mailtoLink = `mailto:${booking.buyerId.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
     
-    // Try multiple methods to open email client
-    try {
-      // Method 1: Direct window.location (most reliable)
-      window.location.href = mailtoLink;
-      
-      showNotification('Opening email client...', 'success');
-    } catch (error) {
-      // Method 2: Fallback with window.open
-      try {
-        window.open(mailtoLink, '_self');
-        showNotification('Opening email client...', 'success');
-      } catch (e) {
-        // Method 3: Create temporary link and click it
-        const tempLink = document.createElement('a');
-        tempLink.href = mailtoLink;
-        tempLink.style.display = 'none';
-        document.body.appendChild(tempLink);
-        tempLink.click();
-        document.body.removeChild(tempLink);
-        showNotification('Opening email client...', 'success');
-      }
-    }
+    // Use the exact same method as the working jobs email feature
+    window.location.href = mailtoLink;
+    
+    showNotification('Opening email client...', 'success');
   };
 
   // Render message content including any attachments
