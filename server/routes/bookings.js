@@ -1304,12 +1304,33 @@ async function fixCompletedBookingsWatermarks() {
                   totalFixed++;
                 }
               } else {
-                console.log(`⚠️ No original file found for message ${message._id}, updating flag only`);
-                // Still update the flag even if file replacement fails
-                await BookingMessage.findByIdAndUpdate(message._id, {
-                  isWatermarked: false
-                });
-                totalFixed++;
+                // No original file found - this means the original was never saved
+                // For completed bookings, we'll rename the watermarked file to remove the prefix
+                // This way the URL will show the image without "watermarked-" prefix
+                try {
+                  await fs.access(watermarkedFilePath);
+                  
+                  const finalFilePath = path.join(__dirname, '../uploads/bookings', originalFilename);
+                  
+                  // Copy watermarked file to final location (without watermarked- prefix)
+                  await fs.copyFile(watermarkedFilePath, finalFilePath);
+                  
+                  // Update the message to point to the final file
+                  await BookingMessage.findByIdAndUpdate(message._id, {
+                    attachment: `/uploads/bookings/${originalFilename}`,
+                    isWatermarked: false
+                  });
+                  
+                  totalFixed++;
+                  console.log(`✅ Renamed watermarked file for message ${message._id} for booking ${booking._id}`);
+                } catch (fileError) {
+                  console.log(`⚠️ Watermarked file not found for message ${message._id}, updating flag only`);
+                  // Still update the flag even if file renaming fails
+                  await BookingMessage.findByIdAndUpdate(message._id, {
+                    isWatermarked: false
+                  });
+                  totalFixed++;
+                }
               }
             } catch (messageError) {
               console.error(`❌ Error processing message ${message._id}:`, messageError);
