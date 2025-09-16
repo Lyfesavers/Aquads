@@ -1205,4 +1205,117 @@ router.get('/notification/:id', auth, async (req, res) => {
   }
 });
 
+// One-time watermark fix function (runs automatically on server startup)
+async function fixCompletedBookingsWatermarks() {
+  try {
+    const Booking = require('../models/Booking');
+    const BookingMessage = require('../models/BookingMessage');
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    // Check if we've already run this fix (using a simple flag file)
+    const flagFilePath = path.join(__dirname, '../uploads/bookings/.watermark-fix-completed');
+    
+    if (fs.existsSync(flagFilePath)) {
+      console.log('Watermark fix already completed, skipping...');
+      return;
+    }
+
+    console.log('🔧 Running one-time watermark fix for completed bookings...');
+
+    // Find all completed bookings
+    const completedBookings = await Booking.find({ status: 'completed' });
+    
+    let totalProcessed = 0;
+    let totalFixed = 0;
+    let errors = [];
+
+    console.log(`Found ${completedBookings.length} completed bookings to process`);
+
+    for (const booking of completedBookings) {
+      try {
+        // Get all watermarked messages for this booking
+        const watermarkedMessages = await BookingMessage.find({
+          bookingId: booking._id,
+          isWatermarked: true
+        });
+
+        if (watermarkedMessages.length > 0) {
+          console.log(`Processing booking ${booking._id} with ${watermarkedMessages.length} watermarked messages`);
+        }
+
+        for (const message of watermarkedMessages) {
+          totalProcessed++;
+          
+          if (message.attachment && message.attachment.includes('watermarked-')) {
+            try {
+              // Get the original filename (remove 'watermarked-' prefix)
+              const originalFilename = message.attachment.replace('/uploads/bookings/watermarked-', '');
+              const watermarkedFilePath = path.join(__dirname, '../uploads/bookings', `watermarked-${originalFilename}`);
+              const originalFilePath = path.join(__dirname, '../uploads/bookings/originals', `original-${originalFilename}`);
+              
+              // Check if both files exist
+              try {
+                await fs.access(watermarkedFilePath);
+                await fs.access(originalFilePath);
+                
+                // Replace the watermarked file with the original file
+                await fs.copyFile(originalFilePath, watermarkedFilePath);
+                
+                // Update the message to point to the original file
+                await BookingMessage.findByIdAndUpdate(message._id, {
+                  attachment: `/uploads/bookings/${originalFilename}`,
+                  isWatermarked: false
+                });
+                
+                totalFixed++;
+                console.log(`✅ Fixed message ${message._id} for booking ${booking._id}`);
+              } catch (fileError) {
+                console.log(`⚠️ File not found for message ${message._id}, updating flag only`);
+                // Still update the flag even if file replacement fails
+                await BookingMessage.findByIdAndUpdate(message._id, {
+                  isWatermarked: false
+                });
+                totalFixed++;
+              }
+            } catch (messageError) {
+              console.error(`❌ Error processing message ${message._id}:`, messageError);
+              errors.push(`Message ${message._id}: ${messageError.message}`);
+              // Still update the flag even if file processing fails
+              await BookingMessage.findByIdAndUpdate(message._id, {
+                isWatermarked: false
+              });
+              totalFixed++;
+            }
+          } else {
+            // For messages without watermarked files, just update the flag
+            await BookingMessage.findByIdAndUpdate(message._id, {
+              isWatermarked: false
+            });
+            totalFixed++;
+          }
+        }
+      } catch (bookingError) {
+        console.error(`❌ Error processing booking ${booking._id}:`, bookingError);
+        errors.push(`Booking ${booking._id}: ${bookingError.message}`);
+      }
+    }
+
+    // Create flag file to indicate completion
+    await fs.writeFile(flagFilePath, `Watermark fix completed at ${new Date().toISOString()}\nProcessed: ${totalProcessed}, Fixed: ${totalFixed}, Errors: ${errors.length}`);
+
+    console.log(`✅ Watermark fix completed! Processed: ${totalProcessed}, Fixed: ${totalFixed}, Errors: ${errors.length}`);
+    
+    if (errors.length > 0) {
+      console.log('Errors encountered:', errors);
+    }
+
+  } catch (error) {
+    console.error('❌ Error in watermark fix:', error);
+  }
+}
+
+// Run the fix when this module is loaded (server startup)
+fixCompletedBookingsWatermarks();
+
 module.exports = router; 
