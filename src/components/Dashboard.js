@@ -10,7 +10,7 @@ import CreateJobModal from './CreateJobModal';
 import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 import AdminDiscountCodes from './AdminDiscountCodes';
-import useSocket from '../hooks/useSocket';
+import { socket } from '../services/api';
 import logger from '../utils/logger';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
@@ -45,8 +45,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [vipUsername, setVipUsername] = useState('');
   const [freeRaidUsername, setFreeRaidUsername] = useState('');
 
-  // Socket connection for real-time updates
-  const { socket, isConnected } = useSocket(process.env.REACT_APP_API_URL);
+  // Use global socket connection for real-time updates
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
