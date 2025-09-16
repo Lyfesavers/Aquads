@@ -96,64 +96,63 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   }
 }));
 
-// Serve bookings subfolder explicitly
-app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookings'), {
-  maxAge: '1h',
-  setHeaders: (res, filePath) => {
-    // Set same headers as above for consistency
-    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (filePath.endsWith('.png')) {
-      res.setHeader('Content-Type', 'image/png');
-    } else if (filePath.endsWith('.gif')) {
-      res.setHeader('Content-Type', 'image/gif');
-    } else if (filePath.endsWith('.pdf')) {
-      res.setHeader('Content-Type', 'application/pdf');
-    }
-    
-    // Allow cross-origin access
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-  }
-}));
+// DISABLED: Static file serving for bookings - now handled by watermarking logic in routes
+// app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookings'), {
+//   maxAge: '1h',
+//   setHeaders: (res, filePath) => {
+//     // Set same headers as above for consistency
+//     if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+//       res.setHeader('Content-Type', 'image/jpeg');
+//     } else if (filePath.endsWith('.png')) {
+//       res.setHeader('Content-Type', 'image/png');
+//     } else if (filePath.endsWith('.gif')) {
+//       res.setHeader('Content-Type', 'image/gif');
+//     } else if (filePath.endsWith('.pdf')) {
+//       res.setHeader('Content-Type', 'application/pdf');
+//     }
+//     
+//     // Allow cross-origin access
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+//     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+//   }
+// }));
 
-// API endpoint for file access - alternative to direct static file serving
-// This helps if the static file serving doesn't work in production
-app.get('/api/uploads/bookings/:filename', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.error('File not found (API endpoint):', filePath);
-      return res.status(404).send('File not found');
-    }
-    
-    // Set appropriate content type based on file extension
-    const ext = path.extname(req.params.filename).toLowerCase();
-    if (ext === '.jpg' || ext === '.jpeg') {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (ext === '.png') {
-      res.setHeader('Content-Type', 'image/png');
-    } else if (ext === '.gif') {
-      res.setHeader('Content-Type', 'image/gif');
-    } else if (ext === '.pdf') {
-      res.setHeader('Content-Type', 'application/pdf');
-    }
-    
-    // Allow cross-origin access and caching
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-    
-    // Send the file
-    res.sendFile(filePath);
-  } catch (error) {
-    console.error('Error serving file (API endpoint):', error);
-    res.status(500).send('Error serving file');
-  }
-});
+// DISABLED: API endpoint for file access - now handled by watermarking logic in routes
+// app.get('/api/uploads/bookings/:filename', (req, res) => {
+//   try {
+//     const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+//     
+//     // Check if file exists
+//     if (!fs.existsSync(filePath)) {
+//       console.error('File not found (API endpoint):', filePath);
+//       return res.status(404).send('File not found');
+//     }
+//     
+//     // Set appropriate content type based on file extension
+//     const ext = path.extname(req.params.filename).toLowerCase();
+//     if (ext === '.jpg' || ext === '.jpeg') {
+//       res.setHeader('Content-Type', 'image/jpeg');
+//     } else if (ext === '.png') {
+//       res.setHeader('Content-Type', 'image/png');
+//     } else if (ext === '.gif') {
+//       res.setHeader('Content-Type', 'image/gif');
+//     } else if (ext === '.pdf') {
+//       res.setHeader('Content-Type', 'application/pdf');
+//     }
+//     
+//     // Allow cross-origin access and caching
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+//     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+//     
+//     // Send the file
+//     res.sendFile(filePath);
+//   } catch (error) {
+//     console.error('Error serving file (API endpoint):', error);
+//     res.status(500).send('Error serving file');
+//   }
+// });
 
 // Log all requests to uploads for debugging
 app.use('/uploads', (req, res, next) => {
@@ -626,40 +625,40 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build/index.html'));
 });
 
-// Direct file access endpoint for booking attachments
-app.get('/uploads/bookings/:filename', (req, res) => {
-  try {
-    // Construct the absolute path to the file
-    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).send('File not found');
-    }
-    
-    // Set appropriate content type based on file extension
-    const ext = path.extname(req.params.filename).toLowerCase();
-    if (ext === '.jpg' || ext === '.jpeg') {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (ext === '.png') {
-      res.setHeader('Content-Type', 'image/png');
-    } else if (ext === '.gif') {
-      res.setHeader('Content-Type', 'image/gif');
-    } else if (ext === '.pdf') {
-      res.setHeader('Content-Type', 'application/pdf');
-    }
-    
-    // Allow cross-origin access
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Add caching
-    
-    // Send the file
-    res.sendFile(filePath);
-  } catch (error) {
-    res.status(500).send('Error serving file');
-  }
-});
+// DISABLED: Direct file access endpoint - now handled by watermarking logic in routes
+// app.get('/uploads/bookings/:filename', (req, res) => {
+//   try {
+//     // Construct the absolute path to the file
+//     const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+//     
+//     // Check if file exists
+//     if (!fs.existsSync(filePath)) {
+//       return res.status(404).send('File not found');
+//     }
+//     
+//     // Set appropriate content type based on file extension
+//     const ext = path.extname(req.params.filename).toLowerCase();
+//     if (ext === '.jpg' || ext === '.jpeg') {
+//       res.setHeader('Content-Type', 'image/jpeg');
+//     } else if (ext === '.png') {
+//       res.setHeader('Content-Type', 'image/png');
+//     } else if (ext === '.gif') {
+//       res.setHeader('Content-Type', 'image/gif');
+//     } else if (ext === '.pdf') {
+//       res.setHeader('Content-Type', 'application/pdf');
+//     }
+//     
+//     // Allow cross-origin access
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+//     res.setHeader('Cache-Control', 'public, max-age=3600'); // Add caching
+//     
+//     // Send the file
+//     res.sendFile(filePath);
+//   } catch (error) {
+//     res.status(500).send('Error serving file');
+//   }
+// });
 
 // 404 handler
 app.use((req, res, next) => {
