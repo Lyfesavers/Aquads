@@ -677,12 +677,18 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     
     // Choose best image URL to display
     const getBestImageUrl = () => {
-      // If we have a data URL, use it as the most reliable source
+      if (!msg.attachment) return null;
+      
+      // For completed bookings, always use the query parameter URL to get original files
+      if (booking.status === 'completed') {
+        const urls = generateAttachmentUrls(msg.attachment);
+        return urls.queryParam;
+      }
+      
+      // For active bookings, prioritize data URL if available
       if (msg.dataUrl) {
         return msg.dataUrl;
       }
-      
-      if (!msg.attachment) return null;
       
       // If we've already processed the URL during fetch
       if (msg.attachmentFullUrl) {
