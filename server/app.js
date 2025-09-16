@@ -120,9 +120,41 @@ app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookin
 
 // API endpoint for file access - alternative to direct static file serving
 // This helps if the static file serving doesn't work in production
-app.get('/api/uploads/bookings/:filename', (req, res) => {
+app.get('/api/uploads/bookings/:filename', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+    const filename = req.params.filename;
+    const bookingId = req.query.bookingId;
+    
+    let filePath = path.join(__dirname, 'uploads/bookings', filename);
+    
+    // If this is a watermarked file and we have a bookingId, check if booking is completed
+    if (filename.startsWith('watermarked-') && bookingId) {
+      try {
+        const Booking = require('./models/Booking');
+        const booking = await Booking.findById(bookingId);
+        
+        if (booking && booking.status === 'completed') {
+          // Try to serve the original file instead
+          const originalFilename = filename.replace('watermarked-', '');
+          const possibleOriginalPaths = [
+            path.join(__dirname, 'uploads/bookings/originals', `original-${originalFilename}`),
+            path.join(__dirname, 'uploads/bookings', originalFilename),
+            path.join(__dirname, 'uploads/bookings', `original-${originalFilename}`)
+          ];
+          
+          for (const possiblePath of possibleOriginalPaths) {
+            if (fs.existsSync(possiblePath)) {
+              filePath = possiblePath;
+              console.log(`📁 Serving original file from: ${possiblePath}`);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error checking booking status:', err);
+        // Continue with watermarked file if error
+      }
+    }
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -131,7 +163,7 @@ app.get('/api/uploads/bookings/:filename', (req, res) => {
     }
     
     // Set appropriate content type based on file extension
-    const ext = path.extname(req.params.filename).toLowerCase();
+    const ext = path.extname(filename).toLowerCase();
     if (ext === '.jpg' || ext === '.jpeg') {
       res.setHeader('Content-Type', 'image/jpeg');
     } else if (ext === '.png') {
@@ -627,10 +659,42 @@ app.get('*', (req, res) => {
 });
 
 // Direct file access endpoint for booking attachments
-app.get('/uploads/bookings/:filename', (req, res) => {
+app.get('/uploads/bookings/:filename', async (req, res) => {
   try {
+    const filename = req.params.filename;
+    const bookingId = req.query.bookingId;
+    
     // Construct the absolute path to the file
-    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+    let filePath = path.join(__dirname, 'uploads/bookings', filename);
+    
+    // If this is a watermarked file and we have a bookingId, check if booking is completed
+    if (filename.startsWith('watermarked-') && bookingId) {
+      try {
+        const Booking = require('./models/Booking');
+        const booking = await Booking.findById(bookingId);
+        
+        if (booking && booking.status === 'completed') {
+          // Try to serve the original file instead
+          const originalFilename = filename.replace('watermarked-', '');
+          const possibleOriginalPaths = [
+            path.join(__dirname, 'uploads/bookings/originals', `original-${originalFilename}`),
+            path.join(__dirname, 'uploads/bookings', originalFilename),
+            path.join(__dirname, 'uploads/bookings', `original-${originalFilename}`)
+          ];
+          
+          for (const possiblePath of possibleOriginalPaths) {
+            if (fs.existsSync(possiblePath)) {
+              filePath = possiblePath;
+              console.log(`📁 Serving original file from: ${possiblePath}`);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error checking booking status:', err);
+        // Continue with watermarked file if error
+      }
+    }
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -638,7 +702,7 @@ app.get('/uploads/bookings/:filename', (req, res) => {
     }
     
     // Set appropriate content type based on file extension
-    const ext = path.extname(req.params.filename).toLowerCase();
+    const ext = path.extname(filename).toLowerCase();
     if (ext === '.jpg' || ext === '.jpeg') {
       res.setHeader('Content-Type', 'image/jpeg');
     } else if (ext === '.png') {
