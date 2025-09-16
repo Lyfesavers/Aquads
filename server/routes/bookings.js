@@ -1216,9 +1216,12 @@ async function fixCompletedBookingsWatermarks() {
     // Check if we've already run this fix (using a simple flag file)
     const flagFilePath = path.join(__dirname, '../uploads/bookings/.watermark-fix-completed');
     
-    if (fs.existsSync(flagFilePath)) {
+    try {
+      await fs.access(flagFilePath);
       console.log('Watermark fix already completed, skipping...');
       return;
+    } catch (error) {
+      // Flag file doesn't exist, continue with the fix
     }
 
     console.log('🔧 Running one-time watermark fix for completed bookings...');
