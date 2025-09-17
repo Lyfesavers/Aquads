@@ -852,39 +852,62 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       {/* User Positions */}
       {walletConnected && userPositions.length > 0 && (
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-          <h3 className="text-xl font-semibold text-white mb-4">Your Positions</h3>
-          <div className="grid gap-4">
+          <h3 className="text-xl font-semibold text-white mb-6">Your Positions</h3>
+          <div className="grid gap-6">
             {userPositions.map((position) => (
-              <div key={position.id} className="bg-gray-700/50 rounded-lg p-4 flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-medium">{position.protocol}</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-300">{position.token}</span>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Deposited: {position.amount.toFixed(4)} {position.token}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Net Amount: {position.netAmount?.toFixed(4) || position.amount.toFixed(4)} {position.token}
-                  </div>
-                  <div className="text-sm text-green-400">
-                    Earned: +{position.earned.toFixed(4)} {position.token}
-                  </div>
-                  {position.txHash && (
-                    <div className="text-sm text-blue-400">
-                      TX: {position.txHash.slice(0, 10)}...
+              <div key={position.id} className="bg-gray-700/50 rounded-xl p-6 border border-gray-600/30">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{position.protocol === 'Aave V3' ? '🏦' : '💰'}</span>
+                    <div>
+                      <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
+                      <p className="text-sm text-gray-400">{position.token} Pool</p>
                     </div>
-                  )}
+                  </div>
+                  <button
+                    onClick={() => handleWithdraw(position)}
+                    disabled={loading}
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <FaArrowUp className="w-4 h-4" />
+                    Withdraw
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleWithdraw(position)}
-                  disabled={loading}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  <FaArrowUp className="w-4 h-4" />
-                  Withdraw
-                </button>
+
+                {/* Earned Amount - Center & Prominent */}
+                <div className="text-center mb-6 py-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <p className="text-sm text-gray-400 mb-1">Total Earned</p>
+                  <div className="text-3xl font-bold text-green-400">
+                    +{(position.currentValue - (position.amount - (position.amount * 0.01))).toFixed(6)} {position.token}
+                  </div>
+                  <p className="text-xs text-green-300 mt-1">Including yield accrual</p>
+                </div>
+
+                {/* Position Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-gray-800/50 rounded-lg p-3">
+                    <p className="text-gray-400 mb-1">Original Deposit</p>
+                    <p className="text-white font-semibold">{position.amount.toFixed(6)} {position.token}</p>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-3">
+                    <p className="text-gray-400 mb-1">Current Value</p>
+                    <p className="text-blue-400 font-semibold">{position.currentValue.toFixed(6)} {position.token}</p>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-3">
+                    <p className="text-gray-400 mb-1">APY</p>
+                    <p className="text-yellow-400 font-semibold">{position.apy.toFixed(2)}%</p>
+                  </div>
+                </div>
+
+                {/* Transaction Hash */}
+                {position.txHash && (
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-blue-400">
+                      TX: {position.txHash.slice(0, 10)}...{position.txHash.slice(-6)}
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
