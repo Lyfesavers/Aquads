@@ -164,13 +164,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [connectedAddress, setConnectedAddress] = useState(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
+  const [activeChain, setActiveChain] = useState('All');
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
   const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
   const [isUpdatingAPY, setIsUpdatingAPY] = useState(false);
 
-  // Since we only use Aave V3, no need for protocol filtering
-  const filteredPools = pools;
+  // Get unique chains for tabs
+  const chains = ['All', ...new Set(pools.map(pool => pool.chain))];
+
+  // Filter pools based on active chain
+  const filteredPools = activeChain === 'All' ? pools : pools.filter(pool => pool.chain === activeChain);
 
   // Refresh positions manually
   const refreshPositions = async () => {
@@ -1131,6 +1135,36 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           </div>
         </div>
         
+        {/* Chain Filter Tabs */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50">
+            <div className="flex gap-2">
+              {chains.map((chain) => (
+                <button
+                  key={chain}
+                  onClick={() => setActiveChain(chain)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeChain === chain
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                  }`}
+                >
+                  <span className="text-lg">
+                    {chain === 'All' ? '🌐' : 
+                     chain === 'Ethereum' ? '⚡' : 
+                     chain === 'Base' ? '🔵' : 
+                     chain === 'BNB Chain' ? '🟡' : '🔗'}
+                  </span>
+                  {chain}
+                  <span className="text-xs opacity-75">
+                    ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        
         {/* Warning Notice */}
         {!walletConnected && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6">
@@ -1158,7 +1192,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">APY:</span>
-                      <span className="text-green-400 font-semibold ml-1">{pool.apy}%</span>
+                      <span className="text-green-400 font-semibold ml-1">{pool.apy.toFixed(2)}%</span>
                     </div>
                     <div>
                       <span className="text-gray-400">TVL:</span>
