@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp, FaSync } from 'react-icons/fa';
 import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain, getChainConfig } from '../config/wallets';
 import tokenAddresses from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
@@ -96,9 +96,31 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [activeTab, setActiveTab] = useState('All');
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
+  const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
 
   // Since we only use Aave V3, no need for protocol filtering
   const filteredPools = pools;
+
+  // Refresh positions manually
+  const refreshPositions = async () => {
+    if (!walletConnected || !connectedAddress || !walletProvider) {
+      showNotification('Please connect your wallet first', 'error');
+      return;
+    }
+
+    setIsRefreshingPositions(true);
+    try {
+      const ethersProvider = new ethers.BrowserProvider(walletProvider);
+      const positions = await fetchUserPositions(connectedAddress, ethersProvider);
+      setUserPositions(positions);
+      showNotification('Positions refreshed successfully!', 'success');
+    } catch (error) {
+      logger.error('Error refreshing positions:', error);
+      showNotification('Failed to refresh positions. Please try again.', 'error');
+    } finally {
+      setIsRefreshingPositions(false);
+    }
+  };
 
   // Calculate earnings using Aave's liquidity index method
   const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider) => {
@@ -905,7 +927,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       {/* User Positions */}
       {walletConnected && userPositions.length > 0 && (
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-          <h3 className="text-xl font-semibold text-white mb-6">Your Positions</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-white">Your Positions</h3>
+            <button
+              onClick={refreshPositions}
+              disabled={isRefreshingPositions}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+            >
+              <FaSync className={`w-3 h-3 ${isRefreshingPositions ? 'animate-spin' : ''}`} />
+              {isRefreshingPositions ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
           <div className="grid gap-6">
             {userPositions.map((position) => (
               <div key={position.id} className="bg-gray-700/50 rounded-xl p-6 border border-gray-600/30">
