@@ -362,17 +362,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const aaveContract = new ethers.Contract(contractAddress, aavePoolABI, provider);
       const reserveData = await aaveContract.getReserveData(tokenAddress);
       
-      // Convert liquidityRate to APY percentage
-      // Aave rates are in Ray units (1e27), and represent per-second rates
+      // Convert liquidityRate to APY percentage using Aave's formula
+      // Aave rates are in Ray units (1e27) and represent annual rates, not per-second
       const liquidityRate = reserveData.currentLiquidityRate;
-      const SECONDS_PER_YEAR = 31536000;
       const RAY = ethers.parseUnits('1', 27);
       
-      // Calculate APY: ((1 + ratePerSecond) ^ secondsPerYear) - 1
-      const ratePerSecond = Number(liquidityRate) / Number(RAY);
-      const apy = ((1 + ratePerSecond) ** SECONDS_PER_YEAR - 1) * 100;
+      // Aave's currentLiquidityRate is already annualized, just convert from Ray to percentage
+      const apy = (Number(liquidityRate) / Number(RAY)) * 100;
       
-      return Math.max(0, Math.min(50, apy)); // Cap between 0% and 50% for safety
+      return Math.max(0, Math.min(20, apy)); // Cap between 0% and 20% for realistic DeFi rates
     } catch (error) {
       logger.error('Error fetching live APY from Aave:', error);
       return null; // Return null to use fallback static APY
