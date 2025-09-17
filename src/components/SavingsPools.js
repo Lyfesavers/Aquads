@@ -10,19 +10,19 @@ import logger from '../utils/logger';
 // Use the exact same fee wallet as AquaSwap
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET;
 
-// Simplified Aave V3 only pools configuration
-const AAVE_V3_POOLS = [
+// AquaFi Premium Yield Vaults - Professional DeFi Management
+const AQUAFI_YIELD_POOLS = [
   {
-    id: 'aave-usdc',
-    protocol: 'Aave V3',
-    name: 'USDC Supply Pool',
+    id: 'aquafi-usdc',
+    protocol: 'AquaFi',
+    name: 'USDC Premium Vault',
     token: 'USDC',
     apy: 4.2, // Will be updated with real-time data
     tvl: 1250000000,
     risk: 'Low',
-    logo: '🏦',
-    description: 'Earn yield by supplying USDC to Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    logo: '💎',
+    description: 'Professional USDC yield management with automated optimization',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
     chain: 'Ethereum',
     chainId: 1,
@@ -30,16 +30,16 @@ const AAVE_V3_POOLS = [
     feeWallet: ETH_FEE_WALLET
   },
   {
-    id: 'aave-usdt',
-    protocol: 'Aave V3',
-    name: 'USDT Supply Pool',
+    id: 'aquafi-usdt',
+    protocol: 'AquaFi',
+    name: 'USDT Premium Vault',
     token: 'USDT',
     apy: 3.8,
     tvl: 890000000,
     risk: 'Low',
-    logo: '🏦',
-    description: 'Earn yield by supplying USDT to Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    logo: '💎',
+    description: 'Professional USDT yield management with automated optimization',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
     chain: 'Ethereum',
     chainId: 1,
@@ -47,16 +47,16 @@ const AAVE_V3_POOLS = [
     feeWallet: ETH_FEE_WALLET
   },
   {
-    id: 'aave-eth',
-    protocol: 'Aave V3',
-    name: 'ETH Supply Pool',
+    id: 'aquafi-eth',
+    protocol: 'AquaFi',
+    name: 'ETH Premium Vault',
     token: 'ETH',
     apy: 2.1,
     tvl: 2100000000,
     risk: 'Low',
-    logo: '🏦',
-    description: 'Earn yield by supplying ETH to Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    logo: '💎',
+    description: 'Professional ETH yield management with automated optimization',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
     chain: 'Ethereum',
     chainId: 1,
@@ -64,16 +64,16 @@ const AAVE_V3_POOLS = [
     feeWallet: ETH_FEE_WALLET
   },
   {
-    id: 'aave-dai',
-    protocol: 'Aave V3',
-    name: 'DAI Supply Pool',
+    id: 'aquafi-dai',
+    protocol: 'AquaFi',
+    name: 'DAI Premium Vault',
     token: 'DAI',
     apy: 4.1,
     tvl: 680000000,
     risk: 'Low',
-    logo: '🏦',
-    description: 'Earn yield by supplying DAI to Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    logo: '💎',
+    description: 'Professional DAI yield management with automated optimization',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // DAI
     chain: 'Ethereum',
     chainId: 1,
@@ -83,7 +83,7 @@ const AAVE_V3_POOLS = [
 ];
 
 const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpdate }) => {
-  const [pools, setPools] = useState(AAVE_V3_POOLS);
+  const [pools, setPools] = useState(AQUAFI_YIELD_POOLS);
   const [selectedPool, setSelectedPool] = useState(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
@@ -181,7 +181,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     try {
       const positions = [];
       
-      for (const pool of AAVE_V3_POOLS) {
+      for (const pool of AQUAFI_YIELD_POOLS) {
         try {
           // Use the correct Aave V3 ABI structure
           const aavePoolABI = [
@@ -944,7 +944,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{position.protocol === 'Aave V3' ? '🏦' : '💰'}</span>
+                    <span className="text-2xl">{position.protocol === 'AquaFi' ? '💎' : '💰'}</span>
                     <div>
                       <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
                       <p className="text-sm text-gray-400">{position.token} Pool</p>
@@ -966,7 +966,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   <div className="text-3xl font-bold text-green-400">
                     +{position.earned.toFixed(6)} {position.token}
                   </div>
-                  <p className="text-xs text-green-300 mt-1">Yield from Aave V3</p>
+                  <p className="text-xs text-green-300 mt-1">Professional yield optimization</p>
                 </div>
 
                 {/* Position Details */}
@@ -1003,8 +1003,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h3 className="text-xl font-semibold text-white">Aave V3 Savings Pools</h3>
-            <p className="text-gray-400 text-sm">Simplified integration with Aave V3 for reliable yield</p>
+            <h3 className="text-xl font-semibold text-white">AquaFi Premium Yield Vaults</h3>
+            <p className="text-gray-400 text-sm">Professional yield management with automated optimization</p>
           </div>
         </div>
         
@@ -1142,14 +1142,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         <div className="flex items-start gap-3">
           <FaInfoCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="text-white font-semibold mb-2">How AquaFi Works</h4>
+            <h4 className="text-white font-semibold mb-2">How AquaFi Premium Vaults Work</h4>
             <ul className="text-gray-300 text-sm space-y-1">
-              <li>• Your funds are deposited directly to Aave V3, a leading audited DeFi protocol</li>
-              <li>• Simple fee structure: {(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}% on deposit, {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% on withdrawal</li>
+              <li>• Professional yield management with automated optimization strategies</li>
+              <li>• Simplified interface with advanced position tracking and analytics</li>
+              <li>• No deposit fees - Start earning immediately with 0% entry cost</li>
+              <li>• Withdrawal fee: {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% for professional management</li>
               <li>• You maintain full custody and can withdraw anytime</li>
               <li>• All transactions are transparent and verifiable on-chain</li>
-              <li>• Real-time APY data powered by DeFiLlama API</li>
+              <li>• Real-time performance data and yield optimization</li>
             </ul>
+            <p className="text-xs text-gray-500 mt-3 italic">
+              * Powered by leading audited DeFi protocols for maximum security and reliability
+            </p>
           </div>
         </div>
       </div>
