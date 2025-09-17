@@ -210,19 +210,21 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const events = await aToken.queryFilter(filter, -10000); // Look back 10k blocks
       
       let originalDeposit = 0;
+      const decimals = await aToken.decimals(); // Get correct decimals for this token
+      
       if (events.length > 0) {
-        // Sum all mint events (deposits) - this gives us total deposited
-        originalDeposit = events.reduce((sum, event) => sum + parseFloat(ethers.formatUnits(event.args.value, 6)), 0);
+        // Sum all mint events (deposits) using correct decimals for this token
+        originalDeposit = events.reduce((sum, event) => 
+          sum + parseFloat(ethers.formatUnits(event.args.value, decimals)), 0
+        );
       } else {
         // Fallback: assume recent deposit with minimal yield
-        const decimals = await aToken.decimals();
         const balance = parseFloat(ethers.formatUnits(currentBalance, decimals));
         originalDeposit = balance * 0.9995; // Assume very small yield
       }
       
-      const decimals = await aToken.decimals();
       const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
-      const earned = currentAmount - originalDeposit;
+      const earned = Math.max(0, currentAmount - originalDeposit); // Ensure non-negative
       
       return {
         originalDeposit: Math.max(originalDeposit, 0),
@@ -232,14 +234,18 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     } catch (error) {
       logger.error('Error calculating earnings from Aave:', error);
       // Safe fallback
-      const decimals = await aTokenContract.decimals();
-      const balance = await aTokenContract.balanceOf(userAddress);
-      const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
-      return {
-        originalDeposit: currentAmount * 0.9995,
-        currentAmount,
-        earned: currentAmount * 0.0005
-      };
+      try {
+        const decimals = await aTokenContract.decimals();
+        const balance = await aTokenContract.balanceOf(userAddress);
+        const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
+        return {
+          originalDeposit: currentAmount * 0.9995,
+          currentAmount,
+          earned: currentAmount * 0.0005
+        };
+      } catch (fallbackError) {
+        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
+      }
     }
   };
 
@@ -766,8 +772,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Handle withdraw with real blockchain transactions
   const handleWithdraw = async (position) => {
-    console.log('🔄 Withdraw button clicked, position:', position);
-    
     if (!walletConnected) {
       showNotification('Please connect your wallet', 'error');
       return;
