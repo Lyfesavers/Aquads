@@ -205,8 +205,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const storageKey = `aquafi_original_${userAddress.toLowerCase()}_${poolId}`;
       let originalDeposit = localStorage.getItem(storageKey);
       
-      if (!originalDeposit) {
-        // First time seeing this position - save current amount as original
+      if (!originalDeposit || Math.abs(parseFloat(originalDeposit) - currentAmount) > currentAmount * 0.1) {
+        // First time OR significant difference (new deposit after withdrawal) - reset original
         originalDeposit = currentAmount;
         localStorage.setItem(storageKey, originalDeposit.toString());
       } else {
