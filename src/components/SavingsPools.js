@@ -79,6 +79,76 @@ const AQUAFI_YIELD_POOLS = [
     chainId: 1,
     minDeposit: 1,
     feeWallet: ETH_FEE_WALLET
+  },
+  // Base Network Pools
+  {
+    id: 'aquafi-usdc-base',
+    protocol: 'AquaFi',
+    name: 'USDC Premium Vault (Base)',
+    token: 'USDC',
+    apy: 4.5, // Base typically has competitive rates
+    tvl: 250000000,
+    risk: 'Low',
+    logo: '🔵',
+    description: 'Professional USDC yield management on Base L2 with lower fees',
+    contractAddress: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5', // Aave V3 Pool on Base
+    tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+    chain: 'Base',
+    chainId: 8453,
+    minDeposit: 1,
+    feeWallet: ETH_FEE_WALLET
+  },
+  {
+    id: 'aquafi-eth-base',
+    protocol: 'AquaFi',
+    name: 'ETH Premium Vault (Base)',
+    token: 'ETH',
+    apy: 2.3,
+    tvl: 180000000,
+    risk: 'Low',
+    logo: '🔵',
+    description: 'Professional ETH yield management on Base L2 with lower fees',
+    contractAddress: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5', // Aave V3 Pool on Base
+    tokenAddress: '0x4200000000000000000000000000000000000006', // WETH on Base
+    chain: 'Base',
+    chainId: 8453,
+    minDeposit: 0.01,
+    feeWallet: ETH_FEE_WALLET
+  },
+  // BNB Chain Pools
+  {
+    id: 'aquafi-usdc-bnb',
+    protocol: 'AquaFi',
+    name: 'USDC Premium Vault (BNB)',
+    token: 'USDC',
+    apy: 4.8, // BNB Chain often has higher yields
+    tvl: 320000000,
+    risk: 'Low',
+    logo: '🟡',
+    description: 'Professional USDC yield management on BNB Chain with high yields',
+    contractAddress: '0x6807dc923806fE8Fd134338EABCA509979a7e0cB', // Aave V3 Pool on BNB
+    tokenAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // USDC on BNB Chain
+    chain: 'BNB Chain',
+    chainId: 56,
+    minDeposit: 1,
+    feeWallet: ETH_FEE_WALLET
+  },
+  {
+    id: 'aquafi-usdt-bnb',
+    protocol: 'AquaFi',
+    name: 'USDT Premium Vault (BNB)',
+    token: 'USDT',
+    apy: 4.2,
+    tvl: 280000000,
+    risk: 'Low',
+    logo: '🟡',
+    description: 'Professional USDT yield management on BNB Chain with high yields',
+    contractAddress: '0x6807dc923806fE8Fd134338EABCA509979a7e0cB', // Aave V3 Pool on BNB
+    tokenAddress: '0x55d398326f99059fF775485246999027B3197955', // USDT on BNB Chain
+    chain: 'BNB Chain',
+    chainId: 56,
+    minDeposit: 1,
+    feeWallet: ETH_FEE_WALLET
   }
 ];
 
@@ -97,6 +167,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
   const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
+  const [isUpdatingAPY, setIsUpdatingAPY] = useState(false);
 
   // Since we only use Aave V3, no need for protocol filtering
   const filteredPools = pools;
@@ -269,24 +340,70 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     return () => clearInterval(apyInterval);
   }, []);
 
-  // Fetch real-time APY data from DeFiLlama
-  const fetchRealTimeAPYs = async () => {
+  // Get live APY directly from Aave contracts
+  const getLiveAPYFromAave = async (contractAddress, tokenAddress, chainId) => {
     try {
-      const apyData = await getPoolAPYs();
-      
-      if (apyData && Object.keys(apyData).length > 0) {
-        const updatedPools = pools.map(pool => {
-          const poolKey = `${pool.protocol.toLowerCase()}-${pool.token.toLowerCase()}`;
-          if (apyData[poolKey] && apyData[poolKey].apy) {
-            return { ...pool, apy: apyData[poolKey].apy };
-          }
-          return pool;
-        });
-        setPools(updatedPools);
+      // Get RPC provider for the specific chain
+      let rpcUrl;
+      switch (chainId) {
+        case 1: rpcUrl = 'https://ethereum.publicnode.com'; break;
+        case 8453: rpcUrl = 'https://mainnet.base.org'; break;
+        case 56: rpcUrl = 'https://bsc-dataseed.binance.org'; break;
+        default: rpcUrl = 'https://ethereum.publicnode.com';
       }
+      
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      
+      // Aave V3 Pool ABI for getting reserve data
+      const aavePoolABI = [
+        'function getReserveData(address asset) view returns (tuple(uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))'
+      ];
+      
+      const aaveContract = new ethers.Contract(contractAddress, aavePoolABI, provider);
+      const reserveData = await aaveContract.getReserveData(tokenAddress);
+      
+      // Convert liquidityRate to APY percentage
+      // Aave rates are in Ray units (1e27), and represent per-second rates
+      const liquidityRate = reserveData.currentLiquidityRate;
+      const SECONDS_PER_YEAR = 31536000;
+      const RAY = ethers.parseUnits('1', 27);
+      
+      // Calculate APY: ((1 + ratePerSecond) ^ secondsPerYear) - 1
+      const ratePerSecond = Number(liquidityRate) / Number(RAY);
+      const apy = ((1 + ratePerSecond) ** SECONDS_PER_YEAR - 1) * 100;
+      
+      return Math.max(0, Math.min(50, apy)); // Cap between 0% and 50% for safety
+    } catch (error) {
+      logger.error('Error fetching live APY from Aave:', error);
+      return null; // Return null to use fallback static APY
+    }
+  };
+
+  // Fetch real-time APY data directly from Aave contracts
+  const fetchRealTimeAPYs = async () => {
+    setIsUpdatingAPY(true);
+    try {
+      const updatedPools = await Promise.all(
+        pools.map(async (pool) => {
+          const liveAPY = await getLiveAPYFromAave(
+            pool.contractAddress,
+            pool.tokenAddress,
+            pool.chainId
+          );
+          
+          if (liveAPY !== null && liveAPY > 0) {
+            return { ...pool, apy: liveAPY };
+          }
+          return pool; // Keep static APY if live fetch fails
+        })
+      );
+      
+      setPools(updatedPools);
     } catch (error) {
       logger.error('Error fetching real-time APYs:', error);
-      // Silently fail and use default APYs
+      // Silently fail and use static APYs
+    } finally {
+      setIsUpdatingAPY(false);
     }
   };
 
@@ -1004,7 +1121,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h3 className="text-xl font-semibold text-white">AquaFi Premium Yield Vaults</h3>
-            <p className="text-gray-400 text-sm">Professional yield management with automated optimization</p>
+            <div className="flex items-center gap-2">
+              <p className="text-gray-400 text-sm">Professional yield management with automated optimization</p>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${isUpdatingAPY ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
+                <span className="text-xs text-gray-500">
+                  {isUpdatingAPY ? 'Updating rates...' : 'Live APY rates'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         

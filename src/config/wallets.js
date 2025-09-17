@@ -79,6 +79,14 @@ export const SUPPORTED_CHAINS = {
     rpcUrl: "https://api.avax.network/ext/bc/C/rpc",
     explorerUrl: "https://snowtrace.io",
     feeWallet: AQUADS_WALLETS.AVALANCHE
+  },
+  BNB_CHAIN: {
+    id: 56,
+    name: "BNB Chain",
+    symbol: "BNB",
+    rpcUrl: "https://bsc-dataseed.binance.org",
+    explorerUrl: "https://bscscan.com",
+    feeWallet: AQUADS_WALLETS.BSC
   }
 };
 
