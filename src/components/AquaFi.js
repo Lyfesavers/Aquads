@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
-import SimpleFlashLoans from './SimpleFlashLoans';
-import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt, FaBolt, FaPiggyBank } from 'react-icons/fa';
+import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt } from 'react-icons/fa';
 import './AquaFi.css';
 
 const AquaFi = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [totalTVL, setTotalTVL] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
-  const [activeTab, setActiveTab] = useState('savings');
 
   useEffect(() => {
     // Add class to body for page-specific styling
@@ -86,50 +84,13 @@ const AquaFi = ({ currentUser, showNotification }) => {
         </div>
 
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-2 border border-gray-700/50">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('savings')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'savings'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                }`}
-              >
-                <FaPiggyBank className="w-4 h-4" />
-                Savings Pools
-              </button>
-              <button
-                onClick={() => setActiveTab('flash-loans')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'flash-loans'
-                    ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                }`}
-                             >
-                 <FaBolt className="w-4 h-4" />
-                 Flash Loans
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'savings' ? (
-          <SavingsPools 
-            currentUser={currentUser} 
-            showNotification={showNotification}
-            onTVLUpdate={setTotalTVL}
-            onBalanceUpdate={setUserBalance}
-          />
-        ) : (
-          <SimpleFlashLoans 
-            currentUser={currentUser} 
-            showNotification={showNotification}
-          />
-        )}
+        {/* Direct to Savings Pools - No Tabs Needed */}
+        <SavingsPools 
+          currentUser={currentUser} 
+          showNotification={showNotification}
+          onTVLUpdate={setTotalTVL}
+          onBalanceUpdate={setUserBalance}
+        />
       </div>
     </div>
   );
