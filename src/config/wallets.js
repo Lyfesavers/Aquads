@@ -22,8 +22,8 @@ export const FEE_CONFIG = {
   SWAP_FEE_PERCENTAGE: 0.02, // 2%
   
   // BexFi fees (simple flat structure)
-  SAVINGS_MANAGEMENT_FEE: 0.05, // 5% flat fee on deposit
-  SAVINGS_WITHDRAWAL_FEE: 0.005, // 0.5% fee on withdrawal
+  SAVINGS_MANAGEMENT_FEE: 0.01, // 1% flat fee on deposit
+  SAVINGS_WITHDRAWAL_FEE: 0.01, // 1% fee on withdrawal
   
   // Fee thresholds
   MIN_FEE_AMOUNT: 0.0001, // Minimum fee to collect (in native token)
