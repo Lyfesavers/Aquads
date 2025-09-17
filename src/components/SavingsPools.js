@@ -95,9 +95,74 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [walletConnectProvider, setWalletConnectProvider] = useState(null);
 
   // Since we only use Aave V3, no need for protocol filtering
   const filteredPools = pools;
+
+  // Fetch user positions directly from Aave V3 contracts
+  const fetchUserPositions = async (userAddress, provider) => {
+    try {
+      const positions = [];
+      
+      for (const pool of AAVE_V3_POOLS) {
+        try {
+          // Get aToken address for this asset from Aave V3
+          const aavePoolABI = [
+            'function getReserveData(address asset) view returns (uint256, uint128, uint128, uint128, uint128, uint128, uint128, uint128, uint128, uint128, uint128, uint40)',
+            'function getUserAccountData(address user) view returns (uint256, uint256, uint256, uint256, uint256, uint256)'
+          ];
+          
+          const aaveContract = new ethers.Contract(pool.contractAddress, aavePoolABI, provider);
+          
+          // Get reserve data to find aToken address
+          const reserveData = await aaveContract.getReserveData(pool.tokenAddress);
+          // aToken address is at index 7 of the returned data
+          const aTokenAddress = reserveData[7];
+          
+          if (aTokenAddress && aTokenAddress !== '0x0000000000000000000000000000000000000000') {
+            // Check user's aToken balance
+            const aTokenABI = [
+              'function balanceOf(address account) view returns (uint256)',
+              'function decimals() view returns (uint8)'
+            ];
+            
+            const aTokenContract = new ethers.Contract(aTokenAddress, aTokenABI, provider);
+            const balance = await aTokenContract.balanceOf(userAddress);
+            
+            if (balance > 0) {
+              const decimals = await aTokenContract.decimals();
+              const amount = parseFloat(ethers.formatUnits(balance, decimals));
+              
+              positions.push({
+                id: `${pool.id}-${userAddress}`,
+                poolId: pool.id,
+                protocol: pool.protocol,
+                token: pool.token,
+                amount: amount,
+                depositDate: new Date(), // We can't get exact deposit date from contract
+                currentValue: amount, // aToken balance represents current value including yield
+                earned: 0, // Would need deposit history to calculate exact earnings
+                apy: pool.apy,
+                contractAddress: pool.contractAddress,
+                tokenAddress: pool.tokenAddress,
+                aTokenAddress: aTokenAddress,
+                netAmount: amount
+              });
+            }
+          }
+        } catch (poolError) {
+          logger.error(`Error fetching position for ${pool.token}:`, poolError);
+          // Continue with other pools even if one fails
+        }
+      }
+      
+      return positions;
+    } catch (error) {
+      logger.error('Error fetching user positions from Aave:', error);
+      return [];
+    }
+  };
 
   // Format currency helper
   const formatCurrency = (value) => {
@@ -156,6 +221,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         setWalletConnected(walletProvider.connected);
         if (walletProvider.connected && walletProvider.accounts?.length > 0) {
           setConnectedAddress(walletProvider.accounts[0]);
+          
+          // Load positions from Aave V3 contracts
+          try {
+            const ethersProvider = new ethers.BrowserProvider(walletProvider);
+            const positions = await fetchUserPositions(walletProvider.accounts[0], ethersProvider);
+            setUserPositions(positions);
+          } catch (error) {
+            logger.error('Error loading positions from Aave:', error);
+          }
         }
       }
     } catch (error) {
@@ -165,9 +239,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Initialize WalletConnect provider
+  // Initialize WalletConnect provider (singleton pattern to prevent multiple inits)
   const initWalletConnect = async () => {
     try {
+      // Check if we already have a provider instance
+      if (walletConnectProvider) {
+        return walletConnectProvider;
+      }
+
       const provider = await EthereumProvider.init({
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         chains: [1], // Ethereum mainnet
@@ -181,6 +260,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         showQrModal: true
       });
       
+      setWalletConnectProvider(provider);
       setWalletProvider(provider);
       return provider;
     } catch (error) {
@@ -204,6 +284,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           setWalletProvider(provider);
           setWalletConnected(true);
           setConnectedAddress(accounts[0]);
+          
+          // Load positions from Aave V3 contracts
+          try {
+            const ethersProvider = new ethers.BrowserProvider(provider);
+            const positions = await fetchUserPositions(accounts[0], ethersProvider);
+            setUserPositions(positions);
+          } catch (error) {
+            logger.error('Error loading positions from Aave:', error);
+          }
+          
           showNotification('Wallet connected successfully!', 'success');
           
           // Check network
@@ -516,7 +606,18 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         netAmount: parseFloat(depositAmount) * (1 - managementFee)
       };
       
-      setUserPositions(prev => [...prev, newPosition]);
+      // Instead of adding to local state, refresh positions from Aave contracts
+      // This ensures we have the most up-to-date data including yield accrual
+      try {
+        const ethersProvider = new ethers.BrowserProvider(walletProvider);
+        const positions = await fetchUserPositions(userAddress, ethersProvider);
+        setUserPositions(positions);
+      } catch (error) {
+        logger.error('Error refreshing positions from Aave:', error);
+        // Fallback: add the new position to local state
+        setUserPositions(prev => [...prev, newPosition]);
+      }
+      
       setDepositAmount('');
       setSelectedPool(null);
       
@@ -685,15 +786,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       }
       
-      // Remove position after successful withdrawal
-      setUserPositions(prev => prev.filter(p => p.id !== position.id));
+      // Refresh positions from Aave contracts after withdrawal
+      try {
+        const ethersProvider = new ethers.BrowserProvider(walletProvider);
+        const positions = await fetchUserPositions(connectedAddress, ethersProvider);
+        setUserPositions(positions);
+      } catch (error) {
+        logger.error('Error refreshing positions from Aave:', error);
+        // Fallback: remove position from local state
+        setUserPositions(prev => prev.filter(p => p.id !== position.id));
+      }
+      
       showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');
       
-      // Update callbacks for parent component
-      if (onBalanceUpdate) {
-        const remainingBalance = userPositions.filter(p => p.id !== position.id).reduce((sum, pos) => sum + pos.currentValue, 0);
-        onBalanceUpdate(remainingBalance);
-      }
+      // Update callbacks for parent component will be handled after positions refresh
       
     } catch (error) {
       logger.error('Withdraw error:', error);
