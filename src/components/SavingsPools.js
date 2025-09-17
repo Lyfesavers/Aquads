@@ -189,51 +189,50 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Calculate earnings using Aave's scaledBalanceOf (bulletproof method)
-  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider) => {
+  // Simple earnings calculation using localStorage for original deposit tracking
+  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider, poolId) => {
     try {
-      // Get both balances from aToken contract
-      const aTokenABI = [
-        'function balanceOf(address account) view returns (uint256)',
-        'function scaledBalanceOf(address account) view returns (uint256)',
-        'function decimals() view returns (uint8)'
-      ];
-      
-      const aToken = new ethers.Contract(aTokenAddress, aTokenABI, provider);
-      
-      // Get the two key balances
-      const currentBalance = await aToken.balanceOf(userAddress);        // Current value WITH yield
-      const scaledBalance = await aToken.scaledBalanceOf(userAddress);   // Original deposit WITHOUT yield
-      const decimals = await aToken.decimals();
-      
-      // Convert to readable numbers
+      // Get current aToken balance (always live from blockchain)
+      const currentBalance = await aTokenContract.balanceOf(userAddress);
+      const decimals = await aTokenContract.decimals();
       const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
-      const originalDeposit = parseFloat(ethers.formatUnits(scaledBalance, decimals));
       
-      // Calculate REAL earnings directly from Aave's data
+      if (currentAmount === 0) {
+        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
+      }
+      
+      // Get or set original deposit amount from localStorage
+      const storageKey = `aquafi_original_${userAddress.toLowerCase()}_${poolId}`;
+      let originalDeposit = localStorage.getItem(storageKey);
+      
+      if (!originalDeposit) {
+        // First time seeing this position - save current amount as original
+        originalDeposit = currentAmount;
+        localStorage.setItem(storageKey, originalDeposit.toString());
+      } else {
+        // Use stored original deposit (static)
+        originalDeposit = parseFloat(originalDeposit);
+      }
+      
+      // Calculate real earnings: current - original
       const earned = Math.max(0, currentAmount - originalDeposit);
       
       return {
-        originalDeposit: Math.max(originalDeposit, 0),
+        originalDeposit: originalDeposit,
         currentAmount,
         earned: earned
       };
     } catch (error) {
       logger.error('Error calculating earnings from Aave:', error);
-      // Safe fallback if scaledBalanceOf fails
+      // Safe fallback
       try {
         const decimals = await aTokenContract.decimals();
         const balance = await aTokenContract.balanceOf(userAddress);
         const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
-        
-        // Conservative fallback
-        const earned = currentAmount * 0.0001; // Very small estimate
-        const originalDeposit = currentAmount - earned;
-        
         return {
-          originalDeposit: Math.max(originalDeposit, 0),
+          originalDeposit: currentAmount,
           currentAmount,
-          earned: Math.max(earned, 0)
+          earned: 0
         };
       } catch (fallbackError) {
         return { originalDeposit: 0, currentAmount: 0, earned: 0 };
@@ -273,7 +272,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             
             if (balance > 0) {
               // Calculate earnings directly from Aave blockchain data
-              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider);
+              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider, pool.id);
 
               positions.push({
                 id: `${pool.id}-${userAddress}`,
