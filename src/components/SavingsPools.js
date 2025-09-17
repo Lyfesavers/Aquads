@@ -836,6 +836,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Handle withdraw with real blockchain transactions
   const handleWithdraw = async (position) => {
+    console.log('🔄 Starting withdrawal for position:', position);
+    
     if (!walletConnected) {
       showNotification('Please connect your wallet', 'error');
       return;
@@ -844,6 +846,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     setLoading(true);
     
     try {
+      // Add timeout protection for the entire withdrawal process
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Withdrawal timed out - please try again')), 120000) // 2 minutes
+      );
+      
       // Get user's wallet and provider (WalletConnect only)
       if (!walletProvider) {
         showNotification('Please connect your wallet first', 'error');
@@ -854,12 +861,21 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const web3Provider = walletProvider;
       
       const provider = new ethers.BrowserProvider(web3Provider);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
+      const signer = await Promise.race([provider.getSigner(), timeoutPromise]);
+      const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
       
       // Check if we're on the correct network and switch if needed
+      console.log('🌐 Checking network...');
       const network = await provider.getNetwork();
       const pool = pools.find(p => p.id === position.poolId);
+      console.log('📍 Current network:', Number(network.chainId), 'Required:', pool?.chainId);
+      
+      if (!pool) {
+        showNotification('Pool configuration not found', 'error');
+        setLoading(false);
+        return;
+      }
+      
       if (Number(network.chainId) !== pool.chainId) {
         try {
           await web3Provider.request({
@@ -885,12 +901,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       };
       const decimals = getTokenDecimals(position.token);
-      const totalWithdrawAmount = ethers.parseUnits(position.netAmount.toString(), decimals);
       
-      // Calculate withdrawal fee (0.5%)
+      // For Aave withdrawal, we need to withdraw ALL aTokens (use max amount)
+      console.log('💰 Preparing withdrawal...');
       const withdrawalFee = FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE;
-      const feeAmount = calculateFeeWithValidation(totalWithdrawAmount, withdrawalFee);
-      const withdrawAmount = totalWithdrawAmount - feeAmount;
+      console.log('📊 Withdrawal fee rate:', withdrawalFee);
+      
+      // Withdraw the full aToken balance (Aave handles this automatically)
+      const withdrawAmount = ethers.MaxUint256; // Withdraw all available
+      console.log('💰 Withdrawing full aToken balance (MaxUint256)');
       
       let txHash = '';
       
@@ -905,49 +924,63 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           signer
         );
         
+        console.log('🏦 Calling Aave withdraw for ETH...');
         const WETH_ADDRESS = tokenAddresses.WETH;
-        const gasEstimate = await aaveContract.withdraw.estimateGas(
-          WETH_ADDRESS,
-          withdrawAmount,
-          userAddress
-        );
+        console.log('🔗 WETH address:', WETH_ADDRESS);
+        console.log('🏛️ Contract address:', position.contractAddress);
         
-        const withdrawTx = await aaveContract.withdraw(
-          WETH_ADDRESS,
-          withdrawAmount,
-          userAddress,
-          { gasLimit: gasEstimate + BigInt(30000) }
-        );
+        const gasEstimate = await Promise.race([
+          aaveContract.withdraw.estimateGas(WETH_ADDRESS, withdrawAmount, userAddress),
+          timeoutPromise
+        ]);
+        console.log('⛽ Gas estimate:', gasEstimate.toString());
+        
+        const withdrawTx = await Promise.race([
+          aaveContract.withdraw(WETH_ADDRESS, withdrawAmount, userAddress, { gasLimit: gasEstimate + BigInt(30000) }),
+          timeoutPromise
+        ]);
+        console.log('📝 Withdraw transaction sent:', withdrawTx.hash);
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
+        console.log('✅ Withdrawal successful:', txHash);
         
-        // Send withdrawal fee to fee wallet (ETH)
-        if (feeAmount > 0) {
+        // Calculate and send withdrawal fee based on received amount
+        const currentBalance = await provider.getBalance(userAddress);
+        const feeAmount = (BigInt(Math.floor(position.currentValue * 1000000)) * BigInt(25)) / BigInt(1000); // 2.5% of position value in wei
+        
+        if (feeAmount > 0 && currentBalance > feeAmount) {
+          console.log('💸 Sending withdrawal fee...');
           const feeGasEstimate = await provider.estimateGas({
-            to: position.feeWallet,
+            to: position.feeWallet || ETH_FEE_WALLET,
             value: feeAmount,
             from: userAddress
           });
           
           await signer.sendTransaction({
-            to: position.feeWallet,
+            to: position.feeWallet || ETH_FEE_WALLET,
             value: feeAmount,
             gasLimit: feeGasEstimate + BigInt(10000)
           });
+          console.log('✅ Fee sent successfully');
         }
         
       } else {
         // Withdraw ERC20 tokens from Aave V3
+        console.log('🏦 Calling Aave withdraw for ERC20...');
         const aaveV3ABI = [
           'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
         ];
         const aaveContract = new ethers.Contract(position.contractAddress, aaveV3ABI, signer);
+        
+        console.log('🔗 Token address:', position.tokenAddress);
+        console.log('🏛️ Contract address:', position.contractAddress);
         
         const gasEstimate = await aaveContract.withdraw.estimateGas(
           position.tokenAddress,
           withdrawAmount,
           userAddress
         );
+        console.log('⛽ Gas estimate:', gasEstimate.toString());
         
         const withdrawTx = await aaveContract.withdraw(
           position.tokenAddress,
@@ -955,9 +988,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           userAddress,
           { gasLimit: gasEstimate + BigInt(30000) }
         );
+        console.log('📝 Withdraw transaction sent:', withdrawTx.hash);
         
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
+        console.log('✅ Withdrawal successful:', txHash);
         
         // Send withdrawal fee to fee wallet (ERC20)
         if (feeAmount > 0) {
@@ -989,8 +1024,21 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       // Update callbacks for parent component will be handled after positions refresh
       
     } catch (error) {
+      console.error('❌ Withdrawal error:', error);
       logger.error('Withdraw error:', error);
-      showNotification(`Withdrawal failed: ${error.message}`, 'error');
+      
+      // Handle specific error types
+      if (error.message.includes('timeout') || error.message.includes('expired')) {
+        showNotification('Withdrawal timed out. Please reconnect your wallet and try again.', 'error');
+      } else if (error.message.includes('user rejected') || error.code === 4001) {
+        showNotification('Withdrawal cancelled by user', 'warning');
+      } else if (error.message.includes('insufficient funds')) {
+        showNotification('Insufficient funds for withdrawal', 'error');
+      } else if (error.message.includes('network')) {
+        showNotification('Network error - please check your connection and try again', 'error');
+      } else {
+        showNotification(`Withdrawal failed: ${error.message}`, 'error');
+      }
     } finally {
       setLoading(false);
     }
