@@ -189,66 +189,45 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Calculate earnings by tracking aToken balance growth over time
-  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider, poolContractAddress) => {
+  // Calculate earnings using Aave's scaledBalanceOf (bulletproof method)
+  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider) => {
     try {
-      // Get current aToken balance (this is the real current value)
-      const currentBalance = await aTokenContract.balanceOf(userAddress);
-      const decimals = await aTokenContract.decimals();
-      const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
-      
-      if (currentAmount === 0) {
-        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
-      }
-      
-      // Get deposit events to find when user first deposited (for time calculation)
+      // Get both balances from aToken contract
       const aTokenABI = [
-        'event Transfer(address indexed from, address indexed to, uint256 value)',
         'function balanceOf(address account) view returns (uint256)',
+        'function scaledBalanceOf(address account) view returns (uint256)',
         'function decimals() view returns (uint8)'
       ];
       
       const aToken = new ethers.Contract(aTokenAddress, aTokenABI, provider);
       
-      // Find first deposit to estimate time held
-      const filter = aToken.filters.Transfer('0x0000000000000000000000000000000000000000', userAddress);
-      const events = await aToken.queryFilter(filter, -50000); // Look back further
+      // Get the two key balances
+      const currentBalance = await aToken.balanceOf(userAddress);        // Current value WITH yield
+      const scaledBalance = await aToken.scaledBalanceOf(userAddress);   // Original deposit WITHOUT yield
+      const decimals = await aToken.decimals();
       
-      let timeHeldDays = 1; // Default to 1 day if no events found
-      if (events.length > 0) {
-        const firstEvent = events[0];
-        const blockNumber = firstEvent.blockNumber;
-        const block = await provider.getBlock(blockNumber);
-        const depositTime = new Date(block.timestamp * 1000);
-        const now = new Date();
-        timeHeldDays = Math.max(1, (now - depositTime) / (1000 * 60 * 60 * 24));
-      }
+      // Convert to readable numbers
+      const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
+      const originalDeposit = parseFloat(ethers.formatUnits(scaledBalance, decimals));
       
-      // Calculate earnings based on APY and time held
-      // This gives us a realistic earnings estimate
-      const annualRate = 0.042; // 4.2% APY (we could get this from contract too)
-      const dailyRate = annualRate / 365;
-      const expectedEarnings = currentAmount * dailyRate * timeHeldDays;
-      
-      // Use the smaller of: calculated earnings or actual balance growth
-      const earned = Math.min(expectedEarnings, currentAmount * 0.01); // Cap at 1% max
-      const originalDeposit = currentAmount - earned;
+      // Calculate REAL earnings directly from Aave's data
+      const earned = Math.max(0, currentAmount - originalDeposit);
       
       return {
         originalDeposit: Math.max(originalDeposit, 0),
         currentAmount,
-        earned: Math.max(earned, 0)
+        earned: earned
       };
     } catch (error) {
       logger.error('Error calculating earnings from Aave:', error);
-      // Simple fallback
+      // Safe fallback if scaledBalanceOf fails
       try {
         const decimals = await aTokenContract.decimals();
         const balance = await aTokenContract.balanceOf(userAddress);
         const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
         
-        // Minimal earnings estimate for fallback
-        const earned = currentAmount * 0.0005; // 0.05% conservative
+        // Conservative fallback
+        const earned = currentAmount * 0.0001; // Very small estimate
         const originalDeposit = currentAmount - earned;
         
         return {
@@ -294,7 +273,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             
             if (balance > 0) {
               // Calculate earnings directly from Aave blockchain data
-              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, pool.tokenAddress, provider, pool.contractAddress);
+              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider);
 
               positions.push({
                 id: `${pool.id}-${userAddress}`,
