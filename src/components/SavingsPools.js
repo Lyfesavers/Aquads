@@ -337,63 +337,22 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     return () => clearInterval(apyInterval);
   }, []);
 
-  // Get live APY directly from Aave contracts
-  const getLiveAPYFromAave = async (contractAddress, tokenAddress, chainId) => {
-    try {
-      // Get RPC provider for the specific chain
-      let rpcUrl;
-      switch (chainId) {
-        case 1: rpcUrl = 'https://ethereum.publicnode.com'; break;
-        case 8453: rpcUrl = 'https://mainnet.base.org'; break;
-        case 56: rpcUrl = 'https://bsc-dataseed.binance.org'; break;
-        default: rpcUrl = 'https://ethereum.publicnode.com';
-      }
-      
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
-      
-      // Aave V3 Pool ABI for getting reserve data
-      const aavePoolABI = [
-        'function getReserveData(address asset) view returns (tuple(uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))'
-      ];
-      
-      const aaveContract = new ethers.Contract(contractAddress, aavePoolABI, provider);
-      const reserveData = await aaveContract.getReserveData(tokenAddress);
-      
-      // Convert liquidityRate to APY percentage using Aave's formula
-      // Aave rates are in Ray units (1e27) and represent annual rates, not per-second
-      const liquidityRate = reserveData.currentLiquidityRate;
-      const RAY = ethers.parseUnits('1', 27);
-      
-      // Aave's currentLiquidityRate is already annualized, just convert from Ray to percentage
-      const apy = (Number(liquidityRate) / Number(RAY)) * 100;
-      
-      return Math.max(0, Math.min(20, apy)); // Cap between 0% and 20% for realistic DeFi rates
-    } catch (error) {
-      logger.error('Error fetching live APY from Aave:', error);
-      return null; // Return null to use fallback static APY
-    }
-  };
-
-  // Fetch real-time APY data directly from Aave contracts
+  // Fetch real-time APY data from DeFiLlama (fallback to static)
   const fetchRealTimeAPYs = async () => {
     setIsUpdatingAPY(true);
     try {
-      const updatedPools = await Promise.all(
-        pools.map(async (pool) => {
-          const liveAPY = await getLiveAPYFromAave(
-            pool.contractAddress,
-            pool.tokenAddress,
-            pool.chainId
-          );
-          
-          if (liveAPY !== null && liveAPY > 0) {
-            return { ...pool, apy: liveAPY };
-          }
-          return pool; // Keep static APY if live fetch fails
-        })
-      );
+      const apyData = await getPoolAPYs();
       
-      setPools(updatedPools);
+      if (apyData && Object.keys(apyData).length > 0) {
+        const updatedPools = pools.map(pool => {
+          const poolKey = `${pool.id}`;
+          if (apyData[poolKey] && apyData[poolKey].apy) {
+            return { ...pool, apy: apyData[poolKey].apy };
+          }
+          return pool;
+        });
+        setPools(updatedPools);
+      }
     } catch (error) {
       logger.error('Error fetching real-time APYs:', error);
       // Silently fail and use static APYs
