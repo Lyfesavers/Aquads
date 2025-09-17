@@ -599,7 +599,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       }
       
-      // Calculate deposit amount and fees with enhanced validation
+      // Calculate deposit amount (no upfront fees in new flow)
       const isETH = selectedPool.token === 'ETH';
       const getTokenDecimals = (token) => {
         switch (token) {
@@ -612,32 +612,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       };
       const decimals = getTokenDecimals(selectedPool.token);
       const depositAmountBN = ethers.parseUnits(depositAmount, decimals);
-      const managementFee = FEE_CONFIG.SAVINGS_MANAGEMENT_FEE;
-      
-      // Use enhanced fee calculation
-      const feeAmount = calculateFeeWithValidation(depositAmountBN, managementFee);
+      const managementFee = FEE_CONFIG.SAVINGS_MANAGEMENT_FEE; // 0% now, so no upfront fee
       
       let txHash = '';
       
       if (isETH) {
-        // Direct ETH deposit to protocol with proper gas estimation
-        
-        // Send ETH with management fee to our wallet
-        const feeGasEstimate = await provider.estimateGas({
-          to: selectedPool.feeWallet,
-          value: feeAmount,
-          from: userAddress
-        });
-        
-        const feeWalletTx = await signer.sendTransaction({
-          to: selectedPool.feeWallet,
-          value: feeAmount,
-          gasLimit: feeGasEstimate + BigInt(10000) // Add buffer
-        });
-        await feeWalletTx.wait();
-        
-        // Deposit ETH to Aave V3 (automatically wraps to WETH)
-        const netAmount = depositAmountBN - feeAmount;
+        // Single ETH deposit to Aave V3 (no upfront management fee)
         const aaveV3ABI = [
           'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) payable'
         ];
@@ -647,19 +627,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         const WETH_ADDRESS = tokenAddresses.WETH;
         const gasEstimate = await aaveContract.supply.estimateGas(
           WETH_ADDRESS,
-          netAmount,
+          depositAmountBN, // Full amount, no fee deduction
           userAddress,
           0, // referralCode
-          { value: netAmount }
+          { value: depositAmountBN }
         );
         
         const depositTx = await aaveContract.supply(
           WETH_ADDRESS,
-          netAmount,
+          depositAmountBN, // Full amount
           userAddress,
           0, // referralCode
           { 
-            value: netAmount,
+            value: depositAmountBN,
             gasLimit: gasEstimate + BigInt(20000)
           }
         );
@@ -667,11 +647,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         txHash = receipt.hash;
         
       } else {
-        // ERC20 token deposit
+        // Standard 2-transaction ERC20 deposit flow
         const tokenABI = [
           'function allowance(address owner, address spender) view returns (uint256)',
           'function approve(address spender, uint256 amount) returns (bool)',
-          'function transfer(address to, uint256 amount) returns (bool)',
           'function balanceOf(address account) view returns (uint256)'
         ];
         
@@ -685,28 +664,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           return;
         }
         
-        // Send management fee to our fee wallet with gas estimation
-        const feeGasEstimate = await tokenContract.transfer.estimateGas(selectedPool.feeWallet, feeAmount);
-        const feeTx = await tokenContract.transfer(selectedPool.feeWallet, feeAmount, {
-          gasLimit: feeGasEstimate + BigInt(10000)
-        });
-        await feeTx.wait();
-        
-        // Check allowance for protocol contract
-        const netAmount = depositAmountBN - feeAmount;
+        // Transaction 1: Approve Aave to spend the full deposit amount
         const allowance = await tokenContract.allowance(userAddress, selectedPool.contractAddress);
         
-        if (allowance < netAmount) {
-          // Approve protocol contract to spend tokens with gas estimation
-          const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, netAmount);
-          const approveTx = await tokenContract.approve(selectedPool.contractAddress, netAmount, {
+        if (allowance < depositAmountBN) {
+          showNotification('Approving token spending...', 'info');
+          const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, depositAmountBN);
+          const approveTx = await tokenContract.approve(selectedPool.contractAddress, depositAmountBN, {
             gasLimit: approveGasEstimate + BigInt(10000)
           });
           await approveTx.wait();
           showNotification('Token approval confirmed, proceeding with deposit...', 'info');
         }
         
-        // Deposit to Aave V3 with simplified ABI
+        // Transaction 2: Deposit full amount to Aave V3
         const aaveV3ABI = [
           'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
         ];
@@ -714,14 +685,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         const gasEstimate = await aaveContract.supply.estimateGas(
           selectedPool.tokenAddress,
-          netAmount,
+          depositAmountBN, // Full amount, no fee deduction
           userAddress,
           0 // referralCode
         );
         
         const depositTx = await aaveContract.supply(
           selectedPool.tokenAddress,
-          netAmount,
+          depositAmountBN, // Full amount
           userAddress,
           0, // referralCode
           { gasLimit: gasEstimate + BigInt(30000) }
@@ -731,7 +702,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         txHash = receipt.hash;
       }
       
-      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to Aave V3! TX: ${txHash.slice(0, 10)}...`, 'success');
+      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to AquaFi Premium Vault! TX: ${txHash.slice(0, 10)}...`, 'success');
       
       // Create position with real transaction data
       const newPosition = {
@@ -750,7 +721,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         tokenAddress: selectedPool.tokenAddress,
         managementFee: managementFee,
         txHash: txHash,
-        netAmount: parseFloat(depositAmount) * (1 - managementFee)
+        netAmount: parseFloat(depositAmount) // Full amount since no management fee
       };
       
       // Refresh positions from Aave contracts to get updated data including earnings
@@ -795,6 +766,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Handle withdraw with real blockchain transactions
   const handleWithdraw = async (position) => {
+    console.log('🔄 Withdraw button clicked, position:', position);
     
     if (!walletConnected) {
       showNotification('Please connect your wallet', 'error');
