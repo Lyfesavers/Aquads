@@ -85,13 +85,6 @@ const AquaFi = ({ currentUser, showNotification }) => {
           </div>
         </div>
 
-        {/* BEX Callout */}
-        <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-xl p-6 mb-8">
-          <h3 className="text-xl font-bold text-yellow-400 mb-2">🚀 World's First BEX (Bicentralized Exchange) DeFi Hub</h3>
-          <p className="text-gray-200">
-            Experience the perfect blend of centralized convenience and decentralized security. Access savings pools and flash loans - all in one platform.
-          </p>
-        </div>
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">

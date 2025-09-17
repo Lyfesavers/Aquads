@@ -10,38 +10,37 @@ import logger from '../utils/logger';
 // Use the exact same fee wallet as AquaSwap
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET;
 
-// Production-ready pool configurations using real contract addresses
-// Now using the exact same ETH_FEE_WALLET as AquaSwap
-const PROTOCOL_POOLS = [
+// Simplified Aave V3 only pools configuration
+const AAVE_V3_POOLS = [
   {
     id: 'aave-usdc',
-    protocol: 'Aave',
-    name: 'USDC Lending Pool',
+    protocol: 'Aave V3',
+    name: 'USDC Supply Pool',
     token: 'USDC',
     apy: 4.2, // Will be updated with real-time data
     tvl: 1250000000,
     risk: 'Low',
     logo: '🏦',
-    description: 'Earn yield by lending USDC on Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
-    tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    description: 'Earn yield by supplying USDC to Aave V3',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
     feeWallet: ETH_FEE_WALLET
   },
   {
-    id: 'compound-usdt',
-    protocol: 'Compound',
+    id: 'aave-usdt',
+    protocol: 'Aave V3',
     name: 'USDT Supply Pool',
     token: 'USDT',
     apy: 3.8,
     tvl: 890000000,
     risk: 'Low',
-    logo: '🔄',
-    description: 'Supply USDT to Compound V3 for yield',
-    contractAddress: '0xc3d688B66703497DAA19211EEdff47f25384cdc3',
-    tokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    logo: '🏦',
+    description: 'Earn yield by supplying USDT to Aave V3',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    tokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
@@ -49,76 +48,42 @@ const PROTOCOL_POOLS = [
   },
   {
     id: 'aave-eth',
-    protocol: 'Aave',
-    name: 'ETH Lending Pool',
+    protocol: 'Aave V3',
+    name: 'ETH Supply Pool',
     token: 'ETH',
     apy: 2.1,
     tvl: 2100000000,
     risk: 'Low',
     logo: '🏦',
-    description: 'Earn yield by lending ETH on Aave V3',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
-    tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    description: 'Earn yield by supplying ETH to Aave V3',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 0.01,
     feeWallet: ETH_FEE_WALLET
   },
   {
-    id: 'yearn-usdc',
-    protocol: 'Yearn',
-    name: 'USDC Vault v2',
-    token: 'USDC',
-    apy: 5.7,
-    tvl: 450000000,
-    risk: 'Medium',
-    logo: '🏛️',
-    description: 'Auto-compound USDC through Yearn strategies',
-    contractAddress: '0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9',
-    tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    chain: 'Ethereum',
-    chainId: 1,
-    minDeposit: 1,
-    feeWallet: ETH_FEE_WALLET
-  },
-  {
     id: 'aave-dai',
-    protocol: 'Aave',
+    protocol: 'Aave V3',
     name: 'DAI Supply Pool',
     token: 'DAI',
     apy: 4.1,
     tvl: 680000000,
     risk: 'Low',
-    logo: '🔄',
-    description: 'Supply DAI to Aave V3 for steady yield',
-    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
-    tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    logo: '🏦',
+    description: 'Earn yield by supplying DAI to Aave V3',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Aave V3 Pool
+    tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // DAI
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
-    feeWallet: ETH_FEE_WALLET
-  },
-  {
-    id: 'yearn-eth',
-    protocol: 'Yearn',
-    name: 'ETH Vault v2',
-    token: 'ETH',
-    apy: 3.4,
-    tvl: 320000000,
-    risk: 'Medium',
-    logo: '🏛️',
-    description: 'Auto-compound ETH through Yearn strategies',
-    contractAddress: '0xa258C4606Ca8206D8aA700cE2143D7db854D168c',
-    tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-    chain: 'Ethereum',
-    chainId: 1,
-    minDeposit: 0.01,
     feeWallet: ETH_FEE_WALLET
   }
 ];
 
 const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpdate }) => {
-  const [pools, setPools] = useState(PROTOCOL_POOLS);
+  const [pools, setPools] = useState(AAVE_V3_POOLS);
   const [selectedPool, setSelectedPool] = useState(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
@@ -131,11 +96,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [activeTab, setActiveTab] = useState('All');
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Get unique protocols for tabs
-  const protocols = ['All', ...new Set(pools.map(pool => pool.protocol))];
-
-  // Filter pools based on active tab
-  const filteredPools = activeTab === 'All' ? pools : pools.filter(pool => pool.protocol === activeTab);
+  // Since we only use Aave V3, no need for protocol filtering
+  const filteredPools = pools;
 
   // Format currency helper
   const formatCurrency = (value) => {
@@ -437,35 +399,31 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         });
         await feeWalletTx.wait();
         
-        // Deposit remaining ETH to protocol with Aave V3 ABI
+        // Deposit ETH to Aave V3 (automatically wraps to WETH)
         const netAmount = depositAmountBN - feeAmount;
-        const protocolContract = new ethers.Contract(
-          selectedPool.contractAddress,
-          [
-            'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) payable',
-            'function supplyWithPermit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode, uint256 deadline, uint8 v, bytes32 r, bytes32 s) payable'
-          ],
-          signer
-        );
+        const aaveV3ABI = [
+          'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) payable'
+        ];
+        const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
         
-        // Use WETH address for ETH deposits in Aave
+        // Use WETH address for ETH deposits in Aave V3
         const WETH_ADDRESS = tokenAddresses.WETH;
-        const gasEstimate = await protocolContract.supply.estimateGas(
+        const gasEstimate = await aaveContract.supply.estimateGas(
           WETH_ADDRESS,
           netAmount,
           userAddress,
-          0,
+          0, // referralCode
           { value: netAmount }
         );
         
-        const depositTx = await protocolContract.supply(
+        const depositTx = await aaveContract.supply(
           WETH_ADDRESS,
           netAmount,
           userAddress,
-          0,
+          0, // referralCode
           { 
             value: netAmount,
-            gasLimit: gasEstimate + BigInt(20000) // Add buffer
+            gasLimit: gasEstimate + BigInt(20000)
           }
         );
         const receipt = await depositTx.wait();
@@ -511,58 +469,32 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           showNotification('Token approval confirmed, proceeding with deposit...', 'info');
         }
         
-        // Deposit to protocol with proper ABIs and gas estimation
-        let depositTx;
-        let gasEstimate;
+        // Deposit to Aave V3 with simplified ABI
+        const aaveV3ABI = [
+          'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
+        ];
+        const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
         
-        if (selectedPool.protocol === 'Aave') {
-          const aaveABI = [
-            'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
-          ];
-          const protocolContract = new ethers.Contract(selectedPool.contractAddress, aaveABI, signer);
-          
-          gasEstimate = await protocolContract.supply.estimateGas(
-            selectedPool.tokenAddress,
-            netAmount,
-            userAddress,
-            0
-          );
-          
-          depositTx = await protocolContract.supply(
-            selectedPool.tokenAddress,
-            netAmount,
-            userAddress,
-            0,
-            { gasLimit: gasEstimate + BigInt(30000) }
-          );
-        } else if (selectedPool.protocol === 'Compound') {
-          const compoundABI = [
-            'function supply(address asset, uint256 amount)'
-          ];
-          const protocolContract = new ethers.Contract(selectedPool.contractAddress, compoundABI, signer);
-          
-          gasEstimate = await protocolContract.supply.estimateGas(selectedPool.tokenAddress, netAmount);
-          depositTx = await protocolContract.supply(selectedPool.tokenAddress, netAmount, {
-            gasLimit: gasEstimate + BigInt(30000)
-          });
-        } else if (selectedPool.protocol === 'Yearn') {
-          const yearnABI = [
-            'function deposit(uint256 _amount) returns (uint256)',
-            'function deposit(uint256 _amount, address recipient) returns (uint256)'
-          ];
-          const protocolContract = new ethers.Contract(selectedPool.contractAddress, yearnABI, signer);
-          
-          gasEstimate = await protocolContract.deposit.estimateGas(netAmount);
-          depositTx = await protocolContract.deposit(netAmount, {
-            gasLimit: gasEstimate + BigInt(30000)
-          });
-        }
+        const gasEstimate = await aaveContract.supply.estimateGas(
+          selectedPool.tokenAddress,
+          netAmount,
+          userAddress,
+          0 // referralCode
+        );
+        
+        const depositTx = await aaveContract.supply(
+          selectedPool.tokenAddress,
+          netAmount,
+          userAddress,
+          0, // referralCode
+          { gasLimit: gasEstimate + BigInt(30000) }
+        );
         
         const receipt = await depositTx.wait();
         txHash = receipt.hash;
       }
       
-      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to ${selectedPool.protocol}! TX: ${txHash.slice(0, 10)}...`, 'success');
+      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to Aave V3! TX: ${txHash.slice(0, 10)}...`, 'success');
       
       // Create position with real transaction data
       const newPosition = {
@@ -675,24 +607,24 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       let txHash = '';
       
       if (isETH) {
-        // Withdraw ETH from protocol (Aave V3)
-        const aaveABI = [
+        // Withdraw ETH from Aave V3 (automatically unwraps from WETH)
+        const aaveV3ABI = [
           'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
         ];
-        const protocolContract = new ethers.Contract(
+        const aaveContract = new ethers.Contract(
           position.contractAddress,
-          aaveABI,
+          aaveV3ABI,
           signer
         );
         
         const WETH_ADDRESS = tokenAddresses.WETH;
-        const gasEstimate = await protocolContract.withdraw.estimateGas(
+        const gasEstimate = await aaveContract.withdraw.estimateGas(
           WETH_ADDRESS,
           withdrawAmount,
           userAddress
         );
         
-        const withdrawTx = await protocolContract.withdraw(
+        const withdrawTx = await aaveContract.withdraw(
           WETH_ADDRESS,
           withdrawAmount,
           userAddress,
@@ -717,50 +649,24 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
         
       } else {
-        // Withdraw ERC20 tokens from protocol with proper ABIs and gas estimation
-        let withdrawTx;
-        let gasEstimate;
+        // Withdraw ERC20 tokens from Aave V3
+        const aaveV3ABI = [
+          'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
+        ];
+        const aaveContract = new ethers.Contract(position.contractAddress, aaveV3ABI, signer);
         
-        if (position.protocol === 'Aave') {
-          const aaveABI = [
-            'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
-          ];
-          const protocolContract = new ethers.Contract(position.contractAddress, aaveABI, signer);
-          
-          gasEstimate = await protocolContract.withdraw.estimateGas(
-            position.tokenAddress,
-            withdrawAmount,
-            userAddress
-          );
-          
-          withdrawTx = await protocolContract.withdraw(
-            position.tokenAddress,
-            withdrawAmount,
-            userAddress,
-            { gasLimit: gasEstimate + BigInt(30000) }
-          );
-        } else if (position.protocol === 'Compound') {
-          const compoundABI = [
-            'function withdraw(address asset, uint256 amount)'
-          ];
-          const protocolContract = new ethers.Contract(position.contractAddress, compoundABI, signer);
-          
-          gasEstimate = await protocolContract.withdraw.estimateGas(position.tokenAddress, withdrawAmount);
-          withdrawTx = await protocolContract.withdraw(position.tokenAddress, withdrawAmount, {
-            gasLimit: gasEstimate + BigInt(30000)
-          });
-        } else if (position.protocol === 'Yearn') {
-          const yearnABI = [
-            'function withdraw(uint256 maxShares) returns (uint256)',
-            'function withdraw(uint256 maxShares, address recipient) returns (uint256)'
-          ];
-          const protocolContract = new ethers.Contract(position.contractAddress, yearnABI, signer);
-          
-          gasEstimate = await protocolContract.withdraw.estimateGas(withdrawAmount);
-          withdrawTx = await protocolContract.withdraw(withdrawAmount, {
-            gasLimit: gasEstimate + BigInt(30000)
-          });
-        }
+        const gasEstimate = await aaveContract.withdraw.estimateGas(
+          position.tokenAddress,
+          withdrawAmount,
+          userAddress
+        );
+        
+        const withdrawTx = await aaveContract.withdraw(
+          position.tokenAddress,
+          withdrawAmount,
+          userAddress,
+          { gasLimit: gasEstimate + BigInt(30000) }
+        );
         
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
@@ -879,25 +785,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       )}
 
       {/* Available Pools */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 className="text-xl font-semibold text-white">Available Savings Pools</h3>
-          
-          {/* Protocol Tabs */}
-          <div className="flex flex-wrap gap-2">
-            {protocols.map((protocol) => (
-              <button
-                key={protocol}
-                onClick={() => setActiveTab(protocol)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === protocol
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {protocol} ({protocol === 'All' ? pools.length : pools.filter(p => p.protocol === protocol).length})
-              </button>
-            ))}
+          <div>
+            <h3 className="text-xl font-semibold text-white">Aave V3 Savings Pools</h3>
+            <p className="text-gray-400 text-sm">Simplified integration with Aave V3 for reliable yield</p>
           </div>
         </div>
         
@@ -1037,7 +929,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           <div>
             <h4 className="text-white font-semibold mb-2">How AquaFi Works</h4>
             <ul className="text-gray-300 text-sm space-y-1">
-              <li>• Your funds are deposited directly to audited DeFi protocols (Aave, Compound, Yearn)</li>
+              <li>• Your funds are deposited directly to Aave V3, a leading audited DeFi protocol</li>
               <li>• Simple fee structure: {(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}% on deposit, {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% on withdrawal</li>
               <li>• You maintain full custody and can withdraw anytime</li>
               <li>• All transactions are transparent and verifiable on-chain</li>

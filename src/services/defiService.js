@@ -9,17 +9,17 @@ let apyCache = null;
 let cacheTimestamp = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// Protocol mapping to DeFiLlama pool IDs
-const PROTOCOL_MAPPING = {
+// Simplified Aave V3 pool mapping to DeFiLlama pool IDs
+const AAVE_V3_MAPPING = {
   'aave-usdc': {
     chain: 'Ethereum',
     project: 'aave-v3',
     symbol: 'USDC',
     poolId: null // Will be found dynamically
   },
-  'compound-usdt': {
-    chain: 'Ethereum', 
-    project: 'compound-v2',
+  'aave-usdt': {
+    chain: 'Ethereum',
+    project: 'aave-v3',
     symbol: 'USDT',
     poolId: null
   },
@@ -29,22 +29,10 @@ const PROTOCOL_MAPPING = {
     symbol: 'ETH',
     poolId: null
   },
-  'yearn-usdc': {
+  'aave-dai': {
     chain: 'Ethereum',
-    project: 'yearn-finance',
-    symbol: 'USDC',
-    poolId: null
-  },
-  'compound-dai': {
-    chain: 'Ethereum',
-    project: 'compound-v2',
+    project: 'aave-v3',
     symbol: 'DAI', 
-    poolId: null
-  },
-  'yearn-eth': {
-    chain: 'Ethereum',
-    project: 'yearn-finance',
-    symbol: 'ETH',
     poolId: null
   }
 };
@@ -80,9 +68,9 @@ export const getPoolAPYs = async () => {
     const allPools = await fetchAllPools();
     const poolAPYs = {};
 
-    // Find matching pools for each of our protocols
-    Object.keys(PROTOCOL_MAPPING).forEach(poolId => {
-      const mapping = PROTOCOL_MAPPING[poolId];
+    // Find matching pools for Aave V3
+    Object.keys(AAVE_V3_MAPPING).forEach(poolId => {
+      const mapping = AAVE_V3_MAPPING[poolId];
       
       // Find pools that match our criteria
       const matchingPools = allPools.filter(pool => 
@@ -117,35 +105,17 @@ export const getPoolAPYs = async () => {
 };
 
 /**
- * Get protocol-specific data and contract addresses
+ * Get Aave V3 protocol data and contract addresses
  */
 export const getProtocolData = (protocol) => {
   const protocolInfo = {
-    'Aave': {
-      name: 'Aave Protocol',
+    'Aave V3': {
+      name: 'Aave Protocol V3',
       website: 'https://aave.com',
       logo: '🏦',
-      description: 'Leading decentralized lending protocol',
+      description: 'Leading decentralized lending protocol - Version 3',
       contracts: {
-        ethereum: '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9'
-      }
-    },
-    'Compound': {
-      name: 'Compound Finance',
-      website: 'https://compound.finance',
-      logo: '🔄', 
-      description: 'Algorithmic money markets protocol',
-      contracts: {
-        ethereum: '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'
-      }
-    },
-    'Yearn': {
-      name: 'Yearn Finance',
-      website: 'https://yearn.finance',
-      logo: '🏛️',
-      description: 'Automated yield farming strategies',
-      contracts: {
-        ethereum: '0x50c1a2eA0a861A967D9d0FFE2AE4012c2E053804'
+        ethereum: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2' // Aave V3 Pool
       }
     }
   };

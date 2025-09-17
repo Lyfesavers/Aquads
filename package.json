@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aave/react": "^0.6.1",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@bigmi/react": "^0.3.0",
     "@emailjs/browser": "^4.4.1",
