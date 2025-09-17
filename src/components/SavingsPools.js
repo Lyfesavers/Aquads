@@ -20,7 +20,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 4.2, // Will be updated with real-time data
     tvl: 1250000000,
     risk: 'Low',
-    logo: '💎',
     description: 'Professional USDC yield management with automated optimization',
     contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
@@ -37,7 +36,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 3.8,
     tvl: 890000000,
     risk: 'Low',
-    logo: '💎',
     description: 'Professional USDT yield management with automated optimization',
     contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
@@ -54,7 +52,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 2.1,
     tvl: 2100000000,
     risk: 'Low',
-    logo: '💎',
     description: 'Professional ETH yield management with automated optimization',
     contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
@@ -71,7 +68,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 4.1,
     tvl: 680000000,
     risk: 'Low',
-    logo: '💎',
     description: 'Professional DAI yield management with automated optimization',
     contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', // Underlying protocol
     tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // DAI
@@ -89,7 +85,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 4.5, // Base typically has competitive rates
     tvl: 250000000,
     risk: 'Low',
-    logo: '🔵',
     description: 'Professional USDC yield management on Base L2 with lower fees',
     contractAddress: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5', // Aave V3 Pool on Base
     tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
@@ -106,7 +101,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 2.3,
     tvl: 180000000,
     risk: 'Low',
-    logo: '🔵',
     description: 'Professional ETH yield management on Base L2 with lower fees',
     contractAddress: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5', // Aave V3 Pool on Base
     tokenAddress: '0x4200000000000000000000000000000000000006', // WETH on Base
@@ -124,7 +118,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 4.8, // BNB Chain often has higher yields
     tvl: 320000000,
     risk: 'Low',
-    logo: '🟡',
     description: 'Professional USDC yield management on BNB Chain with high yields',
     contractAddress: '0x6807dc923806fE8Fd134338EABCA509979a7e0cB', // Aave V3 Pool on BNB
     tokenAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // USDC on BNB Chain
@@ -141,7 +134,6 @@ const AQUAFI_YIELD_POOLS = [
     apy: 4.2,
     tvl: 280000000,
     risk: 'Low',
-    logo: '🟡',
     description: 'Professional USDT yield management on BNB Chain with high yields',
     contractAddress: '0x6807dc923806fE8Fd134338EABCA509979a7e0cB', // Aave V3 Pool on BNB
     tokenAddress: '0x55d398326f99059fF775485246999027B3197955', // USDT on BNB Chain
@@ -1064,14 +1056,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={`/${position.chain === 'Ethereum' ? 'eth' : position.chain === 'Base' ? 'base' : position.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
-                        alt={position.chain || 'Ethereum'}
-                        className="w-6 h-6 object-contain"
-                      />
-                      <span className="text-xl">💎</span>
-                    </div>
+                    <img 
+                      src={`/${position.chain === 'Ethereum' ? 'eth' : position.chain === 'Base' ? 'base' : position.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                      alt={position.chain || 'Ethereum'}
+                      className="w-8 h-8 object-contain"
+                    />
                     <div>
                       <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
                       <p className="text-sm text-gray-400">{position.token} Pool • {position.chain || 'Ethereum'}</p>
@@ -1192,14 +1181,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={`/${pool.chain === 'Ethereum' ? 'eth' : pool.chain === 'Base' ? 'base' : pool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
-                        alt={pool.chain}
-                        className="w-6 h-6 object-contain"
-                      />
-                      <span className="text-xl">{pool.logo}</span>
-                    </div>
+                    <img 
+                      src={`/${pool.chain === 'Ethereum' ? 'eth' : pool.chain === 'Base' ? 'base' : pool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                      alt={pool.chain}
+                      className="w-8 h-8 object-contain"
+                    />
                     <div>
                       <h4 className="text-lg font-semibold text-white">{pool.name}</h4>
                       <p className="text-sm text-gray-400">{pool.protocol} • {pool.chain}</p>
