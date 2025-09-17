@@ -102,14 +102,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Fetch user positions directly from Aave V3 contracts
   const fetchUserPositions = async (userAddress, provider) => {
-    console.log('🔍 Fetching positions for user:', userAddress);
-    
     try {
       const positions = [];
       
       for (const pool of AAVE_V3_POOLS) {
-        console.log(`🔍 Checking pool: ${pool.token} (${pool.id})`);
-        
         try {
           // Use the correct Aave V3 ABI structure
           const aavePoolABI = [
@@ -119,13 +115,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           const aaveContract = new ethers.Contract(pool.contractAddress, aavePoolABI, provider);
           
           // Get reserve data to find aToken address
-          console.log(`🔍 Getting reserve data for ${pool.token} at ${pool.tokenAddress}`);
           const reserveData = await aaveContract.getReserveData(pool.tokenAddress);
-          console.log('📊 Reserve data:', reserveData);
           
           // Extract aToken address from the tuple structure
           const aTokenAddress = reserveData.aTokenAddress || reserveData[8]; // Try both tuple property and index
-          console.log(`🪙 aToken address for ${pool.token}:`, aTokenAddress);
           
           if (aTokenAddress && aTokenAddress !== '0x0000000000000000000000000000000000000000') {
             // Check user's aToken balance
@@ -136,12 +129,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             
             const aTokenContract = new ethers.Contract(aTokenAddress, aTokenABI, provider);
             const balance = await aTokenContract.balanceOf(userAddress);
-            console.log(`💰 ${pool.token} balance:`, balance.toString());
             
             if (balance > 0) {
               const decimals = await aTokenContract.decimals();
               const amount = parseFloat(ethers.formatUnits(balance, decimals));
-              console.log(`✅ Found position: ${amount} ${pool.token}`);
               
               positions.push({
                 id: `${pool.id}-${userAddress}`,
@@ -158,23 +149,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 aTokenAddress: aTokenAddress,
                 netAmount: amount
               });
-            } else {
-              console.log(`❌ No balance found for ${pool.token}`);
             }
-          } else {
-            console.log(`❌ No aToken address found for ${pool.token}`);
           }
         } catch (poolError) {
-          console.error(`❌ Error fetching position for ${pool.token}:`, poolError);
           logger.error(`Error fetching position for ${pool.token}:`, poolError);
           // Continue with other pools even if one fails
         }
       }
       
-      console.log('🎯 Final positions found:', positions);
       return positions;
     } catch (error) {
-      console.error('❌ Error fetching user positions from Aave:', error);
       logger.error('Error fetching user positions from Aave:', error);
       return [];
     }
@@ -302,14 +286,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           setConnectedAddress(accounts[0]);
           
           // Load positions from Aave V3 contracts
-          console.log('🔗 Wallet connected, loading positions...');
           try {
             const ethersProvider = new ethers.BrowserProvider(provider);
             const positions = await fetchUserPositions(accounts[0], ethersProvider);
-            console.log('📍 Setting positions:', positions);
             setUserPositions(positions);
           } catch (error) {
-            console.error('❌ Error loading positions from Aave:', error);
             logger.error('Error loading positions from Aave:', error);
           }
           
@@ -867,19 +848,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         </div>
       </div>
 
-      {/* Debug info */}
-      {walletConnected && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-6">
-          <p className="text-sm text-yellow-300">
-            🔍 Debug: Connected to {connectedAddress?.slice(0, 6)}...{connectedAddress?.slice(-4)} | Positions: {userPositions.length}
-          </p>
-          {userPositions.length === 0 && (
-            <p className="text-sm text-yellow-300">
-              ⚠️ No positions found. Check console for detailed logs.
-            </p>
-          )}
-        </div>
-      )}
 
       {/* User Positions */}
       {walletConnected && userPositions.length > 0 && (
