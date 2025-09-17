@@ -290,6 +290,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 poolId: pool.id,
                 protocol: pool.protocol,
                 token: pool.token,
+                chain: pool.chain, // Add chain info for logo display
                 amount: earningsData.originalDeposit, // Original deposit from blockchain
                 depositDate: new Date(), // We can't get exact deposit date from contract
                 currentValue: earningsData.currentAmount, // Current aToken balance
@@ -1063,10 +1064,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{position.protocol === 'AquaFi' ? '💎' : '💰'}</span>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={`/${position.chain === 'Ethereum' ? 'eth' : position.chain === 'Base' ? 'base' : position.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                        alt={position.chain || 'Ethereum'}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span className="text-xl">💎</span>
+                    </div>
                     <div>
                       <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
-                      <p className="text-sm text-gray-400">{position.token} Pool</p>
+                      <p className="text-sm text-gray-400">{position.token} Pool • {position.chain || 'Ethereum'}</p>
                     </div>
                   </div>
                   <button
@@ -1149,12 +1157,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                       : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
                   }`}
                 >
-                  <span className="text-lg">
-                    {chain === 'All' ? '🌐' : 
-                     chain === 'Ethereum' ? '⚡' : 
-                     chain === 'Base' ? '🔵' : 
-                     chain === 'BNB Chain' ? '🟡' : '🔗'}
-                  </span>
+                  {chain === 'All' ? (
+                    <span className="text-lg">🌐</span>
+                  ) : (
+                    <img 
+                      src={`/${chain === 'Ethereum' ? 'eth' : chain === 'Base' ? 'base' : chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                      alt={chain}
+                      className="w-5 h-5 object-contain"
+                    />
+                  )}
                   {chain}
                   <span className="text-xs opacity-75">
                     ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
@@ -1181,7 +1192,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{pool.logo}</span>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={`/${pool.chain === 'Ethereum' ? 'eth' : pool.chain === 'Base' ? 'base' : pool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                        alt={pool.chain}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span className="text-xl">{pool.logo}</span>
+                    </div>
                     <div>
                       <h4 className="text-lg font-semibold text-white">{pool.name}</h4>
                       <p className="text-sm text-gray-400">{pool.protocol} • {pool.chain}</p>
