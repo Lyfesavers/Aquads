@@ -836,7 +836,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Handle withdraw with real blockchain transactions
   const handleWithdraw = async (position) => {
-    console.log('🔄 Starting withdrawal for position:', position);
     
     if (!walletConnected) {
       showNotification('Please connect your wallet', 'error');
@@ -865,10 +864,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
       
       // Check if we're on the correct network and switch if needed
-      console.log('🌐 Checking network...');
       const network = await provider.getNetwork();
       const pool = pools.find(p => p.id === position.poolId);
-      console.log('📍 Current network:', Number(network.chainId), 'Required:', pool?.chainId);
       
       if (!pool) {
         showNotification('Pool configuration not found', 'error');
@@ -903,13 +900,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const decimals = getTokenDecimals(position.token);
       
       // For Aave withdrawal, we need to withdraw ALL aTokens (use max amount)
-      console.log('💰 Preparing withdrawal...');
       const withdrawalFee = FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE;
-      console.log('📊 Withdrawal fee rate:', withdrawalFee);
       
       // Withdraw the full aToken balance (Aave handles this automatically)
       const withdrawAmount = ethers.MaxUint256; // Withdraw all available
-      console.log('💰 Withdrawing full aToken balance (MaxUint256)');
       
       let txHash = '';
       
@@ -924,32 +918,24 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           signer
         );
         
-        console.log('🏦 Calling Aave withdraw for ETH...');
         const WETH_ADDRESS = tokenAddresses.WETH;
-        console.log('🔗 WETH address:', WETH_ADDRESS);
-        console.log('🏛️ Contract address:', position.contractAddress);
         
         const gasEstimate = await Promise.race([
           aaveContract.withdraw.estimateGas(WETH_ADDRESS, withdrawAmount, userAddress),
           timeoutPromise
         ]);
-        console.log('⛽ Gas estimate:', gasEstimate.toString());
-        
         const withdrawTx = await Promise.race([
           aaveContract.withdraw(WETH_ADDRESS, withdrawAmount, userAddress, { gasLimit: gasEstimate + BigInt(30000) }),
           timeoutPromise
         ]);
-        console.log('📝 Withdraw transaction sent:', withdrawTx.hash);
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
-        console.log('✅ Withdrawal successful:', txHash);
         
         // Calculate and send withdrawal fee based on received amount
         const currentBalance = await provider.getBalance(userAddress);
         const feeAmount = (BigInt(Math.floor(position.currentValue * 1000000)) * BigInt(25)) / BigInt(1000); // 2.5% of position value in wei
         
         if (feeAmount > 0 && currentBalance > feeAmount) {
-          console.log('💸 Sending withdrawal fee...');
           const feeGasEstimate = await provider.estimateGas({
             to: position.feeWallet || ETH_FEE_WALLET,
             value: feeAmount,
@@ -961,48 +947,40 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             value: feeAmount,
             gasLimit: feeGasEstimate + BigInt(10000)
           });
-          console.log('✅ Fee sent successfully');
         }
         
       } else {
         // Withdraw ERC20 tokens from Aave V3
-        console.log('🏦 Calling Aave withdraw for ERC20...');
         const aaveV3ABI = [
           'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
         ];
         const aaveContract = new ethers.Contract(position.contractAddress, aaveV3ABI, signer);
         
-        console.log('🔗 Token address:', position.tokenAddress);
-        console.log('🏛️ Contract address:', position.contractAddress);
+        const gasEstimate = await Promise.race([
+          aaveContract.withdraw.estimateGas(position.tokenAddress, withdrawAmount, userAddress),
+          timeoutPromise
+        ]);
         
-        const gasEstimate = await aaveContract.withdraw.estimateGas(
-          position.tokenAddress,
-          withdrawAmount,
-          userAddress
-        );
-        console.log('⛽ Gas estimate:', gasEstimate.toString());
-        
-        const withdrawTx = await aaveContract.withdraw(
-          position.tokenAddress,
-          withdrawAmount,
-          userAddress,
-          { gasLimit: gasEstimate + BigInt(30000) }
-        );
-        console.log('📝 Withdraw transaction sent:', withdrawTx.hash);
+        const withdrawTx = await Promise.race([
+          aaveContract.withdraw(position.tokenAddress, withdrawAmount, userAddress, { gasLimit: gasEstimate + BigInt(30000) }),
+          timeoutPromise
+        ]);
         
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
-        console.log('✅ Withdrawal successful:', txHash);
         
-        // Send withdrawal fee to fee wallet (ERC20)
-        if (feeAmount > 0) {
+        // Calculate and send withdrawal fee for ERC20 tokens
+        const withdrawnAmount = parseFloat(ethers.formatUnits(receipt.logs[0]?.data || '0', decimals));
+        const feeAmount = ethers.parseUnits((withdrawnAmount * withdrawalFee).toString(), decimals);
+        
+        if (feeAmount > 0 && withdrawnAmount > 0) {
           const tokenABI = [
             'function transfer(address to, uint256 amount) returns (bool)'
           ];
           const tokenContract = new ethers.Contract(position.tokenAddress, tokenABI, signer);
           
-          const feeGasEstimate = await tokenContract.transfer.estimateGas(position.feeWallet, feeAmount);
-          await tokenContract.transfer(position.feeWallet, feeAmount, {
+          const feeGasEstimate = await tokenContract.transfer.estimateGas(position.feeWallet || ETH_FEE_WALLET, feeAmount);
+          await tokenContract.transfer(position.feeWallet || ETH_FEE_WALLET, feeAmount, {
             gasLimit: feeGasEstimate + BigInt(10000)
           });
         }
@@ -1024,7 +1002,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       // Update callbacks for parent component will be handled after positions refresh
       
     } catch (error) {
-      console.error('❌ Withdrawal error:', error);
       logger.error('Withdraw error:', error);
       
       // Handle specific error types
