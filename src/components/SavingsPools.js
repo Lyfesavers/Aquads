@@ -1521,7 +1521,26 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
       showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');
 
-      
+      // Remove baseline from database after successful withdrawal
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        if (currentUser && currentUser.token) {
+          await fetch(`${process.env.REACT_APP_API_URL}/api/users/aquafi-baseline`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              poolId: position.poolId,
+              userAddress: userAddress
+            })
+          });
+        }
+      } catch (error) {
+        logger.error('Error removing baseline from database:', error);
+        // Don't show error to user as withdrawal was successful
+      }
 
       // Update callbacks for parent component will be handled after positions refresh
       

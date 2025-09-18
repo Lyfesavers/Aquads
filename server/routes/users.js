@@ -1001,4 +1001,32 @@ router.post('/aquafi-deposit', auth, async (req, res) => {
   }
 });
 
+// Remove AquaFi baseline after withdrawal
+router.delete('/aquafi-baseline', auth, async (req, res) => {
+  const { poolId, userAddress } = req.body;
+  
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    // Initialize array if it doesn't exist
+    if (!user.aquafiBaselines) {
+      user.aquafiBaselines = [];
+    }
+
+    // Remove the baseline entry for this pool
+    user.aquafiBaselines = user.aquafiBaselines.filter(
+      b => !(b.poolId === poolId && b.userAddress.toLowerCase() === userAddress.toLowerCase())
+    );
+
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error removing baseline:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router; 
