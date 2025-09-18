@@ -17,6 +17,88 @@ function init(server) {
   // Add socket event handlers
   io.on('connection', (socket) => {
 
+    // Handle AquaFi baseline requests
+    socket.on('requestAquafiBaselines', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const User = require('./models/User');
+          const user = await User.findById(userData.userId).select('aquafiBaselines');
+          
+          if (user && user.aquafiBaselines) {
+            socket.emit('aquafiBaselinesUpdate', user.aquafiBaselines);
+          } else {
+            socket.emit('aquafiBaselinesUpdate', []);
+          }
+        } catch (error) {
+          console.error('Error fetching AquaFi baselines via socket:', error);
+          socket.emit('aquafiBaselinesError', { error: 'Failed to fetch baselines' });
+        }
+      }
+    });
+
+    // Handle saving AquaFi baseline
+    socket.on('saveAquafiBaseline', async (data) => {
+      if (data && data.userId && data.poolId && data.userAddress && data.baseline !== undefined) {
+        try {
+          const User = require('./models/User');
+          const user = await User.findById(data.userId);
+          
+          if (user) {
+            if (!user.aquafiBaselines) {
+              user.aquafiBaselines = [];
+            }
+            
+            // Check if baseline already exists
+            const existingIndex = user.aquafiBaselines.findIndex(
+              b => b.poolId === data.poolId && b.userAddress.toLowerCase() === data.userAddress.toLowerCase()
+            );
+            
+            if (existingIndex !== -1) {
+              // Update existing
+              user.aquafiBaselines[existingIndex].baseline = data.baseline;
+              user.aquafiBaselines[existingIndex].createdAt = new Date();
+            } else {
+              // Add new
+              user.aquafiBaselines.push({
+                poolId: data.poolId,
+                userAddress: data.userAddress.toLowerCase(),
+                baseline: data.baseline,
+                createdAt: new Date()
+              });
+            }
+            
+            await user.save();
+            socket.emit('aquafiBaselineSaved', { success: true, poolId: data.poolId });
+          }
+        } catch (error) {
+          console.error('Error saving AquaFi baseline via socket:', error);
+          socket.emit('aquafiBaselineError', { error: 'Failed to save baseline' });
+        }
+      }
+    });
+
+    // Handle removing AquaFi baseline (on withdrawal)
+    socket.on('removeAquafiBaseline', async (data) => {
+      if (data && data.userId && data.poolId && data.userAddress) {
+        try {
+          const User = require('./models/User');
+          const user = await User.findById(data.userId);
+          
+          if (user && user.aquafiBaselines) {
+            user.aquafiBaselines = user.aquafiBaselines.filter(
+              b => !(b.poolId === data.poolId && b.userAddress.toLowerCase() === data.userAddress.toLowerCase())
+            );
+            
+            await user.save();
+            socket.emit('aquafiBaselineRemoved', { success: true, poolId: data.poolId });
+          }
+        } catch (error) {
+          console.error('Error removing AquaFi baseline via socket:', error);
+          socket.emit('aquafiBaselineError', { error: 'Failed to remove baseline' });
+        }
+      }
+    });
+
     // Handle user requesting affiliate info
     socket.on('requestAffiliateInfo', async (userData) => {
       if (userData && userData.userId) {

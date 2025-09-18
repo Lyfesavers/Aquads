@@ -5,6 +5,7 @@ import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain, getCha
 import tokenAddresses from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
+import useSocket from '../hooks/useSocket';
 import logger from '../utils/logger';
 
 // Use the exact same fee wallet as AquaSwap
@@ -161,12 +162,82 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
   const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
   const [isUpdatingAPY, setIsUpdatingAPY] = useState(false);
+  const [baselines, setBaselines] = useState([]);
+
+  // Socket connection for real-time baseline updates
+  const { socket, isConnected, emit, on, off } = useSocket(process.env.REACT_APP_API_URL || 'http://localhost:5000');
 
   // Get unique chains for tabs
   const chains = ['All', ...new Set(pools.map(pool => pool.chain))];
 
   // Filter pools based on active chain
   const filteredPools = activeChain === 'All' ? pools : pools.filter(pool => pool.chain === activeChain);
+
+  // Socket event listeners for baseline updates
+  useEffect(() => {
+    if (socket && currentUser) {
+      // Request baselines when socket connects
+      const handleBaselinesUpdate = (baselineData) => {
+        setBaselines(baselineData || []);
+      };
+
+      const handleBaselineError = (error) => {
+        logger.error('Socket baseline error:', error);
+      };
+
+      // Set up listeners
+      on('aquafiBaselinesUpdate', handleBaselinesUpdate);
+      on('aquafiBaselinesError', handleBaselineError);
+      on('aquafiBaselineSaved', () => {
+        // Request updated baselines after save
+        emit('requestAquafiBaselines', { userId: currentUser.userId });
+      });
+      on('aquafiBaselineRemoved', () => {
+        // Request updated baselines after removal
+        emit('requestAquafiBaselines', { userId: currentUser.userId });
+      });
+
+      // Request initial baselines
+      emit('requestAquafiBaselines', { userId: currentUser.userId });
+
+      // Cleanup
+      return () => {
+        off('aquafiBaselinesUpdate', handleBaselinesUpdate);
+        off('aquafiBaselinesError', handleBaselineError);
+      };
+    }
+  }, [socket, currentUser, emit, on, off]);
+
+  // Helper function to get baseline for a position
+  const getBaseline = (poolId, userAddress) => {
+    const baseline = baselines.find(
+      b => b.poolId === poolId && b.userAddress.toLowerCase() === userAddress.toLowerCase()
+    );
+    return baseline ? baseline.baseline : null;
+  };
+
+  // Helper function to save baseline
+  const saveBaseline = (poolId, userAddress, baseline) => {
+    if (currentUser && socket) {
+      emit('saveAquafiBaseline', {
+        userId: currentUser.userId,
+        poolId,
+        userAddress: userAddress.toLowerCase(),
+        baseline
+      });
+    }
+  };
+
+  // Helper function to remove baseline (on withdrawal)
+  const removeBaseline = (poolId, userAddress) => {
+    if (currentUser && socket) {
+      emit('removeAquafiBaseline', {
+        userId: currentUser.userId,
+        poolId,
+        userAddress: userAddress.toLowerCase()
+      });
+    }
+  };
 
   // Refresh positions manually
   const refreshPositions = async () => {
@@ -221,34 +292,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             const balance = await aTokenContract.balanceOf(userAddress);
             
             if (balance > 0) {
-              // Get both balances using Aave's official method
-              const aTokenABI = [
-                'function balanceOf(address account) view returns (uint256)',
-                'function scaledBalanceOf(address account) view returns (uint256)',
-                'function decimals() view returns (uint8)'
-              ];
+              const decimals = await aTokenContract.decimals();
+              const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
               
-              const aToken = new ethers.Contract(aTokenAddress, aTokenABI, provider);
+              // Get baseline from database
+              let baseline = getBaseline(pool.id, userAddress);
               
-              // Get the official Aave balances with debugging
-              const currentBalance = await aToken.balanceOf(userAddress);      // Current WITH yield
-              const scaledBalance = await aToken.scaledBalanceOf(userAddress); // Original WITHOUT yield
-              const decimals = await aToken.decimals();
+              if (!baseline) {
+                // First time seeing this position - save current as baseline
+                baseline = currentAmount;
+                saveBaseline(pool.id, userAddress, baseline);
+              }
               
-              console.log('🔍 Debug Aave balances:');
-              console.log('Current balance (raw):', currentBalance.toString());
-              console.log('Scaled balance (raw):', scaledBalance.toString());
-              console.log('Decimals:', decimals);
-              
-              // Convert to readable amounts
-              const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
-              const originalDeposit = parseFloat(ethers.formatUnits(scaledBalance, decimals));
-              
-              console.log('Current amount (formatted):', currentAmount);
-              console.log('Original deposit (formatted):', originalDeposit);
-              
-              const earned = Math.max(0, currentAmount - originalDeposit);
-              console.log('Calculated earned:', earned);
+              // Calculate earnings: current - baseline
+              const earned = Math.max(0, currentAmount - baseline);
 
               positions.push({
                 id: `${pool.id}-${userAddress}`,
@@ -256,10 +313,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 protocol: pool.protocol,
                 token: pool.token,
                 chain: pool.chain,
-                amount: originalDeposit, // Original deposit from Aave's scaledBalanceOf
+                amount: baseline, // Original deposit from database
                 depositDate: new Date(),
-                currentValue: currentAmount, // Current balance from Aave's balanceOf
-                earned: earned, // Real earnings calculated from Aave's data
+                currentValue: currentAmount, // Current aToken balance from blockchain
+                earned: earned, // Real earnings: current - baseline
                 apy: pool.apy,
                 contractAddress: pool.contractAddress,
                 tokenAddress: pool.tokenAddress,
@@ -652,24 +709,24 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         // Transaction 2: Deposit full amount to Aave V3
         const aaveV3ABI = [
-          'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
-        ];
+            'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
+          ];
         const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
-        
+          
         const gasEstimate = await aaveContract.supply.estimateGas(
-          selectedPool.tokenAddress,
+            selectedPool.tokenAddress,
           depositAmountBN, // Full amount, no fee deduction
-          userAddress,
+            userAddress,
           0 // referralCode
-        );
-        
+          );
+          
         const depositTx = await aaveContract.supply(
-          selectedPool.tokenAddress,
+            selectedPool.tokenAddress,
           depositAmountBN, // Full amount
-          userAddress,
+            userAddress,
           0, // referralCode
-          { gasLimit: gasEstimate + BigInt(30000) }
-        );
+            { gasLimit: gasEstimate + BigInt(30000) }
+          );
         
         const receipt = await depositTx.wait();
         txHash = receipt.hash;
@@ -705,7 +762,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
         // Fallback: add the new position to local state
-        setUserPositions(prev => [...prev, newPosition]);
+      setUserPositions(prev => [...prev, newPosition]);
       }
       
       setDepositAmount('');
@@ -854,8 +911,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } else {
         // Withdraw ERC20 tokens from Aave V3
         const aaveV3ABI = [
-          'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
-        ];
+            'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
+          ];
         const aaveContract = new ethers.Contract(position.contractAddress, aaveV3ABI, signer);
         
         const gasEstimate = await Promise.race([
@@ -888,6 +945,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       }
       
+      // Remove baseline from database (position fully withdrawn)
+      removeBaseline(position.poolId, connectedAddress);
+      
       // Refresh positions from Aave contracts after withdrawal
       try {
         const ethersProvider = new ethers.BrowserProvider(walletProvider);
@@ -916,7 +976,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } else if (error.message.includes('network')) {
         showNotification('Network error - please check your connection and try again', 'error');
       } else {
-        showNotification(`Withdrawal failed: ${error.message}`, 'error');
+      showNotification(`Withdrawal failed: ${error.message}`, 'error');
       }
     } finally {
       setLoading(false);
@@ -988,19 +1048,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                       alt={position.chain || 'Ethereum'}
                       className="w-8 h-8 object-contain"
                     />
-                    <div>
+                <div>
                       <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
                       <p className="text-sm text-gray-400">{position.token} Pool • {position.chain || 'Ethereum'}</p>
-                    </div>
                   </div>
-                  <button
-                    onClick={() => handleWithdraw(position)}
-                    disabled={loading}
+                </div>
+                <button
+                  onClick={() => handleWithdraw(position)}
+                  disabled={loading}
                     className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <FaArrowUp className="w-4 h-4" />
-                    Withdraw
-                  </button>
+                >
+                  <FaArrowUp className="w-4 h-4" />
+                  Withdraw
+                </button>
                 </div>
 
                 {/* Earned Amount - Center & Prominent */}
@@ -1043,7 +1103,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       )}
 
       {/* Available Pools */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h3 className="text-xl font-semibold text-white">AquaFi Premium Yield Vaults</h3>
@@ -1064,7 +1124,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50">
             <div className="flex gap-2">
               {chains.map((chain) => (
-                <button
+              <button
                   key={chain}
                   onClick={() => setActiveChain(chain)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -1086,8 +1146,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   <span className="text-xs opacity-75">
                     ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
                   </span>
-                </button>
-              ))}
+              </button>
+            ))}
             </div>
           </div>
         </div>
