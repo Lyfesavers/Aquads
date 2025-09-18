@@ -397,6 +397,41 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 aTokenAddress: aTokenAddress,
                 netAmount: currentValue
               });
+            } else {
+              // Balance is 0, but check if we have a stale baseline in database that needs cleanup
+              if (currentUser && currentUser.token) {
+                try {
+                  const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+                    headers: {
+                      'Authorization': `Bearer ${currentUser.token}`
+                    }
+                  });
+                  
+                  if (response.ok) {
+                    const userData = await response.json();
+                    const baseline = userData.aquafiBaselines?.find(
+                      b => b.poolId === pool.id && b.userAddress.toLowerCase() === userAddress.toLowerCase()
+                    );
+                    
+                    // If we have a baseline but 0 balance, clean up the database
+                    if (baseline) {
+                      await fetch(`${process.env.REACT_APP_API_URL}/api/users/aquafi-baseline`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Authorization': `Bearer ${currentUser.token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          poolId: pool.id,
+                          userAddress: userAddress
+                        })
+                      });
+                    }
+                  }
+                } catch (error) {
+                  logger.error('Error cleaning up stale baseline:', error);
+                }
+              }
             }
           }
         } catch (poolError) {
