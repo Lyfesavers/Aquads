@@ -2144,52 +2144,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
 
 
-            {/* Fee Information */}
-
-            <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 mb-8">
-
-              <h4 className="text-white font-semibold text-xl mb-6">Fee Structure</h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div className="flex justify-between items-center py-3">
-
-                  <span className="text-gray-300 text-lg">Deposit Fee:</span>
-
-                  <span className="text-green-400 font-semibold text-lg">FREE (0%)</span>
-
-                </div>
-
-                <div className="flex justify-between items-center py-3">
-
-                  <span className="text-gray-300 text-lg">Withdrawal Fee:</span>
-
-                  <span className="text-yellow-400 font-semibold text-lg">{(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}%</span>
-
-                </div>
-
-                <div className="flex justify-between items-center py-3">
-
-                  <span className="text-gray-300 text-lg">Gas Fees:</span>
-
-                  <span className="text-blue-400 font-semibold text-lg">Network Standard</span>
-
-                </div>
-
-                <div className="flex justify-between items-center py-3">
-
-                  <span className="text-gray-300 text-lg">Management:</span>
-
-                  <span className="text-purple-400 font-semibold text-lg">Professional</span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-
             {/* Action Buttons */}
 
             <div className="flex gap-6">
