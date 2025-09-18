@@ -189,61 +189,80 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Simple earnings calculation using localStorage for original deposit tracking
-  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider, poolId) => {
+  // API helper functions for baseline management
+  const getBaselines = async () => {
+    if (!currentUser || !currentUser.token) return [];
+    
     try {
-      // Get current aToken balance (always live from blockchain)
-      const currentBalance = await aTokenContract.balanceOf(userAddress);
-      const decimals = await aTokenContract.decimals();
-      const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
+      const response = await fetch('/api/aquafi/baselines', {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
-      if (currentAmount === 0) {
-        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
+      if (response.ok) {
+        return await response.json();
       }
-      
-      // Get or set original deposit amount from localStorage
-      const storageKey = `aquafi_original_${userAddress.toLowerCase()}_${poolId}`;
-      let originalDeposit = localStorage.getItem(storageKey);
-      
-      if (!originalDeposit || Math.abs(parseFloat(originalDeposit) - currentAmount) > currentAmount * 0.1) {
-        // First time OR significant difference (new deposit after withdrawal) - reset original
-        originalDeposit = currentAmount;
-        localStorage.setItem(storageKey, originalDeposit.toString());
-      } else {
-        // Use stored original deposit (static)
-        originalDeposit = parseFloat(originalDeposit);
-      }
-      
-      // Calculate real earnings: current - original
-      const earned = Math.max(0, currentAmount - originalDeposit);
-      
-      return {
-        originalDeposit: originalDeposit,
-        currentAmount,
-        earned: earned
-      };
+      return [];
     } catch (error) {
-      logger.error('Error calculating earnings from Aave:', error);
-      // Safe fallback
-      try {
-        const decimals = await aTokenContract.decimals();
-        const balance = await aTokenContract.balanceOf(userAddress);
-        const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
-        return {
-          originalDeposit: currentAmount,
-          currentAmount,
-          earned: 0
-        };
-      } catch (fallbackError) {
-        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
-      }
+      console.error('Error fetching baselines:', error);
+      return [];
     }
   };
 
-  // Fetch user positions directly from Aave V3 contracts
+  const saveBaseline = async (poolId, userAddress, depositAmount, tokenSymbol) => {
+    if (!currentUser || !currentUser.token) return false;
+    
+    try {
+      const response = await fetch('/api/aquafi/baselines', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          poolId,
+          userAddress,
+          depositAmount,
+          tokenSymbol
+        })
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Error saving baseline:', error);
+      return false;
+    }
+  };
+
+  const removeBaseline = async (poolId, userAddress) => {
+    if (!currentUser || !currentUser.token) return false;
+    
+    try {
+      const response = await fetch(`/api/aquafi/baselines/${poolId}/${userAddress}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Error removing baseline:', error);
+      return false;
+    }
+  };
+
+
+  // Fetch user positions using database baselines + live Aave data
   const fetchUserPositions = async (userAddress, provider) => {
     try {
       const positions = [];
+      
+      // Get user's baselines from database
+      const baselines = await getBaselines();
       
       for (const pool of AQUAFI_YIELD_POOLS) {
         try {
@@ -271,25 +290,35 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             const balance = await aTokenContract.balanceOf(userAddress);
             
             if (balance > 0) {
-              // Calculate earnings directly from Aave blockchain data
-              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider, pool.id);
-
-              positions.push({
-                id: `${pool.id}-${userAddress}`,
-                poolId: pool.id,
-                protocol: pool.protocol,
-                token: pool.token,
-                chain: pool.chain, // Add chain info for logo display
-                amount: earningsData.originalDeposit, // Original deposit from blockchain
-                depositDate: new Date(), // We can't get exact deposit date from contract
-                currentValue: earningsData.currentAmount, // Current aToken balance
-                earned: earningsData.earned, // Calculated earnings from blockchain
-                apy: pool.apy,
-                contractAddress: pool.contractAddress,
-                tokenAddress: pool.tokenAddress,
-                aTokenAddress: aTokenAddress,
-                netAmount: earningsData.currentAmount
-              });
+              const decimals = await aTokenContract.decimals();
+              const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
+              
+              // Find baseline for this pool from database
+              const baseline = baselines.find(
+                b => b.poolId === pool.id && b.userAddress.toLowerCase() === userAddress.toLowerCase()
+              );
+              
+              if (baseline) {
+                // Calculate earnings: current - original from database
+                const earned = Math.max(0, currentAmount - baseline.originalAmount);
+                
+                positions.push({
+                  id: `${pool.id}-${userAddress}`,
+                  poolId: pool.id,
+                  protocol: pool.protocol,
+                  token: pool.token,
+                  chain: pool.chain,
+                  amount: baseline.originalAmount, // Original deposit from database
+                  depositDate: new Date(baseline.createdAt), // Actual deposit date
+                  currentValue: currentAmount, // Live current value from Aave
+                  earned: earned, // Real earnings calculation
+                  apy: pool.apy,
+                  contractAddress: pool.contractAddress,
+                  tokenAddress: pool.tokenAddress,
+                  aTokenAddress: aTokenAddress,
+                  netAmount: currentAmount
+                });
+              }
             }
           }
         } catch (poolError) {
@@ -701,25 +730,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
       showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to AquaFi Premium Vault! TX: ${txHash.slice(0, 10)}...`, 'success');
       
-      // Create position with real transaction data
-      const newPosition = {
-        id: Date.now(),
-        poolId: selectedPool.id,
-        protocol: selectedPool.protocol,
-        token: selectedPool.token,
-        amount: parseFloat(depositAmount),
-        depositDate: new Date(),
-        currentValue: parseFloat(depositAmount),
-        earned: 0,
-        apy: selectedPool.apy,
-        feeWallet: selectedPool.feeWallet,
-        userAddress: userAddress,
-        contractAddress: selectedPool.contractAddress,
-        tokenAddress: selectedPool.tokenAddress,
-        managementFee: managementFee,
-        txHash: txHash,
-        netAmount: parseFloat(depositAmount) // Full amount since no management fee
-      };
+      // Save baseline to database (creates new or updates existing for this pool)
+      const baselineSaved = await saveBaseline(
+        selectedPool.id, 
+        userAddress, 
+        parseFloat(depositAmount), 
+        selectedPool.token
+      );
+      
+      if (!baselineSaved) {
+        console.warn('Failed to save baseline, but deposit was successful');
+      }
       
       // Refresh positions from Aave contracts to get updated data including earnings
       try {
@@ -921,6 +942,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         logger.error('Error refreshing positions from Aave:', error);
         // Fallback: remove position from local state
       setUserPositions(prev => prev.filter(p => p.id !== position.id));
+      }
+      
+      // Remove baseline from database after successful withdrawal
+      const baselineRemoved = await removeBaseline(position.poolId, connectedAddress);
+      if (!baselineRemoved) {
+        console.warn('Failed to remove baseline, but withdrawal was successful');
       }
       
       showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');

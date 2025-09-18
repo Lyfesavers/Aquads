@@ -139,6 +139,37 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
+  // AquaFi position baselines - one entry per pool
+  aquafiBaselines: {
+    type: [{
+      poolId: {
+        type: String,
+        required: true
+      },
+      userAddress: {
+        type: String,
+        required: true,
+        lowercase: true
+      },
+      originalAmount: {
+        type: Number,
+        required: true
+      },
+      tokenSymbol: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    default: []
+  },
   pointsHistory: [{
     amount: Number,
     reason: String,
