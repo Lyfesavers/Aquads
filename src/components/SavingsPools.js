@@ -348,6 +348,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               // Get original deposit from database
               let originalDeposit = 0;
               let earned = 0;
+              let hasBaselineData = false;
               
               if (currentUser && currentUser.token) {
                 try {
@@ -366,19 +367,23 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                     if (baseline) {
                       originalDeposit = baseline.originalAmount;
                       earned = Math.max(0, currentValue - originalDeposit);
+                      hasBaselineData = true;
                     } else {
                       originalDeposit = currentValue; // No baseline, assume current is original
                       earned = 0;
+                      hasBaselineData = false;
                     }
                   }
                 } catch (error) {
                   console.error('Error fetching user baseline:', error);
                   originalDeposit = currentValue;
                   earned = 0;
+                  hasBaselineData = false;
                 }
               } else {
                 originalDeposit = currentValue;
                 earned = 0;
+                hasBaselineData = false;
               }
 
               positions.push({
@@ -395,7 +400,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 contractAddress: pool.contractAddress,
                 tokenAddress: pool.tokenAddress,
                 aTokenAddress: aTokenAddress,
-                netAmount: currentValue
+                netAmount: currentValue,
+                hasBaselineData: hasBaselineData // Flag to show loading state if needed
               });
             } else {
               // Balance is 0, but check if we have a stale baseline in database that needs cleanup
@@ -1746,9 +1752,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 {/* Earned Amount - Center & Prominent */}
                 <div className="text-center mb-6 py-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                   <p className="text-sm text-gray-400 mb-1">Total Earned</p>
-                  <div className="text-3xl font-bold text-green-400">
-                    +{position.earned.toFixed(6)} {position.token}
-                  </div>
+                  {position.hasBaselineData ? (
+                    <div className="text-3xl font-bold text-green-400">
+                      +{position.earned.toFixed(6)} {position.token}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400"></div>
+                      <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                    </div>
+                  )}
                   <p className="text-xs text-green-300 mt-1">Professional yield optimization</p>
                 </div>
 
@@ -1756,7 +1769,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="bg-gray-800/50 rounded-lg p-3">
                     <p className="text-gray-400 mb-1">Original Deposit</p>
-                    <p className="text-white font-semibold">{position.amount.toFixed(6)} {position.token}</p>
+                    {position.hasBaselineData ? (
+                      <p className="text-white font-semibold">{position.amount.toFixed(6)} {position.token}</p>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                        <p className="text-gray-400 font-semibold">Loading...</p>
+                      </div>
+                    )}
                   </div>
                   <div className="bg-gray-800/50 rounded-lg p-3">
                     <p className="text-gray-400 mb-1">Current Value</p>
