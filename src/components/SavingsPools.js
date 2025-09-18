@@ -1954,111 +1954,315 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
 
 
-      {/* Deposit Modal */}
+      {/* Enhanced Full-Screen Deposit Modal */}
 
       {selectedPool && (
 
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50">
 
-          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700">
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl w-full max-w-2xl mx-4 border border-gray-600/50 shadow-2xl overflow-hidden">
 
-            <h3 className="text-xl font-semibold text-white mb-4">
+            {/* Header */}
 
-              Deposit to {selectedPool.protocol} {selectedPool.token}
+            <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-gray-600/50 p-6">
 
-            </h3>
+              <div className="flex items-center justify-between">
 
-            
+                <div className="flex items-center gap-4">
 
-            <div className="mb-4">
+                  <img 
 
-              <div className="bg-gray-700/50 rounded-lg p-4 mb-4">
+                    src={`/${selectedPool.chain === 'Ethereum' ? 'eth' : selectedPool.chain === 'Base' ? 'base' : selectedPool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
 
-                <div className="flex justify-between text-sm mb-2">
+                    alt={selectedPool.chain}
 
-                  <span className="text-gray-400">APY:</span>
+                    className="w-12 h-12 object-contain"
 
-                  <span className="text-green-400 font-semibold">{selectedPool.apy}%</span>
+                  />
+
+                  <div>
+
+                    <h2 className="text-2xl font-bold text-white">
+
+                      {selectedPool.name}
+
+                    </h2>
+
+                    <p className="text-gray-300">{selectedPool.protocol} • {selectedPool.chain}</p>
+
+                  </div>
 
                 </div>
 
-                <div className="flex justify-between text-sm">
+                <button
 
-                  <span className="text-gray-400">Management Fee:</span>
+                  onClick={() => {
 
-                  <span className="text-blue-400">{(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}%</span>
+                    setSelectedPool(null);
+
+                    setDepositAmount('');
+
+                  }}
+
+                  className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg"
+
+                >
+
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+
+                  </svg>
+
+                </button>
+
+              </div>
+
+            </div>
+
+
+
+            {/* Content */}
+
+            <div className="p-8">
+
+              {/* Pool Stats */}
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+                <div className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700/50">
+
+                  <p className="text-gray-400 text-sm mb-1">APY</p>
+
+                  <p className="text-green-400 font-bold text-xl">{selectedPool.apy.toFixed(2)}%</p>
 
                 </div>
 
-                <div className="flex justify-between text-sm">
+                <div className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700/50">
 
-                  <span className="text-gray-400">Fee Wallet:</span>
+                  <p className="text-gray-400 text-sm mb-1">Management Fee</p>
 
-                  <span className="text-blue-400 text-xs">{selectedPool.feeWallet.slice(0, 6)}...{selectedPool.feeWallet.slice(-4)}</span>
+                  <p className="text-blue-400 font-bold text-xl">{(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}%</p>
+
+                </div>
+
+                <div className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700/50">
+
+                  <p className="text-gray-400 text-sm mb-1">Withdrawal Fee</p>
+
+                  <p className="text-yellow-400 font-bold text-xl">{(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}%</p>
+
+                </div>
+
+                <div className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700/50">
+
+                  <p className="text-gray-400 text-sm mb-1">Min Deposit</p>
+
+                  <p className="text-white font-bold text-xl">{selectedPool.minDeposit}</p>
 
                 </div>
 
               </div>
 
-              
 
-              <label className="block text-sm font-medium text-gray-300 mb-2">
 
-                Amount ({selectedPool.token})
+              {/* Deposit Amount */}
 
-              </label>
+              <div className="mb-8">
 
-              <input
+                <label className="block text-lg font-semibold text-white mb-3">
 
-                type="number"
+                  Deposit Amount ({selectedPool.token})
 
-                value={depositAmount}
+                </label>
 
-                onChange={(e) => setDepositAmount(e.target.value)}
+                <div className="relative">
 
-                placeholder={`Min: ${selectedPool.minDeposit}`}
+                  <input
 
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="number"
 
-              />
+                    value={depositAmount}
 
-            </div>
+                    onChange={(e) => setDepositAmount(e.target.value)}
 
-            
+                    placeholder={`Minimum: ${selectedPool.minDeposit} ${selectedPool.token}`}
 
-            <div className="flex gap-3">
+                    className="w-full bg-gray-800/70 border-2 border-gray-600/50 rounded-xl px-6 py-4 text-white text-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
 
-              <button
+                  />
 
-                onClick={handleDeposit}
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
 
-                disabled={isDepositing || !depositAmount}
+                    <span className="text-gray-400 font-semibold">{selectedPool.token}</span>
 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg transition-colors"
+                  </div>
 
-              >
+                </div>
 
-                {isDepositing ? 'Depositing...' : 'Confirm Deposit'}
+              </div>
 
-              </button>
 
-              <button
 
-                onClick={() => {
+              {/* Transaction Process Notice */}
 
-                  setSelectedPool(null);
+              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-xl p-6 mb-8">
 
-                  setDepositAmount('');
+                <div className="flex items-start gap-4">
 
-                }}
+                  <div className="bg-blue-500/20 rounded-full p-2 flex-shrink-0">
 
-                className="px-4 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg transition-colors"
+                    <FaInfoCircle className="w-5 h-5 text-blue-400" />
 
-              >
+                  </div>
 
-                Cancel
+                  <div>
 
-              </button>
+                    <h4 className="text-white font-semibold text-lg mb-3">Transaction Process</h4>
+
+                    <div className="space-y-3">
+
+                      <div className="flex items-center gap-3">
+
+                        <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+
+                        <p className="text-gray-300"><strong>Approve Token:</strong> First signature to allow the platform to access your {selectedPool.token}</p>
+
+                      </div>
+
+                      <div className="flex items-center gap-3">
+
+                        <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+
+                        <p className="text-gray-300"><strong>Deposit Funds:</strong> Second signature to complete the deposit transaction</p>
+
+                      </div>
+
+                    </div>
+
+                    <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+
+                      <p className="text-yellow-300 text-sm">
+
+                        <strong>⚠️ Important:</strong> You will need to approve <strong>two signatures</strong> in your wallet. 
+
+                        Please don't close this window until both transactions are complete.
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+
+              {/* Fee Information */}
+
+              <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 mb-8">
+
+                <h4 className="text-white font-semibold text-lg mb-4">Fee Structure</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="flex justify-between items-center py-2">
+
+                    <span className="text-gray-300">Deposit Fee:</span>
+
+                    <span className="text-green-400 font-semibold">FREE (0%)</span>
+
+                  </div>
+
+                  <div className="flex justify-between items-center py-2">
+
+                    <span className="text-gray-300">Withdrawal Fee:</span>
+
+                    <span className="text-yellow-400 font-semibold">{(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}%</span>
+
+                  </div>
+
+                  <div className="flex justify-between items-center py-2">
+
+                    <span className="text-gray-300">Gas Fees:</span>
+
+                    <span className="text-blue-400 font-semibold">Network Standard</span>
+
+                  </div>
+
+                  <div className="flex justify-between items-center py-2">
+
+                    <span className="text-gray-300">Management:</span>
+
+                    <span className="text-purple-400 font-semibold">Professional</span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+
+              {/* Action Buttons */}
+
+              <div className="flex gap-4">
+
+                <button
+
+                  onClick={handleDeposit}
+
+                  disabled={isDepositing || !depositAmount || parseFloat(depositAmount) < parseFloat(selectedPool.minDeposit)}
+
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-3 shadow-lg"
+
+                >
+
+                  {isDepositing ? (
+
+                    <>
+
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+
+                      Processing...
+
+                    </>
+
+                  ) : (
+
+                    <>
+
+                      <FaArrowDown className="w-5 h-5" />
+
+                      Deposit {depositAmount ? `${depositAmount} ${selectedPool.token}` : 'Funds'}
+
+                    </>
+
+                  )}
+
+                </button>
+
+                <button
+
+                  onClick={() => {
+
+                    setSelectedPool(null);
+
+                    setDepositAmount('');
+
+                  }}
+
+                  className="px-8 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-semibold text-lg transition-all duration-200"
+
+                >
+
+                  Cancel
+
+                </button>
+
+              </div>
 
             </div>
 
