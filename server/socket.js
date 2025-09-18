@@ -22,9 +22,15 @@ function init(server) {
       if (userData && userData.userId) {
         try {
           const User = require('./models/User');
-          const user = await User.findById(userData.userId).select('aquafiBaselines');
+          let user = await User.findById(userData.userId);
           
-          if (user && user.aquafiBaselines) {
+          if (user) {
+            // Initialize aquafiBaselines array if it doesn't exist
+            if (!user.aquafiBaselines) {
+              user.aquafiBaselines = [];
+              await user.save();
+            }
+            
             socket.emit('aquafiBaselinesUpdate', user.aquafiBaselines);
           } else {
             socket.emit('aquafiBaselinesUpdate', []);

@@ -173,9 +173,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   // Filter pools based on active chain
   const filteredPools = activeChain === 'All' ? pools : pools.filter(pool => pool.chain === activeChain);
 
-  // Socket event listeners for baseline updates
+  // Socket event listeners for baseline updates (with fallback)
   useEffect(() => {
-    if (socket && currentUser) {
+    if (socket && currentUser && isConnected) {
       // Request baselines when socket connects
       const handleBaselinesUpdate = (baselineData) => {
         console.log('📊 Received baselines from database:', baselineData);
@@ -184,6 +184,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       const handleBaselineError = (error) => {
         logger.error('Socket baseline error:', error);
+        // Fallback to empty baselines if socket fails
+        setBaselines([]);
       };
 
       // Set up listeners
@@ -207,8 +209,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         off('aquafiBaselinesUpdate', handleBaselinesUpdate);
         off('aquafiBaselinesError', handleBaselineError);
       };
+    } else {
+      // Socket not connected - use empty baselines (temporary tracking)
+      console.log('⚠️ Socket not connected, using temporary baseline tracking');
+      setBaselines([]);
     }
-  }, [socket, currentUser, emit, on, off]);
+  }, [socket, currentUser, isConnected, emit, on, off]);
 
   // Helper function to get baseline for a position
   const getBaseline = (poolId, userAddress) => {
@@ -304,18 +310,18 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               const decimals = await aTokenContract.decimals();
               const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
               
-              // Get baseline from database (requires user login)
+              // Get baseline from database or use fallback
               let baseline = getBaseline(pool.id, userAddress);
               
               if (!baseline) {
-                // First time seeing this position - save current as baseline
-                if (currentUser && currentUser.userId) {
-                  baseline = currentAmount;
+                // No baseline found - use current amount
+                baseline = currentAmount;
+                
+                // Try to save baseline if user is logged in and socket connected
+                if (currentUser && currentUser.userId && socket && isConnected) {
                   saveBaseline(pool.id, userAddress, baseline);
                 } else {
-                  // User not logged in - use current amount as temporary baseline
-                  baseline = currentAmount;
-                  showNotification('Please log in to track earnings across sessions', 'warning');
+                  console.log('⚠️ Using temporary baseline - socket not connected or user not logged in');
                 }
               }
               
@@ -555,6 +561,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Handle deposit with real blockchain transactions
   const handleDeposit = async () => {
+    console.log('🏦 Deposit initiated:', { selectedPool: selectedPool?.name, depositAmount, walletConnected });
+    
     if (!selectedPool || !depositAmount || !walletConnected) {
       showNotification('Please connect wallet and enter deposit amount', 'error');
       return;
