@@ -230,15 +230,25 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               
               const aToken = new ethers.Contract(aTokenAddress, aTokenABI, provider);
               
-              // Get the official Aave balances
+              // Get the official Aave balances with debugging
               const currentBalance = await aToken.balanceOf(userAddress);      // Current WITH yield
               const scaledBalance = await aToken.scaledBalanceOf(userAddress); // Original WITHOUT yield
               const decimals = await aToken.decimals();
               
+              console.log('🔍 Debug Aave balances:');
+              console.log('Current balance (raw):', currentBalance.toString());
+              console.log('Scaled balance (raw):', scaledBalance.toString());
+              console.log('Decimals:', decimals);
+              
               // Convert to readable amounts
               const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
               const originalDeposit = parseFloat(ethers.formatUnits(scaledBalance, decimals));
+              
+              console.log('Current amount (formatted):', currentAmount);
+              console.log('Original deposit (formatted):', originalDeposit);
+              
               const earned = Math.max(0, currentAmount - originalDeposit);
+              console.log('Calculated earned:', earned);
 
               positions.push({
                 id: `${pool.id}-${userAddress}`,
