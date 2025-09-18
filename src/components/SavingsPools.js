@@ -189,56 +189,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Simple earnings calculation using localStorage for original deposit tracking
-  const calculateEarningsFromAave = async (userAddress, aTokenContract, aTokenAddress, provider, poolId) => {
-    try {
-      // Get current aToken balance (always live from blockchain)
-      const currentBalance = await aTokenContract.balanceOf(userAddress);
-      const decimals = await aTokenContract.decimals();
-      const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
-      
-      if (currentAmount === 0) {
-        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
-      }
-      
-      // Get or set original deposit amount from localStorage
-      const storageKey = `aquafi_original_${userAddress.toLowerCase()}_${poolId}`;
-      let originalDeposit = localStorage.getItem(storageKey);
-      
-      if (!originalDeposit || Math.abs(parseFloat(originalDeposit) - currentAmount) > currentAmount * 0.1) {
-        // First time OR significant difference (new deposit after withdrawal) - reset original
-        originalDeposit = currentAmount;
-        localStorage.setItem(storageKey, originalDeposit.toString());
-      } else {
-        // Use stored original deposit (static)
-        originalDeposit = parseFloat(originalDeposit);
-      }
-      
-      // Calculate real earnings: current - original
-      const earned = Math.max(0, currentAmount - originalDeposit);
-      
-      return {
-        originalDeposit: originalDeposit,
-        currentAmount,
-        earned: earned
-      };
-    } catch (error) {
-      logger.error('Error calculating earnings from Aave:', error);
-      // Safe fallback
-      try {
-        const decimals = await aTokenContract.decimals();
-        const balance = await aTokenContract.balanceOf(userAddress);
-        const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
-        return {
-          originalDeposit: currentAmount,
-          currentAmount,
-          earned: 0
-        };
-      } catch (fallbackError) {
-        return { originalDeposit: 0, currentAmount: 0, earned: 0 };
-      }
-    }
-  };
 
   // Fetch user positions directly from Aave V3 contracts
   const fetchUserPositions = async (userAddress, provider) => {
@@ -271,24 +221,40 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             const balance = await aTokenContract.balanceOf(userAddress);
             
             if (balance > 0) {
-              // Calculate earnings directly from Aave blockchain data
-              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider, pool.id);
+              // Get both balances using Aave's official method
+              const aTokenABI = [
+                'function balanceOf(address account) view returns (uint256)',
+                'function scaledBalanceOf(address account) view returns (uint256)',
+                'function decimals() view returns (uint8)'
+              ];
+              
+              const aToken = new ethers.Contract(aTokenAddress, aTokenABI, provider);
+              
+              // Get the official Aave balances
+              const currentBalance = await aToken.balanceOf(userAddress);      // Current WITH yield
+              const scaledBalance = await aToken.scaledBalanceOf(userAddress); // Original WITHOUT yield
+              const decimals = await aToken.decimals();
+              
+              // Convert to readable amounts
+              const currentAmount = parseFloat(ethers.formatUnits(currentBalance, decimals));
+              const originalDeposit = parseFloat(ethers.formatUnits(scaledBalance, decimals));
+              const earned = Math.max(0, currentAmount - originalDeposit);
 
               positions.push({
                 id: `${pool.id}-${userAddress}`,
                 poolId: pool.id,
                 protocol: pool.protocol,
                 token: pool.token,
-                chain: pool.chain, // Add chain info for logo display
-                amount: earningsData.originalDeposit, // Original deposit from blockchain
-                depositDate: new Date(), // We can't get exact deposit date from contract
-                currentValue: earningsData.currentAmount, // Current aToken balance
-                earned: earningsData.earned, // Calculated earnings from blockchain
+                chain: pool.chain,
+                amount: originalDeposit, // Original deposit from Aave's scaledBalanceOf
+                depositDate: new Date(),
+                currentValue: currentAmount, // Current balance from Aave's balanceOf
+                earned: earned, // Real earnings calculated from Aave's data
                 apy: pool.apy,
                 contractAddress: pool.contractAddress,
                 tokenAddress: pool.tokenAddress,
                 aTokenAddress: aTokenAddress,
-                netAmount: earningsData.currentAmount
+                netAmount: currentAmount
               });
             }
           }
