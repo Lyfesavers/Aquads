@@ -178,6 +178,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     if (socket && currentUser) {
       // Request baselines when socket connects
       const handleBaselinesUpdate = (baselineData) => {
+        console.log('📊 Received baselines from database:', baselineData);
         setBaselines(baselineData || []);
       };
 
@@ -198,6 +199,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       });
 
       // Request initial baselines
+      console.log('🔌 Requesting baselines for user:', currentUser.userId);
       emit('requestAquafiBaselines', { userId: currentUser.userId });
 
       // Cleanup
@@ -218,12 +220,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Helper function to save baseline
   const saveBaseline = (poolId, userAddress, baseline) => {
-    if (currentUser && socket) {
+    if (currentUser && socket && currentUser.userId) {
+      console.log('💾 Saving baseline:', { poolId, userAddress, baseline, userId: currentUser.userId });
       emit('saveAquafiBaseline', {
         userId: currentUser.userId,
         poolId,
         userAddress: userAddress.toLowerCase(),
         baseline
+      });
+    } else {
+      console.log('❌ Cannot save baseline - missing:', { 
+        currentUser: !!currentUser, 
+        socket: !!socket, 
+        userId: currentUser?.userId 
       });
     }
   };
@@ -295,13 +304,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               const decimals = await aTokenContract.decimals();
               const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
               
-              // Get baseline from database
+              // Get baseline from database (requires user login)
               let baseline = getBaseline(pool.id, userAddress);
               
               if (!baseline) {
                 // First time seeing this position - save current as baseline
-                baseline = currentAmount;
-                saveBaseline(pool.id, userAddress, baseline);
+                if (currentUser && currentUser.userId) {
+                  baseline = currentAmount;
+                  saveBaseline(pool.id, userAddress, baseline);
+                } else {
+                  // User not logged in - use current amount as temporary baseline
+                  baseline = currentAmount;
+                  showNotification('Please log in to track earnings across sessions', 'warning');
+                }
               }
               
               // Calculate earnings: current - baseline
@@ -956,7 +971,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
         // Fallback: remove position from local state
-        setUserPositions(prev => prev.filter(p => p.id !== position.id));
+      setUserPositions(prev => prev.filter(p => p.id !== position.id));
       }
       
       showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');
