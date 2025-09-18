@@ -11,10 +11,16 @@ router.get('/baselines', auth, async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
     
-    res.json(user.aquafiBaselines || []);
+    // Initialize aquafiBaselines if it doesn't exist for existing users
+    if (!user.aquafiBaselines) {
+      user.aquafiBaselines = [];
+      await user.save();
+    }
+    
+    res.json(user.aquafiBaselines);
   } catch (err) {
     console.error('Error fetching baselines:', err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error', details: err.message });
   }
 });
 
@@ -28,7 +34,7 @@ router.post('/baselines', auth, async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    // Initialize array if it doesn't exist
+    // Initialize array if it doesn't exist for existing users
     if (!user.aquafiBaselines) {
       user.aquafiBaselines = [];
     }

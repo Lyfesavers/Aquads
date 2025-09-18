@@ -191,7 +191,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // API helper functions for baseline management
   const getBaselines = async () => {
-    if (!currentUser || !currentUser.token) return [];
+    if (!currentUser || !currentUser.token) {
+      return [];
+    }
     
     try {
       const response = await fetch('/api/aquafi/baselines', {
@@ -202,9 +204,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       });
       
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        return data;
+      } else {
+        console.error('Failed to fetch baselines:', response.status);
+        return [];
       }
-      return [];
     } catch (error) {
       console.error('Error fetching baselines:', error);
       return [];
@@ -261,8 +266,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     try {
       const positions = [];
       
-      // Get user's baselines from database
-      const baselines = await getBaselines();
+      // Get user's baselines from database (with fallback)
+      let baselines = [];
+      try {
+        baselines = await getBaselines();
+      } catch (error) {
+        console.error('Failed to fetch baselines, using empty array:', error);
+        baselines = [];
+      }
       
       for (const pool of AQUAFI_YIELD_POOLS) {
         try {
@@ -312,6 +323,25 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   depositDate: new Date(baseline.createdAt), // Actual deposit date
                   currentValue: currentAmount, // Live current value from Aave
                   earned: earned, // Real earnings calculation
+                  apy: pool.apy,
+                  contractAddress: pool.contractAddress,
+                  tokenAddress: pool.tokenAddress,
+                  aTokenAddress: aTokenAddress,
+                  netAmount: currentAmount
+                });
+              } else if (currentAmount > 0) {
+                // Fallback: show position with current amount as original (for existing positions without baselines)
+                console.warn(`No baseline found for pool ${pool.id}, showing current amount as original`);
+                positions.push({
+                  id: `${pool.id}-${userAddress}`,
+                  poolId: pool.id,
+                  protocol: pool.protocol,
+                  token: pool.token,
+                  chain: pool.chain,
+                  amount: currentAmount, // Use current as original
+                  depositDate: new Date(),
+                  currentValue: currentAmount,
+                  earned: 0, // No earnings calculation without baseline
                   apy: pool.apy,
                   contractAddress: pool.contractAddress,
                   tokenAddress: pool.tokenAddress,
