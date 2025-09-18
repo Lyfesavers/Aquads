@@ -139,33 +139,6 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
-  // AquaFi baseline tracking for individual position earnings calculation
-  aquafiBaselines: {
-    type: [{
-      positionId: {
-        type: String,
-        required: true
-      },
-      poolId: {
-        type: String,
-        required: true
-      },
-      userAddress: {
-        type: String,
-        required: true,
-        lowercase: true
-      },
-      baseline: {
-        type: Number,
-        required: true
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }],
-    default: [] // Initialize as empty array for all users
-  },
   pointsHistory: [{
     amount: Number,
     reason: String,

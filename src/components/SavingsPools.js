@@ -5,7 +5,6 @@ import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain, getCha
 import tokenAddresses from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
-import useSocket from '../hooks/useSocket';
 import logger from '../utils/logger';
 
 // Use the exact same fee wallet as AquaSwap
@@ -162,81 +161,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
   const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
   const [isUpdatingAPY, setIsUpdatingAPY] = useState(false);
-  const [baselines, setBaselines] = useState([]); // Database-managed baselines
-
-  // Socket integration for real-time baseline updates
-  const { socket, isConnected, emit, on, off } = useSocket(process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
 
   // Get unique chains for tabs
   const chains = ['All', ...new Set(pools.map(pool => pool.chain))];
 
   // Filter pools based on active chain
   const filteredPools = activeChain === 'All' ? pools : pools.filter(pool => pool.chain === activeChain);
-
-  // Socket event listeners for baseline management
-  useEffect(() => {
-    if (socket && currentUser && currentUser.userId) {
-      // Request baselines when socket connects
-      emit('requestAquafiBaselines', { userId: currentUser.userId });
-
-      // Listen for baseline updates
-      on('aquafiBaselinesUpdate', (updatedBaselines) => {
-        setBaselines(updatedBaselines);
-      });
-
-      on('aquafiBaselinesError', (error) => {
-        console.error('Baselines error:', error);
-        showNotification('Error loading position data', 'error');
-      });
-
-      on('aquafiBaselineSaved', (response) => {
-        console.log('Baseline saved:', response);
-      });
-
-      on('aquafiBaselineRemoved', (response) => {
-        console.log('Baseline removed:', response);
-      });
-
-      return () => {
-        off('aquafiBaselinesUpdate');
-        off('aquafiBaselinesError');
-        off('aquafiBaselineSaved');
-        off('aquafiBaselineRemoved');
-      };
-    } else {
-      // Socket not connected - use empty baselines (temporary tracking)
-      setBaselines([]);
-    }
-  }, [socket, currentUser, isConnected, emit, on, off]);
-
-  // Helper function to get baseline for a specific position
-  const getBaseline = (positionId) => {
-    const baseline = baselines.find(b => b.positionId === positionId);
-    return baseline ? baseline.baseline : null;
-  };
-
-  // Helper function to save baseline for individual position
-  const saveBaseline = (positionId, poolId, userAddress, baseline) => {
-    if (currentUser && socket && currentUser.userId) {
-      emit('saveAquafiBaseline', {
-        userId: currentUser.userId,
-        positionId,
-        poolId,
-        userAddress: userAddress.toLowerCase(),
-        baseline
-      });
-    }
-  };
-
-  // Helper function to remove baseline for specific position (on withdrawal)
-  const removeBaseline = (positionId) => {
-    if (currentUser && socket) {
-      emit('removeAquafiBaseline', {
-        userId: currentUser.userId,
-        positionId
-      });
-    }
-  };
 
   // Refresh positions manually
   const refreshPositions = async () => {
@@ -341,63 +271,25 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             const balance = await aTokenContract.balanceOf(userAddress);
             
             if (balance > 0) {
-              const decimals = await aTokenContract.decimals();
-              const currentAmount = parseFloat(ethers.formatUnits(balance, decimals));
-              
-              // Find all baselines for this pool and user
-              const poolBaselines = baselines.filter(
-                b => b.poolId === pool.id && b.userAddress.toLowerCase() === userAddress.toLowerCase()
-              );
-              
-              if (poolBaselines.length > 0) {
-                // Create individual positions for each baseline
-                poolBaselines.forEach(baseline => {
-                  const earned = Math.max(0, currentAmount - baseline.baseline);
-                  
-                  positions.push({
-                    id: baseline.positionId, // Use unique position ID from database
-                    poolId: pool.id,
-                    protocol: pool.protocol,
-                    token: pool.token,
-                    chain: pool.chain,
-                    amount: baseline.baseline, // Original deposit from database baseline
-                    depositDate: new Date(baseline.createdAt), // Actual deposit date
-                    currentValue: currentAmount, // Current aToken balance from blockchain
-                    earned: earned, // Real earnings: current - baseline
-                    apy: pool.apy,
-                    contractAddress: pool.contractAddress,
-                    tokenAddress: pool.tokenAddress,
-                    aTokenAddress: aTokenAddress,
-                    netAmount: currentAmount
-                  });
-                });
-              } else if (currentAmount > 0) {
-                // If no baseline exists but there's a balance, this might be from before tracking
-                // Create a temporary position with current amount as baseline (0 earnings)
-                const tempPositionId = `${pool.id}-${userAddress}-${Date.now()}`;
-                
-                positions.push({
-                  id: tempPositionId,
-                  poolId: pool.id,
-                  protocol: pool.protocol,
-                  token: pool.token,
-                  chain: pool.chain,
-                  amount: currentAmount, // Use current as baseline
-                  depositDate: new Date(),
-                  currentValue: currentAmount,
-                  earned: 0, // No earnings since we don't know the original
-                  apy: pool.apy,
-                  contractAddress: pool.contractAddress,
-                  tokenAddress: pool.tokenAddress,
-                  aTokenAddress: aTokenAddress,
-                  netAmount: currentAmount
-                });
-                
-                // Save this as a new baseline for future tracking
-                if (currentUser && socket && currentUser.userId) {
-                  saveBaseline(tempPositionId, pool.id, userAddress, currentAmount);
-                }
-              }
+              // Calculate earnings directly from Aave blockchain data
+              const earningsData = await calculateEarningsFromAave(userAddress, aTokenContract, aTokenAddress, provider, pool.id);
+
+              positions.push({
+                id: `${pool.id}-${userAddress}`,
+                poolId: pool.id,
+                protocol: pool.protocol,
+                token: pool.token,
+                chain: pool.chain, // Add chain info for logo display
+                amount: earningsData.originalDeposit, // Original deposit from blockchain
+                depositDate: new Date(), // We can't get exact deposit date from contract
+                currentValue: earningsData.currentAmount, // Current aToken balance
+                earned: earningsData.earned, // Calculated earnings from blockchain
+                apy: pool.apy,
+                contractAddress: pool.contractAddress,
+                tokenAddress: pool.tokenAddress,
+                aTokenAddress: aTokenAddress,
+                netAmount: earningsData.currentAmount
+              });
             }
           }
         } catch (poolError) {
@@ -809,14 +701,25 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
       showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to AquaFi Premium Vault! TX: ${txHash.slice(0, 10)}...`, 'success');
       
-      // Create unique position ID and save baseline for individual position tracking
-      const positionId = `${selectedPool.id}-${userAddress}-${Date.now()}`;
-      const depositAmountFloat = parseFloat(depositAmount);
-      
-      // Save baseline for this new position (ALWAYS create new, never check existing)
-      if (currentUser && socket && currentUser.userId) {
-        saveBaseline(positionId, selectedPool.id, userAddress, depositAmountFloat);
-      }
+      // Create position with real transaction data
+      const newPosition = {
+        id: Date.now(),
+        poolId: selectedPool.id,
+        protocol: selectedPool.protocol,
+        token: selectedPool.token,
+        amount: parseFloat(depositAmount),
+        depositDate: new Date(),
+        currentValue: parseFloat(depositAmount),
+        earned: 0,
+        apy: selectedPool.apy,
+        feeWallet: selectedPool.feeWallet,
+        userAddress: userAddress,
+        contractAddress: selectedPool.contractAddress,
+        tokenAddress: selectedPool.tokenAddress,
+        managementFee: managementFee,
+        txHash: txHash,
+        netAmount: parseFloat(depositAmount) // Full amount since no management fee
+      };
       
       // Refresh positions from Aave contracts to get updated data including earnings
       try {
@@ -825,23 +728,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         setUserPositions(positions);
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
-        // Fallback: create temporary position
-        const newPosition = {
-          id: positionId,
-          poolId: selectedPool.id,
-          protocol: selectedPool.protocol,
-          token: selectedPool.token,
-          amount: depositAmountFloat,
-          depositDate: new Date(),
-          currentValue: depositAmountFloat,
-          earned: 0,
-          apy: selectedPool.apy,
-          contractAddress: selectedPool.contractAddress,
-          tokenAddress: selectedPool.tokenAddress,
-          txHash: txHash,
-          netAmount: depositAmountFloat
-        };
-        setUserPositions(prev => [...prev, newPosition]);
+        // Fallback: add the new position to local state
+      setUserPositions(prev => [...prev, newPosition]);
       }
       
       setDepositAmount('');
@@ -1024,11 +912,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       }
       
-      // Remove baseline for this specific position after successful withdrawal
-      if (currentUser && socket && position.id) {
-        removeBaseline(position.id);
-      }
-      
       // Refresh positions from Aave contracts after withdrawal
       try {
         const ethersProvider = new ethers.BrowserProvider(walletProvider);
@@ -1037,7 +920,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
         // Fallback: remove position from local state
-        setUserPositions(prev => prev.filter(p => p.id !== position.id));
+      setUserPositions(prev => prev.filter(p => p.id !== position.id));
       }
       
       showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');
