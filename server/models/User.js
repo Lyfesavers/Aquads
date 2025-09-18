@@ -139,34 +139,14 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
-  // AquaFi position baselines - one entry per pool
+  // AquaFi baselines for tracking original deposits
   aquafiBaselines: {
     type: [{
-      poolId: {
-        type: String,
-        required: true
-      },
-      userAddress: {
-        type: String,
-        required: true,
-        lowercase: true
-      },
-      originalAmount: {
-        type: Number,
-        required: true
-      },
-      tokenSymbol: {
-        type: String,
-        required: true
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      },
-      updatedAt: {
-        type: Date,
-        default: Date.now
-      }
+      poolId: String,
+      userAddress: String,
+      originalAmount: Number,
+      tokenSymbol: String,
+      createdAt: { type: Date, default: Date.now }
     }],
     default: []
   },

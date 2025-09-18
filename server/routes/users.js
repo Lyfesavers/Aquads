@@ -957,4 +957,48 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
+// Simple AquaFi deposit tracking
+router.post('/aquafi-deposit', auth, async (req, res) => {
+  const { poolId, userAddress, depositAmount, tokenSymbol } = req.body;
+  
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    // Initialize array if it doesn't exist
+    if (!user.aquafiBaselines) {
+      user.aquafiBaselines = [];
+    }
+
+    // Find existing entry for this pool
+    const existingIndex = user.aquafiBaselines.findIndex(
+      b => b.poolId === poolId && b.userAddress.toLowerCase() === userAddress.toLowerCase()
+    );
+
+    if (existingIndex !== -1) {
+      // Add to existing deposit amount
+      user.aquafiBaselines[existingIndex].originalAmount += depositAmount;
+      user.aquafiBaselines[existingIndex].updatedAt = new Date();
+    } else {
+      // Create new entry
+      user.aquafiBaselines.push({
+        poolId,
+        userAddress: userAddress.toLowerCase(),
+        originalAmount: depositAmount,
+        tokenSymbol,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving deposit:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router; 
