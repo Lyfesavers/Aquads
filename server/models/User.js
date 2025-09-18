@@ -139,9 +139,13 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
-  // AquaFi baseline tracking for earnings calculation
+  // AquaFi baseline tracking for individual position earnings calculation
   aquafiBaselines: {
     type: [{
+      positionId: {
+        type: String,
+        required: true
+      },
       poolId: {
         type: String,
         required: true
