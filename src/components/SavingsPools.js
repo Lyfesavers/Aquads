@@ -603,15 +603,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
       
       // Validate contract address before proceeding
+      console.log('🔍 Validating contract address...');
       const isValidContract = await validateContractAddress(selectedPool.contractAddress);
       if (!isValidContract) {
         showNotification('Invalid contract address detected. Please contact support.', 'error');
         setIsDepositing(false);
         return;
       }
+      console.log('✅ Contract address valid');
       
       // Check if we're on the correct network and switch if needed
+      console.log('🌐 Checking network...');
       const network = await provider.getNetwork();
+      console.log('📍 Current network:', Number(network.chainId), 'Required:', selectedPool.chainId);
+      
       if (Number(network.chainId) !== selectedPool.chainId) {
         try {
           // Try to switch network automatically
