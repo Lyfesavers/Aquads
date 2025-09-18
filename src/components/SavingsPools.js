@@ -196,7 +196,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
     
     try {
-      const response = await fetch('/api/aquafi/baselines', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/aquafi/baselines`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
           'Content-Type': 'application/json'
@@ -220,7 +220,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     if (!currentUser || !currentUser.token) return false;
     
     try {
-      const response = await fetch('/api/aquafi/baselines', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/aquafi/baselines`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
@@ -245,7 +245,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     if (!currentUser || !currentUser.token) return false;
     
     try {
-      const response = await fetch(`/api/aquafi/baselines/${poolId}/${userAddress}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/aquafi/baselines/${poolId}/${userAddress}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
