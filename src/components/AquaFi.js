@@ -60,25 +60,25 @@ const AquaFi = ({ currentUser, showNotification }) => {
             </h1>
           </div>
           <p className="text-xl text-gray-300 mb-6 max-w-3xl mx-auto">
-            Earn yield on your crypto assets through our bicentralized savings pools powered by industry-leading DeFi protocols
+            Let your money work for you - earn passive income on your crypto through professional yield optimization
           </p>
           
           {/* Key Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
               <FaShieldAlt className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Secure Protocols</h3>
-              <p className="text-gray-400 text-sm">Powered by battle-tested protocols: Aave, Compound, and Yearn Finance</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Stable & Secure</h3>
+              <p className="text-gray-400 text-sm">Battle-tested DeFi protocols with institutional-grade security and audited smart contracts</p>
             </div>
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
               <FaChartLine className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Competitive Yields</h3>
-              <p className="text-gray-400 text-sm">Earn attractive APY on your holdings with auto-compounding features</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Pays Every 5 Minutes</h3>
+              <p className="text-gray-400 text-sm">Continuous yield accrual with earnings updated every block - watch your money grow in real-time</p>
             </div>
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
               <FaCoins className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Multi-Chain Support</h3>
-              <p className="text-gray-400 text-sm">Access savings pools across Ethereum, Polygon, and other major chains</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Withdraw Anytime</h3>
+              <p className="text-gray-400 text-sm">Complete liquidity control - access your funds instantly without lock-up periods or penalties</p>
             </div>
           </div>
         </div>
