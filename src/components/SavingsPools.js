@@ -587,12 +587,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       // Get user's wallet and provider (WalletConnect only)
       if (!walletProvider) {
         showNotification('Please connect your wallet first', 'error');
+        setIsDepositing(false);
         return;
       }
       
-      // Add timeout to prevent hanging
+      // Add longer timeout for deposit process
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Transaction timeout - please try again')), 60000)
+        setTimeout(() => reject(new Error('Transaction timeout - please try again')), 180000) // 3 minutes
       );
       
       const web3Provider = walletProvider;
@@ -722,11 +723,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         if (allowance < depositAmountBN) {
           showNotification('Approving token spending...', 'info');
-          const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, depositAmountBN);
-          const approveTx = await tokenContract.approve(selectedPool.contractAddress, depositAmountBN, {
-            gasLimit: approveGasEstimate + BigInt(10000)
-          });
-          await approveTx.wait();
+          const approveGasEstimate = await Promise.race([
+            tokenContract.approve.estimateGas(selectedPool.contractAddress, depositAmountBN),
+            timeoutPromise
+          ]);
+          const approveTx = await Promise.race([
+            tokenContract.approve(selectedPool.contractAddress, depositAmountBN, {
+              gasLimit: approveGasEstimate + BigInt(10000)
+            }),
+            timeoutPromise
+          ]);
+          await Promise.race([approveTx.wait(), timeoutPromise]);
           showNotification('Token approval confirmed, proceeding with deposit...', 'info');
         }
         
@@ -736,22 +743,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           ];
         const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
           
-        const gasEstimate = await aaveContract.supply.estimateGas(
-            selectedPool.tokenAddress,
-          depositAmountBN, // Full amount, no fee deduction
-            userAddress,
-          0 // referralCode
-          );
-          
-        const depositTx = await aaveContract.supply(
-            selectedPool.tokenAddress,
-          depositAmountBN, // Full amount
-            userAddress,
-          0, // referralCode
-            { gasLimit: gasEstimate + BigInt(30000) }
-          );
+        const gasEstimate = await Promise.race([
+          aaveContract.supply.estimateGas(selectedPool.tokenAddress, depositAmountBN, userAddress, 0),
+          timeoutPromise
+        ]);
         
-        const receipt = await depositTx.wait();
+        const depositTx = await Promise.race([
+          aaveContract.supply(selectedPool.tokenAddress, depositAmountBN, userAddress, 0, { 
+            gasLimit: gasEstimate + BigInt(30000) 
+          }),
+          timeoutPromise
+        ]);
+        
+        const receipt = await Promise.race([depositTx.wait(), timeoutPromise]);
         txHash = receipt.hash;
       }
       
