@@ -36,6 +36,24 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
     setShowCreateAccountModal(true);
   };
 
+  const handleLoginSubmit = async (credentials) => {
+    try {
+      await onLogin(credentials);
+      setShowLoginModal(false);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
+
+  const handleCreateAccountSubmit = async (formData) => {
+    try {
+      await onCreateAccount(formData);
+      setShowCreateAccountModal(false);
+    } catch (error) {
+      console.error('Create account error:', error);
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -126,12 +144,6 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
-              </Link>
-              <Link
-                to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Benefits
               </Link>
 
               {currentUser ? (
@@ -250,12 +262,6 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Learn
-              </Link>
-              <Link
-                to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Benefits
               </Link>
               {currentUser ? (
                 <>
@@ -390,17 +396,19 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
       {/* Modals */}
       {showLoginModal && (
         <LoginModal
-          isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
-          onLogin={onLogin}
+          onLogin={handleLoginSubmit}
+          onCreateAccount={() => {
+            setShowLoginModal(false);
+            setShowCreateAccountModal(true);
+          }}
         />
       )}
 
       {showCreateAccountModal && (
         <CreateAccountModal
-          isOpen={showCreateAccountModal}
           onClose={() => setShowCreateAccountModal(false)}
-          onCreateAccount={onCreateAccount}
+          onCreateAccount={handleCreateAccountSubmit}
         />
       )}
 
