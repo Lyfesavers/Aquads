@@ -3655,7 +3655,16 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/verify-user" element={<VerifyUser />} />
-            <Route path="/aquafi" element={<AquaFi currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/aquafi" element={
+              <AquaFi 
+                currentUser={currentUser} 
+                showNotification={showNotification}
+                onLogin={handleLogin}
+                onLogout={handleLogout}
+                onCreateAccount={handleCreateAccount}
+                openMintFunnelPlatform={openMintFunnelPlatform}
+              />
+            } />
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
