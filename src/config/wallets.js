@@ -2,18 +2,18 @@
 // Used by both AquaSwap and BexFi for fee collection
 
 export const AQUADS_WALLETS = {
-  // Main fee collection wallets (from environment variables)
-  ETHEREUM: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  SOLANA: process.env.REACT_APP_SOLANA_FEE_WALLET || "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
-  SUI: process.env.REACT_APP_SUI_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
+  // Main fee collection wallets (from environment variables only)
+  ETHEREUM: process.env.REACT_APP_FEE_WALLET,
+  SOLANA: process.env.REACT_APP_SOLANA_FEE_WALLET,
+  SUI: process.env.REACT_APP_SUI_FEE_WALLET,
   
   // Additional chain wallets (using ETH wallet for EVM chains)
-  POLYGON: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  ARBITRUM: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  OPTIMISM: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  BASE: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  AVALANCHE: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  BSC: process.env.REACT_APP_FEE_WALLET || "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05"
+  POLYGON: process.env.REACT_APP_FEE_WALLET,
+  ARBITRUM: process.env.REACT_APP_FEE_WALLET,
+  OPTIMISM: process.env.REACT_APP_FEE_WALLET,
+  BASE: process.env.REACT_APP_FEE_WALLET,
+  AVALANCHE: process.env.REACT_APP_FEE_WALLET,
+  BSC: process.env.REACT_APP_FEE_WALLET
 };
 
 // Fee structure configuration
