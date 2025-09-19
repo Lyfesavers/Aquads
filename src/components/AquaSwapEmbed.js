@@ -4,7 +4,7 @@ import logger from '../utils/logger';
 import './AquaSwapEmbed.css';
 
 // Constants - using the same fee structure as the main swap
-const FEE_PERCENTAGE = 0.02; // 2% fee
+const FEE_PERCENTAGE = 0.0025; // 0.25% fee
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET;
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET;
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;

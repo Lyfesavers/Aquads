@@ -19,15 +19,11 @@ export const AQUADS_WALLETS = {
 // Fee structure configuration
 export const FEE_CONFIG = {
   // AquaSwap fees (existing)
-  SWAP_FEE_PERCENTAGE: 0.02, // 2%
+  SWAP_FEE_PERCENTAGE: 0.0025, // 0.25%
   
   // AquaFi fees (strategic structure - 0% deposit, 2.5% withdrawal)
   SAVINGS_MANAGEMENT_FEE: 0.0, // 0% fee on deposit (no barrier to entry)
-  SAVINGS_WITHDRAWAL_FEE: 0.025, // 2.5% fee on withdrawal (revenue optimization)
-  
-  // Fee thresholds
-  MIN_FEE_AMOUNT: 0.0001, // Minimum fee to collect (in native token)
-  FEE_COLLECTION_THRESHOLD: 0.01 // Collect fees when >= this amount
+  SAVINGS_WITHDRAWAL_FEE: 0.025 // 2.5% fee on withdrawal (revenue optimization)
 };
 
 // Supported chains for BexFi savings pools
