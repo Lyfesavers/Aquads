@@ -104,10 +104,10 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
             <div className="hidden md:flex items-center space-x-3">
               {/* Main Navigation - Smaller buttons */}
               <Link
-                to="/"
+                to="/marketplace"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
-                Home
+                Freelancer Hub
               </Link>
               <Link
                 to="/games"
@@ -228,10 +228,10 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
           <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
             <div className="flex flex-col space-y-2">
               <Link
-                to="/"
+                to="/marketplace"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
-                Home
+                Freelancer Hub
               </Link>
               <Link
                 to="/games"
