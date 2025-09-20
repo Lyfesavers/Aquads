@@ -166,30 +166,6 @@ const NotificationBell = ({ currentUser }) => {
           // Remember the working path for future requests
           window.WORKING_MARK_ALL_READ_PATH = path;
           
-          // Force a fresh fetch after a short delay to ensure backend sync
-          // Clear any existing timeout first
-          if (refreshTimeoutRef.current) {
-            clearTimeout(refreshTimeoutRef.current);
-          }
-          
-          refreshTimeoutRef.current = setTimeout(() => {
-            if (window.WORKING_NOTIFICATION_PATH) {
-              fetch(window.WORKING_NOTIFICATION_PATH, {
-                headers: { 'Authorization': `Bearer ${currentUser.token}` }
-              })
-              .then(response => response.ok ? response.json() : null)
-              .then(data => {
-                if (data) {
-                  setNotifications(data);
-                  const unread = data.filter(note => !note.isRead).length;
-                  setUnreadCount(unread);
-                }
-              })
-              .catch(error => {
-              });
-            }
-            refreshTimeoutRef.current = null;
-          }, 1000); // 1 second delay to allow backend to process
           
           break;
         } else {
@@ -253,30 +229,6 @@ const NotificationBell = ({ currentUser }) => {
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
         
-        // Force a fresh fetch after a short delay to ensure backend sync
-        // Clear any existing timeout first
-        if (refreshTimeoutRef.current) {
-          clearTimeout(refreshTimeoutRef.current);
-        }
-        
-        refreshTimeoutRef.current = setTimeout(() => {
-          if (window.WORKING_NOTIFICATION_PATH) {
-            fetch(window.WORKING_NOTIFICATION_PATH, {
-              headers: { 'Authorization': `Bearer ${currentUser.token}` }
-            })
-            .then(response => response.ok ? response.json() : null)
-            .then(data => {
-              if (data) {
-                setNotifications(data);
-                const unread = data.filter(note => !note.isRead).length;
-                setUnreadCount(unread);
-              }
-            })
-            .catch(error => {
-            });
-          }
-          refreshTimeoutRef.current = null;
-        }, 1000); // 1 second delay to allow backend to process
       }
       
       // Extract the booking ID from the notification data if available
