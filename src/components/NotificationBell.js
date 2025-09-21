@@ -512,7 +512,9 @@ const NotificationBell = ({ currentUser }) => {
                           {notification.type === 'message' ? '💬' : 
                            notification.type === 'booking' ? '📅' : 
                            notification.type === 'review' ? '⭐' : 
-                           notification.type === 'affiliate' ? '🎉' : '📣'}
+                           notification.type === 'affiliate' ? '🎉' : 
+                           notification.type === 'service_approved' ? '✅' : 
+                           notification.type === 'service_rejected' ? '❌' : '📣'}
                         </div>
                         <div className="flex-1">
                           <p className="text-sm text-white">{notification.message}</p>

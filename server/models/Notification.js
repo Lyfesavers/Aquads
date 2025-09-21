@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund'],
+    enum: ['message', 'booking', 'status', 'review', 'system', 'affiliate', 'token_refund', 'service_approved', 'service_rejected'],
     required: true
   },
   message: {
