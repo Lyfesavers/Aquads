@@ -3,7 +3,7 @@ import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
-import { useSocket } from '../hooks/useSocket';
+import useSocket from '../hooks/useSocket';
 
 // Debounce utility function - placed outside component to avoid recreation
 const debounce = (func, wait) => {
