@@ -253,13 +253,19 @@ router.patch('/:id/read', auth, async (req, res) => {
     // Emit real-time socket update for notification read
     try {
       const { emitNotificationRead } = require('../socket');
+      const unreadCount = await NotificationModel.countDocuments({ userId, isRead: false });
+      console.log('🔔 Emitting notificationRead socket event:', {
+        userId,
+        notificationId,
+        unreadCount
+      });
       emitNotificationRead({
         userId,
         notificationId,
-        unreadCount: await NotificationModel.countDocuments({ userId, isRead: false })
+        unreadCount
       });
     } catch (socketError) {
-      console.error('Error emitting notification read:', socketError);
+      console.error('❌ Error emitting notification read:', socketError);
       // Don't fail the operation if socket emission fails
     }
     
