@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../services/api';
+import { API_URL, socket } from '../services/api';
 import logger from '../utils/logger';
 
 // Debounce utility function - placed outside component to avoid recreation
@@ -28,64 +28,76 @@ const NotificationBell = ({ currentUser }) => {
   const isMarkingAllRead = useRef(false); // Prevent duplicate mark-all-read calls
   const refreshTimeoutRef = useRef(null); // Track refresh timeout
 
-  // Check if we have a user and token before trying to fetch
+  // Socket listener for real-time notification updates (same pattern as Dashboard lines 186-230)
   useEffect(() => {
-    if (currentUser && currentUser.token) {
-      tryFetchNotifications();
-    }
-  }, [currentUser]);
+    if (socket && currentUser) {
+      // Join user's room for direct updates (same as Dashboard line 189)
+      socket.emit('userOnline', {
+        userId: currentUser.userId,
+        username: currentUser.username
+      });
 
+      // Request initial notifications via socket (same pattern as Dashboard line 179)
+      socket.emit('requestUserNotifications', {
+        userId: currentUser.userId
+      });
 
+      // Socket handlers for real-time updates
+      const handleNotificationsLoaded = (data) => {
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+        setApiAvailable(true);
+      };
 
-  // Use callback for tryFetchNotifications to prevent recreation
-  const tryFetchNotifications = useCallback(async () => {
-    if (!currentUser || !currentUser.token) return;
-    
-    hasAttemptedFetch.current = true;
-    
-    // Try the main notifications endpoint first, then fallback to booking endpoint
-    const possiblePaths = [
-      `${API_URL}/notifications`,              // Main endpoint (now fixed)
-      `${API_URL}/bookings/user-notifications`, // Fallback endpoint
-      `${API_URL}/api/notifications`,
-      `/api/notifications`,
-      `${window.location.origin}/api/notifications`
-    ];
-    
-    for (const path of possiblePaths) {
-      try {
-        const response = await fetch(path, {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data);
-          const unread = data.filter(note => !note.isRead).length;
-          setUnreadCount(unread);
-          setApiAvailable(true);
-          
-          // Store the working path for future use
-          window.WORKING_NOTIFICATION_PATH = path;
-          return;
+      const handleNotificationsError = (error) => {
+        console.error('Error loading notifications via socket:', error);
+        setApiAvailable(false);
+      };
+
+      const handleNewNotification = (data) => {
+        if (data.userId === (currentUser.userId || currentUser.id)) {
+          setNotifications(prev => [data.notification, ...prev]);
+          setUnreadCount(data.unreadCount);
         }
-      } catch (error) {
-        // Continue to next path
-      }
+      };
+
+      const handleNotificationRead = (data) => {
+        if (data.userId === (currentUser.userId || currentUser.id)) {
+          setNotifications(prev => 
+            prev.map(n => n._id === data.notificationId ? { ...n, isRead: true } : n)
+          );
+          setUnreadCount(data.unreadCount);
+        }
+      };
+
+      const handleAllNotificationsRead = (data) => {
+        if (data.userId === (currentUser.userId || currentUser.id)) {
+          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          setUnreadCount(0);
+        }
+      };
+
+      // Add socket listeners (same pattern as Dashboard lines 220-222)
+      socket.on('userNotificationsLoaded', handleNotificationsLoaded);
+      socket.on('userNotificationsError', handleNotificationsError);
+      socket.on('newNotification', handleNewNotification);
+      socket.on('notificationRead', handleNotificationRead);
+      socket.on('allNotificationsRead', handleAllNotificationsRead);
+
+      return () => {
+        // Cleanup socket listeners (same pattern as Dashboard lines 224-228)
+        socket.off('userNotificationsLoaded', handleNotificationsLoaded);
+        socket.off('userNotificationsError', handleNotificationsError);
+        socket.off('newNotification', handleNewNotification);
+        socket.off('notificationRead', handleNotificationRead);
+        socket.off('allNotificationsRead', handleAllNotificationsRead);
+      };
     }
-    
-    setApiAvailable(false);
-  }, [currentUser]);
-  
-  // Use memoized debounced version of fetch
-  const debouncedFetchNotifications = useCallback(
-    debounce(() => {
-      if (currentUser && currentUser.token) {
-        tryFetchNotifications();
-      }
-    }, 300),
-    [tryFetchNotifications]
-  );
+  }, [socket, currentUser]);
+
+
+
+  // Pure socket approach - no API fallbacks to prevent query overrides
 
   // Handle click outside with useCallback to prevent recreation on each render
   const handleClickOutside = useCallback((event) => {
@@ -100,9 +112,9 @@ const NotificationBell = ({ currentUser }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
   
-  // Mark notification as read
+  // Mark notification as read - API call triggers socket emission
   const markAsRead = async (notificationId) => {
-    if (!currentUser || !currentUser.token || !apiAvailable) return;
+    if (!currentUser || !currentUser.token) return;
 
     try {
       const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
@@ -113,14 +125,9 @@ const NotificationBell = ({ currentUser }) => {
       });
 
       if (!response.ok) throw new Error('Failed to mark notification as read');
-
-      // Update local state
-      setNotifications(prev => prev.map(note => 
-        note._id === notificationId ? { ...note, isRead: true } : note
-      ));
       
-      // Update unread count
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      // Socket will handle the real-time UI update via 'notificationRead' event
+      // No local state updates needed - socket handles everything
     } catch (error) {
       logger.error('Error marking notification as read:', error);
     }
@@ -158,14 +165,13 @@ const NotificationBell = ({ currentUser }) => {
         
         if (response.ok) {
           const data = await response.json();
-          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-          setUnreadCount(0);
           success = true;
           
+          // Socket will handle the real-time UI update via 'allNotificationsRead' event
+          // No local state updates needed - socket handles everything
           
           // Remember the working path for future requests
           window.WORKING_MARK_ALL_READ_PATH = path;
-          
           
           break;
         } else {
@@ -220,14 +226,11 @@ const NotificationBell = ({ currentUser }) => {
         }
         
         if (!markReadSuccess) {
-          return; // Don't update local state if backend update failed
+          return; // Don't navigate if backend update failed
         }
         
-        // Only update local state if backend update was successful
-        setNotifications(prev => 
-          prev.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        // Socket will handle the real-time UI update via 'notificationRead' event
+        // No local state updates needed - socket handles everything
         
       }
       
@@ -311,87 +314,9 @@ const NotificationBell = ({ currentUser }) => {
     }
   };
 
-  // Try the test notification endpoint
-  const tryTestNotification = async () => {
-    if (!currentUser || !currentUser.token) return;
-    
-    try {
-      const response = await fetch(`${API_URL}/bookings/test-notification`, {
-        headers: { 'Authorization': `Bearer ${currentUser.token}` }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // If test works but main notification path failed, we can use the test path to check
-        if (!apiAvailable) {
-          setApiAvailable(true);
-        }
-        
-        return true;
-      }
-    } catch (error) {
-      // Continue silently
-    }
-    
-    return false;
-  };
+  // Removed test function - using pure socket approach
   
-  // Use effect to try the test route if normal routes fail
-  useEffect(() => {
-    if (currentUser && currentUser.token && !apiAvailable && hasAttemptedFetch.current) {
-      tryTestNotification();
-    }
-  }, [currentUser, apiAvailable]);
-  
-  // Set up polling if API is available
-  useEffect(() => {
-    if (!currentUser || !currentUser.token || !apiAvailable) return;
-    
-    const pollingInterval = setInterval(() => {
-      // Use the working path if we found one
-      if (window.WORKING_NOTIFICATION_PATH) {
-        fetch(window.WORKING_NOTIFICATION_PATH, {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
-        })
-        .then(response => {
-          if (response.ok) return response.json();
-          throw new Error('Polling failed');
-        })
-        .then(data => {
-          // Only update state if we don't have recent local changes
-          setNotifications(prevNotifications => {
-            // Check if any local notifications have been marked as read recently
-            const hasRecentLocalChanges = prevNotifications.some(prevNote => {
-              const serverNote = data.find(serverNote => serverNote._id === prevNote._id);
-              return serverNote && prevNote.isRead && !serverNote.isRead;
-            });
-            
-            // If we have recent local changes, merge them with server data
-            if (hasRecentLocalChanges) {
-              return data.map(serverNote => {
-                const localNote = prevNotifications.find(prevNote => prevNote._id === serverNote._id);
-                // Keep local read status if it's more recent
-                return localNote && localNote.isRead ? { ...serverNote, isRead: true } : serverNote;
-              });
-            }
-            
-            // No recent local changes, use server data
-            return data;
-          });
-          
-          const unread = data.filter(note => !note.isRead).length;
-          setUnreadCount(unread);
-        })
-        .catch(error => {
-          // Silent error handling for polling
-        });
-      }
-      // Don't call tryFetchNotifications here to avoid duplicate calls
-    }, 60000); // Poll every 60 seconds (reduced frequency for better performance)
-    
-    return () => clearInterval(pollingInterval);
-  }, [currentUser, apiAvailable, tryFetchNotifications]);
+  // Pure socket approach - removed all API polling to prevent query overrides
 
   // Cleanup on unmount
   useEffect(() => {
@@ -403,8 +328,8 @@ const NotificationBell = ({ currentUser }) => {
     };
   }, []);
 
-  // Don't render if user is not logged in or if API is not available
-  if (!currentUser || !currentUser.token || !apiAvailable) {
+  // Don't render if user is not logged in
+  if (!currentUser || !currentUser.token) {
     return null;
   }
 

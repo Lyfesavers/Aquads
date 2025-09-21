@@ -367,6 +367,37 @@ function init(server) {
       }
     });
 
+    // Handle user requesting their notifications
+    socket.on('requestUserNotifications', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('userNotificationsError', { error: 'User authentication required' });
+        return;
+      }
+
+      try {
+        const Notification = require('./models/Notification');
+        
+        // Fetch user's notifications
+        const notifications = await Notification.find({ userId: userData.userId })
+          .sort({ createdAt: -1 })
+          .limit(50) // Limit to recent 50 notifications
+          .lean();
+
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+
+        // Send notifications to this user
+        socket.emit('userNotificationsLoaded', {
+          notifications,
+          unreadCount,
+          total: notifications.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching user notifications:', error);
+        socket.emit('userNotificationsError', { error: 'Failed to fetch notifications' });
+      }
+    });
+
     socket.on('error', (error) => {
       // Silent error handling
     });

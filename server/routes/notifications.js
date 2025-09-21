@@ -249,6 +249,19 @@ router.patch('/:id/read', auth, async (req, res) => {
     if (!notification) {
       return res.status(404).json({ error: 'Notification not found or not owned by user' });
     }
+
+    // Emit real-time socket update for notification read
+    try {
+      const { emitNotificationRead } = require('../socket');
+      emitNotificationRead({
+        userId,
+        notificationId,
+        unreadCount: await NotificationModel.countDocuments({ userId, isRead: false })
+      });
+    } catch (socketError) {
+      console.error('Error emitting notification read:', socketError);
+      // Don't fail the operation if socket emission fails
+    }
     
     res.json({ success: true, notification });
   } catch (error) {
@@ -332,6 +345,19 @@ router.patch('/mark-all-read', auth, async (req, res) => {
       { userId, isRead: false },
       { $set: { isRead: true } }
     );
+
+    // Emit real-time socket update for all notifications read
+    try {
+      const { emitAllNotificationsRead } = require('../socket');
+      emitAllNotificationsRead({
+        userId,
+        modifiedCount: result.modifiedCount,
+        unreadCount: 0 // All notifications are now read
+      });
+    } catch (socketError) {
+      console.error('Error emitting all notifications read:', socketError);
+      // Don't fail the operation if socket emission fails
+    }
     
     res.json({ success: true, modifiedCount: result.modifiedCount });
   } catch (error) {
@@ -353,6 +379,19 @@ const createNotification = async (userId, type, message, link = null, relatedDat
     });
     
     await notification.save();
+
+    // Emit real-time socket update for new notification
+    try {
+      const { emitNewNotification } = require('../socket');
+      emitNewNotification({
+        userId,
+        notification: notification.toObject(),
+        unreadCount: await Notification.countDocuments({ userId, isRead: false })
+      });
+    } catch (socketError) {
+      console.error('Error emitting new notification:', socketError);
+      // Don't fail notification creation if socket emission fails
+    }
   
     return notification;
   } catch (error) {
