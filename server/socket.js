@@ -369,9 +369,7 @@ function init(server) {
 
     // Handle user requesting their notifications
     socket.on('requestUserNotifications', async (userData) => {
-      console.log('🔔 Socket: Received requestUserNotifications:', userData);
       if (!userData || !userData.userId) {
-        console.log('❌ Socket: Invalid user data for notifications');
         socket.emit('userNotificationsError', { error: 'User authentication required' });
         return;
       }
@@ -387,9 +385,6 @@ function init(server) {
 
         const unreadCount = notifications.filter(n => !n.isRead).length;
 
-        console.log(`🔔 Socket: Sending ${notifications.length} notifications to user ${userData.userId}`);
-        console.log(`🔔 Socket: ${unreadCount} unread notifications`);
-
         // Send notifications to this user
         socket.emit('userNotificationsLoaded', {
           notifications,
@@ -398,7 +393,6 @@ function init(server) {
         });
         
       } catch (error) {
-        console.error('❌ Error fetching user notifications:', error);
         socket.emit('userNotificationsError', { error: 'Failed to fetch notifications' });
       }
     });
@@ -580,28 +574,19 @@ function emitNewServicePending(serviceData) {
 // Notification socket emission functions
 function emitNewNotification(notificationData) {
   if (io) {
-    console.log('🔔 Socket: Emitting newNotification event:', notificationData);
     io.emit('newNotification', notificationData);
-  } else {
-    console.log('❌ Socket: IO not available for newNotification');
   }
 }
 
 function emitNotificationRead(notificationData) {
   if (io) {
-    console.log('🔔 Socket: Emitting notificationRead event:', notificationData);
     io.emit('notificationRead', notificationData);
-  } else {
-    console.log('❌ Socket: IO not available for notificationRead');
   }
 }
 
 function emitAllNotificationsRead(userData) {
   if (io) {
-    console.log('🔔 Socket: Emitting allNotificationsRead event:', userData);
     io.emit('allNotificationsRead', userData);
-  } else {
-    console.log('❌ Socket: IO not available for allNotificationsRead');
   }
 }
 

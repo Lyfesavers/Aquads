@@ -42,59 +42,39 @@ const NotificationBell = ({ currentUser }) => {
         userId: currentUser.userId
       });
 
-      // Socket handlers for real-time updates
-      const handleNotificationsLoaded = (data) => {
-        console.log('🔔 Notifications loaded via socket:', data);
-        setNotifications(data.notifications);
-        setUnreadCount(data.unreadCount);
-        setApiAvailable(true);
-      };
+            // Socket handlers for real-time updates
+            const handleNotificationsLoaded = (data) => {
+              setNotifications(data.notifications);
+              setUnreadCount(data.unreadCount);
+              setApiAvailable(true);
+            };
 
-      const handleNotificationsError = (error) => {
-        console.error('❌ Error loading notifications via socket:', error);
-        setApiAvailable(false);
-      };
+            const handleNotificationsError = (error) => {
+              setApiAvailable(false);
+            };
 
-      const handleNewNotification = (data) => {
-        console.log('🆕 New notification received:', data);
-        console.log('👤 Current user ID:', currentUser.userId || currentUser.id);
-        console.log('📨 Notification user ID:', data.userId);
-        if (data.userId === (currentUser.userId || currentUser.id)) {
-          console.log('✅ User ID match - updating notifications');
-          setNotifications(prev => [data.notification, ...prev]);
-          setUnreadCount(data.unreadCount);
-        } else {
-          console.log('❌ User ID mismatch - not updating');
-        }
-      };
+            const handleNewNotification = (data) => {
+              if (data.userId === (currentUser.userId || currentUser.id)) {
+                setNotifications(prev => [data.notification, ...prev]);
+                setUnreadCount(data.unreadCount);
+              }
+            };
 
-      const handleNotificationRead = (data) => {
-        console.log('✅ Notification marked as read:', data);
-        console.log('👤 Current user ID:', currentUser.userId || currentUser.id);
-        console.log('📨 Notification user ID:', data.userId);
-        if (data.userId === (currentUser.userId || currentUser.id)) {
-          console.log('✅ User ID match - updating notification as read');
-          setNotifications(prev => 
-            prev.map(n => n._id === data.notificationId ? { ...n, isRead: true } : n)
-          );
-          setUnreadCount(data.unreadCount);
-        } else {
-          console.log('❌ User ID mismatch - not updating');
-        }
-      };
+            const handleNotificationRead = (data) => {
+              if (data.userId === (currentUser.userId || currentUser.id)) {
+                setNotifications(prev =>
+                  prev.map(n => n._id === data.notificationId ? { ...n, isRead: true } : n)
+                );
+                setUnreadCount(data.unreadCount);
+              }
+            };
 
-      const handleAllNotificationsRead = (data) => {
-        console.log('✅ All notifications marked as read:', data);
-        console.log('👤 Current user ID:', currentUser.userId || currentUser.id);
-        console.log('📨 Notification user ID:', data.userId);
-        if (data.userId === (currentUser.userId || currentUser.id)) {
-          console.log('✅ User ID match - marking all as read');
-          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-          setUnreadCount(0);
-        } else {
-          console.log('❌ User ID mismatch - not updating');
-        }
-      };
+            const handleAllNotificationsRead = (data) => {
+              if (data.userId === (currentUser.userId || currentUser.id)) {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                setUnreadCount(0);
+              }
+            };
 
       // Add socket listeners (same pattern as Dashboard lines 220-222)
       socket.on('userNotificationsLoaded', handleNotificationsLoaded);
