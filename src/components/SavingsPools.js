@@ -1829,17 +1829,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         </div>
         
         {/* Chain Filter Tabs */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50">
+        <div className="flex justify-center mb-6 chain-filter-container">
+          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50 chain-filter-tabs">
             <div className="flex gap-2">
               {chains.map((chain) => (
               <button
 
                   key={chain}
                   onClick={() => setActiveChain(chain)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all chain-filter-tab ${
                     activeChain === chain
-                      ? 'bg-blue-600 text-white shadow-lg'
+                      ? 'bg-blue-600 text-white shadow-lg active'
                       : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
                   }`}
                 >

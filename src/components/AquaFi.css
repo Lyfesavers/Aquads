@@ -157,6 +157,128 @@
   .pool-card {
     margin-bottom: 1rem;
   }
+  
+  /* Mobile-friendly chain filter tabs */
+  .chain-filter-container {
+    padding: 0 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .chain-filter-tabs {
+    background: rgba(75, 85, 99, 0.5) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 0.75rem !important;
+    padding: 0.375rem !important;
+    border: 1px solid rgba(107, 114, 128, 0.5) !important;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    position: relative;
+  }
+  
+  /* Subtle scroll indicator on very small screens */
+  .chain-filter-tabs::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    width: 0.25rem;
+    height: 0.25rem;
+    background: rgba(59, 130, 246, 0.6);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .chain-filter-tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  .chain-filter-tabs .flex {
+    flex-wrap: nowrap !important;
+    gap: 0.25rem !important;
+    min-width: max-content;
+  }
+  
+  .chain-filter-tab {
+    flex: 0 0 auto !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    min-width: max-content !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .chain-filter-tab.active {
+    background: #3b82f6 !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  .chain-filter-tab:not(.active) {
+    color: #d1d5db !important;
+    background: transparent !important;
+  }
+  
+  .chain-filter-tab:not(.active):hover {
+    color: white !important;
+    background: rgba(107, 114, 128, 0.5) !important;
+  }
+  
+  .chain-filter-tab img {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+  
+  .chain-filter-tab span:last-child {
+    font-size: 0.625rem !important;
+    opacity: 0.75 !important;
+  }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+  .chain-filter-container {
+    padding: 0 0.5rem;
+  }
+  
+  .chain-filter-tab {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.6875rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  .chain-filter-tab img {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+  }
+  
+  .chain-filter-tab span:last-child {
+    font-size: 0.5625rem !important;
+  }
+  
+  /* Show scroll indicator on very small screens when scrollable */
+  .chain-filter-tabs:hover::after,
+  .chain-filter-tabs:focus-within::after {
+    opacity: 1;
+  }
+}
+
+/* Tablet responsive adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .chain-filter-tab {
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .chain-filter-tab img {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+  }
 }
 
 /* Protocol Logos */
