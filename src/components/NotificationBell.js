@@ -3,6 +3,7 @@ import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
+import { useSocket } from '../hooks/useSocket';
 
 // Debounce utility function - placed outside component to avoid recreation
 const debounce = (func, wait) => {
@@ -28,14 +29,85 @@ const NotificationBell = ({ currentUser }) => {
   const isMarkingAllRead = useRef(false); // Prevent duplicate mark-all-read calls
   const refreshTimeoutRef = useRef(null); // Track refresh timeout
 
+  // Initialize socket connection
+  const serverUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const { socket } = useSocket(serverUrl);
+
+  // Socket-based notification loading function
+  const requestNotificationsViaSocket = useCallback(() => {
+    if (!socket || !currentUser?.userId) return;
+    socket.emit('requestUserNotifications', {
+      userId: currentUser.userId || currentUser.id
+    });
+  }, [socket, currentUser]);
+
   // Check if we have a user and token before trying to fetch
   useEffect(() => {
     if (currentUser && currentUser.token) {
-      tryFetchNotifications();
+      // Try socket first, fallback to API if needed
+      if (socket) {
+        requestNotificationsViaSocket();
+      } else {
+        tryFetchNotifications();
+      }
     }
-  }, [currentUser]);
+  }, [currentUser, socket, requestNotificationsViaSocket]);
 
+  // Socket event listeners for real-time notification updates
+  useEffect(() => {
+    if (!socket || !currentUser) return;
 
+    const handleNotificationsLoaded = (data) => {
+      setNotifications(data.notifications);
+      setUnreadCount(data.unreadCount);
+      setApiAvailable(true);
+    };
+
+    const handleNotificationsError = (error) => {
+      console.error('Error loading notifications via socket:', error);
+      // Fallback to API if socket fails
+      tryFetchNotifications();
+    };
+
+    const handleNewNotification = (data) => {
+      if (data.userId === (currentUser.userId || currentUser.id)) {
+        setNotifications(prev => [data.notification, ...prev]);
+        setUnreadCount(data.unreadCount);
+      }
+    };
+
+    const handleNotificationRead = (data) => {
+      if (data.userId === (currentUser.userId || currentUser.id)) {
+        setNotifications(prev => 
+          prev.map(n => n._id === data.notificationId ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(data.unreadCount);
+      }
+    };
+
+    const handleAllNotificationsRead = (data) => {
+      if (data.userId === (currentUser.userId || currentUser.id)) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    };
+
+    // Add socket listeners
+    socket.on('userNotificationsLoaded', handleNotificationsLoaded);
+    socket.on('userNotificationsError', handleNotificationsError);
+    socket.on('newNotification', handleNewNotification);
+    socket.on('notificationRead', handleNotificationRead);
+    socket.on('allNotificationsRead', handleAllNotificationsRead);
+
+    return () => {
+      // Cleanup socket listeners
+      socket.off('userNotificationsLoaded', handleNotificationsLoaded);
+      socket.off('userNotificationsError', handleNotificationsError);
+      socket.off('newNotification', handleNewNotification);
+      socket.off('notificationRead', handleNotificationRead);
+      socket.off('allNotificationsRead', handleAllNotificationsRead);
+    };
+  }, [socket, currentUser, tryFetchNotifications]);
 
   // Use callback for tryFetchNotifications to prevent recreation
   const tryFetchNotifications = useCallback(async () => {
