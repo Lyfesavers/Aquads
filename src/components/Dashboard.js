@@ -451,6 +451,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPendingServices(prev => [...prev, data]);
     };
 
+    const handlePendingServicesLoaded = (data) => {
+      setPendingServices(data.pendingServices);
+      setIsLoadingServices(false);
+    };
+
+    const handlePendingServicesError = (error) => {
+      console.error('Error loading initial services via socket:', error);
+      setIsLoadingServices(false);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
@@ -463,6 +473,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('serviceApproved', handleServiceApproved);
     socket.on('serviceRejected', handleServiceRejected);
     socket.on('newServicePending', handleNewServicePending);
+    socket.on('pendingServicesLoaded', handlePendingServicesLoaded);
+    socket.on('pendingServicesError', handlePendingServicesError);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -477,6 +489,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('serviceApproved', handleServiceApproved);
       socket.off('serviceRejected', handleServiceRejected);
       socket.off('newServicePending', handleNewServicePending);
+      socket.off('pendingServicesLoaded', handlePendingServicesLoaded);
+      socket.off('pendingServicesError', handlePendingServicesError);
     };
   }, [socket, currentUser]);
 
@@ -484,9 +498,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchPendingBubbleListings();
       fetchPendingTokenPurchases();
-      fetchPendingServicesData();
+      requestPendingServicesViaSocket();
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser, activeTab, socket]);
 
   useEffect(() => {
     if (currentUser?.isAdmin && activeTab === 'facebookRaids') {
@@ -1871,6 +1885,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   // Service approval functions
+  const requestPendingServicesViaSocket = () => {
+    if (!socket || !currentUser?.isAdmin) return;
+    setIsLoadingServices(true);
+    socket.emit('requestPendingServices', {
+      userId: currentUser.userId || currentUser.id,
+      isAdmin: currentUser.isAdmin
+    });
+  };
+
   const fetchPendingServicesData = async () => {
     if (!currentUser?.isAdmin) return;
     try {

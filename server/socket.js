@@ -339,6 +339,34 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending services
+    socket.on('requestPendingServices', async (userData) => {
+      if (!userData || !userData.userId || !userData.isAdmin) {
+        socket.emit('pendingServicesError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const Service = require('./models/Service');
+        
+        // Fetch all pending services
+        const pendingServices = await Service.find({ status: 'pending' })
+          .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType')
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Send all pending services to this admin
+        socket.emit('pendingServicesLoaded', {
+          pendingServices,
+          total: pendingServices.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching pending services for admin:', error);
+        socket.emit('pendingServicesError', { error: 'Failed to fetch pending services' });
+      }
+    });
+
     socket.on('error', (error) => {
       // Silent error handling
     });
