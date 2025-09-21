@@ -431,6 +431,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error loading initial bump requests via socket:', error);
     };
 
+    // Service approval socket handlers
+    const handleServiceApproved = (data) => {
+      // Remove the approved service from the pending list
+      setPendingServices(prev => 
+        prev.filter(service => service._id.toString() !== data.serviceId.toString())
+      );
+    };
+
+    const handleServiceRejected = (data) => {
+      // Remove the rejected service from the pending list
+      setPendingServices(prev => 
+        prev.filter(service => service._id.toString() !== data.serviceId.toString())
+      );
+    };
+
+    const handleNewServicePending = (data) => {
+      // Add the new pending service to the list immediately
+      setPendingServices(prev => [...prev, data]);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
@@ -438,6 +458,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
     socket.on('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
     socket.on('pendingBumpRequestsError', handlePendingBumpRequestsError);
+    
+    // Service approval socket listeners
+    socket.on('serviceApproved', handleServiceApproved);
+    socket.on('serviceRejected', handleServiceRejected);
+    socket.on('newServicePending', handleNewServicePending);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -447,6 +472,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
       socket.off('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
       socket.off('pendingBumpRequestsError', handlePendingBumpRequestsError);
+      
+      // Service approval socket cleanup
+      socket.off('serviceApproved', handleServiceApproved);
+      socket.off('serviceRejected', handleServiceRejected);
+      socket.off('newServicePending', handleNewServicePending);
     };
   }, [socket, currentUser]);
 
@@ -1858,7 +1888,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       await approveService(serviceId);
       showNotification('Service approved successfully', 'success');
-      fetchPendingServicesData(); // Refresh the list
+      // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to approve service', 'error');
     }
@@ -1878,7 +1908,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setShowRejectServiceModal(false);
       setSelectedServiceForRejection(null);
       setServiceRejectionReason('');
-      fetchPendingServicesData(); // Refresh the list
+      // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to reject service', 'error');
     }

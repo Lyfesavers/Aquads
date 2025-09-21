@@ -494,6 +494,25 @@ function emitAffiliateEarningUpdate(affiliateData) {
   }
 }
 
+// Service approval socket emission functions
+function emitServiceApproved(serviceData) {
+  if (io) {
+    io.emit('serviceApproved', serviceData);
+  }
+}
+
+function emitServiceRejected(serviceData) {
+  if (io) {
+    io.emit('serviceRejected', serviceData);
+  }
+}
+
+function emitNewServicePending(serviceData) {
+  if (io) {
+    io.emit('newServicePending', serviceData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -507,5 +526,8 @@ module.exports = {
   emitTwitterRaidApproved,
   emitTwitterRaidRejected,
   emitNewTwitterRaidCompletion,
-  emitAffiliateEarningUpdate
+  emitAffiliateEarningUpdate,
+  emitServiceApproved,
+  emitServiceRejected,
+  emitNewServicePending
 }; 

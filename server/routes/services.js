@@ -8,6 +8,7 @@ const requireEmailVerification = require('../middleware/emailVerification');
 const upload = require('../middleware/upload');
 const { awardListingPoints } = require('./points');
 const { createNotification } = require('./notifications');
+const { emitServiceApproved, emitServiceRejected, emitNewServicePending } = require('../socket');
 
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
@@ -196,6 +197,23 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     }
     
     await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+
+    // Emit real-time socket update for new service pending approval
+    try {
+      emitNewServicePending({
+        _id: service._id,
+        title: service.title,
+        description: service.description,
+        category: service.category,
+        price: service.price,
+        seller: service.seller,
+        status: service.status,
+        createdAt: service.createdAt
+      });
+    } catch (socketError) {
+      console.error('Error emitting new service pending:', socketError);
+      // Don't fail the service creation if socket emission fails
+    }
 
     res.status(201).json(service);
   } catch (error) {
@@ -394,6 +412,20 @@ router.post('/:id/approve', auth, async (req, res) => {
       // Don't fail the approval if notification fails
     }
 
+    // Emit real-time socket update for service approval
+    try {
+      emitServiceApproved({
+        serviceId: service._id,
+        title: service.title,
+        seller: service.seller,
+        approvedBy: req.user.id,
+        approvedAt: new Date()
+      });
+    } catch (socketError) {
+      console.error('Error emitting service approval:', socketError);
+      // Don't fail the approval if socket emission fails
+    }
+
     res.json({ 
       message: 'Service approved successfully',
       service
@@ -446,6 +478,21 @@ router.post('/:id/reject', auth, async (req, res) => {
     } catch (notificationError) {
       console.error('Error creating rejection notification:', notificationError);
       // Don't fail the rejection if notification fails
+    }
+
+    // Emit real-time socket update for service rejection
+    try {
+      emitServiceRejected({
+        serviceId: service._id,
+        title: service.title,
+        seller: service.seller,
+        reason: reason || 'No reason provided',
+        rejectedBy: req.user.id,
+        rejectedAt: new Date()
+      });
+    } catch (socketError) {
+      console.error('Error emitting service rejection:', socketError);
+      // Don't fail the rejection if socket emission fails
     }
 
     res.json({ 
