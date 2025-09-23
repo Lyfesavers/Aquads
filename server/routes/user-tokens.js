@@ -50,7 +50,7 @@ router.get('/balance', auth, async (req, res) => {
 // Create token purchase order
 router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { amount, paymentMethod = 'crypto', txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+    const { amount, cost, paymentMethod = 'crypto', txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid token amount' });
@@ -60,11 +60,12 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Transaction signature is required' });
     }
 
-    const cost = amount; // 1 token = 1 USDC
+    // Use the cost from request body (for package discounts) or fallback to amount (1 token = 1 USDC)
+    const finalCost = cost || amount;
     const tokenPurchase = new TokenPurchase({
       userId: req.user.userId,
       amount,
-      cost,
+      cost: finalCost,
       paymentMethod,
       txSignature,
       paymentChain,
@@ -92,7 +93,7 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
         const notification = new Notification({
           userId: admin._id,
           type: 'admin',
-          message: `New token purchase pending approval: ${amount} tokens ($${cost}) from ${username}`,
+          message: `New token purchase pending approval: ${amount} tokens ($${finalCost}) from ${username}`,
           link: '/admin/token-purchases',
           relatedId: tokenPurchase._id,
           relatedModel: 'TokenPurchase'
