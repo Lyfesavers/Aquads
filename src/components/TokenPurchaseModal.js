@@ -107,6 +107,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
         `${process.env.REACT_APP_API_URL}/api/user-tokens/purchase`,
         {
           amount: selectedPackage.tokens,
+          cost: selectedPackage.price, // Use the discounted package price, not token count
           paymentMethod: 'crypto',
           txSignature: txSignature.trim(),
           paymentChain: selectedChain.name,
@@ -170,6 +171,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
         `${process.env.REACT_APP_API_URL}/api/user-tokens/purchase`,
         {
           amount: selectedPackage.tokens,
+          cost: selectedPackage.price, // Use the discounted package price, not token count
           paymentMethod: 'paypal',
           txSignature: 'paypal', // Identifier to show it was a PayPal payment
           paymentChain: 'PayPal',
