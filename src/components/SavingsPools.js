@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { ethers } from 'ethers';
 
-import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp, FaSync } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp, FaSync, FaChartLine } from 'react-icons/fa';
 
 import Modal from './Modal';
 import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain, getChainConfig } from '../config/wallets';
