@@ -367,6 +367,34 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending token purchases
+    socket.on('requestPendingTokenPurchases', async (userData) => {
+      if (!userData || !userData.userId || !userData.isAdmin) {
+        socket.emit('pendingTokenPurchasesError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const TokenPurchase = require('./models/TokenPurchase');
+        
+        // Fetch all pending token purchases
+        const pendingTokenPurchases = await TokenPurchase.find({ status: 'pending' })
+          .populate('userId', 'username email')
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Send all pending token purchases to this admin
+        socket.emit('pendingTokenPurchasesLoaded', {
+          pendingTokenPurchases,
+          total: pendingTokenPurchases.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching pending token purchases for admin:', error);
+        socket.emit('pendingTokenPurchasesError', { error: 'Failed to fetch pending token purchases' });
+      }
+    });
+
     // Handle user requesting their notifications
     socket.on('requestUserNotifications', async (userData) => {
       if (!userData || !userData.userId) {
@@ -571,6 +599,25 @@ function emitNewServicePending(serviceData) {
   }
 }
 
+// Token purchase socket emission functions
+function emitTokenPurchaseApproved(tokenPurchaseData) {
+  if (io) {
+    io.emit('tokenPurchaseApproved', tokenPurchaseData);
+  }
+}
+
+function emitTokenPurchaseRejected(tokenPurchaseData) {
+  if (io) {
+    io.emit('tokenPurchaseRejected', tokenPurchaseData);
+  }
+}
+
+function emitNewTokenPurchasePending(tokenPurchaseData) {
+  if (io) {
+    io.emit('newTokenPurchasePending', tokenPurchaseData);
+  }
+}
+
 // Notification socket emission functions
 function emitNewNotification(notificationData) {
   if (io) {
@@ -607,6 +654,9 @@ module.exports = {
   emitServiceApproved,
   emitServiceRejected,
   emitNewServicePending,
+  emitTokenPurchaseApproved,
+  emitTokenPurchaseRejected,
+  emitNewTokenPurchasePending,
   emitNewNotification,
   emitNotificationRead,
   emitAllNotificationsRead

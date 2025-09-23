@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
+const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending } = require('../socket');
 
 // Get user's token balance and history
 router.get('/balance', auth, async (req, res) => {
@@ -81,13 +82,35 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
 
     await tokenPurchase.save();
 
+    // Get the user who made the purchase to get their username for notifications and socket
+    const purchaseUser = await User.findById(req.user.userId).select('username email');
+    const username = purchaseUser ? purchaseUser.username : 'Unknown User';
+
+    // Populate the token purchase with user data for socket emission
+    await tokenPurchase.populate('userId', 'username email');
+
+    // Emit real-time socket update for new token purchase pending approval
+    try {
+      emitNewTokenPurchasePending({
+        _id: tokenPurchase._id,
+        amount: tokenPurchase.amount,
+        cost: tokenPurchase.cost,
+        currency: tokenPurchase.currency,
+        paymentMethod: tokenPurchase.paymentMethod,
+        paymentChain: tokenPurchase.paymentChain,
+        txSignature: tokenPurchase.txSignature,
+        userId: tokenPurchase.userId,
+        status: tokenPurchase.status,
+        createdAt: tokenPurchase.createdAt
+      });
+    } catch (socketError) {
+      console.error('Error emitting new token purchase pending:', socketError);
+      // Don't fail the purchase creation if socket emission fails
+    }
+
     // Create notification for admins
     try {
       const admins = await User.find({ isAdmin: true });
-      
-      // Get the user who made the purchase to get their username
-      const purchaseUser = await User.findById(req.user.userId).select('username');
-      const username = purchaseUser ? purchaseUser.username : 'Unknown User';
       
       for (const admin of admins) {
         const notification = new Notification({
@@ -189,6 +212,21 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
       // Don't fail the entire request if notification fails
     }
 
+    // Emit real-time socket update for token purchase approval
+    try {
+      emitTokenPurchaseApproved({
+        purchaseId: tokenPurchase._id,
+        amount: tokenPurchase.amount,
+        cost: tokenPurchase.cost,
+        userId: tokenPurchase.userId,
+        username: tokenPurchase.userId?.username,
+        approvedBy: req.user.userId,
+        approvedAt: tokenPurchase.approvedAt
+      });
+    } catch (socketError) {
+      console.error('Error emitting token purchase approval:', socketError);
+      // Don't fail the approval if socket emission fails
+    }
 
     res.json({
       message: 'Token purchase approved successfully',
@@ -236,6 +274,23 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
       await notification.save();
     } catch (notificationError) {
       // Don't fail the entire request if notification fails
+    }
+
+    // Emit real-time socket update for token purchase rejection
+    try {
+      emitTokenPurchaseRejected({
+        purchaseId: tokenPurchase._id,
+        amount: tokenPurchase.amount,
+        cost: tokenPurchase.cost,
+        userId: tokenPurchase.userId,
+        username: tokenPurchase.userId?.username,
+        rejectionReason: tokenPurchase.rejectionReason,
+        rejectedBy: req.user.userId,
+        rejectedAt: new Date()
+      });
+    } catch (socketError) {
+      console.error('Error emitting token purchase rejection:', socketError);
+      // Don't fail the rejection if socket emission fails
     }
 
     res.json({

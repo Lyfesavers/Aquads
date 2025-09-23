@@ -461,6 +461,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setIsLoadingServices(false);
     };
 
+    // Token purchase socket handlers
+    const handleTokenPurchaseApproved = (data) => {
+      // Remove the approved token purchase from the pending list
+      setPendingTokenPurchases(prev => 
+        prev.filter(purchase => purchase._id.toString() !== data.purchaseId.toString())
+      );
+    };
+
+    const handleTokenPurchaseRejected = (data) => {
+      // Remove the rejected token purchase from the pending list
+      setPendingTokenPurchases(prev => 
+        prev.filter(purchase => purchase._id.toString() !== data.purchaseId.toString())
+      );
+    };
+
+    const handleNewTokenPurchasePending = (data) => {
+      // Add the new pending token purchase to the list immediately
+      setPendingTokenPurchases(prev => [...prev, data]);
+    };
+
+    const handlePendingTokenPurchasesLoaded = (data) => {
+      setPendingTokenPurchases(data.pendingTokenPurchases);
+    };
+
+    const handlePendingTokenPurchasesError = (error) => {
+      console.error('Error loading initial token purchases via socket:', error);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
@@ -475,6 +503,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('newServicePending', handleNewServicePending);
     socket.on('pendingServicesLoaded', handlePendingServicesLoaded);
     socket.on('pendingServicesError', handlePendingServicesError);
+
+    // Token purchase socket listeners
+    socket.on('tokenPurchaseApproved', handleTokenPurchaseApproved);
+    socket.on('tokenPurchaseRejected', handleTokenPurchaseRejected);
+    socket.on('newTokenPurchasePending', handleNewTokenPurchasePending);
+    socket.on('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
+    socket.on('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -491,13 +526,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newServicePending', handleNewServicePending);
       socket.off('pendingServicesLoaded', handlePendingServicesLoaded);
       socket.off('pendingServicesError', handlePendingServicesError);
+
+      // Token purchase socket cleanup
+      socket.off('tokenPurchaseApproved', handleTokenPurchaseApproved);
+      socket.off('tokenPurchaseRejected', handleTokenPurchaseRejected);
+      socket.off('newTokenPurchasePending', handleNewTokenPurchasePending);
+      socket.off('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
+      socket.off('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
     };
   }, [socket, currentUser]);
 
   useEffect(() => {
     if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchPendingBubbleListings();
-      fetchPendingTokenPurchases();
+      // Request token purchases via socket instead of API call
+      if (socket) {
+        socket.emit('requestPendingTokenPurchases', {
+          userId: currentUser.userId,
+          isAdmin: currentUser.isAdmin
+        });
+      }
       requestPendingServicesViaSocket();
     }
   }, [currentUser, activeTab, socket]);
@@ -1165,7 +1213,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       if (response.ok) {
         showNotification('Token purchase approved successfully', 'success');
-        fetchPendingTokenPurchases();
+        // No need to refetch - socket will update the list automatically
       } else {
         const error = await response.json();
         showNotification(error.error || error.message || 'Failed to approve token purchase', 'error');
@@ -1307,7 +1355,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       if (response.ok) {
         showNotification('Token purchase rejected', 'success');
-        fetchPendingTokenPurchases();
+        // No need to refetch - socket will update the list automatically
       } else {
         const error = await response.json();
         showNotification(error.error || error.message || 'Failed to reject token purchase', 'error');
