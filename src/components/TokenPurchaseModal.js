@@ -143,6 +143,68 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
     }
   };
 
+  const handlePayPalPurchase = async () => {
+    if (!selectedPackage) {
+      alert('Please select a package first');
+      return;
+    }
+    
+    try {
+      setPurchasing(true);
+      const token = currentUser?.token;
+      if (!token) {
+        const message = 'Authentication error. Please log in again.';
+        if (showNotification) {
+          showNotification(message, 'error');
+        } else {
+          alert(message);
+        }
+        return;
+      }
+      
+      // Open PayPal payment link
+      window.open('https://www.paypal.com/ncp/payment/NCKA498UEPL2E', '_blank');
+      
+      // Submit purchase for admin approval with PayPal method
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/user-tokens/purchase`,
+        {
+          amount: selectedPackage.tokens,
+          paymentMethod: 'paypal',
+          txSignature: 'paypal', // Identifier to show it was a PayPal payment
+          paymentChain: 'PayPal',
+          chainSymbol: 'USD',
+          chainAddress: 'https://www.paypal.com/ncp/payment/NCKA498UEPL2E'
+        },
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      const successMessage = 'PayPal payment initiated! Please complete the payment in the opened window. Your purchase will be verified by an admin and tokens will be added once approved.';
+      if (showNotification) {
+        showNotification(successMessage, 'success');
+      } else {
+        alert(successMessage);
+      }
+      
+      // Reset form
+      setStep(1);
+      onClose();
+
+    } catch (error) {
+      console.error('Error creating PayPal purchase:', error);
+      const message = error.response?.data?.error || error.response?.data?.message || 'Failed to submit PayPal purchase';
+      if (showNotification) {
+        showNotification(message, 'error');
+      } else {
+        alert(message);
+      }
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -237,13 +299,27 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
           <>
             {/* Payment Step */}
             <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-6">
-              <h4 className="text-yellow-400 font-semibold mb-2">⚠️ Payment Instructions:</h4>
-              <ul className="text-yellow-300 text-sm space-y-1">
-                <li>• Send exactly ${selectedPackage?.price} USDC to the address below</li>
-                <li>• Copy the transaction signature after payment</li>
-                <li>• Admin will verify and approve your purchase</li>
-                <li>• Tokens will be added to your account once approved</li>
-              </ul>
+              <h4 className="text-yellow-400 font-semibold mb-2">💳 Payment Options:</h4>
+              <div className="text-yellow-300 text-sm space-y-2">
+                <div>
+                  <strong>Crypto Payment:</strong>
+                  <ul className="ml-4 mt-1 space-y-1">
+                    <li>• Send exactly ${selectedPackage?.price} USDC to the address below</li>
+                    <li>• Copy the transaction signature after payment</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong>PayPal Payment:</strong>
+                  <ul className="ml-4 mt-1 space-y-1">
+                    <li>• Click "Pay with PayPal" to open payment link</li>
+                    <li>• Complete payment of ${selectedPackage?.price} USD</li>
+                  </ul>
+                </div>
+                <div className="border-t border-yellow-500/30 pt-2 mt-2">
+                  <li>• Admin will verify and approve your purchase</li>
+                  <li>• Tokens will be added to your account once approved</li>
+                </div>
+              </div>
             </div>
 
             {/* Selected Package Summary */}
@@ -321,27 +397,47 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="space-y-3">
+              {/* Back Button */}
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+                className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
               >
                 ← Back
               </button>
-              <button
-                onClick={handlePurchase}
-                disabled={purchasing || !txSignature.trim()}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
-              >
-                {purchasing ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Submitting...
-                  </div>
-                ) : (
-                  'Submit Purchase'
-                )}
-              </button>
+              
+              {/* Payment Method Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePurchase}
+                  disabled={purchasing || !txSignature.trim()}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                >
+                  {purchasing ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Submitting...
+                    </div>
+                  ) : (
+                    'Pay with Crypto'
+                  )}
+                </button>
+                
+                <button
+                  onClick={handlePayPalPurchase}
+                  disabled={purchasing}
+                  className="flex-1 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                >
+                  {purchasing ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    '💳 Pay with Card'
+                  )}
+                </button>
+              </div>
             </div>
 
             <p className="text-gray-400 text-xs text-center mt-4">
