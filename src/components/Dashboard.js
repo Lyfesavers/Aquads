@@ -3180,7 +3180,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   {purchase.amount} Tokens Purchase
                                 </h4>
                                 <p className="text-sm text-gray-400">
-                                  User: <span className="text-white">{purchase.user?.username}</span>
+                                  User: <span className="text-white">{purchase.userId?.username}</span>
                                 </p>
                                 <p className="text-sm text-gray-400">
                                   Cost: <span className="text-green-400 font-medium">${purchase.cost} {purchase.currency}</span>
