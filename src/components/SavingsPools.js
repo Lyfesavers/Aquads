@@ -251,6 +251,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     };
   };
 
+  // Calculate days since deposit
+  const getDaysSinceDeposit = (createdAt) => {
+    if (!createdAt) return 0;
+    const now = new Date();
+    const depositDate = new Date(createdAt);
+    const diffTime = Math.abs(now - depositDate);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const [isDepositing, setIsDepositing] = useState(false);
 
   const [userPositions, setUserPositions] = useState([]);
@@ -390,6 +400,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               let originalDeposit = 0;
               let earned = 0;
               let hasBaselineData = false;
+              let depositDate = null;
               
               if (currentUser && currentUser.token) {
                 try {
@@ -409,10 +420,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                       originalDeposit = baseline.originalAmount;
                       earned = Math.max(0, currentValue - originalDeposit);
                       hasBaselineData = true;
+                      // Store the actual deposit date from baseline
+                      depositDate = baseline.createdAt;
                     } else {
                       originalDeposit = currentValue; // No baseline, assume current is original
                       earned = 0;
                       hasBaselineData = false;
+                      depositDate = null; // No deposit date available
                     }
                   }
                 } catch (error) {
@@ -420,11 +434,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   originalDeposit = currentValue;
                   earned = 0;
                   hasBaselineData = false;
+                  depositDate = null;
                 }
               } else {
                 originalDeposit = currentValue;
                 earned = 0;
                 hasBaselineData = false;
+                depositDate = null;
               }
 
               positions.push({
@@ -434,7 +450,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                 token: pool.token,
                 chain: pool.chain,
                 amount: originalDeposit, // Original deposit from database
-                depositDate: new Date(),
+                depositDate: depositDate, // Actual deposit date from baseline
                 currentValue: currentValue, // Live current value from Aave
                 earned: earned, // Real earnings: current - original
                 apy: pool.apy,
@@ -1766,9 +1782,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                       className="w-8 h-8 object-contain"
                     />
                 <div>
-
                       <h4 className="text-lg font-semibold text-white">{position.protocol}</h4>
                       <p className="text-sm text-gray-400">{position.token} Pool • {position.chain || 'Ethereum'}</p>
+                      {position.depositDate && (
+                        <p className="text-xs text-blue-400 mt-1">
+                          📅 {getDaysSinceDeposit(position.depositDate)} days earning
+                        </p>
+                      )}
                   </div>
 
                 </div>
