@@ -256,8 +256,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     if (!createdAt) return 0;
     const now = new Date();
     const depositDate = new Date(createdAt);
-    const diffTime = Math.abs(now - depositDate);
+    
+    // Calculate the difference in calendar days, not just 24-hour periods
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const depositDateOnly = new Date(depositDate.getFullYear(), depositDate.getMonth(), depositDate.getDate());
+    
+    const diffTime = nowDate - depositDateOnly;
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
     return diffDays;
   };
 
