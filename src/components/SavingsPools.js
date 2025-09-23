@@ -210,6 +210,34 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   const [depositAmount, setDepositAmount] = useState('');
 
+  // Yield Calculator Functions
+  const calculateCompoundInterest = (principal, annualRate, years) => {
+    if (!principal || !annualRate || principal <= 0) return 0;
+    
+    // Convert APY to decimal and calculate compound interest
+    // Using continuous compounding since rewards are paid every 5 minutes
+    // Formula: A = P * e^(rt) where e is Euler's number
+    const rate = annualRate / 100;
+    const finalAmount = principal * Math.exp(rate * years);
+    
+    return finalAmount - principal; // Return only the earnings
+  };
+
+  const getYieldProjections = () => {
+    if (!depositAmount || !selectedPool) return null;
+    
+    const principal = parseFloat(depositAmount);
+    if (isNaN(principal) || principal <= 0) return null;
+    
+    const apy = selectedPool.apy;
+    
+    return {
+      sixMonths: calculateCompoundInterest(principal, apy, 0.5),
+      oneYear: calculateCompoundInterest(principal, apy, 1),
+      fiveYears: calculateCompoundInterest(principal, apy, 5)
+    };
+  };
+
   const [isDepositing, setIsDepositing] = useState(false);
 
   const [userPositions, setUserPositions] = useState([]);
@@ -2109,7 +2137,73 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
             </div>
 
+            {/* Yield Calculator */}
+            {depositAmount && parseFloat(depositAmount) > 0 && getYieldProjections() && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+                  <FaChartLine className="w-6 h-6 text-green-400" />
+                  Estimated Earnings Projection
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* 6 Months */}
+                  <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-6">
+                    <div className="text-center">
+                      <div className="text-green-400 text-sm font-medium mb-2">6 MONTHS</div>
+                      <div className="text-green-400 text-2xl font-bold mb-1">
+                        +{getYieldProjections().sixMonths.toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        Total: {(parseFloat(depositAmount) + getYieldProjections().sixMonths).toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-green-300 text-xs mt-2">
+                        {((getYieldProjections().sixMonths / parseFloat(depositAmount)) * 100).toFixed(2)}% gain
+                      </div>
+                    </div>
+                  </div>
 
+                  {/* 1 Year */}
+                  <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/30 rounded-xl p-6">
+                    <div className="text-center">
+                      <div className="text-blue-400 text-sm font-medium mb-2">1 YEAR</div>
+                      <div className="text-blue-400 text-2xl font-bold mb-1">
+                        +{getYieldProjections().oneYear.toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        Total: {(parseFloat(depositAmount) + getYieldProjections().oneYear).toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-blue-300 text-xs mt-2">
+                        {((getYieldProjections().oneYear / parseFloat(depositAmount)) * 100).toFixed(2)}% gain
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5 Years */}
+                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6">
+                    <div className="text-center">
+                      <div className="text-purple-400 text-sm font-medium mb-2">5 YEARS</div>
+                      <div className="text-purple-400 text-2xl font-bold mb-1">
+                        +{getYieldProjections().fiveYears.toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        Total: {(parseFloat(depositAmount) + getYieldProjections().fiveYears).toFixed(4)} {selectedPool.token}
+                      </div>
+                      <div className="text-purple-300 text-xs mt-2">
+                        {((getYieldProjections().fiveYears / parseFloat(depositAmount)) * 100).toFixed(2)}% gain
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-gray-500 italic">
+                    * Projections based on current {selectedPool.apy.toFixed(2)}% APY with continuous compounding (rewards every 5 minutes). 
+                    Actual returns may vary due to market conditions and rate changes.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Transaction Process Notice */}
 
