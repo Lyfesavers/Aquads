@@ -1,9 +1,11 @@
-/* AquaFi Page Styles */
+/* Enhanced AquaFi Page Styles */
 .aquafi-page {
-  background-color: #0a0a0a;
+  background: linear-gradient(135deg, #0a0a0a 0%, #0f0f23 50%, #1a0a2e 100%);
   min-height: 100vh;
+  position: relative;
 }
 
+/* Enhanced Tech Lines with Multiple Layers */
 .aquafi-page .tech-lines {
   position: fixed;
   top: 0;
@@ -11,78 +13,208 @@
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-  background-size: 50px 50px;
-  animation: float 20s ease-in-out infinite;
+    linear-gradient(90deg, rgba(59, 130, 246, 0.15) 1px, transparent 1px),
+    linear-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 25px 25px;
+  animation: float 20s ease-in-out infinite, drift 30s linear infinite;
   pointer-events: none;
+  opacity: 0.8;
 }
 
+/* Enhanced Dots with Glow Effect */
 .aquafi-page .tech-dots {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.1) 2px, transparent 2px);
-  background-size: 100px 100px;
-  animation: float 25s ease-in-out infinite reverse;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.15) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 100px 100px, 150px 150px;
+  animation: float 25s ease-in-out infinite reverse, pulse 15s ease-in-out infinite;
   pointer-events: none;
 }
 
+/* Enhanced Animations */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px) translateX(0px);
   }
-  50% {
-    transform: translateY(-10px) translateX(5px);
+  33% {
+    transform: translateY(-8px) translateX(4px);
+  }
+  66% {
+    transform: translateY(6px) translateX(-3px);
   }
 }
 
-/* Pool Cards */
+@keyframes drift {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(50px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Glowing Orbs Background Effect */
+.aquafi-page::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+  animation: rotate 60s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced Pool Cards */
 .pool-card {
-  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8) 0%, rgba(17, 24, 39, 0.9) 100%);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, 
+    rgba(31, 41, 55, 0.9) 0%, 
+    rgba(17, 24, 39, 0.95) 50%, 
+    rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.pool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(59, 130, 246, 0.1) 50%, 
+    transparent 100%);
+  transition: left 0.5s ease;
+  z-index: 1;
+}
+
+.pool-card:hover::before {
+  left: 100%;
 }
 
 .pool-card:hover {
-  border-color: rgba(59, 130, 246, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(59, 130, 246, 0.15),
+    0 10px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Risk Badges */
+/* Pool Card Content */
+.pool-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Enhanced Risk Badges */
 .risk-low {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.3) 100%);
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.25) 0%, 
+    rgba(21, 128, 61, 0.35) 100%);
   color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .risk-medium {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.3) 100%);
+  background: linear-gradient(135deg, 
+    rgba(251, 191, 36, 0.25) 0%, 
+    rgba(245, 158, 11, 0.35) 100%);
   color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .risk-high {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.3) 100%);
+  background: linear-gradient(135deg, 
+    rgba(239, 68, 68, 0.25) 0%, 
+    rgba(220, 38, 38, 0.35) 100%);
   color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Buttons */
+/* Enhanced Primary Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border: none;
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, 
+    #3b82f6 0%, 
+    #6366f1 50%, 
+    #8b5cf6 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 
+    0 4px 15px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, 
+    #2563eb 0%, 
+    #5b21b6 50%, 
+    #7c3aed 100%);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Glow Effects for Interactive Elements */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
 .btn-secondary {
@@ -98,213 +230,18 @@
   color: #f3f4f6;
 }
 
-/* Loading States */
-.loading-skeleton {
-  background: linear-gradient(90deg, rgba(75, 85, 99, 0.3) 25%, rgba(107, 114, 128, 0.5) 50%, rgba(75, 85, 99, 0.3) 75%);
-  background-size: 200% 100%;
-  animation: loading 2s infinite;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Modal Styles */
-.modal-backdrop {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-}
-
-/* Input Fields */
-.input-field {
-  background: rgba(31, 41, 55, 0.5);
-  border: 1px solid rgba(75, 85, 99, 0.5);
-  color: #f3f4f6;
-  transition: all 0.3s ease;
-}
-
-.input-field:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  outline: none;
-}
-
-/* Stats Cards */
-.stat-card {
-  background: linear-gradient(135deg, rgba(31, 41, 55, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.2);
-}
-
-/* Responsive Design */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .aquafi-page .tech-lines,
   .aquafi-page .tech-dots {
-    background-size: 30px 30px;
+    opacity: 0.5;
   }
   
   .pool-card {
-    margin-bottom: 1rem;
+    transform: none !important;
   }
   
-  /* Mobile-friendly chain filter tabs */
-  .chain-filter-container {
-    padding: 0 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .chain-filter-tabs {
-    background: rgba(75, 85, 99, 0.5) !important;
-    backdrop-filter: blur(10px);
-    border-radius: 0.75rem !important;
-    padding: 0.375rem !important;
-    border: 1px solid rgba(107, 114, 128, 0.5) !important;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-    position: relative;
-  }
-  
-  /* Subtle scroll indicator on very small screens */
-  .chain-filter-tabs::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 0.5rem;
-    transform: translateY(-50%);
-    width: 0.25rem;
-    height: 0.25rem;
-    background: rgba(59, 130, 246, 0.6);
-    border-radius: 50%;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .chain-filter-tabs::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-  }
-  
-  .chain-filter-tabs .flex {
-    flex-wrap: nowrap !important;
-    gap: 0.25rem !important;
-    min-width: max-content;
-  }
-  
-  .chain-filter-tab {
-    flex: 0 0 auto !important;
-    padding: 0.5rem 0.75rem !important;
-    border-radius: 0.5rem !important;
-    font-size: 0.75rem !important;
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-    min-width: max-content !important;
-    transition: all 0.2s ease !important;
-  }
-  
-  .chain-filter-tab.active {
-    background: #3b82f6 !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
-  }
-  
-  .chain-filter-tab:not(.active) {
-    color: #d1d5db !important;
-    background: transparent !important;
-  }
-  
-  .chain-filter-tab:not(.active):hover {
-    color: white !important;
-    background: rgba(107, 114, 128, 0.5) !important;
-  }
-  
-  .chain-filter-tab img {
-    width: 1rem !important;
-    height: 1rem !important;
-  }
-  
-  .chain-filter-tab span:last-child {
-    font-size: 0.625rem !important;
-    opacity: 0.75 !important;
+  .pool-card:hover {
+    transform: translateY(-2px) !important;
   }
 }
-
-/* Extra small mobile screens */
-@media (max-width: 480px) {
-  .chain-filter-container {
-    padding: 0 0.5rem;
-  }
-  
-  .chain-filter-tab {
-    padding: 0.375rem 0.5rem !important;
-    font-size: 0.6875rem !important;
-    gap: 0.25rem !important;
-  }
-  
-  .chain-filter-tab img {
-    width: 0.875rem !important;
-    height: 0.875rem !important;
-  }
-  
-  .chain-filter-tab span:last-child {
-    font-size: 0.5625rem !important;
-  }
-  
-  /* Show scroll indicator on very small screens when scrollable */
-  .chain-filter-tabs:hover::after,
-  .chain-filter-tabs:focus-within::after {
-    opacity: 1;
-  }
-}
-
-/* Tablet responsive adjustments */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .chain-filter-tab {
-    padding: 0.625rem 1rem !important;
-    font-size: 0.875rem !important;
-  }
-  
-  .chain-filter-tab img {
-    width: 1.125rem !important;
-    height: 1.125rem !important;
-  }
-}
-
-/* Protocol Logos */
-.protocol-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-/* APY Display */
-.apy-display {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(21, 128, 61, 0.2) 100%);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #22c55e;
-}
-
-/* TVL Display */
-.tvl-display {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.2) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
-} 
