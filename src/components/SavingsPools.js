@@ -1891,77 +1891,109 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
           {filteredPools.map((pool) => (
 
-            <div key={pool.id} className="pool-card rounded-2xl p-8 group">
+            <div key={pool.id} className="bg-gray-700/30 rounded-xl p-6 border border-gray-600/30 hover:border-blue-500/50 transition-all">
 
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
                 <div className="flex-1">
 
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-500"></div>
-                      <img 
-                        src={`/${pool.chain === 'Ethereum' ? 'eth' : pool.chain === 'Base' ? 'base' : pool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
-                        alt={pool.chain}
-                        className="relative w-12 h-12 object-contain p-2 bg-gray-800/50 rounded-xl border border-gray-600/30 group-hover:border-blue-400/50 transition-all duration-300"
-                      />
-                    </div>
+                  <div className="flex items-center gap-3 mb-2">
+
+                    <img 
+                      src={`/${pool.chain === 'Ethereum' ? 'eth' : pool.chain === 'Base' ? 'base' : pool.chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
+                      alt={pool.chain}
+                      className="w-8 h-8 object-contain"
+                    />
                     <div>
-                      <h4 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors duration-300">{pool.name}</h4>
-                      <p className="text-sm text-gray-400 font-medium">{pool.protocol} • {pool.chain}</p>
+
+                      <h4 className="text-lg font-semibold text-white">{pool.name}</h4>
+
+                      <p className="text-sm text-gray-400">{pool.protocol} • {pool.chain}</p>
+
                     </div>
+
                   </div>
 
-                  <p className="text-gray-300 text-base mb-4 leading-relaxed">{pool.description}</p>
+                  <p className="text-gray-300 text-sm mb-3">{pool.description}</p>
 
                   
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-green-500/30 transition-all duration-300">
-                      <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">APY</span>
-                      <span className="text-green-400 font-bold text-lg">{pool.apy.toFixed(2)}%</span>
+                  <div className="flex flex-wrap gap-4 text-sm">
+
+                    <div>
+
+                      <span className="text-gray-400">APY:</span>
+
+                      <span className="text-green-400 font-semibold ml-1">{pool.apy.toFixed(2)}%</span>
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-blue-500/30 transition-all duration-300">
-                      <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">TVL</span>
-                      <span className="text-white font-semibold text-lg">{formatCurrency(pool.tvl)}</span>
+                    <div>
+
+                      <span className="text-gray-400">TVL:</span>
+
+                      <span className="text-white ml-1">{formatCurrency(pool.tvl)}</span>
+
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-purple-500/30 transition-all duration-300">
-                      <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">Risk</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRiskColor(pool.risk)}`}>
+                    <div>
+
+                      <span className="text-gray-400">Risk:</span>
+
+                      <span className={`ml-1 px-2 py-1 rounded-full text-xs ${getRiskColor(pool.risk)}`}>
+
                         {pool.risk}
+
                       </span>
+
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-yellow-500/30 transition-all duration-300">
-                      <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">Min Deposit</span>
-                      <span className="text-white font-semibold text-lg">{pool.minDeposit} {pool.token}</span>
+                    <div>
+
+                      <span className="text-gray-400">Min:</span>
+
+                      <span className="text-white ml-1">{pool.minDeposit} {pool.token}</span>
+
                     </div>
+
                   </div>
 
                 </div>
 
                 
 
-                <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                <div className="flex flex-col sm:flex-row gap-3">
+
                   <button
+
                     onClick={() => setSelectedPool(pool)}
+
                     disabled={!walletConnected}
-                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg group-hover:shadow-blue-500/30 transition-all duration-300"
+
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+
                   >
-                    <FaArrowDown className="w-5 h-5" />
-                    {walletConnected ? 'Deposit & Earn' : 'Connect Wallet to Start'}
+
+                    <FaArrowDown className="w-4 h-4" />
+
+                    {walletConnected ? 'Deposit' : 'Connect Wallet'}
+
                   </button>
 
                   <a
+
                     href={`https://etherscan.io/address/${pool.contractAddress}`}
+
                     target="_blank"
+
                     rel="noopener noreferrer"
-                    className="bg-gray-700/50 hover:bg-gray-600/70 border border-gray-600/50 hover:border-gray-500/70 text-gray-300 hover:text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 font-medium backdrop-blur-sm"
+
+                    className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+
                   >
+
                     <FaExternalLinkAlt className="w-4 h-4" />
-                    View Contract
+
+                    Contract
 
                   </a>
 
@@ -2233,15 +2265,18 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
 
 
-      {/* Enhanced Info Section */}
-      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl p-8 backdrop-blur-sm">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <FaInfoCircle className="w-6 h-6 text-white" />
-          </div>
+      {/* Info Section */}
+
+      <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
+
+        <div className="flex items-start gap-3">
+
+          <FaInfoCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+
           <div>
-            <h4 className="text-white font-bold text-xl mb-4">How AquaFi Premium Vaults Work</h4>
-            <ul className="text-gray-300 text-base space-y-2">
+
+            <h4 className="text-white font-semibold mb-2">How AquaFi Premium Vaults Work</h4>
+            <ul className="text-gray-300 text-sm space-y-1">
 
               <li>• Professional yield management with automated optimization strategies</li>
               <li>• Simplified interface with advanced position tracking and analytics</li>

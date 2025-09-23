@@ -79,17 +79,16 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
   }, []);
 
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white">
-      {/* Enhanced Fixed Background */}
+    <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
+      {/* Fixed Background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-purple-900/5 to-black"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/15 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
         <div className="tech-lines"></div>
         <div className="tech-dots"></div>
       </div>
 
-      {/* Enhanced Fixed Navigation */}
-      <nav className="sticky top-0 bg-gray-800/90 backdrop-blur-xl shadow-2xl shadow-blue-500/10 border-b border-gray-700/50 z-50">
+      {/* Fixed Navigation */}
+      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -351,66 +350,35 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
-        <div className="text-center mb-16">
-          {/* Enhanced Logo Section */}
-          <div className="relative inline-block mb-6">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
-            <div className="relative inline-flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <FaCoins className="w-8 h-8 text-white drop-shadow-lg" />
-              </div>
-              <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-purple-400 drop-shadow-2xl">
-                AquaFi
-              </h1>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <FaCoins className="w-6 h-6 text-white" />
             </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              AquaFi
+            </h1>
           </div>
+          <p className="text-xl text-gray-300 mb-6 max-w-3xl mx-auto">
+            Let your money work for you - earn passive income on your crypto through professional yield optimization
+          </p>
           
-          {/* Enhanced Tagline */}
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4 leading-tight">
-              Professional DeFi Yield Management
-            </h2>
-            <p className="text-xl md:text-2xl text-blue-200/80 mb-2 font-light">
-              Let your money work for you
-            </p>
-            <p className="text-lg text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Earn passive income on your crypto through institutional-grade yield optimization with battle-tested protocols and automated strategies
-            </p>
-          </div>
-          
-          {/* Enhanced Key Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
-            <div className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-600/30 hover:border-blue-400/50 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-shadow duration-500">
-                  <FaShieldAlt className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300">Stable & Secure</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">Battle-tested DeFi protocols with institutional-grade security and audited smart contracts</p>
-              </div>
+          {/* Key Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+              <FaShieldAlt className="w-8 h-8 text-blue-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-white mb-2">Stable & Secure</h3>
+              <p className="text-gray-400 text-sm">Battle-tested DeFi protocols with institutional-grade security and audited smart contracts</p>
             </div>
-            
-            <div className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-600/30 hover:border-green-400/50 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 transition-shadow duration-500">
-                  <FaChartLine className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-green-300 transition-colors duration-300">Pays Every 5 Minutes</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">Continuous yield accrual with earnings updated every block - watch your money grow in real-time</p>
-              </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+              <FaChartLine className="w-8 h-8 text-green-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-white mb-2">Pays Every 5 Minutes</h3>
+              <p className="text-gray-400 text-sm">Continuous yield accrual with earnings updated every block - watch your money grow in real-time</p>
             </div>
-            
-            <div className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl p-8 border border-gray-600/30 hover:border-purple-400/50 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-shadow duration-500">
-                  <FaCoins className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors duration-300">Withdraw Anytime</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">Complete liquidity control - access your funds instantly without lock-up periods or penalties</p>
-              </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+              <FaCoins className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-white mb-2">Withdraw Anytime</h3>
+              <p className="text-gray-400 text-sm">Complete liquidity control - access your funds instantly without lock-up periods or penalties</p>
             </div>
           </div>
         </div>
