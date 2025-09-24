@@ -9,6 +9,7 @@ import ProfileModal from './ProfileModal';
 import Dashboard from './Dashboard';
 import CreateBannerModal from './CreateBannerModal';
 import NotificationBell from './NotificationBell';
+import { socket } from '../services/api';
 
 const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
   const [partners, setPartners] = useState([]);
@@ -38,8 +39,9 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [redemptionResult, setRedemptionResult] = useState(null);
   const [copiedCode, setCopiedCode] = useState(false);
   
-  // User points (from currentUser or fetch separately)
-  const [userPoints, setUserPoints] = useState(currentUser?.points || 0);
+  // User points (fetch from socket like Dashboard does)
+  const [userPoints, setUserPoints] = useState(0);
+  const [pointsInfo, setPointsInfo] = useState(null);
 
   // Category icons mapping
   const getCategoryIcon = (category) => {
@@ -91,11 +93,41 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     filterPartners();
   }, [partners, selectedCategory, searchTerm, sortBy]);
 
+  // Fetch points via socket like Dashboard does
   useEffect(() => {
-    if (currentUser?.points !== undefined) {
-      setUserPoints(currentUser.points);
+    if (!socket || !currentUser) return;
+
+    const handleAffiliateInfoLoaded = (data) => {
+      if (data.pointsInfo) {
+        setPointsInfo(data.pointsInfo);
+        setUserPoints(data.pointsInfo.points || 0);
+      }
+    };
+
+    const handleAffiliateEarningUpdate = (data) => {
+      if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
+        if (data.newTotalPoints !== undefined) {
+          setUserPoints(data.newTotalPoints);
+          setPointsInfo(prev => prev ? { ...prev, points: data.newTotalPoints } : { points: data.newTotalPoints });
+        }
+      }
+    };
+
+    socket.on('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+    socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+
+    // Request affiliate info on mount
+    if (currentUser.userId || currentUser.id) {
+      socket.emit('requestAffiliateInfo', {
+        userId: currentUser.userId || currentUser.id
+      });
     }
-  }, [currentUser]);
+
+    return () => {
+      socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
+      socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+    };
+  }, [currentUser, socket]);
 
   const fetchPartners = async () => {
     try {
@@ -255,6 +287,15 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
               {currentUser ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-blue-400 font-medium">{userPoints} pts</span>
+                  {currentUser.userType === 'project' && (
+                    <button
+                      onClick={() => setShowDashboard(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                    >
+                      <FaGift />
+                      <span>List Reward</span>
+                    </button>
+                  )}
                   <NotificationBell currentUser={currentUser} />
                   <div className="relative">
                     <button
@@ -330,6 +371,14 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
               {currentUser ? (
                 <>
                   <div className="px-3 py-2 text-blue-400 font-medium">{userPoints} points</div>
+                  {currentUser.userType === 'project' && (
+                    <button
+                      onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                      className="block w-full text-left px-3 py-2 text-green-400 hover:text-green-300"
+                    >
+                      🎁 List Reward
+                    </button>
+                  )}
                   <button
                     onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
                     className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
