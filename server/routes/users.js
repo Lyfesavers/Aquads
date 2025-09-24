@@ -1029,4 +1029,204 @@ router.delete('/aquafi-baseline', auth, async (req, res) => {
   }
 });
 
+// Partner Store Management Routes (following existing patterns)
+
+// Create/Update partner store (for project users)
+router.post('/partner-store', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { storeName, storeDescription, storeLogo, storeWebsite, storeCategory, discountOffers } = req.body;
+    
+    // Validate required fields
+    if (!storeName || !storeDescription || !storeLogo || !storeWebsite || !storeCategory) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user is project type
+    if (user.userType !== 'project') {
+      return res.status(403).json({ error: 'Only project users can create partner stores' });
+    }
+    
+    // Update user's partner store info
+    user.partnerStore = {
+      isPartner: true,
+      storeName,
+      storeDescription,
+      storeLogo,
+      storeWebsite,
+      storeCategory,
+      discountOffers: discountOffers || [],
+      partnerStatus: 'pending',
+      partnerSince: new Date()
+    };
+    
+    await user.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Partner store created successfully! Awaiting admin approval.',
+      partnerStore: user.partnerStore 
+    });
+  } catch (error) {
+    console.error('Error creating partner store:', error);
+    res.status(500).json({ error: 'Failed to create partner store' });
+  }
+});
+
+// Get all approved partner stores (public)
+router.get('/partner-stores', async (req, res) => {
+  try {
+    const partners = await User.find({
+      'partnerStore.isPartner': true,
+      'partnerStore.partnerStatus': 'approved'
+    }).select('username partnerStore');
+    
+    res.json(partners);
+  } catch (error) {
+    console.error('Error fetching partner stores:', error);
+    res.status(500).json({ error: 'Failed to fetch partner stores' });
+  }
+});
+
+// Redeem points for partner discount (authenticated users)
+router.post('/redeem-partner/:partnerId', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { partnerId } = req.params;
+    const { offerId } = req.body;
+    
+    const [user, partner] = await Promise.all([
+      User.findById(userId),
+      User.findById(partnerId)
+    ]);
+    
+    if (!user || !partner) {
+      return res.status(404).json({ error: 'User or partner not found' });
+    }
+    
+    if (!partner.partnerStore.isPartner || partner.partnerStore.partnerStatus !== 'approved') {
+      return res.status(400).json({ error: 'Partner store not available' });
+    }
+    
+    const offer = partner.partnerStore.discountOffers.id(offerId);
+    if (!offer || !offer.isActive) {
+      return res.status(400).json({ error: 'Offer not available' });
+    }
+    
+    if (user.points < offer.pointTier) {
+      return res.status(400).json({ error: 'Insufficient points' });
+    }
+    
+    // Create redemption
+    const redemption = {
+      partnerId: partnerId,
+      partnerName: partner.partnerStore.storeName,
+      offerTitle: offer.title,
+      offerDescription: offer.description,
+      pointsUsed: offer.pointTier,
+      discountCode: offer.discountCode,
+      expiresAt: offer.expiryDate
+    };
+    
+    // Update user points and add redemption
+    user.points -= offer.pointTier;
+    user.pointsHistory.push({
+      amount: -offer.pointTier,
+      reason: `Redeemed for ${partner.partnerStore.storeName}: ${offer.title}`,
+      createdAt: new Date()
+    });
+    user.partnerRedemptions.push(redemption);
+    
+    // Update partner stats
+    offer.redemptionCount += 1;
+    partner.partnerStore.totalRedemptions += 1;
+    
+    await Promise.all([user.save(), partner.save()]);
+    
+    res.json({
+      success: true,
+      redemption: {
+        ...redemption,
+        partnerWebsite: partner.partnerStore.storeWebsite
+      },
+      newPointsBalance: user.points
+    });
+  } catch (error) {
+    console.error('Error redeeming partner offer:', error);
+    res.status(500).json({ error: 'Failed to redeem offer' });
+  }
+});
+
+// Admin: Get pending partner stores
+router.get('/admin/pending-partners', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const pendingPartners = await User.find({
+      'partnerStore.isPartner': true,
+      'partnerStore.partnerStatus': 'pending'
+    }).select('username email partnerStore createdAt');
+    
+    res.json(pendingPartners);
+  } catch (error) {
+    console.error('Error fetching pending partners:', error);
+    res.status(500).json({ error: 'Failed to fetch pending partners' });
+  }
+});
+
+// Admin: Approve partner store
+router.post('/admin/approve-partner/:partnerId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const partner = await User.findById(req.params.partnerId);
+    if (!partner || !partner.partnerStore.isPartner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+    
+    partner.partnerStore.partnerStatus = 'approved';
+    partner.partnerStore.approvedBy = req.user.userId;
+    partner.partnerStore.approvedAt = new Date();
+    
+    await partner.save();
+    
+    res.json({ success: true, message: 'Partner approved successfully' });
+  } catch (error) {
+    console.error('Error approving partner:', error);
+    res.status(500).json({ error: 'Failed to approve partner' });
+  }
+});
+
+// Admin: Reject partner store
+router.post('/admin/reject-partner/:partnerId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const partner = await User.findById(req.params.partnerId);
+    if (!partner || !partner.partnerStore.isPartner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+    
+    partner.partnerStore.partnerStatus = 'rejected';
+    
+    await partner.save();
+    
+    res.json({ success: true, message: 'Partner rejected successfully' });
+  } catch (error) {
+    console.error('Error rejecting partner:', error);
+    res.status(500).json({ error: 'Failed to reject partner' });
+  }
+});
+
 module.exports = router; 

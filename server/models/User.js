@@ -187,6 +187,94 @@ const userSchema = new Schema({
     processedAt: Date,
     processedBy: String
   }],
+  
+  // Partner Store Information (for project users)
+  partnerStore: {
+    isPartner: {
+      type: Boolean,
+      default: false
+    },
+    storeName: String,
+    storeDescription: String,
+    storeLogo: String,
+    storeWebsite: String,
+    storeCategory: {
+      type: String,
+      enum: [
+        'DeFi & Crypto', 'NFT & Gaming', 'Web3 Services', 'Crypto Hardware',
+        'Food & Beverage', 'Clothing & Fashion', 'Books & Education', 'Technology & Software',
+        'Health & Fitness', 'Travel & Tourism', 'Entertainment & Media', 'Home & Garden',
+        'Business Services', 'Financial Services', 'Marketing & Design', 'Development & IT',
+        'Electronics & Gadgets', 'Sports & Outdoors', 'Beauty & Personal Care', 'Automotive',
+        'Subscriptions & SaaS', 'Gift Cards & Vouchers', 'Other'
+      ]
+    },
+    discountOffers: [{
+      pointTier: {
+        type: Number,
+        enum: [2000, 4000, 6000, 8000, 10000]
+      },
+      title: String,
+      description: String,
+      discountCode: String,
+      terms: {
+        type: String,
+        default: 'Standard terms and conditions apply'
+      },
+      expiryDate: Date,
+      isActive: {
+        type: Boolean,
+        default: true
+      },
+      redemptionCount: {
+        type: Number,
+        default: 0
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    partnerStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    approvedAt: Date,
+    totalRedemptions: {
+      type: Number,
+      default: 0
+    },
+    partnerSince: Date
+  },
+  
+  // Partner Redemptions (for users who redeem points)
+  partnerRedemptions: [{
+    partnerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    partnerName: String,
+    offerTitle: String,
+    offerDescription: String,
+    pointsUsed: Number,
+    discountCode: String,
+    status: {
+      type: String,
+      enum: ['active', 'used', 'expired'],
+      default: 'active'
+    },
+    redeemedAt: {
+      type: Date,
+      default: Date.now
+    },
+    expiresAt: Date,
+    usedAt: Date
+  }],
   resetToken: {
     type: String,
     default: null

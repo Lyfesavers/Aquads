@@ -1,599 +1,265 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaCheck, FaTimes, FaExternalLinkAlt, FaSpinner, FaStore, FaUser, FaCalendar } from 'react-icons/fa';
 
 const PartnerAdmin = ({ currentUser }) => {
-  const [partners, setPartners] = useState([]);
+  const [pendingPartners, setPendingPartners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingPartner, setEditingPartner] = useState(null);
-  const [filter, setFilter] = useState('all'); // all, active, inactive
+  const [processing, setProcessing] = useState({});
 
   useEffect(() => {
-    fetchPartners();
+    fetchPendingPartners();
   }, []);
 
-  const fetchPartners = async () => {
+  const fetchPendingPartners = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners/admin/all?status=${filter}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/pending-partners`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch partners');
+      if (!response.ok) throw new Error('Failed to fetch pending partners');
       const data = await response.json();
-      setPartners(data);
+      setPendingPartners(data);
     } catch (error) {
-      console.error('Error fetching partners:', error);
-      alert('Failed to fetch partners');
+      console.error('Error fetching pending partners:', error);
+      alert('Failed to fetch pending partners');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreatePartner = async (partnerData) => {
+  const handleApprove = async (partnerId) => {
+    setProcessing(prev => ({ ...prev, [partnerId]: 'approving' }));
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners/admin/create`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/approve-partner/${partnerId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(partnerData)
-      });
-
-      if (!response.ok) throw new Error('Failed to create partner');
-      
-      await fetchPartners();
-      setShowCreateModal(false);
-      alert('Partner created successfully!');
-    } catch (error) {
-      console.error('Error creating partner:', error);
-      alert('Failed to create partner');
-    }
-  };
-
-  const handleUpdatePartner = async (partnerId, updates) => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners/admin/${partnerId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(updates)
-      });
-
-      if (!response.ok) throw new Error('Failed to update partner');
-      
-      await fetchPartners();
-      setEditingPartner(null);
-      alert('Partner updated successfully!');
-    } catch (error) {
-      console.error('Error updating partner:', error);
-      alert('Failed to update partner');
-    }
-  };
-
-  const handleDeletePartner = async (partnerId) => {
-    if (!window.confirm('Are you sure you want to delete this partner? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners/admin/${partnerId}`, {
-        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
-
-      if (!response.ok) throw new Error('Failed to delete partner');
       
-      await fetchPartners();
-      alert('Partner deleted successfully!');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to approve partner');
+      }
+
+      alert('Partner approved successfully!');
+      fetchPendingPartners(); // Refresh the list
     } catch (error) {
-      console.error('Error deleting partner:', error);
-      alert('Failed to delete partner');
+      console.error('Error approving partner:', error);
+      alert(error.message);
+    } finally {
+      setProcessing(prev => ({ ...prev, [partnerId]: null }));
     }
   };
 
-  const togglePartnerStatus = async (partner) => {
-    await handleUpdatePartner(partner._id, { isActive: !partner.isActive });
+  const handleReject = async (partnerId) => {
+    if (!confirm('Are you sure you want to reject this partner application?')) {
+      return;
+    }
+
+    setProcessing(prev => ({ ...prev, [partnerId]: 'rejecting' }));
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/reject-partner/${partnerId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reject partner');
+      }
+
+      alert('Partner rejected.');
+      fetchPendingPartners(); // Refresh the list
+    } catch (error) {
+      console.error('Error rejecting partner:', error);
+      alert(error.message);
+    } finally {
+      setProcessing(prev => ({ ...prev, [partnerId]: null }));
+    }
   };
 
-  if (!currentUser?.isAdmin) {
+  if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6">
-        <div className="text-red-400 text-center">Admin access required</div>
+      <div className="flex justify-center items-center py-12">
+        <FaSpinner className="animate-spin text-blue-400 text-2xl" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Partner Store Management</h2>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <FaPlus />
-          <span>Add Partner</span>
-        </button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+          <FaStore />
+          <span>Partner Store Applications</span>
+        </h2>
+        <div className="text-sm text-gray-400">
+          {pendingPartners.length} pending applications
+        </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex space-x-4">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg transition-colors ${
-            filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+      {pendingPartners.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gray-800 rounded-xl p-8 text-center"
         >
-          All Partners ({partners.length})
-        </button>
-        <button
-          onClick={() => setFilter('active')}
-          className={`px-4 py-2 rounded-lg transition-colors ${
-            filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          Active ({partners.filter(p => p.isActive).length})
-        </button>
-        <button
-          onClick={() => setFilter('inactive')}
-          className={`px-4 py-2 rounded-lg transition-colors ${
-            filter === 'inactive' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          Inactive ({partners.filter(p => !p.isActive).length})
-        </button>
-      </div>
-
-      {/* Partners List */}
-      {loading ? (
-        <div className="text-white text-center py-8">Loading partners...</div>
-      ) : partners.length === 0 ? (
-        <div className="text-gray-400 text-center py-8">No partners found</div>
+          <FaStore className="text-6xl text-gray-600 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-white mb-2">No Pending Applications</h3>
+          <p className="text-gray-400">
+            All partner store applications have been processed.
+          </p>
+        </motion.div>
       ) : (
-        <div className="grid gap-6">
-          {partners.map(partner => (
-            <div key={partner._id} className="bg-gray-800 rounded-lg p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <img
-                      src={partner.logo}
-                      alt={partner.name}
-                      className="w-16 h-16 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.target.src = '/api/placeholder/64/64';
-                      }}
-                    />
+        <div className="space-y-4">
+          {pendingPartners.map((partner, index) => (
+            <motion.div
+              key={partner._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="bg-gray-800 rounded-xl p-6"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Store Info */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-xl font-semibold text-white">{partner.name}</h3>
-                      <p className="text-gray-400">{partner.category}</p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          partner.isActive ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                        }`}>
-                          {partner.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                        <a
-                          href={partner.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 flex items-center space-x-1"
-                        >
-                          <FaExternalLinkAlt size={12} />
-                          <span>Visit Website</span>
-                        </a>
+                      <h3 className="text-xl font-bold text-white mb-1">
+                        {partner.partnerStore.storeName}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-gray-400">
+                        <div className="flex items-center space-x-1">
+                          <FaUser />
+                          <span>{partner.username}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <FaCalendar />
+                          <span>Applied {new Date(partner.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <p className="text-gray-300 mb-4">{partner.description}</p>
-                  
-                  {/* Offers */}
-                  <div className="mb-4">
-                    <h4 className="text-white font-medium mb-2">Discount Offers ({partner.discountOffers?.length || 0})</h4>
-                    <div className="grid gap-2">
-                      {partner.discountOffers?.map((offer, index) => (
-                        <div key={index} className="bg-gray-700 p-3 rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="text-white font-medium">{offer.title}</div>
-                              <div className="text-gray-400 text-sm">{offer.description}</div>
-                              <div className="text-blue-400 text-sm">Code: {offer.discountCode}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-blue-400 font-bold">{offer.pointTier} pts</div>
-                              <div className="text-gray-400 text-sm">
-                                {offer.currentRedemptions}/{offer.maxRedemptions || '∞'}
-                              </div>
-                              <div className={`text-xs ${
-                                offer.isActive && new Date(offer.expiryDate) > new Date()
-                                  ? 'text-green-400' : 'text-red-400'
-                              }`}>
-                                {offer.isActive && new Date(offer.expiryDate) > new Date() ? 'Active' : 'Inactive'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-sm">
+                      {partner.partnerStore.storeCategory}
                     </div>
-                  </div>
-                  
-                  {/* Stats */}
-                  <div className="text-gray-400 text-sm">
-                    Total Redemptions: {partner.totalRedemptions || 0} | 
-                    Contact: {partner.contactEmail} | 
-                    Created: {new Date(partner.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                
-                {/* Actions */}
-                <div className="flex flex-col space-y-2 ml-4">
-                  <button
-                    onClick={() => togglePartnerStatus(partner)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      partner.isActive
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
-                    title={partner.isActive ? 'Deactivate' : 'Activate'}
-                  >
-                    {partner.isActive ? <FaTimes /> : <FaCheck />}
-                  </button>
-                  <button
-                    onClick={() => setEditingPartner(partner)}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                    title="Edit"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDeletePartner(partner._id)}
-                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                    title="Delete"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Create/Edit Modal */}
-      {(showCreateModal || editingPartner) && (
-        <PartnerFormModal
-          partner={editingPartner}
-          onClose={() => {
-            setShowCreateModal(false);
-            setEditingPartner(null);
-          }}
-          onSubmit={(data) => {
-            if (editingPartner) {
-              handleUpdatePartner(editingPartner._id, data);
-            } else {
-              handleCreatePartner(data);
-            }
-          }}
-        />
-      )}
-    </div>
-  );
-};
-
-// Partner Form Modal Component
-const PartnerFormModal = ({ partner, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    name: partner?.name || '',
-    description: partner?.description || '',
-    logo: partner?.logo || '',
-    website: partner?.website || '',
-    category: partner?.category || 'Other',
-    contactEmail: partner?.contactEmail || '',
-    discountOffers: partner?.discountOffers || []
-  });
-
-  const categories = [
-    // Crypto & Web3
-    'DeFi & Crypto',
-    'NFT & Gaming',
-    'Web3 Services',
-    'Crypto Hardware',
-    
-    // Essential Categories
-    'Food & Beverage',
-    'Clothing & Fashion',
-    'Books & Education',
-    'Technology & Software',
-    
-    // Lifestyle & Services
-    'Health & Fitness',
-    'Travel & Tourism',
-    'Entertainment & Media',
-    'Home & Garden',
-    
-    // Professional Services
-    'Business Services',
-    'Financial Services',
-    'Marketing & Design',
-    'Development & IT',
-    
-    // Retail
-    'Electronics & Gadgets',
-    'Sports & Outdoors',
-    'Beauty & Personal Care',
-    'Automotive',
-    
-    // Other
-    'Subscriptions & SaaS',
-    'Gift Cards & Vouchers',
-    'Other'
-  ];
-
-  const pointTiers = [2000, 4000, 6000, 8000, 10000];
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const addOffer = () => {
-    setFormData({
-      ...formData,
-      discountOffers: [
-        ...formData.discountOffers,
-        {
-          pointTier: 2000,
-          title: '',
-          description: '',
-          discountCode: '',
-          terms: 'Standard terms and conditions apply',
-          expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-          usageType: 'multi-use',
-          maxRedemptions: null,
-          isActive: true
-        }
-      ]
-    });
-  };
-
-  const updateOffer = (index, field, value) => {
-    const updatedOffers = [...formData.discountOffers];
-    updatedOffers[index] = { ...updatedOffers[index], [field]: value };
-    setFormData({ ...formData, discountOffers: updatedOffers });
-  };
-
-  const removeOffer = (index) => {
-    const updatedOffers = formData.discountOffers.filter((_, i) => i !== index);
-    setFormData({ ...formData, discountOffers: updatedOffers });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-2xl font-bold text-white mb-6">
-            {partner ? 'Edit Partner' : 'Create New Partner'}
-          </h3>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-300 mb-2">Partner Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-2">Category *</label>
-                <select
-                  required
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-300 mb-2">Description *</label>
-              <textarea
-                required
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-300 mb-2">Logo URL *</label>
-                <input
-                  type="url"
-                  required
-                  value={formData.logo}
-                  onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-                  placeholder="https://example.com/logo.png"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-2">Website URL *</label>
-                <input
-                  type="url"
-                  required
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-                  placeholder="https://example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-300 mb-2">Contact Email *</label>
-              <input
-                type="email"
-                required
-                value={formData.contactEmail}
-                onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-              />
-            </div>
-
-            {/* Discount Offers */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold text-white">Discount Offers</h4>
-                <button
-                  type="button"
-                  onClick={addOffer}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-                >
-                  <FaPlus />
-                  <span>Add Offer</span>
-                </button>
-              </div>
-
-              {formData.discountOffers.map((offer, index) => (
-                <div key={index} className="bg-gray-700 p-4 rounded-lg mb-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h5 className="text-white font-medium">Offer #{index + 1}</h5>
-                    <button
-                      type="button"
-                      onClick={() => removeOffer(index)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      <FaTrash />
-                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-300 mb-2">Point Tier *</label>
-                      <select
-                        required
-                        value={offer.pointTier}
-                        onChange={(e) => updateOffer(index, 'pointTier', parseInt(e.target.value))}
-                        className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      >
-                        {pointTiers.map(tier => (
-                          <option key={tier} value={tier}>{tier.toLocaleString()} points</option>
+                      <img
+                        src={partner.partnerStore.storeLogo}
+                        alt={partner.partnerStore.storeName}
+                        className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.target.src = '/api/placeholder/300/128';
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-gray-400 text-sm">Website</div>
+                        <a
+                          href={partner.partnerStore.storeWebsite}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 flex items-center space-x-1 text-sm"
+                        >
+                          <span>{partner.partnerStore.storeWebsite}</span>
+                          <FaExternalLinkAlt size={10} />
+                        </a>
+                      </div>
+                      <div>
+                        <div className="text-gray-400 text-sm">Email</div>
+                        <div className="text-white text-sm">{partner.email}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-gray-400 text-sm mb-1">Description</div>
+                    <div className="text-white text-sm">{partner.partnerStore.storeDescription}</div>
+                  </div>
+
+                  {/* Discount Offers */}
+                  {partner.partnerStore.discountOffers?.length > 0 && (
+                    <div>
+                      <div className="text-gray-400 text-sm mb-2">Discount Offers</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {partner.partnerStore.discountOffers.map((offer, offerIndex) => (
+                          <div key={offerIndex} className="bg-gray-700/50 rounded-lg p-3">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="text-white text-sm font-medium">{offer.title}</div>
+                              <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                                {offer.pointTier} pts
+                              </div>
+                            </div>
+                            <div className="text-gray-300 text-xs mb-1">{offer.description}</div>
+                            <div className="text-xs text-gray-400">
+                              Code: <span className="font-mono bg-gray-800 px-1 rounded">{offer.discountCode}</span>
+                            </div>
+                          </div>
                         ))}
-                      </select>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-gray-300 mb-2">Discount Code *</label>
-                      <input
-                        type="text"
-                        required
-                        value={offer.discountCode}
-                        onChange={(e) => updateOffer(index, 'discountCode', e.target.value.toUpperCase())}
-                        className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                        placeholder="AQUADS15"
-                      />
-                    </div>
-                  </div>
+                  )}
+                </div>
 
-                  <div className="mt-4">
-                    <label className="block text-gray-300 mb-2">Offer Title *</label>
-                    <input
-                      type="text"
-                      required
-                      value={offer.title}
-                      onChange={(e) => updateOffer(index, 'title', e.target.value)}
-                      className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      placeholder="15% off entire order"
-                    />
-                  </div>
+                {/* Actions */}
+                <div className="lg:col-span-1">
+                  <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
+                    <div className="text-gray-300 text-sm font-medium mb-3">Actions</div>
+                    
+                    <button
+                      onClick={() => handleApprove(partner._id)}
+                      disabled={processing[partner._id]}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+                    >
+                      {processing[partner._id] === 'approving' ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaCheck />
+                      )}
+                      <span>
+                        {processing[partner._id] === 'approving' ? 'Approving...' : 'Approve'}
+                      </span>
+                    </button>
 
-                  <div className="mt-4">
-                    <label className="block text-gray-300 mb-2">Description *</label>
-                    <input
-                      type="text"
-                      required
-                      value={offer.description}
-                      onChange={(e) => updateOffer(index, 'description', e.target.value)}
-                      className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      placeholder="Valid on all menu items"
-                    />
-                  </div>
+                    <button
+                      onClick={() => handleReject(partner._id)}
+                      disabled={processing[partner._id]}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+                    >
+                      {processing[partner._id] === 'rejecting' ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaTimes />
+                      )}
+                      <span>
+                        {processing[partner._id] === 'rejecting' ? 'Rejecting...' : 'Reject'}
+                      </span>
+                    </button>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-gray-300 mb-2">Expiry Date *</label>
-                      <input
-                        type="date"
-                        required
-                        value={offer.expiryDate}
-                        onChange={(e) => updateOffer(index, 'expiryDate', e.target.value)}
-                        className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-300 mb-2">Usage Type *</label>
-                      <select
-                        required
-                        value={offer.usageType}
-                        onChange={(e) => updateOffer(index, 'usageType', e.target.value)}
-                        className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      >
-                        <option value="multi-use">Multi-use</option>
-                        <option value="single-use">Single-use</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-gray-300 mb-2">Terms & Conditions</label>
-                    <input
-                      type="text"
-                      value={offer.terms}
-                      onChange={(e) => updateOffer(index, 'terms', e.target.value)}
-                      className="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-                      placeholder="Cannot combine with other offers"
-                    />
+                    <a
+                      href={partner.partnerStore.storeWebsite}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                    >
+                      <FaExternalLinkAlt />
+                      <span>Visit Store</span>
+                    </a>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Submit Buttons */}
-            <div className="flex space-x-4 pt-6 border-t border-gray-600">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors"
-              >
-                {partner ? 'Update Partner' : 'Create Partner'}
-              </button>
-            </div>
-          </form>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

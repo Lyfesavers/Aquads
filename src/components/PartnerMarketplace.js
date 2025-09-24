@@ -131,7 +131,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
   const fetchPartners = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/partner-stores`);
       if (!response.ok) throw new Error('Failed to fetch partners');
       const data = await response.json();
       setPartners(data);
@@ -145,10 +145,33 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/partners/categories`);
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      const data = await response.json();
-      setCategories(['all', ...data]);
+      // Return the predefined categories since we have a fixed enum
+      const categories = [
+        'DeFi & Crypto',
+        'NFT & Gaming', 
+        'Web3 Services',
+        'Crypto Hardware',
+        'Food & Beverage',
+        'Clothing & Fashion',
+        'Books & Education',
+        'Technology & Software',
+        'Health & Fitness',
+        'Travel & Tourism',
+        'Entertainment & Media',
+        'Home & Garden',
+        'Business Services',
+        'Financial Services',
+        'Marketing & Design',
+        'Development & IT',
+        'Electronics & Gadgets',
+        'Sports & Outdoors',
+        'Beauty & Personal Care',
+        'Automotive',
+        'Subscriptions & SaaS',
+        'Gift Cards & Vouchers',
+        'Other'
+      ];
+      setCategories(['all', ...categories]);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -159,14 +182,14 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(partner => partner.category === selectedCategory);
+      filtered = filtered.filter(partner => partner.partnerStore.storeCategory === selectedCategory);
     }
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(partner =>
-        partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        partner.description.toLowerCase().includes(searchTerm.toLowerCase())
+        partner.partnerStore.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.partnerStore.storeDescription.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -174,13 +197,13 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name);
+          return a.partnerStore.storeName.localeCompare(b.partnerStore.storeName);
         case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.partnerStore.partnerSince || b.createdAt) - new Date(a.partnerStore.partnerSince || a.createdAt);
         case 'popular':
-          return (b.totalRedemptions || 0) - (a.totalRedemptions || 0);
+          return (b.partnerStore.totalRedemptions || 0) - (a.partnerStore.totalRedemptions || 0);
         default:
-          return a.name.localeCompare(b.name);
+          return a.partnerStore.storeName.localeCompare(b.partnerStore.storeName);
       }
     });
 
@@ -208,7 +231,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     setRedeeming(true);
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/partners/${selectedOffer.partner._id}/redeem`,
+        `${process.env.REACT_APP_API_URL}/api/users/redeem-partner/${selectedOffer.partner._id}`,
         {
           method: 'POST',
           headers: {
@@ -663,19 +686,19 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 {/* Partner Logo/Banner */}
                 <div className="relative h-32 bg-gradient-to-br from-gray-700 to-gray-800">
                   <img
-                    src={partner.logo}
-                    alt={partner.name}
+                    src={partner.partnerStore.storeLogo}
+                    alt={partner.partnerStore.storeName}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = '/api/placeholder/200/128';
                     }}
                   />
                   <div className="absolute top-2 left-2 bg-blue-600/80 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
-                    {React.createElement(getCategoryIcon(partner.category), { size: 12 })}
-                    <span>{partner.category}</span>
+                    {React.createElement(getCategoryIcon(partner.partnerStore.storeCategory), { size: 12 })}
+                    <span>{partner.partnerStore.storeCategory}</span>
                   </div>
                   <a
-                    href={partner.website}
+                    href={partner.partnerStore.storeWebsite}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded hover:bg-black/70 transition-colors"
@@ -688,17 +711,17 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 {/* Partner Info */}
                 <div className="p-4">
                   <h3 className="text-white font-semibold text-lg mb-2 truncate">
-                    {partner.name}
+                    {partner.partnerStore.storeName}
                   </h3>
                   <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                    {partner.description}
+                    {partner.partnerStore.storeDescription}
                   </p>
 
                   {/* Available Offers */}
                   <div className="space-y-2">
-                    {(partner.activeOffers || partner.discountOffers.filter(offer => 
-                      offer.isActive && new Date(offer.expiryDate) > new Date()
-                    )).map((offer, offerIndex) => (
+                    {(partner.partnerStore.discountOffers || []).filter(offer => 
+                      offer.isActive && (!offer.expiryDate || new Date(offer.expiryDate) > new Date())
+                    ).map((offer, offerIndex) => (
                       <div key={offerIndex} className="bg-gray-700/50 rounded-lg p-3">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">

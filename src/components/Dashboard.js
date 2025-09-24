@@ -11,6 +11,7 @@ import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 import AdminDiscountCodes from './AdminDiscountCodes';
 import PartnerAdmin from './PartnerAdmin';
+import PartnerStoreManager from './PartnerStoreManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 
@@ -2054,6 +2055,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             </button>
           )}
           
+          {currentUser.userType === 'project' && (
+            <button
+              className={`px-4 py-2 ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('partnerStore')}
+            >
+              🎁 My Partner Store
+            </button>
+          )}
+
           {currentUser.isAdmin && (
             <button
               className={`px-4 py-2 ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
@@ -3810,6 +3820,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           {/* Add the Facebook Raids tab content */}
           {activeTab === 'facebookRaids' && currentUser?.isAdmin && renderFacebookRaidsTab()}
           
+          {/* Partner Store tab content for project users */}
+          {activeTab === 'partnerStore' && currentUser?.userType === 'project' && (
+            <PartnerStoreManager currentUser={currentUser} />
+          )}
+
           {/* Partner Admin tab content */}
           {activeTab === 'partnerAdmin' && currentUser?.isAdmin && (
             <PartnerAdmin currentUser={currentUser} />
