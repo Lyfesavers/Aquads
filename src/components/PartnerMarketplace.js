@@ -268,95 +268,154 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      {/* Header Navigation - Same as other pages */}
+      {/* Header Navigation - Same style as Marketplace */}
       <nav className="relative z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <img src="/Aquadsnewlogo.png" alt="Aquads" className="w-10 h-10" />
-              <span className="text-white font-bold text-xl">Aquads</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-              <Link to="/marketplace" className="text-gray-300 hover:text-white transition-colors">Marketplace</Link>
-              <Link to="/partner-rewards" className="text-blue-400 font-medium">🎯 Rewards</Link>
-              
-              {currentUser ? (
-                <div className="flex items-center space-x-4">
-                  <span className="text-blue-400 font-medium">{userPoints} pts</span>
-                  {currentUser.userType === 'project' && (
-                    <button
-                      onClick={() => setShowDashboard(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                    >
-                      <FaGift />
-                      <span>List Reward</span>
-                    </button>
-                  )}
-                  <NotificationBell currentUser={currentUser} />
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center space-x-2 text-white hover:text-blue-400 transition-colors"
-                    >
-                      <img src={currentUser.image} alt="Profile" className="w-8 h-8 rounded-full" />
-                      <span>{currentUser.username}</span>
-                    </button>
-                    {showUserDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-50">
-                        <button
-                          onClick={() => { setShowProfileModal(true); setShowUserDropdown(false); }}
-                          className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700"
-                        >
-                          Profile
-                        </button>
-                        <button
-                          onClick={() => { setShowDashboard(true); setShowUserDropdown(false); }}
-                          className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700"
-                        >
-                          Dashboard
-                        </button>
-                        <button
-                          onClick={onLogout}
-                          className="block w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setShowLoginModal(true)}
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => setShowCreateAccountModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Sign Up
-                  </button>
-                </div>
-              )}
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/Aquadsnewlogo.png" 
+                  alt="AQUADS" 
+                  className="w-auto filter drop-shadow-lg"
+                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                />
+              </Link>
             </div>
 
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-white hover:text-blue-400 transition-colors"
+                className="text-gray-300 hover:text-white p-3 rounded-md"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
                 </svg>
               </button>
+            </div>
+
+            {/* Desktop menu */}
+            <div className="hidden md:flex items-center space-x-3">
+              {/* Main Navigation - Smaller buttons */}
+              <Link
+                to="/"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Home
+              </Link>
+              <Link
+                to="/marketplace"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Marketplace
+              </Link>
+              <Link
+                to="/games"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Games
+              </Link>
+              <Link
+                to="/partner-rewards"
+                className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+              >
+                🎯 Rewards
+              </Link>
+              <button
+                onClick={openMintFunnelPlatform}
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Paid Ads
+              </button>
+              <Link
+                to="/learn"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Learn
+              </Link>
+
+              {currentUser ? (
+                <>
+                  <div className="text-blue-400 font-medium text-sm">{userPoints} pts</div>
+                  <NotificationBell currentUser={currentUser} />
+                  
+                  {/* User Dropdown */}
+                  <div className="relative user-dropdown">
+                    <button 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                    >
+                      <span className="mr-1">{currentUser.username}</span>
+                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              setShowDashboard(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          >
+                            📊 Dashboard
+                          </button>
+                          {currentUser.userType === 'project' && (
+                            <button
+                              onClick={() => {
+                                setShowDashboard(true);
+                                setShowUserDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-green-600/50 transition-colors"
+                            >
+                              🎁 List Reward
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setShowProfileModal(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                          >
+                            👤 Profile
+                          </button>
+                          <button
+                            onClick={onLogout}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                          >
+                            🚪 Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowLoginModal(true)}
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => setShowCreateAccountModal(true)}
+                    className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -365,12 +424,57 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
         {isMobileMenuOpen && (
           <div className="md:hidden bg-black/90 backdrop-blur-md border-t border-white/10">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-white">Home</Link>
-              <Link to="/marketplace" className="block px-3 py-2 text-gray-300 hover:text-white">Marketplace</Link>
-              <Link to="/partner-rewards" className="block px-3 py-2 text-blue-400 font-medium">🎯 Rewards</Link>
+              <Link 
+                to="/" 
+                className="block px-3 py-2 text-gray-300 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/marketplace" 
+                className="block px-3 py-2 text-gray-300 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Marketplace
+              </Link>
+              <Link 
+                to="/games" 
+                className="block px-3 py-2 text-gray-300 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Games
+              </Link>
+              <Link 
+                to="/partner-rewards" 
+                className="block px-3 py-2 text-blue-400 font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                🎯 Rewards
+              </Link>
+              <button
+                onClick={openMintFunnelPlatform}
+                className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
+              >
+                Paid Ads
+              </button>
+              <Link 
+                to="/learn" 
+                className="block px-3 py-2 text-gray-300 hover:text-white"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Learn
+              </Link>
+
               {currentUser ? (
                 <>
                   <div className="px-3 py-2 text-blue-400 font-medium">{userPoints} points</div>
+                  <button
+                    onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                    className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
+                  >
+                    📊 Dashboard
+                  </button>
                   {currentUser.userType === 'project' && (
                     <button
                       onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
@@ -383,13 +487,13 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                     onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
                     className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
                   >
-                    Profile
+                    👤 Profile
                   </button>
                   <button
-                    onClick={onLogout}
+                    onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
                     className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
                   >
-                    Logout
+                    🚪 Logout
                   </button>
                 </>
               ) : (
