@@ -31,6 +31,7 @@ import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
 import Marketplace from './components/Marketplace';
+import PartnerMarketplace from './components/PartnerMarketplace';
 import GameHub from './components/GameHub';
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
@@ -2606,6 +2607,16 @@ function App() {
         <Routes>
           <Route path="/marketplace" element={
             <Marketplace 
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+              onBannerSubmit={handleBannerSubmit}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+            />
+          } />
+          <Route path="/partner-rewards" element={
+            <PartnerMarketplace 
               currentUser={currentUser}
               onLogin={handleLogin}
               onLogout={handleLogout}

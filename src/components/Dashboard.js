@@ -10,6 +10,7 @@ import CreateJobModal from './CreateJobModal';
 import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 import AdminDiscountCodes from './AdminDiscountCodes';
+import PartnerAdmin from './PartnerAdmin';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 
@@ -2052,6 +2053,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               Facebook Raids
             </button>
           )}
+          
+          {currentUser.isAdmin && (
+            <button
+              className={`px-4 py-2 ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('partnerAdmin')}
+            >
+              🎯 Partner Stores
+            </button>
+          )}
         </div>
 
         <div className="overflow-y-auto">
@@ -3799,6 +3809,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
           {/* Add the Facebook Raids tab content */}
           {activeTab === 'facebookRaids' && currentUser?.isAdmin && renderFacebookRaidsTab()}
+          
+          {/* Partner Admin tab content */}
+          {activeTab === 'partnerAdmin' && currentUser?.isAdmin && (
+            <PartnerAdmin currentUser={currentUser} />
+          )}
 
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-4">My Job Postings</h3>

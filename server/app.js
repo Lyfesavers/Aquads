@@ -23,6 +23,7 @@ const notificationsRoutes = require('./routes/notifications');
 const gamesRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
+const partnersRoutes = require('./routes/partners');
 
 
 // Middleware
@@ -391,6 +392,7 @@ app.use('/api/ads', adsRoutes);
 app.use('/api/bumps', bumpRoutes);
 app.use('/api/tokens', tokensRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/partners', partnersRoutes);
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
