@@ -1,29 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheck, FaTimes, FaExternalLinkAlt, FaSpinner, FaStore, FaUser, FaCalendar } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaExternalLinkAlt, FaSpinner, FaStore, FaUser, FaCalendar, FaPlus, FaEdit } from 'react-icons/fa';
 
 const PartnerAdmin = ({ currentUser }) => {
-  const [pendingPartners, setPendingPartners] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const [formData, setFormData] = useState({
+    storeName: '',
+    storeDescription: '',
+    storeLogo: '',
+    storeWebsite: '',
+    storeCategory: '',
+    discountOffers: []
+  });
+
+  const categories = [
+    'DeFi & Crypto', 'NFT & Gaming', 'Web3 Services', 'Crypto Hardware',
+    'Food & Beverage', 'Clothing & Fashion', 'Books & Education', 'Technology & Software',
+    'Health & Fitness', 'Travel & Tourism', 'Entertainment & Media', 'Home & Garden',
+    'Business Services', 'Financial Services', 'Marketing & Design', 'Development & IT',
+    'Electronics & Gadgets', 'Sports & Outdoors', 'Beauty & Personal Care', 'Automotive',
+    'Subscriptions & SaaS', 'Gift Cards & Vouchers', 'Other'
+  ];
+
+  const pointTiers = [2000, 4000, 6000, 8000, 10000];
 
   useEffect(() => {
-    fetchPendingPartners();
-  }, []);
+    fetchPartners();
+  }, [statusFilter]);
 
-  const fetchPendingPartners = async () => {
+  const fetchPartners = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/pending-partners`, {
+      setLoading(true);
+      let endpoint = '';
+      
+      if (statusFilter === 'pending') {
+        endpoint = `${process.env.REACT_APP_API_URL}/api/users/admin/pending-partners`;
+      } else {
+        // For approved/rejected, we'll need to fetch all partners and filter
+        endpoint = `${process.env.REACT_APP_API_URL}/api/users/admin/all-partners?status=${statusFilter}`;
+      }
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch pending partners');
+      
+      if (!response.ok) throw new Error('Failed to fetch partners');
       const data = await response.json();
-      setPendingPartners(data);
+      setPartners(data);
     } catch (error) {
-      console.error('Error fetching pending partners:', error);
-      alert('Failed to fetch pending partners');
+      console.error('Error fetching partners:', error);
+      alert('Failed to fetch partners');
     } finally {
       setLoading(false);
     }
@@ -44,8 +77,8 @@ const PartnerAdmin = ({ currentUser }) => {
         throw new Error(error.error || 'Failed to approve partner');
       }
 
-      alert('Partner approved successfully!');
-      fetchPendingPartners(); // Refresh the list
+        alert('Partner approved successfully!');
+        fetchPartners(); // Refresh the list
     } catch (error) {
       console.error('Error approving partner:', error);
       alert(error.message);
@@ -74,12 +107,96 @@ const PartnerAdmin = ({ currentUser }) => {
       }
 
       alert('Partner rejected.');
-      fetchPendingPartners(); // Refresh the list
+      fetchPartners(); // Refresh the list
     } catch (error) {
       console.error('Error rejecting partner:', error);
       alert(error.message);
     } finally {
       setProcessing(prev => ({ ...prev, [partnerId]: null }));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const addOffer = () => {
+    setFormData(prev => ({
+      ...prev,
+      discountOffers: [
+        ...prev.discountOffers,
+        {
+          pointTier: 2000,
+          title: '',
+          description: '',
+          discountCode: '',
+          terms: 'Standard terms and conditions apply',
+          isActive: true
+        }
+      ]
+    }));
+  };
+
+  const updateOffer = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      discountOffers: prev.discountOffers.map((offer, i) => 
+        i === index ? { ...offer, [field]: value } : offer
+      )
+    }));
+  };
+
+  const removeOffer = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      discountOffers: prev.discountOffers.filter((_, i) => i !== index)
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      storeName: '',
+      storeDescription: '',
+      storeLogo: '',
+      storeWebsite: '',
+      storeCategory: '',
+      discountOffers: []
+    });
+  };
+
+  const handleCreatePartner = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      // Create a new user account for this partner store
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/create-partner`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        alert('Partner store created successfully!');
+        setShowCreateModal(false);
+        resetForm();
+        fetchPartners(); // Refresh the list
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to create partner store');
+      }
+    } catch (error) {
+      console.error('Error creating partner store:', error);
+      alert('Failed to create partner store');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -98,26 +215,55 @@ const PartnerAdmin = ({ currentUser }) => {
           <FaStore />
           <span>Partner Store Applications</span>
         </h2>
-        <div className="text-sm text-gray-400">
-          {pendingPartners.length} pending applications
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-400">
+            {partners.length} {statusFilter} applications
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <FaPlus />
+            <span>Create Partner</span>
+          </button>
         </div>
       </div>
 
-      {pendingPartners.length === 0 ? (
+      {/* Status Filter Tabs */}
+      <div className="flex space-x-1 bg-gray-700/30 rounded-lg p-1">
+        {['pending', 'approved', 'rejected'].map((status) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              statusFilter === status
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-600/50'
+            }`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {partners.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-gray-800 rounded-xl p-8 text-center"
         >
           <FaStore className="text-6xl text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">No Pending Applications</h3>
+          <h3 className="text-xl font-semibold text-white mb-2">No {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Applications</h3>
           <p className="text-gray-400">
-            All partner store applications have been processed.
+            {statusFilter === 'pending' 
+              ? 'All partner store applications have been processed.'
+              : `No ${statusFilter} partner applications found.`
+            }
           </p>
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {pendingPartners.map((partner, index) => (
+          {partners.map((partner, index) => (
             <motion.div
               key={partner._id}
               initial={{ opacity: 0, y: 20 }}
@@ -214,35 +360,50 @@ const PartnerAdmin = ({ currentUser }) => {
                   <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
                     <div className="text-gray-300 text-sm font-medium mb-3">Actions</div>
                     
-                    <button
-                      onClick={() => handleApprove(partner._id)}
-                      disabled={processing[partner._id]}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
-                    >
-                      {processing[partner._id] === 'approving' ? (
-                        <FaSpinner className="animate-spin" />
-                      ) : (
-                        <FaCheck />
-                      )}
-                      <span>
-                        {processing[partner._id] === 'approving' ? 'Approving...' : 'Approve'}
-                      </span>
-                    </button>
+                    {statusFilter === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(partner._id)}
+                          disabled={processing[partner._id]}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+                        >
+                          {processing[partner._id] === 'approving' ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <FaCheck />
+                          )}
+                          <span>
+                            {processing[partner._id] === 'approving' ? 'Approving...' : 'Approve'}
+                          </span>
+                        </button>
 
-                    <button
-                      onClick={() => handleReject(partner._id)}
-                      disabled={processing[partner._id]}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
-                    >
-                      {processing[partner._id] === 'rejecting' ? (
-                        <FaSpinner className="animate-spin" />
-                      ) : (
-                        <FaTimes />
-                      )}
-                      <span>
-                        {processing[partner._id] === 'rejecting' ? 'Rejecting...' : 'Reject'}
-                      </span>
-                    </button>
+                        <button
+                          onClick={() => handleReject(partner._id)}
+                          disabled={processing[partner._id]}
+                          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+                        >
+                          {processing[partner._id] === 'rejecting' ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <FaTimes />
+                          )}
+                          <span>
+                            {processing[partner._id] === 'rejecting' ? 'Rejecting...' : 'Reject'}
+                          </span>
+                        </button>
+                      </>
+                    )}
+
+                    {statusFilter === 'approved' && (
+                      <a
+                        href="/partner-rewards"
+                        target="_blank"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                      >
+                        <FaExternalLinkAlt />
+                        <span>View Live</span>
+                      </a>
+                    )}
 
                     <a
                       href={partner.partnerStore.storeWebsite}
@@ -258,6 +419,223 @@ const PartnerAdmin = ({ currentUser }) => {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {/* Create Partner Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <FaPlus />
+                <span>Create Partner Store</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePartner} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Store Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="storeName"
+                    value={formData.storeName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="Enter store name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Category *
+                  </label>
+                  <select
+                    name="storeCategory"
+                    value={formData.storeCategory}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Store Logo URL *
+                </label>
+                <input
+                  type="url"
+                  name="storeLogo"
+                  value={formData.storeLogo}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Website URL *
+                </label>
+                <input
+                  type="url"
+                  name="storeWebsite"
+                  value={formData.storeWebsite}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="https://store.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Store Description *
+                </label>
+                <textarea
+                  name="storeDescription"
+                  value={formData.storeDescription}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="Describe the store and what it offers..."
+                />
+              </div>
+
+              {/* Discount Offers */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white text-lg font-semibold">Discount Offers</h4>
+                  <button
+                    type="button"
+                    onClick={addOffer}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg flex items-center space-x-1 text-sm transition-colors"
+                  >
+                    <FaPlus />
+                    <span>Add Offer</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {formData.discountOffers.map((offer, index) => (
+                    <div key={index} className="bg-gray-700/50 rounded-lg p-4 relative">
+                      <button
+                        type="button"
+                        onClick={() => removeOffer(index)}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                      >
+                        <FaTimes />
+                      </button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Point Tier
+                          </label>
+                          <select
+                            value={offer.pointTier}
+                            onChange={(e) => updateOffer(index, 'pointTier', parseInt(e.target.value))}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                          >
+                            {pointTiers.map(tier => (
+                              <option key={tier} value={tier}>{tier} points</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Offer Title
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.title}
+                            onChange={(e) => updateOffer(index, 'title', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 10% Off"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Discount Code
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.discountCode}
+                            onChange={(e) => updateOffer(index, 'discountCode', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="DISCOUNT10"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-gray-300 text-sm font-medium mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          value={offer.description}
+                          onChange={(e) => updateOffer(index, 'description', e.target.value)}
+                          rows={2}
+                          className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                          placeholder="Describe this offer..."
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <FaSpinner className="animate-spin" /> : <FaCheck />}
+                  <span>{saving ? 'Creating...' : 'Create Partner'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    resetForm();
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <FaTimes />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </form>
+          </motion.div>
         </div>
       )}
     </div>

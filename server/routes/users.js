@@ -1181,6 +1181,34 @@ router.get('/admin/pending-partners', auth, async (req, res) => {
   }
 });
 
+// Admin: Get all partner stores by status
+router.get('/admin/all-partners', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { status } = req.query;
+    const query = {
+      'partnerStore.isPartner': true
+    };
+    
+    if (status && status !== 'all') {
+      query['partnerStore.partnerStatus'] = status;
+    }
+    
+    const partners = await User.find(query)
+      .select('username email partnerStore createdAt')
+      .populate('partnerStore.approvedBy', 'username')
+      .sort({ 'partnerStore.partnerSince': -1, createdAt: -1 });
+    
+    res.json(partners);
+  } catch (error) {
+    console.error('Error fetching partners:', error);
+    res.status(500).json({ error: 'Failed to fetch partners' });
+  }
+});
+
 // Admin: Approve partner store
 router.post('/admin/approve-partner/:partnerId', auth, async (req, res) => {
   try {
@@ -1226,6 +1254,59 @@ router.post('/admin/reject-partner/:partnerId', auth, async (req, res) => {
   } catch (error) {
     console.error('Error rejecting partner:', error);
     res.status(500).json({ error: 'Failed to reject partner' });
+  }
+});
+
+// Admin: Create partner store directly
+router.post('/admin/create-partner', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { storeName, storeDescription, storeLogo, storeWebsite, storeCategory, discountOffers } = req.body;
+    
+    // Validate required fields
+    if (!storeName || !storeDescription || !storeLogo || !storeWebsite || !storeCategory) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Create a new user account for this partner
+    const partnerUser = new User({
+      username: storeName.toLowerCase().replace(/[^a-z0-9]/g, '') + '_partner',
+      email: `${storeName.toLowerCase().replace(/[^a-z0-9]/g, '')}@partner.aquads.com`,
+      password: 'admin_created_partner_' + Date.now(), // Temporary password
+      userType: 'project',
+      isEmailVerified: true,
+      partnerStore: {
+        isPartner: true,
+        storeName,
+        storeDescription,
+        storeLogo,
+        storeWebsite,
+        storeCategory,
+        discountOffers: discountOffers || [],
+        partnerStatus: 'approved', // Auto-approve admin-created partners
+        approvedBy: req.user.userId,
+        approvedAt: new Date(),
+        partnerSince: new Date()
+      }
+    });
+    
+    await partnerUser.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Partner store created and approved successfully!',
+      partner: {
+        id: partnerUser._id,
+        username: partnerUser.username,
+        partnerStore: partnerUser.partnerStore
+      }
+    });
+  } catch (error) {
+    console.error('Error creating partner store:', error);
+    res.status(500).json({ error: 'Failed to create partner store' });
   }
 });
 
