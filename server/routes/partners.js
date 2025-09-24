@@ -5,51 +5,19 @@ const PartnerRedemption = require('../models/PartnerRedemption');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
+// Test route to verify partners router is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Partners router is working' });
+});
+
 // Get all active partner stores (public)
 router.get('/', async (req, res) => {
   try {
-    const { category, search, sortBy = 'name' } = req.query;
-    
-    let query = { isActive: true };
-    
-    // Filter by category
-    if (category && category !== 'all') {
-      query.category = category;
-    }
-    
-    // Search functionality
-    if (search) {
-      query.$text = { $search: search };
-    }
-    
-    // Sort options
-    let sortOptions = {};
-    switch (sortBy) {
-      case 'name':
-        sortOptions = { name: 1 };
-        break;
-      case 'newest':
-        sortOptions = { createdAt: -1 };
-        break;
-      case 'popular':
-        sortOptions = { totalRedemptions: -1 };
-        break;
-      default:
-        sortOptions = { name: 1 };
-    }
-    
-    const partners = await PartnerStore.find(query)
-      .sort(sortOptions)
+    const partners = await PartnerStore.find({ isActive: true })
+      .sort({ name: 1 })
       .select('name description logo website category discountOffers totalRedemptions');
     
-    // Filter out expired offers and add virtual activeOffers
-    const partnersWithActiveOffers = partners.map(partner => {
-      const partnerObj = partner.toObject();
-      partnerObj.activeOffers = partner.activeOffers;
-      return partnerObj;
-    });
-    
-    res.json(partnersWithActiveOffers);
+    res.json(partners);
   } catch (error) {
     console.error('Error fetching partners:', error);
     res.status(500).json({ error: 'Failed to fetch partner stores' });
@@ -59,7 +27,32 @@ router.get('/', async (req, res) => {
 // Get partner categories
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await PartnerStore.distinct('category', { isActive: true });
+    // Return the predefined categories since we have a fixed enum
+    const categories = [
+      'DeFi & Crypto',
+      'NFT & Gaming', 
+      'Web3 Services',
+      'Crypto Hardware',
+      'Food & Beverage',
+      'Clothing & Fashion',
+      'Books & Education',
+      'Technology & Software',
+      'Health & Fitness',
+      'Travel & Tourism',
+      'Entertainment & Media',
+      'Home & Garden',
+      'Business Services',
+      'Financial Services',
+      'Marketing & Design',
+      'Development & IT',
+      'Electronics & Gadgets',
+      'Sports & Outdoors',
+      'Beauty & Personal Care',
+      'Automotive',
+      'Subscriptions & SaaS',
+      'Gift Cards & Vouchers',
+      'Other'
+    ];
     res.json(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
