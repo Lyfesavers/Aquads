@@ -904,8 +904,14 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
       {showDashboard && (
         <Dashboard
+          ads={[]} // Pass empty array since PartnerMarketplace doesn't handle ads
           currentUser={currentUser}
           onClose={() => setShowDashboard(false)}
+          onDeleteAd={() => {}} // Empty handlers since not used in this context
+          onBumpAd={() => {}}
+          onEditAd={() => {}}
+          onRejectBump={() => {}}
+          onApproveBump={() => {}}
         />
       )}
 
