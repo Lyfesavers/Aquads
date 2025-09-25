@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaCopy, FaCheck, FaQrcode, FaCrown, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
+import QRCode from 'qrcode';
 
 const MembershipCard = ({ membership, onClose }) => {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [qrCodeDataURL, setQrCodeDataURL] = useState('');
 
   const copyToClipboard = async () => {
     try {
@@ -15,6 +17,36 @@ const MembershipCard = ({ membership, onClose }) => {
       console.error('Failed to copy: ', err);
     }
   };
+
+  const generateQRCode = async () => {
+    try {
+      // Create a data string that includes member ID and verification info
+      const qrData = {
+        memberId: membership.memberId,
+        verificationUrl: `${window.location.origin}/verify-membership`,
+        timestamp: new Date().toISOString()
+      };
+      
+      const qrDataString = JSON.stringify(qrData);
+      const dataURL = await QRCode.toDataURL(qrDataString, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeDataURL(dataURL);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (membership?.memberId) {
+      generateQRCode();
+    }
+  }, [membership?.memberId]);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -128,15 +160,20 @@ const MembershipCard = ({ membership, onClose }) => {
             <div className="text-center">
               <div className="text-white/80 text-xs sm:text-sm mb-2">Scan for Partner Verification</div>
               <div className="bg-white p-3 sm:p-4 rounded-lg inline-block">
-                {/* Simple QR Code representation - in production, use a proper QR library */}
-                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-black grid grid-cols-8 gap-1">
-                  {Array.from({ length: 64 }, (_, i) => (
-                    <div
-                      key={i}
-                      className={`${Math.random() > 0.5 ? 'bg-white' : 'bg-black'}`}
-                    />
-                  ))}
-                </div>
+                {qrCodeDataURL ? (
+                  <img 
+                    src={qrCodeDataURL} 
+                    alt="Membership QR Code" 
+                    className="w-24 h-24 sm:w-32 sm:h-32"
+                  />
+                ) : (
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-200 rounded flex items-center justify-center">
+                    <div className="text-gray-500 text-xs">Generating...</div>
+                  </div>
+                )}
+              </div>
+              <div className="text-white/60 text-xs mt-2">
+                Show this QR code to partners for instant verification
               </div>
             </div>
           </motion.div>
