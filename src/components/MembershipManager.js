@@ -3,9 +3,8 @@ import { motion } from 'framer-motion';
 import { FaCrown, FaCreditCard, FaTimes, FaCheck, FaExclamationTriangle, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import MembershipCard from './MembershipCard';
 
-const MembershipManager = ({ currentUser, onPointsUpdate }) => {
+const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
   const [membership, setMembership] = useState(null);
-  const [points, setPoints] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCard, setShowCard] = useState(false);
@@ -18,7 +17,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
   const fetchMembershipStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/membership/status', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -27,10 +26,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
       if (response.ok) {
         const data = await response.json();
         setMembership(data.membership);
-        setPoints(data.points);
-        if (onPointsUpdate) {
-          onPointsUpdate(data.points);
-        }
+        // Points are now passed as props from Dashboard's socket system
       }
     } catch (error) {
       console.error('Error fetching membership status:', error);
@@ -45,7 +41,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/membership/subscribe', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/subscribe`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -57,7 +53,6 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
 
       if (response.ok) {
         setMembership(data.membership);
-        setPoints(data.pointsRemaining);
         if (onPointsUpdate) {
           onPointsUpdate(data.pointsRemaining);
         }
@@ -86,7 +81,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/membership/cancel', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -172,7 +167,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-gray-400 text-sm">Current Points</div>
-            <div className="text-white text-2xl font-bold">{points.toLocaleString()}</div>
+            <div className="text-white text-2xl font-bold">{userPoints.toLocaleString()}</div>
           </div>
           <div className="text-right">
             <div className="text-gray-400 text-sm">Monthly Cost</div>
@@ -271,9 +266,9 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
 
             <button
               onClick={handleSubscribe}
-              disabled={actionLoading || points < 1000}
+              disabled={actionLoading || userPoints < 1000}
               className={`w-full px-4 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
-                points >= 1000
+                userPoints >= 1000
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
                   : 'bg-gray-600 text-gray-400 cursor-not-allowed'
               }`}
@@ -282,17 +277,17 @@ const MembershipManager = ({ currentUser, onPointsUpdate }) => {
               <span>
                 {actionLoading 
                   ? 'Subscribing...' 
-                  : points >= 1000 
+                  : userPoints >= 1000 
                     ? 'Subscribe to Membership (1,000 points)' 
-                    : `Need ${1000 - points} more points`
+                    : `Need ${1000 - userPoints} more points`
                 }
               </span>
             </button>
 
-            {points < 1000 && (
+            {userPoints < 1000 && (
               <div className="mt-3 text-center">
                 <p className="text-gray-400 text-sm">
-                  You need {1000 - points} more points to subscribe
+                  You need {1000 - userPoints} more points to subscribe
                 </p>
               </div>
             )}

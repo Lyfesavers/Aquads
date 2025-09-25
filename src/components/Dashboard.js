@@ -3842,6 +3842,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           {activeTab === 'membership' && (
             <MembershipManager 
               currentUser={currentUser} 
+              userPoints={pointsInfo?.points || 0}
               onPointsUpdate={(newPoints) => {
                 setPointsInfo(prev => prev ? { ...prev, points: newPoints } : null);
               }}
