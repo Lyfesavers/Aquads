@@ -1129,8 +1129,7 @@ router.post('/redeem-partner/:partnerId', auth, async (req, res) => {
       offerTitle: offer.title,
       offerDescription: offer.description,
       pointsUsed: offer.pointTier,
-      discountCode: offer.discountCode,
-      expiresAt: offer.expiryDate
+      discountCode: offer.discountCode
     };
     
     // Update user points and add redemption

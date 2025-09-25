@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCopy, FaCheck, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaMobile, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCopy, FaCheck, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaMobile, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import BannerDisplay from './BannerDisplay';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
@@ -22,6 +22,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [showFilters, setShowFilters] = useState(false);
   
   // Modal states
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -602,42 +603,64 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           </div>
         </div>
 
-        {/* Category Filter Grid */}
+        {/* Collapsible Category Filter */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <FaFilter className="mr-2 text-blue-400" />
-            Filter by Category
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`flex flex-col items-center p-3 rounded-lg border transition-all duration-200 ${
-                selectedCategory === 'all'
-                  ? 'bg-blue-600/20 border-blue-400/50 text-blue-400'
-                  : 'bg-gray-800/50 border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500/50'
-              }`}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-between w-full p-4 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="flex items-center">
+              <FaFilter className="mr-2 text-blue-400" />
+              <span className="font-medium">Filter by Category</span>
+              {selectedCategory !== 'all' && (
+                <span className="ml-2 px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded-full">
+                  {selectedCategory}
+                </span>
+              )}
+            </div>
+            {showFilters ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 overflow-hidden"
             >
-              <FaGift className="text-xl mb-1" />
-              <span className="text-xs font-medium">All</span>
-            </button>
-            {categories.filter(cat => cat !== 'all').map(category => {
-              const IconComponent = getCategoryIcon(category);
-              return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 p-4 bg-gray-800/30 rounded-lg border border-gray-600/30">
                 <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => setSelectedCategory('all')}
                   className={`flex flex-col items-center p-3 rounded-lg border transition-all duration-200 ${
-                    selectedCategory === category
+                    selectedCategory === 'all'
                       ? 'bg-blue-600/20 border-blue-400/50 text-blue-400'
                       : 'bg-gray-800/50 border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500/50'
                   }`}
                 >
-                  <IconComponent className="text-xl mb-1" />
-                  <span className="text-xs font-medium text-center leading-tight">{category}</span>
+                  <FaGift className="text-xl mb-1" />
+                  <span className="text-xs font-medium">All</span>
                 </button>
-              );
-            })}
-          </div>
+                {categories.filter(cat => cat !== 'all').map(category => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`flex flex-col items-center p-3 rounded-lg border transition-all duration-200 ${
+                        selectedCategory === category
+                          ? 'bg-blue-600/20 border-blue-400/50 text-blue-400'
+                          : 'bg-gray-800/50 border-gray-600/50 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500/50'
+                      }`}
+                    >
+                      <IconComponent className="text-xl mb-1" />
+                      <span className="text-xs font-medium text-center leading-tight">{category}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Partners Grid */}
@@ -720,7 +743,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                   {/* Available Offers */}
                   <div className="space-y-2">
                     {(partner.partnerStore.discountOffers || []).filter(offer => 
-                      offer.isActive && (!offer.expiryDate || new Date(offer.expiryDate) > new Date())
+                      offer.isActive
                     ).map((offer, offerIndex) => (
                       <div key={offerIndex} className="bg-gray-700/50 rounded-lg p-3">
                         <div className="flex justify-between items-start mb-2">
@@ -816,10 +839,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                         {copiedCode ? <FaCheck /> : <FaCopy />}
                       </button>
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">Expires:</div>
-                    <div className="text-white">{new Date(redemptionResult.expiresAt).toLocaleDateString()}</div>
                   </div>
                   <div>
                     <div className="text-gray-300">Instructions:</div>

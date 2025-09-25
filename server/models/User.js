@@ -221,7 +221,6 @@ const userSchema = new Schema({
         type: String,
         default: 'Standard terms and conditions apply'
       },
-      expiryDate: Date,
       isActive: {
         type: Boolean,
         default: true
@@ -272,7 +271,6 @@ const userSchema = new Schema({
       type: Date,
       default: Date.now
     },
-    expiresAt: Date,
     usedAt: Date
   }],
   resetToken: {
