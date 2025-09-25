@@ -213,7 +213,7 @@ const PartnerStoreManager = ({ currentUser }) => {
               <img
                 src={partnerStore.storeLogo}
                 alt={partnerStore.storeName}
-                className="w-full h-48 object-cover rounded-lg mb-4"
+                className="w-full h-48 object-contain rounded-lg mb-4 bg-gray-700/30"
                 onError={(e) => {
                   e.target.src = '/api/placeholder/400/200';
                 }}
@@ -332,6 +332,9 @@ const PartnerStoreManager = ({ currentUser }) => {
               className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
               placeholder="https://example.com/logo.png"
             />
+            <p className="text-gray-400 text-xs mt-1">
+              Recommended size: 400x200px (2:1 ratio) for best display
+            </p>
           </div>
 
           <div>

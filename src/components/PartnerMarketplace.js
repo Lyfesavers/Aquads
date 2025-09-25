@@ -711,7 +711,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                   <img
                     src={partner.partnerStore.storeLogo}
                     alt={partner.partnerStore.storeName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-gray-700/30"
                     onError={(e) => {
                       e.target.src = '/api/placeholder/200/128';
                     }}
