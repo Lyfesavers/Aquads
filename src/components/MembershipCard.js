@@ -20,15 +20,10 @@ const MembershipCard = ({ membership, onClose }) => {
 
   const generateQRCode = async () => {
     try {
-      // Create a data string that includes member ID and verification info
-      const qrData = {
-        memberId: membership.memberId,
-        verificationUrl: `${window.location.origin}/verify-membership`,
-        timestamp: new Date().toISOString()
-      };
+      // Create a clean, user-friendly message for the QR code
+      const qrMessage = `👑 AQUADS MEMBER\n\n${membership.memberId}\n\nActive Member\nPremium Partner Access\n\nScan verified at: ${new Date().toLocaleDateString()}`;
       
-      const qrDataString = JSON.stringify(qrData);
-      const dataURL = await QRCode.toDataURL(qrDataString, {
+      const dataURL = await QRCode.toDataURL(qrMessage, {
         width: 256,
         margin: 2,
         color: {
@@ -173,7 +168,7 @@ const MembershipCard = ({ membership, onClose }) => {
                 )}
               </div>
               <div className="text-white/60 text-xs mt-2">
-                Show this QR code to partners for instant verification
+                Partners will see your membership status when they scan this code
               </div>
             </div>
           </motion.div>
