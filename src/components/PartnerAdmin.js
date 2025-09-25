@@ -29,7 +29,6 @@ const PartnerAdmin = ({ currentUser }) => {
     'Subscriptions & SaaS', 'Gift Cards & Vouchers', 'Other'
   ];
 
-  const pointTiers = [2000, 4000, 6000, 8000, 10000];
 
   useEffect(() => {
     fetchPartners();
@@ -132,7 +131,6 @@ const PartnerAdmin = ({ currentUser }) => {
       discountOffers: [
         ...prev.discountOffers,
         {
-          pointTier: 2000,
           title: '',
           description: '',
           discountCode: '',
@@ -604,22 +602,7 @@ const PartnerAdmin = ({ currentUser }) => {
                         <FaTimes />
                       </button>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <label className="block text-gray-300 text-sm font-medium mb-1">
-                            Point Tier
-                          </label>
-                          <select
-                            value={offer.pointTier}
-                            onChange={(e) => updateOffer(index, 'pointTier', parseInt(e.target.value))}
-                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
-                          >
-                            {pointTiers.map(tier => (
-                              <option key={tier} value={tier}>{tier} points</option>
-                            ))}
-                          </select>
-                        </div>
-
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-gray-300 text-sm font-medium mb-1">
                             Offer Title
