@@ -186,7 +186,12 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
   const fetchMembershipStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
         headers: {
           'Authorization': `Bearer ${token}`

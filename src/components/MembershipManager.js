@@ -16,7 +16,12 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
 
   const fetchMembershipStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -40,7 +45,12 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
     setMessage('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        setMessage('Authentication required. Please log in again.');
+        return;
+      }
+      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/subscribe`, {
         method: 'POST',
         headers: {
@@ -80,7 +90,12 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
     setMessage('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        setMessage('Authentication required. Please log in again.');
+        return;
+      }
+      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/cancel`, {
         method: 'POST',
         headers: {
