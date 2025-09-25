@@ -210,13 +210,9 @@ const userSchema = new Schema({
       ]
     },
     discountOffers: [{
-      pointTier: {
-        type: Number,
-        enum: [2000, 4000, 6000, 8000, 10000]
-      },
       title: String,
       description: String,
-      discountCode: String,
+      discountAmount: String, // e.g., "10%", "$5 off", "Free shipping"
       terms: {
         type: String,
         default: 'Standard terms and conditions apply'
@@ -273,6 +269,38 @@ const userSchema = new Schema({
     },
     usedAt: Date
   }],
+  
+  // Membership System
+  membership: {
+    isActive: {
+      type: Boolean,
+      default: false
+    },
+    memberId: {
+      type: String,
+      default: null
+    },
+    startDate: {
+      type: Date,
+      default: null
+    },
+    nextBillingDate: {
+      type: Date,
+      default: null
+    },
+    autoRenew: {
+      type: Boolean,
+      default: true
+    },
+    gracePeriodEnds: {
+      type: Date,
+      default: null
+    },
+    monthlyCost: {
+      type: Number,
+      default: 1000
+    }
+  },
   resetToken: {
     type: String,
     default: null
@@ -441,6 +469,12 @@ userSchema.pre('save', function(next) {
   }
   next();
 });
+
+// Generate member ID when membership is activated
+userSchema.methods.generateMemberId = function() {
+  const randomNum = Math.floor(Math.random() * 90000000) + 10000000; // 8-digit number
+  return `AQUADS-${randomNum}`;
+};
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

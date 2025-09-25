@@ -33,16 +33,19 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   
-  // Redemption states
-  const [selectedOffer, setSelectedOffer] = useState(null);
-  const [showRedemptionModal, setShowRedemptionModal] = useState(false);
-  const [redeeming, setRedeeming] = useState(false);
-  const [redemptionResult, setRedemptionResult] = useState(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  // Removed old redemption states - now using membership system
+  // const [selectedOffer, setSelectedOffer] = useState(null);
+  // const [showRedemptionModal, setShowRedemptionModal] = useState(false);
+  // const [redeeming, setRedeeming] = useState(false);
+  // const [redemptionResult, setRedemptionResult] = useState(null);
+  // const [copiedCode, setCopiedCode] = useState(false);
   
   // User points (fetch from socket like Dashboard does)
   const [userPoints, setUserPoints] = useState(0);
   const [pointsInfo, setPointsInfo] = useState(null);
+  
+  // Membership status
+  const [membership, setMembership] = useState(null);
 
   // Category icons mapping
   const getCategoryIcon = (category) => {
@@ -88,7 +91,10 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   useEffect(() => {
     fetchPartners();
     fetchCategories();
-  }, []);
+    if (currentUser) {
+      fetchMembershipStatus();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     filterPartners();
@@ -178,6 +184,24 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     }
   };
 
+  const fetchMembershipStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMembership(data.membership);
+      }
+    } catch (error) {
+      console.error('Error fetching membership status:', error);
+    }
+  };
+
   const filterPartners = () => {
     let filtered = [...partners];
 
@@ -211,76 +235,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     setFilteredPartners(filtered);
   };
 
-  const handleRedemption = async (partner, offer) => {
-    if (!currentUser) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    if (userPoints < offer.pointTier) {
-      alert(`You need ${offer.pointTier} points to redeem this offer. You currently have ${userPoints} points.`);
-      return;
-    }
-
-    setSelectedOffer({ partner, offer });
-    setShowRedemptionModal(true);
-  };
-
-  const confirmRedemption = async () => {
-    if (!selectedOffer) return;
-
-    setRedeeming(true);
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/users/redeem-partner/${selectedOffer.partner._id}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify({
-            offerId: selectedOffer.offer._id
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to redeem offer');
-      }
-
-      setRedemptionResult(data.redemption);
-      setUserPoints(data.newPointsBalance);
-      
-      // Update currentUser points if possible
-      if (currentUser.points !== undefined) {
-        currentUser.points = data.newPointsBalance;
-      }
-
-    } catch (error) {
-      console.error('Error redeeming offer:', error);
-      alert(error.message);
-    } finally {
-      setRedeeming(false);
-    }
-  };
-
-  const copyDiscountCode = () => {
-    if (redemptionResult?.discountCode) {
-      navigator.clipboard.writeText(redemptionResult.discountCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    }
-  };
-
-  const closeRedemptionModal = () => {
-    setShowRedemptionModal(false);
-    setSelectedOffer(null);
-    setRedemptionResult(null);
-    setCopiedCode(false);
-  };
+  // Removed old redemption functions - now using membership system
 
   if (loading) {
     return (
@@ -556,17 +511,34 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-purple-400 mb-4">
-              🎯 Partner Rewards
+              👑 Partner Rewards
             </h1>
             <p className="text-xl text-gray-300 mb-6">
-              Redeem your points for exclusive discounts at partner stores
+              Access exclusive discounts at partner stores with your membership
             </p>
             {currentUser && (
-              <div className="inline-flex items-center space-x-2 bg-blue-600/20 border border-blue-400/30 rounded-full px-6 py-3">
-                <FaGift className="text-blue-400" />
-                <span className="text-white font-medium">
-                  Your Points: <span className="text-blue-400 font-bold">{userPoints.toLocaleString()}</span>
-                </span>
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div className="inline-flex items-center space-x-2 bg-blue-600/20 border border-blue-400/30 rounded-full px-6 py-3">
+                  <FaGift className="text-blue-400" />
+                  <span className="text-white font-medium">
+                    Your Points: <span className="text-blue-400 font-bold">{userPoints.toLocaleString()}</span>
+                  </span>
+                </div>
+                {membership?.isActive ? (
+                  <div className="inline-flex items-center space-x-2 bg-green-600/20 border border-green-400/30 rounded-full px-6 py-3">
+                    <span className="text-green-400">👑</span>
+                    <span className="text-white font-medium">
+                      Active Member: <span className="text-green-400 font-bold">{membership.memberId}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center space-x-2 bg-gray-600/20 border border-gray-400/30 rounded-full px-6 py-3">
+                    <span className="text-gray-400">🔒</span>
+                    <span className="text-white font-medium">
+                      Membership Required
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
@@ -756,22 +728,16 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-blue-400 font-bold text-sm">
-                            {offer.pointTier.toLocaleString()} pts
+                          <span className="text-green-400 font-bold text-sm">
+                            {offer.discountAmount}
                           </span>
-                          <button
-                            onClick={() => handleRedemption(partner, offer)}
-                            disabled={!currentUser || userPoints < offer.pointTier}
-                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                              !currentUser
-                                ? 'bg-gray-600 text-gray-400 cursor-pointer'
-                                : userPoints >= offer.pointTier
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {!currentUser ? 'Login' : userPoints >= offer.pointTier ? 'Redeem' : 'Need More'}
-                          </button>
+                          <div className={`px-3 py-1 rounded text-xs font-medium ${
+                            membership?.isActive
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-600 text-gray-400'
+                          }`}>
+                            {membership?.isActive ? 'Available' : 'Membership Required'}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -783,93 +749,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
         )}
       </div>
 
-      {/* Redemption Modal */}
-      {showRedemptionModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-2xl max-w-md w-full p-6">
-            {!redemptionResult ? (
-              <>
-                <h3 className="text-xl font-bold text-white mb-4">Confirm Redemption</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-gray-300">Partner:</div>
-                    <div className="text-white font-medium">{selectedOffer?.partner.name}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">Offer:</div>
-                    <div className="text-white font-medium">{selectedOffer?.offer.title}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">Points Required:</div>
-                    <div className="text-blue-400 font-bold">{selectedOffer?.offer.pointTier.toLocaleString()} points</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">Your Balance After:</div>
-                    <div className="text-white">{(userPoints - (selectedOffer?.offer.pointTier || 0)).toLocaleString()} points</div>
-                  </div>
-                </div>
-                <div className="flex space-x-4 mt-6">
-                  <button
-                    onClick={closeRedemptionModal}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmRedemption}
-                    disabled={redeeming}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {redeeming ? 'Redeeming...' : 'Confirm'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold text-green-400 mb-4">✅ Redemption Successful!</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-gray-300">Your Discount Code:</div>
-                    <div className="bg-gray-700 p-3 rounded-lg flex items-center justify-between">
-                      <span className="text-white font-mono text-lg">{redemptionResult.discountCode}</span>
-                      <button
-                        onClick={copyDiscountCode}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-colors"
-                      >
-                        {copiedCode ? <FaCheck /> : <FaCopy />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">Instructions:</div>
-                    <div className="text-white">Enter this code at checkout on the partner's website</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-300">New Points Balance:</div>
-                    <div className="text-blue-400 font-bold">{userPoints.toLocaleString()} points</div>
-                  </div>
-                </div>
-                <div className="flex space-x-4 mt-6">
-                  <button
-                    onClick={closeRedemptionModal}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition-colors"
-                  >
-                    Close
-                  </button>
-                  <a
-                    href={redemptionResult.partnerWebsite}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors text-center"
-                  >
-                    Visit Store
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Removed old redemption modal - now using membership system */}
 
       {/* Modals */}
       {showLoginModal && (

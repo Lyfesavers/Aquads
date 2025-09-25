@@ -1339,4 +1339,158 @@ router.delete('/admin/delete-partner/:partnerId', auth, async (req, res) => {
   }
 });
 
+// ===== MEMBERSHIP SYSTEM ENDPOINTS =====
+
+// Subscribe to membership
+router.post('/membership/subscribe', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if already has active membership
+    if (user.membership.isActive) {
+      return res.status(400).json({ error: 'You already have an active membership' });
+    }
+    
+    // Check if user has enough points
+    if (user.points < user.membership.monthlyCost) {
+      return res.status(400).json({ 
+        error: `Insufficient points. You need ${user.membership.monthlyCost} points to subscribe.` 
+      });
+    }
+    
+    // Generate member ID
+    const memberId = user.generateMemberId();
+    
+    // Calculate dates
+    const now = new Date();
+    const nextBilling = new Date(now);
+    nextBilling.setMonth(nextBilling.getMonth() + 1);
+    
+    // Activate membership
+    user.membership = {
+      isActive: true,
+      memberId: memberId,
+      startDate: now,
+      nextBillingDate: nextBilling,
+      autoRenew: true,
+      gracePeriodEnds: null,
+      monthlyCost: 1000
+    };
+    
+    // Deduct points
+    user.points -= user.membership.monthlyCost;
+    
+    // Add to points history
+    user.pointsHistory.push({
+      amount: -user.membership.monthlyCost,
+      reason: 'Monthly membership subscription',
+      createdAt: now
+    });
+    
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Membership activated successfully!',
+      membership: user.membership,
+      pointsRemaining: user.points
+    });
+  } catch (error) {
+    console.error('Error subscribing to membership:', error);
+    res.status(500).json({ error: 'Failed to subscribe to membership' });
+  }
+});
+
+// Cancel membership
+router.post('/membership/cancel', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (!user.membership.isActive) {
+      return res.status(400).json({ error: 'No active membership to cancel' });
+    }
+    
+    // Disable auto-renewal
+    user.membership.autoRenew = false;
+    user.membership.isActive = false;
+    
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Membership cancelled successfully. Access will continue until your current billing period ends.',
+      membership: user.membership
+    });
+  } catch (error) {
+    console.error('Error cancelling membership:', error);
+    res.status(500).json({ error: 'Failed to cancel membership' });
+  }
+});
+
+// Get membership status
+router.get('/membership/status', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      membership: user.membership,
+      points: user.points,
+      canSubscribe: user.points >= user.membership.monthlyCost && !user.membership.isActive
+    });
+  } catch (error) {
+    console.error('Error getting membership status:', error);
+    res.status(500).json({ error: 'Failed to get membership status' });
+  }
+});
+
+// Partner: Verify membership
+router.post('/membership/verify', async (req, res) => {
+  try {
+    const { memberId } = req.body;
+    
+    if (!memberId) {
+      return res.status(400).json({ error: 'Member ID is required' });
+    }
+    
+    const user = await User.findOne({ 'membership.memberId': memberId });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        valid: false, 
+        error: 'Invalid member ID' 
+      });
+    }
+    
+    // Check if membership is active
+    const now = new Date();
+    const isActive = user.membership.isActive && 
+                    user.membership.nextBillingDate > now;
+    
+    res.json({
+      valid: isActive,
+      member: {
+        username: user.username,
+        memberId: user.membership.memberId,
+        isActive: isActive,
+        nextBillingDate: user.membership.nextBillingDate
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying membership:', error);
+    res.status(500).json({ error: 'Failed to verify membership' });
+  }
+});
+
 module.exports = router; 
