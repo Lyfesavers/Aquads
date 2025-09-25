@@ -151,13 +151,13 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <div className="flex items-center justify-center space-x-3 mb-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-3 mb-4">
           <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full">
-            <FaCrown className="text-white text-2xl" />
+            <FaCrown className="text-white text-xl sm:text-2xl" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">Aquads Membership</h2>
-            <p className="text-gray-400">Premium Partner Access Program</p>
+          <div className="text-center sm:text-left">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Aquads Membership</h2>
+            <p className="text-gray-400 text-sm sm:text-base">Premium Partner Access Program</p>
           </div>
         </div>
       </div>
@@ -179,14 +179,14 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
 
       {/* Current Points */}
       <div className="bg-gray-800/50 rounded-lg p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <div>
             <div className="text-gray-400 text-sm">Current Points</div>
-            <div className="text-white text-2xl font-bold">{userPoints.toLocaleString()}</div>
+            <div className="text-white text-xl sm:text-2xl font-bold">{userPoints.toLocaleString()}</div>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <div className="text-gray-400 text-sm">Monthly Cost</div>
-            <div className="text-blue-400 text-xl font-bold">1,000 points</div>
+            <div className="text-blue-400 text-lg sm:text-xl font-bold">1,000 points</div>
           </div>
         </div>
       </div>
@@ -204,14 +204,14 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <div className="text-gray-400 text-sm">Member ID</div>
-                <div className="text-white font-mono">{membership.memberId}</div>
+                <div className="text-white font-mono text-sm sm:text-base break-all">{membership.memberId}</div>
               </div>
               <div>
                 <div className="text-gray-400 text-sm">Next Billing</div>
-                <div className="text-white">{formatDate(membership.nextBillingDate)}</div>
+                <div className="text-white text-sm sm:text-base">{formatDate(membership.nextBillingDate)}</div>
               </div>
             </div>
 
@@ -226,13 +226,13 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
               </div>
             )}
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => setShowCard(true)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <FaIdCard />
-                <span>View Membership Card</span>
+                <span className="text-sm sm:text-base">View Membership Card</span>
               </button>
               <button
                 onClick={handleCancel}
@@ -240,7 +240,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
                 className="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-300 px-4 py-2 rounded-lg transition-colors border border-red-500/30 flex items-center justify-center space-x-2"
               >
                 <FaTimes />
-                <span>{actionLoading ? 'Cancelling...' : 'Cancel Membership'}</span>
+                <span className="text-sm sm:text-base">{actionLoading ? 'Cancelling...' : 'Cancel Membership'}</span>
               </button>
             </div>
           </div>
@@ -289,7 +289,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
               }`}
             >
               <FaCrown />
-              <span>
+              <span className="text-sm sm:text-base">
                 {actionLoading 
                   ? 'Subscribing...' 
                   : userPoints >= 1000 
