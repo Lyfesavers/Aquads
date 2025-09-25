@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheck, FaTimes, FaExternalLinkAlt, FaSpinner, FaStore, FaUser, FaCalendar, FaPlus, FaEdit } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaExternalLinkAlt, FaSpinner, FaStore, FaUser, FaCalendar, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 const PartnerAdmin = ({ currentUser }) => {
   const [partners, setPartners] = useState([]);
@@ -8,6 +8,8 @@ const PartnerAdmin = ({ currentUser }) => {
   const [processing, setProcessing] = useState({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState(null);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [formData, setFormData] = useState({
     storeName: '',
@@ -197,6 +199,35 @@ const PartnerAdmin = ({ currentUser }) => {
       alert('Failed to create partner store');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeletePartner = async () => {
+    if (!partnerToDelete) return;
+
+    setProcessing(prev => ({ ...prev, [partnerToDelete._id]: 'deleting' }));
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/admin/delete-partner/${partnerToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete partner');
+      }
+
+      alert('Partner store deleted successfully!');
+      setShowDeleteConfirm(false);
+      setPartnerToDelete(null);
+      fetchPartners(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting partner:', error);
+      alert(error.message);
+    } finally {
+      setProcessing(prev => ({ ...prev, [partnerToDelete._id]: null }));
     }
   };
 
@@ -414,6 +445,24 @@ const PartnerAdmin = ({ currentUser }) => {
                       <FaExternalLinkAlt />
                       <span>Visit Store</span>
                     </a>
+
+                    <button
+                      onClick={() => {
+                        setPartnerToDelete(partner);
+                        setShowDeleteConfirm(true);
+                      }}
+                      disabled={processing[partner._id]}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+                    >
+                      {processing[partner._id] === 'deleting' ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaTrash />
+                      )}
+                      <span>
+                        {processing[partner._id] === 'deleting' ? 'Deleting...' : 'Delete Store'}
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -635,6 +684,71 @@ const PartnerAdmin = ({ currentUser }) => {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && partnerToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-800 rounded-xl p-6 max-w-md w-full"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <FaTrash className="text-red-400" />
+                <span>Delete Partner Store</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setPartnerToDelete(null);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-300 mb-4">
+                Are you sure you want to delete <strong>{partnerToDelete.partnerStore.storeName}</strong>? This action cannot be undone.
+              </p>
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                <p className="text-red-300 text-sm">
+                  <strong>Warning:</strong> This will permanently remove the partner store and all associated data from the system.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={handleDeletePartner}
+                disabled={processing[partnerToDelete._id]}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+              >
+                {processing[partnerToDelete._id] === 'deleting' ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <FaTrash />
+                )}
+                <span>
+                  {processing[partnerToDelete._id] === 'deleting' ? 'Deleting...' : 'Delete Store'}
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setPartnerToDelete(null);
+                }}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+              >
+                <FaTimes />
+                <span>Cancel</span>
+              </button>
+            </div>
           </motion.div>
         </div>
       )}

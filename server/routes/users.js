@@ -1309,4 +1309,34 @@ router.post('/admin/create-partner', auth, async (req, res) => {
   }
 });
 
+// Admin: Delete partner store
+router.delete('/admin/delete-partner/:partnerId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const partner = await User.findById(req.params.partnerId);
+    if (!partner || !partner.partnerStore.isPartner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+    
+    // Reset partner store data
+    partner.partnerStore = {
+      isPartner: false,
+      partnerStatus: 'pending'
+    };
+    
+    await partner.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Partner store deleted successfully!' 
+    });
+  } catch (error) {
+    console.error('Error deleting partner store:', error);
+    res.status(500).json({ error: 'Failed to delete partner store' });
+  }
+});
+
 module.exports = router; 
