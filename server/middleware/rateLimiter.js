@@ -97,12 +97,9 @@ const facebookRaidRateLimit = (req, res, next) => {
   const ipRaidAttempts = ipAttempts.get(`facebook_${ip}`) || [];
   const recentIpAttempts = ipRaidAttempts.filter(time => time > now - 600000);
   
-  // For debugging
-  console.log(`Facebook rate limit check - User ${userId}: ${recentUserAttempts.length}/5 attempts, IP ${ip}: ${recentIpAttempts.length}/3 attempts`);
   
   // Max 5 completions per user per hour
   if (recentUserAttempts.length >= 5) {
-    console.log(`Facebook rate limit exceeded for user ${userId}`);
     return res.status(429).json({
       error: 'Rate limit exceeded. You can only complete 5 Facebook raids per hour.'
     });
@@ -110,7 +107,6 @@ const facebookRaidRateLimit = (req, res, next) => {
   
   // Max 3 completions per IP per 10 minutes
   if (recentIpAttempts.length >= 3) {
-    console.log(`Facebook rate limit exceeded for IP ${ip}`);
     return res.status(429).json({
       error: 'Rate limit exceeded. Please wait before completing more Facebook raids.'
     });

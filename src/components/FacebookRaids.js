@@ -175,10 +175,6 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   };
 
   useEffect(() => {
-    // Debug: Log currentUser info
-    console.log('FacebookRaids - currentUser:', currentUser);
-    console.log('FacebookRaids - currentUser.token:', currentUser?.token);
-    
     fetchRaids();
     fetchUserPoints();
     checkFreeRaidEligibility();
