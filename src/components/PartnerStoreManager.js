@@ -390,7 +390,7 @@ const PartnerStoreManager = ({ currentUser }) => {
                     <FaTimes />
                   </button>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+11                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-gray-300 text-sm font-medium mb-1">
                         Offer Title
