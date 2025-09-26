@@ -87,60 +87,86 @@ const MembershipCard = ({ membership, onClose }) => {
         </div>
 
         {/* Membership Card */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 relative overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-4 right-4 w-20 h-20 border-2 border-white/20 rounded-full"></div>
-            <div className="absolute bottom-4 left-4 w-16 h-16 border-2 border-white/20 rounded-full"></div>
-          </div>
+        <div className="relative mb-4 sm:mb-6">
+          {/* Card Shadow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl blur-xl transform rotate-1"></div>
+          
+          {/* Main Card */}
+          <div className="relative bg-gradient-to-br from-gray-900/90 via-black/80 to-gray-800/90 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl overflow-hidden">
+            {/* Glass Effect Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/20 rounded-2xl"></div>
+            
+            {/* Shine Effect */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+            
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-4 right-4 w-20 h-20 border-2 border-white/30 rounded-full"></div>
+              <div className="absolute bottom-4 left-4 w-16 h-16 border-2 border-white/30 rounded-full"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-white/20 rounded-full"></div>
+            </div>
           
           {/* Card Content */}
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <FaIdCard className="text-white text-lg" />
-                <span className="text-white/80 text-sm">Member ID</span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-yellow-400/20 to-yellow-500/20 rounded-lg border border-yellow-400/30">
+                  <FaCrown className="text-yellow-400 text-xl" />
+                </div>
+                <div>
+                  <span className="text-white text-lg font-bold">Premium Member</span>
+                  <div className="text-white/60 text-xs">Aquads Membership</div>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={copyToClipboard}
-                  className="p-1 text-white/60 hover:text-white transition-colors"
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200 border border-white/20"
                   title="Copy Member ID"
                 >
-                  {copied ? <FaCheck className="text-green-400" /> : <FaCopy />}
+                  {copied ? <FaCheck className="text-green-400" /> : <FaCopy className="text-white/80" />}
                 </button>
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="p-1 text-white/60 hover:text-white transition-colors"
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200 border border-white/20"
                   title="Show QR Code"
                 >
-                  <FaQrcode />
+                  <FaQrcode className="text-white/80" />
                 </button>
               </div>
             </div>
             
-            <div className="mb-4">
-              <div className="text-white text-lg sm:text-2xl font-mono font-bold tracking-wider break-all">
-                {membership.memberId}
-              </div>
-              <div className="text-white/70 text-xs sm:text-sm mt-1">
-                {membership.isActive ? 'Active Membership' : 'Inactive'}
+            <div className="mb-6">
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="text-white/60 text-xs mb-1">Member ID</div>
+                <div className="text-white text-xl sm:text-2xl font-mono font-bold tracking-wider break-all">
+                  {membership.memberId}
+                </div>
+                <div className="flex items-center mt-2">
+                  <div className={`w-2 h-2 rounded-full mr-2 ${membership.isActive ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  <span className="text-white/70 text-sm">
+                    {membership.isActive ? 'Active Membership' : 'Inactive'}
+                  </span>
+                </div>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-              <div className="flex items-center space-x-2 text-white/80">
-                <FaCalendarAlt className="text-sm" />
-                <span className="text-xs sm:text-sm">
-                  Expires: {formatDate(membership.nextBillingDate)}
-                </span>
-              </div>
-              {isExpiringSoon() && (
-                <div className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs self-start sm:self-auto">
-                  Expires Soon
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                <div className="flex items-center space-x-2 text-white/80">
+                  <FaCalendarAlt className="text-sm" />
+                  <span className="text-xs sm:text-sm">
+                    Expires: {formatDate(membership.nextBillingDate)}
+                  </span>
                 </div>
-              )}
+                {isExpiringSoon() && (
+                  <div className="bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-xs self-start sm:self-auto border border-yellow-500/30">
+                    Expires Soon
+                  </div>
+                )}
+              </div>
             </div>
+          </div>
           </div>
         </div>
 
