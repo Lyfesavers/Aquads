@@ -2005,81 +2005,88 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       {/* Content - reuse existing dashboard content */}
       <div className="max-w-7xl mx-auto p-4">
-        <div className="flex border-b border-gray-700 mb-6 sticky top-0 bg-gray-800 z-10">
-          <button
-            className={`px-4 py-2 ${activeTab === 'ads' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-            onClick={() => setActiveTab('ads')}
-          >
-            Main
-          </button>
-          <button
-            className={`px-4 py-2 ${activeTab === 'bookings' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-            onClick={() => setActiveTab('bookings')}
-          >
-            Bookings
-          </button>
-          <button
-            className={`px-4 py-2 ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-            onClick={() => {
-              setActiveTab('affiliateAnalytics');
-              if (!affiliateAnalytics) {
-                fetchAffiliateAnalytics();
-              }
-            }}
-          >
-            Affiliate Analytics
-          </button>
-          {currentUser.isAdmin && (
+        <div className="relative border-b border-gray-700 mb-6 sticky top-0 bg-gray-800 z-10">
+          {/* Mobile scrollable tabs container */}
+          <div className="flex overflow-x-auto scrollbar-hide scroll-smooth md:overflow-x-visible">
+            {/* Fade indicators for mobile - show on mobile only */}
+            <div className="md:hidden absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-800 to-transparent z-10 pointer-events-none"></div>
+            <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-800 to-transparent z-10 pointer-events-none"></div>
+            
             <button
-              className={`px-4 py-2 ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('admin')}
+              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'ads' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('ads')}
             >
-              Admin
+              Main
             </button>
-          )}
+            <button
+              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'bookings' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('bookings')}
+            >
+              Bookings
+            </button>
+            <button
+              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => {
+                setActiveTab('affiliateAnalytics');
+                if (!affiliateAnalytics) {
+                  fetchAffiliateAnalytics();
+                }
+              }}
+            >
+              Affiliate Analytics
+            </button>
+            {currentUser.isAdmin && (
+              <button
+                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('admin')}
+              >
+                Admin
+              </button>
+            )}
 
-          {currentUser.isAdmin && (
-            <button
-              className={`px-4 py-2 ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('twitterRaids')}
-            >
-              Twitter Raids
-            </button>
-          )}
+            {currentUser.isAdmin && (
+              <button
+                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('twitterRaids')}
+              >
+                Twitter Raids
+              </button>
+            )}
 
-          {currentUser.isAdmin && (
-            <button
-              className={`px-4 py-2 ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('facebookRaids')}
-            >
-              Facebook Raids
-            </button>
-          )}
-          
-          {currentUser.userType === 'project' && (
-            <button
-              className={`px-4 py-2 ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('partnerStore')}
-            >
-              🎁 My Partner Store
-            </button>
-          )}
+            {currentUser.isAdmin && (
+              <button
+                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('facebookRaids')}
+              >
+                Facebook Raids
+              </button>
+            )}
+            
+            {currentUser.userType === 'project' && (
+              <button
+                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('partnerStore')}
+              >
+                🎁 My Partner Store
+              </button>
+            )}
 
-          <button
-            className={`px-4 py-2 ${activeTab === 'membership' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-            onClick={() => setActiveTab('membership')}
-          >
-            👑 My Membership
-          </button>
-
-          {currentUser.isAdmin && (
             <button
-              className={`px-4 py-2 ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('partnerAdmin')}
+              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'membership' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('membership')}
             >
-              🎯 Partner Stores
+              👑 My Membership
             </button>
-          )}
+
+            {currentUser.isAdmin && (
+              <button
+                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('partnerAdmin')}
+              >
+                🎯 Partner Stores
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="overflow-y-auto">
