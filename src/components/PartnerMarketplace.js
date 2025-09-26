@@ -549,6 +549,75 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           </motion.div>
         </div>
 
+        {/* How It Works Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
+        >
+          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl p-6 sm:p-8 border border-gray-600/30">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">How It Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Step 1 */}
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl font-bold">1</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Subscribe to Membership</h3>
+                <p className="text-gray-300 text-sm">
+                  Pay 1,000 points monthly for unlimited access to all partner discounts
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl font-bold">2</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Access Member Rewards</h3>
+                <p className="text-gray-300 text-sm">
+                  Browse exclusive discounts from verified partner stores across all categories
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl font-bold">3</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Show Your Member Card</h3>
+                <p className="text-gray-300 text-sm">
+                  Display your QR code at merchant stores for instant verification and discounts
+                </p>
+              </div>
+            </div>
+
+            {/* Benefits */}
+            <div className="mt-8 pt-6 border-t border-gray-600/30">
+              <h3 className="text-lg font-semibold text-white mb-4 text-center">Membership Benefits</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  <span className="text-sm">Unlimited Partner Access</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  <span className="text-sm">Priority Customer Support</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  <span className="text-sm">Exclusive Partner Offers</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  <span className="text-sm">Monthly Auto-Renewal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Search and Sort */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
