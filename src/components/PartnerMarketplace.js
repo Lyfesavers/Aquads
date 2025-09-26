@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCopy, FaCheck, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaMobile, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCopy, FaCheck, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaMobile, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH, FaChevronDown, FaChevronUp, FaQuestionCircle } from 'react-icons/fa';
 import BannerDisplay from './BannerDisplay';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
