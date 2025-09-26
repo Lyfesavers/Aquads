@@ -60,12 +60,12 @@ const MembershipCard = ({ membership, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-gradient-to-br from-blue-900/90 to-purple-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 max-w-md w-full mx-4 border border-blue-500/30"
+        className="bg-gradient-to-br from-blue-900/90 to-purple-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 max-w-md w-full mx-4 border border-blue-500/30 my-8"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
