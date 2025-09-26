@@ -23,6 +23,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showFilters, setShowFilters] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   
   // Modal states
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -556,8 +557,37 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-12"
         >
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl p-6 sm:p-8 border border-gray-600/30">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">How It Works</h2>
+          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl border border-gray-600/30 overflow-hidden">
+            {/* Header with Toggle Button */}
+            <button
+              onClick={() => setShowHowItWorks(!showHowItWorks)}
+              className="w-full p-6 sm:p-8 text-left hover:bg-gray-700/30 transition-colors duration-200"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <FaQuestionCircle className="text-blue-400 text-xl" />
+                  <h2 className="text-2xl font-bold text-white">How It Works</h2>
+                </div>
+                <motion.div
+                  animate={{ rotate: showHowItWorks ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <FaChevronDown className="text-gray-400 text-lg" />
+                </motion.div>
+              </div>
+            </button>
+
+            {/* Collapsible Content */}
+            <AnimatePresence>
+              {showHowItWorks && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-6 sm:px-8 pb-6 sm:pb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Step 1 */}
               <div className="text-center">
@@ -615,6 +645,10 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 </div>
               </div>
             </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
 
