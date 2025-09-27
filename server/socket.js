@@ -449,7 +449,6 @@ function init(server) {
         });
         
       } catch (error) {
-        console.error('Error fetching membership info:', error);
         socket.emit('membershipInfoError', { error: 'Failed to fetch membership info' });
       }
     });
@@ -532,7 +531,6 @@ function init(server) {
         });
         
       } catch (error) {
-        console.error('Error subscribing to membership:', error);
         socket.emit('membershipActionError', { 
           error: 'Failed to subscribe to membership', 
           userId: userData.userId 
@@ -593,7 +591,6 @@ function init(server) {
         });
         
       } catch (error) {
-        console.error('Error cancelling membership:', error);
         socket.emit('membershipActionError', { 
           error: 'Failed to cancel membership', 
           userId: userData.userId 
