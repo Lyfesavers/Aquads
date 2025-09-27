@@ -425,6 +425,182 @@ function init(server) {
       }
     });
 
+    // Handle user requesting membership info
+    socket.on('requestMembershipInfo', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('membershipInfoError', { error: 'User authentication required' });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        
+        // Fetch user's membership info
+        const user = await User.findById(userData.userId).select('membership points');
+        
+        if (!user) {
+          socket.emit('membershipInfoError', { error: 'User not found' });
+          return;
+        }
+
+        // Send membership info to this user
+        socket.emit('membershipInfoLoaded', {
+          membership: user.membership || null
+        });
+        
+      } catch (error) {
+        console.error('Error fetching membership info:', error);
+        socket.emit('membershipInfoError', { error: 'Failed to fetch membership info' });
+      }
+    });
+
+    // Handle user subscribing to membership
+    socket.on('subscribeToMembership', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('membershipActionError', { error: 'User authentication required', userId: userData?.userId });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        
+        // Fetch user
+        const user = await User.findById(userData.userId);
+        
+        if (!user) {
+          socket.emit('membershipActionError', { error: 'User not found', userId: userData.userId });
+          return;
+        }
+
+        // Check if user has enough points (1000 points required)
+        if (user.points < 1000) {
+          socket.emit('membershipActionError', { 
+            error: `Insufficient points. You need 1000 points but only have ${user.points}`, 
+            userId: userData.userId 
+          });
+          return;
+        }
+
+        // Check if user already has active membership
+        if (user.membership && user.membership.isActive) {
+          socket.emit('membershipActionError', { 
+            error: 'You already have an active membership', 
+            userId: userData.userId 
+          });
+          return;
+        }
+
+        // Deduct points and create membership
+        const nextBillingDate = new Date();
+        nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+
+        const membership = {
+          isActive: true,
+          memberId: `MEM-${Date.now()}-${userData.userId.slice(-6)}`,
+          nextBillingDate: nextBillingDate,
+          subscribedAt: new Date(),
+          pointsUsed: 1000
+        };
+
+        // Update user
+        await User.findByIdAndUpdate(userData.userId, {
+          membership: membership,
+          points: user.points - 1000,
+          $push: {
+            pointsHistory: {
+              amount: -1000,
+              type: 'membership_subscription',
+              description: 'Monthly membership subscription',
+              timestamp: new Date()
+            }
+          }
+        });
+
+        // Send success response
+        socket.emit('membershipActionResponse', {
+          membership: membership,
+          pointsRemaining: user.points - 1000,
+          message: 'Membership activated successfully!',
+          userId: userData.userId
+        });
+
+        // Also emit membership update for real-time sync
+        socket.emit('membershipUpdated', {
+          membership: membership,
+          pointsRemaining: user.points - 1000,
+          userId: userData.userId
+        });
+        
+      } catch (error) {
+        console.error('Error subscribing to membership:', error);
+        socket.emit('membershipActionError', { 
+          error: 'Failed to subscribe to membership', 
+          userId: userData.userId 
+        });
+      }
+    });
+
+    // Handle user cancelling membership
+    socket.on('cancelMembership', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('membershipActionError', { error: 'User authentication required', userId: userData?.userId });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        
+        // Fetch user
+        const user = await User.findById(userData.userId);
+        
+        if (!user) {
+          socket.emit('membershipActionError', { error: 'User not found', userId: userData.userId });
+          return;
+        }
+
+        // Check if user has active membership
+        if (!user.membership || !user.membership.isActive) {
+          socket.emit('membershipActionError', { 
+            error: 'You do not have an active membership to cancel', 
+            userId: userData.userId 
+          });
+          return;
+        }
+
+        // Cancel membership
+        const cancelledMembership = {
+          ...user.membership,
+          isActive: false,
+          cancelledAt: new Date()
+        };
+
+        // Update user
+        await User.findByIdAndUpdate(userData.userId, {
+          membership: cancelledMembership
+        });
+
+        // Send success response
+        socket.emit('membershipActionResponse', {
+          membership: cancelledMembership,
+          message: 'Membership cancelled successfully',
+          userId: userData.userId
+        });
+
+        // Also emit membership update for real-time sync
+        socket.emit('membershipUpdated', {
+          membership: cancelledMembership,
+          userId: userData.userId
+        });
+        
+      } catch (error) {
+        console.error('Error cancelling membership:', error);
+        socket.emit('membershipActionError', { 
+          error: 'Failed to cancel membership', 
+          userId: userData.userId 
+        });
+      }
+    });
+
     socket.on('error', (error) => {
       // Silent error handling
     });
@@ -637,6 +813,25 @@ function emitAllNotificationsRead(userData) {
   }
 }
 
+// Membership socket emission functions
+function emitMembershipUpdated(membershipData) {
+  if (io) {
+    io.emit('membershipUpdated', membershipData);
+  }
+}
+
+function emitMembershipActionResponse(actionData) {
+  if (io) {
+    io.emit('membershipActionResponse', actionData);
+  }
+}
+
+function emitMembershipActionError(errorData) {
+  if (io) {
+    io.emit('membershipActionError', errorData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -659,5 +854,8 @@ module.exports = {
   emitNewTokenPurchasePending,
   emitNewNotification,
   emitNotificationRead,
-  emitAllNotificationsRead
+  emitAllNotificationsRead,
+  emitMembershipUpdated,
+  emitMembershipActionResponse,
+  emitMembershipActionError
 }; 

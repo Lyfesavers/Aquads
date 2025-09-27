@@ -3,9 +3,8 @@ import { motion } from 'framer-motion';
 import { FaCrown, FaCreditCard, FaTimes, FaCheck, FaExclamationTriangle, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import MembershipCard from './MembershipCard';
 
-const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0, membershipInfo, socket }) => {
+const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0, membershipInfo, isLoading, socket }) => {
   const [membership, setMembership] = useState(membershipInfo);
-  const [loading, setLoading] = useState(!membershipInfo);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCard, setShowCard] = useState(false);
   const [message, setMessage] = useState('');
@@ -13,9 +12,6 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0, member
   // Update membership when props change (socket updates)
   useEffect(() => {
     setMembership(membershipInfo);
-    if (membershipInfo) {
-      setLoading(false);
-    }
   }, [membershipInfo]);
 
 
@@ -105,7 +101,7 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0, member
     return daysUntilExpiry <= 7;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>

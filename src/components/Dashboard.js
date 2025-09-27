@@ -34,6 +34,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [redeemError, setRedeemError] = useState('');
 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
+  const [isLoadingMembership, setIsLoadingMembership] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
 
   const [bookings, setBookings] = useState([]);
@@ -370,10 +371,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     const handleMembershipInfoLoaded = (data) => {
       setMembershipInfo(data.membership);
+      setIsLoadingMembership(false);
     };
 
     const handleMembershipInfoError = (error) => {
       console.error('Error loading membership info via socket:', error);
+      setIsLoadingMembership(false);
     };
 
     const handleMembershipUpdate = (data) => {
@@ -3915,6 +3918,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               currentUser={currentUser} 
               userPoints={pointsInfo?.points || 0}
               membershipInfo={membershipInfo}
+              isLoading={isLoadingMembership}
               socket={socket}
               onPointsUpdate={(newPoints) => {
                 setPointsInfo(prev => prev ? { ...prev, points: newPoints } : null);
