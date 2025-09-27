@@ -3,80 +3,51 @@ import { motion } from 'framer-motion';
 import { FaCrown, FaCreditCard, FaTimes, FaCheck, FaExclamationTriangle, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import MembershipCard from './MembershipCard';
 
-const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
-  const [membership, setMembership] = useState(null);
-  const [loading, setLoading] = useState(true);
+const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0, membershipInfo, socket }) => {
+  const [membership, setMembership] = useState(membershipInfo);
+  const [loading, setLoading] = useState(!membershipInfo);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCard, setShowCard] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Update membership when props change (socket updates)
   useEffect(() => {
-    fetchMembershipStatus();
-  }, []);
-
-  const fetchMembershipStatus = async () => {
-    try {
-      const token = currentUser?.token;
-      if (!token) {
-        console.error('No authentication token found');
-        return;
-      }
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMembership(data.membership);
-        // Points are now passed as props from Dashboard's socket system
-      }
-    } catch (error) {
-      console.error('Error fetching membership status:', error);
-    } finally {
+    setMembership(membershipInfo);
+    if (membershipInfo) {
       setLoading(false);
     }
-  };
+  }, [membershipInfo]);
+
 
   const handleSubscribe = async () => {
     setActionLoading(true);
     setMessage('');
 
     try {
-      const token = currentUser?.token;
-      if (!token) {
-        setMessage('Authentication required. Please log in again.');
+      if (!socket) {
+        setMessage('Connection error. Please refresh the page.');
+        setActionLoading(false);
         return;
       }
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/subscribe`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+
+      // Emit socket event for membership subscription
+      socket.emit('subscribeToMembership', {
+        userId: currentUser.userId || currentUser.id || currentUser._id
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMembership(data.membership);
-        if (onPointsUpdate) {
-          onPointsUpdate(data.pointsRemaining);
-        }
-        setMessage('Membership activated successfully!');
-        setTimeout(() => setMessage(''), 3000);
-      } else {
-        setMessage(data.error || 'Failed to subscribe to membership');
-        setTimeout(() => setMessage(''), 5000);
-      }
+      setMessage('Processing membership subscription...');
+      
+      // The actual response will come through socket events handled in Dashboard
+      // We'll show a temporary message and let the socket update handle the real response
+      setTimeout(() => {
+        setActionLoading(false);
+        setMessage('');
+      }, 2000);
+      
     } catch (error) {
       console.error('Error subscribing to membership:', error);
       setMessage('Failed to subscribe to membership');
       setTimeout(() => setMessage(''), 5000);
-    } finally {
       setActionLoading(false);
     }
   };
@@ -90,35 +61,30 @@ const MembershipManager = ({ currentUser, onPointsUpdate, userPoints = 0 }) => {
     setMessage('');
 
     try {
-      const token = currentUser?.token;
-      if (!token) {
-        setMessage('Authentication required. Please log in again.');
+      if (!socket) {
+        setMessage('Connection error. Please refresh the page.');
+        setActionLoading(false);
         return;
       }
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+
+      // Emit socket event for membership cancellation
+      socket.emit('cancelMembership', {
+        userId: currentUser.userId || currentUser.id || currentUser._id
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMembership(data.membership);
-        setMessage('Membership cancelled successfully');
-        setTimeout(() => setMessage(''), 3000);
-      } else {
-        setMessage(data.error || 'Failed to cancel membership');
-        setTimeout(() => setMessage(''), 5000);
-      }
+      setMessage('Processing membership cancellation...');
+      
+      // The actual response will come through socket events handled in Dashboard
+      // We'll show a temporary message and let the socket update handle the real response
+      setTimeout(() => {
+        setActionLoading(false);
+        setMessage('');
+      }, 2000);
+      
     } catch (error) {
       console.error('Error cancelling membership:', error);
       setMessage('Failed to cancel membership');
       setTimeout(() => setMessage(''), 5000);
-    } finally {
       setActionLoading(false);
     }
   };

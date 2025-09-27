@@ -28,6 +28,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [affiliateInfo, setAffiliateInfo] = useState(null);
   const [pointsInfo, setPointsInfo] = useState(null);
   const [lastSocketPointsUpdate, setLastSocketPointsUpdate] = useState(null);
+  const [membershipInfo, setMembershipInfo] = useState(null);
 
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
@@ -142,6 +143,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (currentUser?.token && socket) {
       // Request affiliate info via socket instead of API call
       socket.emit('requestAffiliateInfo', {
+        userId: currentUser.userId || currentUser.id || currentUser._id
+      });
+      
+      // Request membership info via socket instead of API call
+      socket.emit('requestMembershipInfo', {
         userId: currentUser.userId || currentUser.id || currentUser._id
       });
     }
@@ -355,6 +361,64 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
       socket.off('affiliateInfoError', handleAffiliateInfoError);
       socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
+    };
+  }, [socket, currentUser]);
+
+  // Socket listeners for membership data
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const handleMembershipInfoLoaded = (data) => {
+      setMembershipInfo(data.membership);
+    };
+
+    const handleMembershipInfoError = (error) => {
+      console.error('Error loading membership info via socket:', error);
+    };
+
+    const handleMembershipUpdate = (data) => {
+      // Update membership data in real-time
+      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
+        setMembershipInfo(data.membership);
+        // Also update points if they changed due to membership action
+        if (data.pointsRemaining !== undefined) {
+          setPointsInfo(prev => prev ? { ...prev, points: data.pointsRemaining } : null);
+        }
+      }
+    };
+
+    const handleMembershipActionResponse = (data) => {
+      // Handle responses from membership actions (subscribe/cancel)
+      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
+        setMembershipInfo(data.membership);
+        if (data.pointsRemaining !== undefined) {
+          setPointsInfo(prev => prev ? { ...prev, points: data.pointsRemaining } : null);
+        }
+        // You could add a toast notification here if you have a notification system
+        console.log('Membership action completed:', data.message);
+      }
+    };
+
+    const handleMembershipActionError = (data) => {
+      // Handle errors from membership actions
+      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
+        // You could add a toast notification here if you have a notification system
+        console.error('Membership action error:', data.error);
+      }
+    };
+
+    socket.on('membershipInfoLoaded', handleMembershipInfoLoaded);
+    socket.on('membershipInfoError', handleMembershipInfoError);
+    socket.on('membershipUpdated', handleMembershipUpdate);
+    socket.on('membershipActionResponse', handleMembershipActionResponse);
+    socket.on('membershipActionError', handleMembershipActionError);
+
+    return () => {
+      socket.off('membershipInfoLoaded', handleMembershipInfoLoaded);
+      socket.off('membershipInfoError', handleMembershipInfoError);
+      socket.off('membershipUpdated', handleMembershipUpdate);
+      socket.off('membershipActionResponse', handleMembershipActionResponse);
+      socket.off('membershipActionError', handleMembershipActionError);
     };
   }, [socket, currentUser]);
 
@@ -3850,6 +3914,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             <MembershipManager 
               currentUser={currentUser} 
               userPoints={pointsInfo?.points || 0}
+              membershipInfo={membershipInfo}
+              socket={socket}
               onPointsUpdate={(newPoints) => {
                 setPointsInfo(prev => prev ? { ...prev, points: newPoints } : null);
               }}
