@@ -7,6 +7,21 @@ const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
+// Get all game categories (define BEFORE dynamic routes)
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Game.aggregate([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    res.json(categories.map(cat => ({ name: cat._id, count: cat.count })));
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
 // Get popular game categories (define BEFORE dynamic routes)
 router.get('/categories/popular', async (req, res) => {
   try {
