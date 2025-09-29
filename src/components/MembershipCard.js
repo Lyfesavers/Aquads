@@ -20,10 +20,10 @@ const MembershipCard = ({ membership, onClose }) => {
 
   const generateQRCode = async () => {
     try {
-      // Create a clean, user-friendly message for the QR code
-      const qrMessage = `👑 AQUADS MEMBER\n\n${membership.memberId}\n\nActive Member\nPremium Partner Access\n\nScan verified at: ${new Date().toLocaleDateString()}`;
+      // Create a URL that redirects to the verification page
+      const verificationUrl = `${window.location.origin}/verify-member/${membership.memberId}`;
       
-      const dataURL = await QRCode.toDataURL(qrMessage, {
+      const dataURL = await QRCode.toDataURL(verificationUrl, {
         width: 256,
         margin: 2,
         color: {
@@ -194,7 +194,7 @@ const MembershipCard = ({ membership, onClose }) => {
                 )}
               </div>
               <div className="text-white/60 text-xs mt-2">
-                Partners will see your membership status when they scan this code
+                Partners will be redirected to a verification page when they scan this code
               </div>
             </div>
           </motion.div>

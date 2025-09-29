@@ -47,6 +47,7 @@ import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
+import MemberVerification from './components/MemberVerification';
 import BannerDisplay from './components/BannerDisplay';
 import useUserPresence from './hooks/useUserPresence';
 
@@ -3666,6 +3667,7 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/verify-user" element={<VerifyUser />} />
+            <Route path="/verify-member/:memberId" element={<MemberVerification />} />
             <Route path="/aquafi" element={
               <AquaFi 
                 currentUser={currentUser} 
