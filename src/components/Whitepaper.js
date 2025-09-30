@@ -217,23 +217,32 @@ const Whitepaper = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">5. Revenue Model</h2>
             
-            <h3 className="text-xl font-semibold mb-3">5.1. Advertising Fees</h3>
+            <h3 className="text-xl font-semibold mb-3">5.1. Token-Based Lead Unlocking System</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Users purchase tokens at $1 USDC each to unlock premium leads and client contact information.</li>
+              <li>2 tokens are required to unlock each client's contact details, creating a pay-per-lead model.</li>
+              <li>This system eliminates traditional subscription fees and allows freelancers to invest only in leads they want to pursue.</li>
+              <li>With average project values of $3,200 and 35% conversion rates, the ROI is typically 560%.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">5.2. AquaSwap Trading Fees</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>0.25% fee on all token swaps and trading activities within the AquaSwap platform.</li>
+              <li>Revenue generated from DeFi trading activities and cross-chain token exchanges.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">5.3. AquaFi Savings Platform Fees</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>0% fee on deposits to encourage user adoption and remove barriers to entry.</li>
+              <li>2.5% fee on withdrawals, optimizing revenue while maintaining user-friendly deposit experience.</li>
+              <li>Strategic fee structure designed to balance user experience with sustainable revenue generation.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">5.4. Advertising Revenue</h3>
             <ul className="list-disc pl-6 mb-4">
               <li>Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.</li>
               <li>VIP ad banners, AMAs, and additional monetized features are planned for future phases and more.</li>
               <li>Paid twitter raid post</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">5.2. Service Commissions and Fees</h3>
-            <ul className="list-disc pl-6 mb-4">
-              <li>A commission model on successful service transactions between freelancers and projects.</li>
-              <li>Premium listings, featured service ad placements, and other revenue streams are anticipated as the platform grows.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">5.3. Affiliate Program Earnings</h3>
-            <ul className="list-disc pl-6 mb-4">
-              <li>A tiered commission structure rewards affiliates based on the volume of referred sales.</li>
-              <li>Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.</li>
             </ul>
           </section>
 
@@ -247,7 +256,15 @@ const Whitepaper = () => {
               <li>Digital Marketing: Leverage SEO, content marketing, and targeted online ads to drive traffic and engagement.</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">6.2. Community Engagement</h3>
+            <h3 className="text-xl font-semibold mb-3">6.2. Affiliate Program</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>A tiered commission structure rewards affiliates based on the volume of referred sales.</li>
+              <li>Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.</li>
+              <li>Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.</li>
+              <li>This program serves as a key user acquisition and retention strategy rather than a primary revenue source.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">6.3. Community Engagement</h3>
             <ul className="list-disc pl-6 mb-4">
               <li>User Reviews & Ratings: Foster trust with a transparent feedback system.</li>
               <li>Social Integration: Enable seamless social sharing and community interaction.</li>
@@ -256,40 +273,17 @@ const Whitepaper = () => {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">7. Roadmap & Future Development</h2>
+            <h2 className="text-2xl font-bold mb-4">7. Management & Team</h2>
             
-            <h3 className="text-xl font-semibold mb-3">7.1. Phase 1 – Core Platform Launch</h3>
-            <ul className="list-disc pl-6 mb-4">
-              <li>Launch the basic advertising system, freelancer marketplace, and token information hub.</li>
-              <li>Implement essential user authentication and profile management.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">7.2. Phase 2 – Feature Expansion</h3>
-            <ul className="list-disc pl-6 mb-4">
-              <li>Roll out the Game Hub and How-To page with blog articles.</li>
-              <li>Enhance the booking system with watermarking and upgrade the internal messaging system.</li>
-              <li>Introduce the Twitter Raid feature to drive social engagement.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mb-3">7.3. Phase 3 – Ecosystem Integration</h3>
-            <ul className="list-disc pl-6 mb-4">
-              <li>Launch mobile applications, additional payment integrations, and further monetized services.</li>
-              <li>Expand marketing and community initiatives to drive global adoption.</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">8. Management & Team</h2>
-            
-            <h3 className="text-xl font-semibold mb-3">8.1. Leadership</h3>
+            <h3 className="text-xl font-semibold mb-3">7.1. Leadership</h3>
             <p>Our team comprises experienced professionals in blockchain, software development, digital marketing, and community management. Our leadership is committed to fostering innovation and growth in the Web3 ecosystem.</p>
 
-            <h3 className="text-xl font-semibold mb-3">8.2. Talent Acquisition</h3>
+            <h3 className="text-xl font-semibold mb-3">7.2. Talent Acquisition</h3>
             <p>We focus on hiring specialists in blockchain technology, cybersecurity, and UI/UX design to ensure a secure, scalable, and user-friendly platform.</p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">9. Conclusion</h2>
+            <h2 className="text-2xl font-bold mb-4">8. Conclusion</h2>
             <p className="mb-4">
               Aquads.xyz represents the future of Web3 work, gaming, and crypto projects by uniting advertising, freelance services, and cutting-edge blockchain features in one platform. With dynamic features such as our new Game Hub, comprehensive How-To page, robust booking system with watermarking, upgraded messaging, and an engaging Twitter Raid feature, Aquads.xyz is poised to lead the decentralized marketplace revolution.
             </p>
