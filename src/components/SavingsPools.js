@@ -1877,13 +1877,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       {/* Available Pools */}
 
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700/50">
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
 
-          <div>
-            <h3 className="text-xl font-semibold text-white">AquaFi Premium Yield Vaults</h3>
-            <div className="flex items-center gap-2">
+          <div className="w-full sm:w-auto">
+            <h3 className="text-lg sm:text-xl font-semibold text-white">AquaFi Premium Yield Vaults</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
               <p className="text-gray-400 text-sm">Professional yield management with automated optimization</p>
               <div className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${isUpdatingAPY ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
@@ -1895,32 +1895,34 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           </div>
         </div>
         
-        {/* Chain Filter Tabs */}
+        {/* Chain Filter Tabs - Mobile Optimized */}
         <div className="flex justify-center mb-6 chain-filter-container">
-          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50 chain-filter-tabs">
-            <div className="flex gap-2">
+          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-1 sm:p-2 border border-gray-600/50 chain-filter-tabs w-full max-w-4xl">
+            <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
               {chains.map((chain) => (
               <button
 
                   key={chain}
                   onClick={() => setActiveChain(chain)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all chain-filter-tab ${
+                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all chain-filter-tab flex-shrink-0 ${
                     activeChain === chain
                       ? 'bg-blue-600 text-white shadow-lg active'
                       : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
                   }`}
                 >
                   {chain === 'All' ? (
-                    <span className="text-lg">🌐</span>
+                    <span className="text-sm sm:text-lg">🌐</span>
                   ) : (
                     <img 
                       src={`/${chain === 'Ethereum' ? 'eth' : chain === 'Base' ? 'base' : chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
                       alt={chain}
-                      className="w-5 h-5 object-contain"
+                      className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
                     />
                   )}
-                  {chain}
-                  <span className="text-xs opacity-75">
+                  <span className="truncate max-w-[60px] sm:max-w-none">
+                    {chain}
+                  </span>
+                  <span className="text-xs opacity-75 flex-shrink-0">
                     ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
                   </span>
               </button>
@@ -1983,27 +1985,27 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
                   
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-green-500/30 transition-all duration-300">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-sm">
+                    <div className="bg-gray-800/30 rounded-lg p-2 sm:p-3 border border-gray-700/30 group-hover:border-green-500/30 transition-all duration-300">
                       <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">APY</span>
-                      <span className="text-green-400 font-bold text-lg">{pool.apy.toFixed(2)}%</span>
+                      <span className="text-green-400 font-bold text-base sm:text-lg">{pool.apy.toFixed(2)}%</span>
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-blue-500/30 transition-all duration-300">
+                    <div className="bg-gray-800/30 rounded-lg p-2 sm:p-3 border border-gray-700/30 group-hover:border-blue-500/30 transition-all duration-300">
                       <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">TVL</span>
-                      <span className="text-white font-semibold text-lg">{formatCurrency(pool.tvl)}</span>
+                      <span className="text-white font-semibold text-sm sm:text-lg">{formatCurrency(pool.tvl)}</span>
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-purple-500/30 transition-all duration-300">
+                    <div className="bg-gray-800/30 rounded-lg p-2 sm:p-3 border border-gray-700/30 group-hover:border-purple-500/30 transition-all duration-300">
                       <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">Risk</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRiskColor(pool.risk)}`}>
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${getRiskColor(pool.risk)}`}>
                         {pool.risk}
                       </span>
                     </div>
 
-                    <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 group-hover:border-yellow-500/30 transition-all duration-300">
+                    <div className="bg-gray-800/30 rounded-lg p-2 sm:p-3 border border-gray-700/30 group-hover:border-yellow-500/30 transition-all duration-300">
                       <span className="text-gray-400 text-xs uppercase tracking-wide block mb-1">Min Deposit</span>
-                      <span className="text-white font-semibold text-lg">{pool.minDeposit} {pool.token}</span>
+                      <span className="text-white font-semibold text-sm sm:text-lg">{pool.minDeposit} {pool.token}</span>
                     </div>
                   </div>
 
@@ -2011,24 +2013,26 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
                 
 
-                <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
                   <button
                     onClick={() => setSelectedPool(pool)}
                     disabled={!walletConnected}
-                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg group-hover:shadow-blue-500/30 transition-all duration-300"
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg group-hover:shadow-blue-500/30 transition-all duration-300 text-sm sm:text-base"
                   >
-                    <FaArrowDown className="w-5 h-5" />
-                    {walletConnected ? 'Deposit & Earn' : 'Connect Wallet to Start'}
+                    <FaArrowDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">{walletConnected ? 'Deposit & Earn' : 'Connect Wallet to Start'}</span>
+                    <span className="sm:hidden">{walletConnected ? 'Deposit' : 'Connect'}</span>
                   </button>
 
                   <a
                     href={`https://etherscan.io/address/${pool.contractAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gray-700/50 hover:bg-gray-600/70 border border-gray-600/50 hover:border-gray-500/70 text-gray-300 hover:text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 font-medium backdrop-blur-sm"
+                    className="bg-gray-700/50 hover:bg-gray-600/70 border border-gray-600/50 hover:border-gray-500/70 text-gray-300 hover:text-white px-4 sm:px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 font-medium backdrop-blur-sm text-sm sm:text-base"
                   >
-                    <FaExternalLinkAlt className="w-4 h-4" />
-                    View Contract
+                    <FaExternalLinkAlt className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">View Contract</span>
+                    <span className="sm:hidden">Contract</span>
 
                   </a>
 
