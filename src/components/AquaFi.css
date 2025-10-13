@@ -259,23 +259,25 @@
   
   .chain-filter-tabs > div {
     min-width: max-content;
-    padding: 0.25rem;
+    padding: 0.5rem;
   }
   
   .chain-filter-tab {
     white-space: nowrap;
     min-width: fit-content;
+    /* Minimum touch target size for mobile accessibility */
+    min-height: 44px;
   }
   
-  /* Ensure proper spacing on very small screens */
+  /* Ensure proper sizing on very small screens */
   @media (max-width: 480px) {
     .chain-filter-tab {
-      font-size: 0.75rem;
-      padding: 0.375rem 0.5rem;
+      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
     }
     
     .chain-filter-tab span:first-of-type {
-      max-width: 40px;
+      max-width: 70px;
     }
   }
 }

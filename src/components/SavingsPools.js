@@ -1897,32 +1897,32 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         {/* Chain Filter Tabs - Mobile Optimized */}
         <div className="flex justify-center mb-6 chain-filter-container">
-          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-1 sm:p-2 border border-gray-600/50 chain-filter-tabs w-full max-w-4xl">
-            <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
+          <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-2 border border-gray-600/50 chain-filter-tabs w-full max-w-4xl">
+            <div className="flex flex-wrap gap-2 justify-center">
               {chains.map((chain) => (
               <button
 
                   key={chain}
                   onClick={() => setActiveChain(chain)}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all chain-filter-tab flex-shrink-0 ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-all chain-filter-tab flex-shrink-0 ${
                     activeChain === chain
                       ? 'bg-blue-600 text-white shadow-lg active'
                       : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
                   }`}
                 >
                   {chain === 'All' ? (
-                    <span className="text-sm sm:text-lg">🌐</span>
+                    <span className="text-lg">🌐</span>
                   ) : (
                     <img 
                       src={`/${chain === 'Ethereum' ? 'eth' : chain === 'Base' ? 'base' : chain === 'BNB Chain' ? 'bnb' : 'eth'}.png`}
                       alt={chain}
-                      className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
+                      className="w-5 h-5 object-contain flex-shrink-0"
                     />
                   )}
-                  <span className="truncate max-w-[60px] sm:max-w-none">
+                  <span className="truncate max-w-[80px] sm:max-w-none">
                     {chain}
                   </span>
-                  <span className="text-xs opacity-75 flex-shrink-0">
+                  <span className="text-xs sm:text-sm opacity-75 flex-shrink-0">
                     ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
                   </span>
               </button>
