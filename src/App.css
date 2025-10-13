@@ -109,3 +109,24 @@ nav .h-16,
     min-height: 4rem !important;
   }
 }
+
+/* Rounded banner ads styling */
+.banner-rounded {
+  padding: 8px 16px !important;
+}
+
+.banner-rounded a {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.banner-rounded img {
+  border-radius: 16px !important;
+}
+
+/* Responsive rounded banner padding */
+@media (max-width: 768px) {
+  .banner-rounded {
+    padding: 6px 12px !important;
+  }
+}

@@ -3388,7 +3388,7 @@ function App() {
                     </div>
                     
                     {/* Banner Ad Display */}
-                    <BannerDisplay />
+                    <BannerDisplay rounded={true} />
                     
                     <TokenList 
                       currentUser={currentUser}

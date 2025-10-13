@@ -499,7 +499,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
       {/* Add top margin for fixed navigation */}
       <div className="pt-16">
         {/* Banner display */}
-        <BannerDisplay />
+        <BannerDisplay rounded={true} />
       
       {/* Hero section */}
       <div className="bg-gradient-to-r from-indigo-900 to-purple-900 py-12">
