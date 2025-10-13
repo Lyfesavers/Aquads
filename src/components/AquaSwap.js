@@ -5,6 +5,7 @@ import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
+import { getGasPrice, formatGasPrice, getGasPriceLevel } from '../services/gasPriceService';
 
 import './AquaSwap.css';
 
@@ -34,6 +35,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [searchInput, setSearchInput] = useState(''); // Separate state for search input
+
+  // Gas price state
+  const [gasPrice, setGasPrice] = useState(null);
+  const [loadingGasPrice, setLoadingGasPrice] = useState(false);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -125,6 +130,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
     fetchBubbleTokens();
   }, []);
+
+  // Fetch gas prices when chain changes
+  useEffect(() => {
+    const fetchGasPriceForChain = async () => {
+      if (chartProvider !== 'dexscreener' || !selectedChain) {
+        return;
+      }
+
+      setLoadingGasPrice(true);
+      try {
+        const gasPriceData = await getGasPrice(selectedChain);
+        setGasPrice(gasPriceData);
+      } catch (error) {
+        console.error('Error fetching gas price:', error);
+        setGasPrice(null);
+      } finally {
+        setLoadingGasPrice(false);
+      }
+    };
+
+    fetchGasPriceForChain();
+
+    // Set up interval to refresh gas prices every 15 seconds
+    const interval = setInterval(fetchGasPriceForChain, 15000);
+
+    return () => clearInterval(interval);
+  }, [selectedChain, chartProvider]);
 
   // Convert blockchain names to chain format
   const getChainForBlockchain = (blockchain) => {
@@ -1216,6 +1248,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="storj">Storj</option>
                       <option value="siacoin">Siacoin</option>
                     </select>
+
+                    {/* Gas Price Indicator */}
+                    {gasPrice && !loadingGasPrice && (
+                      <div className={`gas-price-indicator gas-level-${getGasPriceLevel(gasPrice)}`} title={`Fast: ${formatGasPrice({ ...gasPrice, price: gasPrice.fast })} | Standard: ${formatGasPrice(gasPrice)} | Slow: ${formatGasPrice({ ...gasPrice, price: gasPrice.slow })}`}>
+                        <span className="gas-icon">⛽</span>
+                        <span className="gas-value">{formatGasPrice(gasPrice)}</span>
+                      </div>
+                    )}
+                    
+                    {loadingGasPrice && (
+                      <div className="gas-price-loading">
+                        <span className="gas-icon">⛽</span>
+                        <span className="gas-loading-spinner"></span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="token-search">
