@@ -384,7 +384,29 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         return msg;
       });
       
-      setMessages(processedData);
+      // MERGE messages instead of replacing to prevent socket/polling conflicts
+      setMessages((prevMessages) => {
+        // On initial load (no messages yet), just set them directly
+        if (prevMessages.length === 0) {
+          return processedData;
+        }
+        
+        // Create a map of existing messages by ID for quick lookup
+        const existingIds = new Set(prevMessages.map(msg => msg._id));
+        
+        // Add any new messages from the fetch that don't exist yet
+        const newMessages = processedData.filter(msg => !existingIds.has(msg._id));
+        
+        // If there are new messages from polling, merge them
+        if (newMessages.length > 0) {
+          return [...prevMessages, ...newMessages].sort((a, b) => 
+            new Date(a.createdAt) - new Date(b.createdAt)
+          );
+        }
+        
+        // If no new messages, keep existing state (don't trigger re-render)
+        return prevMessages;
+      });
     } catch (err) {
       setError('Failed to load messages. Please try again.');
       if (showLoader) showNotification('Failed to load messages. Please try again.', 'error');
@@ -588,7 +610,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       }
       
       const sentMessage = await response.json();
-      setMessages([...messages, sentMessage]);
+      
+      // Add message using functional update to avoid conflicts with socket/polling
+      setMessages((prevMessages) => {
+        // Check if message already exists (in case socket was super fast)
+        const exists = prevMessages.some(msg => msg._id === sentMessage._id);
+        if (!exists) {
+          return [...prevMessages, sentMessage];
+        }
+        return prevMessages;
+      });
+      
       setNewMessage('');
       setAttachment(null);
       
