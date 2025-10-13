@@ -1132,15 +1132,59 @@ ${currentUser.username}`;
     );
   };
 
+  // Function to open conversation in a new window
+  const openInNewWindow = () => {
+    // Store auth data in sessionStorage for the new window
+    const authData = {
+      userId: currentUser.userId,
+      username: currentUser.username,
+      email: currentUser.email,
+      token: currentUser.token,
+      userType: currentUser.userType,
+      isAdmin: currentUser.isAdmin
+    };
+    
+    sessionStorage.setItem('bookingConversationAuth', JSON.stringify(authData));
+    
+    // Open new window with the conversation
+    const width = Math.min(1200, window.screen.width * 0.8);
+    const height = Math.min(900, window.screen.height * 0.9);
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(
+      `/booking-conversation/${booking._id}`,
+      `booking-conversation-${booking._id}`,
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+    
+    // Optionally close the modal after opening new window
+    if (showNotification) {
+      showNotification('Conversation opened in new window', 'success');
+    }
+    // Uncomment the line below if you want to auto-close the modal
+    // onClose();
+  };
+
   return (
-    <div className="bg-gray-800 rounded-lg p-4 shadow-lg w-full max-w-4xl mx-auto">
+    <div className="bg-gray-800 rounded-lg p-4 shadow-lg w-full max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
         <h3 className="text-xl text-blue-400 font-semibold">
           Conversation: {booking?.serviceId?.title || 'Loading...'}
         </h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-white">
-          ✖
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={openInNewWindow}
+            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center gap-1"
+            title="Open in new window"
+          >
+            <span>🗗</span>
+            <span className="hidden sm:inline">New Window</span>
+          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">
+            ✖
+          </button>
+        </div>
       </div>
       
       {loading ? (
@@ -1159,7 +1203,7 @@ ${currentUser.username}`;
         </div>
       ) : (
         <>
-          <div className="h-96 overflow-y-auto mb-4 p-2 bg-gray-900 rounded-lg">
+          <div className="h-[60vh] md:h-[65vh] overflow-y-auto mb-4 p-2 bg-gray-900 rounded-lg">
             {!messages || messages.length === 0 ? (
               <div className="text-gray-500 text-center my-8">
                 No messages yet. Start the conversation!

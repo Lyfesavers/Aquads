@@ -53,6 +53,7 @@ import useUserPresence from './hooks/useUserPresence';
 
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
+import BookingConversationPage from './components/BookingConversationPage';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -2635,6 +2636,7 @@ function App() {
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
+          <Route path="/booking-conversation/:bookingId" element={<BookingConversationPage />} />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
 

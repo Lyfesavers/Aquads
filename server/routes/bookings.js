@@ -159,6 +159,38 @@ router.get('/my-bookings', auth, async (req, res) => {
   }
 });
 
+// Get a specific booking by ID (for new window view)
+router.get('/:bookingId', auth, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    
+    // Validate bookingId is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ error: 'Invalid booking ID' });
+    }
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('serviceId')
+      .populate('sellerId', 'username email')
+      .populate('buyerId', 'username email');
+    
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    // Verify user is either buyer or seller
+    if (booking.buyerId._id.toString() !== req.user.userId && 
+        booking.sellerId._id.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to view this booking' });
+    }
+    
+    res.json(booking);
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Handle OPTIONS request for the status update endpoint
 router.options('/:id/status', (req, res) => {
   res.header('Access-Control-Allow-Methods', 'PUT');
