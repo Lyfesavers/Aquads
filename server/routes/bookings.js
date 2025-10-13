@@ -414,6 +414,18 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
         },
         { $set: { isRead: true } }
       );
+      
+      // Emit socket event for read receipts (so sender sees double check)
+      try {
+        const socketModule = require('../socket');
+        socketModule.emitBookingMessagesRead({
+          bookingId: bookingId,
+          messageIds: unreadMessages.map(msg => msg._id),
+          readBy: req.user.userId
+        });
+      } catch (socketError) {
+        console.error('Error emitting read receipt socket event:', socketError);
+      }
     }
 
     // Include initial requirements as first message if it exists

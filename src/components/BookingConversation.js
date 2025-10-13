@@ -255,10 +255,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       }
     };
 
+    // Listen for read receipts (when recipient reads messages)
+    const handleMessageRead = (data) => {
+      if (data.bookingId === booking._id) {
+        setMessages((prevMessages) => {
+          return prevMessages.map(msg => {
+            // Update isRead status for messages that were marked as read
+            if (data.messageIds && data.messageIds.includes(msg._id)) {
+              return { ...msg, isRead: true };
+            }
+            return msg;
+          });
+        });
+      }
+    };
+
     on('newBookingMessage', handleNewMessage);
+    on('bookingMessagesRead', handleMessageRead);
 
     return () => {
       off('newBookingMessage', handleNewMessage);
+      off('bookingMessagesRead', handleMessageRead);
       if (isConnected) {
         emit('leaveBookingRoom', { bookingId: booking._id });
       }
@@ -1306,9 +1323,23 @@ ${currentUser.username}`;
                         {sender.username || 'Unknown'}
                         {msg.isInitialRequirements && ' (Initial Requirements)'}
                       </span>
-                      <span className="text-xs opacity-75">
-                        {formatMessageTime(msg.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs opacity-75">
+                          {formatMessageTime(msg.createdAt)}
+                        </span>
+                        {/* Read receipts - only show for messages sent by current user */}
+                        {isCurrentUserMessage(sender) && !msg.isInitialRequirements && (
+                          <span className="text-xs ml-1" title={msg.isRead ? 'Read' : 'Delivered'}>
+                            {msg.isRead ? (
+                              // Double check (read)
+                              <span className="text-yellow-400">✓✓</span>
+                            ) : (
+                              // Single check (delivered)
+                              <span className="text-yellow-400">✓</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {renderMessageContent(msg)}
                   </div>

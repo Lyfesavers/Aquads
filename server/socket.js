@@ -866,6 +866,13 @@ function emitBookingMessageRead(messageData) {
   }
 }
 
+function emitBookingMessagesRead(data) {
+  if (io) {
+    // Emit to the booking room so sender sees double check marks
+    io.to(`booking_${data.bookingId}`).emit('bookingMessagesRead', data);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -893,5 +900,6 @@ module.exports = {
   emitMembershipActionResponse,
   emitMembershipActionError,
   emitNewBookingMessage,
-  emitBookingMessageRead
+  emitBookingMessageRead,
+  emitBookingMessagesRead
 }; 
