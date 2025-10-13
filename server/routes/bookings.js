@@ -703,6 +703,19 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
       }
     );
 
+    // Emit socket event for real-time message delivery
+    try {
+      const socketModule = require('../socket');
+      socketModule.emitNewBookingMessage({
+        ...populatedMessage.toObject(),
+        bookingId: bookingId,
+        recipientId: recipientId
+      });
+    } catch (socketError) {
+      console.error('Error emitting socket event for new message:', socketError);
+      // Don't fail the request if socket emission fails
+    }
+
     res.status(201).json(populatedMessage);
   } catch (error) {
     console.error('Error sending message:', error);

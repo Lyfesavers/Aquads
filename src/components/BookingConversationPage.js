@@ -6,6 +6,7 @@ import { API_URL } from '../services/api';
 /**
  * Standalone page for booking conversations
  * Opens in a new window for better multitasking
+ * Includes real-time socket messaging support
  */
 const BookingConversationPage = () => {
   const { bookingId } = useParams();

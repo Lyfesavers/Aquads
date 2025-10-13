@@ -598,6 +598,22 @@ function init(server) {
       }
     });
 
+    // Handle user joining a booking room for real-time messaging
+    socket.on('joinBookingRoom', (data) => {
+      if (data && data.bookingId) {
+        socket.join(`booking_${data.bookingId}`);
+        console.log(`User ${data.userId} joined booking room: booking_${data.bookingId}`);
+      }
+    });
+
+    // Handle user leaving a booking room
+    socket.on('leaveBookingRoom', (data) => {
+      if (data && data.bookingId) {
+        socket.leave(`booking_${data.bookingId}`);
+        console.log(`User left booking room: booking_${data.bookingId}`);
+      }
+    });
+
     socket.on('error', (error) => {
       // Silent error handling
     });
@@ -829,6 +845,27 @@ function emitMembershipActionError(errorData) {
   }
 }
 
+// Booking message socket emission functions
+function emitNewBookingMessage(messageData) {
+  if (io) {
+    // Emit to all users in the booking room
+    io.to(`booking_${messageData.bookingId}`).emit('newBookingMessage', messageData);
+    
+    // Also emit globally for dashboard updates
+    io.emit('bookingMessageReceived', {
+      bookingId: messageData.bookingId,
+      messageId: messageData._id,
+      senderId: messageData.senderId
+    });
+  }
+}
+
+function emitBookingMessageRead(messageData) {
+  if (io) {
+    io.to(`booking_${messageData.bookingId}`).emit('bookingMessageRead', messageData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -854,5 +891,7 @@ module.exports = {
   emitAllNotificationsRead,
   emitMembershipUpdated,
   emitMembershipActionResponse,
-  emitMembershipActionError
+  emitMembershipActionError,
+  emitNewBookingMessage,
+  emitBookingMessageRead
 }; 

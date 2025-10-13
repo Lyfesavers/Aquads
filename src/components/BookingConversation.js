@@ -3,6 +3,7 @@ import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 import InvoiceModal from './InvoiceModal';
 import invoiceService from '../services/invoiceService';
+import useSocket from '../hooks/useSocket';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -185,6 +186,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const audioStreamRef = useRef(null);
   const recordingDurationRef = useRef(0);
 
+  // Initialize socket connection
+  const socketUrl = API_URL.replace('/api', '');
+  const { socket, isConnected, emit, on, off } = useSocket(socketUrl);
+
   // Seller check
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
   
@@ -226,17 +231,51 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     setShowReplyTemplates(false);
   };
 
-  // Fetch messages on component mount and set up polling
+  // Socket event listeners for real-time messaging
+  useEffect(() => {
+    if (!booking || !booking._id || !socket) return;
+
+    // Join the booking room for real-time updates
+    if (isConnected) {
+      emit('joinBookingRoom', { bookingId: booking._id, userId: currentUser?.userId });
+    }
+
+    // Listen for new messages
+    const handleNewMessage = (messageData) => {
+      // Only add message if it's for this booking and not from current user
+      if (messageData.bookingId === booking._id) {
+        // Check if message already exists (avoid duplicates)
+        setMessages((prevMessages) => {
+          const exists = prevMessages.some(msg => msg._id === messageData._id);
+          if (!exists) {
+            return [...prevMessages, messageData];
+          }
+          return prevMessages;
+        });
+      }
+    };
+
+    on('newBookingMessage', handleNewMessage);
+
+    return () => {
+      off('newBookingMessage', handleNewMessage);
+      if (isConnected) {
+        emit('leaveBookingRoom', { bookingId: booking._id });
+      }
+    };
+  }, [booking?._id, socket, isConnected, emit, on, off, currentUser?.userId]);
+
+  // Fetch messages on component mount and set up polling (as fallback)
   useEffect(() => {
     if (booking && booking._id) {
       fetchMessages();
       fetchInvoices();
       
-      // Set up polling every 15 seconds
+      // Set up polling every 30 seconds (increased from 15 since we have sockets now)
       pollingIntervalRef.current = setInterval(() => {
         fetchMessages(false); // false means don't show loading indicator
         fetchInvoices();
-      }, 15000);
+      }, 30000);
     }
     
     // Clean up interval on unmount
