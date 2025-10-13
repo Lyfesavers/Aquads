@@ -1281,14 +1281,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 >
                   Jobs
                 </button>
-                {currentUser && (
-                  <button
-                    onClick={() => setShowJobModal(true)}
-                    className="px-3 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors w-full sm:w-auto text-sm"
-                  >
-                    Post Job
-                  </button>
-                )}
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
@@ -1339,20 +1331,40 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">{showJobs ? "Job Postings" : "Freelancer Services"}</h2>
-              {currentUser ? (
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
-                >
-                  List Your Service
-                </button>
+              {showJobs ? (
+                // Show Post Job button when in Jobs view
+                currentUser ? (
+                  <button
+                    onClick={() => setShowJobModal(true)}
+                    className="px-4 py-2 bg-green-500/80 hover:bg-green-600/80 rounded-lg transition-colors"
+                  >
+                    Post Job
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLoginClick}
+                    className="px-4 py-2 bg-green-500/80 hover:bg-green-600/80 rounded-lg transition-colors"
+                  >
+                    Login to Post Job
+                  </button>
+                )
               ) : (
-                <button
-                  onClick={handleLoginClick}
-                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
-                >
-                  Login to List Service
-                </button>
+                // Show List Service button when in Services view
+                currentUser ? (
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
+                  >
+                    List Your Service
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLoginClick}
+                    className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
+                  >
+                    Login to List Service
+                  </button>
+                )
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
