@@ -1217,7 +1217,9 @@ ${currentUser.username}`;
             className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center gap-1"
             title="Open in new window"
           >
-            <span>🗗</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
             <span className="hidden sm:inline">New Window</span>
           </button>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">
