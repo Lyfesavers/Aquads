@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -172,6 +172,32 @@ const Footer = () => {
                   <FaFileAlt className="mr-2" />
                   <span>Privacy Policy</span>
                 </Link>
+              </div>
+            </div>
+
+            {/* Mobile Apps */}
+            <div className="space-y-3">
+              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Mobile Apps</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center lg:justify-start">
+                  <span className="inline-block px-2 py-1 text-xs font-semibold text-cyan-400 bg-cyan-900/30 border border-cyan-500/30 rounded-full animate-pulse">
+                    Coming Soon
+                  </span>
+                </div>
+                <div
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm cursor-not-allowed opacity-60"
+                  title="Coming Soon on Google Play Store"
+                >
+                  <FaGooglePlay className="mr-2 text-green-500" />
+                  <span>Google Play</span>
+                </div>
+                <div
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm cursor-not-allowed opacity-60"
+                  title="Coming Soon on Apple App Store"
+                >
+                  <FaApple className="mr-2 text-blue-400" />
+                  <span>App Store</span>
+                </div>
               </div>
             </div>
           </div>
