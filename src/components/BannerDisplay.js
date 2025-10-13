@@ -78,12 +78,12 @@ const BannerDisplay = () => {
         href={currentBanner.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="block w-full flex items-center justify-center"
+        className="block w-full flex items-center justify-center overflow-hidden rounded-lg"
       >
         <img
           src={currentBanner.gif}
           alt={currentBanner.title}
-          className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
+          className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain rounded-lg"
           width="1280"
           height="200"
           loading="eager"
