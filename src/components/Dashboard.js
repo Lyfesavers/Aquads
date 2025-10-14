@@ -2981,34 +2981,88 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       {bannerAds.filter(banner => banner.status !== 'rejected').map(banner => (
                         <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
                           <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="text-white font-semibold">{banner.title}</h4>
-                              <p className="text-gray-400 text-sm">Status: {banner.status}</p>
-                              <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
-                              <a href={banner.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm">
-                                {banner.url}
-                              </a>
+                            <div className="flex-1">
+                              <h4 className="text-white font-semibold text-lg">{banner.title}</h4>
+                              
+                              {/* User Information */}
+                              <div className="mt-2 space-y-1">
+                                <p className="text-gray-300 text-sm">
+                                  <span className="font-medium">Created by:</span> {banner.owner?.username || 'Unknown User'} ({banner.owner?.email || 'N/A'})
+                                </p>
+                                <p className="text-gray-400 text-sm">
+                                  <span className="font-medium">Status:</span> <span className={`font-semibold ${banner.status === 'active' ? 'text-green-400' : banner.status === 'pending' ? 'text-yellow-400' : 'text-gray-400'}`}>{banner.status}</span>
+                                </p>
+                                <p className="text-gray-400 text-sm">
+                                  <span className="font-medium">Created:</span> {new Date(banner.createdAt).toLocaleString()}
+                                </p>
+                                
+                                {/* Payment Information */}
+                                <div className="mt-2 p-3 bg-gray-800 rounded border border-gray-600">
+                                  <p className="text-blue-400 font-semibold text-sm mb-2">💳 Payment Information</p>
+                                  <div className="space-y-1">
+                                    <p className="text-gray-300 text-sm">
+                                      <span className="font-medium">Method:</span> {banner.txSignature === 'paypal' ? (
+                                        <span className="text-yellow-400 font-semibold">Card/PayPal</span>
+                                      ) : (
+                                        <span className="text-blue-400 font-semibold">Crypto ({banner.chainSymbol})</span>
+                                      )}
+                                    </p>
+                                    <p className="text-gray-300 text-sm">
+                                      <span className="font-medium">Chain:</span> {banner.paymentChain}
+                                    </p>
+                                    {banner.txSignature === 'paypal' ? (
+                                      <p className="text-gray-300 text-sm">
+                                        <span className="font-medium">Payment Link:</span>{' '}
+                                        <a 
+                                          href={banner.chainAddress} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="text-yellow-400 hover:text-yellow-300 underline"
+                                        >
+                                          View PayPal Payment
+                                        </a>
+                                      </p>
+                                    ) : (
+                                      <>
+                                        <p className="text-gray-300 text-sm break-all">
+                                          <span className="font-medium">Tx Signature:</span>{' '}
+                                          <span className="font-mono text-xs text-blue-300">{banner.txSignature}</span>
+                                        </p>
+                                        <p className="text-gray-300 text-sm break-all">
+                                          <span className="font-medium">Payment Address:</span>{' '}
+                                          <span className="font-mono text-xs text-gray-400">{banner.chainAddress}</span>
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <a href={banner.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm inline-block mt-2">
+                                  🔗 {banner.url}
+                                </a>
+                              </div>
                             </div>
                             {banner.status === 'pending' && (
-                              <div className="flex space-x-2">
-                                <button onClick={() => handleApproveBanner(banner._id)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                                  Approve
+                              <div className="flex space-x-2 ml-4">
+                                <button onClick={() => handleApproveBanner(banner._id)} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold">
+                                  ✓ Approve
                                 </button>
-                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handleRejectBanner(banner._id, reason); }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-                                  Reject
+                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handleRejectBanner(banner._id, reason); }} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
+                                  ✗ Reject
                                 </button>
                               </div>
                             )}
                           </div>
                           <div className="mt-4">
-                            <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800" />
+                            <p className="text-gray-400 text-sm mb-2">Banner Preview:</p>
+                            <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800 border border-gray-600" />
                           </div>
                           {currentUser?.isAdmin && banner.status === 'active' && (
-                            <div className="mt-2 flex space-x-2">
-                              <button onClick={() => handleEditBanner(banner)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+                            <div className="mt-4 flex space-x-2 pt-3 border-t border-gray-600">
+                              <button onClick={() => handleEditBanner(banner)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
                                 Edit Banner
                               </button>
-                              <button onClick={() => handleDeleteBanner(banner._id)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                              <button onClick={() => handleDeleteBanner(banner._id)} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                                 Delete Banner
                               </button>
                             </div>

@@ -26,7 +26,9 @@ router.get('/', auth, async (req, res) => {
   
     const { status } = req.query;
     const query = status ? { status } : {};
-    const banners = await BannerAd.find(query).sort({ createdAt: -1 });
+    const banners = await BannerAd.find(query)
+      .populate('owner', 'username email') // Populate owner with username and email
+      .sort({ createdAt: -1 });
   
     res.json(banners);
   } catch (error) {
