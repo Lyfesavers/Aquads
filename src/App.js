@@ -2888,6 +2888,15 @@ function App() {
                             </button>
                             <button
                               onClick={() => {
+                                setShowBannerModal(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                            >
+                              🎨 Create Banner Ad
+                            </button>
+                            <button
+                              onClick={() => {
                                 handleLogout();
                                 setIsMobileMenuOpen(false);
                               }}
