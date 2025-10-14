@@ -5,7 +5,7 @@ import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
-import { getGasPrice, formatGasPrice, getGasPriceLevel } from '../services/gasPriceService';
+import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
 import './AquaSwap.css';
 
@@ -1254,6 +1254,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <div className={`gas-price-indicator gas-level-${getGasPriceLevel(gasPrice)}`} title={`Fast: ${formatGasPrice({ ...gasPrice, price: gasPrice.fast })} | Standard: ${formatGasPrice(gasPrice)} | Slow: ${formatGasPrice({ ...gasPrice, price: gasPrice.slow })}`}>
                         <span className="gas-icon">⛽</span>
                         <span className="gas-value">{formatGasPrice(gasPrice)}</span>
+                        <span className="gas-level-text">({getGasPriceLevelText(gasPrice)})</span>
                       </div>
                     )}
                     

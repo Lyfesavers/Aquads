@@ -349,9 +349,27 @@ export function getGasPriceLevel(gasData) {
   return 'medium';
 }
 
+/**
+ * Get gas price level text label (Cheap, Normal, Expensive)
+ */
+export function getGasPriceLevelText(gasData) {
+  const level = getGasPriceLevel(gasData);
+  
+  switch (level) {
+    case 'low':
+      return 'Cheap';
+    case 'high':
+      return 'Expensive';
+    case 'medium':
+    default:
+      return 'Normal';
+  }
+}
+
 export default {
   getGasPrice,
   formatGasPrice,
-  getGasPriceLevel
+  getGasPriceLevel,
+  getGasPriceLevelText
 };
 

@@ -525,6 +525,13 @@
   letter-spacing: 0.5px;
 }
 
+.gas-price-indicator .gas-level-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-left: 2px;
+}
+
 /* Gas price level colors */
 .gas-level-low {
   background: rgba(16, 185, 129, 0.15);
