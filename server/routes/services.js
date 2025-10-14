@@ -351,7 +351,7 @@ router.post('/:id/premium-reject', auth, async (req, res) => {
     }
 
     // Clear premium request data
-    service.premiumStatus = 'inactive';
+    service.premiumStatus = 'rejected';
     service.premiumPaymentId = null;
     service.premiumRequestedAt = null;
     
