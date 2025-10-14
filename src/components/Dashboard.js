@@ -1074,6 +1074,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  const handleRejectPremium = async (serviceId) => {
+    const reason = prompt('Enter rejection reason (optional):');
+    
+    try {
+      const response = await fetch(`${API_URL}/services/${serviceId}/premium-reject`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+
+      if (!response.ok) throw new Error('Failed to reject premium status');
+
+      setPremiumRequests(prev => prev.filter(req => req._id !== serviceId));
+      showNotification('Premium request rejected successfully');
+    } catch (error) {
+      showNotification('Failed to reject premium status', 'error');
+    }
+  };
+
   const handleUpdateJob = async (jobData) => {
     try {
       const response = await fetch(`${API_URL}/jobs/${jobData._id}`, {
@@ -3356,9 +3378,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleApprovePremium(request._id)}
-                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                                 >
                                   Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectPremium(request._id)}
+                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                                >
+                                  Reject
                                 </button>
                               </div>
                             </div>

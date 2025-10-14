@@ -336,6 +336,37 @@ router.post('/:id/premium-approve', auth, async (req, res) => {
   }
 });
 
+// Reject premium status (admin only)
+router.post('/:id/premium-reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject premium status' });
+    }
+
+    const { reason } = req.body;
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Clear premium request data
+    service.premiumStatus = 'inactive';
+    service.premiumPaymentId = null;
+    service.premiumRequestedAt = null;
+    
+    await service.save();
+
+    res.json({ 
+      message: 'Premium request rejected successfully',
+      service
+    });
+  } catch (error) {
+    console.error('Error rejecting premium status:', error);
+    res.status(500).json({ error: 'Failed to reject premium status' });
+  }
+});
+
 // Get pending premium requests (admin only)
 router.get('/premium-requests', auth, async (req, res) => {
   try {
