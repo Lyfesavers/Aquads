@@ -37,6 +37,20 @@ router.get('/', auth, async (req, res) => {
 
 // Banner ad specific pricing
 const calculateBannerAmount = (duration) => {
+  // Duration can be either a string or milliseconds
+  if (typeof duration === 'number') {
+    // Duration in milliseconds
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const threeDaysMs = 3 * oneDayMs;
+    const sevenDaysMs = 7 * oneDayMs;
+    
+    if (duration <= oneDayMs) return 40;
+    if (duration <= threeDaysMs) return 80;
+    if (duration <= sevenDaysMs) return 160;
+    return 160;
+  }
+  
+  // Duration as string (legacy support)
   switch (duration) {
     case '24 hours':
       return 40;  // 40 USDC for 24h banner
@@ -54,6 +68,10 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { title, gif, url, txSignature, duration, paymentChain, chainSymbol, chainAddress } = req.body;
 
+    // Get user with referral info
+    const User = require('../models/User');
+    const user = await User.findById(req.user.userId).populate('referredBy');
+
     const banner = new BannerAd({
       title,
       gif,
@@ -68,13 +86,14 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 
     await banner.save();
 
-    if (referredBy) {
+    // Handle affiliate commission if user was referred
+    if (user && user.referredBy) {
       const bannerAmount = calculateBannerAmount(req.body.duration);
-      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy._id);
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(user.referredBy._id);
       const commissionEarned = AffiliateEarning.calculateCommission(bannerAmount, commissionRate);
 
       const affiliateEarning = new AffiliateEarning({
-        affiliateId: referredBy._id,
+        affiliateId: user.referredBy._id,
         referredUserId: req.user.userId,
         adId: banner._id,
         adAmount: bannerAmount, // Now in USDC
