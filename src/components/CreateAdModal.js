@@ -281,6 +281,37 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
     });
   };
 
+  const handlePayPalPurchase = async () => {
+    // Validate required data before proceeding
+    if (!formData.title || !formData.logo || !formData.url || !formData.pairAddress) {
+      alert('Please complete all required fields in step 1');
+      return;
+    }
+
+    try {
+      // Open PayPal payment link
+      window.open('https://www.paypal.com/ncp/payment/4XBSMGVA348FC', '_blank');
+      
+      // Submit ad for admin approval with PayPal method
+      await onCreateAd({
+        ...formData,
+        txSignature: 'paypal', // Identifier to show it was a PayPal payment
+        paymentMethod: 'paypal',
+        paymentChain: 'PayPal',
+        chainSymbol: 'USD',
+        chainAddress: 'https://www.paypal.com/ncp/payment/4XBSMGVA348FC',
+        isAffiliate: isAffiliate,
+        affiliateDiscount: affiliateDiscount,
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+      });
+
+      alert('PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
+    } catch (error) {
+      console.error('Error creating PayPal listing:', error);
+      alert(error.message || 'Failed to create listing');
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'logo') {
@@ -880,20 +911,41 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                   {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
 
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
-                  >
-                    <FaArrowLeft className="mr-2" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex items-center px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-lg"
-                  >
-                    Submit Payment
-                  </button>
+                <div className="space-y-4 pt-4">
+                  {/* Payment Method Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+                    >
+                      <span className="mr-1.5 sm:mr-2">🔗</span>
+                      Pay with Crypto
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handlePayPalPurchase}
+                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+                    >
+                      <span className="mr-1.5 sm:mr-2">💳</span>
+                      Pay with Card
+                    </button>
+                  </div>
+
+                  <p className="text-gray-400 text-xs sm:text-sm text-center">
+                    * Your payment will be manually verified by an admin
+                  </p>
+
+                  {/* Navigation */}
+                  <div className="flex justify-start pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
+                    >
+                      <FaArrowLeft className="mr-2" /> Back
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
