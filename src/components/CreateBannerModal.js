@@ -47,6 +47,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(selectedChain.address);
@@ -54,7 +55,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!txSignature) {
       alert('Please enter the transaction signature');
@@ -62,20 +63,58 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
     }
 
     try {
-      onSubmit({
+      setSubmitting(true);
+      await onSubmit({
         ...bannerData,
         txSignature,
         paymentChain: selectedChain.name,
         chainSymbol: selectedChain.symbol,
         chainAddress: selectedChain.address,
-        duration: selectedOption.durationMs
+        duration: selectedOption.durationMs,
+        paymentMethod: 'crypto'
       });
       
-      alert('Banner ad created successfully!');
+      alert('Banner ad created successfully! It will be reviewed by an admin for approval.');
       onClose();
     } catch (error) {
       console.error('Error creating banner:', error);
       alert(error.message || 'Failed to create banner ad');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePayPalPurchase = async () => {
+    // Validate banner data before proceeding
+    if (!bannerData.title || !bannerData.gif || !bannerData.url) {
+      alert('Please fill in all banner details (Title, Image URL, and Website URL)');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Open PayPal payment link
+      window.open('https://www.paypal.com/ncp/payment/CCJGW2D9SM3XA', '_blank');
+      
+      // Submit banner for admin approval with PayPal method
+      await onSubmit({
+        ...bannerData,
+        txSignature: 'paypal', // Identifier to show it was a PayPal payment
+        paymentMethod: 'paypal',
+        paymentChain: 'PayPal',
+        chainSymbol: 'USD',
+        chainAddress: 'https://www.paypal.com/ncp/payment/CCJGW2D9SM3XA',
+        duration: selectedOption.durationMs
+      });
+
+      alert('PayPal payment initiated! Please complete the payment in the opened window. Your banner ad will be verified by an admin and activated once approved.');
+      onClose();
+    } catch (error) {
+      console.error('Error creating PayPal banner:', error);
+      alert(error.message || 'Failed to create banner ad');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -359,11 +398,41 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                   </div>
                 </div>
 
+                {/* Payment Instructions */}
+                <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-xl p-6">
+                  <h4 className="text-yellow-400 font-semibold mb-3 flex items-center">
+                    <span className="text-xl mr-2">💳</span>
+                    Payment Options:
+                  </h4>
+                  <div className="text-yellow-300 text-sm space-y-3">
+                    <div>
+                      <strong>Crypto Payment:</strong>
+                      <ul className="ml-4 mt-1 space-y-1 text-yellow-200">
+                        <li>• Send exactly ${selectedOption.price} USDC to the address below</li>
+                        <li>• Copy the transaction signature after payment</li>
+                        <li>• Click "Pay with Crypto" to submit</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong>Card/PayPal Payment:</strong>
+                      <ul className="ml-4 mt-1 space-y-1 text-yellow-200">
+                        <li>• Click "Pay with Card" to open secure payment link</li>
+                        <li>• Complete payment of ${selectedOption.price} USD</li>
+                        <li>• Your banner will be submitted for admin approval</li>
+                      </ul>
+                    </div>
+                    <div className="border-t border-yellow-500/30 pt-2 mt-2">
+                      <li>• Admin will verify and approve your banner</li>
+                      <li>• Banner will be activated once payment is confirmed</li>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Payment Options */}
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <h3 className="text-xl font-semibold mb-4 text-white flex items-center">
                     <FaGlobe className="mr-2 text-green-400" />
-                    Payment Chain
+                    Select Crypto Payment Chain
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {BLOCKCHAIN_OPTIONS.map((chain) => (
@@ -417,45 +486,82 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                   </div>
                 </div>
 
-                {/* Transaction Signature */}
+                {/* Transaction Signature - Only for Crypto Payment */}
                 <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
                   <h3 className="text-xl font-semibold mb-4 text-white">
-                    Confirm Payment
+                    Crypto Payment Confirmation
                   </h3>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-300">
-                      Transaction Signature/Hash
+                      Transaction Signature/Hash <span className="text-gray-500">(Required for crypto payment only)</span>
                     </label>
                     <input
                       type="text"
                       value={txSignature}
                       onChange={(e) => setTxSignature(e.target.value)}
-                      required
-                      placeholder="Paste your transaction signature here"
+                      placeholder="Paste your transaction signature here (for crypto payment)"
                       className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-sm"
                     />
                     <p className="mt-2 text-xs text-gray-400">
-                      After sending payment, paste your transaction signature to verify the payment
+                      After sending crypto payment, paste your transaction signature here
                     </p>
                   </div>
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t border-gray-700">
+                <div className="space-y-3 pt-4 border-t border-gray-700">
+                  {/* Cancel Button */}
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-medium transition-colors"
+                    className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-medium transition-colors"
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
-                  >
-                    <FaRocket className="mr-2" />
-                    Create Banner Ad
-                  </button>
+                  
+                  {/* Payment Method Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="submit"
+                      disabled={submitting || !txSignature.trim()}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
+                    >
+                      {submitting ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Submitting...
+                        </div>
+                      ) : (
+                        <>
+                          <FaRocket className="mr-2" />
+                          Pay with Crypto
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handlePayPalPurchase}
+                      disabled={submitting}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
+                    >
+                      {submitting ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Processing...
+                        </div>
+                      ) : (
+                        <>
+                          <span className="mr-2">💳</span>
+                          Pay with Card
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-gray-400 text-xs text-center">
+                    * Your payment will be manually verified by an admin
+                  </p>
                 </div>
               </form>
             </div>
