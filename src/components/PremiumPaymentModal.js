@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaCrown, FaCheckCircle, FaStar, FaHeadset, FaAd, FaShieldAlt, FaSearch, FaBolt } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaCrown, FaCheckCircle, FaStar, FaHeadset, FaAd, FaShieldAlt, FaSearch, FaBolt, FaCreditCard } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -76,11 +76,20 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [paymentSignature, setPaymentSignature] = useState('');
   const [copied, setCopied] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' or 'paypal'
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(selectedChain.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePayPalPayment = () => {
+    // Open PayPal payment link
+    window.open('https://www.paypal.com/ncp/payment/LYECY49SXB3E6', '_blank');
+    
+    // Submit with PayPal identifier
+    onSubmit('paypal');
   };
 
   const handleSubmit = (e) => {
@@ -153,7 +162,47 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">Payment Details</h2>
                 
                 <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
-                  {/* Blockchain Selection */}
+                  {/* Payment Method Selection */}
+                  <div>
+                    <label className="block text-base md:text-lg font-semibold text-gray-200 mb-3 md:mb-4">
+                      Select Payment Method
+                    </label>
+                    <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('crypto')}
+                        className={`p-4 md:p-5 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                          paymentMethod === 'crypto'
+                            ? 'bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-2 border-blue-400 shadow-lg shadow-blue-500/30'
+                            : 'bg-gray-700/50 border-2 border-gray-600 hover:bg-gray-600/50 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="text-3xl mb-2">₿</div>
+                          <div className="font-bold text-white text-base md:text-lg">Crypto Payment</div>
+                          <div className="text-xs md:text-sm text-gray-300 mt-1">Pay with USDC</div>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('paypal')}
+                        className={`p-4 md:p-5 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                          paymentMethod === 'paypal'
+                            ? 'bg-gradient-to-br from-yellow-500/30 to-yellow-600/30 border-2 border-yellow-400 shadow-lg shadow-yellow-500/30'
+                            : 'bg-gray-700/50 border-2 border-gray-600 hover:bg-gray-600/50 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <FaCreditCard className="text-3xl mx-auto mb-2" />
+                          <div className="font-bold text-white text-base md:text-lg">Card Payment</div>
+                          <div className="text-xs md:text-sm text-gray-300 mt-1">Pay with Card/PayPal</div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Blockchain Selection - Only show for crypto */}
+                  {paymentMethod === 'crypto' && (
                   <div>
                     <label className="block text-base md:text-lg font-semibold text-gray-200 mb-3 md:mb-4">
                       Select Blockchain
@@ -179,8 +228,10 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
                       ))}
                     </div>
                   </div>
+                  )}
 
-                  {/* Payment Address */}
+                  {/* Payment Address - Only show for crypto */}
+                  {paymentMethod === 'crypto' && (
                   <div>
                     <label className="block text-base md:text-lg font-semibold text-gray-200 mb-3 md:mb-4">
                       Payment Address
@@ -210,8 +261,10 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
                       )}
                     </div>
                   </div>
+                  )}
 
-                  {/* Payment Signature */}
+                  {/* Payment Signature - Only show for crypto */}
+                  {paymentMethod === 'crypto' && (
                   <div>
                     <label className="block text-base md:text-lg font-semibold text-gray-200 mb-3 md:mb-4">
                       Payment Signature / Transaction Hash
@@ -228,6 +281,30 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
                       After sending payment, paste your transaction signature here
                     </p>
                   </div>
+                  )}
+
+                  {/* PayPal Instructions - Only show for PayPal */}
+                  {paymentMethod === 'paypal' && (
+                  <div className="bg-yellow-500/10 border-2 border-yellow-500/30 rounded-xl p-5 md:p-6">
+                    <div className="flex items-start gap-3 mb-4">
+                      <FaCreditCard className="text-yellow-400 text-2xl md:text-3xl mt-1 shrink-0" />
+                      <div>
+                        <h3 className="font-bold text-white mb-2 text-base md:text-lg">Card/PayPal Payment Instructions</h3>
+                        <ol className="text-sm md:text-base text-gray-300 space-y-2 list-decimal list-inside">
+                          <li>Click the "Pay with Card/PayPal" button below</li>
+                          <li>Complete the payment of $1000 USD in the opened window</li>
+                          <li>Your premium status will be activated within 24 hours after verification</li>
+                        </ol>
+                      </div>
+                    </div>
+                    <div className="bg-yellow-500/10 rounded-lg p-3 md:p-4 border border-yellow-500/20">
+                      <p className="text-xs md:text-sm text-yellow-200 flex items-center gap-2">
+                        <FaCheckCircle className="shrink-0" />
+                        <span>Secure payment processed through PayPal</span>
+                      </p>
+                    </div>
+                  </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4">
@@ -238,13 +315,25 @@ const PremiumPaymentModal = ({ onClose, onSubmit }) => {
                     >
                       Cancel
                     </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-xl hover:from-yellow-500 hover:to-yellow-700 transition-all duration-300 font-bold text-base md:text-lg shadow-xl shadow-yellow-500/30 hover:shadow-yellow-500/50 transform hover:scale-105 flex items-center justify-center gap-2 md:gap-3"
-                    >
-                      <FaCrown />
-                      Upgrade to Premium
-                    </button>
+                    
+                    {paymentMethod === 'crypto' ? (
+                      <button
+                        type="submit"
+                        className="flex-1 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-xl hover:from-blue-500 hover:to-blue-700 transition-all duration-300 font-bold text-base md:text-lg shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:scale-105 flex items-center justify-center gap-2 md:gap-3"
+                      >
+                        <FaCrown />
+                        Pay with Crypto
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handlePayPalPayment}
+                        className="flex-1 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-xl hover:from-yellow-500 hover:to-yellow-700 transition-all duration-300 font-bold text-base md:text-lg shadow-xl shadow-yellow-500/30 hover:shadow-yellow-500/50 transform hover:scale-105 flex items-center justify-center gap-2 md:gap-3"
+                      >
+                        <FaCreditCard />
+                        Pay with Card/PayPal
+                      </button>
+                    )}
                   </div>
                 </form>
               </div>
