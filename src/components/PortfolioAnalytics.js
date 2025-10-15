@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FaChartLine, FaChartPie, FaChartBar, FaArrowUp, FaDollarSign, FaPercentage, FaClock, FaFire } from 'react-icons/fa';
+import { FaChartLine, FaChartPie, FaChartBar, FaArrowUp, FaDollarSign, FaPercentage, FaClock, FaFire, FaInfoCircle } from 'react-icons/fa';
 import './PortfolioAnalytics.css';
 
 const PortfolioAnalytics = ({ userPositions, pools }) => {
