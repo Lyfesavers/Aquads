@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, AreaChart, Area, PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React from 'react';
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FaChartLine, FaChartPie, FaChartBar, FaArrowUp, FaDollarSign, FaPercentage, FaClock, FaFire, FaInfoCircle } from 'react-icons/fa';
 import './PortfolioAnalytics.css';
 
 const PortfolioAnalytics = ({ userPositions, pools }) => {
-  const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d, 1y, all
-  const [growthData, setGrowthData] = useState([]);
   
   // Color palette for charts
   const COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
@@ -32,38 +30,6 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
   };
 
   const metrics = calculateMetrics();
-
-  // Generate historical growth data (simulated based on APY)
-  useEffect(() => {
-    const generateGrowthData = () => {
-      const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : timeRange === '1y' ? 365 : 90;
-      const data = [];
-      
-      for (let i = days; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        
-        // Simulate growth based on weighted APY
-        const daysPassed = days - i;
-        const growthFactor = 1 + (metrics.weightedAPY / 100 / 365) * daysPassed;
-        const value = metrics.totalDeposited * growthFactor;
-        const earned = value - metrics.totalDeposited;
-        
-        data.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          value: value,
-          deposited: metrics.totalDeposited,
-          earned: earned
-        });
-      }
-      
-      return data;
-    };
-    
-    if (userPositions.length > 0) {
-      setGrowthData(generateGrowthData());
-    }
-  }, [userPositions, timeRange, metrics.totalDeposited, metrics.weightedAPY]);
 
   // Prepare asset allocation data for pie chart
   const assetAllocationData = userPositions.map((pos, index) => ({
@@ -226,149 +192,79 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
         </div>
       </div>
 
-      {/* Portfolio Growth Chart */}
+      {/* Asset Allocation Pie Chart - Full Width */}
       <div className="chart-section">
         <div className="chart-header">
           <div className="chart-title-wrapper">
-            <FaChartLine className="chart-icon" />
+            <FaChartPie className="chart-icon" />
             <div>
-              <h3 className="chart-title">Portfolio Growth Projection</h3>
-              <p className="chart-subtitle">⚠️ Simulated based on current APY - Not actual historical data</p>
+              <h3 className="chart-title">Asset Allocation <span className="data-badge real">LIVE</span></h3>
+              <p className="chart-subtitle-small">Real-time portfolio distribution</p>
             </div>
-          </div>
-          <div className="time-range-selector">
-            {['7d', '30d', '90d', '1y'].map(range => (
-              <button
-                key={range}
-                className={`range-btn ${timeRange === range ? 'active' : ''}`}
-                onClick={() => setTimeRange(range)}
-              >
-                {range.toUpperCase()}
-              </button>
-            ))}
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={growthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                </linearGradient>
-                <linearGradient id="colorEarned" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-              <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={assetAllocationData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {assetAllocationData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
               <Tooltip content={<CustomTooltip valuePrefix="$" />} />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorValue)" 
-                name="Portfolio Value"
-              />
-              <Area 
-                type="monotone" 
-                dataKey="earned" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorEarned)" 
-                name="Total Earned"
-              />
-            </AreaChart>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="pie-legend">
+            {assetAllocationData.map((item, index) => (
+              <div key={index} className="legend-item">
+                <div className="legend-color" style={{ backgroundColor: item.color }}></div>
+                <span className="legend-label">{item.name}</span>
+                <span className="legend-value">{item.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Earnings by Asset Bar Chart - Full Width */}
+      <div className="chart-section">
+        <div className="chart-header">
+          <div className="chart-title-wrapper">
+            <FaChartBar className="chart-icon" />
+            <div>
+              <h3 className="chart-title">Earnings by Asset <span className="data-badge real">LIVE</span></h3>
+              <p className="chart-subtitle-small">Actual earnings from blockchain</p>
+            </div>
+          </div>
+        </div>
+        <div className="chart-container">
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={earningsData} margin={{ top: 5, right: 15, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
+              <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
+              <Tooltip content={<CustomTooltip valuePrefix="$" />} />
+              <Bar dataKey="earned" name="Earned" radius={[6, 6, 0, 0]}>
+                {earningsData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="chart-disclaimer">
-          <FaInfoCircle style={{ flexShrink: 0 }} />
-          <p>This chart shows a projection based on your current APY rates. Real historical tracking coming soon!</p>
-        </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="charts-grid">
-        {/* Asset Allocation Pie Chart */}
-        <div className="chart-section">
-          <div className="chart-header">
-            <div className="chart-title-wrapper">
-              <FaChartPie className="chart-icon" />
-              <div>
-                <h3 className="chart-title">Asset Allocation <span className="data-badge real">LIVE</span></h3>
-                <p className="chart-subtitle-small">Real-time portfolio distribution</p>
-              </div>
-            </div>
-          </div>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={assetAllocationData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={renderCustomizedLabel}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {assetAllocationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip valuePrefix="$" />} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pie-legend">
-              {assetAllocationData.map((item, index) => (
-                <div key={index} className="legend-item">
-                  <div className="legend-color" style={{ backgroundColor: item.color }}></div>
-                  <span className="legend-label">{item.name}</span>
-                  <span className="legend-value">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Earnings by Asset Bar Chart */}
-        <div className="chart-section">
-          <div className="chart-header">
-            <div className="chart-title-wrapper">
-              <FaChartBar className="chart-icon" />
-              <div>
-                <h3 className="chart-title">Earnings by Asset <span className="data-badge real">LIVE</span></h3>
-                <p className="chart-subtitle-small">Actual earnings from blockchain</p>
-              </div>
-            </div>
-          </div>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={earningsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip valuePrefix="$" />} />
-                <Bar dataKey="earned" name="Earned" radius={[8, 8, 0, 0]}>
-                  {earningsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* APY Comparison Chart */}
-      <div className="chart-section">
+      {/* APY Comparison Chart - Compact */}
+      <div className="chart-section chart-section-compact">
         <div className="chart-header">
           <div className="chart-title-wrapper">
             <FaChartBar className="chart-icon" />
@@ -376,20 +272,20 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={apyComparisonData} margin={{ top: 10, right: 30, left: 0, bottom: 50 }}>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={apyComparisonData} margin={{ top: 5, right: 15, left: 5, bottom: 40 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="name" 
                 stroke="rgba(255,255,255,0.5)" 
                 angle={-45}
                 textAnchor="end"
-                height={100}
-                style={{ fontSize: '11px' }}
+                height={80}
+                style={{ fontSize: '10px' }}
               />
-              <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} label={{ value: 'APY %', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
+              <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} label={{ value: 'APY %', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
               <Tooltip content={<CustomTooltip valuePrefix="" valueSuffix="%" />} />
-              <Bar dataKey="apy" name="APY" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="apy" name="APY" radius={[6, 6, 0, 0]}>
                 {apyComparisonData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
