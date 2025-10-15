@@ -676,16 +676,23 @@ const HorseRacing = ({ currentUser }) => {
           const resultHorse = results.sortedHorses.find(h => h.id === horse.id);
           const finishPosition = results.sortedHorses.findIndex(h => h.id === horse.id);
           
-          // Much closer speeds for exciting races - smaller gaps between horses
-          let speed = 1.8 - (finishPosition * 0.1); // Winner gets 1.8, last gets ~1.1 (much closer!)
+          // SLOWER races with VERY close finishes for maximum drama
+          let speed = 1.1 - (finishPosition * 0.05); // Winner gets 1.1, last gets ~0.75 (extremely close!)
           
-          // Add rubber band effect - trailing horses get slight speed boost to keep race close
+          // Strong rubber band effect - keep all horses bunched together
           const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
           const positionGap = currentMaxPosition - horse.position;
-          if (positionGap > 15) {
-            speed += 0.3; // Boost for horses that are far behind
-          } else if (positionGap > 8) {
-            speed += 0.15; // Small boost for horses that are somewhat behind
+          if (positionGap > 10) {
+            speed += 0.4; // Strong boost to catch up
+          } else if (positionGap > 5) {
+            speed += 0.25; // Moderate boost to stay close
+          } else if (positionGap > 2) {
+            speed += 0.12; // Small boost to maintain tight pack
+          }
+          
+          // Dramatic slowdown in final stretch (90-98%) for photo finishes
+          if (currentMaxPosition > 90 && currentMaxPosition < 98) {
+            speed *= 0.6; // 40% slower for dramatic finish buildup
           }
 
           // Check for dramatic comeback opportunity in backend races too
@@ -714,7 +721,7 @@ const HorseRacing = ({ currentUser }) => {
               ...horse,
               position: 100,
               finished: true,
-              finishTime: Date.now() - (finishPosition * 150) // Stagger finish times
+              finishTime: Date.now() - (finishPosition * 80) // Tighter finish times for photo finishes!
             };
           }
           
@@ -724,19 +731,22 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
-        // Add mid-race commentary with adjusted timing for slower races
+        // Add mid-race commentary with timing optimized for slower, more dramatic races
         const maxPosition = Math.max(...updatedHorses.map(h => h.position));
-        if (maxPosition > 18 && commentaryCounter === 0) {
+        if (maxPosition > 15 && commentaryCounter === 0) {
           setTimeout(() => playCommentary(midRaceCommentary[0]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 40 && commentaryCounter === 1) {
+        } else if (maxPosition > 35 && commentaryCounter === 1) {
           setTimeout(() => playCommentary(midRaceCommentary[1]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 65 && commentaryCounter === 2) {
+        } else if (maxPosition > 60 && commentaryCounter === 2) {
           setTimeout(() => playCommentary(midRaceCommentary[2]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 88 && commentaryCounter === 3) {
+        } else if (maxPosition > 85 && commentaryCounter === 3) {
           setTimeout(() => playCommentary("Coming down the home stretch!"), 200);
+          commentaryCounter++;
+        } else if (maxPosition > 92 && commentaryCounter === 4) {
+          setTimeout(() => playCommentary("What a photo finish!"), 200);
           commentaryCounter++;
         }
         
@@ -777,7 +787,7 @@ const HorseRacing = ({ currentUser }) => {
         
         return updatedHorses;
       });
-    }, 100);
+    }, 150); // Slower update rate for more dramatic pacing (was 100ms)
   };
 
   // Reset horse positions
@@ -805,19 +815,26 @@ const HorseRacing = ({ currentUser }) => {
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
-          // Simple speed calculation (backend handles all psychology)
-          let speedMultiplier = 1;
+          // SLOWER speed for dramatic pacing (backend handles all psychology)
+          let speedMultiplier = 0.65; // Reduced from 1.0 for slower, more dramatic races
           
-          // More balanced random speed variation for closer races
-          let randomSpeed = (Math.random() * 0.4 + 0.8) * horse.speed * speedMultiplier;
+          // Tighter random speed variation for VERY close racing
+          let randomSpeed = (Math.random() * 0.25 + 0.85) * horse.speed * speedMultiplier;
           
-          // Add catch-up mechanics for trailing horses in random races too
+          // Strong rubber band mechanics to keep all horses bunched together
           const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
           const positionGap = currentMaxPosition - horse.position;
-          if (positionGap > 20) {
-            randomSpeed *= 1.2; // 20% speed boost for horses far behind
-          } else if (positionGap > 10) {
-            randomSpeed *= 1.1; // 10% speed boost for horses somewhat behind
+          if (positionGap > 10) {
+            randomSpeed *= 1.5; // Strong boost to catch up
+          } else if (positionGap > 5) {
+            randomSpeed *= 1.3; // Good boost to stay close
+          } else if (positionGap > 2) {
+            randomSpeed *= 1.15; // Small boost to maintain tight pack
+          }
+          
+          // Dramatic slowdown in final stretch (90-98%) for nail-biter finishes
+          if (currentMaxPosition > 90 && currentMaxPosition < 98) {
+            randomSpeed *= 0.65; // 35% slower for maximum drama
           }
 
           // Check for dramatic comeback opportunity
@@ -876,16 +893,22 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
-        // Add mid-race commentary adjusted for slower race pace
+        // Add mid-race commentary optimized for slower, more dramatic races
         const maxPosition = Math.max(...updatedHorses.map(h => h.position));
-        if (maxPosition > 22 && commentaryCounter === 0) {
+        if (maxPosition > 15 && commentaryCounter === 0) {
           playCommentary(midRaceCommentary[0]);
           commentaryCounter++;
-        } else if (maxPosition > 45 && commentaryCounter === 1) {
+        } else if (maxPosition > 35 && commentaryCounter === 1) {
           playCommentary(midRaceCommentary[1]);
           commentaryCounter++;
-        } else if (maxPosition > 70 && commentaryCounter === 2) {
+        } else if (maxPosition > 60 && commentaryCounter === 2) {
           playCommentary(midRaceCommentary[2]);
+          commentaryCounter++;
+        } else if (maxPosition > 85 && commentaryCounter === 3) {
+          playCommentary("Coming down the home stretch!");
+          commentaryCounter++;
+        } else if (maxPosition > 92 && commentaryCounter === 4) {
+          playCommentary("It's going to be close!");
           commentaryCounter++;
         }
         
@@ -901,7 +924,7 @@ const HorseRacing = ({ currentUser }) => {
         
         return updatedHorses;
       });
-    }, 50);
+    }, 80); // Slower update rate (was 50ms) for more dramatic, suspenseful pacing
   };
 
   // Finish race and calculate results
