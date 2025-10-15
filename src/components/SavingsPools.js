@@ -16,6 +16,8 @@ import { EthereumProvider } from '@walletconnect/ethereum-provider';
 
 import logger from '../utils/logger';
 
+import { getGasPrice } from '../services/gasPriceService';
+
 
 
 // Use the exact same fee wallet as AquaSwap
@@ -290,6 +292,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [walletConnectProvider, setWalletConnectProvider] = useState(null);
   const [isRefreshingPositions, setIsRefreshingPositions] = useState(false);
   const [isUpdatingAPY, setIsUpdatingAPY] = useState(false);
+  const [gasPrices, setGasPrices] = useState({});
+  const [loadingGasPrices, setLoadingGasPrices] = useState(false);
 
   // Get unique chains for tabs
   const chains = ['All', ...new Set(pools.map(pool => pool.chain))];
@@ -580,6 +584,50 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
     return () => clearInterval(apyInterval);
 
+  }, []);
+
+  // Fetch gas prices for all chains
+  useEffect(() => {
+    const fetchGasPrices = async () => {
+      setLoadingGasPrices(true);
+      try {
+        // Map chain names to gas price service chain IDs
+        const chainIdMap = {
+          'Ethereum': 'ether',
+          'Base': 'base',
+          'BNB Chain': 'bnb'
+        };
+
+        const prices = {};
+        
+        // Fetch gas prices for each chain in parallel
+        await Promise.all(
+          Object.entries(chainIdMap).map(async ([chainName, chainId]) => {
+            try {
+              const gasData = await getGasPrice(chainId);
+              if (gasData) {
+                prices[chainName] = gasData;
+              }
+            } catch (error) {
+              console.error(`Error fetching gas price for ${chainName}:`, error);
+            }
+          })
+        );
+
+        setGasPrices(prices);
+      } catch (error) {
+        console.error('Error fetching gas prices:', error);
+      } finally {
+        setLoadingGasPrices(false);
+      }
+    };
+
+    fetchGasPrices();
+
+    // Refresh gas prices every 15 seconds
+    const gasInterval = setInterval(fetchGasPrices, 15000);
+
+    return () => clearInterval(gasInterval);
   }, []);
 
 
@@ -1931,10 +1979,22 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                       className="w-5 h-5 object-contain flex-shrink-0"
                     />
                   )}
-                  <span className="truncate max-w-[80px] sm:max-w-none">
-                    {chain}
-                  </span>
-                  <span className="text-xs sm:text-sm opacity-75 flex-shrink-0">
+                  <div className="flex flex-col items-start">
+                    <span className="truncate max-w-[80px] sm:max-w-none">
+                      {chain}
+                    </span>
+                    {chain !== 'All' && gasPrices[chain] && (
+                      <span className={`text-xs ${activeChain === chain ? 'text-blue-200' : 'text-green-400'} font-semibold`}>
+                        ⛽ {gasPrices[chain].price} {gasPrices[chain].unit}
+                      </span>
+                    )}
+                    {chain !== 'All' && loadingGasPrices && !gasPrices[chain] && (
+                      <span className="text-xs text-gray-500 animate-pulse">
+                        ⛽ Loading...
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs sm:text-sm opacity-75 flex-shrink-0 ml-1">
                     ({chain === 'All' ? pools.length : pools.filter(p => p.chain === chain).length})
                   </span>
               </button>
