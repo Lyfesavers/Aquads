@@ -936,16 +936,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     
 
     try {
+      console.log('🔍 Checking wallet provider...');
 
       // Get user's wallet and provider (WalletConnect only)
 
       if (!walletProvider) {
+        console.error('❌ No wallet provider found');
 
         showNotification('Please connect your wallet first', 'error');
+        setIsDepositing(false);
 
         return;
 
       }
+      console.log('✅ Wallet provider exists');
 
       
 
@@ -958,16 +962,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       );
 
       
+      console.log('🔍 Getting provider and signer...');
 
       const web3Provider = walletProvider;
 
       
 
       const provider = new ethers.BrowserProvider(web3Provider);
+      console.log('✅ BrowserProvider created');
 
       const signer = await Promise.race([provider.getSigner(), timeoutPromise]);
+      console.log('✅ Signer obtained');
 
       const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
+      console.log('✅ User address:', userAddress);
 
       
 
@@ -1385,6 +1393,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     } catch (error) {
 
       logger.error('Deposit error:', error);
+      console.error('❌❌❌ DEPOSIT ERROR:', error);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error stack:', error.stack);
 
       
 
@@ -1415,6 +1427,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     } finally {
 
       setIsDepositing(false);
+      console.log('🏁 Deposit process ended');
 
     }
 
