@@ -109,8 +109,8 @@ const HorseRacing = ({ currentUser }) => {
   // No need to submit to leaderboard - horse racing API already handles all point management
   const updateAfterRace = async () => {
     try {
-      // Just reload points and history from server
-      loadUserPoints();
+      // Only reload game history - points already updated from bet response
+      // Don't reload points here to avoid race condition with API
       loadGameHistory();
     } catch (error) {
       console.error('Failed to update after race:', error);
