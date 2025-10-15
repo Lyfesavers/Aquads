@@ -6,16 +6,16 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { getIO } = require('../socket');
 
-// Horse data with base odds and speeds
+// Horse data with base odds and speeds (balanced for fair gameplay)
 const HORSE_DATA = [
-  { name: "Thunder Bolt", color: "#8B4513", baseOdds: 3.5, baseSpeed: 0.8 },
-  { name: "Lightning Flash", color: "#000000", baseOdds: 4.2, baseSpeed: 0.75 },
-  { name: "Midnight Runner", color: "#483D8B", baseOdds: 5.1, baseSpeed: 0.7 },
-  { name: "Golden Arrow", color: "#FFD700", baseOdds: 2.8, baseSpeed: 0.85 },
-  { name: "Fire Storm", color: "#DC143C", baseOdds: 6.2, baseSpeed: 0.65 },
-  { name: "Silver Wind", color: "#C0C0C0", baseOdds: 4.8, baseSpeed: 0.72 },
-  { name: "Emerald Star", color: "#50C878", baseOdds: 5.5, baseSpeed: 0.68 },
-  { name: "Royal Blue", color: "#4169E1", baseOdds: 3.9, baseSpeed: 0.78 }
+  { name: "Thunder Bolt", color: "#8B4513", baseOdds: 2.3, baseSpeed: 0.8 },
+  { name: "Lightning Flash", color: "#000000", baseOdds: 2.6, baseSpeed: 0.75 },
+  { name: "Midnight Runner", color: "#483D8B", baseOdds: 3.0, baseSpeed: 0.7 },
+  { name: "Golden Arrow", color: "#FFD700", baseOdds: 1.8, baseSpeed: 0.85 },
+  { name: "Fire Storm", color: "#DC143C", baseOdds: 3.2, baseSpeed: 0.65 },
+  { name: "Silver Wind", color: "#C0C0C0", baseOdds: 2.8, baseSpeed: 0.72 },
+  { name: "Emerald Star", color: "#50C878", baseOdds: 3.1, baseSpeed: 0.68 },
+  { name: "Royal Blue", color: "#4169E1", baseOdds: 2.5, baseSpeed: 0.78 }
 ];
 
 // Constants for game balance
