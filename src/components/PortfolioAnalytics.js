@@ -248,12 +248,22 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
         </div>
         <div className="chart-container">
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={earningsData} margin={{ top: 5, right: 15, left: 0, bottom: 0 }}>
+            <BarChart 
+              data={earningsData} 
+              margin={{ top: 5, right: 15, left: 0, bottom: 0 }}
+              barCategoryGap="20%"
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
+              <XAxis 
+                dataKey="name" 
+                stroke="rgba(255,255,255,0.5)" 
+                style={{ fontSize: '11px' }}
+                type="category"
+                scale="point"
+              />
               <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} />
               <Tooltip content={<CustomTooltip valuePrefix="$" />} />
-              <Bar dataKey="earned" name="Earned" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="earned" name="Earned" radius={[6, 6, 0, 0]} maxBarSize={120}>
                 {earningsData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
@@ -273,7 +283,11 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
         </div>
         <div className="chart-container">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={apyComparisonData} margin={{ top: 5, right: 15, left: 5, bottom: 40 }}>
+            <BarChart 
+              data={apyComparisonData} 
+              margin={{ top: 5, right: 15, left: 5, bottom: 40 }}
+              barCategoryGap="20%"
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="name" 
@@ -282,10 +296,12 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
                 textAnchor="end"
                 height={80}
                 style={{ fontSize: '10px' }}
+                type="category"
+                scale="point"
               />
               <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '11px' }} label={{ value: 'APY %', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
               <Tooltip content={<CustomTooltip valuePrefix="" valueSuffix="%" />} />
-              <Bar dataKey="apy" name="APY" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="apy" name="APY" radius={[6, 6, 0, 0]} maxBarSize={100}>
                 {apyComparisonData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
