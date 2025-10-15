@@ -1108,8 +1108,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         ];
         const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
         
-        // Use WETH address for ETH deposits in Aave V3
-        const WETH_ADDRESS = tokenAddresses.WETH;
+        // Use the correct WETH address for the selected pool's network (supports all chains)
+        const WETH_ADDRESS = selectedPool.tokenAddress;
 
         const gasEstimate = await aaveContract.supply.estimateGas(
           WETH_ADDRESS,
@@ -1514,7 +1514,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
         
 
-        const WETH_ADDRESS = tokenAddresses.WETH;
+        // Use the correct WETH address from the position (supports all chains)
+        const WETH_ADDRESS = position.tokenAddress;
 
         
         const gasEstimate = await Promise.race([
