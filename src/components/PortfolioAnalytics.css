@@ -1,6 +1,8 @@
 /* Portfolio Analytics Styles */
 .portfolio-analytics {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 0;
   animation: fadeIn 0.5s ease-in;
 }

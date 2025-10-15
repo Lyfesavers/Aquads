@@ -204,7 +204,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={assetAllocationData}
@@ -212,7 +212,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
                 cy="50%"
                 labelLine={false}
                 label={renderCustomizedLabel}
-                outerRadius={65}
+                outerRadius={85}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -247,7 +247,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart 
               data={earningsData} 
               margin={{ top: 5, right: 15, left: 0, bottom: 0 }}
@@ -282,7 +282,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart 
               data={apyComparisonData} 
               margin={{ top: 5, right: 15, left: 5, bottom: 40 }}
