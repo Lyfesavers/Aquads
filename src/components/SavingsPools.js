@@ -306,8 +306,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
     setIsRefreshingPositions(true);
     try {
-      const ethersProvider = new ethers.BrowserProvider(walletProvider);
-      const positions = await fetchUserPositions(connectedAddress, ethersProvider);
+      const positions = await fetchUserPositions(connectedAddress, walletProvider);
       setUserPositions(positions);
       showNotification('Positions refreshed successfully!', 'success');
     } catch (error) {
@@ -369,19 +368,35 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Fetch user positions directly from Aave V3 contracts
-  const fetchUserPositions = async (userAddress, provider) => {
+  // Fetch user positions directly from Aave V3 contracts across ALL networks
+  const fetchUserPositions = async (userAddress, walletProvider) => {
+    console.log('🔍 Fetching positions for user:', userAddress);
+    console.log('📊 Checking', AQUAFI_YIELD_POOLS.length, 'pools across multiple networks...');
+    
     try {
       const positions = [];
       
       for (const pool of AQUAFI_YIELD_POOLS) {
         try {
+          console.log(`🔍 Checking ${pool.token} pool on ${pool.chain}...`);
+          
+          // Create a provider for the specific network this pool is on
+          const chainConfig = getChainConfig(pool.chainId);
+          if (!chainConfig) {
+            console.warn(`❌ No chain config found for ${pool.chain} (${pool.chainId})`);
+            continue;
+          }
+          
+          // Use public RPC for reading positions (doesn't require wallet connection)
+          const rpcProvider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
+          console.log(`✅ Created RPC provider for ${pool.chain}`);
+          
           // Use the correct Aave V3 ABI structure
           const aavePoolABI = [
             'function getReserveData(address asset) view returns (tuple(uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))'
           ];
           
-          const aaveContract = new ethers.Contract(pool.contractAddress, aavePoolABI, provider);
+          const aaveContract = new ethers.Contract(pool.contractAddress, aavePoolABI, rpcProvider);
           
           // Get reserve data to find aToken address
           const reserveData = await aaveContract.getReserveData(pool.tokenAddress);
@@ -396,12 +411,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               'function decimals() view returns (uint8)'
             ];
             
-            const aTokenContract = new ethers.Contract(aTokenAddress, aTokenABI, provider);
+            const aTokenContract = new ethers.Contract(aTokenAddress, aTokenABI, rpcProvider);
             const balance = await aTokenContract.balanceOf(userAddress);
             
             if (balance > 0) {
               const decimals = await aTokenContract.decimals();
               const currentValue = parseFloat(ethers.formatUnits(balance, decimals));
+              console.log(`✅ Found position: ${currentValue} ${pool.token} on ${pool.chain}`);
               
               // Get original deposit from database
               let originalDeposit = 0;
@@ -505,11 +521,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             }
           }
         } catch (poolError) {
-          logger.error(`Error fetching position for ${pool.token}:`, poolError);
+          console.error(`❌ Error fetching position for ${pool.token} on ${pool.chain}:`, poolError.message);
+          logger.error(`Error fetching position for ${pool.token} on ${pool.chain}:`, poolError);
           // Continue with other pools even if one fails
         }
       }
       
+      console.log(`✅ Total positions found: ${positions.length}`);
       return positions;
     } catch (error) {
       logger.error('Error fetching user positions from Aave:', error);
@@ -635,8 +653,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           
           // Load positions from Aave V3 contracts
           try {
-            const ethersProvider = new ethers.BrowserProvider(walletProvider);
-            const positions = await fetchUserPositions(walletProvider.accounts[0], ethersProvider);
+            const positions = await fetchUserPositions(walletProvider.accounts[0], walletProvider);
             setUserPositions(positions);
           } catch (error) {
             logger.error('Error loading positions from Aave:', error);
@@ -745,8 +762,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           
           // Load positions from Aave V3 contracts
           try {
-            const ethersProvider = new ethers.BrowserProvider(provider);
-            const positions = await fetchUserPositions(accounts[0], ethersProvider);
+            const positions = await fetchUserPositions(accounts[0], provider);
             setUserPositions(positions);
           } catch (error) {
             logger.error('Error loading positions from Aave:', error);
@@ -1367,8 +1383,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
       // Refresh positions from Aave contracts to get updated data including earnings
       try {
-        const ethersProvider = new ethers.BrowserProvider(walletProvider);
-        const positions = await fetchUserPositions(userAddress, ethersProvider);
+        const positions = await fetchUserPositions(userAddress, walletProvider);
         setUserPositions(positions);
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
@@ -1687,8 +1702,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       // Refresh positions from Aave contracts after withdrawal
       try {
-        const ethersProvider = new ethers.BrowserProvider(walletProvider);
-        const positions = await fetchUserPositions(connectedAddress, ethersProvider);
+        const positions = await fetchUserPositions(connectedAddress, walletProvider);
         setUserPositions(positions);
       } catch (error) {
         logger.error('Error refreshing positions from Aave:', error);
