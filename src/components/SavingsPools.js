@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp, FaSync, FaChartLine } from 'react-icons/fa';
 
 import Modal from './Modal';
+import PortfolioAnalytics from './PortfolioAnalytics';
 import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain, getChainConfig } from '../config/wallets';
 
 import tokenAddresses from '../config/tokenAddresses';
@@ -1873,7 +1874,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       )}
 
-
+      {/* Portfolio Analytics Dashboard */}
+      {walletConnected && userPositions.length > 0 && (
+        <div className="mb-8">
+          <PortfolioAnalytics userPositions={userPositions} pools={pools} />
+        </div>
+      )}
 
       {/* Available Pools */}
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
+import PortfolioAnalytics from './PortfolioAnalytics';
 import { FaCoins, FaChartLine, FaShieldAlt } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 import LoginModal from './LoginModal';
