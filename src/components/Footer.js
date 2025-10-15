@@ -206,6 +206,8 @@ const Footer = () => {
           <div className="border-t border-gray-700 pt-6">
             <div className="text-sm text-gray-400 text-center">
               © {new Date().getFullYear()} Aquads. All rights reserved.
+              <br />
+              By using Aquads platform and services you agree to all our terms and conditions.
             </div>
           </div>
         </div>
