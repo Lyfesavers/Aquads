@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FaChartLine, FaChartPie, FaChartBar, FaTrendingUp, FaDollarSign, FaPercentage, FaClock, FaFire } from 'react-icons/fa';
+import { FaChartLine, FaChartPie, FaChartBar, FaArrowUp, FaDollarSign, FaPercentage, FaClock, FaFire } from 'react-icons/fa';
 import './PortfolioAnalytics.css';
 
 const PortfolioAnalytics = ({ userPositions, pools }) => {
@@ -175,7 +175,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
             </p>
             <h3 className="metric-value">${metrics.totalCurrentValue.toFixed(2)}</h3>
             <p className="metric-change positive">
-              <FaTrendingUp className="change-icon" />
+              <FaArrowUp className="change-icon" />
               +${metrics.totalEarned.toFixed(2)} earned
             </p>
           </div>
@@ -371,7 +371,7 @@ const PortfolioAnalytics = ({ userPositions, pools }) => {
       <div className="chart-section">
         <div className="chart-header">
           <div className="chart-title-wrapper">
-            <FaTrendingUp className="chart-icon" />
+            <FaChartBar className="chart-icon" />
             <h3 className="chart-title">Available Pools - APY Comparison</h3>
           </div>
         </div>
