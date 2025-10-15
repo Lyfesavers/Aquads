@@ -979,23 +979,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       
 
-      // Validate contract address before proceeding
-
-      const isValidContract = await validateContractAddress(selectedPool.contractAddress);
-
-      if (!isValidContract) {
-
-        showNotification('Invalid contract address detected. Please contact support.', 'error');
-
-        setIsDepositing(false);
-
-        return;
-
-      }
-
-      
-
-      // Check if we're on the correct network and switch if needed
+      // Check if we're on the correct network and switch if needed FIRST
+      console.log('🔍 Checking network...');
 
       const network = await provider.getNetwork();
       console.log('🌐 Current network:', Number(network.chainId));
@@ -1091,6 +1076,26 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } else {
         console.log('✅ Already on correct network');
       }
+
+      
+
+      // Validate contract address AFTER network switch
+      console.log('🔍 Validating contract address on correct network:', selectedPool.contractAddress);
+
+      const isValidContract = await validateContractAddress(selectedPool.contractAddress);
+      console.log('Contract validation result:', isValidContract);
+
+      if (!isValidContract) {
+        console.error('❌ Invalid contract address');
+
+        showNotification('Invalid contract address detected. Please contact support.', 'error');
+
+        setIsDepositing(false);
+
+        return;
+
+      }
+      console.log('✅ Contract address is valid');
 
       
 
