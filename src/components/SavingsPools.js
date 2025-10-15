@@ -370,26 +370,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Fetch user positions directly from Aave V3 contracts across ALL networks
   const fetchUserPositions = async (userAddress, walletProvider) => {
-    console.log('🔍 Fetching positions for user:', userAddress);
-    console.log('📊 Checking', AQUAFI_YIELD_POOLS.length, 'pools across multiple networks...');
-    
     try {
       const positions = [];
       
       for (const pool of AQUAFI_YIELD_POOLS) {
         try {
-          console.log(`🔍 Checking ${pool.token} pool on ${pool.chain}...`);
-          
           // Create a provider for the specific network this pool is on
           const chainConfig = getChainConfig(pool.chainId);
           if (!chainConfig) {
-            console.warn(`❌ No chain config found for ${pool.chain} (${pool.chainId})`);
             continue;
           }
           
           // Use public RPC for reading positions (doesn't require wallet connection)
           const rpcProvider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
-          console.log(`✅ Created RPC provider for ${pool.chain}`);
           
           // Use the correct Aave V3 ABI structure
           const aavePoolABI = [
@@ -417,7 +410,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             if (balance > 0) {
               const decimals = await aTokenContract.decimals();
               const currentValue = parseFloat(ethers.formatUnits(balance, decimals));
-              console.log(`✅ Found position: ${currentValue} ${pool.token} on ${pool.chain}`);
               
               // Get original deposit from database
               let originalDeposit = 0;
@@ -521,13 +513,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             }
           }
         } catch (poolError) {
-          console.error(`❌ Error fetching position for ${pool.token} on ${pool.chain}:`, poolError.message);
           logger.error(`Error fetching position for ${pool.token} on ${pool.chain}:`, poolError);
           // Continue with other pools even if one fails
         }
       }
       
-      console.log(`✅ Total positions found: ${positions.length}`);
       return positions;
     } catch (error) {
       logger.error('Error fetching user positions from Aave:', error);
@@ -905,10 +895,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   // Handle deposit with real blockchain transactions
 
   const handleDeposit = async () => {
-    console.log('🔵 handleDeposit called');
-    console.log('Selected Pool:', selectedPool);
-    console.log('Deposit Amount:', depositAmount);
-    console.log('Wallet Connected:', walletConnected);
 
     if (!selectedPool || !depositAmount || !walletConnected) {
 
@@ -947,17 +933,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
 
     setIsDepositing(true);
-    console.log('✅ Starting deposit process...');
 
     
 
     try {
-      console.log('🔍 Checking wallet provider...');
 
       // Get user's wallet and provider (WalletConnect only)
 
       if (!walletProvider) {
-        console.error('❌ No wallet provider found');
 
         showNotification('Please connect your wallet first', 'error');
         setIsDepositing(false);
@@ -965,7 +948,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         return;
 
       }
-      console.log('✅ Wallet provider exists');
 
       
 
@@ -978,37 +960,28 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       );
 
       
-      console.log('🔍 Getting provider and signer...');
 
       const web3Provider = walletProvider;
 
       
 
       const provider = new ethers.BrowserProvider(web3Provider);
-      console.log('✅ BrowserProvider created');
 
       const signer = await Promise.race([provider.getSigner(), timeoutPromise]);
-      console.log('✅ Signer obtained');
 
       const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
-      console.log('✅ User address:', userAddress);
 
       
 
-      // Check if we're on the correct network and switch if needed FIRST
-      console.log('🔍 Checking network...');
+      // Check if we're on the correct network and switch if needed
 
       const network = await provider.getNetwork();
-      console.log('🌐 Current network:', Number(network.chainId));
-      console.log('🎯 Required network:', selectedPool.chainId, selectedPool.chain);
 
       if (Number(network.chainId) !== selectedPool.chainId) {
-        console.log('⚠️ Network switch required');
 
         try {
 
           // Try to switch network automatically
-          console.log('🔄 Attempting to switch network...');
 
           await web3Provider.request({
 
@@ -1019,20 +992,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           });
 
           showNotification(`Switched to ${selectedPool.chain} network`, 'success');
-          console.log('✅ Network switched successfully');
 
         } catch (switchError) {
-          console.error('❌ Network switch error:', switchError);
 
           if (switchError.code === 4902) {
 
             // Network not added, try to add it
-            console.log('📝 Network not found, attempting to add...');
 
             try {
 
               const chainConfig = getChainConfig(selectedPool.chainId);
-              console.log('Chain config:', chainConfig);
 
               await web3Provider.request({
 
@@ -1063,10 +1032,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               });
 
               showNotification(`Added and switched to ${selectedPool.chain} network`, 'success');
-              console.log('✅ Network added and switched');
 
             } catch (addError) {
-              console.error('❌ Failed to add network:', addError);
 
               showNotification(`Please manually switch to ${selectedPool.chain} network`, 'error');
 
@@ -1077,7 +1044,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             }
 
           } else {
-            console.error('❌ Switch error (not 4902):', switchError);
 
             showNotification(`Please switch to ${selectedPool.chain} network`, 'error');
 
@@ -1089,20 +1055,15 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
         }
 
-      } else {
-        console.log('✅ Already on correct network');
       }
 
       
 
       // Validate contract address AFTER network switch
-      console.log('🔍 Validating contract address on correct network:', selectedPool.contractAddress);
 
       const isValidContract = await validateContractAddress(selectedPool.contractAddress);
-      console.log('Contract validation result:', isValidContract);
 
       if (!isValidContract) {
-        console.error('❌ Invalid contract address');
 
         showNotification('Invalid contract address detected. Please contact support.', 'error');
 
@@ -1111,7 +1072,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         return;
 
       }
-      console.log('✅ Contract address is valid');
 
       
 
@@ -1194,10 +1154,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } else {
 
         // Standard 2-transaction ERC20 deposit flow
-        console.log('💰 Starting ERC20 deposit flow for', selectedPool.token);
-        console.log('Token Address:', selectedPool.tokenAddress);
-        console.log('Contract Address:', selectedPool.contractAddress);
-        
         const tokenABI = [
 
           'function allowance(address owner, address spender) view returns (uint256)',
@@ -1211,21 +1167,16 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
 
         const tokenContract = new ethers.Contract(selectedPool.tokenAddress, tokenABI, signer);
-        console.log('✅ Token contract created');
 
         
 
         // Check user balance
-        console.log('🔍 Checking user balance...');
 
         const balance = await tokenContract.balanceOf(userAddress);
-        console.log('Balance:', ethers.formatUnits(balance, decimals), selectedPool.token);
-        console.log('Required:', depositAmount, selectedPool.token);
 
         if (balance < depositAmountBN) {
 
           showNotification(`Insufficient ${selectedPool.token} balance`, 'error');
-          console.error('❌ Insufficient balance');
 
           setIsDepositing(false);
 
@@ -1236,87 +1187,62 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
 
         // Transaction 1: Approve Aave to spend the full deposit amount
-        console.log('🔍 Checking allowance...');
         const allowance = await tokenContract.allowance(userAddress, selectedPool.contractAddress);
-        console.log('Current allowance:', ethers.formatUnits(allowance, decimals));
 
         
 
         if (allowance < depositAmountBN) {
-          console.log('📝 Approval required, requesting signature...');
           showNotification('Approving token spending...', 'info');
-          
-          try {
-            const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, depositAmountBN);
-            console.log('Gas estimate for approve:', approveGasEstimate.toString());
-            
-            const approveTx = await tokenContract.approve(selectedPool.contractAddress, depositAmountBN, {
-              gasLimit: approveGasEstimate + BigInt(10000)
+          const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, depositAmountBN);
+          const approveTx = await tokenContract.approve(selectedPool.contractAddress, depositAmountBN, {
+            gasLimit: approveGasEstimate + BigInt(10000)
 
-            });
-            console.log('✅ Approve transaction sent:', approveTx.hash);
+          });
 
-            await approveTx.wait();
-            console.log('✅ Approve transaction confirmed');
+          await approveTx.wait();
 
-            showNotification('Token approval confirmed, proceeding with deposit...', 'info');
-          } catch (approveError) {
-            console.error('❌ Approve transaction failed:', approveError);
-            throw approveError;
-          }
+          showNotification('Token approval confirmed, proceeding with deposit...', 'info');
 
-        } else {
-          console.log('✅ Already approved');
         }
 
         
 
         // Transaction 2: Deposit full amount to Aave V3
-        console.log('💸 Preparing deposit transaction...');
         const aaveV3ABI = [
             'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
 
           ];
 
         const aaveContract = new ethers.Contract(selectedPool.contractAddress, aaveV3ABI, signer);
-        console.log('✅ Aave contract created');
           
 
-        try {
-          console.log('🔍 Estimating gas for supply...');
-          const gasEstimate = await aaveContract.supply.estimateGas(
-              selectedPool.tokenAddress,
+        const gasEstimate = await aaveContract.supply.estimateGas(
+            selectedPool.tokenAddress,
 
-            depositAmountBN, // Full amount, no fee deduction
-              userAddress,
+          depositAmountBN, // Full amount, no fee deduction
+            userAddress,
 
-            0 // referralCode
-            );
-          console.log('Gas estimate for supply:', gasEstimate.toString());
-
-          console.log('📝 Requesting deposit signature...');
-          const depositTx = await aaveContract.supply(
-              selectedPool.tokenAddress,
-
-            depositAmountBN, // Full amount
-              userAddress,
-
-            0, // referralCode
-              { gasLimit: gasEstimate + BigInt(30000) }
-
-            );
-          console.log('✅ Deposit transaction sent:', depositTx.hash);
+          0 // referralCode
+          );
 
           
 
-          const receipt = await depositTx.wait();
-          console.log('✅ Deposit transaction confirmed');
+        const depositTx = await aaveContract.supply(
+            selectedPool.tokenAddress,
 
-          txHash = receipt.hash;
-        } catch (supplyError) {
-          console.error('❌ Supply transaction failed:', supplyError);
-          throw supplyError;
-        }
+          depositAmountBN, // Full amount
+            userAddress,
+
+          0, // referralCode
+            { gasLimit: gasEstimate + BigInt(30000) }
+
+          );
+
+        
+
+        const receipt = await depositTx.wait();
+
+        txHash = receipt.hash;
 
       }
 
@@ -1413,10 +1339,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     } catch (error) {
 
       logger.error('Deposit error:', error);
-      console.error('❌❌❌ DEPOSIT ERROR:', error);
-      console.error('Error message:', error.message);
-      console.error('Error code:', error.code);
-      console.error('Error stack:', error.stack);
 
       
 
@@ -1447,7 +1369,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     } finally {
 
       setIsDepositing(false);
-      console.log('🏁 Deposit process ended');
 
     }
 
