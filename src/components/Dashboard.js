@@ -133,7 +133,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       // Create canvas to add logo
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { alpha: true });
+      
+      // Enable high-quality image rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       
       // Load QR code image
       const qrImage = new Image();
@@ -152,6 +156,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       // Load and draw logo
       const logo = new Image();
+      logo.crossOrigin = 'anonymous'; // Prevent CORS issues
       logo.src = '/Aquadsnewlogo.png';
       
       await new Promise((resolve, reject) => {
@@ -159,23 +164,48 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         logo.onerror = reject;
       });
       
-      // Calculate logo size (about 15% of QR code size for less cramped look)
-      const logoSize = canvas.width * 0.15;
-      const logoX = (canvas.width - logoSize) / 2;
-      const logoY = (canvas.height - logoSize) / 2;
+      // Calculate logo size (about 12% of QR code size for less cramped look)
+      const logoSize = canvas.width * 0.12;
       
-      // Draw white background circle for logo (much larger for breathing room)
-      const bgSize = logoSize * 1.8;
-      const bgX = (canvas.width - bgSize) / 2;
-      const bgY = (canvas.height - bgSize) / 2;
+      // Calculate logo dimensions maintaining aspect ratio
+      const logoAspectRatio = logo.width / logo.height;
+      let logoWidth = logoSize;
+      let logoHeight = logoSize;
+      
+      // Adjust dimensions based on aspect ratio
+      if (logoAspectRatio > 1) {
+        // Logo is wider than tall
+        logoHeight = logoSize / logoAspectRatio;
+      } else if (logoAspectRatio < 1) {
+        // Logo is taller than wide
+        logoWidth = logoSize * logoAspectRatio;
+      }
+      
+      const logoX = (canvas.width - logoWidth) / 2;
+      const logoY = (canvas.height - logoHeight) / 2;
+      
+      // Draw white background circle for logo (extra large for breathing room)
+      const bgSize = logoSize * 2.5;
+      
+      // Add subtle shadow for depth
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
       
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
       ctx.arc(canvas.width / 2, canvas.height / 2, bgSize / 2, 0, 2 * Math.PI);
       ctx.fill();
       
-      // Draw logo
-      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+      // Reset shadow for logo
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw logo with high quality
+      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
       
       // Convert canvas to data URL
       const finalDataURL = canvas.toDataURL('image/png');
