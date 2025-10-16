@@ -23,17 +23,113 @@ const MembershipCard = ({ membership, onClose }) => {
       // Create a URL that redirects to the verification page
       const verificationUrl = `${window.location.origin}/verify-member/${membership.memberId}`;
       
-      const dataURL = await QRCode.toDataURL(verificationUrl, {
-        width: 256,
+      // Generate QR code with brand colors
+      const qrDataURL = await QRCode.toDataURL(verificationUrl, {
+        width: 300,
         margin: 2,
+        errorCorrectionLevel: 'H', // High error correction to allow logo overlay
         color: {
-          dark: '#000000',
-          light: '#FFFFFF'
+          dark: '#FEBC10',  // Brand yellow (data pixels)
+          light: '#51159D'  // Brand purple (background)
         }
       });
-      setQrCodeDataURL(dataURL);
+      
+      // Create canvas to add logo
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { alpha: true });
+      
+      // Enable high-quality image rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Load QR code image
+      const qrImage = new Image();
+      qrImage.src = qrDataURL;
+      
+      await new Promise((resolve) => {
+        qrImage.onload = resolve;
+      });
+      
+      // Set canvas size
+      canvas.width = qrImage.width;
+      canvas.height = qrImage.height;
+      
+      // Draw QR code
+      ctx.drawImage(qrImage, 0, 0);
+      
+      // Load and draw logo
+      const logo = new Image();
+      logo.crossOrigin = 'anonymous'; // Prevent CORS issues
+      logo.src = '/Aquadsnewlogo.png';
+      
+      await new Promise((resolve, reject) => {
+        logo.onload = resolve;
+        logo.onerror = reject;
+      });
+      
+      // Calculate logo size (about 25% of QR code size - clearly visible)
+      const logoSize = canvas.width * 0.25;
+      
+      // Calculate logo dimensions maintaining aspect ratio
+      const logoAspectRatio = logo.width / logo.height;
+      let logoWidth = logoSize;
+      let logoHeight = logoSize;
+      
+      // Adjust dimensions based on aspect ratio
+      if (logoAspectRatio > 1) {
+        // Logo is wider than tall
+        logoHeight = logoSize / logoAspectRatio;
+      } else if (logoAspectRatio < 1) {
+        // Logo is taller than wide
+        logoWidth = logoSize * logoAspectRatio;
+      }
+      
+      const logoX = (canvas.width - logoWidth) / 2;
+      const logoY = (canvas.height - logoHeight) / 2;
+      
+      // Draw white background circle for logo (good breathing room)
+      const bgSize = logoSize * 1.4;
+      
+      // Add subtle shadow for depth
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, bgSize / 2, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Reset shadow for logo
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw logo with high quality
+      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+      
+      // Convert canvas to data URL
+      const finalDataURL = canvas.toDataURL('image/png');
+      setQrCodeDataURL(finalDataURL);
     } catch (error) {
       console.error('Error generating QR code:', error);
+      // Fallback to QR code without logo if there's an error
+      try {
+        const verificationUrl = `${window.location.origin}/verify-member/${membership.memberId}`;
+        const dataURL = await QRCode.toDataURL(verificationUrl, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#FEBC10',
+            light: '#51159D'
+          }
+        });
+        setQrCodeDataURL(dataURL);
+      } catch (fallbackError) {
+        console.error('Fallback QR generation failed:', fallbackError);
+      }
     }
   };
 
@@ -180,21 +276,21 @@ const MembershipCard = ({ membership, onClose }) => {
           >
             <div className="text-center">
               <div className="text-white/80 text-xs sm:text-sm mb-2">Scan for Partner Verification</div>
-              <div className="bg-white p-3 sm:p-4 rounded-lg inline-block">
+              <div className="bg-white p-4 rounded-lg inline-block shadow-lg">
                 {qrCodeDataURL ? (
                   <img 
                     src={qrCodeDataURL} 
                     alt="Membership QR Code" 
-                    className="w-24 h-24 sm:w-32 sm:h-32"
+                    className="w-64 h-64"
                   />
                 ) : (
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-200 rounded flex items-center justify-center">
-                    <div className="text-gray-500 text-xs">Generating...</div>
+                  <div className="w-64 h-64 bg-gray-200 rounded flex items-center justify-center">
+                    <div className="text-gray-500 text-sm">Generating...</div>
                   </div>
                 )}
               </div>
               <div className="text-white/60 text-xs mt-2">
-                Partners will be redirected to a verification page when they scan this code
+                Branded QR code with Aquads logo - Partners will be redirected to a verification page
               </div>
             </div>
           </motion.div>

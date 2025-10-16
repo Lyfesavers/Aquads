@@ -164,8 +164,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         logo.onerror = reject;
       });
       
-      // Calculate logo size (about 18% of QR code size - visible but not cramped)
-      const logoSize = canvas.width * 0.18;
+      // Calculate logo size (about 25% of QR code size - clearly visible)
+      const logoSize = canvas.width * 0.25;
       
       // Calculate logo dimensions maintaining aspect ratio
       const logoAspectRatio = logo.width / logo.height;
@@ -185,7 +185,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const logoY = (canvas.height - logoHeight) / 2;
       
       // Draw white background circle for logo (good breathing room)
-      const bgSize = logoSize * 1.6;
+      const bgSize = logoSize * 1.4;
       
       // Add subtle shadow for depth
       ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
