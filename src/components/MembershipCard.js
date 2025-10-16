@@ -67,8 +67,8 @@ const MembershipCard = ({ membership, onClose }) => {
         logo.onerror = reject;
       });
       
-      // Calculate logo size (about 25% of QR code size - clearly visible)
-      const logoSize = canvas.width * 0.25;
+      // Calculate logo size (about 30% of QR code size - clearly visible)
+      const logoSize = canvas.width * 0.30;
       
       // Calculate logo dimensions maintaining aspect ratio
       const logoAspectRatio = logo.width / logo.height;
@@ -87,8 +87,8 @@ const MembershipCard = ({ membership, onClose }) => {
       const logoX = (canvas.width - logoWidth) / 2;
       const logoY = (canvas.height - logoHeight) / 2;
       
-      // Draw white background circle for logo (good breathing room)
-      const bgSize = logoSize * 1.4;
+      // Draw white background circle for logo (tighter fit)
+      const bgSize = logoSize * 1.25;
       
       // Add subtle shadow for depth
       ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
