@@ -15,6 +15,8 @@ import PartnerStoreManager from './PartnerStoreManager';
 import MembershipManager from './MembershipManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
+import QRCode from 'qrcode';
+import { FaQrcode, FaCopy, FaCheck } from 'react-icons/fa';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -82,6 +84,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showRejectServiceModal, setShowRejectServiceModal] = useState(false);
   const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
   const [serviceRejectionReason, setServiceRejectionReason] = useState('');
+  // Referral QR code states
+  const [showReferralQR, setShowReferralQR] = useState(false);
+  const [referralQRCodeDataURL, setReferralQRCodeDataURL] = useState('');
+  const [referralLinkCopied, setReferralLinkCopied] = useState(false);
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
   const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
@@ -108,6 +114,93 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   
   // Loading state for main dashboard tab
   const [isLoadingMainTab, setIsLoadingMainTab] = useState(true);
+
+  // Generate QR code for referral link with brand colors and logo
+  const generateReferralQRCode = async () => {
+    try {
+      const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
+      
+      // Generate QR code with brand colors
+      const qrDataURL = await QRCode.toDataURL(referralUrl, {
+        width: 300,
+        margin: 2,
+        errorCorrectionLevel: 'H', // High error correction to allow logo overlay
+        color: {
+          dark: '#51159D', // Brand purple
+          light: '#FEBC10'  // Brand yellow
+        }
+      });
+      
+      // Create canvas to add logo
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Load QR code image
+      const qrImage = new Image();
+      qrImage.src = qrDataURL;
+      
+      await new Promise((resolve) => {
+        qrImage.onload = resolve;
+      });
+      
+      // Set canvas size
+      canvas.width = qrImage.width;
+      canvas.height = qrImage.height;
+      
+      // Draw QR code
+      ctx.drawImage(qrImage, 0, 0);
+      
+      // Load and draw logo
+      const logo = new Image();
+      logo.src = '/Aquadsnewlogo.png';
+      
+      await new Promise((resolve, reject) => {
+        logo.onload = resolve;
+        logo.onerror = reject;
+      });
+      
+      // Calculate logo size (about 20% of QR code size)
+      const logoSize = canvas.width * 0.2;
+      const logoX = (canvas.width - logoSize) / 2;
+      const logoY = (canvas.height - logoSize) / 2;
+      
+      // Draw white background circle for logo
+      const bgSize = logoSize * 1.15;
+      const bgX = (canvas.width - bgSize) / 2;
+      const bgY = (canvas.height - bgSize) / 2;
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, bgSize / 2, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Draw logo
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+      
+      // Convert canvas to data URL
+      const finalDataURL = canvas.toDataURL('image/png');
+      setReferralQRCodeDataURL(finalDataURL);
+      setShowReferralQR(true);
+    } catch (error) {
+      console.error('Error generating referral QR code:', error);
+      // Fallback to QR code without logo if there's an error
+      try {
+        const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
+        const dataURL = await QRCode.toDataURL(referralUrl, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#51159D',
+            light: '#FEBC10'
+          }
+        });
+        setReferralQRCodeDataURL(dataURL);
+        setShowReferralQR(true);
+      } catch (fallbackError) {
+        console.error('Fallback QR generation failed:', fallbackError);
+      }
+    }
+  };
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -2224,21 +2317,104 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-gray-300">Your Referral Code:</p>
-                      <p 
-                        className="text-blue-400 font-mono font-bold cursor-pointer hover:underline"
-                        onClick={() => {
-                          const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
-                          navigator.clipboard.writeText(referralUrl).then(() => {
-                            showNotification('Referral link copied to clipboard!', 'success');
-                          }).catch(err => {
-                            showNotification('Failed to copy referral link', 'error');
-                          });
-                        }}
-                        title="Click to copy referral link"
+                      <p className="text-gray-300 mb-2">Your Referral Code:</p>
+                      <div className="flex items-center justify-end gap-2">
+                        <p 
+                          className="text-blue-400 font-mono font-bold cursor-pointer hover:underline"
+                          onClick={() => {
+                            const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
+                            navigator.clipboard.writeText(referralUrl).then(() => {
+                              setReferralLinkCopied(true);
+                              showNotification('Referral link copied to clipboard!', 'success');
+                              setTimeout(() => setReferralLinkCopied(false), 2000);
+                            }).catch(err => {
+                              showNotification('Failed to copy referral link', 'error');
+                            });
+                          }}
+                          title="Click to copy referral link"
+                        >
+                          {currentUser?.username}
+                        </p>
+                        
+                        {/* Copy Icon */}
+                        <button
+                          onClick={() => {
+                            const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
+                            navigator.clipboard.writeText(referralUrl).then(() => {
+                              setReferralLinkCopied(true);
+                              showNotification('Referral link copied to clipboard!', 'success');
+                              setTimeout(() => setReferralLinkCopied(false), 2000);
+                            }).catch(err => {
+                              showNotification('Failed to copy referral link', 'error');
+                            });
+                          }}
+                          className="p-2 hover:bg-gray-600 rounded transition-colors"
+                          title="Copy referral link"
+                        >
+                          {referralLinkCopied ? (
+                            <FaCheck className="text-green-400 text-sm" />
+                          ) : (
+                            <FaCopy className="text-gray-400 hover:text-blue-400 text-sm" />
+                          )}
+                        </button>
+                        
+                        {/* QR Code Icon */}
+                        <button
+                          onClick={generateReferralQRCode}
+                          className="p-2 hover:bg-gray-600 rounded transition-colors"
+                          title="Generate QR code"
+                        >
+                          <FaQrcode className="text-gray-400 hover:text-blue-400 text-sm" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* QR Code Display */}
+                {showReferralQR && (
+                  <div className="mt-4 bg-gray-800/50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-white font-medium">Referral QR Code</h4>
+                      <button
+                        onClick={() => setShowReferralQR(false)}
+                        className="text-gray-400 hover:text-white transition-colors"
+                        title="Close QR Code"
                       >
-                        {currentUser?.username}
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="text-center">
+                      <div className="bg-white p-4 rounded-lg inline-block shadow-lg">
+                        {referralQRCodeDataURL ? (
+                          <img 
+                            src={referralQRCodeDataURL} 
+                            alt="Referral QR Code" 
+                            className="w-64 h-64"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 bg-gray-200 rounded flex items-center justify-center">
+                            <div className="text-gray-500 text-sm">Generating...</div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-sm mt-3">
+                        Branded QR code with Aquads logo - Share for quick affiliate sign-ups!
                       </p>
+                      <button
+                        onClick={() => {
+                          // Download QR code
+                          const link = document.createElement('a');
+                          link.download = `aquads-referral-${currentUser?.username}.png`;
+                          link.href = referralQRCodeDataURL;
+                          link.click();
+                        }}
+                        className="mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                      >
+                        Download QR Code
+                      </button>
                     </div>
                   </div>
                 )}
