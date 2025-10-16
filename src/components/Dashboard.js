@@ -120,14 +120,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
       
-      // Generate QR code with brand colors
+      // Generate QR code with brand colors (reversed)
       const qrDataURL = await QRCode.toDataURL(referralUrl, {
         width: 300,
         margin: 2,
         errorCorrectionLevel: 'H', // High error correction to allow logo overlay
         color: {
-          dark: '#51159D', // Brand purple
-          light: '#FEBC10'  // Brand yellow
+          dark: '#FEBC10',  // Brand yellow (data pixels)
+          light: '#51159D'  // Brand purple (background)
         }
       });
       
@@ -159,13 +159,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         logo.onerror = reject;
       });
       
-      // Calculate logo size (about 20% of QR code size)
-      const logoSize = canvas.width * 0.2;
+      // Calculate logo size (about 15% of QR code size for less cramped look)
+      const logoSize = canvas.width * 0.15;
       const logoX = (canvas.width - logoSize) / 2;
       const logoY = (canvas.height - logoSize) / 2;
       
-      // Draw white background circle for logo
-      const bgSize = logoSize * 1.15;
+      // Draw white background circle for logo (much larger for breathing room)
+      const bgSize = logoSize * 1.8;
       const bgX = (canvas.width - bgSize) / 2;
       const bgY = (canvas.height - bgSize) / 2;
       
@@ -190,8 +190,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           width: 300,
           margin: 2,
           color: {
-            dark: '#51159D',
-            light: '#FEBC10'
+            dark: '#FEBC10',
+            light: '#51159D'
           }
         });
         setReferralQRCodeDataURL(dataURL);
