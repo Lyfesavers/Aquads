@@ -39,11 +39,6 @@ const calculateCasinoPsychology = (userPoints) => {
     phase = 'safety_net';
     winRate = 0.45; // 45% win rate - Minimal help, hard to exploit
     psychologyBonus = 0.05; // Small 5% boost
-  } else if (userPoints <= 500) {
-    // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
-    phase = 'honeymoon';
-    winRate = 0.70; // 70% win rate - Very generous
-    psychologyBonus = 0.08; // Extra 8% boost for confidence
   } else if (userPoints <= 1500) {
     // BUILDING CONFIDENCE - Just above safety net
     phase = 'building';
