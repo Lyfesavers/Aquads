@@ -37,7 +37,7 @@ const calculateCasinoPsychology = (userPoints) => {
   // CRITICAL: 1K SAFETY NET - Never let them stay below 1000 points
   if (userPoints < 1000) {
     phase = 'safety_net';
-    winRate = 0.55; // 55% win rate - Help them recover but not exploitable
+    winRate = 0.45; // 45% win rate - Minimal help, hard to exploit
     psychologyBonus = 0.05; // Small 5% boost
   } else if (userPoints <= 500) {
     // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
@@ -47,26 +47,26 @@ const calculateCasinoPsychology = (userPoints) => {
   } else if (userPoints <= 1500) {
     // BUILDING CONFIDENCE - Just above safety net
     phase = 'building';
-    winRate = 0.55; // 55% win rate - Balanced recovery
+    winRate = 0.45; // 45% win rate - Minimal advantage
     psychologyBonus = 0.05; // 5% confidence boost
   } else if (userPoints <= 2500) {
     // EARLY HOOK - Keep them engaged
     phase = 'early_hook';
-    winRate = 0.58; // 58% win rate - Positive bias
+    winRate = 0.35; // 45% win rate - Slight disadvantage
     
     // Dynamic ceiling check around 2200-2400
     if (userPoints > getCeilingThreshold(2300, 0.08)) {
-      winRate = 0.45; // Pullback mode
+      winRate = 0.25; // Pullback mode
       phase = 'ceiling_pullback';
     }
   } else if (userPoints <= 4000) {
     // MAIN ADDICTION ZONE - Balanced to keep them cycling
     phase = 'addiction_zone';
-    winRate = 0.35; // 35% win rate - House edge kicks in
+    winRate = 0.20; // 35% win rate - House edge kicks in
     
     // Dynamic ceiling check around 3600-3800
     if (userPoints > getCeilingThreshold(3700, 0.08)) {
-      winRate = 0.30; // Pullback mode
+      winRate = 0.20; // Pullback mode
       phase = 'ceiling_pullback';
     }
   } else if (userPoints <= 5000) {
