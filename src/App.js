@@ -2981,7 +2981,7 @@ function App() {
                             <p className="text-yellow-100 text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                               <span className="flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                                Swap & bridge across 38+ blockchains
+                                Swap & bridge across 50+ blockchains
                               </span>
                               <span className="hidden sm:inline text-yellow-300">•</span>
                               <span className="hidden sm:inline text-yellow-200 font-semibold">Best rates & speed</span>

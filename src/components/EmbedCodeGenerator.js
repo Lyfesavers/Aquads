@@ -288,7 +288,7 @@ const EmbedCodeGenerator = () => {
         <div className="features-grid">
           <div className="feature-item">
             <span className="feature-icon">🔄</span>
-            <span>Cross-chain swaps across 38+ blockchains</span>
+            <span>Cross-chain swaps across 50+ blockchains</span>
           </div>
           <div className="feature-item">
             <span className="feature-icon">💰</span>

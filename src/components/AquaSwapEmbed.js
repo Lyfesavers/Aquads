@@ -119,7 +119,7 @@ const AquaSwapEmbed = () => {
 
       {/* Footer with Powered by Aquads and description */}
       <div className="embed-footer">
-        <p>Cross-chain swaps across 38+ blockchains</p>
+        <p>Cross-chain swaps across 50+ blockchains</p>
         <a 
           href="https://www.aquads.xyz/aquaswap" 
           target="_blank" 

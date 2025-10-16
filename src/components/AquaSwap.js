@@ -988,7 +988,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <LiFiWidget integrator="aquaswap" config={widgetConfig} />
               </div>
               <div className="swap-footer">
-                <p>✨ Cross-chain swaps • 38+ blockchains • Best rates</p>
+                <p>✨ Cross-chain swaps • 50+ blockchains • Best rates</p>
               </div>
               
               {/* Banner Display - smaller version below swap for desktop/tablet only */}
