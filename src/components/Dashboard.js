@@ -2316,8 +2316,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   )}
                 </div>
                 
-                {/* Existing Affiliate Info */}
-                {affiliateInfo && (
+                {/* Loading Skeleton for Affiliate Info */}
+                {!affiliateInfo ? (
+                  <div className="flex items-center justify-between mb-6 animate-pulse">
+                    <div className="flex-1">
+                      <div className="h-6 bg-gray-600 rounded w-48 mb-2"></div>
+                      <div className="h-4 bg-gray-600 rounded w-64"></div>
+                    </div>
+                    <div className="text-right">
+                      <div className="h-5 bg-gray-600 rounded w-32 mb-2"></div>
+                      <div className="h-8 bg-gray-600 rounded w-40"></div>
+                    </div>
+                  </div>
+                ) : (
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <p className="text-gray-300">Total Affiliates: 
@@ -2438,7 +2449,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 )}
                 
                 {/* Points Display */}
-                {pointsInfo && (
+                {!pointsInfo ? (
+                  <div className="bg-gray-800 rounded-lg p-4 animate-pulse">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                      <div>
+                        <div className="h-5 bg-gray-600 rounded w-32 mb-2"></div>
+                        <div className="h-8 bg-gray-600 rounded w-24"></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-600 rounded w-full"></div>
+                      <div className="h-4 bg-gray-600 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-600 rounded w-4/6"></div>
+                    </div>
+                  </div>
+                ) : (
                   <div className="bg-gray-800 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
                       <div>
