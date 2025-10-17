@@ -112,8 +112,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Free raid eligibility state
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
   
-  // Loading state for main dashboard tab
-  const [isLoadingMainTab, setIsLoadingMainTab] = useState(true);
+  // Loading state for main dashboard tab - Start false for immediate display (Optimistic UI)
+  const [isLoadingMainTab, setIsLoadingMainTab] = useState(false);
 
   // Generate QR code for referral link with brand colors and logo
   const generateReferralQRCode = async () => {
@@ -239,21 +239,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [initialActiveTab]);
   
-  // Set loading to false when affiliate data is loaded
-  useEffect(() => {
-    if (affiliateInfo && pointsInfo) {
-      setIsLoadingMainTab(false);
-    }
-  }, [affiliateInfo, pointsInfo]);
-
-  // Fallback timeout to prevent infinite loading (10 seconds max)
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      setIsLoadingMainTab(false);
-    }, 10000);
-    
-    return () => clearTimeout(fallbackTimer);
-  }, []);
+  // OPTIMISTIC UI: Removed blocking useEffect - Dashboard now shows immediately
+  // Individual sections show loading skeletons while their data loads
+  // This provides instant UI feedback instead of blocking the entire tab
 
   // Fetch banner ads when dashboard opens
   useEffect(() => {
