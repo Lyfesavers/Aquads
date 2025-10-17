@@ -133,11 +133,8 @@ const MembershipCard = ({ membership, onClose }) => {
     }
   };
 
-  useEffect(() => {
-    if (membership?.memberId) {
-      generateQRCode();
-    }
-  }, [membership?.memberId]);
+  // QR code is now generated on-demand when user clicks the QR icon
+  // This improves initial load performance
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -223,7 +220,13 @@ const MembershipCard = ({ membership, onClose }) => {
                   {copied ? <FaCheck className="text-green-400" /> : <FaCopy className="text-white/80" />}
                 </button>
                 <button
-                  onClick={() => setShowQR(!showQR)}
+                  onClick={() => {
+                    setShowQR(!showQR);
+                    // Generate QR code on first click if not already generated
+                    if (!showQR && !qrCodeDataURL) {
+                      generateQRCode();
+                    }
+                  }}
                   className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200 border border-white/20"
                   title="Show QR Code"
                 >
