@@ -51,6 +51,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [userJobs, setUserJobs] = useState([]);
   const [vipUsername, setVipUsername] = useState('');
   const [freeRaidUsername, setFreeRaidUsername] = useState('');
+  const [suspensionUsername, setSuspensionUsername] = useState('');
+  const [suspensionReason, setSuspensionReason] = useState('');
 
   // Use global socket connection for real-time updates
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
@@ -1381,6 +1383,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setFreeRaidUsername('');
     } catch (error) {
       alert('Failed to update free raid project status: ' + error.message);
+    }
+  };
+
+  const handleSuspendUser = async (username, reason) => {
+    try {
+      if (!username) {
+        alert('Please enter a username');
+        return;
+      }
+
+      // Get user by username
+      const response = await fetch(`${API_URL}/users/by-username/${username}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        alert('User not found or unauthorized');
+        return;
+      }
+
+      const user = await response.json();
+      
+      if (!user._id) {
+        alert('User not found');
+        return;
+      }
+
+      // Suspend/unsuspend the user
+      const suspendResponse = await fetch(`${API_URL}/admin/suspend-user/${user._id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: reason || 'No reason provided' })
+      });
+
+      if (!suspendResponse.ok) {
+        const errorData = await suspendResponse.json();
+        throw new Error(errorData.error || 'Failed to update suspension status');
+      }
+
+      const result = await suspendResponse.json();
+      alert(result.message);
+      setSuspensionUsername('');
+      setSuspensionReason('');
+    } catch (error) {
+      alert('Failed to update suspension status: ' + error.message);
     }
   };
 
@@ -4393,6 +4446,41 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 >
                   Toggle Free Raid Status
                 </button>
+              </div>
+            </div>
+          )}
+
+          {currentUser?.isAdmin && (
+            <div className="bg-gray-800 p-4 rounded-lg mb-4">
+              <h3 className="text-xl font-semibold mb-4">Suspend/Unsuspend User Account</h3>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={suspensionUsername}
+                    onChange={(e) => setSuspensionUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="bg-gray-700 px-3 py-2 rounded flex-1"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={suspensionReason}
+                    onChange={(e) => setSuspensionReason(e.target.value)}
+                    placeholder="Reason for suspension (optional)"
+                    className="bg-gray-700 px-3 py-2 rounded flex-1"
+                  />
+                  <button
+                    onClick={() => handleSuspendUser(suspensionUsername, suspensionReason)}
+                    className="bg-red-500 px-4 py-2 rounded hover:bg-red-600 whitespace-nowrap"
+                  >
+                    Toggle Suspension
+                  </button>
+                </div>
+                <p className="text-sm text-gray-400">
+                  This will suspend or unsuspend the user account. Suspended users cannot access the platform.
+                </p>
               </div>
             </div>
           )}

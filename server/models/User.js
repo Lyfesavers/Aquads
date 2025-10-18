@@ -330,6 +330,24 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
+  // Account suspension
+  suspended: {
+    type: Boolean,
+    default: false
+  },
+  suspendedReason: {
+    type: String,
+    default: null
+  },
+  suspendedAt: {
+    type: Date,
+    default: null
+  },
+  suspendedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   // Online status tracking fields
   isOnline: {
     type: Boolean,
@@ -564,6 +582,7 @@ userSchema.index({ userType: 1 }); // For user type filtering
 userSchema.index({ isOnline: 1, lastActivity: 1 }); // For online status queries
 userSchema.index({ referredBy: 1 }); // For affiliate queries
 userSchema.index({ isFreeRaidProject: 1 }); // For free raid eligibility
+userSchema.index({ suspended: 1 }); // For suspension checks
 
 // Additional performance indexes
 // Note: username, email, and referralCode already have unique indexes from schema

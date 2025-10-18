@@ -639,4 +639,86 @@ router.post('/debug/bulk-dormant-analysis', auth, isAdmin, async (req, res) => {
   }
 });
 
+// Suspend/unsuspend user (admin only)
+router.post('/suspend-user/:userId', auth, isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent suspending admin accounts
+    if (user.isAdmin) {
+      return res.status(403).json({ error: 'Cannot suspend admin accounts' });
+    }
+
+    // Toggle suspension status
+    const wasSuspended = user.suspended;
+    user.suspended = !user.suspended;
+
+    if (user.suspended) {
+      // Setting suspension
+      user.suspendedReason = reason || 'No reason provided';
+      user.suspendedAt = new Date();
+      user.suspendedBy = req.user.userId;
+    } else {
+      // Removing suspension
+      user.suspendedReason = null;
+      user.suspendedAt = null;
+      user.suspendedBy = null;
+    }
+
+    await user.save();
+
+    const message = user.suspended 
+      ? `User ${user.username} has been suspended`
+      : `User ${user.username} suspension has been removed`;
+
+    res.json({ 
+      message,
+      suspended: user.suspended,
+      user: {
+        id: user._id,
+        username: user.username,
+        suspended: user.suspended,
+        suspendedReason: user.suspendedReason,
+        suspendedAt: user.suspendedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error managing user suspension:', error);
+    res.status(500).json({ error: 'Failed to update user suspension status' });
+  }
+});
+
+// Get all suspended users (admin only)
+router.get('/suspended-users', auth, isAdmin, async (req, res) => {
+  try {
+    const suspendedUsers = await User.find({ suspended: true })
+      .select('username email suspended suspendedReason suspendedAt createdAt')
+      .populate('suspendedBy', 'username')
+      .sort({ suspendedAt: -1 })
+      .limit(100);
+
+    res.json({
+      suspendedUsers: suspendedUsers.map(user => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        suspendedReason: user.suspendedReason,
+        suspendedAt: user.suspendedAt,
+        suspendedBy: user.suspendedBy?.username || 'Unknown',
+        createdAt: user.createdAt
+      })),
+      total: suspendedUsers.length
+    });
+  } catch (error) {
+    console.error('Error fetching suspended users:', error);
+    res.status(500).json({ error: 'Failed to fetch suspended users' });
+  }
+});
+
 module.exports = router; 

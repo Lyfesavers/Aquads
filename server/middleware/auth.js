@@ -33,14 +33,31 @@ const auth = async (req, res, next) => {
       throw new Error('Invalid token: No user ID found');
     }
     
+    // Check if user is suspended - Fetch user from database
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username');
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check suspension status
+    if (user.suspended) {
+      return res.status(403).json({ 
+        error: 'Account suspended',
+        message: 'Your account has been suspended. Please contact support for more information.',
+        suspendedReason: user.suspendedReason,
+        suspendedAt: user.suspendedAt
+      });
+    }
+    
     // Set both userId and id for better compatibility with different code styles
     req.user = {
       userId: userId,
       id: userId,  // Add this for compatibility
-      username: decoded.username,
-      isAdmin: Boolean(decoded.isAdmin),  // Ensure boolean conversion
-      emailVerified: Boolean(decoded.emailVerified),  // Include email verification status
-      referredBy: decoded.referredBy  // Include referredBy for affiliate detection
+      username: user.username,
+      isAdmin: Boolean(user.isAdmin),  // Ensure boolean conversion
+      emailVerified: Boolean(user.emailVerified),  // Include email verification status
+      referredBy: user.referredBy  // Include referredBy for affiliate detection
     };
 
     // Update user's lastActivity (rate limited to prevent excessive DB writes)
