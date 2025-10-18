@@ -43,6 +43,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleCopyAddress = async () => {
     await navigator.clipboard.writeText(selectedChain.address);
@@ -74,6 +75,37 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
     
     // Call the parent component's callback with the transaction data
     onSubmitPayment(ad.id, txSignature, selectedOption.durationMs, appliedDiscount ? appliedDiscount.discountCode.code : null);
+  };
+
+  const handlePayPalPurchase = async () => {
+    if (!ad?.id) {
+      alert('Invalid ad data');
+      return;
+    }
+    
+    try {
+      setSubmitting(true);
+      
+      // Open PayPal payment link
+      window.open('https://www.paypal.com/ncp/payment/7RNMKRG49E7QS', '_blank');
+      
+      // Submit bump request for admin approval with PayPal method
+      await onSubmitPayment(
+        ad.id, 
+        'paypal', // Identifier to show it was a PayPal payment
+        selectedOption.durationMs, 
+        appliedDiscount ? appliedDiscount.discountCode.code : null
+      );
+      
+      // Parent component (handleBumpPurchase) handles showing notification and closing modal
+      // But we can also close explicitly here for immediate feedback
+      onClose();
+    } catch (error) {
+      logger.error('Error processing PayPal bump purchase:', error);
+      alert(error.message || 'Failed to process bump purchase');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -177,12 +209,40 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors"
-            >
-              Submit Payment
-            </button>
+            {/* Payment Method Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+              >
+                <span className="mr-1.5 sm:mr-2">🔗</span>
+                Pay with Crypto
+              </button>
+              
+              <button
+                type="button"
+                onClick={handlePayPalPurchase}
+                disabled={submitting}
+                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+              >
+                {submitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 sm:h-5 w-4 sm:w-5 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </div>
+                ) : (
+                  <>
+                    <span className="mr-1.5 sm:mr-2">💳</span>
+                    Pay with Card
+                  </>
+                )}
+              </button>
+            </div>
+
+            <p className="text-gray-400 text-xs text-center mt-3">
+              * Your payment will be manually verified by an admin
+            </p>
           </form>
         </div>
       </div>
