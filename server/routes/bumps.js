@@ -184,6 +184,11 @@ router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
 
     // Emit socket event for approved bump request
     emitBumpRequestUpdate('approve', bumpRequest);
+    
+    // Also emit ad update immediately so all clients see the bump
+    const socket = require('../socket');
+    socket.emitAdUpdate('update', ad);
+    console.log(`[BUMP APPROVED] Ad ${adId} bumped - broadcasted to all clients`);
 
     res.json({ bumpRequest, ad });
   } catch (error) {
@@ -237,6 +242,11 @@ router.post('/reject', auth, emitAdEvent('update'), async (req, res) => {
 
     // Emit socket event for rejected bump request
     emitBumpRequestUpdate('reject', bumpRequest);
+    
+    // Also emit ad update immediately so all clients see the rejection
+    const socket = require('../socket');
+    socket.emitAdUpdate('update', ad);
+    console.log(`[BUMP REJECTED] Ad ${adId} bump rejected - broadcasted to all clients`);
 
     res.json({ bumpRequest, ad });
   } catch (error) {

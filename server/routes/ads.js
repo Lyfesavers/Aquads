@@ -86,10 +86,10 @@ router.use((req, res, next) => {
 });
 
 // Constants for shrinking logic
-const SHRINK_INTERVAL = 30000; // 30 seconds
+const SHRINK_INTERVAL = 15000; // 15 seconds - faster updates for real-time feel
 const MAX_SIZE = 100; // This will be maximum size, client may request smaller for mobile
 const MIN_SIZE = 50;
-const SHRINK_PERCENTAGE = 0.9; // Shrink by 5% each interval
+const SHRINK_PERCENTAGE = 0.9; // Shrink by 10% each interval
 
 // Function to calculate and update ad size
 const updateAdSize = async (ad) => {
@@ -131,10 +131,10 @@ const updateAdSize = async (ad) => {
             { new: true }
           );
           
-          // Emit WebSocket event for the updated ad
+          // Emit WebSocket event for the updated ad immediately
           if (result) {
-            const socket = require('../socket');
             socket.emitAdUpdate('update', result);
+            console.log(`[BUMP EXPIRED] Ad ${ad.id} shrunk to ${newSize}px - broadcasted to all clients`);
           }
           return;
         } catch (updateError) {
@@ -150,10 +150,10 @@ const updateAdSize = async (ad) => {
           $set: { size: MAX_SIZE }
         }, { new: true });
         
-        // Emit WebSocket event for the updated ad
+        // Emit WebSocket event for the updated ad immediately
         if (result) {
-          const socket = require('../socket');
           socket.emitAdUpdate('update', result);
+          console.log(`[BUMP ACTIVE] Ad ${ad.id} maximized to ${MAX_SIZE}px - broadcasted to all clients`);
         }
       }
       return;
@@ -178,10 +178,10 @@ const updateAdSize = async (ad) => {
         $set: { size: newSize }
       }, { new: true });
       
-      // Emit WebSocket event for the updated ad
+      // Emit WebSocket event for the updated ad immediately
       if (result) {
-        const socket = require('../socket');
         socket.emitAdUpdate('update', result);
+        console.log(`[SHRINK] Ad ${ad.id} shrunk from ${ad.size}px to ${newSize}px - broadcasted to all clients`);
       }
     }
   } catch (error) {

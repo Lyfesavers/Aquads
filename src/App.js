@@ -137,7 +137,7 @@ const BLOCKCHAIN_OPTIONS = [
 ];
 
 const SHRINK_RATE = 4; // Amount to shrink by each interval
-const SHRINK_INTERVAL = 30000; // 30 seconds
+const SHRINK_INTERVAL = 15000; // 15 seconds (matches backend for real-time sync)
 const SHRINK_PERCENTAGE = 0.9; // More gradual shrinking
 const TOKEN_PRICE = 0.01; // SOL per token
 const AD_EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -793,7 +793,7 @@ function App() {
     logger.log('Ads state updated:', ads);
   }, [ads]);
 
-  // Backend handles automatic ad shrinking every 30 seconds
+  // Backend handles automatic ad shrinking every 15 seconds
   // WebSocket events will update the frontend in real-time
   // No need for frontend shrinking interval
 
