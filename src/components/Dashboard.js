@@ -3174,33 +3174,125 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p className="text-gray-400 text-center py-8">No pending bump approvals.</p>
                     ) : (
                       <div className="space-y-4">
-                        {pendingBumpAds.map(ad => (
-                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
-                                <div>
-                                  <h4 className="text-white font-semibold">{ad.title}</h4>
-                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                                  <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
+                        {pendingBumpAds.map(ad => {
+                          // Calculate duration display
+                          const getDurationDisplay = (durationMs) => {
+                            if (durationMs === -1) return 'Lifetime';
+                            const days = durationMs / (24 * 60 * 60 * 1000);
+                            if (days === 90) return '3 Months';
+                            if (days === 180) return '6 Months';
+                            return `${days} days`;
+                          };
+
+                          // Calculate price based on duration
+                          const getPrice = (durationMs) => {
+                            if (durationMs === 90 * 24 * 60 * 60 * 1000) return 99;
+                            if (durationMs === 180 * 24 * 60 * 60 * 1000) return 150;
+                            if (durationMs === -1) return 300;
+                            return 0;
+                          };
+
+                          const originalPrice = getPrice(ad.bumpRequest.duration);
+                          const discountAmount = ad.bumpRequest.discountAmount || 0;
+                          const finalPrice = originalPrice - discountAmount;
+                          const isPayPal = ad.bumpRequest.txSignature === 'paypal';
+
+                          return (
+                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                              {/* Left side - Ad Info */}
+                              <div className="flex items-start space-x-4">
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-white font-semibold text-base sm:text-lg mb-1">{ad.title}</h4>
+                                  <p className="text-gray-400 text-sm mb-1">
+                                    <span className="font-medium">Owner:</span> {ad.owner}
+                                  </p>
+                                  <p className="text-gray-400 text-xs sm:text-sm">
+                                    <span className="font-medium">Requested:</span> {new Date(ad.bumpRequest.createdAt).toLocaleString()}
+                                  </p>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-end">
-                                <a href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm mb-2">
-                                  View Transaction
-                                </a>
-                                <div className="flex space-x-2">
-                                  <button onClick={() => handleApprove(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                                    Approve
-                                  </button>
-                                  <button onClick={() => handleReject(ad)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-                                    Reject
-                                  </button>
+
+                              {/* Right side - Payment & Bump Details */}
+                              <div className="flex flex-col items-start sm:items-end gap-3">
+                                {/* Bump Details */}
+                                <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[250px]">
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-gray-400">Duration:</span>
+                                      <span className="text-white font-semibold">{getDurationDisplay(ad.bumpRequest.duration)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-gray-400">Payment Method:</span>
+                                      <span className={`font-semibold ${isPayPal ? 'text-yellow-400' : 'text-blue-400'}`}>
+                                        {isPayPal ? '💳 PayPal/Card' : '🔗 Crypto'}
+                                      </span>
+                                    </div>
+                                    {ad.bumpRequest.appliedDiscountCode && (
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400">Discount Code:</span>
+                                        <span className="text-green-400 font-semibold">{ad.bumpRequest.appliedDiscountCode}</span>
+                                      </div>
+                                    )}
+                                    <div className="border-t border-gray-700 pt-2 mt-2">
+                                      {discountAmount > 0 && (
+                                        <div className="flex justify-between gap-4 mb-1">
+                                          <span className="text-gray-400">Original Price:</span>
+                                          <span className="text-gray-400 line-through">${originalPrice}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400 font-medium">Total Price:</span>
+                                        <span className="text-green-400 font-bold text-base">
+                                          ${finalPrice} {isPayPal ? 'USD' : 'USDC'}
+                                        </span>
+                                      </div>
+                                      {discountAmount > 0 && (
+                                        <p className="text-xs text-green-400 mt-1 text-right">
+                                          Saved ${discountAmount}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Transaction Link & Actions */}
+                                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                  {!isPayPal ? (
+                                    <a 
+                                      href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer" 
+                                      className="text-blue-400 hover:text-blue-300 text-sm text-center sm:text-right hover:underline"
+                                    >
+                                      🔍 View Transaction
+                                    </a>
+                                  ) : (
+                                    <p className="text-yellow-400 text-sm text-center sm:text-right">
+                                      💳 PayPal Payment - Verify manually
+                                    </p>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => handleApprove(ad)} 
+                                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold transition-colors"
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                    <button 
+                                      onClick={() => handleReject(ad)} 
+                                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition-colors"
+                                    >
+                                      ✗ Reject
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                     
