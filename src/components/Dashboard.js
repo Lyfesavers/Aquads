@@ -4411,17 +4411,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           {currentUser?.isAdmin && (
             <div className="bg-gray-800 p-4 rounded-lg mb-4">
               <h3 className="text-xl font-semibold mb-4">Manage VIP Affiliates</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={vipUsername}
                   onChange={(e) => setVipUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="bg-gray-700 px-3 py-2 rounded"
+                  className="bg-gray-700 px-3 py-2 rounded w-full sm:flex-1"
                 />
                 <button
                   onClick={() => handleVipAffiliateToggle(vipUsername)}
-                  className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
+                  className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600 w-full sm:w-auto whitespace-nowrap"
                 >
                   Toggle VIP Status
                 </button>
@@ -4432,17 +4432,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           {currentUser?.isAdmin && (
             <div className="bg-gray-800 p-4 rounded-lg mb-4">
               <h3 className="text-xl font-semibold mb-4">Manage Free Raid Projects</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={freeRaidUsername}
                   onChange={(e) => setFreeRaidUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="bg-gray-700 px-3 py-2 rounded"
+                  className="bg-gray-700 px-3 py-2 rounded w-full sm:flex-1"
                 />
                 <button
                   onClick={() => handleFreeRaidProjectToggle(freeRaidUsername)}
-                  className="bg-green-500 px-4 py-2 rounded hover:bg-green-600"
+                  className="bg-green-500 px-4 py-2 rounded hover:bg-green-600 w-full sm:w-auto whitespace-nowrap"
                 >
                   Toggle Free Raid Status
                 </button>
@@ -4454,26 +4454,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             <div className="bg-gray-800 p-4 rounded-lg mb-4">
               <h3 className="text-xl font-semibold mb-4">Suspend/Unsuspend User Account</h3>
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={suspensionUsername}
                     onChange={(e) => setSuspensionUsername(e.target.value)}
                     placeholder="Enter username"
-                    className="bg-gray-700 px-3 py-2 rounded flex-1"
+                    className="bg-gray-700 px-3 py-2 rounded w-full"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={suspensionReason}
                     onChange={(e) => setSuspensionReason(e.target.value)}
                     placeholder="Reason for suspension (optional)"
-                    className="bg-gray-700 px-3 py-2 rounded flex-1"
+                    className="bg-gray-700 px-3 py-2 rounded w-full sm:flex-1"
                   />
                   <button
                     onClick={() => handleSuspendUser(suspensionUsername, suspensionReason)}
-                    className="bg-red-500 px-4 py-2 rounded hover:bg-red-600 whitespace-nowrap"
+                    className="bg-red-500 px-4 py-2 rounded hover:bg-red-600 w-full sm:w-auto whitespace-nowrap"
                   >
                     Toggle Suspension
                   </button>
