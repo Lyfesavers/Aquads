@@ -766,6 +766,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                       <p className="text-gray-300 text-sm">Featured placement in our targeted advertising campaigns across multiple channels</p>
                     </div>
                   </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border-2 border-yellow-500/50">
+                    <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-2 rounded-full">
+                      <FaGift className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">$50 Free Ad Credit</h4>
+                      <p className="text-gray-300 text-sm">Get $50 in free advertising credits to run ads on our partner platform across 1500+ platforms including Forbes, CoinTelegraph, and so much more</p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
