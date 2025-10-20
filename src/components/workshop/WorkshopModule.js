@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaPlay, FaCheckCircle, FaLightbulb, FaUsers, FaChartLine, 
   FaDesktop, FaQuestionCircle, FaAward, FaBolt, FaRocket,
@@ -14,6 +14,12 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
   const [completedSections, setCompletedSections] = useState(
     progress.completedSections?.[module.id] || []
   );
+
+  // Sync local state with props when progress updates from API
+  useEffect(() => {
+    const updatedSections = progress.completedSections?.[module.id] || [];
+    setCompletedSections(updatedSections);
+  }, [progress.completedSections, module.id]);
 
   const handleSectionComplete = (sectionIndex, sectionTitle) => {
     if (!completedSections.includes(sectionIndex)) {
