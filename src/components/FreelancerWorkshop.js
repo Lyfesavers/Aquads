@@ -356,16 +356,71 @@ const FreelancerWorkshop = ({ currentUser }) => {
 
     try {
       const result = await completeWorkshopSection(moduleId, sectionIndex, sectionTitle);
-      // Reload progress to get updated data
-      await loadWorkshopProgress();
       
-      // Check if module is now complete for celebration
-      const module = modules.find(m => m.id === moduleId);
-      const moduleCompletedSections = workshopProgress.completedSections[moduleId] || [];
-      
-      if (moduleCompletedSections.length + 1 === module.sections.length) {
-        setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 3000);
+      // Use the returned user data instead of making another API call
+      if (result.success && result.user) {
+        const user = result.user;
+        
+        // Process the user's pointsHistory to extract completed sections (same as API does)
+        const workshopHistory = user.pointsHistory.filter(
+          entry => entry.reason && entry.reason.includes('Workshop')
+        );
+        
+        const completedSectionsArray = workshopHistory
+          .filter(entry => entry.workshopSection)
+          .map(entry => entry.workshopSection);
+        
+        // Convert to map format
+        const completedSectionsMap = {};
+        completedSectionsArray.forEach(sectionKey => {
+          const [modId, , secIndex] = sectionKey.split('-');
+          if (!completedSectionsMap[modId]) {
+            completedSectionsMap[modId] = [];
+          }
+          completedSectionsMap[modId].push(parseInt(secIndex));
+        });
+        
+        // Calculate completed modules and badges
+        const completedModules = [];
+        const badges = [];
+        
+        modules.forEach(module => {
+          const moduleCompletedSections = completedSectionsMap[module.id] || [];
+          const validCompletedSections = moduleCompletedSections.filter(
+            sectionIndex => sectionIndex < module.sections.length
+          );
+          if (validCompletedSections.length === module.sections.length && 
+              validCompletedSections.length > 0) {
+            completedModules.push(module.id);
+            badges.push(module.badge);
+          }
+          completedSectionsMap[module.id] = validCompletedSections;
+        });
+        
+        // Update state with processed data
+        setWorkshopProgress({
+          totalPoints: user.points || 0,
+          completedSections: completedSectionsMap,
+          workshopHistory: workshopHistory.map(entry => ({
+            amount: entry.amount,
+            reason: entry.reason,
+            section: entry.workshopSection,
+            date: entry.createdAt
+          })),
+          completedModules,
+          badges,
+          currentStreak: calculateStreak(workshopHistory),
+          timeSpent: calculateTimeSpent(workshopHistory)
+        });
+        
+        // Check if module is now complete for celebration
+        const module = modules.find(m => m.id === moduleId);
+        const moduleCompletedSections = completedSectionsMap[moduleId] || [];
+        
+        if (moduleCompletedSections.length === module.sections.length) {
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 3000);
+        }
       }
       
     } catch (err) {

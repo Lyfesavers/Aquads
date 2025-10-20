@@ -16,10 +16,18 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
   );
 
   // Sync local state with props when progress updates from API
+  // Only sync if the prop data is different from local state
   useEffect(() => {
     const updatedSections = progress.completedSections?.[module.id] || [];
-    setCompletedSections(updatedSections);
-  }, [progress.completedSections, module.id]);
+    
+    // Only update if the sections are actually different
+    const isDifferent = updatedSections.length !== completedSections.length ||
+      updatedSections.some(sec => !completedSections.includes(sec));
+    
+    if (isDifferent) {
+      setCompletedSections(updatedSections);
+    }
+  }, [progress.completedSections, module.id, completedSections]);
 
   const handleSectionComplete = (sectionIndex, sectionTitle) => {
     if (!completedSections.includes(sectionIndex)) {
