@@ -26,6 +26,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
   });
   const [showCelebration, setShowCelebration] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [completingSection, setCompletingSection] = useState(false);
   const [error, setError] = useState(null);
 
 
@@ -355,6 +356,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
     }
 
     try {
+      setCompletingSection(true);
       const result = await completeWorkshopSection(moduleId, sectionIndex, sectionTitle);
       
       // Use the returned user data instead of making another API call
@@ -426,6 +428,8 @@ const FreelancerWorkshop = ({ currentUser }) => {
     } catch (err) {
       console.error('Error completing section:', err);
       setError(err.message || 'Failed to save progress');
+    } finally {
+      setCompletingSection(false);
     }
   };
 
@@ -563,6 +567,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
           progress={workshopProgress}
           onSectionComplete={completeSection}
           currentUser={currentUser}
+          isCompletingSection={completingSection}
         />
       </div>
 

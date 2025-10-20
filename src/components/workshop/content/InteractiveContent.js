@@ -5,7 +5,7 @@ import {
   FaArrowRight, FaStar, FaTrophy, FaEye, FaSearch
 } from 'react-icons/fa';
 
-const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) => {
+const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted, isCompletingSection }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showResults, setShowResults] = useState(false);
@@ -1183,10 +1183,22 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
         {allStepsCompleted() && !isCompleted ? (
           <button
             onClick={handleSectionComplete}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg"
+            disabled={isCompletingSection}
+            className={`px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg ${
+              isCompletingSection ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
           >
-            <FaCheck className="inline mr-2" />
-            Complete Section
+            {isCompletingSection ? (
+              <>
+                <div className="inline-block animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                Saving Progress...
+              </>
+            ) : (
+              <>
+                <FaCheck className="inline mr-2" />
+                Complete Section
+              </>
+            )}
           </button>
         ) : isCompleted ? (
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">

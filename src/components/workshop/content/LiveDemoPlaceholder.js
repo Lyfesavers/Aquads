@@ -6,7 +6,7 @@ import {
   FaRocket, FaTools, FaListAlt, FaSearch, FaChartLine
 } from 'react-icons/fa';
 
-const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted }) => {
+const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted, isCompletingSection }) => {
   const [demoWatched, setDemoWatched] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
 
@@ -461,10 +461,22 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
         {!demoWatched && !isCompleted ? (
           <button
             onClick={handleDemoComplete}
-            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg"
+            disabled={isCompletingSection}
+            className={`px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg ${
+              isCompletingSection ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
           >
-            <FaPlay className="inline mr-2" />
-            Mark Demo as Watched
+            {isCompletingSection ? (
+              <>
+                <div className="inline-block animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                Saving Progress...
+              </>
+            ) : (
+              <>
+                <FaPlay className="inline mr-2" />
+                Mark Demo as Watched
+              </>
+            )}
           </button>
         ) : isCompleted ? (
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">

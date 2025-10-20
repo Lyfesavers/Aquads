@@ -9,7 +9,7 @@ import InfographicContent from './content/InfographicContent';
 import LiveDemoPlaceholder from './content/LiveDemoPlaceholder';
 import QuizComponent from './content/QuizComponent';
 
-const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) => {
+const WorkshopModule = ({ module, progress, onSectionComplete, currentUser, isCompletingSection }) => {
   const [activeSection, setActiveSection] = useState(0);
   const [completedSections, setCompletedSections] = useState(
     progress.completedSections?.[module.id] || []
@@ -129,7 +129,8 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
             module,
             onComplete: handleSectionComplete,
             isCompleted: isSectionCompleted(index),
-            currentUser
+            currentUser,
+            isCompletingSection
           };
 
           return (
