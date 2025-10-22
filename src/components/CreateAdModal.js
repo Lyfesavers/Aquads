@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 
 const BLOCKCHAIN_OPTIONS = [
@@ -171,6 +171,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [expandedPackages, setExpandedPackages] = useState(new Set()); // Track expanded packages
   const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateImageUrl = async (url) => {
     try {
@@ -258,7 +259,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
     setStep(3);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (step === 1) {
       handleInfoSubmit(e);
@@ -270,15 +271,23 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
       return;
     }
 
-    onCreateAd({
-      ...formData,
-      paymentChain: selectedChain.name,
-      chainSymbol: selectedChain.symbol,
-      chainAddress: selectedChain.address,
-      isAffiliate: isAffiliate,
-      affiliateDiscount: affiliateDiscount,
-      discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
-    });
+    try {
+      setIsSubmitting(true);
+      await onCreateAd({
+        ...formData,
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address,
+        isAffiliate: isAffiliate,
+        affiliateDiscount: affiliateDiscount,
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+      });
+    } catch (error) {
+      console.error('Error submitting ad:', error);
+      setError('Failed to submit listing. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePayPalPurchase = async () => {
@@ -926,16 +935,27 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="submit"
-                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
                     >
-                      <span className="mr-1.5 sm:mr-2">🔗</span>
-                      Pay with Crypto
+                      {isSubmitting ? (
+                        <>
+                          <FaSpinner className="animate-spin mr-1.5 sm:mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-1.5 sm:mr-2">🔗</span>
+                          Pay with Crypto
+                        </>
+                      )}
                     </button>
                     
                     <button
                       type="button"
                       onClick={handlePayPalPurchase}
-                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
                     >
                       <span className="mr-1.5 sm:mr-2">💳</span>
                       Pay with Card
