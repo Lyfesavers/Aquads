@@ -370,6 +370,19 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     // Emit socket event for real-time updates
     socket.getIO().emit('adsUpdated', { type: 'create', ad: savedAd });
 
+    // If the ad is pending (non-admin user), notify admins
+    if (savedAd.status === 'pending') {
+      try {
+        socket.getIO().emit('newPendingAd', {
+          ad: savedAd,
+          createdAt: new Date()
+        });
+      } catch (socketError) {
+        console.error('Error emitting new pending ad:', socketError);
+        // Don't fail the creation if socket emission fails
+      }
+    }
+
     // Award points to affiliate if the user was referred by someone
     try {
       // Find the current user to check if they were referred by an affiliate
@@ -798,6 +811,20 @@ router.post('/:id/approve', auth, emitAdEvent('update'), async (req, res) => {
     ad.status = 'active';
     await ad.save();
 
+    // Emit real-time socket update for ad approval
+    try {
+      socket.getIO().emit('pendingAdApproved', {
+        adId: ad.id,
+        title: ad.title,
+        owner: ad.owner,
+        approvedBy: req.user.id,
+        approvedAt: new Date()
+      });
+    } catch (socketError) {
+      console.error('Error emitting ad approval:', socketError);
+      // Don't fail the approval if socket emission fails
+    }
+
     res.json({ 
       message: 'Ad approved successfully',
       ad
@@ -828,6 +855,21 @@ router.post('/:id/reject', auth, emitAdEvent('delete'), async (req, res) => {
 
     // Instead of updating the status, delete the ad entirely
     await Ad.findByIdAndDelete(ad._id);
+
+    // Emit real-time socket update for ad rejection
+    try {
+      socket.getIO().emit('pendingAdRejected', {
+        adId: ad.id,
+        title: ad.title,
+        owner: ad.owner,
+        rejectedBy: req.user.id,
+        rejectionReason: rejectionReason || 'Rejected by admin',
+        rejectedAt: new Date()
+      });
+    } catch (socketError) {
+      console.error('Error emitting ad rejection:', socketError);
+      // Don't fail the rejection if socket emission fails
+    }
 
     res.json({ 
       message: 'Ad rejected and deleted successfully',

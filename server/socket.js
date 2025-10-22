@@ -367,6 +367,33 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending ads
+    socket.on('requestPendingAds', async (userData) => {
+      if (!userData || !userData.userId || !userData.isAdmin) {
+        socket.emit('pendingAdsError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const Ad = require('./models/Ad');
+        
+        // Fetch all pending ads
+        const pendingAds = await Ad.find({ status: 'pending' })
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Send all pending ads to this admin
+        socket.emit('pendingAdsLoaded', {
+          pendingAds,
+          total: pendingAds.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching pending ads for admin:', error);
+        socket.emit('pendingAdsError', { error: 'Failed to fetch pending ads' });
+      }
+    });
+
     // Handle admin requesting pending token purchases
     socket.on('requestPendingTokenPurchases', async (userData) => {
       if (!userData || !userData.userId || !userData.isAdmin) {

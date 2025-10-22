@@ -414,6 +414,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         userId: currentUser.userId || currentUser.id
       });
       
+      // Request pending ads via socket instead of API call
+      socket.emit('requestPendingAds', {
+        isAdmin: currentUser.isAdmin,
+        userId: currentUser.userId || currentUser.id
+      });
+      
       fetchPendingFacebookRaids();
     }
   }, [currentUser, socket]);
@@ -644,6 +650,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setIsLoadingServices(false);
     };
 
+    // Bubble listing (ad) approval socket handlers
+    const handlePendingAdApproved = (data) => {
+      // Remove the approved ad from the pending list
+      setPendingListings(prev => 
+        prev.filter(listing => listing.id.toString() !== data.adId.toString())
+      );
+    };
+
+    const handlePendingAdRejected = (data) => {
+      // Remove the rejected ad from the pending list
+      setPendingListings(prev => 
+        prev.filter(listing => listing.id.toString() !== data.adId.toString())
+      );
+    };
+
+    const handleNewPendingAd = (data) => {
+      // Add the new pending ad to the list immediately
+      setPendingListings(prev => [...prev, data.ad]);
+    };
+
+    const handlePendingAdsLoaded = (data) => {
+      setPendingListings(data.pendingAds);
+      setIsLoadingListings(false);
+    };
+
+    const handlePendingAdsError = (error) => {
+      console.error('Error loading initial pending ads via socket:', error);
+      setIsLoadingListings(false);
+    };
+
     // Token purchase socket handlers
     const handleTokenPurchaseApproved = (data) => {
       // Remove the approved token purchase from the pending list
@@ -687,6 +723,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('pendingServicesLoaded', handlePendingServicesLoaded);
     socket.on('pendingServicesError', handlePendingServicesError);
 
+    // Bubble listing (ad) approval socket listeners
+    socket.on('pendingAdApproved', handlePendingAdApproved);
+    socket.on('pendingAdRejected', handlePendingAdRejected);
+    socket.on('newPendingAd', handleNewPendingAd);
+    socket.on('pendingAdsLoaded', handlePendingAdsLoaded);
+    socket.on('pendingAdsError', handlePendingAdsError);
+
     // Token purchase socket listeners
     socket.on('tokenPurchaseApproved', handleTokenPurchaseApproved);
     socket.on('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -710,6 +753,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('pendingServicesLoaded', handlePendingServicesLoaded);
       socket.off('pendingServicesError', handlePendingServicesError);
 
+      // Bubble listing (ad) approval socket cleanup
+      socket.off('pendingAdApproved', handlePendingAdApproved);
+      socket.off('pendingAdRejected', handlePendingAdRejected);
+      socket.off('newPendingAd', handleNewPendingAd);
+      socket.off('pendingAdsLoaded', handlePendingAdsLoaded);
+      socket.off('pendingAdsError', handlePendingAdsError);
+
       // Token purchase socket cleanup
       socket.off('tokenPurchaseApproved', handleTokenPurchaseApproved);
       socket.off('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -721,7 +771,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   useEffect(() => {
     if (currentUser?.isAdmin && activeTab === 'admin') {
-      fetchPendingBubbleListings();
+      requestPendingAdsViaSocket();
       // Request token purchases via socket instead of API call
       if (socket) {
         socket.emit('requestPendingTokenPurchases', {
@@ -2169,6 +2219,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   // Add these new functions to handle listing approvals
+  const requestPendingAdsViaSocket = () => {
+    if (!socket || !currentUser?.isAdmin) return;
+    setIsLoadingListings(true);
+    socket.emit('requestPendingAds', {
+      userId: currentUser.userId || currentUser.id,
+      isAdmin: currentUser.isAdmin
+    });
+  };
+
   const fetchPendingBubbleListings = async () => {
     if (!currentUser?.isAdmin) return;
     try {
@@ -2186,7 +2245,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       await approveAd(listingId);
       showNotification('Listing approved successfully', 'success');
-      fetchPendingBubbleListings(); // Refresh the list
+      // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to approve listing', 'error');
     }
@@ -2206,7 +2265,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setShowRejectListingModal(false);
       setSelectedListing(null);
       setListingRejectionReason('');
-      fetchPendingBubbleListings(); // Refresh the list
+      // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to reject listing', 'error');
     }
