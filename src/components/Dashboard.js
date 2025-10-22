@@ -16,7 +16,7 @@ import MembershipManager from './MembershipManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 import QRCode from 'qrcode';
-import { FaQrcode, FaCopy, FaCheck } from 'react-icons/fa';
+import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -76,6 +76,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedListing, setSelectedListing] = useState(null);
   const [listingRejectionReason, setListingRejectionReason] = useState('');
   const [isLoadingListings, setIsLoadingListings] = useState(false);
+  const [approvingListingId, setApprovingListingId] = useState(null);
+  const [isRejectingListing, setIsRejectingListing] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [activeAdminSection, setActiveAdminSection] = useState('bumps');
   const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
@@ -2243,11 +2245,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleApproveListing = async (listingId) => {
     try {
+      setApprovingListingId(listingId);
       await approveAd(listingId);
       showNotification('Listing approved successfully', 'success');
       // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to approve listing', 'error');
+    } finally {
+      setApprovingListingId(null);
     }
   };
 
@@ -2260,6 +2265,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!selectedListing) return;
     
     try {
+      setIsRejectingListing(true);
       await rejectAd(selectedListing.id, listingRejectionReason);
       showNotification('Listing rejected successfully', 'success');
       setShowRejectListingModal(false);
@@ -2268,6 +2274,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       // No need to refresh - socket will handle real-time update
     } catch (error) {
       showNotification('Failed to reject listing', 'error');
+    } finally {
+      setIsRejectingListing(false);
     }
   };
 
@@ -3712,10 +3720,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   <td className="px-4 py-3 text-gray-300">{new Date(listing.createdAt).toLocaleDateString()}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex space-x-2">
-                                      <button onClick={() => handleApproveListing(listing.id)} className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm">
+                                      <button 
+                                        onClick={() => handleApproveListing(listing.id)} 
+                                        disabled={approvingListingId === listing.id || approvingListingId !== null}
+                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                      >
+                                        {approvingListingId === listing.id && <FaSpinner className="animate-spin" />}
                                         Approve
                                       </button>
-                                      <button onClick={() => openRejectModal(listing)} className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm">
+                                      <button 
+                                        onClick={() => openRejectModal(listing)} 
+                                        disabled={approvingListingId !== null}
+                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
                                         Reject
                                       </button>
                                     </div>
@@ -4614,14 +4631,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   setSelectedListing(null);
                   setListingRejectionReason('');
                 }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
+                disabled={isRejectingListing}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRejectListing}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
+                disabled={isRejectingListing}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
+                {isRejectingListing && <FaSpinner className="animate-spin" />}
                 Confirm Reject
               </button>
             </div>
