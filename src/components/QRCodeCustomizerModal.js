@@ -414,6 +414,12 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       return;
     }
     
+    // Double-check canvas is available
+    if (!canvasRef.current) {
+      console.error('Canvas ref not ready yet');
+      return;
+    }
+    
     setIsGenerating(true);
     
     try {
@@ -479,8 +485,12 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
   // Auto-generate when options change
   useEffect(() => {
-    if (isOpen) {
-      generateCustomQRCode();
+    if (isOpen && canvasRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        generateCustomQRCode();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, selectedGender, selectedColor, referralUrl]);
 
@@ -616,6 +626,12 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
               <div className="flex flex-col">
                 <label className="block text-white font-semibold mb-3">Preview</label>
                 <div className="bg-gray-800 rounded-lg p-6 flex-1 flex flex-col items-center justify-center">
+                  {/* Canvas always rendered but hidden - ensures ref is available */}
+                  <canvas
+                    ref={canvasRef}
+                    className="hidden"
+                  />
+                  
                   {isGenerating ? (
                     <div className="text-center">
                       <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
@@ -623,10 +639,6 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                     </div>
                   ) : qrDataURL ? (
                     <div className="text-center">
-                      <canvas
-                        ref={canvasRef}
-                        className="hidden"
-                      />
                       <img
                         src={qrDataURL}
                         alt="Custom QR Code"
