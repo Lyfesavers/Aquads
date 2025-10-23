@@ -17,7 +17,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#C084FC',
       glow: '#DDD6FE',
-      bg: '#1E1B4B'
+      bg: '#1E1B4B',
+      qrDark: '#7C3AED',    // QR code data pixels
+      qrLight: '#F3E8FF'    // QR code background (light purple)
     },
     blue: {
       name: 'Neon Blue',
@@ -25,7 +27,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#1D4ED8',
       accent: '#60A5FA',
       glow: '#DBEAFE',
-      bg: '#0C4A6E'
+      bg: '#0C4A6E',
+      qrDark: '#1D4ED8',    // QR code data pixels
+      qrLight: '#DBEAFE'    // QR code background (light blue)
     },
     green: {
       name: 'Toxic Green',
@@ -33,7 +37,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#059669',
       accent: '#34D399',
       glow: '#D1FAE5',
-      bg: '#064E3B'
+      bg: '#064E3B',
+      qrDark: '#065F46',    // QR code data pixels
+      qrLight: '#D1FAE5'    // QR code background (light green)
     },
     pink: {
       name: 'Hot Pink',
@@ -41,7 +47,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#DB2777',
       accent: '#F9A8D4',
       glow: '#FCE7F3',
-      bg: '#831843'
+      bg: '#831843',
+      qrDark: '#BE185D',    // QR code data pixels
+      qrLight: '#FCE7F3'    // QR code background (light pink)
     },
     orange: {
       name: 'Cyber Orange',
@@ -49,7 +57,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#D97706',
       accent: '#FBBf24',
       glow: '#FEF3C7',
-      bg: '#78350F'
+      bg: '#78350F',
+      qrDark: '#B45309',    // QR code data pixels
+      qrLight: '#FEF3C7'    // QR code background (light orange)
     },
     cyan: {
       name: 'Electric Cyan',
@@ -57,7 +67,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#0891B2',
       accent: '#22D3EE',
       glow: '#CFFAFE',
-      bg: '#164E63'
+      bg: '#164E63',
+      qrDark: '#0E7490',    // QR code data pixels
+      qrLight: '#CFFAFE'    // QR code background (light cyan)
     }
   };
 
@@ -366,8 +378,8 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         };
       });
       
-      // Calculate logo size (about 25% of QR code size)
-      const logoSize = qrSize * 0.25;
+      // Calculate logo size (about 35% of QR code size - nice and prominent)
+      const logoSize = qrSize * 0.35;
       
       // Calculate logo dimensions maintaining aspect ratio
       const logoAspectRatio = logo.width / logo.height;
@@ -492,8 +504,8 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         margin: 1,
         errorCorrectionLevel: 'H', // High error correction allows up to 30% damage
         color: {
-          dark: colors.primary,
-          light: '#FFFFFF'
+          dark: colors.qrDark,    // Dark color for QR data pixels
+          light: colors.qrLight   // Light contrasting background
         }
       });
       
