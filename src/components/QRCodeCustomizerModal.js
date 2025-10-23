@@ -17,7 +17,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#FEBC10',
       glow: '#FFE896',
-      bg: '#1E1B4B',
+      bg: '#FEBC10',        // Solid brand yellow background
       qrDark: '#51159D',    // Brand purple for QR data pixels
       qrLight: '#FEBC10'    // Brand yellow for QR background (bright & easy on eyes)
     },
@@ -27,7 +27,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#F59E0B',
       accent: '#A855F7',
       glow: '#DDD6FE',
-      bg: '#78350F',
+      bg: '#51159D',        // Solid brand purple background
       qrDark: '#FEBC10',    // Brand yellow for QR data pixels
       qrLight: '#51159D'    // Brand purple for QR background
     },
@@ -37,7 +37,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#C084FC',
       glow: '#DDD6FE',
-      bg: '#1E1B4B',
+      bg: '#FEBC10',        // Solid brand yellow background (contrast with purple)
       qrDark: '#51159D',    // Brand purple for QR data pixels
       qrLight: '#FFFFFF'    // White background for maximum contrast
     },
@@ -47,7 +47,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#F59E0B',
       accent: '#FBBf24',
       glow: '#FEF3C7',
-      bg: '#78350F',
+      bg: '#51159D',        // Solid brand purple background (contrast with yellow)
       qrDark: '#C79100',    // Darker yellow for QR data pixels
       qrLight: '#FFFFFF'    // White background for maximum contrast
     },
@@ -57,7 +57,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#FEBC10',
       glow: '#FFE896',
-      bg: '#1E1B4B',
+      bg: '#FEBC10',        // Solid brand yellow background
       qrDark: '#000000',    // Black for QR data pixels
       qrLight: '#FFFFFF'    // White background (most scannable)
     },
@@ -67,7 +67,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#C084FC',
       glow: '#DDD6FE',
-      bg: '#1E1B4B',
+      bg: '#51159D',        // Solid brand purple background
       qrDark: '#51159D',    // Brand purple for QR data pixels
       qrLight: '#FFF8E1'    // Soft cream background (easy on eyes)
     }
@@ -82,11 +82,8 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw background with gradient
-    const bgGradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size);
-    bgGradient.addColorStop(0, colors.bg);
-    bgGradient.addColorStop(1, '#000000');
-    ctx.fillStyle = bgGradient;
+    // Draw solid background (brand color)
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, size, size);
     
     // Draw pixel art character body FIRST (behind QR)
