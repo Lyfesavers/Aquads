@@ -17,6 +17,7 @@ import { socket } from '../services/api';
 import logger from '../utils/logger';
 import QRCode from 'qrcode';
 import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
+import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -92,6 +93,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showReferralQR, setShowReferralQR] = useState(false);
   const [referralQRCodeDataURL, setReferralQRCodeDataURL] = useState('');
   const [referralLinkCopied, setReferralLinkCopied] = useState(false);
+  const [showQRCustomizerModal, setShowQRCustomizerModal] = useState(false);
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
   const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
@@ -2533,9 +2535,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         
                         {/* QR Code Icon */}
                         <button
-                          onClick={generateReferralQRCode}
+                          onClick={() => setShowQRCustomizerModal(true)}
                           className="p-2 hover:bg-gray-600 rounded transition-colors"
-                          title="Generate QR code"
+                          title="Create custom QR code"
                         >
                           <FaQrcode className="text-gray-400 hover:text-blue-400 text-sm" />
                         </button>
@@ -4697,6 +4699,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           currentUser={currentUser}
         />
       )}
+
+      {/* QR Code Customizer Modal */}
+      <QRCodeCustomizerModal
+        isOpen={showQRCustomizerModal}
+        onClose={() => setShowQRCustomizerModal(false)}
+        referralUrl={`${window.location.origin}/?ref=${currentUser?.username}`}
+        username={currentUser?.username}
+      />
     </div>
   );
 };
