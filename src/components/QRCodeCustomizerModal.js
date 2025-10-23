@@ -110,12 +110,6 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     } else {
       drawFemaleCyberpunkHead(ctx, size, colors, pixelSize, qrY);
     }
-    
-    // Add glitch effects
-    addGlitchEffects(ctx, size, colors);
-    
-    // Add corner decorations
-    drawCornerDecorations(ctx, size, colors, pixelSize);
   };
 
   const drawCyberpunkFrame = (ctx, x, y, width, height, colors, pixelSize) => {
