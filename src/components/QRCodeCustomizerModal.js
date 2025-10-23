@@ -163,7 +163,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     const centerX = size / 2;
     
     // Jacket/hoodie shoulders (stylish) - HIGHER UP
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 100, 245, 65, 30); // Left shoulder
     ctx.fillRect(centerX + 35, 245, 65, 30);  // Right shoulder
     
@@ -200,11 +200,11 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 85, 315, 20, 15);
     
     // Torso/chest (behind QR) - hoodie/jacket
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 50, 275, 100, 100);
     
     // Jacket zipper
-    ctx.fillStyle = colors.primary;
+    ctx.fillStyle = colors.secondary;
     ctx.fillRect(centerX - 2, 280, 4, 90);
     
     // Jacket pockets/details
@@ -296,7 +296,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     const centerX = size / 2;
     
     // Stylish jacket shoulders - HIGHER UP
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 95, 247, 60, 28);
     ctx.fillRect(centerX + 35, 247, 60, 28);
     
@@ -336,11 +336,11 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 82, 312, 18, 12);
     
     // Torso/jacket (behind QR)
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 48, 275, 96, 100);
     
     // Jacket/top design lines
-    ctx.fillStyle = colors.primary;
+    ctx.fillStyle = colors.secondary;
     ctx.fillRect(centerX - 42, 290, 16, 75);
     ctx.fillRect(centerX + 26, 290, 16, 75);
     
