@@ -185,7 +185,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.shadowBlur = 0;
     
     // ARMS extending from shoulders (clearly at shoulder level)
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 105, 250, 20, 65); // Left arm
     ctx.fillRect(centerX + 85, 250, 20, 65);  // Right arm
     
@@ -318,7 +318,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.shadowBlur = 0;
     
     // ARMS extending from shoulders (clearly at shoulder level)
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 100, 252, 18, 60); // Left arm
     ctx.fillRect(centerX + 82, 252, 18, 60);  // Right arm
     
