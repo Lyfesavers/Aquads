@@ -351,6 +351,66 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.globalAlpha = 1.0;
   };
 
+  const addLogoToQRCode = async (ctx, qrX, qrY, qrSize) => {
+    try {
+      // Load Aquads logo
+      const logo = new Image();
+      logo.crossOrigin = 'anonymous'; // Prevent CORS issues
+      logo.src = '/Aquadsnewlogo.png';
+      
+      await new Promise((resolve, reject) => {
+        logo.onload = resolve;
+        logo.onerror = () => {
+          console.warn('Could not load logo, skipping...');
+          resolve(); // Continue without logo if it fails
+        };
+      });
+      
+      // Calculate logo size (about 25% of QR code size)
+      const logoSize = qrSize * 0.25;
+      
+      // Calculate logo dimensions maintaining aspect ratio
+      const logoAspectRatio = logo.width / logo.height;
+      let logoWidth = logoSize;
+      let logoHeight = logoSize;
+      
+      if (logoAspectRatio > 1) {
+        logoHeight = logoSize / logoAspectRatio;
+      } else if (logoAspectRatio < 1) {
+        logoWidth = logoSize * logoAspectRatio;
+      }
+      
+      const logoX = qrX + (qrSize - logoWidth) / 2;
+      const logoY = qrY + (qrSize - logoHeight) / 2;
+      
+      // Draw white background circle for logo
+      const bgSize = logoSize * 1.3;
+      
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(qrX + qrSize / 2, qrY + qrSize / 2, bgSize / 2, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw logo with high quality
+      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+      
+    } catch (error) {
+      console.error('Error adding logo to QR code:', error);
+      // Continue without logo if there's an error
+    }
+  };
+
   const drawCornerDecorations = (ctx, size, colors, pixelSize) => {
     // Bottom corners - data stream aesthetic
     const streams = 5;
@@ -453,6 +513,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       
       // Draw pixel character with QR code
       drawPixelCharacter(ctx, qrCanvas, selectedGender, colors);
+      
+      // Add Aquads logo to center of QR code
+      await addLogoToQRCode(ctx, 120, 140, 160); // qrX, qrY, qrSize
       
       // Convert to data URL with high quality
       const dataURL = canvas.toDataURL('image/png', 1.0);
