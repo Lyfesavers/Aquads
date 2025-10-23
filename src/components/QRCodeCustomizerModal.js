@@ -24,40 +24,6 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
     const generateStyledQRCode = async () => {
       try {
-        // Create QR code instance
-        const qrCodeInstance = new QRCodeStyling({
-          width: 400,
-          height: 400,
-          data: referralUrl,
-          margin: 10,
-          qrOptions: {
-            typeNumber: 0,
-            mode: 'Byte',
-            errorCorrectionLevel: 'H' // High error correction for logo overlay
-          },
-          imageOptions: {
-            hideBackgroundDots: true,
-            imageSize: 0.4,
-            margin: 8,
-            crossOrigin: 'anonymous'
-          },
-          dotsOptions: {
-            color: selectedColor,
-            type: 'rounded' // Pixelated/retro look
-          },
-          backgroundOptions: {
-            color: '#0a0a0a' // Dark cyberpunk background
-          },
-          cornersSquareOptions: {
-            color: selectedColor,
-            type: 'extra-rounded'
-          },
-          cornersDotOptions: {
-            color: selectedColor,
-            type: 'dot'
-          }
-        });
-
         // Load the character image based on gender selection
         const characterImage = gender === 'male' ? '/cyber-male.svg' : '/cyber-female.svg';
         
@@ -70,7 +36,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         svgText = svgText.replace(new RegExp(defaultColor, 'g'), selectedColor);
         
         // Convert SVG to data URL
-        const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const svgUrl = URL.createObjectURL(svgBlob);
         
         // Create temporary image to convert SVG to PNG for better compatibility
@@ -79,7 +45,10 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         
         await new Promise((resolve, reject) => {
           img.onload = resolve;
-          img.onerror = reject;
+          img.onerror = (e) => {
+            console.error('Error loading SVG:', e);
+            reject(e);
+          };
           img.src = svgUrl;
         });
         
@@ -92,21 +61,71 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         
         const pngUrl = canvas.toDataURL('image/png');
         
-        // Update QR code with character image
-        qrCodeInstance.update({
-          image: pngUrl
-        });
-
-        setQrCode(qrCodeInstance);
-
-        // Append to DOM
-        if (qrRef.current) {
-          qrRef.current.innerHTML = '';
-          qrCodeInstance.append(qrRef.current);
-        }
-
-        // Cleanup
+        // Cleanup blob URL
         URL.revokeObjectURL(svgUrl);
+
+        // Create or update QR code instance
+        if (qrCode) {
+          qrCode.update({
+            data: referralUrl,
+            image: pngUrl,
+            dotsOptions: {
+              color: selectedColor,
+              type: 'rounded'
+            },
+            cornersSquareOptions: {
+              color: selectedColor,
+              type: 'extra-rounded'
+            },
+            cornersDotOptions: {
+              color: selectedColor,
+              type: 'dot'
+            }
+          });
+        } else {
+          // Create new QR code instance
+          const qrCodeInstance = new QRCodeStyling({
+            width: 300,
+            height: 300,
+            data: referralUrl,
+            margin: 10,
+            qrOptions: {
+              typeNumber: 0,
+              mode: 'Byte',
+              errorCorrectionLevel: 'H' // High error correction for logo overlay
+            },
+            imageOptions: {
+              hideBackgroundDots: true,
+              imageSize: 0.4,
+              margin: 8,
+              crossOrigin: 'anonymous'
+            },
+            dotsOptions: {
+              color: selectedColor,
+              type: 'rounded' // Pixelated/retro look
+            },
+            backgroundOptions: {
+              color: '#0a0a0a' // Dark cyberpunk background
+            },
+            cornersSquareOptions: {
+              color: selectedColor,
+              type: 'extra-rounded'
+            },
+            cornersDotOptions: {
+              color: selectedColor,
+              type: 'dot'
+            },
+            image: pngUrl
+          });
+
+          setQrCode(qrCodeInstance);
+          
+          // Append to DOM after state is set
+          if (qrRef.current) {
+            qrRef.current.innerHTML = '';
+            qrCodeInstance.append(qrRef.current);
+          }
+        }
       } catch (error) {
         console.error('Error generating styled QR code:', error);
       }
@@ -114,6 +133,14 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
     generateStyledQRCode();
   }, [isOpen, referralUrl, gender, selectedColor]);
+
+  // Re-append QR code when qrCode state changes
+  useEffect(() => {
+    if (qrCode && qrRef.current && isOpen) {
+      qrRef.current.innerHTML = '';
+      qrCode.append(qrRef.current);
+    }
+  }, [qrCode, isOpen]);
 
   const handleDownload = () => {
     if (qrCode) {
@@ -128,17 +155,17 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 border border-purple-500/30 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl shadow-2xl max-w-xl w-full my-4 border border-purple-500/30 overflow-hidden max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600/20 to-cyan-600/20 p-6 border-b border-purple-500/30">
+        <div className="bg-gradient-to-r from-purple-600/20 to-cyan-600/20 p-4 border-b border-purple-500/30 flex-shrink-0">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-2xl font-bold text-white mb-1">
+              <h3 className="text-xl font-bold text-white">
                 Customize Your QR Code
               </h3>
-              <p className="text-gray-400 text-sm">
-                Create your unique cyberpunk character QR code
+              <p className="text-gray-400 text-xs mt-1">
+                Create your unique cyberpunk character
               </p>
             </div>
             <button
@@ -146,39 +173,39 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
               className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
               title="Close"
             >
-              <FaTimes className="text-xl" />
+              <FaTimes className="text-lg" />
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content - Scrollable */}
+        <div className="p-4 space-y-4 overflow-y-auto flex-grow">
           {/* Gender Selection */}
           <div>
-            <label className="block text-white font-medium mb-3 text-sm uppercase tracking-wide">
+            <label className="block text-white font-medium mb-2 text-xs uppercase tracking-wide">
               Character Gender
             </label>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={() => setGender('male')}
-                className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 ${
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
                   gender === 'male'
                     ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 border-2 border-cyan-400 text-white shadow-lg shadow-cyan-500/50'
                     : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
                 }`}
               >
-                <FaMale className="text-2xl" />
+                <FaMale className="text-lg" />
                 <span>Male</span>
               </button>
               <button
                 onClick={() => setGender('female')}
-                className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 ${
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
                   gender === 'female'
                     ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 border-2 border-pink-400 text-white shadow-lg shadow-pink-500/50'
                     : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
                 }`}
               >
-                <FaFemale className="text-2xl" />
+                <FaFemale className="text-lg" />
                 <span>Female</span>
               </button>
             </div>
@@ -186,72 +213,77 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
           {/* Color Selection */}
           <div>
-            <label className="block text-white font-medium mb-3 text-sm uppercase tracking-wide">
+            <label className="block text-white font-medium mb-2 text-xs uppercase tracking-wide">
               Accent Color
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {colorOptions.map((color) => (
                 <button
                   key={color.value}
                   onClick={() => setSelectedColor(color.value)}
-                  className={`py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center gap-3 ${
+                  className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 text-sm ${
                     selectedColor === color.value
                       ? 'bg-gray-700/50 border-2 text-white shadow-lg'
                       : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
                   }`}
                   style={{
                     borderColor: selectedColor === color.value ? color.value : undefined,
-                    boxShadow: selectedColor === color.value ? `0 0 20px ${color.value}40` : undefined
+                    boxShadow: selectedColor === color.value ? `0 0 15px ${color.value}40` : undefined
                   }}
                 >
                   <div
-                    className="w-6 h-6 rounded-full border-2 border-gray-900"
+                    className="w-5 h-5 rounded-full border-2 border-gray-900 flex-shrink-0"
                     style={{ backgroundColor: color.value }}
                   />
-                  <span className="text-sm">{color.label}</span>
+                  <span className="text-xs truncate">{color.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* QR Code Preview */}
-          <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-            <label className="block text-white font-medium mb-4 text-sm uppercase tracking-wide text-center">
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <label className="block text-white font-medium mb-3 text-xs uppercase tracking-wide text-center">
               Preview
             </label>
             <div className="flex justify-center">
               <div 
                 ref={qrRef} 
-                className="bg-white p-4 rounded-xl shadow-2xl"
+                className="bg-white p-3 rounded-lg shadow-2xl"
                 style={{
-                  boxShadow: `0 0 30px ${selectedColor}40`
+                  boxShadow: `0 0 25px ${selectedColor}40`,
+                  minHeight: '300px',
+                  minWidth: '300px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               />
             </div>
-            <p className="text-gray-400 text-xs text-center mt-4">
-              Your personalized cyberpunk QR code - Perfect as a profile picture!
+            <p className="text-gray-400 text-xs text-center mt-3">
+              Scan-ready profile picture QR code
             </p>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDownload}
-              className="flex-1 py-3 px-6 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg"
-              style={{
-                boxShadow: `0 0 20px ${selectedColor}40`
-              }}
-            >
-              <FaDownload />
-              <span>Download QR Code</span>
-            </button>
-          </div>
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="flex gap-3 p-4 border-t border-gray-700 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDownload}
+            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg text-sm"
+            style={{
+              boxShadow: `0 0 20px ${selectedColor}40`
+            }}
+          >
+            <FaDownload />
+            <span>Download QR Code</span>
+          </button>
         </div>
       </div>
     </div>
@@ -259,4 +291,3 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 };
 
 export default QRCodeCustomizerModal;
-
