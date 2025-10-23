@@ -1,332 +1,512 @@
-import React, { useState, useEffect, useRef } from 'react';
-import QRCodeStyling from 'qr-code-styling';
-import { FaTimes, FaMale, FaFemale, FaDownload } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import QRCode from 'qrcode';
+import { FaTimes, FaDownload, FaMale, FaFemale } from 'react-icons/fa';
 
 const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
-  const [gender, setGender] = useState('male');
-  const [selectedColor, setSelectedColor] = useState('#00ffff');
+  const [selectedGender, setSelectedGender] = useState('male');
+  const [selectedColor, setSelectedColor] = useState('purple');
+  const [qrDataURL, setQrDataURL] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const qrRef = useRef(null);
-  const qrCodeInstance = useRef(null);
+  const canvasRef = useRef(null);
 
-  // Cyberpunk color options
-  const colorOptions = [
-    { name: 'Cyan', value: '#00ffff', label: 'Neon Cyan' },
-    { name: 'Magenta', value: '#ff00ff', label: 'Neon Pink' },
-    { name: 'Green', value: '#00ff41', label: 'Matrix Green' },
-    { name: 'Purple', value: '#9d00ff', label: 'Electric Purple' },
-    { name: 'Orange', value: '#ff6600', label: 'Cyber Orange' },
-    { name: 'Yellow', value: '#ffff00', label: 'Neon Yellow' }
-  ];
+  const colorSchemes = {
+    purple: {
+      name: 'Cyber Purple',
+      primary: '#A855F7',
+      secondary: '#7C3AED',
+      accent: '#C084FC',
+      glow: '#DDD6FE',
+      bg: '#1E1B4B'
+    },
+    blue: {
+      name: 'Neon Blue',
+      primary: '#3B82F6',
+      secondary: '#1D4ED8',
+      accent: '#60A5FA',
+      glow: '#DBEAFE',
+      bg: '#0C4A6E'
+    },
+    green: {
+      name: 'Toxic Green',
+      primary: '#10B981',
+      secondary: '#059669',
+      accent: '#34D399',
+      glow: '#D1FAE5',
+      bg: '#064E3B'
+    },
+    pink: {
+      name: 'Hot Pink',
+      primary: '#EC4899',
+      secondary: '#DB2777',
+      accent: '#F9A8D4',
+      glow: '#FCE7F3',
+      bg: '#831843'
+    },
+    orange: {
+      name: 'Cyber Orange',
+      primary: '#F59E0B',
+      secondary: '#D97706',
+      accent: '#FBBf24',
+      glow: '#FEF3C7',
+      bg: '#78350F'
+    },
+    cyan: {
+      name: 'Electric Cyan',
+      primary: '#06B6D4',
+      secondary: '#0891B2',
+      accent: '#22D3EE',
+      glow: '#CFFAFE',
+      bg: '#164E63'
+    }
+  };
 
-  // Generate QR code whenever settings change
-  useEffect(() => {
-    if (!isOpen || !referralUrl) return;
+  // Pixel art character templates
+  const drawPixelCharacter = (ctx, qrCanvas, gender, colors) => {
+    const canvas = ctx.canvas;
+    const size = 400; // Canvas size
+    const pixelSize = 8; // Size of each pixel block
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background with gradient
+    const bgGradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size);
+    bgGradient.addColorStop(0, colors.bg);
+    bgGradient.addColorStop(1, '#000000');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, size, size);
+    
+    // Calculate QR code position (center)
+    const qrSize = 180;
+    const qrX = (size - qrSize) / 2;
+    const qrY = (size - qrSize) / 2;
+    
+    // Draw cyberpunk frame around QR code
+    drawCyberpunkFrame(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, colors, pixelSize);
+    
+    // Draw the QR code
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    
+    // Draw pixel art character elements around the QR code
+    if (gender === 'male') {
+      drawMaleCyberpunkElements(ctx, size, colors, pixelSize);
+    } else {
+      drawFemaleCyberpunkElements(ctx, size, colors, pixelSize);
+    }
+    
+    // Add glitch effects
+    addGlitchEffects(ctx, size, colors);
+    
+    // Add corner decorations
+    drawCornerDecorations(ctx, size, colors, pixelSize);
+  };
 
-    const generateStyledQRCode = async () => {
-      setIsGenerating(true);
-      try {
-        console.log('Starting QR code generation...');
-        console.log('Gender:', gender, 'Color:', selectedColor);
-        
-        // Load the character image based on gender selection
-        const characterImage = gender === 'male' ? '/cyber-male.svg' : '/cyber-female.svg';
-        console.log('Loading character:', characterImage);
-        
-        // Fetch SVG and inject the selected color
-        const response = await fetch(characterImage);
-        if (!response.ok) {
-          throw new Error(`Failed to load character: ${response.status}`);
+  const drawCyberpunkFrame = (ctx, x, y, width, height, colors, pixelSize) => {
+    // Outer glow
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 20;
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    
+    // Corner accents
+    const cornerSize = 15;
+    ctx.fillStyle = colors.accent;
+    
+    // Top-left corner
+    ctx.fillRect(x - 3, y - 3, cornerSize, 3);
+    ctx.fillRect(x - 3, y - 3, 3, cornerSize);
+    
+    // Top-right corner
+    ctx.fillRect(x + width - cornerSize + 3, y - 3, cornerSize, 3);
+    ctx.fillRect(x + width, y - 3, 3, cornerSize);
+    
+    // Bottom-left corner
+    ctx.fillRect(x - 3, y + height, cornerSize, 3);
+    ctx.fillRect(x - 3, y + height - cornerSize + 3, 3, cornerSize);
+    
+    // Bottom-right corner
+    ctx.fillRect(x + width - cornerSize + 3, y + height, cornerSize, 3);
+    ctx.fillRect(x + width, y + height - cornerSize + 3, 3, cornerSize);
+  };
+
+  const drawMaleCyberpunkElements = (ctx, size, colors, pixelSize) => {
+    // Robot head/helmet at top
+    const headX = size / 2 - 40;
+    const headY = 20;
+    
+    // Helmet
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(headX, headY, 80, 40);
+    
+    // Visor
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(headX + 10, headY + 15, 60, 15);
+    
+    // Visor glow
+    ctx.fillStyle = colors.glow;
+    ctx.fillRect(headX + 15, headY + 20, 50, 5);
+    
+    // Antenna
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(headX + 35, headY - 10, 10, 10);
+    ctx.fillRect(headX + 38, headY - 15, 4, 5);
+    
+    // Shoulders
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(headX - 20, headY + 45, 30, 20);
+    ctx.fillRect(headX + 70, headY + 45, 30, 20);
+    
+    // Shoulder lights
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(headX - 15, headY + 50, 8, 8);
+    ctx.fillRect(headX + 75, headY + 50, 8, 8);
+  };
+
+  const drawFemaleCyberpunkElements = (ctx, size, colors, pixelSize) => {
+    // Cyberpunk hair/helmet at top
+    const headX = size / 2 - 40;
+    const headY = 20;
+    
+    // Hair/helmet with more curves
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(headX - 5, headY, 90, 35);
+    
+    // Hair strands (pixel art style)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(headX - 10, headY + 10, 8, 30);
+    ctx.fillRect(headX + 82, headY + 10, 8, 30);
+    
+    // Visor
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(headX + 5, headY + 12, 70, 18);
+    
+    // Visor glow
+    ctx.fillStyle = colors.glow;
+    ctx.fillRect(headX + 10, headY + 18, 60, 6);
+    
+    // Hair ornament
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(headX + 30, headY - 8, 20, 8);
+    ctx.fillRect(headX + 35, headY - 12, 10, 4);
+    
+    // Earrings/tech
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(headX - 8, headY + 25, 6, 12);
+    ctx.fillRect(headX + 82, headY + 25, 6, 12);
+    
+    // Shoulder pads
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(headX - 25, headY + 40, 35, 25);
+    ctx.fillRect(headX + 70, headY + 40, 35, 25);
+    
+    // Shoulder decorations
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(headX - 20, headY + 45, 10, 10);
+    ctx.fillRect(headX + 75, headY + 45, 10, 10);
+  };
+
+  const addGlitchEffects = (ctx, size, colors) => {
+    // Random glitch bars (cyberpunk aesthetic)
+    ctx.globalAlpha = 0.3;
+    
+    for (let i = 0; i < 3; i++) {
+      const y = Math.random() * size;
+      const height = 2 + Math.random() * 4;
+      
+      ctx.fillStyle = colors.accent;
+      ctx.fillRect(0, y, size, height);
+    }
+    
+    ctx.globalAlpha = 1.0;
+  };
+
+  const drawCornerDecorations = (ctx, size, colors, pixelSize) => {
+    // Bottom corners - data stream aesthetic
+    const streams = 5;
+    
+    // Bottom left corner streams
+    for (let i = 0; i < streams; i++) {
+      ctx.fillStyle = i % 2 === 0 ? colors.primary : colors.secondary;
+      ctx.fillRect(10 + i * 8, size - 40 + i * 6, 6, 6);
+    }
+    
+    // Bottom right corner streams
+    for (let i = 0; i < streams; i++) {
+      ctx.fillStyle = i % 2 === 0 ? colors.primary : colors.secondary;
+      ctx.fillRect(size - 50 + i * 8, size - 40 + i * 6, 6, 6);
+    }
+    
+    // Add circuit lines
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    
+    // Top corners
+    ctx.beginPath();
+    ctx.moveTo(20, 20);
+    ctx.lineTo(60, 20);
+    ctx.lineTo(60, 40);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(size - 20, 20);
+    ctx.lineTo(size - 60, 20);
+    ctx.lineTo(size - 60, 40);
+    ctx.stroke();
+    
+    ctx.globalAlpha = 1.0;
+  };
+
+  const generateCustomQRCode = async () => {
+    if (!referralUrl) {
+      console.error('No referral URL provided');
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    try {
+      // Generate base QR code
+      const qrCanvas = document.createElement('canvas');
+      const colors = colorSchemes[selectedColor] || colorSchemes.purple;
+      
+      await QRCode.toCanvas(qrCanvas, referralUrl, {
+        width: 180,
+        margin: 1,
+        errorCorrectionLevel: 'H', // High error correction allows up to 30% damage
+        color: {
+          dark: colors.primary,
+          light: '#FFFFFF'
         }
-        let svgText = await response.text();
-        console.log('SVG loaded successfully');
-        
-        // Replace the default color in SVG with selected color
-        const defaultColor = gender === 'male' ? '#00ffff' : '#ff00ff';
-        svgText = svgText.replace(new RegExp(defaultColor, 'g'), selectedColor);
-        
-        // Convert SVG to data URL
-        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-        const svgUrl = URL.createObjectURL(svgBlob);
-        
-        // Create temporary image to convert SVG to PNG
-        const img = new Image();
-        
-        const imageLoadPromise = new Promise((resolve, reject) => {
-          img.onload = () => {
-            console.log('Character image loaded');
-            resolve();
-          };
-          img.onerror = (e) => {
-            console.error('Error loading character image:', e);
-            reject(e);
-          };
-        });
-        
-        img.src = svgUrl;
-        await imageLoadPromise;
-        
-        // Create canvas to convert SVG to PNG
-        const canvas = document.createElement('canvas');
-        canvas.width = 200;
-        canvas.height = 200;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, 200, 200);
-        
-        const pngUrl = canvas.toDataURL('image/png');
-        console.log('Character converted to PNG');
-        
-        // Cleanup blob URL
-        URL.revokeObjectURL(svgUrl);
-
-        // Clear previous QR code
-        if (qrRef.current) {
-          qrRef.current.innerHTML = '';
-        }
-
-        // Create new QR code instance
-        const qr = new QRCodeStyling({
-          width: 300,
-          height: 300,
-          data: referralUrl,
-          margin: 10,
-          qrOptions: {
-            typeNumber: 0,
-            mode: 'Byte',
-            errorCorrectionLevel: 'H'
-          },
-          imageOptions: {
-            hideBackgroundDots: true,
-            imageSize: 0.35,
-            margin: 5,
-            crossOrigin: 'anonymous'
-          },
-          dotsOptions: {
-            color: selectedColor,
-            type: 'rounded'
-          },
-          backgroundOptions: {
-            color: '#ffffff'
-          },
-          cornersSquareOptions: {
-            color: selectedColor,
-            type: 'extra-rounded'
-          },
-          cornersDotOptions: {
-            color: selectedColor,
-            type: 'dot'
-          },
-          image: pngUrl
-        });
-
-        qrCodeInstance.current = qr;
-        
-        // Append to DOM
-        if (qrRef.current) {
-          await qr.append(qrRef.current);
-          console.log('QR code appended to DOM');
-        }
-        
-        setIsGenerating(false);
-      } catch (error) {
-        console.error('Error generating styled QR code:', error);
-        setIsGenerating(false);
-        
-        // Fallback: create simple QR without character
-        try {
-          if (qrRef.current) {
-            qrRef.current.innerHTML = '';
-          }
-          
-          const fallbackQr = new QRCodeStyling({
-            width: 300,
-            height: 300,
-            data: referralUrl,
-            margin: 10,
-            qrOptions: {
-              errorCorrectionLevel: 'H'
-            },
-            dotsOptions: {
-              color: selectedColor,
-              type: 'rounded'
-            },
-            backgroundOptions: {
-              color: '#ffffff'
-            },
-            cornersSquareOptions: {
-              color: selectedColor,
-              type: 'extra-rounded'
-            },
-            cornersDotOptions: {
-              color: selectedColor,
-              type: 'dot'
-            }
-          });
-          
-          qrCodeInstance.current = fallbackQr;
-          if (qrRef.current) {
-            await fallbackQr.append(qrRef.current);
-          }
-        } catch (fallbackError) {
-          console.error('Fallback QR generation also failed:', fallbackError);
-        }
+      });
+      
+      // Create main canvas
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        throw new Error('Canvas element not found');
       }
-    };
+      
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
+      }
+      
+      // Draw pixel character with QR code
+      drawPixelCharacter(ctx, qrCanvas, selectedGender, colors);
+      
+      // Convert to data URL with high quality
+      const dataURL = canvas.toDataURL('image/png', 1.0);
+      setQrDataURL(dataURL);
+      
+    } catch (error) {
+      console.error('Error generating custom QR code:', error);
+      // Fallback: try to generate a simple QR code without pixel art
+      try {
+        const fallbackCanvas = document.createElement('canvas');
+        await QRCode.toCanvas(fallbackCanvas, referralUrl, {
+          width: 400,
+          margin: 2,
+          errorCorrectionLevel: 'H',
+          color: {
+            dark: colorSchemes[selectedColor].primary,
+            light: '#FFFFFF'
+          }
+        });
+        const fallbackURL = fallbackCanvas.toDataURL('image/png', 1.0);
+        setQrDataURL(fallbackURL);
+      } catch (fallbackError) {
+        console.error('Fallback QR generation failed:', fallbackError);
+        alert('Unable to generate QR code. Please try refreshing the page.');
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
-    generateStyledQRCode();
-  }, [isOpen, referralUrl, gender, selectedColor]);
+  // Auto-generate when options change
+  useEffect(() => {
+    if (isOpen) {
+      generateCustomQRCode();
+    }
+  }, [isOpen, selectedGender, selectedColor, referralUrl]);
 
   const handleDownload = () => {
-    if (qrCodeInstance.current) {
-      const fileName = `aquads-referral-${username || 'user'}-${gender}-qr.png`;
-      qrCodeInstance.current.download({
-        name: fileName,
-        extension: 'png'
-      });
+    if (!qrDataURL) {
+      alert('QR code not ready. Please wait for generation to complete.');
+      return;
+    }
+    
+    try {
+      const link = document.createElement('a');
+      link.download = `aquads-cyberpunk-qr-${username || 'user'}-${selectedGender}-${selectedColor}.png`;
+      link.href = qrDataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed. Please try right-clicking the image and selecting "Save Image As..."');
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl shadow-2xl max-w-xl w-full my-4 border border-purple-500/30 overflow-hidden max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600/20 to-cyan-600/20 p-4 border-b border-purple-500/30 flex-shrink-0">
-          <div className="flex justify-between items-center">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+          {/* Header */}
+          <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 p-6 flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-bold text-white">
-                Customize Your QR Code
-              </h3>
-              <p className="text-gray-400 text-xs mt-1">
-                Create your unique cyberpunk character
-              </p>
+              <h2 className="text-2xl font-bold text-white mb-1">Cyberpunk QR Code Generator</h2>
+              <p className="text-gray-400 text-sm">Create your custom pixel art QR code</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-              title="Close"
+              className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800 rounded-lg"
             >
-              <FaTimes className="text-lg" />
+              <FaTimes size={24} />
             </button>
           </div>
-        </div>
 
-        {/* Content - Scrollable */}
-        <div className="p-4 space-y-4 overflow-y-auto flex-grow">
-          {/* Gender Selection */}
-          <div>
-            <label className="block text-white font-medium mb-2 text-xs uppercase tracking-wide">
-              Character Gender
-            </label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setGender('male')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
-                  gender === 'male'
-                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 border-2 border-cyan-400 text-white shadow-lg shadow-cyan-500/50'
-                    : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
-                }`}
-              >
-                <FaMale className="text-lg" />
-                <span>Male</span>
-              </button>
-              <button
-                onClick={() => setGender('female')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
-                  gender === 'female'
-                    ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 border-2 border-pink-400 text-white shadow-lg shadow-pink-500/50'
-                    : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
-                }`}
-              >
-                <FaFemale className="text-lg" />
-                <span>Female</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Color Selection */}
-          <div>
-            <label className="block text-white font-medium mb-2 text-xs uppercase tracking-wide">
-              Accent Color
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {colorOptions.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 text-sm ${
-                    selectedColor === color.value
-                      ? 'bg-gray-700/50 border-2 text-white shadow-lg'
-                      : 'bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600'
-                  }`}
-                  style={{
-                    borderColor: selectedColor === color.value ? color.value : undefined,
-                    boxShadow: selectedColor === color.value ? `0 0 15px ${color.value}40` : undefined
-                  }}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full border-2 border-gray-900 flex-shrink-0"
-                    style={{ backgroundColor: color.value }}
-                  />
-                  <span className="text-xs truncate">{color.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* QR Code Preview */}
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-            <label className="block text-white font-medium mb-3 text-xs uppercase tracking-wide text-center">
-              Preview
-            </label>
-            <div className="flex justify-center items-center">
-              {isGenerating ? (
-                <div className="w-[300px] h-[300px] bg-white rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-2"></div>
-                    <p className="text-gray-600 text-sm">Generating...</p>
+          {/* Content */}
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Customization Panel */}
+              <div className="space-y-6">
+                {/* Gender Selection */}
+                <div>
+                  <label className="block text-white font-semibold mb-3">Character Style</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setSelectedGender('male')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        selectedGender === 'male'
+                          ? 'border-blue-500 bg-blue-500/20'
+                          : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                      }`}
+                    >
+                      <FaMale className="text-3xl mx-auto mb-2 text-blue-400" />
+                      <span className="text-white font-medium">Male</span>
+                      <p className="text-xs text-gray-400 mt-1">Robotic Helmet</p>
+                    </button>
+                    <button
+                      onClick={() => setSelectedGender('female')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        selectedGender === 'female'
+                          ? 'border-pink-500 bg-pink-500/20'
+                          : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                      }`}
+                    >
+                      <FaFemale className="text-3xl mx-auto mb-2 text-pink-400" />
+                      <span className="text-white font-medium">Female</span>
+                      <p className="text-xs text-gray-400 mt-1">Cyber Hair</p>
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <div 
-                  ref={qrRef} 
-                  className="bg-white rounded-lg shadow-2xl"
-                  style={{
-                    boxShadow: `0 0 25px ${selectedColor}40`
-                  }}
-                />
-              )}
-            </div>
-            <p className="text-gray-400 text-xs text-center mt-3">
-              Scan-ready profile picture QR code
-            </p>
-          </div>
-        </div>
 
-        {/* Action Buttons - Fixed at bottom */}
-        <div className="flex gap-3 p-4 border-t border-gray-700 flex-shrink-0">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={isGenerating}
-            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              boxShadow: `0 0 20px ${selectedColor}40`
-            }}
-          >
-            <FaDownload />
-            <span>Download QR Code</span>
-          </button>
-        </div>
-      </div>
-    </div>
+                {/* Color Scheme Selection */}
+                <div>
+                  <label className="block text-white font-semibold mb-3">Color Scheme</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(colorSchemes).map(([key, scheme]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedColor(key)}
+                        className={`p-3 rounded-lg border-2 transition-all ${
+                          selectedColor === key
+                            ? 'border-white bg-gray-700'
+                            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-8 h-8 rounded-full"
+                            style={{
+                              background: `linear-gradient(135deg, ${scheme.primary}, ${scheme.secondary})`
+                            }}
+                          />
+                          <span className="text-white text-sm font-medium">{scheme.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <h3 className="text-blue-400 font-semibold mb-2">✨ About This QR Code</h3>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Unique pixel art cyberpunk design</li>
+                    <li>• Fully scannable with any QR reader</li>
+                    <li>• High-quality 400x400px PNG</li>
+                    <li>• Perfect for social media sharing</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Preview Panel */}
+              <div className="flex flex-col">
+                <label className="block text-white font-semibold mb-3">Preview</label>
+                <div className="bg-gray-800 rounded-lg p-6 flex-1 flex flex-col items-center justify-center">
+                  {isGenerating ? (
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                      <p className="text-gray-400">Generating your cyberpunk QR code...</p>
+                    </div>
+                  ) : qrDataURL ? (
+                    <div className="text-center">
+                      <canvas
+                        ref={canvasRef}
+                        className="hidden"
+                      />
+                      <img
+                        src={qrDataURL}
+                        alt="Custom QR Code"
+                        className="w-full max-w-[400px] h-auto rounded-lg shadow-2xl"
+                      />
+                      <button
+                        onClick={handleDownload}
+                        className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 mx-auto"
+                      >
+                        <FaDownload />
+                        Download QR Code
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">Select options to generate</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
 export default QRCodeCustomizerModal;
+

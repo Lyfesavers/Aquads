@@ -90,10 +90,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
   const [serviceRejectionReason, setServiceRejectionReason] = useState('');
   // Referral QR code states
-  const [showReferralQR, setShowReferralQR] = useState(false);
-  const [referralQRCodeDataURL, setReferralQRCodeDataURL] = useState('');
+  const [showReferralQRModal, setShowReferralQRModal] = useState(false);
   const [referralLinkCopied, setReferralLinkCopied] = useState(false);
-  const [showQRCustomizerModal, setShowQRCustomizerModal] = useState(false);
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
   const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
@@ -121,121 +119,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Loading state for main dashboard tab - Start false for immediate display (Optimistic UI)
   const [isLoadingMainTab, setIsLoadingMainTab] = useState(false);
 
-  // Generate QR code for referral link with brand colors and logo
-  const generateReferralQRCode = async () => {
-    try {
-      const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
-      
-      // Generate QR code with brand colors (reversed)
-      const qrDataURL = await QRCode.toDataURL(referralUrl, {
-        width: 300,
-        margin: 2,
-        errorCorrectionLevel: 'H', // High error correction to allow logo overlay
-        color: {
-          dark: '#FEBC10',  // Brand yellow (data pixels)
-          light: '#51159D'  // Brand purple (background)
-        }
-      });
-      
-      // Create canvas to add logo
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { alpha: true });
-      
-      // Enable high-quality image rendering
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
-      // Load QR code image
-      const qrImage = new Image();
-      qrImage.src = qrDataURL;
-      
-      await new Promise((resolve) => {
-        qrImage.onload = resolve;
-      });
-      
-      // Set canvas size
-      canvas.width = qrImage.width;
-      canvas.height = qrImage.height;
-      
-      // Draw QR code
-      ctx.drawImage(qrImage, 0, 0);
-      
-      // Load and draw logo
-      const logo = new Image();
-      logo.crossOrigin = 'anonymous'; // Prevent CORS issues
-      logo.src = '/Aquadsnewlogo.png';
-      
-      await new Promise((resolve, reject) => {
-        logo.onload = resolve;
-        logo.onerror = reject;
-      });
-      
-      // Calculate logo size (about 30% of QR code size - clearly visible)
-      const logoSize = canvas.width * 0.30;
-      
-      // Calculate logo dimensions maintaining aspect ratio
-      const logoAspectRatio = logo.width / logo.height;
-      let logoWidth = logoSize;
-      let logoHeight = logoSize;
-      
-      // Adjust dimensions based on aspect ratio
-      if (logoAspectRatio > 1) {
-        // Logo is wider than tall
-        logoHeight = logoSize / logoAspectRatio;
-      } else if (logoAspectRatio < 1) {
-        // Logo is taller than wide
-        logoWidth = logoSize * logoAspectRatio;
-      }
-      
-      const logoX = (canvas.width - logoWidth) / 2;
-      const logoY = (canvas.height - logoHeight) / 2;
-      
-      // Draw white background circle for logo (tighter fit)
-      const bgSize = logoSize * 1.25;
-      
-      // Add subtle shadow for depth
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
-      
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, bgSize / 2, 0, 2 * Math.PI);
-      ctx.fill();
-      
-      // Reset shadow for logo
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      
-      // Draw logo with high quality
-      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
-      
-      // Convert canvas to data URL
-      const finalDataURL = canvas.toDataURL('image/png');
-      setReferralQRCodeDataURL(finalDataURL);
-      setShowReferralQR(true);
-    } catch (error) {
-      console.error('Error generating referral QR code:', error);
-      // Fallback to QR code without logo if there's an error
-      try {
-        const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
-        const dataURL = await QRCode.toDataURL(referralUrl, {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: '#FEBC10',
-            light: '#51159D'
-          }
-        });
-        setReferralQRCodeDataURL(dataURL);
-        setShowReferralQR(true);
-      } catch (fallbackError) {
-        console.error('Fallback QR generation failed:', fallbackError);
-      }
-    }
+  // Open QR code customizer modal
+  const generateReferralQRCode = () => {
+    setShowReferralQRModal(true);
   };
 
   // Update activeTab when initialActiveTab changes
@@ -2535,9 +2421,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         
                         {/* QR Code Icon */}
                         <button
-                          onClick={() => setShowQRCustomizerModal(true)}
+                          onClick={generateReferralQRCode}
                           className="p-2 hover:bg-gray-600 rounded transition-colors"
-                          title="Create custom QR code"
+                          title="Generate QR code"
                         >
                           <FaQrcode className="text-gray-400 hover:text-blue-400 text-sm" />
                         </button>
@@ -2546,53 +2432,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
                 
-                {/* QR Code Display */}
-                {showReferralQR && (
-                  <div className="mt-4 bg-gray-800/50 rounded-lg p-4 mb-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-white font-medium">Referral QR Code</h4>
-                      <button
-                        onClick={() => setShowReferralQR(false)}
-                        className="text-gray-400 hover:text-white transition-colors"
-                        title="Close QR Code"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-white p-4 rounded-lg inline-block shadow-lg">
-                        {referralQRCodeDataURL ? (
-                          <img 
-                            src={referralQRCodeDataURL} 
-                            alt="Referral QR Code" 
-                            className="w-64 h-64"
-                          />
-                        ) : (
-                          <div className="w-64 h-64 bg-gray-200 rounded flex items-center justify-center">
-                            <div className="text-gray-500 text-sm">Generating...</div>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-sm mt-3">
-                        Branded QR code with Aquads logo - Share for quick affiliate sign-ups!
-                      </p>
-                      <button
-                        onClick={() => {
-                          // Download QR code
-                          const link = document.createElement('a');
-                          link.download = `aquads-referral-${currentUser?.username}.png`;
-                          link.href = referralQRCodeDataURL;
-                          link.click();
-                        }}
-                        className="mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-                      >
-                        Download QR Code
-                      </button>
-                    </div>
-                  </div>
-                )}
                 
                 {/* Points Display */}
                 {!pointsInfo ? (
@@ -4702,8 +4541,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       {/* QR Code Customizer Modal */}
       <QRCodeCustomizerModal
-        isOpen={showQRCustomizerModal}
-        onClose={() => setShowQRCustomizerModal(false)}
+        isOpen={showReferralQRModal}
+        onClose={() => setShowReferralQRModal(false)}
         referralUrl={`${window.location.origin}/?ref=${currentUser?.username}`}
         username={currentUser?.username}
       />
