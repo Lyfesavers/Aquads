@@ -478,202 +478,210 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   };
 
   const drawCigar = (ctx, centerX, headY, gender, colors) => {
-    // Position in mouth
-    const mouthY = headY + 60;
+    // Position in mouth (bigger and more visible)
+    const mouthY = headY + 58;
     const cigarX = centerX + 12;
     
-    // Cigar body (brown)
+    // Cigar body (brown) - thicker
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(cigarX, mouthY, 20, 4);
+    ctx.fillRect(cigarX, mouthY, 28, 6);
     
     // Cigar tip (darker)
     ctx.fillStyle = '#654321';
-    ctx.fillRect(cigarX + 20, mouthY, 3, 4);
+    ctx.fillRect(cigarX + 28, mouthY, 4, 6);
     
-    // Glowing ember
+    // Glowing ember (bigger)
     ctx.shadowColor = '#FF6600';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12;
     ctx.fillStyle = '#FF4500';
-    ctx.fillRect(cigarX + 20, mouthY + 1, 2, 2);
+    ctx.fillRect(cigarX + 29, mouthY + 1, 3, 4);
     ctx.shadowBlur = 0;
     
-    // Smoke (subtle)
-    ctx.globalAlpha = 0.4;
+    // Smoke (more visible)
+    ctx.globalAlpha = 0.5;
     ctx.fillStyle = '#CCCCCC';
-    ctx.fillRect(cigarX + 23, mouthY - 2, 2, 2);
-    ctx.fillRect(cigarX + 25, mouthY - 4, 2, 2);
-    ctx.fillRect(cigarX + 27, mouthY - 6, 2, 2);
+    ctx.fillRect(cigarX + 32, mouthY - 3, 3, 3);
+    ctx.fillRect(cigarX + 35, mouthY - 6, 3, 3);
+    ctx.fillRect(cigarX + 38, mouthY - 10, 3, 3);
     ctx.globalAlpha = 1.0;
   };
 
   const drawBible = (ctx, centerX, size, gender, colors) => {
-    // Held in left hand
-    const handX = gender === 'male' ? centerX - 105 : centerX - 100;
-    const handY = 320;
+    // Held in right hand (bigger and more visible)
+    const handX = gender === 'male' ? centerX + 85 : centerX + 82;
+    const handY = 315;
     
-    // Bible book (dark cover)
+    // Bible book (dark cover) - bigger
     ctx.fillStyle = '#2C1810';
-    ctx.fillRect(handX - 5, handY - 18, 16, 22);
+    ctx.fillRect(handX - 8, handY - 32, 24, 32);
     
-    // Cross on cover (gold)
+    // Cross on cover (gold) - bigger
     ctx.fillStyle = '#FFD700';
-    ctx.fillRect(handX + 1, handY - 13, 6, 2);
-    ctx.fillRect(handX + 3, handY - 15, 2, 8);
+    ctx.fillRect(handX - 2, handY - 22, 10, 3);
+    ctx.fillRect(handX + 1, handY - 26, 4, 12);
     
     // Pages edge (white)
     ctx.fillStyle = '#F5F5DC';
-    ctx.fillRect(handX + 11, handY - 17, 2, 20);
+    ctx.fillRect(handX + 16, handY - 30, 3, 28);
     
     // Highlight
     ctx.globalAlpha = 0.3;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(handX - 4, handY - 17, 6, 2);
+    ctx.fillRect(handX - 7, handY - 30, 8, 3);
     ctx.globalAlpha = 1.0;
   };
 
   const drawWineGlass = (ctx, centerX, size, gender, colors) => {
-    // Held in right hand
-    const handX = gender === 'male' ? centerX + 85 : centerX + 82;
-    const handY = 315;
+    // Held in left hand (bigger and more visible)
+    const handX = gender === 'male' ? centerX - 105 : centerX - 100;
+    const handY = 320;
     
-    // Glass stem
+    // Glass stem (thicker)
     ctx.fillStyle = '#E8E8E8';
-    ctx.fillRect(handX + 8, handY - 20, 2, 18);
+    ctx.fillRect(handX + 6, handY - 30, 4, 26);
     
-    // Glass base
-    ctx.fillRect(handX + 5, handY - 2, 8, 2);
+    // Glass base (wider)
+    ctx.fillRect(handX + 2, handY - 4, 12, 3);
     
-    // Glass bowl
+    // Glass bowl (bigger)
     ctx.fillStyle = '#F0F0F0';
-    ctx.fillRect(handX + 4, handY - 28, 10, 8);
+    ctx.fillRect(handX + 1, handY - 42, 14, 12);
     
-    // Wine (red)
+    // Wine (red) - more wine
     ctx.fillStyle = '#8B0000';
-    ctx.fillRect(handX + 5, handY - 24, 8, 5);
+    ctx.fillRect(handX + 2, handY - 38, 12, 8);
     
-    // Glass shine
-    ctx.globalAlpha = 0.5;
+    // Glass shine (bigger)
+    ctx.globalAlpha = 0.6;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(handX + 5, handY - 27, 2, 3);
+    ctx.fillRect(handX + 3, handY - 40, 4, 5);
     ctx.globalAlpha = 1.0;
   };
 
   const drawGameController = (ctx, centerX, size, gender, colors) => {
-    // Held in front (both hands)
-    const controllerX = centerX - 20;
-    const controllerY = 330;
+    // Held in front (both hands) - bigger and more visible
+    const controllerX = centerX - 30;
+    const controllerY = 325;
     
-    // Controller body
+    // Controller body (bigger)
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(controllerX, controllerY, 40, 16);
+    ctx.fillRect(controllerX, controllerY, 60, 24);
     
-    // D-pad (left side)
+    // D-pad (left side) - bigger
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(controllerX + 6, controllerY + 4, 8, 8);
+    ctx.fillRect(controllerX + 10, controllerY + 7, 12, 12);
     
-    // Buttons (right side)
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(controllerX + 26, controllerY + 5, 3, 3);
-    ctx.fillRect(controllerX + 30, controllerY + 5, 3, 3);
-    ctx.fillRect(controllerX + 26, controllerY + 9, 3, 3);
-    ctx.fillRect(controllerX + 30, controllerY + 9, 3, 3);
-    
-    // Grips
+    // D-pad cross pattern
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(controllerX - 4, controllerY + 8, 4, 12);
-    ctx.fillRect(controllerX + 40, controllerY + 8, 4, 12);
+    ctx.fillRect(controllerX + 11, controllerY + 11, 10, 4);
+    ctx.fillRect(controllerX + 14, controllerY + 8, 4, 10);
     
-    // Glow effect
+    // Buttons (right side) - bigger
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(controllerX + 38, controllerY + 7, 5, 5);
+    ctx.fillRect(controllerX + 45, controllerY + 7, 5, 5);
+    ctx.fillRect(controllerX + 38, controllerY + 14, 5, 5);
+    ctx.fillRect(controllerX + 45, controllerY + 14, 5, 5);
+    
+    // Grips (bigger)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(controllerX - 6, controllerY + 12, 6, 18);
+    ctx.fillRect(controllerX + 60, controllerY + 12, 6, 18);
+    
+    // Glow effect (more intense)
     ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12;
     ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(controllerX, controllerY, 40, 16);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(controllerX, controllerY, 60, 24);
     ctx.shadowBlur = 0;
   };
 
   const drawMicrophone = (ctx, centerX, headY, gender, colors) => {
-    // Held near mouth
-    const micX = centerX - 30;
-    const micY = headY + 55;
+    // Held near mouth (bigger and more visible)
+    const micX = centerX - 40;
+    const micY = headY + 50;
     
-    // Microphone head (grille)
+    // Microphone head (grille) - bigger
     ctx.fillStyle = '#4A4A4A';
-    ctx.fillRect(micX, micY, 12, 16);
+    ctx.fillRect(micX, micY, 18, 24);
     
-    // Grille pattern
+    // Grille pattern (more detailed)
     ctx.fillStyle = '#2A2A2A';
-    for (let i = 0; i < 4; i++) {
-      ctx.fillRect(micX + 2, micY + 2 + i * 3, 8, 1);
+    for (let i = 0; i < 6; i++) {
+      ctx.fillRect(micX + 3, micY + 3 + i * 3, 12, 2);
     }
     
-    // Microphone handle
+    // Microphone handle (thicker)
     ctx.fillStyle = '#1A1A1A';
-    ctx.fillRect(micX + 2, micY + 16, 8, 20);
+    ctx.fillRect(micX + 4, micY + 24, 10, 30);
     
-    // Brand ring (accent color)
+    // Brand ring (accent color) - bigger
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(micX + 1, micY + 14, 10, 3);
+    ctx.fillRect(micX + 2, micY + 22, 14, 4);
     
-    // Shine on grille
-    ctx.globalAlpha = 0.4;
+    // Shine on grille (bigger)
+    ctx.globalAlpha = 0.5;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(micX + 2, micY + 2, 4, 6);
+    ctx.fillRect(micX + 3, micY + 3, 6, 10);
     ctx.globalAlpha = 1.0;
     
-    // Cable (subtle)
+    // Cable (thicker and more visible)
     ctx.strokeStyle = '#1A1A1A';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(micX + 6, micY + 36);
-    ctx.lineTo(micX + 10, micY + 50);
+    ctx.moveTo(micX + 9, micY + 54);
+    ctx.lineTo(micX + 14, micY + 70);
     ctx.stroke();
   };
 
   const drawArtistPalette = (ctx, centerX, size, gender, colors) => {
-    // Held in left hand
-    const handX = gender === 'male' ? centerX - 105 : centerX - 100;
-    const handY = 320;
+    // Palette in right hand, brush in left hand (bigger and more visible)
+    const handX = gender === 'male' ? centerX + 85 : centerX + 82;
+    const handY = 315;
     
-    // Palette shape (wood/tan color)
+    // Palette shape (wood/tan color) - bigger
     ctx.fillStyle = '#D2B48C';
-    ctx.fillRect(handX - 8, handY - 15, 22, 18);
+    ctx.fillRect(handX - 12, handY - 28, 32, 26);
     
-    // Thumb hole
+    // Thumb hole (bigger)
     ctx.fillStyle = '#8B7355';
-    ctx.fillRect(handX + 10, handY - 10, 4, 8);
+    ctx.fillRect(handX + 14, handY - 20, 6, 12);
     
-    // Paint spots (various colors)
+    // Paint spots (various colors) - bigger and more
     ctx.fillStyle = '#FF0000';
-    ctx.fillRect(handX - 5, handY - 12, 4, 4);
+    ctx.fillRect(handX - 8, handY - 24, 6, 6);
     
     ctx.fillStyle = '#0000FF';
-    ctx.fillRect(handX + 1, handY - 12, 4, 4);
+    ctx.fillRect(handX + 0, handY - 24, 6, 6);
     
     ctx.fillStyle = '#FFFF00';
-    ctx.fillRect(handX - 5, handY - 6, 4, 4);
+    ctx.fillRect(handX - 8, handY - 16, 6, 6);
     
     ctx.fillStyle = '#00FF00';
-    ctx.fillRect(handX + 1, handY - 6, 4, 4);
+    ctx.fillRect(handX + 0, handY - 16, 6, 6);
     
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(handX + 7, handY - 9, 3, 3);
+    ctx.fillRect(handX + 8, handY - 20, 5, 5);
     
-    // Brush in right hand
-    const brushX = gender === 'male' ? centerX + 85 : centerX + 82;
-    const brushY = 315;
+    ctx.fillStyle = '#FF00FF';
+    ctx.fillRect(handX - 8, handY - 8, 6, 6);
     
-    // Brush handle
+    // Brush in left hand (bigger)
+    const brushX = gender === 'male' ? centerX - 105 : centerX - 100;
+    const brushY = 320;
+    
+    // Brush handle (thicker)
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(brushX + 6, brushY - 25, 3, 22);
+    ctx.fillRect(brushX + 4, brushY - 38, 5, 32);
     
-    // Brush ferrule (metal)
+    // Brush ferrule (metal) - bigger
     ctx.fillStyle = '#C0C0C0';
-    ctx.fillRect(brushX + 6, brushY - 28, 3, 3);
+    ctx.fillRect(brushX + 3, brushY - 42, 7, 4);
     
-    // Brush bristles
+    // Brush bristles (bigger)
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(brushX + 5, brushY - 32, 5, 4);
+    ctx.fillRect(brushX + 2, brushY - 48, 9, 6);
   };
 
   const addGlitchEffects = (ctx, size, colors) => {
