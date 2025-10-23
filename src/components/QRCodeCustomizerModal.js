@@ -6,6 +6,7 @@ import { FaTimes, FaDownload, FaMale, FaFemale } from 'react-icons/fa';
 const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const [selectedGender, setSelectedGender] = useState('male');
   const [selectedColor, setSelectedColor] = useState('purple');
+  const [selectedAccessory, setSelectedAccessory] = useState('none');
   const [qrDataURL, setQrDataURL] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef(null);
@@ -73,6 +74,16 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     }
   };
 
+  const accessories = {
+    none: { name: 'None', icon: '🚫' },
+    cigar: { name: 'Cigar', icon: '🚬' },
+    bible: { name: 'Bible', icon: '📖' },
+    wine: { name: 'Wine Glass', icon: '🍷' },
+    controller: { name: 'Game Controller', icon: '🎮' },
+    microphone: { name: 'Microphone', icon: '🎤' },
+    palette: { name: 'Artist Palette', icon: '🎨' }
+  };
+
   // Pixel art character templates
   const drawPixelCharacter = (ctx, qrCanvas, gender, colors) => {
     const canvas = ctx.canvas;
@@ -110,6 +121,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     } else {
       drawFemaleCyberquadsHead(ctx, size, colors, pixelSize, qrY);
     }
+    
+    // Draw selected accessory (after character is fully drawn)
+    drawAccessory(ctx, size, gender, selectedAccessory, colors, qrY);
   };
 
   const drawCyberquadsFrame = (ctx, x, y, width, height, colors, pixelSize) => {
@@ -432,6 +446,236 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 25, headY + 40, 6, 2);
   };
 
+  // Draw accessories based on character and type
+  const drawAccessory = (ctx, size, gender, accessory, colors, qrY) => {
+    const centerX = size / 2;
+    const headY = qrY - 90;
+
+    if (accessory === 'none') return;
+
+    switch (accessory) {
+      case 'cigar':
+        drawCigar(ctx, centerX, headY, gender, colors);
+        break;
+      case 'bible':
+        drawBible(ctx, centerX, size, gender, colors);
+        break;
+      case 'wine':
+        drawWineGlass(ctx, centerX, size, gender, colors);
+        break;
+      case 'controller':
+        drawGameController(ctx, centerX, size, gender, colors);
+        break;
+      case 'microphone':
+        drawMicrophone(ctx, centerX, headY, gender, colors);
+        break;
+      case 'palette':
+        drawArtistPalette(ctx, centerX, size, gender, colors);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const drawCigar = (ctx, centerX, headY, gender, colors) => {
+    // Position in mouth
+    const mouthY = headY + 60;
+    const cigarX = centerX + 12;
+    
+    // Cigar body (brown)
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(cigarX, mouthY, 20, 4);
+    
+    // Cigar tip (darker)
+    ctx.fillStyle = '#654321';
+    ctx.fillRect(cigarX + 20, mouthY, 3, 4);
+    
+    // Glowing ember
+    ctx.shadowColor = '#FF6600';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#FF4500';
+    ctx.fillRect(cigarX + 20, mouthY + 1, 2, 2);
+    ctx.shadowBlur = 0;
+    
+    // Smoke (subtle)
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#CCCCCC';
+    ctx.fillRect(cigarX + 23, mouthY - 2, 2, 2);
+    ctx.fillRect(cigarX + 25, mouthY - 4, 2, 2);
+    ctx.fillRect(cigarX + 27, mouthY - 6, 2, 2);
+    ctx.globalAlpha = 1.0;
+  };
+
+  const drawBible = (ctx, centerX, size, gender, colors) => {
+    // Held in left hand
+    const handX = gender === 'male' ? centerX - 105 : centerX - 100;
+    const handY = 320;
+    
+    // Bible book (dark cover)
+    ctx.fillStyle = '#2C1810';
+    ctx.fillRect(handX - 5, handY - 18, 16, 22);
+    
+    // Cross on cover (gold)
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(handX + 1, handY - 13, 6, 2);
+    ctx.fillRect(handX + 3, handY - 15, 2, 8);
+    
+    // Pages edge (white)
+    ctx.fillStyle = '#F5F5DC';
+    ctx.fillRect(handX + 11, handY - 17, 2, 20);
+    
+    // Highlight
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(handX - 4, handY - 17, 6, 2);
+    ctx.globalAlpha = 1.0;
+  };
+
+  const drawWineGlass = (ctx, centerX, size, gender, colors) => {
+    // Held in right hand
+    const handX = gender === 'male' ? centerX + 85 : centerX + 82;
+    const handY = 315;
+    
+    // Glass stem
+    ctx.fillStyle = '#E8E8E8';
+    ctx.fillRect(handX + 8, handY - 20, 2, 18);
+    
+    // Glass base
+    ctx.fillRect(handX + 5, handY - 2, 8, 2);
+    
+    // Glass bowl
+    ctx.fillStyle = '#F0F0F0';
+    ctx.fillRect(handX + 4, handY - 28, 10, 8);
+    
+    // Wine (red)
+    ctx.fillStyle = '#8B0000';
+    ctx.fillRect(handX + 5, handY - 24, 8, 5);
+    
+    // Glass shine
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(handX + 5, handY - 27, 2, 3);
+    ctx.globalAlpha = 1.0;
+  };
+
+  const drawGameController = (ctx, centerX, size, gender, colors) => {
+    // Held in front (both hands)
+    const controllerX = centerX - 20;
+    const controllerY = 330;
+    
+    // Controller body
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(controllerX, controllerY, 40, 16);
+    
+    // D-pad (left side)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(controllerX + 6, controllerY + 4, 8, 8);
+    
+    // Buttons (right side)
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(controllerX + 26, controllerY + 5, 3, 3);
+    ctx.fillRect(controllerX + 30, controllerY + 5, 3, 3);
+    ctx.fillRect(controllerX + 26, controllerY + 9, 3, 3);
+    ctx.fillRect(controllerX + 30, controllerY + 9, 3, 3);
+    
+    // Grips
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(controllerX - 4, controllerY + 8, 4, 12);
+    ctx.fillRect(controllerX + 40, controllerY + 8, 4, 12);
+    
+    // Glow effect
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(controllerX, controllerY, 40, 16);
+    ctx.shadowBlur = 0;
+  };
+
+  const drawMicrophone = (ctx, centerX, headY, gender, colors) => {
+    // Held near mouth
+    const micX = centerX - 30;
+    const micY = headY + 55;
+    
+    // Microphone head (grille)
+    ctx.fillStyle = '#4A4A4A';
+    ctx.fillRect(micX, micY, 12, 16);
+    
+    // Grille pattern
+    ctx.fillStyle = '#2A2A2A';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(micX + 2, micY + 2 + i * 3, 8, 1);
+    }
+    
+    // Microphone handle
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(micX + 2, micY + 16, 8, 20);
+    
+    // Brand ring (accent color)
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(micX + 1, micY + 14, 10, 3);
+    
+    // Shine on grille
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(micX + 2, micY + 2, 4, 6);
+    ctx.globalAlpha = 1.0;
+    
+    // Cable (subtle)
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(micX + 6, micY + 36);
+    ctx.lineTo(micX + 10, micY + 50);
+    ctx.stroke();
+  };
+
+  const drawArtistPalette = (ctx, centerX, size, gender, colors) => {
+    // Held in left hand
+    const handX = gender === 'male' ? centerX - 105 : centerX - 100;
+    const handY = 320;
+    
+    // Palette shape (wood/tan color)
+    ctx.fillStyle = '#D2B48C';
+    ctx.fillRect(handX - 8, handY - 15, 22, 18);
+    
+    // Thumb hole
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(handX + 10, handY - 10, 4, 8);
+    
+    // Paint spots (various colors)
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(handX - 5, handY - 12, 4, 4);
+    
+    ctx.fillStyle = '#0000FF';
+    ctx.fillRect(handX + 1, handY - 12, 4, 4);
+    
+    ctx.fillStyle = '#FFFF00';
+    ctx.fillRect(handX - 5, handY - 6, 4, 4);
+    
+    ctx.fillStyle = '#00FF00';
+    ctx.fillRect(handX + 1, handY - 6, 4, 4);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(handX + 7, handY - 9, 3, 3);
+    
+    // Brush in right hand
+    const brushX = gender === 'male' ? centerX + 85 : centerX + 82;
+    const brushY = 315;
+    
+    // Brush handle
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(brushX + 6, brushY - 25, 3, 22);
+    
+    // Brush ferrule (metal)
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(brushX + 6, brushY - 28, 3, 3);
+    
+    // Brush bristles
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(brushX + 5, brushY - 32, 5, 4);
+  };
+
   const addGlitchEffects = (ctx, size, colors) => {
     // Random glitch bars (cyberquads aesthetic)
     ctx.globalAlpha = 0.2;
@@ -645,7 +889,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, selectedGender, selectedColor, referralUrl]);
+  }, [isOpen, selectedGender, selectedColor, selectedAccessory, referralUrl]);
 
   const handleDownload = () => {
     if (!qrDataURL) {
@@ -655,7 +899,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     
     try {
       const link = document.createElement('a');
-      link.download = `aquads-cyberquads-qr-${username || 'user'}-${selectedGender}-${selectedColor}.png`;
+      link.download = `aquads-cyberquads-qr-${username || 'user'}-${selectedGender}-${selectedColor}-${selectedAccessory}.png`;
       link.href = qrDataURL;
       document.body.appendChild(link);
       link.click();
@@ -757,6 +1001,29 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                             }}
                           />
                           <span className="text-white text-sm font-medium">{scheme.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Accessory Selection */}
+                <div>
+                  <label className="block text-white font-semibold mb-3">Accessories</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(accessories).map(([key, acc]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedAccessory(key)}
+                        className={`p-3 rounded-lg border-2 transition-all ${
+                          selectedAccessory === key
+                            ? 'border-yellow-500 bg-yellow-500/20'
+                            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="text-2xl mb-1">{acc.icon}</div>
+                          <span className="text-white text-xs font-medium">{acc.name}</span>
                         </div>
                       </button>
                     ))}
