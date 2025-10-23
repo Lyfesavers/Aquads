@@ -453,10 +453,10 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
   const addLogoToQRCode = async (ctx, qrX, qrY, qrSize) => {
     try {
-      // Load Aquads logo
+      // Load Aquads symbol SVG
       const logo = new Image();
       logo.crossOrigin = 'anonymous'; // Prevent CORS issues
-      logo.src = '/Aquadsnewlogo.png';
+      logo.src = '/AquadsSymbol.svg';
       
       await new Promise((resolve, reject) => {
         logo.onload = resolve;
@@ -466,25 +466,8 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         };
       });
       
-      // Calculate logo size (about 35% of QR code size - nice and prominent)
-      const logoSize = qrSize * 0.35;
-      
-      // Calculate logo dimensions maintaining aspect ratio
-      const logoAspectRatio = logo.width / logo.height;
-      let logoWidth = logoSize;
-      let logoHeight = logoSize;
-      
-      if (logoAspectRatio > 1) {
-        logoHeight = logoSize / logoAspectRatio;
-      } else if (logoAspectRatio < 1) {
-        logoWidth = logoSize * logoAspectRatio;
-      }
-      
-      const logoX = qrX + (qrSize - logoWidth) / 2;
-      const logoY = qrY + (qrSize - logoHeight) / 2;
-      
-      // Draw white background circle for logo
-      const bgSize = logoSize * 1.3;
+      // Draw white background circle for logo (bigger to fit symbol)
+      const bgSize = qrSize * 0.40; // 40% of QR code size
       
       ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
       ctx.shadowBlur = 10;
@@ -502,8 +485,15 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
       
-      // Draw logo with high quality
-      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+      // Calculate logo size to fill most of the circle (90% of circle diameter)
+      const logoSize = bgSize * 0.9;
+      
+      // Center the logo in the circle
+      const logoX = qrX + (qrSize - logoSize) / 2;
+      const logoY = qrY + (qrSize - logoSize) / 2;
+      
+      // Draw logo with high quality - fill the circle
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
       
     } catch (error) {
       console.error('Error adding logo to QR code:', error);
