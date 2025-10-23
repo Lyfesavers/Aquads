@@ -148,50 +148,65 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const drawMaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
-    // Jacket/hoodie shoulders (stylish)
+    // Jacket/hoodie shoulders (stylish) - HIGHER UP
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 100, 250, 70, 45); // Left shoulder
-    ctx.fillRect(centerX + 30, 250, 70, 45);  // Right shoulder
+    ctx.fillRect(centerX - 100, 245, 65, 30); // Left shoulder
+    ctx.fillRect(centerX + 35, 245, 65, 30);  // Right shoulder
     
     // Hoodie collar/jacket collar
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 30, 250, 60, 15);
+    ctx.fillRect(centerX - 30, 245, 60, 12);
     
     // Cool jacket details
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 95, 258, 60, 3);
-    ctx.fillRect(centerX + 35, 258, 60, 3);
+    ctx.fillRect(centerX - 95, 252, 55, 3);
+    ctx.fillRect(centerX + 40, 252, 55, 3);
     
     // Glowing Aquads pins/badges on jacket
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 12;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 85, 268, 12, 12);
-    ctx.fillRect(centerX + 73, 268, 12, 12);
+    ctx.fillRect(centerX - 85, 260, 12, 12);
+    ctx.fillRect(centerX + 73, 260, 12, 12);
     ctx.shadowBlur = 0;
     
-    // Torso/chest (behind QR) - hoodie/jacket
+    // ARMS extending from shoulders (clearly at shoulder level)
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 55, 290, 110, 85);
-    
-    // Jacket zipper
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 2, 295, 4, 75);
-    
-    // Jacket pockets/details
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 40, 320, 25, 3);
-    ctx.fillRect(centerX + 15, 320, 25, 3);
-    
-    // Arms (more natural)
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 95, 295, 25, 95); // Left arm
-    ctx.fillRect(centerX + 70, 295, 25, 95);  // Right arm
+    ctx.fillRect(centerX - 105, 250, 20, 65); // Left arm
+    ctx.fillRect(centerX + 85, 250, 20, 65);  // Right arm
     
     // Watch/tech bracelet on wrist
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 93, 370, 21, 8);
-    ctx.fillRect(centerX + 72, 370, 21, 8);
+    ctx.fillRect(centerX - 105, 305, 20, 8);
+    ctx.fillRect(centerX + 85, 305, 20, 8);
+    
+    // Hands
+    ctx.fillStyle = '#D4A574';
+    ctx.fillRect(centerX - 105, 315, 20, 15);
+    ctx.fillRect(centerX + 85, 315, 20, 15);
+    
+    // Torso/chest (behind QR) - hoodie/jacket
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 50, 275, 100, 100);
+    
+    // Jacket zipper
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 2, 280, 4, 90);
+    
+    // Jacket pockets/details
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 35, 310, 20, 3);
+    ctx.fillRect(centerX + 15, 310, 20, 3);
+    
+    // LEGS (clearly at bottom, separate from arms)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 40, 375, 30, 20); // Left thigh
+    ctx.fillRect(centerX + 10, 375, 30, 20); // Right thigh
+    
+    // Shoes/feet
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 42, 395, 34, 5); // Left shoe
+    ctx.fillRect(centerX + 8, 395, 34, 5);  // Right shoe
   };
 
   const drawMaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
@@ -266,55 +281,68 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const drawFemaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
-    // Stylish jacket shoulders
+    // Stylish jacket shoulders - HIGHER UP
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 95, 252, 65, 40);
-    ctx.fillRect(centerX + 30, 252, 65, 40);
+    ctx.fillRect(centerX - 95, 247, 60, 28);
+    ctx.fillRect(centerX + 35, 247, 60, 28);
     
     // Collar/neckline
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 28, 252, 56, 12);
+    ctx.fillRect(centerX - 28, 247, 56, 10);
     
     // Jacket details/trim
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 92, 260, 58, 3);
-    ctx.fillRect(centerX + 34, 260, 58, 3);
+    ctx.fillRect(centerX - 92, 254, 55, 3);
+    ctx.fillRect(centerX + 37, 254, 55, 3);
     
     // Glowing Aquads badges/pins
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 12;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 80, 270, 10, 10);
-    ctx.fillRect(centerX + 70, 270, 10, 10);
+    ctx.fillRect(centerX - 82, 263, 10, 10);
+    ctx.fillRect(centerX + 72, 263, 10, 10);
     ctx.shadowBlur = 0;
     
-    // Torso/jacket (behind QR)
+    // ARMS extending from shoulders (clearly at shoulder level)
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 52, 292, 104, 82);
-    
-    // Jacket/top design lines
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 45, 305, 18, 60);
-    ctx.fillRect(centerX + 27, 305, 18, 60);
-    
-    // Belt/waist accent
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 50, 360, 100, 8);
-    
-    // Arms (fitted)
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 90, 295, 23, 92);
-    ctx.fillRect(centerX + 67, 295, 23, 92);
+    ctx.fillRect(centerX - 100, 252, 18, 60); // Left arm
+    ctx.fillRect(centerX + 82, 252, 18, 60);  // Right arm
     
     // Bracelet/tech bands
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 8;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 88, 340, 19, 7);
-    ctx.fillRect(centerX + 69, 340, 19, 7);
-    ctx.fillRect(centerX - 88, 368, 19, 7);
-    ctx.fillRect(centerX + 69, 368, 19, 7);
+    ctx.fillRect(centerX - 100, 290, 18, 6);
+    ctx.fillRect(centerX + 82, 290, 18, 6);
     ctx.shadowBlur = 0;
+    
+    // Hands
+    ctx.fillStyle = '#E8C5A0';
+    ctx.fillRect(centerX - 100, 312, 18, 12);
+    ctx.fillRect(centerX + 82, 312, 18, 12);
+    
+    // Torso/jacket (behind QR)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 48, 275, 96, 100);
+    
+    // Jacket/top design lines
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 42, 290, 16, 75);
+    ctx.fillRect(centerX + 26, 290, 16, 75);
+    
+    // Belt/waist accent
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 46, 365, 92, 8);
+    
+    // LEGS (clearly at bottom, separate from arms)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 38, 375, 28, 20); // Left leg
+    ctx.fillRect(centerX + 10, 375, 28, 20); // Right leg
+    
+    // Shoes/boots
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 40, 395, 32, 5); // Left shoe
+    ctx.fillRect(centerX + 8, 395, 32, 5);  // Right shoe
   };
 
   const drawFemaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
