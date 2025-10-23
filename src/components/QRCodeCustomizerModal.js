@@ -5,8 +5,9 @@ import { FaTimes, FaMale, FaFemale, FaDownload } from 'react-icons/fa';
 const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const [gender, setGender] = useState('male');
   const [selectedColor, setSelectedColor] = useState('#00ffff');
-  const [qrCode, setQrCode] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const qrRef = useRef(null);
+  const qrCodeInstance = useRef(null);
 
   // Cyberpunk color options
   const colorOptions = [
@@ -23,13 +24,22 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     if (!isOpen || !referralUrl) return;
 
     const generateStyledQRCode = async () => {
+      setIsGenerating(true);
       try {
+        console.log('Starting QR code generation...');
+        console.log('Gender:', gender, 'Color:', selectedColor);
+        
         // Load the character image based on gender selection
         const characterImage = gender === 'male' ? '/cyber-male.svg' : '/cyber-female.svg';
+        console.log('Loading character:', characterImage);
         
         // Fetch SVG and inject the selected color
         const response = await fetch(characterImage);
+        if (!response.ok) {
+          throw new Error(`Failed to load character: ${response.status}`);
+        }
         let svgText = await response.text();
+        console.log('SVG loaded successfully');
         
         // Replace the default color in SVG with selected color
         const defaultColor = gender === 'male' ? '#00ffff' : '#ff00ff';
@@ -39,18 +49,22 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const svgUrl = URL.createObjectURL(svgBlob);
         
-        // Create temporary image to convert SVG to PNG for better compatibility
+        // Create temporary image to convert SVG to PNG
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
+        const imageLoadPromise = new Promise((resolve, reject) => {
+          img.onload = () => {
+            console.log('Character image loaded');
+            resolve();
+          };
           img.onerror = (e) => {
-            console.error('Error loading SVG:', e);
+            console.error('Error loading character image:', e);
             reject(e);
           };
-          img.src = svgUrl;
         });
+        
+        img.src = svgUrl;
+        await imageLoadPromise;
         
         // Create canvas to convert SVG to PNG
         const canvas = document.createElement('canvas');
@@ -60,18 +74,84 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
         ctx.drawImage(img, 0, 0, 200, 200);
         
         const pngUrl = canvas.toDataURL('image/png');
+        console.log('Character converted to PNG');
         
         // Cleanup blob URL
         URL.revokeObjectURL(svgUrl);
 
-        // Create or update QR code instance
-        if (qrCode) {
-          qrCode.update({
+        // Clear previous QR code
+        if (qrRef.current) {
+          qrRef.current.innerHTML = '';
+        }
+
+        // Create new QR code instance
+        const qr = new QRCodeStyling({
+          width: 300,
+          height: 300,
+          data: referralUrl,
+          margin: 10,
+          qrOptions: {
+            typeNumber: 0,
+            mode: 'Byte',
+            errorCorrectionLevel: 'H'
+          },
+          imageOptions: {
+            hideBackgroundDots: true,
+            imageSize: 0.35,
+            margin: 5,
+            crossOrigin: 'anonymous'
+          },
+          dotsOptions: {
+            color: selectedColor,
+            type: 'rounded'
+          },
+          backgroundOptions: {
+            color: '#ffffff'
+          },
+          cornersSquareOptions: {
+            color: selectedColor,
+            type: 'extra-rounded'
+          },
+          cornersDotOptions: {
+            color: selectedColor,
+            type: 'dot'
+          },
+          image: pngUrl
+        });
+
+        qrCodeInstance.current = qr;
+        
+        // Append to DOM
+        if (qrRef.current) {
+          await qr.append(qrRef.current);
+          console.log('QR code appended to DOM');
+        }
+        
+        setIsGenerating(false);
+      } catch (error) {
+        console.error('Error generating styled QR code:', error);
+        setIsGenerating(false);
+        
+        // Fallback: create simple QR without character
+        try {
+          if (qrRef.current) {
+            qrRef.current.innerHTML = '';
+          }
+          
+          const fallbackQr = new QRCodeStyling({
+            width: 300,
+            height: 300,
             data: referralUrl,
-            image: pngUrl,
+            margin: 10,
+            qrOptions: {
+              errorCorrectionLevel: 'H'
+            },
             dotsOptions: {
               color: selectedColor,
               type: 'rounded'
+            },
+            backgroundOptions: {
+              color: '#ffffff'
             },
             cornersSquareOptions: {
               color: selectedColor,
@@ -82,70 +162,24 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
               type: 'dot'
             }
           });
-        } else {
-          // Create new QR code instance
-          const qrCodeInstance = new QRCodeStyling({
-            width: 300,
-            height: 300,
-            data: referralUrl,
-            margin: 10,
-            qrOptions: {
-              typeNumber: 0,
-              mode: 'Byte',
-              errorCorrectionLevel: 'H' // High error correction for logo overlay
-            },
-            imageOptions: {
-              hideBackgroundDots: true,
-              imageSize: 0.4,
-              margin: 8,
-              crossOrigin: 'anonymous'
-            },
-            dotsOptions: {
-              color: selectedColor,
-              type: 'rounded' // Pixelated/retro look
-            },
-            backgroundOptions: {
-              color: '#0a0a0a' // Dark cyberpunk background
-            },
-            cornersSquareOptions: {
-              color: selectedColor,
-              type: 'extra-rounded'
-            },
-            cornersDotOptions: {
-              color: selectedColor,
-              type: 'dot'
-            },
-            image: pngUrl
-          });
-
-          setQrCode(qrCodeInstance);
           
-          // Append to DOM after state is set
+          qrCodeInstance.current = fallbackQr;
           if (qrRef.current) {
-            qrRef.current.innerHTML = '';
-            qrCodeInstance.append(qrRef.current);
+            await fallbackQr.append(qrRef.current);
           }
+        } catch (fallbackError) {
+          console.error('Fallback QR generation also failed:', fallbackError);
         }
-      } catch (error) {
-        console.error('Error generating styled QR code:', error);
       }
     };
 
     generateStyledQRCode();
   }, [isOpen, referralUrl, gender, selectedColor]);
 
-  // Re-append QR code when qrCode state changes
-  useEffect(() => {
-    if (qrCode && qrRef.current && isOpen) {
-      qrRef.current.innerHTML = '';
-      qrCode.append(qrRef.current);
-    }
-  }, [qrCode, isOpen]);
-
   const handleDownload = () => {
-    if (qrCode) {
+    if (qrCodeInstance.current) {
       const fileName = `aquads-referral-${username || 'user'}-${gender}-qr.png`;
-      qrCode.download({
+      qrCodeInstance.current.download({
         name: fileName,
         extension: 'png'
       });
@@ -246,19 +280,23 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
             <label className="block text-white font-medium mb-3 text-xs uppercase tracking-wide text-center">
               Preview
             </label>
-            <div className="flex justify-center">
-              <div 
-                ref={qrRef} 
-                className="bg-white p-3 rounded-lg shadow-2xl"
-                style={{
-                  boxShadow: `0 0 25px ${selectedColor}40`,
-                  minHeight: '300px',
-                  minWidth: '300px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              />
+            <div className="flex justify-center items-center">
+              {isGenerating ? (
+                <div className="w-[300px] h-[300px] bg-white rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-2"></div>
+                    <p className="text-gray-600 text-sm">Generating...</p>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  ref={qrRef} 
+                  className="bg-white rounded-lg shadow-2xl"
+                  style={{
+                    boxShadow: `0 0 25px ${selectedColor}40`
+                  }}
+                />
+              )}
             </div>
             <p className="text-gray-400 text-xs text-center mt-3">
               Scan-ready profile picture QR code
@@ -276,7 +314,8 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
           </button>
           <button
             onClick={handleDownload}
-            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg text-sm"
+            disabled={isGenerating}
+            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               boxShadow: `0 0 20px ${selectedColor}40`
             }}
