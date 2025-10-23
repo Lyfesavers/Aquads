@@ -67,7 +67,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       secondary: '#7C3AED',
       accent: '#C084FC',
       glow: '#DDD6FE',
-      bg: '#51159D',        // Solid brand purple background
+      bg: '#FEBC10',        // Solid brand yellow background (contrast with purple/cream)
       qrDark: '#51159D',    // Brand purple for QR data pixels
       qrLight: '#FFF8E1'    // Soft cream background (easy on eyes)
     }
