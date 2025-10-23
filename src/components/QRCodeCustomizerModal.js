@@ -88,9 +88,9 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     
     // Draw pixel art character body FIRST (behind QR)
     if (gender === 'male') {
-      drawMaleCyberpunkBody(ctx, size, colors, pixelSize);
+      drawMaleCyberquadsBody(ctx, size, colors, pixelSize);
     } else {
-      drawFemaleCyberpunkBody(ctx, size, colors, pixelSize);
+      drawFemaleCyberquadsBody(ctx, size, colors, pixelSize);
     }
     
     // Calculate QR code position (center, but smaller to leave room for character)
@@ -101,18 +101,18 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     // Draw the QR code (no white backing - using bright solid colors)
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
     
-    // Draw cyberpunk frame around QR code
-    drawCyberpunkFrame(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, colors, pixelSize);
+    // Draw cyberquads frame around QR code
+    drawCyberquadsFrame(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, colors, pixelSize);
     
     // Draw pixel art character HEAD on top
     if (gender === 'male') {
-      drawMaleCyberpunkHead(ctx, size, colors, pixelSize, qrY);
+      drawMaleCyberquadsHead(ctx, size, colors, pixelSize, qrY);
     } else {
-      drawFemaleCyberpunkHead(ctx, size, colors, pixelSize, qrY);
+      drawFemaleCyberquadsHead(ctx, size, colors, pixelSize, qrY);
     }
   };
 
-  const drawCyberpunkFrame = (ctx, x, y, width, height, colors, pixelSize) => {
+  const drawCyberquadsFrame = (ctx, x, y, width, height, colors, pixelSize) => {
     // Outer glow
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 20;
@@ -145,7 +145,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   };
 
   // Male character body (shoulders and torso behind QR)
-  const drawMaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
+  const drawMaleCyberquadsBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
     // Jacket/hoodie shoulders (stylish) - HIGHER UP
@@ -209,7 +209,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 8, 395, 34, 5);  // Right shoe
   };
 
-  const drawMaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
+  const drawMaleCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
     const headY = qrY - 90;
     
@@ -233,7 +233,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX - 30, headY + 3, 60, 6);
     ctx.fillRect(centerX - 20, headY + 12, 40, 4);
     
-    // Cyberpunk headband/tech band
+    // Cyberquads headband/tech band
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
@@ -278,7 +278,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   };
 
   // Female character body (shoulders and torso behind QR)
-  const drawFemaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
+  const drawFemaleCyberquadsBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
     // Stylish jacket shoulders - HIGHER UP
@@ -345,7 +345,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 8, 395, 32, 5);  // Right shoe
   };
 
-  const drawFemaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
+  const drawFemaleCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
     const headY = qrY - 90;
     
@@ -358,7 +358,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillStyle = skinTone;
     ctx.fillRect(centerX - 36, headY + 8, 72, 62);
     
-    // Long flowing hair (cyberpunk style)
+    // Long flowing hair (cyberquads style)
     ctx.fillStyle = colors.primary;
     // Top of hair
     ctx.fillRect(centerX - 42, headY - 2, 84, 18);
@@ -375,7 +375,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX - 45, headY + 20, 8, 30);
     ctx.fillRect(centerX + 37, headY + 20, 8, 30);
     
-    // Cyberpunk hair accessory/clip
+    // Cyberquads hair accessory/clip
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
@@ -433,7 +433,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   };
 
   const addGlitchEffects = (ctx, size, colors) => {
-    // Random glitch bars (cyberpunk aesthetic)
+    // Random glitch bars (cyberquads aesthetic)
     ctx.globalAlpha = 0.2;
     
     // Horizontal glitch lines
@@ -655,7 +655,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     
     try {
       const link = document.createElement('a');
-      link.download = `aquads-cyberpunk-qr-${username || 'user'}-${selectedGender}-${selectedColor}.png`;
+      link.download = `aquads-cyberquads-qr-${username || 'user'}-${selectedGender}-${selectedColor}.png`;
       link.href = qrDataURL;
       document.body.appendChild(link);
       link.click();
@@ -688,7 +688,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
           {/* Header */}
           <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 p-6 flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Cyberpunk QR Code Generator</h2>
+              <h2 className="text-2xl font-bold text-white mb-1">Cyberquads QR Code Generator</h2>
               <p className="text-gray-400 text-sm">Create your custom pixel art QR code</p>
             </div>
             <button
@@ -767,7 +767,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                   <h3 className="text-blue-400 font-semibold mb-2">✨ About This QR Code</h3>
                   <ul className="text-sm text-gray-300 space-y-1">
-                    <li>• Unique pixel art cyberpunk design</li>
+                    <li>• Unique pixel art cyberquads design</li>
                     <li>• Fully scannable with any QR reader</li>
                     <li>• High-quality 400x400px PNG</li>
                     <li>• Perfect for social media sharing</li>
@@ -788,7 +788,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                   {isGenerating ? (
                     <div className="text-center">
                       <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                      <p className="text-gray-400">Generating your cyberpunk QR code...</p>
+                      <p className="text-gray-400">Generating your cyberquads QR code...</p>
                     </div>
                   ) : qrDataURL ? (
                     <div className="text-center">
