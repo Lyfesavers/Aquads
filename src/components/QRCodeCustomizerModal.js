@@ -157,187 +157,260 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const drawMaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
-    // Broad shoulders
+    // Jacket/hoodie shoulders (stylish)
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 120, 250, 80, 40); // Left shoulder
-    ctx.fillRect(centerX + 40, 250, 80, 40);  // Right shoulder
+    ctx.fillRect(centerX - 100, 250, 70, 45); // Left shoulder
+    ctx.fillRect(centerX + 30, 250, 70, 45);  // Right shoulder
     
-    // Shoulder armor plates
+    // Hoodie collar/jacket collar
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 115, 255, 70, 8);
-    ctx.fillRect(centerX + 45, 255, 70, 8);
+    ctx.fillRect(centerX - 30, 250, 60, 15);
     
-    // Glowing shoulder lights
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 15;
+    // Cool jacket details
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 100, 265, 15, 15);
-    ctx.fillRect(centerX + 85, 265, 15, 15);
+    ctx.fillRect(centerX - 95, 258, 60, 3);
+    ctx.fillRect(centerX + 35, 258, 60, 3);
+    
+    // Glowing Aquads pins/badges on jacket
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 85, 268, 12, 12);
+    ctx.fillRect(centerX + 73, 268, 12, 12);
     ctx.shadowBlur = 0;
     
-    // Torso (behind QR)
+    // Torso/chest (behind QR) - hoodie/jacket
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 60, 290, 120, 80);
+    ctx.fillRect(centerX - 55, 290, 110, 85);
     
-    // Chest plate details
+    // Jacket zipper
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 50, 300, 100, 5);
-    ctx.fillRect(centerX - 50, 320, 100, 5);
-    ctx.fillRect(centerX - 50, 340, 100, 5);
+    ctx.fillRect(centerX - 2, 295, 4, 75);
     
-    // Arms
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 110, 295, 30, 100); // Left arm
-    ctx.fillRect(centerX + 80, 295, 30, 100);  // Right arm
-    
-    // Arm tech details
+    // Jacket pockets/details
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 105, 310, 20, 8);
-    ctx.fillRect(centerX - 105, 330, 20, 8);
-    ctx.fillRect(centerX + 85, 310, 20, 8);
-    ctx.fillRect(centerX + 85, 330, 20, 8);
+    ctx.fillRect(centerX - 40, 320, 25, 3);
+    ctx.fillRect(centerX + 15, 320, 25, 3);
+    
+    // Arms (more natural)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 95, 295, 25, 95); // Left arm
+    ctx.fillRect(centerX + 70, 295, 25, 95);  // Right arm
+    
+    // Watch/tech bracelet on wrist
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 93, 370, 21, 8);
+    ctx.fillRect(centerX + 72, 370, 21, 8);
   };
 
   const drawMaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
-    const headY = qrY - 80;
+    const headY = qrY - 90;
     
-    // Neck
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 20, headY + 65, 40, 20);
+    // Neck/collar
+    const skinTone = '#D4A574';
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(centerX - 18, headY + 68, 36, 22);
     
-    // Head base
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 40, headY, 80, 60);
+    // Head base (skin tone)
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(centerX - 38, headY + 5, 76, 65);
     
-    // Helmet top
+    // Cool hair/undercut style
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 45, headY - 5, 90, 10);
+    ctx.fillRect(centerX - 40, headY, 80, 25); // Top hair
+    ctx.fillRect(centerX - 42, headY + 8, 10, 35); // Left sideburn
+    ctx.fillRect(centerX + 32, headY + 8, 10, 35); // Right sideburn
     
-    // Visor (large glowing area)
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 20;
+    // Hair highlights
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 35, headY + 20, 70, 20);
+    ctx.fillRect(centerX - 30, headY + 3, 60, 6);
+    ctx.fillRect(centerX - 20, headY + 12, 40, 4);
+    
+    // Cyberpunk headband/tech band
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 40, headY + 28, 80, 8);
     ctx.shadowBlur = 0;
     
-    // Visor details
-    ctx.fillStyle = colors.glow;
-    ctx.fillRect(centerX - 30, headY + 25, 60, 8);
+    // Eyes (human-like)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(centerX - 26, headY + 38, 14, 10);
+    ctx.fillRect(centerX + 12, headY + 38, 14, 10);
     
-    // Antenna on top
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 8, headY - 20, 16, 20);
+    // Pupils (glowing cyber eyes)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 5, headY - 25, 10, 5);
+    ctx.fillRect(centerX - 21, headY + 41, 6, 6);
+    ctx.fillRect(centerX + 17, headY + 41, 6, 6);
+    ctx.shadowBlur = 0;
     
-    // Side vents
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 45, headY + 15, 8, 25);
-    ctx.fillRect(centerX + 37, headY + 15, 8, 25);
-    
-    // Jaw/lower helmet
+    // Eyebrows
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 35, headY + 45, 70, 15);
+    ctx.fillRect(centerX - 28, headY + 34, 16, 3);
+    ctx.fillRect(centerX + 12, headY + 34, 16, 3);
+    
+    // Nose (simple pixel art)
+    ctx.fillStyle = '#C4956A';
+    ctx.fillRect(centerX - 4, headY + 48, 8, 8);
+    
+    // Mouth/smirk
+    ctx.fillStyle = '#8B6F5E';
+    ctx.fillRect(centerX - 12, headY + 60, 24, 5);
+    ctx.fillRect(centerX + 8, headY + 57, 4, 3); // Smirk corner
+    
+    // Ear tech/earpiece
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 42, headY + 40, 4, 12);
+    ctx.fillRect(centerX + 38, headY + 40, 4, 12);
+    
+    // Beard/facial hair (optional stylish detail)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 20, headY + 65, 40, 6);
   };
 
   // Female character body (shoulders and torso behind QR)
   const drawFemaleCyberpunkBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     
-    // Sleeker shoulders
+    // Stylish jacket shoulders
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 110, 250, 70, 35);
-    ctx.fillRect(centerX + 40, 250, 70, 35);
+    ctx.fillRect(centerX - 95, 252, 65, 40);
+    ctx.fillRect(centerX + 30, 252, 65, 40);
     
-    // Shoulder decorations
+    // Collar/neckline
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 105, 255, 60, 6);
-    ctx.fillRect(centerX + 45, 255, 60, 6);
+    ctx.fillRect(centerX - 28, 252, 56, 12);
     
-    // Glowing shoulder gems
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 15;
+    // Jacket details/trim
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 95, 265, 12, 12);
-    ctx.fillRect(centerX + 83, 265, 12, 12);
+    ctx.fillRect(centerX - 92, 260, 58, 3);
+    ctx.fillRect(centerX + 34, 260, 58, 3);
+    
+    // Glowing Aquads badges/pins
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 80, 270, 10, 10);
+    ctx.fillRect(centerX + 70, 270, 10, 10);
     ctx.shadowBlur = 0;
     
-    // Torso (behind QR)
+    // Torso/jacket (behind QR)
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 55, 290, 110, 80);
+    ctx.fillRect(centerX - 52, 292, 104, 82);
     
-    // Body suit details
+    // Jacket/top design lines
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 45, 300, 90, 4);
-    ctx.fillRect(centerX - 45, 315, 90, 4);
-    ctx.fillRect(centerX - 45, 330, 90, 4);
-    ctx.fillRect(centerX - 45, 345, 90, 4);
+    ctx.fillRect(centerX - 45, 305, 18, 60);
+    ctx.fillRect(centerX + 27, 305, 18, 60);
     
-    // Arms (slimmer)
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 105, 295, 25, 95);
-    ctx.fillRect(centerX + 80, 295, 25, 95);
-    
-    // Arm bands
+    // Belt/waist accent
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 103, 310, 21, 6);
-    ctx.fillRect(centerX - 103, 330, 21, 6);
-    ctx.fillRect(centerX + 82, 310, 21, 6);
-    ctx.fillRect(centerX + 82, 330, 21, 6);
+    ctx.fillRect(centerX - 50, 360, 100, 8);
+    
+    // Arms (fitted)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 90, 295, 23, 92);
+    ctx.fillRect(centerX + 67, 295, 23, 92);
+    
+    // Bracelet/tech bands
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 88, 340, 19, 7);
+    ctx.fillRect(centerX + 69, 340, 19, 7);
+    ctx.fillRect(centerX - 88, 368, 19, 7);
+    ctx.fillRect(centerX + 69, 368, 19, 7);
+    ctx.shadowBlur = 0;
   };
 
   const drawFemaleCyberpunkHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
-    const headY = qrY - 80;
+    const headY = qrY - 90;
     
     // Neck
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 18, headY + 60, 36, 25);
+    const skinTone = '#E8C5A0';
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(centerX - 16, headY + 70, 32, 20);
     
-    // Head base
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 38, headY, 76, 55);
+    // Head base (skin tone)
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(centerX - 36, headY + 8, 72, 62);
     
-    // Hair/helmet top
+    // Long flowing hair (cyberpunk style)
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 45, headY - 10, 90, 15);
+    // Top of hair
+    ctx.fillRect(centerX - 42, headY - 2, 84, 18);
+    // Hair volume sides
+    ctx.fillRect(centerX - 48, headY + 10, 12, 55);
+    ctx.fillRect(centerX + 36, headY + 10, 12, 55);
+    // Hair flowing over shoulders
+    ctx.fillRect(centerX - 54, headY + 35, 10, 40);
+    ctx.fillRect(centerX + 44, headY + 35, 10, 40);
     
-    // Hair strands (pixel art style)
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 50, headY + 5, 10, 45);
-    ctx.fillRect(centerX + 40, headY + 5, 10, 45);
-    ctx.fillRect(centerX - 58, headY + 15, 8, 35);
-    ctx.fillRect(centerX + 50, headY + 15, 8, 35);
-    
-    // Visor (sleeker)
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 20;
+    // Hair highlights/streaks
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 33, headY + 18, 66, 18);
-    ctx.shadowBlur = 0;
+    ctx.fillRect(centerX - 35, headY + 2, 70, 5);
+    ctx.fillRect(centerX - 45, headY + 20, 8, 30);
+    ctx.fillRect(centerX + 37, headY + 20, 8, 30);
     
-    // Visor glow
-    ctx.fillStyle = colors.glow;
-    ctx.fillRect(centerX - 28, headY + 23, 56, 6);
-    
-    // Hair ornament/tech crown
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 30, headY - 15, 60, 8);
-    ctx.fillRect(centerX - 20, headY - 20, 40, 5);
-    ctx.fillRect(centerX - 10, headY - 25, 20, 5);
-    
-    // Earrings/tech
+    // Cyberpunk hair accessory/clip
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 43, headY + 30, 5, 15);
-    ctx.fillRect(centerX + 38, headY + 30, 5, 15);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 35, headY + 5, 20, 8);
+    ctx.fillRect(centerX + 15, headY + 5, 20, 8);
     ctx.shadowBlur = 0;
     
-    // Lower face/mask
+    // Eyes (beautiful, human-like)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(centerX - 24, headY + 32, 13, 11);
+    ctx.fillRect(centerX + 11, headY + 32, 13, 11);
+    
+    // Pupils (glowing cyber eyes)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 20, headY + 36, 6, 6);
+    ctx.fillRect(centerX + 15, headY + 36, 6, 6);
+    ctx.shadowBlur = 0;
+    
+    // Eyelashes (upper)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(centerX - 24, headY + 31, 13, 2);
+    ctx.fillRect(centerX + 11, headY + 31, 13, 2);
+    
+    // Eyebrows (styled)
     ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 30, headY + 42, 60, 13);
+    ctx.fillRect(centerX - 26, headY + 27, 15, 3);
+    ctx.fillRect(centerX + 11, headY + 27, 15, 3);
+    
+    // Nose (delicate pixel art)
+    ctx.fillStyle = '#D4A080';
+    ctx.fillRect(centerX - 3, headY + 44, 6, 8);
+    
+    // Lips/smile
+    ctx.fillStyle = '#C96A7D';
+    ctx.fillRect(centerX - 10, headY + 56, 20, 6);
+    ctx.fillStyle = '#E88FA5';
+    ctx.fillRect(centerX - 8, headY + 57, 16, 3);
+    
+    // Earrings (glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 40, headY + 48, 4, 14);
+    ctx.fillRect(centerX + 36, headY + 48, 4, 14);
+    ctx.fillRect(centerX - 41, headY + 62, 6, 6);
+    ctx.fillRect(centerX + 35, headY + 62, 6, 6);
+    ctx.shadowBlur = 0;
+    
+    // Tech implant/face marking
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX + 25, headY + 42, 2, 12);
+    ctx.fillRect(centerX + 25, headY + 40, 6, 2);
   };
 
   const addGlitchEffects = (ctx, size, colors) => {
