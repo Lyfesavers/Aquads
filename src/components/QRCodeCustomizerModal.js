@@ -63,14 +63,14 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       qrLight: '#FFFFFF'    // White background (most scannable)
     },
     purpleDark: {
-      name: 'Purple & Cream',
-      primary: '#A855F7',
-      secondary: '#7C3AED',
-      accent: '#C084FC',
-      glow: '#DDD6FE',
-      bg: '#FEBC10',        // Solid brand yellow background (contrast with purple/cream)
-      qrDark: '#51159D',    // Brand purple for QR data pixels
-      qrLight: '#FFF8E1'    // Soft cream background (easy on eyes)
+      name: 'Black, White & Yellow',
+      primary: '#000000',
+      secondary: '#FFFFFF',
+      accent: '#FEBC10',
+      glow: '#FFE896',
+      bg: '#FFFFFF',        // White background for clean contrast
+      qrDark: '#000000',    // Black for QR data pixels
+      qrLight: '#FFFFFF'    // White background for maximum scannability
     }
   };
 
