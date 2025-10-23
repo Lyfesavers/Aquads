@@ -12,64 +12,64 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
 
   const colorSchemes = {
     purple: {
-      name: 'Cyber Purple',
+      name: 'Purple & Yellow',
+      primary: '#A855F7',
+      secondary: '#7C3AED',
+      accent: '#FEBC10',
+      glow: '#FFE896',
+      bg: '#1E1B4B',
+      qrDark: '#51159D',    // Brand purple for QR data pixels
+      qrLight: '#FEBC10'    // Brand yellow for QR background (bright & easy on eyes)
+    },
+    yellow: {
+      name: 'Yellow & Purple',
+      primary: '#FEBC10',
+      secondary: '#F59E0B',
+      accent: '#A855F7',
+      glow: '#DDD6FE',
+      bg: '#78350F',
+      qrDark: '#FEBC10',    // Brand yellow for QR data pixels
+      qrLight: '#51159D'    // Brand purple for QR background
+    },
+    purpleLight: {
+      name: 'Purple & White',
       primary: '#A855F7',
       secondary: '#7C3AED',
       accent: '#C084FC',
       glow: '#DDD6FE',
       bg: '#1E1B4B',
-      qrDark: '#7C3AED',    // QR code data pixels
-      qrLight: '#F3E8FF'    // QR code background (light purple)
+      qrDark: '#51159D',    // Brand purple for QR data pixels
+      qrLight: '#FFFFFF'    // White background for maximum contrast
     },
-    blue: {
-      name: 'Neon Blue',
-      primary: '#3B82F6',
-      secondary: '#1D4ED8',
-      accent: '#60A5FA',
-      glow: '#DBEAFE',
-      bg: '#0C4A6E',
-      qrDark: '#1D4ED8',    // QR code data pixels
-      qrLight: '#DBEAFE'    // QR code background (light blue)
-    },
-    green: {
-      name: 'Toxic Green',
-      primary: '#10B981',
-      secondary: '#059669',
-      accent: '#34D399',
-      glow: '#D1FAE5',
-      bg: '#064E3B',
-      qrDark: '#065F46',    // QR code data pixels
-      qrLight: '#D1FAE5'    // QR code background (light green)
-    },
-    pink: {
-      name: 'Hot Pink',
-      primary: '#EC4899',
-      secondary: '#DB2777',
-      accent: '#F9A8D4',
-      glow: '#FCE7F3',
-      bg: '#831843',
-      qrDark: '#BE185D',    // QR code data pixels
-      qrLight: '#FCE7F3'    // QR code background (light pink)
-    },
-    orange: {
-      name: 'Cyber Orange',
-      primary: '#F59E0B',
-      secondary: '#D97706',
+    yellowLight: {
+      name: 'Yellow & White',
+      primary: '#FEBC10',
+      secondary: '#F59E0B',
       accent: '#FBBf24',
       glow: '#FEF3C7',
       bg: '#78350F',
-      qrDark: '#B45309',    // QR code data pixels
-      qrLight: '#FEF3C7'    // QR code background (light orange)
+      qrDark: '#C79100',    // Darker yellow for QR data pixels
+      qrLight: '#FFFFFF'    // White background for maximum contrast
     },
-    cyan: {
-      name: 'Electric Cyan',
-      primary: '#06B6D4',
-      secondary: '#0891B2',
-      accent: '#22D3EE',
-      glow: '#CFFAFE',
-      bg: '#164E63',
-      qrDark: '#0E7490',    // QR code data pixels
-      qrLight: '#CFFAFE'    // QR code background (light cyan)
+    classic: {
+      name: 'Classic Black & White',
+      primary: '#A855F7',
+      secondary: '#7C3AED',
+      accent: '#FEBC10',
+      glow: '#FFE896',
+      bg: '#1E1B4B',
+      qrDark: '#000000',    // Black for QR data pixels
+      qrLight: '#FFFFFF'    // White background (most scannable)
+    },
+    purpleDark: {
+      name: 'Purple & Cream',
+      primary: '#A855F7',
+      secondary: '#7C3AED',
+      accent: '#C084FC',
+      glow: '#DDD6FE',
+      bg: '#1E1B4B',
+      qrDark: '#51159D',    // Brand purple for QR data pixels
+      qrLight: '#FFF8E1'    // Soft cream background (easy on eyes)
     }
   };
 
@@ -101,11 +101,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     const qrX = (size - qrSize) / 2;
     const qrY = (size - qrSize) / 2 + 20; // Shifted down for head
     
-    // Draw white backing for QR code
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
-    
-    // Draw the QR code
+    // Draw the QR code (no white backing - using bright solid colors)
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
     
     // Draw cyberpunk frame around QR code
