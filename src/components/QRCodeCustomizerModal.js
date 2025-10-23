@@ -218,7 +218,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 10, 375, 30, 20); // Right thigh
     
     // Shoes/feet
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 42, 395, 34, 5); // Left shoe
     ctx.fillRect(centerX + 8, 395, 34, 5);  // Right shoe
   };
@@ -354,7 +354,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 10, 375, 28, 20); // Right leg
     
     // Shoes/boots
-    ctx.fillStyle = colors.secondary;
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(centerX - 40, 395, 32, 5); // Left shoe
     ctx.fillRect(centerX + 8, 395, 32, 5);  // Right shoe
   };
