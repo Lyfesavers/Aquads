@@ -819,27 +819,58 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* Custom scrollbar */
+  /* Custom scrollbar - more visible */
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 212, 255, 0.4) rgba(0, 0, 0, 0.2);
+  scrollbar-color: rgba(0, 212, 255, 0.6) rgba(0, 0, 0, 0.3);
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
 }
 
+/* Fade edges to indicate scrollable content */
+.token-pairs-container::before,
+.token-pairs-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.token-pairs-container::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
+  border-radius: 4px 0 0 4px;
+}
+
+.token-pairs-container::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
+  border-radius: 0 4px 4px 0;
+}
+
+/* More visible scrollbar */
 .token-pairs-container::-webkit-scrollbar {
-  height: 4px;
+  height: 6px;
 }
 
 .token-pairs-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  margin: 0 40px; /* Space for fade edges */
 }
 
 .token-pairs-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.4);
-  border-radius: 2px;
+  background: rgba(0, 212, 255, 0.6);
+  border-radius: 3px;
+  transition: background 0.3s ease;
 }
 
 .token-pairs-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 212, 255, 0.6);
+  background: rgba(0, 212, 255, 0.9);
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.5);
 }
 
 .token-pairs-scroll {
@@ -966,6 +997,15 @@
     height: 36px;
   }
 
+  .token-pairs-container::before,
+  .token-pairs-container::after {
+    width: 30px;
+  }
+
+  .token-pairs-container::-webkit-scrollbar-track {
+    margin: 0 30px;
+  }
+
   .pair-btn {
     height: 28px;
     font-size: 0.7rem;
@@ -998,6 +1038,19 @@
     height: 34px;
   }
 
+  .token-pairs-container::before,
+  .token-pairs-container::after {
+    width: 25px;
+  }
+
+  .token-pairs-container::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .token-pairs-container::-webkit-scrollbar-track {
+    margin: 0 25px;
+  }
+
   .pair-btn {
     height: 26px;
     font-size: 0.68rem;
@@ -1028,6 +1081,19 @@
 
   .token-pairs-container {
     height: 32px;
+  }
+
+  .token-pairs-container::before,
+  .token-pairs-container::after {
+    width: 20px;
+  }
+
+  .token-pairs-container::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .token-pairs-container::-webkit-scrollbar-track {
+    margin: 0 20px;
   }
 
   .pair-btn {
