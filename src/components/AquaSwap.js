@@ -266,11 +266,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         // Process and filter results
         const processedResults = data.pairs
           .filter(pair => pair.pairAddress && pair.baseToken && pair.quoteToken)
-          .slice(0, 10) // Limit to top 10 results
           .map(pair => ({
             id: `${pair.chainId}-${pair.pairAddress}`,
             name: pair.baseToken.name,
             symbol: pair.baseToken.symbol,
+            baseTokenAddress: pair.baseToken.address,
             pairAddress: pair.pairAddress,
             chainId: pair.chainId,
             dexId: pair.dexId,
@@ -370,7 +370,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     
     // Store all pairs for the selected token for quick navigation
     const samePairs = searchResults.filter(r => 
-      r.symbol === result.symbol && r.name === result.name
+      r.baseTokenAddress && result.baseTokenAddress &&
+      r.baseTokenAddress.toLowerCase() === result.baseTokenAddress.toLowerCase()
     );
     setTokenPairs(samePairs);
     setActiveTokenName(result.name);
