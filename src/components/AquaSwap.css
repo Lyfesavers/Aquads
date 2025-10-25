@@ -68,9 +68,9 @@
 /* Header Buttons Container - More compact */
 .header-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: 4px;
   flex-wrap: wrap;
 }
 
@@ -79,12 +79,12 @@
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
   color: #00d4ff;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .embed-toggle-button:hover {
@@ -98,12 +98,12 @@
   background: rgba(255, 165, 0, 0.1);
   border: 1px solid rgba(255, 165, 0, 0.3);
   color: #ffa500;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-decoration: none;
   display: inline-block;
 }
@@ -114,6 +114,35 @@
   transform: translateY(-1px);
   color: #ffa500;
   text-decoration: none;
+}
+
+/* Mobile header buttons - even more compact */
+@media (max-width: 768px) {
+  .header-buttons {
+    gap: 4px;
+    margin-top: 3px;
+  }
+
+  .embed-toggle-button,
+  .fiat-purchase-button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-buttons {
+    gap: 3px;
+    margin-top: 2px;
+  }
+
+  .embed-toggle-button,
+  .fiat-purchase-button {
+    padding: 3px 6px;
+    font-size: 0.65rem;
+    border-radius: 4px;
+  }
 }
 
 /* Banner Container - Reduced spacing */
@@ -1231,7 +1260,7 @@
   
   .swap-section {
     flex: none;
-    padding: 10px 12px 16px 12px;
+    padding: 8px 10px 14px 10px;
     min-height: auto;
   }
   
@@ -1244,45 +1273,68 @@
   
   .chart-section {
     min-height: 500px;
-    min-width: 0; /* Reset min-width on smaller screens to prevent horizontal scroll */
+    min-width: 0;
   }
   
   .chart-container iframe {
-    min-width: 0; /* Reset iframe min-width on smaller screens */
+    min-width: 0;
+  }
+  
+  /* Tablet optimized controls */
+  .chart-header {
+    padding: 6px 10px;
   }
   
   .search-controls {
-    flex-direction: column;
-    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  
+  .chain-selector {
+    flex-direction: row;
+    align-items: center;
     gap: 6px;
+    flex: 1;
   }
   
-  .chain-selector,
   .token-search {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
   }
   
-  /* Gas price indicator on tablet/mobile */
+  .search-label {
+    font-size: 0.75rem;
+  }
+  
+  .chain-select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  /* Gas price indicator on tablet */
   .gas-price-indicator,
   .gas-price-loading {
     margin-left: 0;
-    margin-top: 6px;
     width: fit-content;
   }
   
   .chart-controls-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  
+  .chart-provider-selector {
+    width: 100%;
   }
   
   .provider-btn {
     flex-direction: row;
     justify-content: center;
     min-width: auto;
-    height: 28px;
+    height: 34px;
+    font-size: 0.75rem;
   }
   
   /* Mobile collapse button adjustments */
@@ -1306,18 +1358,17 @@
 
 @media (max-width: 768px) {
   .header-section {
-    padding: 6px 10px;
+    padding: 4px 8px;
   }
   
   .aquads-logo-clickable {
-    /* Mobile logo styling - maintain aspect ratio, just adjust margin */
-    margin-bottom: 4px;
-    max-width: 60px;
+    margin-bottom: 2px;
+    max-width: 50px;
     height: auto;
   }
   
   .banner-container {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   /* Show mobile banner, hide desktop banner on mobile */
@@ -1330,11 +1381,16 @@
   }
   
   .page-title h1 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+  }
+  
+  .page-title p {
+    font-size: 0.8rem;
+    margin-bottom: 4px;
   }
   
   .swap-section {
-    padding: 8px 10px 12px 10px;
+    padding: 6px 8px 10px 8px;
   }
   
   .swap-section.collapsed {
@@ -1359,33 +1415,104 @@
     height: 32px;
   }
   
+  /* OPTIMIZED MOBILE CHART HEADER */
   .chart-header {
-    padding: 6px 10px 0 10px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
   }
   
-  .chart-container {
-    min-height: 500px;
-  }
-
-  .chart-container iframe {
-    min-height: 500px;
-    min-width: 0; /* Reset min-width on mobile to prevent horizontal scroll */
-  }
-  
+  /* Compact controls row - horizontal layout */
   .chart-controls-row {
     gap: 6px;
+    margin-bottom: 4px;
   }
   
+  /* Chart provider buttons - horizontal and compact */
   .chart-provider-selector {
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
+    width: 100%;
   }
   
   .provider-btn {
     font-size: 0.7rem;
-    padding: 3px 10px;
-    height: 26px;
-    border-radius: 18px;
+    padding: 6px 8px;
+    height: 32px;
+    border-radius: 6px;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .provider-desc {
+    display: none;
+  }
+  
+  /* COMPACT SEARCH CONTROLS */
+  .search-controls {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  
+  .chain-selector {
+    flex-direction: row;
+    gap: 4px;
+    flex: 1;
+  }
+  
+  .search-label {
+    font-size: 0.7rem;
+    display: none; /* Hide labels on mobile to save space */
+  }
+  
+  .chain-select {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Gas price indicator - more compact */
+  .gas-price-indicator {
+    font-size: 0.65rem;
+    padding: 4px 6px;
+    gap: 2px;
+    white-space: nowrap;
+  }
+  
+  .gas-price-indicator .gas-icon {
+    font-size: 0.75rem;
+  }
+  
+  .gas-price-indicator .gas-level-text {
+    display: none; /* Hide on mobile */
+  }
+  
+  .gas-price-loading {
+    font-size: 0.65rem;
+    padding: 4px 6px;
+  }
+  
+  .gas-loading-spinner {
+    width: 8px;
+    height: 8px;
+  }
+  
+  /* Token search - full width */
+  .token-search {
+    width: 100%;
+    flex-direction: row;
+    gap: 6px;
+  }
+  
+  .token-search-input {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    height: 32px;
+  }
+  
+  /* COMPACT TRENDING TOKENS */
+  .popular-tokens-container {
+    height: 28px;
   }
   
   .popular-tokens-container::before,
@@ -1394,7 +1521,7 @@
   }
   
   .popular-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     padding: 4px 6px;
   }
   
@@ -1402,32 +1529,38 @@
     gap: 4px;
   }
   
-  /* Gas price indicator on mobile */
-  .gas-price-indicator {
+  .popular-token-btn {
     font-size: 0.7rem;
-    padding: 5px 8px;
-    gap: 3px;
+    padding: 3px 6px;
+    height: 24px;
   }
   
-  .gas-price-indicator .gas-icon {
-    font-size: 0.8rem;
+  .popular-token-btn .token-logo {
+    width: 14px;
+    height: 14px;
   }
   
-  .gas-price-loading {
-    font-size: 0.7rem;
-    padding: 5px 8px;
+  .token-rank {
+    font-size: 0.65rem;
+    padding: 1px 3px;
   }
   
-  .gas-loading-spinner {
-    width: 10px;
-    height: 10px;
+  /* MAXIMIZE CHART SPACE */
+  .chart-container {
+    min-height: 450px;
+    height: calc(100vh - 200px);
+  }
+
+  .chart-container iframe {
+    min-height: 450px;
+    min-width: 0;
   }
   
   /* Mobile-specific collapse styles */
   .swap-collapse-toggle {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     padding: 4px 8px;
-    min-height: 36px;
+    min-height: 32px;
     border-radius: 4px;
   }
   
@@ -1456,32 +1589,94 @@
 }
 
 @media (max-width: 480px) {
+  .header-section {
+    padding: 3px 6px;
+  }
+
   .page-title h1 {
-    font-size: 1.3rem;
-    gap: 6px;
+    font-size: 1.2rem;
+    gap: 4px;
   }
   
-  .aquaswap-logo {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .token-search-input {
+  .page-title p {
     font-size: 0.75rem;
   }
   
-  .popular-token-btn {
-    font-size: 0.7rem;
-    padding: 3px 6px;
-    height: 24px;
+  .aquaswap-logo {
+    width: 18px;
+    height: 18px;
   }
   
+  /* Even more compact controls */
+  .chart-header {
+    padding: 3px 6px;
+  }
+  
+  .provider-btn {
+    font-size: 0.68rem;
+    padding: 5px 6px;
+    height: 30px;
+  }
+  
+  .chain-select {
+    font-size: 0.7rem;
+    padding: 5px 6px;
+  }
+  
+  .token-search-input {
+    font-size: 0.7rem;
+    padding: 5px 6px;
+    height: 30px;
+  }
+  
+  .token-search-input::placeholder {
+    font-size: 0.7rem;
+  }
+  
+  /* Compact trending */
+  .popular-tokens-container {
+    height: 26px;
+  }
+  
+  .popular-label {
+    font-size: 0.65rem;
+    padding: 3px 5px;
+  }
+  
+  .popular-token-btn {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    height: 22px;
+  }
+  
+  .popular-token-btn .token-logo {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .token-rank {
+    font-size: 0.6rem;
+    padding: 1px 2px;
+  }
+  
+  /* Gas indicator */
+  .gas-price-indicator {
+    font-size: 0.6rem;
+    padding: 3px 5px;
+  }
+  
+  /* Maximize chart on small screens */
   .chart-container {
-    min-height: 450px;
+    min-height: 400px;
+    height: calc(100vh - 180px);
+  }
+  
+  .chart-container iframe {
+    min-height: 400px;
   }
   
   .chart-section {
-    min-height: 500px;
+    min-height: 450px;
   }
 }
 
