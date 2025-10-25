@@ -438,6 +438,10 @@
 /* Chart search section - more compact */
 .chart-search-section {
   margin-top: 6px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .search-controls {
@@ -789,6 +793,8 @@
   align-items: center;
   gap: 8px;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .pairs-label {
@@ -819,9 +825,12 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* Custom scrollbar - more visible */
+  /* Custom scrollbar */
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 212, 255, 0.6) rgba(0, 0, 0, 0.3);
+  /* Ensure container respects parent width */
+  min-width: 0;
+  max-width: 100%;
   /* Smooth scrolling */
   scroll-behavior: smooth;
 }
@@ -836,7 +845,6 @@
   width: 40px;
   pointer-events: none;
   z-index: 2;
-  transition: opacity 0.3s ease;
 }
 
 .token-pairs-container::before {
@@ -851,7 +859,6 @@
   border-radius: 0 4px 4px 0;
 }
 
-/* More visible scrollbar */
 .token-pairs-container::-webkit-scrollbar {
   height: 6px;
 }
@@ -859,7 +866,6 @@
 .token-pairs-container::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 3px;
-  margin: 0 40px; /* Space for fade edges */
 }
 
 .token-pairs-container::-webkit-scrollbar-thumb {
@@ -1002,10 +1008,6 @@
     width: 30px;
   }
 
-  .token-pairs-container::-webkit-scrollbar-track {
-    margin: 0 30px;
-  }
-
   .pair-btn {
     height: 28px;
     font-size: 0.7rem;
@@ -1047,10 +1049,6 @@
     height: 5px;
   }
 
-  .token-pairs-container::-webkit-scrollbar-track {
-    margin: 0 25px;
-  }
-
   .pair-btn {
     height: 26px;
     font-size: 0.68rem;
@@ -1090,10 +1088,6 @@
 
   .token-pairs-container::-webkit-scrollbar {
     height: 4px;
-  }
-
-  .token-pairs-container::-webkit-scrollbar-track {
-    margin: 0 20px;
   }
 
   .pair-btn {
