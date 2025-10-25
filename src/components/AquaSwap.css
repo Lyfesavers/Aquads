@@ -767,6 +767,287 @@
   }
 }
 
+/* Token Pairs Quick Navigation */
+.token-pairs-section {
+  margin-top: 8px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.token-pairs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.pairs-label {
+  font-size: 0.8rem;
+  color: #ffffff;
+  white-space: nowrap;
+  font-weight: 600;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 162, 255, 0.15) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pairs-token-name {
+  color: #00d4ff;
+  font-weight: 700;
+}
+
+.token-pairs-container {
+  position: relative;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 38px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.4) rgba(0, 0, 0, 0.2);
+}
+
+.token-pairs-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.token-pairs-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.token-pairs-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.4);
+  border-radius: 2px;
+}
+
+.token-pairs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.6);
+}
+
+.token-pairs-scroll {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
+  min-width: min-content;
+}
+
+/* Pair buttons - modern design */
+.pair-btn {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  height: 30px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pair-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 162, 255, 0.15) 100%);
+  border-color: rgba(0, 212, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 212, 255, 0.2);
+}
+
+.pair-btn.active {
+  background: linear-gradient(135deg, #00d4ff 0%, #00a2ff 100%);
+  border-color: #00d4ff;
+  color: #000000;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.pair-btn.active:hover {
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.5);
+}
+
+.pair-name {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.pair-btn.active .pair-name {
+  font-weight: 700;
+}
+
+.pair-dex {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  padding: 2px 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pair-btn.active .pair-dex {
+  background: rgba(0, 0, 0, 0.2);
+  opacity: 1;
+}
+
+.pair-change {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.pair-change.positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.pair-change.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.pair-btn.active .pair-change.positive {
+  background: rgba(16, 185, 129, 0.3);
+  color: #059669;
+}
+
+.pair-btn.active .pair-change.negative {
+  background: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+/* Tablet responsiveness for pairs */
+@media (max-width: 1024px) {
+  .token-pairs-section {
+    margin-top: 6px;
+  }
+
+  .token-pairs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .pairs-label {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .token-pairs-container {
+    height: 36px;
+  }
+
+  .pair-btn {
+    height: 28px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .pair-dex {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
+
+  .pair-change {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+}
+
+/* Mobile responsiveness for pairs */
+@media (max-width: 768px) {
+  .token-pairs-section {
+    margin-top: 8px;
+  }
+
+  .pairs-label {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
+
+  .token-pairs-container {
+    height: 34px;
+  }
+
+  .pair-btn {
+    height: 26px;
+    font-size: 0.68rem;
+    padding: 3px 7px;
+    gap: 4px;
+  }
+
+  .pair-name {
+    letter-spacing: 0.2px;
+  }
+
+  .pair-dex {
+    font-size: 0.58rem;
+    padding: 1px 3px;
+  }
+
+  .pair-change {
+    font-size: 0.62rem;
+    padding: 1px 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pairs-label {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+
+  .token-pairs-container {
+    height: 32px;
+  }
+
+  .pair-btn {
+    height: 24px;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    gap: 3px;
+  }
+
+  .pair-dex {
+    font-size: 0.55rem;
+    padding: 1px 2px;
+  }
+
+  .pair-change {
+    font-size: 0.6rem;
+    padding: 1px 2px;
+  }
+}
+
 /* Chart container - maximized space */
 .chart-container {
   flex: 1;

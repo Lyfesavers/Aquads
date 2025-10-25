@@ -36,6 +36,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [searchInput, setSearchInput] = useState(''); // Separate state for search input
 
+  // Token pairs navigation state
+  const [tokenPairs, setTokenPairs] = useState([]); // Store all pairs for selected token
+  const [activeTokenName, setActiveTokenName] = useState(''); // Track which token's pairs we're showing
+
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
   const [loadingGasPrice, setLoadingGasPrice] = useState(false);
@@ -364,6 +368,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     
     const mappedChain = chainMapping[result.chainId] || 'ether';
     
+    // Store all pairs for the selected token for quick navigation
+    const samePairs = searchResults.filter(r => 
+      r.symbol === result.symbol && r.name === result.name
+    );
+    setTokenPairs(samePairs);
+    setActiveTokenName(result.name);
+    
     // Set all required state for chart loading
     setTokenSearch(result.pairAddress);
     setSearchInput(result.pairAddress); // Also update the search input to show the selected address
@@ -389,6 +400,60 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
+  };
+
+  // Handle pair selection from quick navigation buttons
+  const handlePairSelect = (pair) => {
+    // Map DEXScreener chainId to our internal chain format
+    const chainMapping = {
+      'ethereum': 'ether',
+      'bsc': 'bnb',
+      'polygon': 'polygon',
+      'solana': 'solana',
+      'avalanche': 'avalanche',
+      'arbitrum': 'arbitrum',
+      'optimism': 'optimism',
+      'base': 'base',
+      'fantom': 'fantom',
+      'cronos': 'cronos',
+      'celo': 'celo',
+      'harmony': 'harmony',
+      'near': 'near',
+      'sui': 'sui',
+      'aptos': 'aptos',
+      'ton': 'ton',
+      'stellar': 'stellar',
+      'algorand': 'algorand',
+      'hedera': 'hedera',
+      'icp': 'icp',
+      'elrond': 'elrond',
+      'terra': 'terra',
+      'xrp': 'xrp',
+      'litecoin': 'litecoin',
+      'bitcoin': 'bitcoin',
+      'tron': 'tron',
+      'tezos': 'tezos',
+      'zilliqa': 'zilliqa',
+      'oasis': 'oasis',
+      'stacks': 'stacks',
+      'kadena': 'kadena',
+      'injective': 'injective',
+      'kava': 'kava',
+      'moonriver': 'moonriver',
+      'moonbeam': 'moonbeam',
+      'flow': 'flow',
+      'cardano': 'cardano',
+      'polkadot': 'polkadot',
+      'cosmos': 'cosmos',
+      'kaspa': 'kaspa'
+    };
+
+    const mappedChain = chainMapping[pair.chainId] || 'ether';
+    
+    setTokenSearch(pair.pairAddress);
+    setSearchInput(pair.pairAddress);
+    setSelectedChain(mappedChain);
+    setChartProvider('dexscreener');
   };
 
   // Handle click outside to close search results
@@ -1384,6 +1449,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                           </button>
                         );
                       })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Token Pairs Quick Navigation - show after selection */}
+            {chartProvider === 'dexscreener' && tokenPairs.length > 1 && (
+              <div className="chart-search-section token-pairs-section">
+                <div className="token-pairs">
+                  <span className="pairs-label">
+                    <span className="pairs-token-name">{activeTokenName}</span> Pairs:
+                  </span>
+                  <div className="token-pairs-container">
+                    <div className="token-pairs-scroll">
+                      {tokenPairs.map((pair) => (
+                        <button
+                          key={pair.id}
+                          onClick={() => handlePairSelect(pair)}
+                          className={`pair-btn ${tokenSearch === pair.pairAddress ? 'active' : ''}`}
+                          title={`${pair.dexId} on ${pair.chainId} - $${parseFloat(pair.priceUsd || 0).toFixed(8)} - Vol: $${(pair.volume24h || 0).toLocaleString()} - Liq: $${(pair.liquidityUsd || 0).toLocaleString()}`}
+                        >
+                          <span className="pair-name">{pair.tradingPair}</span>
+                          <span className="pair-dex">{pair.dexId}</span>
+                          <span className={`pair-change ${parseFloat(pair.priceChange24h || 0) >= 0 ? 'positive' : 'negative'}`}>
+                            {parseFloat(pair.priceChange24h || 0) >= 0 ? '↑' : '↓'}
+                            {Math.abs(parseFloat(pair.priceChange24h || 0)).toFixed(2)}%
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
