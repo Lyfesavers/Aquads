@@ -4,6 +4,7 @@ import logger from '../utils/logger';
 import InvoiceModal from './InvoiceModal';
 import invoiceService from '../services/invoiceService';
 import useSocket from '../hooks/useSocket';
+import { getDisplayName } from '../utils/nameUtils';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -1320,7 +1321,7 @@ ${currentUser.username}`;
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-semibold text-sm">
-                        {sender.username || 'Unknown'}
+                        {getDisplayName(sender) || 'Unknown'}
                         {msg.isInitialRequirements && ' (Initial Requirements)'}
                       </span>
                       <div className="flex items-center gap-1">

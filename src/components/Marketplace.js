@@ -27,6 +27,7 @@ import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
+import { getDisplayName } from '../utils/nameUtils';
 
 // Helper function for country flags - using images instead of emojis
 const CountryFlag = ({ countryCode }) => {
@@ -1010,7 +1011,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
                       className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
-                      <span className="mr-1">{currentUser.username}</span>
+                      <span className="mr-1">{getDisplayName(currentUser)}</span>
                       <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
@@ -1139,7 +1140,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                   <div className="flex justify-center">
                     <NotificationBell currentUser={currentUser} />
                   </div>
-                  <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                  <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
                   <button
                     onClick={() => {
                       setShowDashboard(true);
@@ -1455,14 +1456,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           <div className="flex items-center gap-3 mb-3">
                             <UserImage 
                               src={service.seller?.image}
-                              alt={service.seller?.username || 'Seller'}
+                              alt={getDisplayName(service.seller) || 'Seller'}
                               className="w-10 h-10 rounded-full object-cover"
                             />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <h4 className="font-medium">
-                                    {service.seller?.username}
+                                    {getDisplayName(service.seller)}
                                     {service.isPremium && (
                                       <span className="inline-flex items-center ml-1 gap-1">
                                         <span className="text-yellow-500 text-sm font-medium">verified</span>

@@ -21,6 +21,7 @@ import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
 import { FaCrown, FaCheck, FaArrowLeft, FaEye, FaUsers, FaHandshake, FaChartLine, FaStar, FaGlobe, FaClock, FaDollarSign, FaFileAlt } from 'react-icons/fa';
 import logger from '../utils/logger';
+import { getDisplayName } from '../utils/nameUtils';
 
 // Helper function for country flags
 const CountryFlag = ({ countryCode }) => {
@@ -200,9 +201,9 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   return (
     <>
       <Helmet>
-        <title>{service.title} - {service.seller?.username} | AQUADS</title>
+        <title>{service.title} - {getDisplayName(service.seller)} | AQUADS</title>
         <meta name="description" content={service.description?.slice(0, 160)} />
-        <meta property="og:title" content={`${service.title} - ${service.seller?.username}`} />
+        <meta property="og:title" content={`${service.title} - ${getDisplayName(service.seller)}`} />
         <meta property="og:description" content={service.description?.slice(0, 160)} />
         {service.image && <meta property="og:image" content={service.image} />}
       </Helmet>
@@ -606,7 +607,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 <div className="flex items-center gap-4 mb-6">
                   <img 
                     src={service.seller?.image || 'https://placehold.co/100x100?text=User'}
-                    alt={service.seller?.username || 'Seller'}
+                    alt={getDisplayName(service.seller) || 'Seller'}
                     className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
                     onError={(e) => {
                       e.target.src = 'https://placehold.co/100x100?text=User';
@@ -615,7 +616,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-xl font-bold">
-                        {service.seller?.username}
+                        {getDisplayName(service.seller)}
                       </h3>
                       {service.isPremium && (
                         <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-400 px-2 py-1 rounded-full text-xs">
