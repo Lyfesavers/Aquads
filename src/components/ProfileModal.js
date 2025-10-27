@@ -258,6 +258,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     username: currentUser?.username || '',
+    fullName: currentUser?.cv?.fullName || '',
     image: currentUser?.image || '',
     country: currentUser?.country || '',
     currentPassword: '',
@@ -342,6 +343,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
       // Only include password fields if changing password
       const updateData = {
         username: formData.username,
+        fullName: formData.fullName,
         image: formData.image,
         country: formData.country
       };
@@ -413,6 +415,19 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
                   required
                   className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
                 />
+                <p className="text-xs text-gray-400 mt-1">Used for login and identification</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Enter your full name (e.g., John Smith)"
+                  className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                />
+                <p className="text-xs text-gray-400 mt-1">Your real name as it appears to clients</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Country</label>

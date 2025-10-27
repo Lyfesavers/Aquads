@@ -27,12 +27,17 @@ const tempTokenStore = new Map();
 // Register new user
 router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), async (req, res) => {
   try {
-    const { username, email, password, image, referralCode, deviceFingerprint, country } = req.body;
+    const { username, fullName, email, password, image, referralCode, deviceFingerprint, country } = req.body;
 
 
     // Enhanced validation
     if (!username || !password || !email) {
       return res.status(400).json({ error: 'Username, password, and email are required for verification' });
+    }
+
+    // Full name validation
+    if (!fullName || fullName.trim().length < 2) {
+      return res.status(400).json({ error: 'Full name is required (at least 2 characters)' });
     }
 
     // Username requirements
@@ -98,7 +103,10 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
         balanceBefore: 0,
         balanceAfter: 5,
         createdAt: new Date()
-      }] : [] // Empty token history for non-freelancers
+      }] : [], // Empty token history for non-freelancers
+      cv: {
+        fullName: fullName.trim() // Save full name to cv object
+      }
     };
 
     // If referral code provided, find referring user by username
@@ -301,7 +309,7 @@ router.get('/profile', auth, async (req, res) => {
 // Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { username, email, image, currentPassword, newPassword, country } = req.body;
+    const { username, fullName, email, image, currentPassword, newPassword, country } = req.body;
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -336,6 +344,14 @@ router.put('/profile', auth, async (req, res) => {
       user.country = country;
     }
 
+    // Update fullName if provided (stored in cv object)
+    if (fullName !== undefined) {
+      if (!user.cv) {
+        user.cv = {};
+      }
+      user.cv.fullName = fullName.trim();
+    }
+
     // Update password if provided
     if (currentPassword && newPassword) {
       let isValidPassword = false;
@@ -368,7 +384,8 @@ router.put('/profile', auth, async (req, res) => {
       email: user.email,
       image: user.image,
       country: user.country,
-      referralCode: user.referralCode
+      referralCode: user.referralCode,
+      cv: user.cv // Include cv data so frontend gets fullName
     };
 
     res.json(userData);

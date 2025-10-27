@@ -6,6 +6,7 @@ import { FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -353,8 +354,14 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     setError('');
 
     // Validate required fields
-    if (!formData.username || !formData.password || !formData.email) {
-      setError('Username, password, and email are required');
+    if (!formData.username || !formData.fullName || !formData.password || !formData.email) {
+      setError('Username, full name, password, and email are required');
+      return;
+    }
+
+    // Validate full name (must be at least 2 characters and allow spaces/international chars)
+    if (formData.fullName.trim().length < 2) {
+      setError('Please enter your full name (at least 2 characters)');
       return;
     }
 
@@ -543,9 +550,23 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                placeholder="Enter username"
+                placeholder="Enter username (used for login)"
                 className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p className="text-xs text-gray-400 mt-1">Your unique username for login and identification</p>
+            </div>
+            <div>
+              <label className="block text-gray-300 mb-2">Full Name *</label>
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+                placeholder="Enter your full name (e.g., John Smith)"
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">Your real name as it will appear to clients and on your profile</p>
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Email *</label>
