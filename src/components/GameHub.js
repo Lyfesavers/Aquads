@@ -14,6 +14,7 @@ import Dashboard from './Dashboard';
 import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
 import { showToast } from './Toast';
+import { getDisplayName } from '../utils/nameUtils';
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'All Blockchains', value: '' },
@@ -307,7 +308,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
                       className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
-                      <span className="mr-1">{currentUser.username}</span>
+                      <span className="mr-1">{getDisplayName(currentUser)}</span>
                       <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>

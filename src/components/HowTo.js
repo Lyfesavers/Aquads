@@ -12,6 +12,7 @@ import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
+import { getDisplayName } from '../utils/nameUtils';
 
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
   const [blogs, setBlogs] = useState([]);
@@ -330,7 +331,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
                       className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                     >
-                      <span className="mr-1 truncate max-w-16 lg:max-w-none">{currentUser.username}</span>
+                      <span className="mr-1 truncate max-w-16 lg:max-w-none">{getDisplayName(currentUser)}</span>
                       <svg className={`w-3 h-3 lg:w-4 lg:h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
@@ -454,7 +455,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               </Link>
                              {currentUser ? (
                  <>
-                   <span className="text-blue-300 text-center text-sm font-medium">Welcome, {currentUser.username}!</span>
+                   <span className="text-blue-300 text-center text-sm font-medium">Welcome, {getDisplayName(currentUser)}!</span>
                    <button
                      onClick={() => {
                        navigate('/');
