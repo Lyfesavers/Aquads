@@ -50,17 +50,16 @@ async function migrateIndexes() {
       await collection.dropIndex(oldUniqueIndex.name);
       console.log('✅ Old index dropped successfully\n');
 
-      // Create new index with partial filter
-      console.log('🔨 Creating new index with partial filter...');
+      // Create new NON-UNIQUE index for query performance only
+      // (uniqueness is now enforced by bookingId index)
+      console.log('🔨 Creating new non-unique index for query performance...');
       await collection.createIndex(
         { serviceId: 1, userId: 1 },
         {
-          unique: true,
-          partialFilterExpression: { bookingId: { $exists: false } },
-          name: 'serviceId_1_userId_1_partial'
+          name: 'serviceId_1_userId_1_nonunique'
         }
       );
-      console.log('✅ New partial index created successfully\n');
+      console.log('✅ New non-unique index created successfully\n');
     } else {
       console.log('✅ No problematic index found - either already migrated or doesn\'t exist\n');
     }

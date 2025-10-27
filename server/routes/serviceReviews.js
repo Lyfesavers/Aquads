@@ -105,19 +105,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       comment: comment.trim()
     });
 
-    let savedReview;
-    
-    try {
-      savedReview = await review.save();
-    } catch (error) {
-      // Handle duplicate key error from old unique index
-      if (error.code === 11000 && error.keyPattern && error.keyPattern.serviceId && error.keyPattern.userId) {
-        return res.status(400).json({ 
-          error: 'You have already reviewed this service. Please use the new booking-based review system for multiple reviews.' 
-        });
-      }
-      throw error; // Re-throw if it's a different error
-    }
+    const savedReview = await review.save();
 
     // Update service rating, review count, and badge
     const allReviews = await ServiceReview.find({ serviceId });
