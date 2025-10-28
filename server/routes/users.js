@@ -181,6 +181,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       referralCode: user.referralCode,
       referredBy: user.referredBy, // Include referredBy for affiliate detection
       userType: user.userType,
+      cv: user.cv, // Include CV data for display name functionality
       token,
       emailVerified: false,
       verificationRequired: true,
@@ -284,6 +285,7 @@ router.post('/login', async (req, res) => {
       emailVerified: user.emailVerified,
       userType: user.userType,
       referredBy: user.referredBy, // Include referredBy for affiliate detection
+      cv: user.cv, // Include CV data for display name functionality
       token
     });
 
