@@ -454,307 +454,324 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 25, headY + 40, 6, 2);
   };
 
-  // Dog character body (cyberquads dog)
+  // Dog character body (cyberquads dog on all fours - horizontal)
   const drawDogCyberquadsBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
+    const centerY = size / 2;
     
-    // Dog body (behind QR) - furry cyber jacket
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 55, 270, 110, 110);
+    const furColor = colors.primary;
     
-    // Cyber collar/harness
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 50, 265, 100, 10);
-    ctx.shadowBlur = 0;
+    // Main body (horizontal, behind QR code)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 80, centerY - 35, 160, 70);
     
-    // Collar badge/tag (glowing)
+    // Chest/underbelly (lighter)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 70, centerY - 20, 140, 40);
+    
+    // Cyber harness/collar around body
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 10, 270, 20, 20);
+    ctx.fillRect(centerX - 75, centerY - 30, 20, 60);
+    ctx.fillRect(centerX + 55, centerY - 30, 20, 60);
     ctx.shadowBlur = 0;
     
-    // Front legs (paws)
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 45, 380, 25, 18);
-    ctx.fillRect(centerX + 20, 380, 25, 18);
+    // Back legs (right side, behind QR)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX + 45, centerY + 35, 18, 45);
+    ctx.fillRect(centerX + 70, centerY + 35, 18, 45);
     
-    // Paws (darker)
+    // Back paws
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 45, 395, 25, 5);
-    ctx.fillRect(centerX + 20, 395, 25, 5);
+    ctx.fillRect(centerX + 42, centerY + 78, 24, 8);
+    ctx.fillRect(centerX + 67, centerY + 78, 24, 8);
     
-    // Tail (visible on side, wagging)
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX + 55, 285, 35, 15);
-    ctx.fillRect(centerX + 70, 270, 25, 15);
+    // Front legs (left side, in front of QR)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 85, centerY + 35, 18, 45);
+    ctx.fillRect(centerX - 60, centerY + 35, 18, 45);
     
-    // Tail tip (lighter)
+    // Front paws
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 88, centerY + 78, 24, 8);
+    ctx.fillRect(centerX - 63, centerY + 78, 24, 8);
+    
+    // Tail (curving up on right side)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX + 80, centerY - 15, 25, 20);
+    ctx.fillRect(centerX + 95, centerY - 30, 20, 20);
+    ctx.fillRect(centerX + 105, centerY - 45, 15, 20);
+    
+    // Tail tip (wagging, accent color)
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX + 80, 265, 15, 10);
+    ctx.fillRect(centerX + 110, centerY - 50, 12, 12);
     
-    // Fur texture details
+    // Fur texture stripes on body
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 40, 285, 80, 3);
-    ctx.fillRect(centerX - 35, 310, 70, 3);
-    ctx.fillRect(centerX - 30, 335, 60, 3);
+    ctx.globalAlpha = 0.4;
+    ctx.fillRect(centerX - 50, centerY - 28, 100, 3);
+    ctx.fillRect(centerX - 45, centerY - 10, 90, 3);
+    ctx.fillRect(centerX - 40, centerY + 8, 80, 3);
+    ctx.globalAlpha = 1.0;
   };
 
   const drawDogCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
-    const headY = qrY - 90;
+    const centerY = size / 2;
     
     const furColor = colors.primary;
     const noseColor = '#2C1810';
     
-    // Dog head base (rounded)
+    // Neck connecting to body (left side)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 38, headY + 15, 76, 55);
+    ctx.fillRect(centerX - 90, centerY - 20, 15, 40);
     
-    // Snout/muzzle (extending forward)
+    // Dog head (positioned to left of QR, horizontal)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 140, centerY - 30, 50, 60);
+    
+    // Snout/muzzle extending left
     ctx.fillStyle = '#D4A574';
-    ctx.fillRect(centerX - 30, headY + 45, 60, 30);
+    ctx.fillRect(centerX - 155, centerY - 15, 20, 30);
     
     // Snout bridge
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 25, headY + 35, 50, 15);
+    ctx.fillRect(centerX - 142, centerY - 20, 12, 40);
     
-    // Floppy ears (hanging down)
+    // Floppy ears (one up, one down for profile view)
     ctx.fillStyle = furColor;
-    // Left ear
-    ctx.fillRect(centerX - 48, headY + 20, 18, 50);
-    // Right ear
-    ctx.fillRect(centerX + 30, headY + 20, 18, 50);
+    // Top ear
+    ctx.fillRect(centerX - 130, centerY - 50, 35, 22);
+    // Bottom ear (hanging)
+    ctx.fillRect(centerX - 125, centerY + 30, 30, 25);
     
-    // Ear inner (lighter)
+    // Ear inner (accent)
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 45, headY + 25, 12, 40);
-    ctx.fillRect(centerX + 33, headY + 25, 12, 40);
+    ctx.fillRect(centerX - 127, centerY - 46, 28, 16);
+    ctx.fillRect(centerX - 122, centerY + 33, 24, 18);
     
-    // Cyberquads visor/goggles (tech accessory)
+    // Cyber goggles/visor
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 35, headY + 22, 28, 16);
-    ctx.fillRect(centerX + 7, headY + 22, 28, 16);
+    ctx.fillRect(centerX - 128, centerY - 8, 24, 18);
     ctx.shadowBlur = 0;
     
     // Goggle frame
     ctx.strokeStyle = colors.secondary;
     ctx.lineWidth = 2;
-    ctx.strokeRect(centerX - 35, headY + 22, 28, 16);
-    ctx.strokeRect(centerX + 7, headY + 22, 28, 16);
+    ctx.strokeRect(centerX - 128, centerY - 8, 24, 18);
     
-    // Eyes through goggles (glowing)
+    // Eye through goggle (glowing)
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 8;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(centerX - 28, headY + 26, 14, 8);
-    ctx.fillRect(centerX + 14, headY + 26, 14, 8);
+    ctx.fillRect(centerX - 123, centerY - 4, 14, 10);
     
-    // Pupils
+    // Pupil
     ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 23, headY + 28, 6, 5);
-    ctx.fillRect(centerX + 19, headY + 28, 6, 5);
+    ctx.fillRect(centerX - 118, centerY - 1, 6, 6);
     ctx.shadowBlur = 0;
     
-    // Nose (big doggy nose)
+    // Nose (on snout tip)
     ctx.fillStyle = noseColor;
-    ctx.fillRect(centerX - 12, headY + 56, 24, 14);
+    ctx.fillRect(centerX - 158, centerY - 5, 10, 10);
     
     // Nose highlight
     ctx.fillStyle = '#4A3A2A';
-    ctx.fillRect(centerX - 8, headY + 58, 8, 6);
+    ctx.fillRect(centerX - 156, centerY - 3, 4, 4);
     
-    // Mouth/smile
+    // Mouth (happy dog smile)
     ctx.strokeStyle = noseColor;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(centerX, headY + 70);
-    ctx.lineTo(centerX - 15, headY + 73);
-    ctx.moveTo(centerX, headY + 70);
-    ctx.lineTo(centerX + 15, headY + 73);
+    ctx.moveTo(centerX - 155, centerY + 8);
+    ctx.lineTo(centerX - 148, centerY + 15);
     ctx.stroke();
     
-    // Tongue (cute detail)
+    // Tongue hanging out
     ctx.fillStyle = '#E94560';
-    ctx.fillRect(centerX - 8, headY + 73, 16, 8);
+    ctx.fillRect(centerX - 151, centerY + 12, 8, 18);
     
-    // Tech collar (neck)
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 8;
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 25, headY + 75, 50, 10);
-    ctx.shadowBlur = 0;
-  };
-
-  // Cat character body (cyberquads cat)
-  const drawCatCyberquadsBody = (ctx, size, colors, pixelSize) => {
-    const centerX = size / 2;
-    
-    // Cat body (behind QR) - sleek cyber suit
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 50, 275, 100, 105);
-    
-    // Chest/belly (lighter)
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 35, 285, 70, 80);
-    
-    // Cyber harness/vest
+    // Cyber collar
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 45, 270, 90, 8);
-    ctx.fillRect(centerX - 40, 278, 15, 70);
-    ctx.fillRect(centerX + 25, 278, 15, 70);
+    ctx.fillRect(centerX - 95, centerY - 5, 10, 40);
+    
+    // Collar tag
+    ctx.fillRect(centerX - 100, centerY + 8, 8, 12);
+    ctx.shadowBlur = 0;
+  };
+
+  // Cat character body (cyberquads cat on all fours - horizontal)
+  const drawCatCyberquadsBody = (ctx, size, colors, pixelSize) => {
+    const centerX = size / 2;
+    const centerY = size / 2;
+    
+    const furColor = colors.primary;
+    
+    // Main body (horizontal, sleek and lower than dog)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 75, centerY - 25, 150, 50);
+    
+    // Chest/belly (lighter)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 65, centerY - 15, 130, 30);
+    
+    // Cyber harness straps
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 70, centerY - 20, 15, 45);
+    ctx.fillRect(centerX + 55, centerY - 20, 15, 45);
     ctx.shadowBlur = 0;
     
-    // Front legs (sitting position)
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX - 42, 375, 22, 23);
-    ctx.fillRect(centerX + 20, 375, 22, 23);
+    // Back legs (right side)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX + 50, centerY + 25, 15, 50);
+    ctx.fillRect(centerX + 72, centerY + 25, 15, 50);
     
-    // Paws (cute toe beans)
+    // Back paws (toe beans)
     ctx.fillStyle = '#FFB6C1';
-    ctx.fillRect(centerX - 40, 393, 6, 4);
-    ctx.fillRect(centerX - 32, 393, 6, 4);
-    ctx.fillRect(centerX + 22, 393, 6, 4);
-    ctx.fillRect(centerX + 30, 393, 6, 4);
+    ctx.fillRect(centerX + 50, centerY + 72, 6, 5);
+    ctx.fillRect(centerX + 59, centerY + 72, 6, 5);
+    ctx.fillRect(centerX + 72, centerY + 72, 6, 5);
+    ctx.fillRect(centerX + 81, centerY + 72, 6, 5);
     
-    // Tail (curled up on side)
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(centerX + 50, 300, 15, 60);
-    ctx.fillRect(centerX + 50, 290, 30, 15);
-    ctx.fillRect(centerX + 65, 280, 20, 15);
+    // Front legs (left side, slightly forward)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 80, centerY + 25, 15, 50);
+    ctx.fillRect(centerX - 58, centerY + 25, 15, 50);
+    
+    // Front paws (toe beans)
+    ctx.fillStyle = '#FFB6C1';
+    ctx.fillRect(centerX - 80, centerY + 72, 6, 5);
+    ctx.fillRect(centerX - 71, centerY + 72, 6, 5);
+    ctx.fillRect(centerX - 58, centerY + 72, 6, 5);
+    ctx.fillRect(centerX - 49, centerY + 72, 6, 5);
+    
+    // Tail (curling up and over on right side)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX + 75, centerY - 8, 22, 18);
+    ctx.fillRect(centerX + 90, centerY - 22, 18, 18);
+    ctx.fillRect(centerX + 100, centerY - 38, 15, 18);
+    ctx.fillRect(centerX + 108, centerY - 52, 12, 16);
     
     // Tail tip (accent color)
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX + 75, 275, 10, 10);
+    ctx.fillRect(centerX + 112, centerY - 58, 10, 10);
     
-    // Fur pattern stripes
+    // Fur pattern stripes on body
     ctx.fillStyle = colors.secondary;
     ctx.globalAlpha = 0.5;
-    ctx.fillRect(centerX + 50, 310, 15, 4);
-    ctx.fillRect(centerX + 50, 325, 15, 4);
-    ctx.fillRect(centerX + 50, 340, 15, 4);
+    ctx.fillRect(centerX - 45, centerY - 20, 90, 3);
+    ctx.fillRect(centerX - 40, centerY - 5, 80, 3);
+    ctx.fillRect(centerX - 35, centerY + 10, 70, 3);
     ctx.globalAlpha = 1.0;
   };
 
   const drawCatCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
     const centerX = size / 2;
-    const headY = qrY - 90;
+    const centerY = size / 2;
     
     const furColor = colors.primary;
     const noseColor = '#FFB6C1';
     
-    // Cat head base (rounder than dog)
+    // Neck connecting to body (left side)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 35, headY + 18, 70, 52);
+    ctx.fillRect(centerX - 85, centerY - 15, 12, 30);
     
-    // Cheek fluff
-    ctx.fillRect(centerX - 42, headY + 40, 12, 25);
-    ctx.fillRect(centerX + 30, headY + 40, 12, 25);
-    
-    // Pointed ears (standing up)
+    // Cat head (positioned to left of QR, profile view)
     ctx.fillStyle = furColor;
-    // Left ear
-    ctx.fillRect(centerX - 30, headY, 18, 22);
-    ctx.fillRect(centerX - 27, headY - 5, 12, 5);
-    // Right ear
-    ctx.fillRect(centerX + 12, headY, 18, 22);
-    ctx.fillRect(centerX + 15, headY - 5, 12, 5);
+    ctx.fillRect(centerX - 125, centerY - 25, 40, 50);
+    
+    // Cheek fluff (profile)
+    ctx.fillRect(centerX - 128, centerY + 10, 8, 18);
+    
+    // Pointed ears (one visible in profile)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 118, centerY - 42, 16, 20);
+    ctx.fillRect(centerX - 115, centerY - 48, 10, 8);
     
     // Ear inner (pink)
     ctx.fillStyle = noseColor;
-    ctx.fillRect(centerX - 26, headY + 5, 10, 12);
-    ctx.fillRect(centerX + 16, headY + 5, 10, 12);
+    ctx.fillRect(centerX - 114, centerY - 40, 10, 14);
     
     // Cyber headband/tech accessory
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 35, headY + 22, 70, 6);
+    ctx.fillRect(centerX - 123, centerY - 20, 38, 6);
     ctx.shadowBlur = 0;
     
-    // Eyes (cat-like, glowing)
+    // Eye (single visible in profile, cat-like)
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(centerX - 24, headY + 32, 14, 12);
-    ctx.fillRect(centerX + 10, headY + 32, 14, 12);
+    ctx.fillRect(centerX - 113, centerY - 8, 16, 14);
     
-    // Cat pupils (vertical slits, glowing)
+    // Cat pupil (vertical slit, glowing)
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 18, headY + 34, 3, 8);
-    ctx.fillRect(centerX + 16, headY + 34, 3, 8);
+    ctx.fillRect(centerX - 107, centerY - 5, 4, 10);
     ctx.shadowBlur = 0;
     
-    // Nose (small triangle)
+    // Nose (small triangle on snout)
     ctx.fillStyle = noseColor;
     ctx.beginPath();
-    ctx.moveTo(centerX, headY + 52);
-    ctx.lineTo(centerX - 6, headY + 46);
-    ctx.lineTo(centerX + 6, headY + 46);
+    ctx.moveTo(centerX - 128, centerY + 8);
+    ctx.lineTo(centerX - 135, centerY + 3);
+    ctx.lineTo(centerX - 135, centerY + 13);
     ctx.closePath();
     ctx.fill();
     
-    // Whiskers (glowing tech whiskers)
+    // Whiskers (glowing tech whiskers extending forward)
     ctx.strokeStyle = colors.accent;
     ctx.lineWidth = 2;
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 8;
     
-    // Left whiskers
+    // Top whiskers
     ctx.beginPath();
-    ctx.moveTo(centerX - 35, headY + 48);
-    ctx.lineTo(centerX - 55, headY + 45);
+    ctx.moveTo(centerX - 128, centerY + 2);
+    ctx.lineTo(centerX - 155, centerY - 5);
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.moveTo(centerX - 35, headY + 52);
-    ctx.lineTo(centerX - 55, headY + 52);
+    ctx.moveTo(centerX - 130, centerY + 6);
+    ctx.lineTo(centerX - 158, centerY + 4);
+    ctx.stroke();
+    
+    // Bottom whiskers
+    ctx.beginPath();
+    ctx.moveTo(centerX - 130, centerY + 12);
+    ctx.lineTo(centerX - 158, centerY + 12);
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.moveTo(centerX - 35, headY + 56);
-    ctx.lineTo(centerX - 55, headY + 59);
-    ctx.stroke();
-    
-    // Right whiskers
-    ctx.beginPath();
-    ctx.moveTo(centerX + 35, headY + 48);
-    ctx.lineTo(centerX + 55, headY + 45);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX + 35, headY + 52);
-    ctx.lineTo(centerX + 55, headY + 52);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX + 35, headY + 56);
-    ctx.lineTo(centerX + 55, headY + 59);
+    ctx.moveTo(centerX - 128, centerY + 16);
+    ctx.lineTo(centerX - 155, centerY + 20);
     ctx.stroke();
     
     ctx.shadowBlur = 0;
     
-    // Mouth (cat smirk)
-    ctx.strokeStyle = furColor;
+    // Mouth (cat expression)
+    ctx.strokeStyle = noseColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(centerX, headY + 53);
-    ctx.lineTo(centerX - 8, headY + 58);
-    ctx.moveTo(centerX, headY + 53);
-    ctx.lineTo(centerX + 8, headY + 58);
+    ctx.moveTo(centerX - 135, centerY + 13);
+    ctx.lineTo(centerX - 138, centerY + 18);
     ctx.stroke();
     
-    // Tech collar (neck)
+    // Tech collar
     ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 10;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 22, headY + 72, 44, 8);
+    ctx.fillRect(centerX - 90, centerY + 5, 8, 30);
+    
+    // Collar bell/tag
+    ctx.fillRect(centerX - 95, centerY + 15, 6, 10);
     ctx.shadowBlur = 0;
   };
 
