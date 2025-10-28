@@ -258,11 +258,11 @@ router.get('/analytics', auth, async (req, res) => {
   try {
     // Get user's affiliates with fields needed for fraud detection (no personal data like emails)
     const affiliates = await User.find({ referredBy: req.user.userId })
-      .select('username createdAt points tokens isOnline lastSeen lastActivity affiliateCount emailVerified ipAddress country deviceFingerprint')
+      .select('username createdAt points tokens isOnline lastSeen lastActivity affiliateCount emailVerified ipAddress country deviceFingerprint cv')
       .sort({ createdAt: -1 });
 
     // Get current user info with fraud detection fields
-    const currentUser = await User.findById(req.user.userId).select('username createdAt affiliateCount ipAddress country deviceFingerprint lastSeen lastActivity isOnline');
+    const currentUser = await User.findById(req.user.userId).select('username createdAt affiliateCount ipAddress country deviceFingerprint lastSeen lastActivity isOnline cv');
 
     // Calculate analytics
     const now = new Date();

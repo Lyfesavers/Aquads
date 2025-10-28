@@ -113,8 +113,8 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     // Populate the saved booking with service and user details
     const populatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
-      .populate('sellerId', 'username email')
-      .populate('buyerId', 'username email');
+      .populate('sellerId', 'username email cv')
+      .populate('buyerId', 'username email cv');
 
     // Emit socket event for real-time updates
     const { getIO } = require('../socket');
@@ -149,8 +149,8 @@ router.get('/my-bookings', auth, async (req, res) => {
       ]
     })
     .populate('serviceId')
-    .populate('sellerId', 'username email')
-    .populate('buyerId', 'username email')
+    .populate('sellerId', 'username email cv')
+    .populate('buyerId', 'username email cv')
     .sort({ createdAt: -1 });
 
     res.json(bookings);
@@ -171,8 +171,8 @@ router.get('/:bookingId', auth, async (req, res) => {
     
     const booking = await Booking.findById(bookingId)
       .populate('serviceId')
-      .populate('sellerId', 'username email')
-      .populate('buyerId', 'username email');
+      .populate('sellerId', 'username email cv')
+      .populate('buyerId', 'username email cv');
     
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
@@ -352,8 +352,8 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
 
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
-      .populate('sellerId', 'username email')
-      .populate('buyerId', 'username email');
+      .populate('sellerId', 'username email cv')
+      .populate('buyerId', 'username email cv');
 
     // Emit socket event for real-time updates
     const { getIO } = require('../socket');

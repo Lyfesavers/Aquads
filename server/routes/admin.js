@@ -221,7 +221,7 @@ router.get('/top-affiliates', auth, isAdmin, async (req, res) => {
     const topAffiliates = await User.find({
       affiliateCount: { $gte: parseInt(minAffiliates) }
     })
-    .select('username email createdAt affiliateCount points ipAddress country deviceFingerprint')
+    .select('username email createdAt affiliateCount points ipAddress country deviceFingerprint cv')
     .sort({ affiliateCount: -1 })
     .limit(parseInt(limit));
 
@@ -258,7 +258,7 @@ router.get('/search-users', auth, isAdmin, async (req, res) => {
         { email: { $regex: query, $options: 'i' } }
       ]
     })
-    .select('username email createdAt affiliateCount points ipAddress country')
+    .select('username email createdAt affiliateCount points ipAddress country cv')
     .sort({ createdAt: -1 })
     .limit(parseInt(limit));
 

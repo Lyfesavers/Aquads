@@ -127,7 +127,7 @@ router.get('/search', async (req, res) => {
       { score: { $meta: 'textScore' } }
     )
     .sort({ score: { $meta: 'textScore' } })
-    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     res.json(services);
   } catch (error) {
