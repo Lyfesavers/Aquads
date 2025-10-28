@@ -454,73 +454,55 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillRect(centerX + 25, headY + 40, 6, 2);
   };
 
-  // Dog character body - HIGH QUALITY PIXEL ART
+  // Dog character - CLEAN PROFESSIONAL PIXEL ART
   const drawDogCyberquadsBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     const centerY = size / 2;
     
     const furColor = colors.primary;
-    const bellyColor = '#FFF4D6'; // Very light cream
-    const darkOutline = '#000000';
+    const bellyColor = '#FFF8DC'; // Cream
     
-    // Main body - sitting position
+    // Sitting body - left side of QR
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 85, centerY + 5, 45, 55);
+    ctx.fillRect(centerX - 115, centerY + 10, 35, 50);
     
-    // Belly highlight (very prominent)
+    // Belly
     ctx.fillStyle = bellyColor;
-    ctx.fillRect(centerX - 75, centerY + 15, 25, 40);
+    ctx.fillRect(centerX - 108, centerY + 18, 21, 35);
     
-    // Body shading for depth
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 82, centerY + 8, 6, 48);
-    ctx.fillRect(centerX - 42, centerY + 8, 6, 48);
-    
-    // Front legs - well defined
+    // Front paws
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 75, centerY + 55, 12, 28);
-    ctx.fillRect(centerX - 58, centerY + 55, 12, 28);
+    ctx.fillRect(centerX - 108, centerY + 53, 10, 22);
+    ctx.fillRect(centerX - 93, centerY + 53, 10, 22);
     
-    // Leg shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 73, centerY + 58, 3, 22);
-    ctx.fillRect(centerX - 56, centerY + 58, 3, 22);
+    // Paw pads
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(centerX - 108, centerY + 73, 10, 2);
+    ctx.fillRect(centerX - 93, centerY + 73, 10, 2);
     
-    // Paws
-    ctx.fillStyle = darkOutline;
-    ctx.fillRect(centerX - 75, centerY + 80, 12, 3);
-    ctx.fillRect(centerX - 58, centerY + 80, 12, 3);
-    
-    // Back haunch
+    // Back leg
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 83, centerY + 60, 35, 18);
+    ctx.fillRect(centerX - 113, centerY + 60, 28, 14);
     
-    // Tail - flowing curve
+    // Tail (right side, curved up)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX + 65, centerY + 35, 14, 16);
-    ctx.fillRect(centerX + 74, centerY + 20, 12, 18);
-    ctx.fillRect(centerX + 81, centerY + 4, 10, 18);
-    ctx.fillRect(centerX + 87, centerY - 12, 8, 18);
-    ctx.fillRect(centerX + 91, centerY - 28, 6, 18);
+    ctx.fillRect(centerX + 80, centerY + 35, 12, 15);
+    ctx.fillRect(centerX + 88, centerY + 20, 10, 17);
+    ctx.fillRect(centerX + 94, centerY + 4, 8, 18);
+    ctx.fillRect(centerX + 98, centerY - 12, 7, 18);
     
-    // Tail shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX + 67, centerY + 38, 4, 10);
+    // Tail tip (glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX + 100, centerY - 18, 5, 8);
+    ctx.shadowBlur = 0;
     
-    // Tail tip highlight
+    // Collar
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 8;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX + 92, centerY - 34, 5, 8);
-    ctx.shadowBlur = 0;
-    
-    // Cyber collar with detail
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 82, centerY + 8, 42, 5);
-    // Collar buckle
-    ctx.fillRect(centerX - 65, centerY + 10, 8, 3);
+    ctx.fillRect(centerX - 113, centerY + 13, 33, 4);
     ctx.shadowBlur = 0;
   };
 
@@ -529,142 +511,105 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     const centerY = size / 2;
     
     const furColor = colors.primary;
-    const bellyColor = '#FFF4D6';
-    const noseColor = '#1A1A1A';
-    const darkOutline = '#000000';
+    const bellyColor = '#FFF8DC';
     
-    // Head shape - well proportioned
+    // Head
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 100, centerY - 28, 32, 36);
+    ctx.fillRect(centerX - 125, centerY - 22, 28, 35);
     
-    // Head shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 98, centerY - 25, 4, 30);
-    
-    // EARS - triangular, Shiba style
+    // Pointed ears (Shiba style)
     ctx.fillStyle = furColor;
-    // Left ear
-    ctx.fillRect(centerX - 100, centerY - 45, 12, 20);
-    ctx.fillRect(centerX - 98, centerY - 50, 10, 7);
-    ctx.fillRect(centerX - 96, centerY - 54, 6, 5);
-    // Right ear  
-    ctx.fillRect(centerX - 78, centerY - 45, 12, 20);
-    ctx.fillRect(centerX - 76, centerY - 50, 10, 7);
-    ctx.fillRect(centerX - 74, centerY - 54, 6, 5);
+    ctx.fillRect(centerX - 125, centerY - 38, 10, 18);
+    ctx.fillRect(centerX - 122, centerY - 42, 7, 6);
+    ctx.fillRect(centerX - 107, centerY - 38, 10, 18);
+    ctx.fillRect(centerX - 104, centerY - 42, 7, 6);
     
-    // Ear inner detail
+    // Ear inner
     ctx.fillStyle = bellyColor;
-    ctx.fillRect(centerX - 97, centerY - 46, 8, 16);
-    ctx.fillRect(centerX - 75, centerY - 46, 8, 16);
+    ctx.fillRect(centerX - 123, centerY - 36, 7, 14);
+    ctx.fillRect(centerX - 105, centerY - 36, 7, 14);
     
-    // Snout/muzzle - clean shape
+    // Snout
     ctx.fillStyle = bellyColor;
-    ctx.fillRect(centerX - 105, centerY - 15, 20, 22);
+    ctx.fillRect(centerX - 130, centerY - 8, 17, 18);
     
-    // Snout shading
-    ctx.fillStyle = '#FFE8B0';
-    ctx.fillRect(centerX - 103, centerY - 12, 4, 16);
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(centerX - 121, centerY - 15, 5, 4);
+    ctx.fillRect(centerX - 108, centerY - 15, 5, 4);
     
-    // Eyes - expressive
-    ctx.fillStyle = darkOutline;
-    ctx.fillRect(centerX - 96, centerY - 22, 6, 5);
-    ctx.fillRect(centerX - 80, centerY - 22, 6, 5);
-    
-    // Eye highlights
+    // Eye shine
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(centerX - 95, centerY - 21, 2, 2);
-    ctx.fillRect(centerX - 79, centerY - 21, 2, 2);
+    ctx.fillRect(centerX - 120, centerY - 14, 2, 2);
+    ctx.fillRect(centerX - 107, centerY - 14, 2, 2);
     
-    // Nose - defined
-    ctx.fillStyle = noseColor;
-    ctx.fillRect(centerX - 103, centerY - 6, 7, 5);
+    // Nose
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(centerX - 128, centerY - 2, 6, 4);
     
-    // Nose highlight
-    ctx.fillStyle = '#4A4A4A';
-    ctx.fillRect(centerX - 102, centerY - 5, 2, 2);
-    
-    // Mouth - happy expression
-    ctx.fillStyle = noseColor;
-    ctx.fillRect(centerX - 101, centerY + 1, 8, 2);
-    ctx.fillRect(centerX - 99, centerY + 3, 2, 2);
-    ctx.fillRect(centerX - 95, centerY + 3, 2, 2);
+    // Mouth
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(centerX - 127, centerY + 3, 7, 2);
     
     // Tongue
     ctx.fillStyle = '#FF6B9D';
-    ctx.fillRect(centerX - 98, centerY + 5, 5, 4);
+    ctx.fillRect(centerX - 125, centerY + 6, 4, 3);
   };
 
-  // Cat character body - HIGH QUALITY PIXEL ART
+  // Cat character - CLEAN PROFESSIONAL PIXEL ART
   const drawCatCyberquadsBody = (ctx, size, colors, pixelSize) => {
     const centerX = size / 2;
     const centerY = size / 2;
     
     const furColor = colors.primary;
-    const bellyColor = '#FFF4D6'; // Very light cream
-    const darkOutline = '#000000';
+    const bellyColor = '#FFF8DC'; // Cream
     
-    // Main body - sleek sitting position
+    // Sitting body - left side of QR (sleeker than dog)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 83, centerY + 7, 42, 53);
+    ctx.fillRect(centerX - 112, centerY + 12, 32, 48);
     
-    // Belly highlight (prominent)
+    // Belly
     ctx.fillStyle = bellyColor;
-    ctx.fillRect(centerX - 73, centerY + 17, 22, 38);
+    ctx.fillRect(centerX - 105, centerY + 20, 18, 33);
     
-    // Body shading for depth
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 80, centerY + 10, 5, 46);
-    ctx.fillRect(centerX - 43, centerY + 10, 5, 46);
-    
-    // Front legs - sleek and thin
+    // Front paws (thinner than dog)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 73, centerY + 55, 10, 28);
-    ctx.fillRect(centerX - 58, centerY + 55, 10, 28);
+    ctx.fillRect(centerX - 105, centerY + 53, 9, 22);
+    ctx.fillRect(centerX - 92, centerY + 53, 9, 22);
     
-    // Leg shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 71, centerY + 58, 3, 22);
-    ctx.fillRect(centerX - 56, centerY + 58, 3, 22);
-    
-    // Paw toe beans (pink)
+    // Toe beans (pink)
     ctx.fillStyle = '#FFB6C1';
-    ctx.fillRect(centerX - 72, centerY + 80, 3, 2);
-    ctx.fillRect(centerX - 67, centerY + 80, 3, 2);
-    ctx.fillRect(centerX - 57, centerY + 80, 3, 2);
-    ctx.fillRect(centerX - 52, centerY + 80, 3, 2);
+    ctx.fillRect(centerX - 104, centerY + 73, 3, 2);
+    ctx.fillRect(centerX - 99, centerY + 73, 3, 2);
+    ctx.fillRect(centerX - 91, centerY + 73, 3, 2);
+    ctx.fillRect(centerX - 86, centerY + 73, 3, 2);
     
-    // Back haunch
+    // Back leg
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 81, centerY + 60, 33, 18);
+    ctx.fillRect(centerX - 110, centerY + 60, 26, 14);
     
-    // Tail - elegant flowing curve
+    // Tail (right side, elegant high curve)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX + 63, centerY + 38, 12, 15);
-    ctx.fillRect(centerX + 71, centerY + 22, 10, 18);
-    ctx.fillRect(centerX + 77, centerY + 5, 9, 19);
-    ctx.fillRect(centerX + 82, centerY - 12, 8, 19);
-    ctx.fillRect(centerX + 86, centerY - 29, 7, 19);
-    ctx.fillRect(centerX + 89, centerY - 46, 6, 19);
+    ctx.fillRect(centerX + 78, centerY + 38, 10, 14);
+    ctx.fillRect(centerX + 85, centerY + 22, 9, 18);
+    ctx.fillRect(centerX + 91, centerY + 4, 8, 20);
+    ctx.fillRect(centerX + 96, centerY - 14, 7, 20);
+    ctx.fillRect(centerX + 99, centerY - 32, 6, 20);
     
-    // Tail shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX + 65, centerY + 40, 3, 10);
-    ctx.fillRect(centerX + 73, centerY + 25, 3, 12);
+    // Tail tip (glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX + 100, centerY - 38, 5, 8);
+    ctx.shadowBlur = 0;
     
-    // Tail tip highlight
+    // Collar with bell
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 8;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX + 90, centerY - 50, 4, 6);
-    ctx.shadowBlur = 0;
-    
-    // Cyber collar with detail
-    ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 80, centerY + 10, 38, 5);
-    // Collar bell
-    ctx.fillRect(centerX - 63, centerY + 12, 6, 6);
+    ctx.fillRect(centerX - 110, centerY + 15, 30, 4);
+    // Bell
+    ctx.fillRect(centerX - 97, centerY + 17, 5, 5);
     ctx.shadowBlur = 0;
   };
 
@@ -673,104 +618,82 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     const centerY = size / 2;
     
     const furColor = colors.primary;
-    const bellyColor = '#FFF4D6';
+    const bellyColor = '#FFF8DC';
     const noseColor = '#FFB6C1';
-    const darkOutline = '#000000';
     
-    // Head shape - rounder than dog
+    // Head (rounder than dog)
     ctx.fillStyle = furColor;
-    ctx.fillRect(centerX - 98, centerY - 26, 30, 34);
+    ctx.fillRect(centerX - 122, centerY - 20, 26, 33);
     
-    // Head shading
-    ctx.fillStyle = colors.secondary;
-    ctx.fillRect(centerX - 96, centerY - 23, 4, 28);
-    
-    // EARS - tall triangular, very cat-like
+    // Tall pointed ears (cat style)
     ctx.fillStyle = furColor;
-    // Left ear (tall triangle)
-    ctx.fillRect(centerX - 98, centerY - 48, 10, 24);
-    ctx.fillRect(centerX - 96, centerY - 55, 8, 9);
-    ctx.fillRect(centerX - 94, centerY - 60, 6, 7);
-    ctx.fillRect(centerX - 92, centerY - 64, 4, 5);
-    // Right ear (tall triangle)
-    ctx.fillRect(centerX - 78, centerY - 48, 10, 24);
-    ctx.fillRect(centerX - 76, centerY - 55, 8, 9);
-    ctx.fillRect(centerX - 74, centerY - 60, 6, 7);
-    ctx.fillRect(centerX - 72, centerY - 64, 4, 5);
+    ctx.fillRect(centerX - 122, centerY - 40, 9, 22);
+    ctx.fillRect(centerX - 120, centerY - 46, 7, 8);
+    ctx.fillRect(centerX - 118, centerY - 50, 5, 5);
+    ctx.fillRect(centerX - 105, centerY - 40, 9, 22);
+    ctx.fillRect(centerX - 103, centerY - 46, 7, 8);
+    ctx.fillRect(centerX - 101, centerY - 50, 5, 5);
     
-    // Ear inner detail (pink)
+    // Ear inner (pink)
     ctx.fillStyle = noseColor;
-    ctx.fillRect(centerX - 95, centerY - 50, 7, 18);
-    ctx.fillRect(centerX - 75, centerY - 50, 7, 18);
+    ctx.fillRect(centerX - 120, centerY - 38, 6, 16);
+    ctx.fillRect(centerX - 103, centerY - 38, 6, 16);
     
-    // Face/snout - clean shape
+    // Snout/face
     ctx.fillStyle = bellyColor;
-    ctx.fillRect(centerX - 103, centerY - 13, 18, 20);
+    ctx.fillRect(centerX - 127, centerY - 6, 15, 16);
     
     // Cheek fluff
-    ctx.fillRect(centerX - 106, centerY - 8, 5, 12);
+    ctx.fillRect(centerX - 129, centerY - 2, 5, 10);
     
-    // Face shading
-    ctx.fillStyle = '#FFE8B0';
-    ctx.fillRect(centerX - 101, centerY - 10, 3, 14);
+    // Eyes (almond shaped)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(centerX - 118, centerY - 13, 6, 4);
+    ctx.fillRect(centerX - 106, centerY - 13, 6, 4);
     
-    // Eyes - almond shaped, expressive
-    ctx.fillStyle = darkOutline;
-    ctx.fillRect(centerX - 94, centerY - 20, 7, 5);
-    ctx.fillRect(centerX - 79, centerY - 20, 7, 5);
-    
-    // Cat pupils - vertical slits with glow
+    // Vertical slit pupils (glowing)
     ctx.shadowColor = colors.glow;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 5;
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(centerX - 91, centerY - 19, 2, 3);
-    ctx.fillRect(centerX - 76, centerY - 19, 2, 3);
+    ctx.fillRect(centerX - 116, centerY - 12, 2, 3);
+    ctx.fillRect(centerX - 104, centerY - 12, 2, 3);
     ctx.shadowBlur = 0;
     
-    // Eye highlights
+    // Eye shine
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(centerX - 93, centerY - 19, 2, 2);
-    ctx.fillRect(centerX - 78, centerY - 19, 2, 2);
+    ctx.fillRect(centerX - 117, centerY - 12, 1, 1);
+    ctx.fillRect(centerX - 105, centerY - 12, 1, 1);
     
     // Small triangle nose
     ctx.fillStyle = noseColor;
     ctx.beginPath();
-    ctx.moveTo(centerX - 101, centerY - 4);
-    ctx.lineTo(centerX - 104, centerY - 8);
-    ctx.lineTo(centerX - 104, centerY);
+    ctx.moveTo(centerX - 125, centerY - 1);
+    ctx.lineTo(centerX - 128, centerY - 4);
+    ctx.lineTo(centerX - 128, centerY + 2);
     ctx.closePath();
     ctx.fill();
     
-    // Nose highlight
-    ctx.fillStyle = '#FFD4E5';
-    ctx.fillRect(centerX - 103, centerY - 6, 2, 2);
-    
-    // Whiskers - elegant lines
+    // Whiskers
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = 0.6;
     
-    // Left whiskers
     ctx.beginPath();
-    ctx.moveTo(centerX - 104, centerY - 6);
-    ctx.lineTo(centerX - 122, centerY - 10);
+    ctx.moveTo(centerX - 128, centerY - 2);
+    ctx.lineTo(centerX - 143, centerY - 6);
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.moveTo(centerX - 105, centerY - 3);
-    ctx.lineTo(centerX - 125, centerY - 3);
+    ctx.moveTo(centerX - 129, centerY + 1);
+    ctx.lineTo(centerX - 146, centerY + 1);
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.moveTo(centerX - 104, centerY);
-    ctx.lineTo(centerX - 122, centerY + 4);
+    ctx.moveTo(centerX - 128, centerY + 4);
+    ctx.lineTo(centerX - 143, centerY + 8);
     ctx.stroke();
     
     ctx.globalAlpha = 1.0;
-    
-    // Mouth - cat smirk
-    ctx.fillStyle = darkOutline;
-    ctx.fillRect(centerX - 102, centerY + 3, 6, 1);
   };
 
   // Draw accessories based on character and type
