@@ -61,6 +61,154 @@ setInterval(async () => {
   }
 }, 2 * 60 * 1000); // Run every 2 minutes
 
+// Periodic task for processing membership renewals
+setInterval(async () => {
+  try {
+    const now = new Date();
+    
+    // Find users with active memberships that need renewal
+    const usersNeedingRenewal = await User.find({
+      'membership.isActive': true,
+      'membership.autoRenew': true,
+      'membership.nextBillingDate': { $lte: now }
+    });
+    
+    console.log(`[Membership Renewal] Checking ${usersNeedingRenewal.length} memberships for renewal...`);
+    
+    for (const user of usersNeedingRenewal) {
+      try {
+        const monthlyCost = user.membership.monthlyCost || 1000;
+        
+        // Check if user has enough points
+        if (user.points >= monthlyCost) {
+          // Process successful renewal
+          user.points -= monthlyCost;
+          
+          // Set next billing date to one month from now
+          const nextBillingDate = new Date(user.membership.nextBillingDate);
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          user.membership.nextBillingDate = nextBillingDate;
+          user.membership.gracePeriodEnds = null; // Clear any grace period
+          
+          // Add to points history
+          user.pointsHistory.push({
+            amount: -monthlyCost,
+            reason: 'Monthly membership auto-renewal',
+            createdAt: now
+          });
+          
+          await user.save();
+          
+          console.log(`[Membership Renewal] ✓ Successfully renewed membership for user ${user.username} (${user._id}). Next billing: ${nextBillingDate.toISOString()}`);
+          
+          // Emit socket event if socket.io is available
+          if (io) {
+            io.emit('membershipRenewed', {
+              userId: user._id,
+              username: user.username,
+              nextBillingDate: nextBillingDate,
+              pointsRemaining: user.points
+            });
+          }
+        } else {
+          // Insufficient points - enter grace period
+          if (!user.membership.gracePeriodEnds) {
+            // Start 7-day grace period
+            const gracePeriodEnds = new Date(now);
+            gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 7);
+            user.membership.gracePeriodEnds = gracePeriodEnds;
+            
+            await user.save();
+            
+            console.log(`[Membership Renewal] ⚠ User ${user.username} (${user._id}) entered grace period. Insufficient points: ${user.points}/${monthlyCost}. Grace period ends: ${gracePeriodEnds.toISOString()}`);
+            
+            // Emit socket event
+            if (io) {
+              io.emit('membershipGracePeriod', {
+                userId: user._id,
+                username: user.username,
+                gracePeriodEnds: gracePeriodEnds,
+                pointsNeeded: monthlyCost,
+                pointsCurrent: user.points
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[Membership Renewal] Error processing renewal for user ${user._id}:`, error);
+      }
+    }
+    
+    // Handle expired grace periods
+    const usersWithExpiredGrace = await User.find({
+      'membership.isActive': true,
+      'membership.gracePeriodEnds': { $lte: now }
+    });
+    
+    if (usersWithExpiredGrace.length > 0) {
+      console.log(`[Membership Renewal] Processing ${usersWithExpiredGrace.length} expired grace periods...`);
+    }
+    
+    for (const user of usersWithExpiredGrace) {
+      try {
+        const monthlyCost = user.membership.monthlyCost || 1000;
+        
+        // Check one more time if user has enough points
+        if (user.points >= monthlyCost) {
+          // Process late renewal
+          user.points -= monthlyCost;
+          
+          const nextBillingDate = new Date(user.membership.nextBillingDate);
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          user.membership.nextBillingDate = nextBillingDate;
+          user.membership.gracePeriodEnds = null;
+          
+          user.pointsHistory.push({
+            amount: -monthlyCost,
+            reason: 'Monthly membership auto-renewal (grace period)',
+            createdAt: now
+          });
+          
+          await user.save();
+          
+          console.log(`[Membership Renewal] ✓ Late renewal successful for user ${user.username} (${user._id})`);
+          
+          if (io) {
+            io.emit('membershipRenewed', {
+              userId: user._id,
+              username: user.username,
+              nextBillingDate: nextBillingDate,
+              pointsRemaining: user.points
+            });
+          }
+        } else {
+          // Deactivate membership
+          user.membership.isActive = false;
+          user.membership.autoRenew = false;
+          user.membership.gracePeriodEnds = null;
+          
+          await user.save();
+          
+          console.log(`[Membership Renewal] ✗ Membership deactivated for user ${user.username} (${user._id}) - grace period expired with insufficient points`);
+          
+          if (io) {
+            io.emit('membershipExpired', {
+              userId: user._id,
+              username: user.username,
+              reason: 'Grace period expired - insufficient points'
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`[Membership Renewal] Error processing grace period expiry for user ${user._id}:`, error);
+      }
+    }
+    
+  } catch (error) {
+    console.error('[Membership Renewal] Error in renewal task:', error);
+  }
+}, 60 * 60 * 1000); // Run every hour
+
 // Middleware
 const corsOptions = {
   origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],

@@ -721,4 +721,129 @@ router.get('/suspended-users', auth, isAdmin, async (req, res) => {
   }
 });
 
+// Manual trigger for membership renewals
+router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
+  try {
+    const now = new Date();
+    const results = {
+      processed: 0,
+      renewed: 0,
+      gracePeriod: 0,
+      expired: 0,
+      errors: []
+    };
+    
+    // Find users with active memberships that need renewal
+    const usersNeedingRenewal = await User.find({
+      'membership.isActive': true,
+      'membership.autoRenew': true,
+      'membership.nextBillingDate': { $lte: now }
+    });
+    
+    console.log(`[Manual Renewal] Processing ${usersNeedingRenewal.length} memberships...`);
+    
+    for (const user of usersNeedingRenewal) {
+      try {
+        results.processed++;
+        const monthlyCost = user.membership.monthlyCost || 1000;
+        
+        // Check if user has enough points
+        if (user.points >= monthlyCost) {
+          // Process successful renewal
+          user.points -= monthlyCost;
+          
+          // Set next billing date to one month from now
+          const nextBillingDate = new Date(user.membership.nextBillingDate);
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          user.membership.nextBillingDate = nextBillingDate;
+          user.membership.gracePeriodEnds = null;
+          
+          // Add to points history
+          user.pointsHistory.push({
+            amount: -monthlyCost,
+            reason: 'Monthly membership auto-renewal (manual trigger)',
+            createdAt: now
+          });
+          
+          await user.save();
+          results.renewed++;
+          
+          console.log(`[Manual Renewal] ✓ Renewed: ${user.username} (${user._id})`);
+        } else {
+          // Insufficient points - enter grace period
+          if (!user.membership.gracePeriodEnds) {
+            const gracePeriodEnds = new Date(now);
+            gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 7);
+            user.membership.gracePeriodEnds = gracePeriodEnds;
+            
+            await user.save();
+            results.gracePeriod++;
+            
+            console.log(`[Manual Renewal] ⚠ Grace period: ${user.username} (${user._id})`);
+          }
+        }
+      } catch (error) {
+        console.error(`[Manual Renewal] Error for user ${user._id}:`, error);
+        results.errors.push({ userId: user._id, username: user.username, error: error.message });
+      }
+    }
+    
+    // Handle expired grace periods
+    const usersWithExpiredGrace = await User.find({
+      'membership.isActive': true,
+      'membership.gracePeriodEnds': { $lte: now }
+    });
+    
+    for (const user of usersWithExpiredGrace) {
+      try {
+        results.processed++;
+        const monthlyCost = user.membership.monthlyCost || 1000;
+        
+        if (user.points >= monthlyCost) {
+          // Late renewal
+          user.points -= monthlyCost;
+          
+          const nextBillingDate = new Date(user.membership.nextBillingDate);
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          user.membership.nextBillingDate = nextBillingDate;
+          user.membership.gracePeriodEnds = null;
+          
+          user.pointsHistory.push({
+            amount: -monthlyCost,
+            reason: 'Monthly membership auto-renewal (grace period - manual trigger)',
+            createdAt: now
+          });
+          
+          await user.save();
+          results.renewed++;
+          
+          console.log(`[Manual Renewal] ✓ Late renewal: ${user.username} (${user._id})`);
+        } else {
+          // Deactivate membership
+          user.membership.isActive = false;
+          user.membership.autoRenew = false;
+          user.membership.gracePeriodEnds = null;
+          
+          await user.save();
+          results.expired++;
+          
+          console.log(`[Manual Renewal] ✗ Expired: ${user.username} (${user._id})`);
+        }
+      } catch (error) {
+        console.error(`[Manual Renewal] Error for user ${user._id}:`, error);
+        results.errors.push({ userId: user._id, username: user.username, error: error.message });
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Membership renewal processing complete',
+      results
+    });
+  } catch (error) {
+    console.error('Error processing membership renewals:', error);
+    res.status(500).json({ error: 'Failed to process membership renewals', details: error.message });
+  }
+});
+
 module.exports = router; 
