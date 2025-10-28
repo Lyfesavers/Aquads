@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
-import { FaTimes, FaDownload, FaMale, FaFemale } from 'react-icons/fa';
+import { FaTimes, FaDownload, FaMale, FaFemale, FaDog, FaCat } from 'react-icons/fa';
 
 const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
   const [selectedGender, setSelectedGender] = useState('male');
@@ -100,8 +100,12 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     // Draw pixel art character body FIRST (behind QR)
     if (gender === 'male') {
       drawMaleCyberquadsBody(ctx, size, colors, pixelSize);
-    } else {
+    } else if (gender === 'female') {
       drawFemaleCyberquadsBody(ctx, size, colors, pixelSize);
+    } else if (gender === 'dog') {
+      drawDogCyberquadsBody(ctx, size, colors, pixelSize);
+    } else if (gender === 'cat') {
+      drawCatCyberquadsBody(ctx, size, colors, pixelSize);
     }
     
     // Calculate QR code position (center, but smaller to leave room for character)
@@ -118,8 +122,12 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     // Draw pixel art character HEAD on top
     if (gender === 'male') {
       drawMaleCyberquadsHead(ctx, size, colors, pixelSize, qrY);
-    } else {
+    } else if (gender === 'female') {
       drawFemaleCyberquadsHead(ctx, size, colors, pixelSize, qrY);
+    } else if (gender === 'dog') {
+      drawDogCyberquadsHead(ctx, size, colors, pixelSize, qrY);
+    } else if (gender === 'cat') {
+      drawCatCyberquadsHead(ctx, size, colors, pixelSize, qrY);
     }
     
     // Draw selected accessory (after character is fully drawn)
@@ -444,6 +452,310 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
     ctx.fillStyle = colors.accent;
     ctx.fillRect(centerX + 25, headY + 42, 2, 12);
     ctx.fillRect(centerX + 25, headY + 40, 6, 2);
+  };
+
+  // Dog character body (cyberquads dog)
+  const drawDogCyberquadsBody = (ctx, size, colors, pixelSize) => {
+    const centerX = size / 2;
+    
+    // Dog body (behind QR) - furry cyber jacket
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 55, 270, 110, 110);
+    
+    // Cyber collar/harness
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 50, 265, 100, 10);
+    ctx.shadowBlur = 0;
+    
+    // Collar badge/tag (glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 10, 270, 20, 20);
+    ctx.shadowBlur = 0;
+    
+    // Front legs (paws)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 45, 380, 25, 18);
+    ctx.fillRect(centerX + 20, 380, 25, 18);
+    
+    // Paws (darker)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 45, 395, 25, 5);
+    ctx.fillRect(centerX + 20, 395, 25, 5);
+    
+    // Tail (visible on side, wagging)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX + 55, 285, 35, 15);
+    ctx.fillRect(centerX + 70, 270, 25, 15);
+    
+    // Tail tip (lighter)
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX + 80, 265, 15, 10);
+    
+    // Fur texture details
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 40, 285, 80, 3);
+    ctx.fillRect(centerX - 35, 310, 70, 3);
+    ctx.fillRect(centerX - 30, 335, 60, 3);
+  };
+
+  const drawDogCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
+    const centerX = size / 2;
+    const headY = qrY - 90;
+    
+    const furColor = colors.primary;
+    const noseColor = '#2C1810';
+    
+    // Dog head base (rounded)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 38, headY + 15, 76, 55);
+    
+    // Snout/muzzle (extending forward)
+    ctx.fillStyle = '#D4A574';
+    ctx.fillRect(centerX - 30, headY + 45, 60, 30);
+    
+    // Snout bridge
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 25, headY + 35, 50, 15);
+    
+    // Floppy ears (hanging down)
+    ctx.fillStyle = furColor;
+    // Left ear
+    ctx.fillRect(centerX - 48, headY + 20, 18, 50);
+    // Right ear
+    ctx.fillRect(centerX + 30, headY + 20, 18, 50);
+    
+    // Ear inner (lighter)
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 45, headY + 25, 12, 40);
+    ctx.fillRect(centerX + 33, headY + 25, 12, 40);
+    
+    // Cyberquads visor/goggles (tech accessory)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 35, headY + 22, 28, 16);
+    ctx.fillRect(centerX + 7, headY + 22, 28, 16);
+    ctx.shadowBlur = 0;
+    
+    // Goggle frame
+    ctx.strokeStyle = colors.secondary;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(centerX - 35, headY + 22, 28, 16);
+    ctx.strokeRect(centerX + 7, headY + 22, 28, 16);
+    
+    // Eyes through goggles (glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(centerX - 28, headY + 26, 14, 8);
+    ctx.fillRect(centerX + 14, headY + 26, 14, 8);
+    
+    // Pupils
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 23, headY + 28, 6, 5);
+    ctx.fillRect(centerX + 19, headY + 28, 6, 5);
+    ctx.shadowBlur = 0;
+    
+    // Nose (big doggy nose)
+    ctx.fillStyle = noseColor;
+    ctx.fillRect(centerX - 12, headY + 56, 24, 14);
+    
+    // Nose highlight
+    ctx.fillStyle = '#4A3A2A';
+    ctx.fillRect(centerX - 8, headY + 58, 8, 6);
+    
+    // Mouth/smile
+    ctx.strokeStyle = noseColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(centerX, headY + 70);
+    ctx.lineTo(centerX - 15, headY + 73);
+    ctx.moveTo(centerX, headY + 70);
+    ctx.lineTo(centerX + 15, headY + 73);
+    ctx.stroke();
+    
+    // Tongue (cute detail)
+    ctx.fillStyle = '#E94560';
+    ctx.fillRect(centerX - 8, headY + 73, 16, 8);
+    
+    // Tech collar (neck)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 25, headY + 75, 50, 10);
+    ctx.shadowBlur = 0;
+  };
+
+  // Cat character body (cyberquads cat)
+  const drawCatCyberquadsBody = (ctx, size, colors, pixelSize) => {
+    const centerX = size / 2;
+    
+    // Cat body (behind QR) - sleek cyber suit
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 50, 275, 100, 105);
+    
+    // Chest/belly (lighter)
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(centerX - 35, 285, 70, 80);
+    
+    // Cyber harness/vest
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 45, 270, 90, 8);
+    ctx.fillRect(centerX - 40, 278, 15, 70);
+    ctx.fillRect(centerX + 25, 278, 15, 70);
+    ctx.shadowBlur = 0;
+    
+    // Front legs (sitting position)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX - 42, 375, 22, 23);
+    ctx.fillRect(centerX + 20, 375, 22, 23);
+    
+    // Paws (cute toe beans)
+    ctx.fillStyle = '#FFB6C1';
+    ctx.fillRect(centerX - 40, 393, 6, 4);
+    ctx.fillRect(centerX - 32, 393, 6, 4);
+    ctx.fillRect(centerX + 22, 393, 6, 4);
+    ctx.fillRect(centerX + 30, 393, 6, 4);
+    
+    // Tail (curled up on side)
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(centerX + 50, 300, 15, 60);
+    ctx.fillRect(centerX + 50, 290, 30, 15);
+    ctx.fillRect(centerX + 65, 280, 20, 15);
+    
+    // Tail tip (accent color)
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX + 75, 275, 10, 10);
+    
+    // Fur pattern stripes
+    ctx.fillStyle = colors.secondary;
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(centerX + 50, 310, 15, 4);
+    ctx.fillRect(centerX + 50, 325, 15, 4);
+    ctx.fillRect(centerX + 50, 340, 15, 4);
+    ctx.globalAlpha = 1.0;
+  };
+
+  const drawCatCyberquadsHead = (ctx, size, colors, pixelSize, qrY) => {
+    const centerX = size / 2;
+    const headY = qrY - 90;
+    
+    const furColor = colors.primary;
+    const noseColor = '#FFB6C1';
+    
+    // Cat head base (rounder than dog)
+    ctx.fillStyle = furColor;
+    ctx.fillRect(centerX - 35, headY + 18, 70, 52);
+    
+    // Cheek fluff
+    ctx.fillRect(centerX - 42, headY + 40, 12, 25);
+    ctx.fillRect(centerX + 30, headY + 40, 12, 25);
+    
+    // Pointed ears (standing up)
+    ctx.fillStyle = furColor;
+    // Left ear
+    ctx.fillRect(centerX - 30, headY, 18, 22);
+    ctx.fillRect(centerX - 27, headY - 5, 12, 5);
+    // Right ear
+    ctx.fillRect(centerX + 12, headY, 18, 22);
+    ctx.fillRect(centerX + 15, headY - 5, 12, 5);
+    
+    // Ear inner (pink)
+    ctx.fillStyle = noseColor;
+    ctx.fillRect(centerX - 26, headY + 5, 10, 12);
+    ctx.fillRect(centerX + 16, headY + 5, 10, 12);
+    
+    // Cyber headband/tech accessory
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 35, headY + 22, 70, 6);
+    ctx.shadowBlur = 0;
+    
+    // Eyes (cat-like, glowing)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(centerX - 24, headY + 32, 14, 12);
+    ctx.fillRect(centerX + 10, headY + 32, 14, 12);
+    
+    // Cat pupils (vertical slits, glowing)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 18, headY + 34, 3, 8);
+    ctx.fillRect(centerX + 16, headY + 34, 3, 8);
+    ctx.shadowBlur = 0;
+    
+    // Nose (small triangle)
+    ctx.fillStyle = noseColor;
+    ctx.beginPath();
+    ctx.moveTo(centerX, headY + 52);
+    ctx.lineTo(centerX - 6, headY + 46);
+    ctx.lineTo(centerX + 6, headY + 46);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Whiskers (glowing tech whiskers)
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    
+    // Left whiskers
+    ctx.beginPath();
+    ctx.moveTo(centerX - 35, headY + 48);
+    ctx.lineTo(centerX - 55, headY + 45);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX - 35, headY + 52);
+    ctx.lineTo(centerX - 55, headY + 52);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX - 35, headY + 56);
+    ctx.lineTo(centerX - 55, headY + 59);
+    ctx.stroke();
+    
+    // Right whiskers
+    ctx.beginPath();
+    ctx.moveTo(centerX + 35, headY + 48);
+    ctx.lineTo(centerX + 55, headY + 45);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX + 35, headY + 52);
+    ctx.lineTo(centerX + 55, headY + 52);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX + 35, headY + 56);
+    ctx.lineTo(centerX + 55, headY + 59);
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0;
+    
+    // Mouth (cat smirk)
+    ctx.strokeStyle = furColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(centerX, headY + 53);
+    ctx.lineTo(centerX - 8, headY + 58);
+    ctx.moveTo(centerX, headY + 53);
+    ctx.lineTo(centerX + 8, headY + 58);
+    ctx.stroke();
+    
+    // Tech collar (neck)
+    ctx.shadowColor = colors.glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(centerX - 22, headY + 72, 44, 8);
+    ctx.shadowBlur = 0;
   };
 
   // Draw accessories based on character and type
@@ -956,7 +1268,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Customization Panel */}
               <div className="space-y-6">
-                {/* Gender Selection */}
+                {/* Character Selection */}
                 <div>
                   <label className="block text-white font-semibold mb-3">Character Style</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -970,7 +1282,7 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                     >
                       <FaMale className="text-3xl mx-auto mb-2 text-blue-400" />
                       <span className="text-white font-medium">Male</span>
-                      <p className="text-xs text-gray-400 mt-1">Robotic Helmet</p>
+                      <p className="text-xs text-gray-400 mt-1">Cyber Tech</p>
                     </button>
                     <button
                       onClick={() => setSelectedGender('female')}
@@ -983,6 +1295,30 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
                       <FaFemale className="text-3xl mx-auto mb-2 text-pink-400" />
                       <span className="text-white font-medium">Female</span>
                       <p className="text-xs text-gray-400 mt-1">Cyber Hair</p>
+                    </button>
+                    <button
+                      onClick={() => setSelectedGender('dog')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        selectedGender === 'dog'
+                          ? 'border-amber-500 bg-amber-500/20'
+                          : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                      }`}
+                    >
+                      <FaDog className="text-3xl mx-auto mb-2 text-amber-400" />
+                      <span className="text-white font-medium">Dog</span>
+                      <p className="text-xs text-gray-400 mt-1">Cyber Pup</p>
+                    </button>
+                    <button
+                      onClick={() => setSelectedGender('cat')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        selectedGender === 'cat'
+                          ? 'border-purple-500 bg-purple-500/20'
+                          : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                      }`}
+                    >
+                      <FaCat className="text-3xl mx-auto mb-2 text-purple-400" />
+                      <span className="text-white font-medium">Cat</span>
+                      <p className="text-xs text-gray-400 mt-1">Cyber Kitty</p>
                     </button>
                   </div>
                 </div>
