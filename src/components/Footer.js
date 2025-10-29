@@ -1,8 +1,11 @@
 import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import usePWAInstall from '../hooks/usePWAInstall';
 
 const Footer = () => {
+  const { isInstallable, isIOS, handleInstallClick } = usePWAInstall();
+
   return (
     <footer className="bg-gray-800 text-gray-300 py-8 mt-auto">
       <div className="container mx-auto px-4">
@@ -179,6 +182,23 @@ const Footer = () => {
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Mobile Apps</h4>
               <div className="space-y-2">
+                {/* PWA Install Button - Only show on mobile when installable */}
+                {isInstallable && (
+                  <button
+                    onClick={handleInstallClick}
+                    className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm cursor-pointer group w-full text-left"
+                    title="Install Aquads as a mobile app"
+                  >
+                    <FaMobileAlt className="mr-2 text-purple-400 group-hover:text-purple-300" />
+                    <span className="flex items-center">
+                      Install Web App
+                      <span className="ml-2 inline-block px-1.5 py-0.5 text-xs font-semibold text-green-400 bg-green-900/30 border border-green-500/30 rounded">
+                        Available
+                      </span>
+                    </span>
+                  </button>
+                )}
+                
                 <div className="flex items-center justify-center lg:justify-start">
                   <span className="inline-block px-2 py-1 text-xs font-semibold text-cyan-400 bg-cyan-900/30 border border-cyan-500/30 rounded-full animate-pulse">
                     Coming Soon
