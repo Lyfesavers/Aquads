@@ -39,12 +39,9 @@ const Modal = ({ children, onClose, fullScreen = false }) => {
       <style>{modalStyles}</style>
       {fullScreen ? (
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-gray-900 to-black z-[2147483647] modal-backdrop"
+          className="fixed inset-0 bg-gray-900 z-[2147483647] modal-backdrop"
           onClick={handleBackdropClick}
         >
-          {/* Radial gradient overlay to match site theme */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
-          
           <div 
             className="w-full h-full relative modal-content"
             onClick={handleModalContentClick}
