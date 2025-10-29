@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import emailService from '../services/emailService';
-import { FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaSpinner, FaCheck, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
@@ -26,6 +26,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     hasSpecial: false
   });
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Add countries list
   const countries = [
@@ -598,21 +600,31 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
-                required
-                placeholder="Create a password"
-                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
-                  formData.password && isPasswordValid() 
-                    ? "focus:ring-green-500 border border-green-500" 
-                    : "focus:ring-blue-500"
-                }`}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  required
+                  placeholder="Create a password"
+                  className={`w-full px-3 py-2 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                    formData.password && isPasswordValid() 
+                      ? "focus:ring-green-500 border border-green-500" 
+                      : "focus:ring-blue-500"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
               
               {/* Password requirements checklist */}
               {(passwordFocused || formData.password) && (
@@ -642,19 +654,29 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                placeholder="Confirm password"
-                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
-                  formData.confirmPassword && formData.password === formData.confirmPassword
-                    ? "focus:ring-green-500 border border-green-500" 
-                    : "focus:ring-blue-500"
-                }`}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  placeholder="Confirm password"
+                  className={`w-full px-3 py-2 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                    formData.confirmPassword && formData.password === formData.confirmPassword
+                      ? "focus:ring-green-500 border border-green-500" 
+                      : "focus:ring-blue-500"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
                 <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
               )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from 'react-bootstrap';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
@@ -9,6 +10,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
   });
   const [error, setError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -79,15 +81,25 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-3 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
             </div>
             {error && (
               <p className="text-red-500 text-sm">{error}</p>

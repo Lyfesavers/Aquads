@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { updateUserProfile } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
 
 // Country options for dropdown
@@ -268,6 +268,9 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
   const [previewUrl, setPreviewUrl] = useState(currentUser?.image || '');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const showNotification = (message, type) => {
     if (type === 'success') {
@@ -462,33 +465,63 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
-            <input
-              type="password"
-              name="currentPassword"
-              value={formData.currentPassword}
-              onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-            />
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+              >
+                {showCurrentPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
-            <input
-              type="password"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-            />
+            <div className="relative">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmNewPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmNewPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
