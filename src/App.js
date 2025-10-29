@@ -2941,23 +2941,23 @@ function App() {
                 <div className="pt-20">
                   {/* AquaSwap Banner - positioned between token banner and filter controls */}
                   <div className="container mx-auto px-4 mb-4">
-                    <div className="aquaswap-banner bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 border border-purple-400 rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg shadow-purple-500/30">
+                    <div className="aquaswap-banner rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg" style={{background: 'linear-gradient(to right, #51159D, #6B21A8, #51159D)', borderColor: '#FEBC10', borderWidth: '2px', boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)'}}>
                       {/* Animated background effects */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/20 to-transparent animate-pulse"></div>
+                      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.3), transparent)'}}></div>
                       
                       {/* Floating blockchain icons */}
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-1 left-8 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
-                        <div className="absolute top-2 right-16 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
-                        <div className="absolute bottom-1 left-16 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
-                        <div className="absolute bottom-1 right-8 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
-                        <div className="absolute top-1/2 left-1/4 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
-                        <div className="absolute top-1/3 right-1/3 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
+                        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
+                        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
+                        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
+                        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
+                        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
+                        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
                       </div>
                       
                       {/* Animated border glow */}
-                      <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-yellow-400/50 via-purple-400/50 to-yellow-400/50 opacity-60 animate-pulse"></div>
-                      <div className="absolute inset-[2px] rounded-lg bg-purple-600/90 backdrop-blur-sm"></div>
+                      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(254, 188, 16, 0.5), rgba(81, 21, 157, 0.5), rgba(254, 188, 16, 0.5))'}}></div>
+                      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(81, 21, 157, 0.9)'}}></div>
                       
                       <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
                         <div className="flex items-center gap-2 sm:gap-3">
@@ -2966,37 +2966,36 @@ function App() {
                             <img 
                               src="/AquaSwap.svg" 
                               alt="AquaSwap" 
-                              className="w-8 h-8 sm:w-10 sm:h-10 filter drop-shadow-lg flex-shrink-0 animate-pulse"
-                              style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 0, 0.8))'}}
+                              className="w-8 h-8 sm:w-10 sm:h-10 filter drop-shadow-lg flex-shrink-0"
+                              style={{filter: 'drop-shadow(0 0 10px rgba(254, 188, 16, 0.8))'}}
                             />
-                            <div className="absolute inset-0 w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400/30 rounded-full animate-ping"></div>
                           </div>
                           
                           <div>
-                            <h3 className="text-yellow-300 font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2">
+                            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
                               🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!
-                              <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-300 text-purple-900 px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse">
+                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
                                 LIVE
                               </span>
                             </h3>
-                            <p className="text-yellow-100 text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#FEF3C7'}}>
                               <span className="flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#FEBC10'}}></span>
                                 Swap & bridge across 50+ blockchains
                               </span>
-                              <span className="hidden sm:inline text-yellow-300">•</span>
-                              <span className="hidden sm:inline text-yellow-200 font-semibold">Best rates & speed</span>
+                              <span className="hidden sm:inline" style={{color: '#FEBC10'}}>•</span>
+                              <span className="hidden sm:inline font-semibold" style={{color: '#FCD34D'}}>Best rates & speed</span>
                             </p>
                             
                             {/* Feature highlights */}
                             <div className="flex flex-wrap gap-1">
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
+                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
                                 ⚡ Instant Swaps
                               </span>
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
+                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
                                 🔗 Cross-Chain
                               </span>
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
+                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
                                 💰 Best Rates
                               </span>
                             </div>
@@ -3007,23 +3006,32 @@ function App() {
                         <div className="relative">
                           <a
                             href="/aquaswap"
-                            className="relative bg-gradient-to-r from-yellow-400 to-yellow-300 hover:from-yellow-300 hover:to-yellow-200 text-purple-900 px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-400/50 whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
+                            className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
+                            style={{
+                              background: 'linear-gradient(to right, #FEBC10, #FCD34D)',
+                              color: '#51159D',
+                              boxShadow: '0 10px 25px rgba(254, 188, 16, 0.4)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(to right, #FCD34D, #FDE68A)';
+                              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(to right, #FEBC10, #FCD34D)';
+                              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.4)';
+                            }}
                           >
                             <span>Buy Crypto</span>
                             <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
                             
                             {/* Button glow effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10"></div>
+                            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)'}}></div>
                           </a>
-                          
-                          {/* Floating sparkles around button */}
-                          <div className="absolute -top-1 -right-1 text-yellow-300 animate-ping text-xs sm:text-sm">✨</div>
-                          <div className="absolute -bottom-1 -left-1 text-yellow-400 animate-ping text-xs sm:text-sm" style={{animationDelay: '1s'}}>💫</div>
                         </div>
                       </div>
                       
                       {/* Animated wave effect at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 opacity-80">
+                      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D, #FEBC10)'}}>
                         <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
                       </div>
                     </div>
