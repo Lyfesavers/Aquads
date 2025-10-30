@@ -240,43 +240,13 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  for (let i = 0; i < 1000; i++) {
-    const angle = goldenAngle * i;
-    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
-    
-    const x = centerX + radius * Math.cos(angle) - size/2;
-    const y = centerY + radius * Math.sin(angle) - size/2;
-    
-    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
-        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
-      continue;
-    }
-    
-    let hasOverlap = false;
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        x + size/2, 
-        y + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        break;
-      }
-    }
-    
-    if (!hasOverlap) {
-      return { x, y };
-    }
-  }
+  // REMOVED: Spiral fallback code - was causing screen-size-dependent spacing
+  // Grid approach handles all cases with fixed 115px spacing
   
+  // If grid is full, return center position as last resort
   return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+    x: centerX - size/2,
+    y: centerY - size/2
   };
 }
 
@@ -1870,39 +1840,11 @@ function App() {
       }, 100);
     }
   }, [ads, setAds]);
-    // Set up periodic checks to fix overlaps
-  useEffect(() => {
-    // Run initially to handle any existing overlaps
-    fixOverlappingBubbles();
-    
-    // Run periodically to ensure bubbles don't overlap
-    const checkInterval = setInterval(fixOverlappingBubbles, 1000);
-    
-    // Run when window resizes
-    const handleResize = debounce(() => {
-      fixOverlappingBubbles();
-    }, 500);
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Setup custom event listener for bubble updates
-    const handleBubbleUpdate = () => {
-      fixOverlappingBubbles();
-    };
-    
-    // Create custom events for bubble operations
-    window.addEventListener('bubbleAdded', handleBubbleUpdate);
-    window.addEventListener('bubbleBumped', handleBubbleUpdate);
-    window.addEventListener('bubbleMoved', handleBubbleUpdate);
-    
-    return () => {
-      clearInterval(checkInterval);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('bubbleAdded', handleBubbleUpdate);
-      window.removeEventListener('bubbleBumped', handleBubbleUpdate);
-      window.removeEventListener('bubbleMoved', handleBubbleUpdate);
-    };
-  }, [fixOverlappingBubbles]);
+    // DISABLED: fixOverlappingBubbles was causing inconsistent spacing across screens
+    // Grid layout with fixed cell width now handles all spacing perfectly
+  // useEffect(() => {
+  //   // Commented out to prevent constant repositioning that causes spacing inconsistencies
+  // }, [fixOverlappingBubbles]);
 
   // Add effect to check for showCreateAccount parameter
   useEffect(() => {
@@ -2441,36 +2383,16 @@ function App() {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
     
-    // Specific column counts for tested screen resolutions
-    let columns;
+    // FIXED CELL WIDTH for consistent spacing across ALL screen sizes!
+    // 115px matches our grid system = tight consistent packing everywhere
+    const FIXED_CELL_WIDTH = 115;
+    const cellWidth = FIXED_CELL_WIDTH;
     
-    // Specific optimizations for known screen sizes based on user testing
-    if (screenWidth === 2560 && screenHeight === 1440) {
-      columns = 15; // Optimized for 70 bubbles on 2560x1440
-    } else if (screenWidth === 1366 && screenHeight === 768) {
-      columns = 9; // Optimized for 32 bubbles on 1366x768
-    } else if (screenWidth >= 2400) {
-      columns = 16; // Similar to 2560x1440
-    } else if (screenWidth >= 1800) {
-      columns = 14;
-    } else if (screenWidth >= 1440) {
-      columns = 14;
-    } else if (screenWidth >= 1200) {
-      columns = 8;
-    } else if (screenWidth >= 1000) {
-      columns = 6;
-    } else {
-      columns = 5;
-    }
-    
-    // Calculate margins and spacing
-    // Use tighter spacing for known screen resolutions to fit the desired number of bubbles
-    const horizontalMargin = screenWidth >= 1440 ? 10 : 10;
+    // Calculate columns based on screen width (auto-adjusts to fit)
+    const horizontalMargin = 10;
     const verticalMargin = 30;
-    
-    // Calculate available width and the cell size
     const availableWidth = screenWidth - (horizontalMargin * 2);
-    const cellWidth = availableWidth / columns;
+    const columns = Math.floor(availableWidth / FIXED_CELL_WIDTH);
     
     // Store current positions to check if we need to update the model
     const originalPositions = {};
