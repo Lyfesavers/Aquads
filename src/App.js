@@ -172,8 +172,9 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Reduced spacing between bubbles for tighter packing
-  const bubbleSpacing = 0.50;
+  // Tight spacing - 1.1 means 10% gap between bubble edges
+  // With 100px bubbles: minDistance = 100 * 1.1 = 110px between centers = 10px edge gap
+  const bubbleSpacing = 1.1;
   
   // Calculate spiral position with optimized parameters for tight clustering
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -200,15 +201,9 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
       
       if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        // Only mark the actual cell as occupied, not neighbors
+        // Let the overlap checking handle proper spacing for tight, consistent packing
         grid[row][col] = true;
-        
-        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
-          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
-            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
-              grid[r][c] = true;
-            }
-          }
-        }
       }
     });
     
@@ -298,9 +293,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  // Match the spacing in calculateSafePosition (0.50) to maintain tight clustering
-  // Previously 1.02 was pushing bubbles apart on every render
-  const bubbleSpacing = 0.52;
+  // Match the spacing in calculateSafePosition (1.1) for consistent tight packing
+  // This prevents bubbles from spreading apart on every render
+  const bubbleSpacing = 1.1;
   let iterations = 0;
   const maxIterations = 25;
   
