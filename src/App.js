@@ -173,8 +173,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   }
   
   // Reduced spacing between bubbles for tighter packing
-  // Lower value = tighter packing, consistent with grid cellSize
-  const bubbleSpacing = 0.40;
+  const bubbleSpacing = 0.50;
   
   // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -185,9 +184,11 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    // Use same multiplier as bubbleSpacing for consistent tight packing across all PC/laptop screen sizes
-    // Smaller cellSize = more grid cells = tighter packing (like on large screens)
-    const cellSize = size * bubbleSpacing;
+    // Use fixed small cell size to create MORE grid positions for consistent tight packing
+    // Smaller cellSize = more grid cells = more placement options = tighter packing
+    // The overlap checking (line 227) will ensure bubbles don't actually overlap
+    const FIXED_CELL_SIZE = 50; // Small fixed grid for maximum placement flexibility
+    const cellSize = FIXED_CELL_SIZE;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
@@ -296,7 +297,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  const bubbleSpacing = 1.02;
+  // Use much tighter spacing to match calculateSafePosition and maintain consistent tight packing
+  // This ensures bubbles stay tightly packed on all screen sizes
+  const bubbleSpacing = 0.52; // Slightly more than 0.50 to prevent actual overlap
   let iterations = 0;
   const maxIterations = 25;
   
