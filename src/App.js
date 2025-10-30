@@ -173,7 +173,8 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   }
   
   // Reduced spacing between bubbles for tighter packing
-  const bubbleSpacing = 0.50;
+  // Lower value = tighter packing, consistent with grid cellSize
+  const bubbleSpacing = 0.40;
   
   // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -184,8 +185,9 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    // Use fixed multiplier for consistent spacing across all PC/laptop screen sizes
-    const cellSize = size * 1.3;
+    // Use same multiplier as bubbleSpacing for consistent tight packing across all PC/laptop screen sizes
+    // Smaller cellSize = more grid cells = tighter packing (like on large screens)
+    const cellSize = size * bubbleSpacing;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
