@@ -181,11 +181,15 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const startRadius = 35; // Fixed starting radius for consistent tight packing
   const scaleFactor = 0.55; // Reduced from 0.7 for slower expansion = tighter clustering
   
-  // Create a grid-based optimization for larger numbers of bubbles
-  const useGridApproach = existingAds.length > 12;
+  // ALWAYS use grid-based system for clean, sequential, consistent layout
+  // Grid creates organized rows/columns instead of chaotic spiral
+  const useGridApproach = true;
   
   if (useGridApproach) {
-    const cellSize = size * bubbleSpacing;
+    // Use fixed pixel grid for consistent spacing across ALL screen sizes
+    // With 100px bubbles, 110px grid creates tight, uniform spacing
+    const GRID_CELL_SIZE = 110; // Fixed size for consistent layout everywhere
+    const cellSize = GRID_CELL_SIZE;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
