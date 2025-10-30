@@ -175,21 +175,17 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Reduced spacing between bubbles for tighter packing
   const bubbleSpacing = 0.50;
   
-  // Calculate spiral position with optimized parameters
+  // Calculate spiral position with optimized parameters for tight clustering
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const startRadius = size/3;
-  const scaleFactor = 0.7;
+  // Use fixed pixel startRadius instead of size-based for consistent clustering across screens
+  const startRadius = 35; // Fixed starting radius for consistent tight packing
+  const scaleFactor = 0.55; // Reduced from 0.7 for slower expansion = tighter clustering
   
-  // Always use grid-based approach for consistent spacing across all screen sizes
-  // Grid provides much more consistent spacing than spiral, especially on smaller screens
-  const useGridApproach = true; // Changed from: existingAds.length > 12
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    // Use fixed cell size for consistent tight packing across all screen sizes
-    // With 100px bubbles and 0.50 spacing, we want ~55px between centers for tight packing
-    // 55px grid creates the perfect tight spacing seen on large screens
-    const FIXED_CELL_SIZE = 55;
-    const cellSize = FIXED_CELL_SIZE;
+    const cellSize = size * bubbleSpacing;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
@@ -298,9 +294,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  // Use much tighter spacing to match calculateSafePosition and maintain consistent tight packing
-  // This ensures bubbles stay tightly packed on all screen sizes
-  const bubbleSpacing = 0.52; // Slightly more than 0.50 to prevent actual overlap
+  // Match the spacing in calculateSafePosition (0.50) to maintain tight clustering
+  // Previously 1.02 was pushing bubbles apart on every render
+  const bubbleSpacing = 0.52;
   let iterations = 0;
   const maxIterations = 25;
   
@@ -487,11 +483,11 @@ function App() {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       
-      // Specific screen size optimizations based on user testing
+      // Increased bubble counts for tighter, more consistent packing across all screens
       if (viewportWidth === 2560 && viewportHeight === 1440) {
         return 70; // 2560x1440 can fit 70 bubbles
       } else if (viewportWidth === 1366 && viewportHeight === 768) {
-        return 32; // 1366x768 can fit 32 bubbles
+        return 50; // Increased from 32 for tighter packing on small PC screens
       } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
         return 48; // For mobile screens around 412x915 
       } else if (viewportWidth <= 480) {
@@ -501,11 +497,11 @@ function App() {
       } else if (viewportWidth >= 2400) {
         return 70; // Large desktop similar to 2560x1440
       } else if (viewportWidth >= 1440) {
-        return 55; // Medium-large desktop
+        return 60; // Increased from 55 for better packing
       } else if (viewportWidth >= 1200) {
-        return 45; // Medium desktop
+        return 55; // Increased from 45 for better packing
       } else {
-        return 32; // Default to similar to 1366x768
+        return 50; // Increased from 32 for tighter default packing
       }
     };
     setItemsPerPage(calculateItemsPerPage());
