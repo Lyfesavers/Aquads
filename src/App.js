@@ -180,14 +180,15 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const startRadius = size/3;
   const scaleFactor = 0.7;
   
-  // Create a grid-based optimization for larger numbers of bubbles
-  const useGridApproach = existingAds.length > 12;
+  // Always use grid-based approach for consistent spacing across all screen sizes
+  // Grid provides much more consistent spacing than spiral, especially on smaller screens
+  const useGridApproach = true; // Changed from: existingAds.length > 12
   
   if (useGridApproach) {
-    // Use fixed small cell size to create MORE grid positions for consistent tight packing
-    // Smaller cellSize = more grid cells = more placement options = tighter packing
-    // The overlap checking (line 227) will ensure bubbles don't actually overlap
-    const FIXED_CELL_SIZE = 50; // Small fixed grid for maximum placement flexibility
+    // Use fixed cell size for consistent tight packing across all screen sizes
+    // With 100px bubbles and 0.50 spacing, we want ~55px between centers for tight packing
+    // 55px grid creates the perfect tight spacing seen on large screens
+    const FIXED_CELL_SIZE = 55;
     const cellSize = FIXED_CELL_SIZE;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
