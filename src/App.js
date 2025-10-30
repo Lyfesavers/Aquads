@@ -180,11 +180,13 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const startRadius = size/3;
   const scaleFactor = 0.7;
   
-  // Create a grid-based optimization for larger numbers of bubbles
-  const useGridApproach = existingAds.length > 12;
+  // ALWAYS use grid for consistent spacing - spiral causes screen-size-dependent spacing
+  const useGridApproach = true; // Changed from: existingAds.length > 12
   
   if (useGridApproach) {
-    const cellSize = size * bubbleSpacing;
+    // FIXED PIXEL GRID - critical for consistent spacing across all screen sizes!
+    // 115px = perfect tight spacing with 100px bubbles (~15px edge gap)
+    const cellSize = 115;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
@@ -284,68 +286,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
   const minY = TOP_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
+  // Grid already handles perfect spacing - just clamp to viewport bounds
+  // Removed 25-iteration push-apart loop that was causing inconsistent spacing
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
-
-  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  
-  if (otherAds.length === 0) {
-    return { x: newX, y: newY };
-  }
-  
-  const bubbleSpacing = 1.02;
-  let iterations = 0;
-  const maxIterations = 25;
-  
-  while(iterations < maxIterations) {
-    let hasOverlap = false;
-    let totalPushX = 0;
-    let totalPushY = 0;
-    let overlappingAds = 0;
-    
-    for (const ad of otherAds) {
-      const distance = calculateDistance(
-        newX + size/2, 
-        newY + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        overlappingAds++;
-        
-        const dx = (ad.x + ad.size/2) - (newX + size/2);
-        const dy = (ad.y + ad.size/2) - (newY + size/2);
-        
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        const pushX = dx === 0 ? 0 : dx / magnitude;
-        const pushY = dy === 0 ? 0 : dy / magnitude;
-        
-        const pushAmount = minDistance - distance;
-        
-        const multiplier = 1 / Math.sqrt(overlappingAds);
-        totalPushX -= pushX * pushAmount * multiplier;
-        totalPushY -= pushY * pushAmount * multiplier;
-      }
-
-    }
-    
-    if (!hasOverlap) {
-      break;
-    }
-    
-    const dampening = 0.8;
-    newX += totalPushX * dampening;
-    newY += totalPushY * dampening;
-    
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
-    
-    iterations++;
-  }
 
   return { x: newX, y: newY };
 }
