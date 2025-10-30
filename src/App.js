@@ -69,19 +69,6 @@ import HorseRacing from './components/HorseRacing';
 
 import ServicePage from './components/ServicePage';
 
-// Simple debounce function implementation
-const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-
 window.Buffer = Buffer;
 
 // Initialize EmailJS right after imports
@@ -175,13 +162,8 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Reduced spacing between bubbles for tighter packing
   const bubbleSpacing = 0.50;
   
-  // Calculate spiral position with optimized parameters
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const startRadius = size/3;
-  const scaleFactor = 0.7;
-  
-  // ALWAYS use grid for consistent spacing - spiral causes screen-size-dependent spacing
-  const useGridApproach = true; // Changed from: existingAds.length > 12
+  // ALWAYS use grid for consistent spacing across all screen sizes
+  const useGridApproach = true;
   
   if (useGridApproach) {
     // FIXED PIXEL GRID - critical for consistent spacing across all screen sizes!
@@ -1737,114 +1719,6 @@ function App() {
     });
   };
 
-  // Function to periodically check and fix overlapping bubbles
-  const fixOverlappingBubbles = useCallback(() => {
-    // We'll only run this function when necessary, not periodically
-    // This reduces the constant repositioning that causes glitchy appearance
-    
-    const adsCopy = [...ads];
-    let hasOverlaps = false;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // Check all pairs of bubbles for overlaps
-    for (let i = 0; i < adsCopy.length; i++) {
-      for (let j = i + 1; j < adsCopy.length; j++) {
-        const ad1 = adsCopy[i];
-        const ad2 = adsCopy[j];
-        
-        if (ad1.element && ad2.element) {
-          const dx = (ad1.x + ad1.size/2) - (ad2.x + ad2.size/2);
-          const dy = (ad1.y + ad1.size/2) - (ad2.y + ad2.size/2);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Check for any meaningful overlap (more aggressive - 95% of expected distance)
-          const minDistance = (ad1.size + ad2.size) / 2 * 0.95;
-          
-          if (distance < minDistance) {
-            hasOverlaps = true;
-            
-            // Calculate push direction - normalized vector
-            const pushDirection = { 
-              x: dx / (distance || 0.001), 
-              y: dy / (distance || 0.001) 
-            };
-            
-            // Calculate stronger push amount (extra 5px buffer)
-            const pushAmount = (minDistance - distance) + 5;
-            
-            // Determine which ad should move more
-            let push1 = 0.5;
-            let push2 = 0.5;
-            
-            // If one is bumped, the other one moves more
-            if (ad1.isBumped) {
-              push1 = 0.1; // Bumped ad moves less
-              push2 = 0.9; // Other ad moves more
-            } else if (ad2.isBumped) {
-              push1 = 0.9;
-              push2 = 0.1;
-            }
-            // If one is newer, it gets priority
-            else if (ad1.id > ad2.id) {
-              push1 = 0.3;
-              push2 = 0.7;
-            } else if (ad2.id > ad1.id) {
-              push1 = 0.7;
-              push2 = 0.3;
-            }
-            
-            // Move the bubbles apart with the calculated ratios
-            ad1.x += pushDirection.x * pushAmount * push1;
-            ad1.y += pushDirection.y * pushAmount * push1;
-            ad2.x -= pushDirection.x * pushAmount * push2;
-            ad2.y -= pushDirection.y * pushAmount * push2;
-            
-            // Add a velocity component to help them separate naturally
-            ad1.vx = (ad1.vx || 0) + pushDirection.x * 0.8;
-            ad1.vy = (ad1.vy || 0) + pushDirection.y * 0.8;
-            ad2.vx = (ad2.vx || 0) - pushDirection.x * 0.8;
-            ad2.vy = (ad2.vy || 0) - pushDirection.y * 0.8;
-            
-            // Keep bubbles on screen
-            ad1.x = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad1.size - BUBBLE_PADDING, ad1.x));
-            ad1.y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad1.size - BUBBLE_PADDING, ad1.y));
-            ad2.x = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad2.size - BUBBLE_PADDING, ad2.x));
-            ad2.y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad2.size - BUBBLE_PADDING, ad2.y));
-            
-            // Update DOM elements immediately
-            if (ad1.element) {
-              ad1.element.style.left = `${ad1.x}px`;
-              ad1.element.style.top = `${ad1.y}px`;
-              // Add a slight transition for smoother movement
-              ad1.element.style.transition = 'left 0.1s, top 0.1s';
-            }
-            if (ad2.element) {
-              ad2.element.style.left = `${ad2.x}px`;
-              ad2.element.style.top = `${ad2.y}px`;
-              // Add a slight transition for smoother movement
-              ad2.element.style.transition = 'left 0.1s, top 0.1s';
-            }
-          }
-        }
-      }
-    }
-    
-    // If we fixed overlaps, update the state
-    if (hasOverlaps) {
-      setAds(adsCopy);
-      
-      // Schedule another check after a short delay to handle cascading conflicts
-      setTimeout(() => {
-        fixOverlappingBubbles();
-      }, 100);
-    }
-  }, [ads, setAds]);
-    // DISABLED: fixOverlappingBubbles was causing inconsistent spacing across screens
-    // Grid layout with fixed cell width now handles all spacing perfectly
-  // useEffect(() => {
-  //   // Commented out to prevent constant repositioning that causes spacing inconsistencies
-  // }, [fixOverlappingBubbles]);
 
   // Add effect to check for showCreateAccount parameter
   useEffect(() => {
@@ -2193,57 +2067,6 @@ function App() {
       setTimeout(arrangeDesktopGrid, 300);
     }
   }, [ads]);
-
-  // Arrange bubbles in a spiral pattern for desktop layout
-  function arrangeDesktopBubbleSpiral() {
-    // Only run on desktop
-    if (window.innerWidth <= 480) return;
-    
-    // Find all bubble containers
-    const bubbles = document.querySelectorAll('.bubble-container');
-    if (bubbles.length === 0) return;
-    
-    // Get screen dimensions
-    const centerX = window.innerWidth / 2;
-    const centerY = (window.innerHeight - TOP_PADDING) / 2 + TOP_PADDING;
-    
-    // Sort by ID to ensure consistent arrangement
-    const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
-    
-    // Use golden ratio for nice spiral
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    
-    // First bubble goes in center
-    if (sortedBubbles.length > 0) {
-      const firstBubbleSize = parseInt(sortedBubbles[0].style.width) || 50;
-      sortedBubbles[0].style.transform = `translate(${centerX - firstBubbleSize/2}px, ${centerY - firstBubbleSize/2}px)`;
-    }
-    
-    // Arrange rest in spiral - use MUCH wider spread for desktop
-    for (let i = 1; i < sortedBubbles.length; i++) {
-      const bubble = sortedBubbles[i];
-      const size = parseInt(bubble.style.width) || 50;
-      
-      // Calculate spiral position with SUBSTANTIALLY increased spacing
-      const angle = i * goldenAngle;
-      const radius = 200 + 90 * Math.sqrt(i); // Extreme wide spacing for desktop
-      
-      // Calculate position, ensuring bubbles don't go off screen
-      let x = centerX + radius * Math.cos(angle) - size/2;
-      let y = centerY + radius * Math.sin(angle) - size/2;
-      
-      // Boundary checks
-      const margin = 30;
-      x = Math.max(margin, Math.min(window.innerWidth - size - margin, x));
-      y = Math.max(TOP_PADDING + margin, Math.min(window.innerHeight - size - margin, y));
-      
-      // Apply position
-      bubble.style.transform = `translate(${x}px, ${y}px)`;
-    }
-    
-    // Update the model to match the DOM positions
-    updateModelFromDomPositions();
-  }
 
   // Call immediately to fix desktop layout
   // This ensures it runs before any React rendering completes
