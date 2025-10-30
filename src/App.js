@@ -184,7 +184,8 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    const cellSize = size * bubbleSpacing;
+    // Use fixed multiplier for consistent spacing across all PC/laptop screen sizes
+    const cellSize = size * 1.3;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
