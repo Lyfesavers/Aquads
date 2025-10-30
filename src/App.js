@@ -284,70 +284,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
   const minY = TOP_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
+  // Simply clamp to viewport bounds - grid already handles spacing perfectly
+  // Removing the push-apart loop that was causing inconsistent spacing across screens
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
-
-  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  
-  if (otherAds.length === 0) {
-    return { x: newX, y: newY };
-  }
-  
-  // Match the spacing in calculateSafePosition (1.1) for consistent tight packing
-  // This prevents bubbles from spreading apart on every render
-  const bubbleSpacing = 1.1;
-  let iterations = 0;
-  const maxIterations = 25;
-  
-  while(iterations < maxIterations) {
-    let hasOverlap = false;
-    let totalPushX = 0;
-    let totalPushY = 0;
-    let overlappingAds = 0;
-    
-    for (const ad of otherAds) {
-      const distance = calculateDistance(
-        newX + size/2, 
-        newY + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        overlappingAds++;
-        
-        const dx = (ad.x + ad.size/2) - (newX + size/2);
-        const dy = (ad.y + ad.size/2) - (newY + size/2);
-        
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        const pushX = dx === 0 ? 0 : dx / magnitude;
-        const pushY = dy === 0 ? 0 : dy / magnitude;
-        
-        const pushAmount = minDistance - distance;
-        
-        const multiplier = 1 / Math.sqrt(overlappingAds);
-        totalPushX -= pushX * pushAmount * multiplier;
-        totalPushY -= pushY * pushAmount * multiplier;
-      }
-
-    }
-    
-    if (!hasOverlap) {
-      break;
-    }
-    
-    const dampening = 0.8;
-    newX += totalPushX * dampening;
-    newY += totalPushY * dampening;
-    
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
-    
-    iterations++;
-  }
 
   return { x: newX, y: newY };
 }
