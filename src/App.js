@@ -172,25 +172,19 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Tight spacing - 1.1 means 10% gap between bubble edges
-  // With 100px bubbles: minDistance = 100 * 1.1 = 110px between centers = 10px edge gap
-  const bubbleSpacing = 1.1;
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 0.50;
   
-  // Calculate spiral position with optimized parameters for tight clustering
+  // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  // Use fixed pixel startRadius instead of size-based for consistent clustering across screens
-  const startRadius = 35; // Fixed starting radius for consistent tight packing
-  const scaleFactor = 0.55; // Reduced from 0.7 for slower expansion = tighter clustering
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
   
-  // ALWAYS use grid-based system for clean, sequential, consistent layout
-  // Grid creates organized rows/columns instead of chaotic spiral
-  const useGridApproach = true;
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    // Use fixed pixel grid for consistent spacing across ALL screen sizes
-    // With 100px bubbles, 110px grid creates tight, uniform spacing
-    const GRID_CELL_SIZE = 110; // Fixed size for consistent layout everywhere
-    const cellSize = GRID_CELL_SIZE;
+    const cellSize = size * bubbleSpacing;
     const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
@@ -201,9 +195,15 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
       
       if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
-        // Only mark the actual cell as occupied, not neighbors
-        // Let the overlap checking handle proper spacing for tight, consistent packing
         grid[row][col] = true;
+        
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
+          }
+        }
       }
     });
     
@@ -284,10 +284,68 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
   const minY = TOP_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
-  // Simply clamp to viewport bounds - grid already handles spacing perfectly
-  // Removing the push-apart loop that was causing inconsistent spacing across screens
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
+
+  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
+  
+  if (otherAds.length === 0) {
+    return { x: newX, y: newY };
+  }
+  
+  const bubbleSpacing = 1.02;
+  let iterations = 0;
+  const maxIterations = 25;
+  
+  while(iterations < maxIterations) {
+    let hasOverlap = false;
+    let totalPushX = 0;
+    let totalPushY = 0;
+    let overlappingAds = 0;
+    
+    for (const ad of otherAds) {
+      const distance = calculateDistance(
+        newX + size/2, 
+        newY + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        overlappingAds++;
+        
+        const dx = (ad.x + ad.size/2) - (newX + size/2);
+        const dy = (ad.y + ad.size/2) - (newY + size/2);
+        
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        const pushX = dx === 0 ? 0 : dx / magnitude;
+        const pushY = dy === 0 ? 0 : dy / magnitude;
+        
+        const pushAmount = minDistance - distance;
+        
+        const multiplier = 1 / Math.sqrt(overlappingAds);
+        totalPushX -= pushX * pushAmount * multiplier;
+        totalPushY -= pushY * pushAmount * multiplier;
+      }
+
+    }
+    
+    if (!hasOverlap) {
+      break;
+    }
+    
+    const dampening = 0.8;
+    newX += totalPushX * dampening;
+    newY += totalPushY * dampening;
+    
+    newX = Math.min(Math.max(newX, minX), maxX);
+    newY = Math.min(Math.max(newY, minY), maxY);
+    
+    iterations++;
+  }
 
   return { x: newX, y: newY };
 }
@@ -422,11 +480,12 @@ function App() {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       
-      // Increased bubble counts for tighter, more consistent packing across all screens
+      // Increased bubble counts on smaller screens for tighter, more consistent spacing
+      // More bubbles = less space per bubble = forced tight packing (like large screens)
       if (viewportWidth === 2560 && viewportHeight === 1440) {
         return 70; // 2560x1440 can fit 70 bubbles
       } else if (viewportWidth === 1366 && viewportHeight === 768) {
-        return 50; // Increased from 32 for tighter packing on small PC screens
+        return 58; // INCREASED from 32 - forces tight packing like large screens
       } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
         return 48; // For mobile screens around 412x915 
       } else if (viewportWidth <= 480) {
@@ -436,11 +495,11 @@ function App() {
       } else if (viewportWidth >= 2400) {
         return 70; // Large desktop similar to 2560x1440
       } else if (viewportWidth >= 1440) {
-        return 60; // Increased from 55 for better packing
+        return 65; // INCREASED from 55 for consistent tight packing
       } else if (viewportWidth >= 1200) {
-        return 55; // Increased from 45 for better packing
+        return 58; // INCREASED from 45 for consistent tight packing
       } else {
-        return 50; // Increased from 32 for tighter default packing
+        return 58; // INCREASED from 32 - default tight packing
       }
     };
     setItemsPerPage(calculateItemsPerPage());
