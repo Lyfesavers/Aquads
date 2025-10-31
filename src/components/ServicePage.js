@@ -67,9 +67,10 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   
   // Portfolio state
   const [showAddPortfolio, setShowAddPortfolio] = useState(false);
-  const [portfolioForm, setPortfolioForm] = useState({ imageUrl: '', liveUrl: '' });
+  const [portfolioForm, setPortfolioForm] = useState({ imageUrl: '', liveUrl: '', reviewId: '' });
   const [editingPortfolioId, setEditingPortfolioId] = useState(null);
   const [portfolioError, setPortfolioError] = useState('');
+  const [availableReviews, setAvailableReviews] = useState([]);
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -160,6 +161,26 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   };
 
   // Portfolio handlers
+  const fetchAvailableReviews = async () => {
+    if (!currentUser || !service) return;
+    
+    try {
+      const token = currentUser?.token;
+      const response = await fetch(`${API_URL}/services/${service._id}/portfolio-reviews`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const reviews = await response.json();
+        setAvailableReviews(reviews);
+      }
+    } catch (error) {
+      logger.error('Error fetching available reviews:', error);
+    }
+  };
+
   const handleAddPortfolio = async (e) => {
     e.preventDefault();
     setPortfolioError('');
@@ -182,7 +203,11 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(portfolioForm)
+        body: JSON.stringify({
+          imageUrl: portfolioForm.imageUrl,
+          liveUrl: portfolioForm.liveUrl,
+          reviewId: portfolioForm.reviewId || null
+        })
       });
 
       if (!response.ok) {
@@ -192,7 +217,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
 
       const updatedService = await response.json();
       setService(updatedService);
-      setPortfolioForm({ imageUrl: '', liveUrl: '' });
+      setPortfolioForm({ imageUrl: '', liveUrl: '', reviewId: '' });
       setShowAddPortfolio(false);
     } catch (error) {
       logger.error('Error adding portfolio item:', error);
@@ -646,7 +671,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                     </h2>
                     {currentUser && service.seller && currentUser.userId === service.seller._id && (
                       <button
-                        onClick={() => setShowAddPortfolio(!showAddPortfolio)}
+                        onClick={() => {
+                          setShowAddPortfolio(!showAddPortfolio);
+                          if (!showAddPortfolio) {
+                            fetchAvailableReviews();
+                          }
+                        }}
                         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                       >
                         {showAddPortfolio ? '✕ Cancel' : '+ Add Portfolio Item'}
@@ -693,6 +723,24 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 onChange={(e) => setPortfolioForm({ ...portfolioForm, liveUrl: e.target.value })}
                               />
                             </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Link Client Review (Optional)
+                              </label>
+                              <select
+                                className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                                value={portfolioForm.reviewId}
+                                onChange={(e) => setPortfolioForm({ ...portfolioForm, reviewId: e.target.value })}
+                              >
+                                <option value="">No review (optional)</option>
+                                {availableReviews.map((review) => (
+                                  <option key={review._id} value={review._id}>
+                                    {review.rating}★ by {review.username} - {review.comment.substring(0, 50)}...
+                                  </option>
+                                ))}
+                              </select>
+                              <p className="text-gray-400 text-xs mt-1">💡 Show a client's review with this work sample</p>
+                            </div>
                           </div>
                           {portfolioError && (
                             <div className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-red-400">
@@ -726,6 +774,19 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                             />
                           </a>
                           <div className="p-4">
+                            {/* Client Review (if linked) */}
+                            {item.reviewId && (
+                              <div className="mb-3 bg-green-900/20 border border-green-500/30 rounded-lg p-3">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="text-yellow-400 text-sm">
+                                    {'★'.repeat(item.reviewId.rating)}{'☆'.repeat(5 - item.reviewId.rating)}
+                                  </div>
+                                  <span className="text-xs text-gray-400">by {item.reviewId.username}</span>
+                                </div>
+                                <p className="text-sm text-gray-300 italic">"{item.reviewId.comment}"</p>
+                              </div>
+                            )}
+                            
                             <div className="flex items-center justify-between">
                               <a
                                 href={item.liveUrl}

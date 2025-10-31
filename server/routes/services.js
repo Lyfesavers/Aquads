@@ -386,10 +386,36 @@ router.get('/premium-requests', auth, async (req, res) => {
   }
 });
 
+// Get available reviews for portfolio (owner only)
+router.get('/:id/portfolio-reviews', auth, async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Check if user is the owner
+    if (service.seller.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the service owner can access this' });
+    }
+
+    // Get all reviews for this service
+    const reviews = await ServiceReview.find({ 
+      serviceId: req.params.id 
+    }).sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (error) {
+    console.error('Error fetching portfolio reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
 // Add portfolio item to service (owner only)
 router.post('/:id/portfolio', auth, async (req, res) => {
   try {
-    const { imageUrl, liveUrl } = req.body;
+    const { imageUrl, liveUrl, reviewId } = req.body;
     
     if (!imageUrl || !liveUrl) {
       return res.status(400).json({ error: 'Image URL and Live URL are required' });
@@ -411,16 +437,36 @@ router.post('/:id/portfolio', auth, async (req, res) => {
       return res.status(400).json({ error: 'Maximum 10 portfolio items allowed' });
     }
 
+    // If reviewId provided, verify it exists and belongs to this service
+    if (reviewId) {
+      const review = await ServiceReview.findOne({
+        _id: reviewId,
+        serviceId: req.params.id
+      });
+      
+      if (!review) {
+        return res.status(400).json({ error: 'Invalid review ID' });
+      }
+    }
+
     // Add new portfolio item
     service.portfolio.push({
       imageUrl: imageUrl.trim(),
       liveUrl: liveUrl.trim(),
+      reviewId: reviewId || null,
       addedAt: new Date()
     });
 
     await service.save();
 
-    res.json(service);
+    // Populate the portfolio reviews before sending response
+    const populatedService = await Service.findById(service._id)
+      .populate({
+        path: 'portfolio.reviewId',
+        select: 'rating comment username createdAt'
+      });
+
+    res.json(populatedService);
   } catch (error) {
     console.error('Error adding portfolio item:', error);
     res.status(500).json({ error: 'Failed to add portfolio item' });
@@ -430,7 +476,7 @@ router.post('/:id/portfolio', auth, async (req, res) => {
 // Update portfolio item (owner only)
 router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
   try {
-    const { imageUrl, liveUrl } = req.body;
+    const { imageUrl, liveUrl, reviewId } = req.body;
     
     const service = await Service.findById(req.params.id);
     
@@ -450,13 +496,33 @@ router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
       return res.status(404).json({ error: 'Portfolio item not found' });
     }
 
+    // If reviewId provided, verify it exists and belongs to this service
+    if (reviewId) {
+      const review = await ServiceReview.findOne({
+        _id: reviewId,
+        serviceId: req.params.id
+      });
+      
+      if (!review) {
+        return res.status(400).json({ error: 'Invalid review ID' });
+      }
+    }
+
     // Update fields
     if (imageUrl) portfolioItem.imageUrl = imageUrl.trim();
     if (liveUrl) portfolioItem.liveUrl = liveUrl.trim();
+    if (reviewId !== undefined) portfolioItem.reviewId = reviewId || null;
 
     await service.save();
 
-    res.json(service);
+    // Populate the portfolio reviews before sending response
+    const populatedService = await Service.findById(service._id)
+      .populate({
+        path: 'portfolio.reviewId',
+        select: 'rating comment username createdAt'
+      });
+
+    res.json(populatedService);
   } catch (error) {
     console.error('Error updating portfolio item:', error);
     res.status(500).json({ error: 'Failed to update portfolio item' });
@@ -482,7 +548,14 @@ router.delete('/:id/portfolio/:portfolioId', auth, async (req, res) => {
 
     await service.save();
 
-    res.json(service);
+    // Populate the portfolio reviews before sending response
+    const populatedService = await Service.findById(service._id)
+      .populate({
+        path: 'portfolio.reviewId',
+        select: 'rating comment username createdAt'
+      });
+
+    res.json(populatedService);
   } catch (error) {
     console.error('Error deleting portfolio item:', error);
     res.status(500).json({ error: 'Failed to delete portfolio item' });
@@ -643,7 +716,11 @@ router.post('/:id/reject', auth, async (req, res) => {
 router.get('/:id/details', async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('seller', 'username image country isOnline lastSeen lastActivity skillBadges createdAt cv userType');
+      .populate('seller', 'username image country isOnline lastSeen lastActivity skillBadges createdAt cv userType')
+      .populate({
+        path: 'portfolio.reviewId',
+        select: 'rating comment username createdAt'
+      });
     
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });

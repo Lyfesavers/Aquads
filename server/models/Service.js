@@ -160,6 +160,11 @@ const serviceSchema = new mongoose.Schema({
       required: true,
       trim: true
     },
+    reviewId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ServiceReview',
+      default: null
+    },
     addedAt: {
       type: Date,
       default: Date.now
