@@ -386,6 +386,111 @@ router.get('/premium-requests', auth, async (req, res) => {
   }
 });
 
+// Add portfolio item to service (owner only)
+router.post('/:id/portfolio', auth, async (req, res) => {
+  try {
+    const { imageUrl, liveUrl, description } = req.body;
+    
+    if (!imageUrl || !liveUrl) {
+      return res.status(400).json({ error: 'Image URL and Live URL are required' });
+    }
+
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Check if user is the owner
+    if (service.seller.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the service owner can add portfolio items' });
+    }
+
+    // Check if portfolio already has 10 items
+    if (service.portfolio && service.portfolio.length >= 10) {
+      return res.status(400).json({ error: 'Maximum 10 portfolio items allowed' });
+    }
+
+    // Add new portfolio item
+    service.portfolio.push({
+      imageUrl: imageUrl.trim(),
+      liveUrl: liveUrl.trim(),
+      description: description ? description.trim() : '',
+      addedAt: new Date()
+    });
+
+    await service.save();
+
+    res.json(service);
+  } catch (error) {
+    console.error('Error adding portfolio item:', error);
+    res.status(500).json({ error: 'Failed to add portfolio item' });
+  }
+});
+
+// Update portfolio item (owner only)
+router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
+  try {
+    const { imageUrl, liveUrl, description } = req.body;
+    
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Check if user is the owner
+    if (service.seller.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the service owner can update portfolio items' });
+    }
+
+    // Find the portfolio item
+    const portfolioItem = service.portfolio.id(req.params.portfolioId);
+    
+    if (!portfolioItem) {
+      return res.status(404).json({ error: 'Portfolio item not found' });
+    }
+
+    // Update fields
+    if (imageUrl) portfolioItem.imageUrl = imageUrl.trim();
+    if (liveUrl) portfolioItem.liveUrl = liveUrl.trim();
+    if (description !== undefined) portfolioItem.description = description.trim();
+
+    await service.save();
+
+    res.json(service);
+  } catch (error) {
+    console.error('Error updating portfolio item:', error);
+    res.status(500).json({ error: 'Failed to update portfolio item' });
+  }
+});
+
+// Delete portfolio item (owner only)
+router.delete('/:id/portfolio/:portfolioId', auth, async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Check if user is the owner
+    if (service.seller.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the service owner can delete portfolio items' });
+    }
+
+    // Remove the portfolio item
+    service.portfolio.pull(req.params.portfolioId);
+
+    await service.save();
+
+    res.json(service);
+  } catch (error) {
+    console.error('Error deleting portfolio item:', error);
+    res.status(500).json({ error: 'Failed to delete portfolio item' });
+  }
+});
+
 // Get pending services (admin only)
 router.get('/pending', auth, async (req, res) => {
   try {

@@ -64,6 +64,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   const [showCVPreview, setShowCVPreview] = useState(false);
   const [cvUserId, setCvUserId] = useState(null);
   const [cvUsername, setCvUsername] = useState(null);
+  
+  // Portfolio state
+  const [showAddPortfolio, setShowAddPortfolio] = useState(false);
+  const [portfolioForm, setPortfolioForm] = useState({ imageUrl: '', liveUrl: '', description: '' });
+  const [editingPortfolioId, setEditingPortfolioId] = useState(null);
+  const [portfolioError, setPortfolioError] = useState('');
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -150,6 +156,79 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
       setShowCreateAccountModal(false);
     } catch (error) {
       logger.error('Create account error:', error);
+    }
+  };
+
+  // Portfolio handlers
+  const handleAddPortfolio = async (e) => {
+    e.preventDefault();
+    setPortfolioError('');
+
+    if (!portfolioForm.imageUrl || !portfolioForm.liveUrl) {
+      setPortfolioError('Image URL and Live URL are required');
+      return;
+    }
+
+    try {
+      const token = currentUser?.token;
+      if (!token) {
+        setPortfolioError('You must be logged in');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/services/${service._id}/portfolio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(portfolioForm)
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add portfolio item');
+      }
+
+      const updatedService = await response.json();
+      setService(updatedService);
+      setPortfolioForm({ imageUrl: '', liveUrl: '', description: '' });
+      setShowAddPortfolio(false);
+    } catch (error) {
+      logger.error('Error adding portfolio item:', error);
+      setPortfolioError(error.message);
+    }
+  };
+
+  const handleDeletePortfolio = async (portfolioId) => {
+    if (!window.confirm('Are you sure you want to delete this portfolio item?')) {
+      return;
+    }
+
+    try {
+      const token = currentUser?.token;
+      if (!token) {
+        alert('You must be logged in');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/services/${service._id}/portfolio/${portfolioId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete portfolio item');
+      }
+
+      const updatedService = await response.json();
+      setService(updatedService);
+    } catch (error) {
+      logger.error('Error deleting portfolio item:', error);
+      alert(error.message);
     }
   };
 
@@ -551,6 +630,149 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                   </div>
                 </motion.div>
               )}
+
+              {/* Portfolio Section */}
+              {(service.portfolio && service.portfolio.length > 0) || (currentUser && service.seller && currentUser.userId === service.seller._id) ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.35 }}
+                  className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 shadow-2xl"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold flex items-center gap-3">
+                      <FaFileAlt className="text-purple-400" />
+                      Past Work & Portfolio
+                    </h2>
+                    {currentUser && service.seller && currentUser.userId === service.seller._id && (
+                      <button
+                        onClick={() => setShowAddPortfolio(!showAddPortfolio)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        {showAddPortfolio ? '✕ Cancel' : '+ Add Portfolio Item'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Add Portfolio Form (Owner Only) */}
+                  {showAddPortfolio && currentUser && service.seller && currentUser.userId === service.seller._id && (
+                    <form onSubmit={handleAddPortfolio} className="mb-6 bg-gray-700/30 rounded-xl p-6 border border-purple-500/30">
+                      <h3 className="text-lg font-semibold mb-4 text-purple-400">Add New Portfolio Item</h3>
+                      {service.portfolio && service.portfolio.length >= 10 && (
+                        <div className="mb-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 text-yellow-400">
+                          Maximum 10 portfolio items allowed. Please delete an existing item to add a new one.
+                        </div>
+                      )}
+                      {service.portfolio && service.portfolio.length < 10 && (
+                        <>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Screenshot Image URL *
+                              </label>
+                              <input
+                                type="url"
+                                required
+                                placeholder="https://example.com/screenshot.jpg"
+                                className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                                value={portfolioForm.imageUrl}
+                                onChange={(e) => setPortfolioForm({ ...portfolioForm, imageUrl: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Live Product URL *
+                              </label>
+                              <input
+                                type="url"
+                                required
+                                placeholder="https://example.com/product"
+                                className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                                value={portfolioForm.liveUrl}
+                                onChange={(e) => setPortfolioForm({ ...portfolioForm, liveUrl: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Description (Optional)
+                              </label>
+                              <textarea
+                                rows="3"
+                                placeholder="Brief description of the work..."
+                                className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white resize-none"
+                                value={portfolioForm.description}
+                                onChange={(e) => setPortfolioForm({ ...portfolioForm, description: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          {portfolioError && (
+                            <div className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-red-400">
+                              {portfolioError}
+                            </div>
+                          )}
+                          <button
+                            type="submit"
+                            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors w-full"
+                          >
+                            Add Portfolio Item
+                          </button>
+                        </>
+                      )}
+                    </form>
+                  )}
+
+                  {/* Portfolio Grid */}
+                  {service.portfolio && service.portfolio.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {service.portfolio.map((item) => (
+                        <div key={item._id} className="bg-gray-700/30 rounded-xl overflow-hidden border border-gray-600/50 hover:border-purple-500/50 transition-all">
+                          <a href={item.liveUrl} target="_blank" rel="noopener noreferrer" className="block">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.description || 'Portfolio item'}
+                              className="w-full h-48 object-cover hover:opacity-90 transition-opacity"
+                              onError={(e) => {
+                                e.target.src = 'https://placehold.co/400x300?text=Image+Not+Found';
+                              }}
+                            />
+                          </a>
+                          <div className="p-4">
+                            {item.description && (
+                              <p className="text-gray-300 text-sm mb-3">{item.description}</p>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <a
+                                href={item.liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-2"
+                              >
+                                <FaGlobe className="text-xs" />
+                                View Live Product
+                              </a>
+                              {currentUser && service.seller && currentUser.userId === service.seller._id && (
+                                <button
+                                  onClick={() => handleDeletePortfolio(item._id)}
+                                  className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    currentUser && service.seller && currentUser.userId === service.seller._id ? (
+                      <div className="text-center py-8 text-gray-400">
+                        <FaFileAlt className="text-4xl mx-auto mb-3 text-gray-600" />
+                        <p>No portfolio items yet. Add your first one!</p>
+                      </div>
+                    ) : null
+                  )}
+                </motion.div>
+              ) : null}
 
               {/* Reviews Section */}
               <motion.div

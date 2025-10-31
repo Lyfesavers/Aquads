@@ -148,7 +148,28 @@ const serviceSchema = new mongoose.Schema({
   views: {
     type: Number,
     default: 0
-  }
+  },
+  portfolio: [{
+    imageUrl: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    liveUrl: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });
