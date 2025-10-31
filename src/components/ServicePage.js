@@ -67,7 +67,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   
   // Portfolio state
   const [showAddPortfolio, setShowAddPortfolio] = useState(false);
-  const [portfolioForm, setPortfolioForm] = useState({ imageUrl: '', liveUrl: '', description: '' });
+  const [portfolioForm, setPortfolioForm] = useState({ imageUrl: '', liveUrl: '' });
   const [editingPortfolioId, setEditingPortfolioId] = useState(null);
   const [portfolioError, setPortfolioError] = useState('');
 
@@ -192,7 +192,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
 
       const updatedService = await response.json();
       setService(updatedService);
-      setPortfolioForm({ imageUrl: '', liveUrl: '', description: '' });
+      setPortfolioForm({ imageUrl: '', liveUrl: '' });
       setShowAddPortfolio(false);
     } catch (error) {
       logger.error('Error adding portfolio item:', error);
@@ -673,11 +673,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                               <input
                                 type="url"
                                 required
-                                placeholder="https://example.com/screenshot.jpg"
+                                placeholder="https://example.com/screenshot.jpg (Recommended: 800x600px)"
                                 className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                                 value={portfolioForm.imageUrl}
                                 onChange={(e) => setPortfolioForm({ ...portfolioForm, imageUrl: e.target.value })}
                               />
+                              <p className="text-gray-400 text-xs mt-1">💡 Use 800x600px or 4:3 ratio for best display</p>
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -690,18 +691,6 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                                 className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
                                 value={portfolioForm.liveUrl}
                                 onChange={(e) => setPortfolioForm({ ...portfolioForm, liveUrl: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Description (Optional)
-                              </label>
-                              <textarea
-                                rows="3"
-                                placeholder="Brief description of the work..."
-                                className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white resize-none"
-                                value={portfolioForm.description}
-                                onChange={(e) => setPortfolioForm({ ...portfolioForm, description: e.target.value })}
                               />
                             </div>
                           </div>
@@ -729,17 +718,14 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                           <a href={item.liveUrl} target="_blank" rel="noopener noreferrer" className="block">
                             <img
                               src={item.imageUrl}
-                              alt={item.description || 'Portfolio item'}
-                              className="w-full h-48 object-cover hover:opacity-90 transition-opacity"
+                              alt="Portfolio item"
+                              className="w-full h-48 object-contain bg-gray-800 hover:opacity-90 transition-opacity"
                               onError={(e) => {
-                                e.target.src = 'https://placehold.co/400x300?text=Image+Not+Found';
+                                e.target.src = 'https://placehold.co/800x600?text=Image+Not+Found';
                               }}
                             />
                           </a>
                           <div className="p-4">
-                            {item.description && (
-                              <p className="text-gray-300 text-sm mb-3">{item.description}</p>
-                            )}
                             <div className="flex items-center justify-between">
                               <a
                                 href={item.liveUrl}

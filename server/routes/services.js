@@ -389,7 +389,7 @@ router.get('/premium-requests', auth, async (req, res) => {
 // Add portfolio item to service (owner only)
 router.post('/:id/portfolio', auth, async (req, res) => {
   try {
-    const { imageUrl, liveUrl, description } = req.body;
+    const { imageUrl, liveUrl } = req.body;
     
     if (!imageUrl || !liveUrl) {
       return res.status(400).json({ error: 'Image URL and Live URL are required' });
@@ -415,7 +415,6 @@ router.post('/:id/portfolio', auth, async (req, res) => {
     service.portfolio.push({
       imageUrl: imageUrl.trim(),
       liveUrl: liveUrl.trim(),
-      description: description ? description.trim() : '',
       addedAt: new Date()
     });
 
@@ -431,7 +430,7 @@ router.post('/:id/portfolio', auth, async (req, res) => {
 // Update portfolio item (owner only)
 router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
   try {
-    const { imageUrl, liveUrl, description } = req.body;
+    const { imageUrl, liveUrl } = req.body;
     
     const service = await Service.findById(req.params.id);
     
@@ -454,7 +453,6 @@ router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
     // Update fields
     if (imageUrl) portfolioItem.imageUrl = imageUrl.trim();
     if (liveUrl) portfolioItem.liveUrl = liveUrl.trim();
-    if (description !== undefined) portfolioItem.description = description.trim();
 
     await service.save();
 
