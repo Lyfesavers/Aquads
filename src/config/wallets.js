@@ -19,7 +19,7 @@ export const AQUADS_WALLETS = {
 // Fee structure configuration
 export const FEE_CONFIG = {
   // AquaSwap fees (existing)
-  SWAP_FEE_PERCENTAGE: 0.0025, // 0.25%
+  SWAP_FEE_PERCENTAGE: 0.005, // 0.5%
   
   // AquaFi fees (strategic structure - 0% deposit, 2.5% withdrawal)
   SAVINGS_MANAGEMENT_FEE: 0.0, // 0% fee on deposit (no barrier to entry)

@@ -10,7 +10,7 @@ import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } f
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
-const FEE_PERCENTAGE = 0.0025; // 0.25% fee
+const FEE_PERCENTAGE = 0.005; // 0.5% fee
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet address
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
