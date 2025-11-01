@@ -2048,9 +2048,14 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       // Store message ID for next cleanup
       if (messageId) {
         telegramService.lastTrendingMessages.push(messageId);
+        
+        // Pin the message to the channel
+        try {
+          await telegramService.pinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
+        } catch (pinError) {
+          console.error('Error pinning bubble summary:', pinError.message);
+        }
       }
-
-      console.log('Daily bubble summary sent to trending channel');
 
     } catch (error) {
       console.error('Error sending daily bubble summary:', error);

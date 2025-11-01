@@ -221,7 +221,6 @@ setInterval(async () => {
 // Send initial bubble summary on server start (after a delay to ensure DB is ready)
 setTimeout(async () => {
   try {
-    console.log('[Daily Bubble Summary] Sending initial bubble summary...');
     await telegramService.sendDailyBubbleSummary();
   } catch (error) {
     console.error('[Daily Bubble Summary] Error sending initial summary:', error);
