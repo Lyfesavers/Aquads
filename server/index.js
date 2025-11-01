@@ -209,6 +209,25 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000); // Run every hour
 
+// Periodic task for sending daily bubble summary to trending channel
+setInterval(async () => {
+  try {
+    await telegramService.sendDailyBubbleSummary();
+  } catch (error) {
+    console.error('[Daily Bubble Summary] Error in daily summary task:', error);
+  }
+}, 24 * 60 * 60 * 1000); // Run every 24 hours
+
+// Send initial bubble summary on server start (after a delay to ensure DB is ready)
+setTimeout(async () => {
+  try {
+    console.log('[Daily Bubble Summary] Sending initial bubble summary...');
+    await telegramService.sendDailyBubbleSummary();
+  } catch (error) {
+    console.error('[Daily Bubble Summary] Error sending initial summary:', error);
+  }
+}, 10000); // Wait 10 seconds after server start
+
 // Middleware
 const corsOptions = {
   origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],

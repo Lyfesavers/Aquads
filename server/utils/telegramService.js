@@ -11,6 +11,12 @@ const BotSettings = require('../models/BotSettings');
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
+  
+  // Trending channel ID for all vote notifications and daily bubble updates
+  TRENDING_CHANNEL_ID: '-1003255823970',
+  
+  // Store message IDs for cleanup
+  lastTrendingMessages: [],
 
   // Load active groups from database
   loadActiveGroups: async () => {
@@ -1835,15 +1841,62 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
     }
   },
 
-  // Send vote notification to registered group
-  sendVoteNotificationToGroup: async (project) => {
+  // Delete a message
+  deleteMessage: async (chatId, messageId) => {
     try {
-      // Only send if project has a registered group
-      if (!project.telegramGroupId) {
-        return;
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) return;
+
+      await axios.post(
+        `https://api.telegram.org/bot${botToken}/deleteMessage`,
+        {
+          chat_id: chatId,
+          message_id: messageId
+        }
+      );
+    } catch (error) {
+      // Silently fail - message might already be deleted
+    }
+  },
+
+  // Send video to a chat
+  sendVideoToChat: async (chatId, videoPath, caption) => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        console.error('TELEGRAM_BOT_TOKEN not configured');
+        return null;
       }
 
-      const groupChatId = project.telegramGroupId;
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('video', fs.createReadStream(videoPath));
+      formData.append('caption', caption);
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/sendVideo`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+          },
+          timeout: 30000,
+        }
+      );
+
+      if (response.data.ok) {
+        return response.data.result.message_id;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error sending video:', error.message);
+      return null;
+    }
+  },
+
+  // Send vote notification to registered group AND trending channel
+  sendVoteNotificationToGroup: async (project) => {
+    try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
       if (!botToken) {
@@ -1871,46 +1924,117 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       const videoPath = path.join(__dirname, '../../public/new vote.mp4');
       const videoExists = fs.existsSync(videoPath);
 
+      // Send to registered group (if exists)
+      if (project.telegramGroupId) {
+        const groupChatId = project.telegramGroupId;
+        
+        if (videoExists) {
+          try {
+            await telegramService.sendVideoToChat(groupChatId, videoPath, message);
+          } catch (error) {
+            console.error('Error sending to registered group:', error.message);
+            // Fallback to text
+            try {
+              await telegramService.sendTextMessage(botToken, groupChatId, message);
+            } catch (textError) {
+              console.error('Failed to send text fallback:', textError.message);
+            }
+          }
+        } else {
+          await telegramService.sendTextMessage(botToken, groupChatId, message);
+        }
+      }
+
+      // Also send to trending channel
       if (videoExists) {
         try {
-          // Send video with caption
-          const formData = new FormData();
-          formData.append('chat_id', groupChatId);
-          formData.append('video', fs.createReadStream(videoPath));
-          formData.append('caption', message);
-
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendVideo`,
-            formData,
-            {
-              headers: {
-                ...formData.getHeaders(),
-              },
-              timeout: 30000, // 30 second timeout for video upload
-            }
-          );
-
-          if (!response.data.ok) {
-            console.error('Failed to send vote notification video:', response.data);
-            // Fallback to text message
-            await telegramService.sendTextMessage(botToken, groupChatId, message);
-          }
+          await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
         } catch (error) {
-          console.error('Error sending vote notification video:', error.message);
-          // Fallback to text message
+          console.error('Error sending to trending channel:', error.message);
+          // Fallback to text
           try {
-            await telegramService.sendTextMessage(botToken, groupChatId, message);
+            await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
           } catch (textError) {
-            console.error('Failed to send text fallback:', textError.message);
+            console.error('Failed to send text to trending channel:', textError.message);
           }
         }
       } else {
-        // Video doesn't exist, send text message
-        await telegramService.sendTextMessage(botToken, groupChatId, message);
+        await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
       }
 
     } catch (error) {
       console.error('Error sending vote notification to group:', error);
+    }
+  },
+
+  // Send daily bubble summary to trending channel
+  sendDailyBubbleSummary: async () => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        console.error('TELEGRAM_BOT_TOKEN not configured');
+        return;
+      }
+
+      // Delete old messages first
+      for (const messageId of telegramService.lastTrendingMessages) {
+        await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
+      }
+      telegramService.lastTrendingMessages = [];
+
+      // Get top 10 bumped bubbles by votes
+      const topBubbles = await Ad.find({ 
+        isBumped: true,
+        status: { $in: ['active', 'approved'] }
+      })
+      .sort({ bullishVotes: -1 })
+      .limit(10);
+
+      if (topBubbles.length === 0) {
+        return;
+      }
+
+      // Create summary message
+      let message = `🔥 AQUADS TRENDING BUBBLES 🔥\n`;
+      message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+      topBubbles.forEach((bubble, index) => {
+        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔸';
+        message += `${rankEmoji} #${index + 1} ${bubble.title}\n`;
+        message += `📊 👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0}\n`;
+        message += `🔗 ${bubble.url}\n`;
+        message += `⛓️ ${bubble.blockchain || 'Ethereum'}\n\n`;
+      });
+
+      message += `━━━━━━━━━━━━━━━━━━━━\n`;
+      message += `💎 Vote on your favorites at aquads.xyz`;
+
+      // Send with video
+      const videoPath = path.join(__dirname, '../../public/trend.mp4');
+      const videoExists = fs.existsSync(videoPath);
+
+      let messageId = null;
+      if (videoExists) {
+        messageId = await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
+      }
+
+      if (!messageId) {
+        // Fallback to text
+        const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
+        if (result.success) {
+          messageId = result.messageId;
+        }
+      }
+
+      // Store message ID for next cleanup
+      if (messageId) {
+        telegramService.lastTrendingMessages.push(messageId);
+      }
+
+      console.log('Daily bubble summary sent to trending channel');
+
+    } catch (error) {
+      console.error('Error sending daily bubble summary:', error);
     }
   },
 
