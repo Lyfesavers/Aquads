@@ -9,6 +9,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
+const telegramService = require('../utils/telegramService');
 
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
@@ -673,6 +674,11 @@ router.post('/:id/vote', auth, async (req, res) => {
         bearishVotes: updatedAd.bearishVotes
       });
       
+      // Send notification to registered Telegram group about vote change
+      telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
+        console.error('Error sending telegram notification:', err);
+      });
+      
       return res.json({
         success: true,
         adId: updatedAd.id,
@@ -724,6 +730,11 @@ router.post('/:id/vote', auth, async (req, res) => {
         adId: updatedAd.id,
         bullishVotes: updatedAd.bullishVotes,
         bearishVotes: updatedAd.bearishVotes
+      });
+      
+      // Send notification to registered Telegram group about new vote
+      telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
+        console.error('Error sending telegram notification:', err);
       });
       
       return res.json({

@@ -1658,7 +1658,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         if (chatId < 0 && (!project.telegramGroupId || project.telegramGroupId !== chatId.toString())) {
           project.telegramGroupId = chatId.toString();
           await project.save();
-          console.log(`Registered project ${project.title} to group ${chatId}`);
         }
         // Get project rank based on bullish votes
         const allBubbles = await Ad.find({ 
@@ -1841,7 +1840,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
     try {
       // Only send if project has a registered group
       if (!project.telegramGroupId) {
-        console.log(`No telegram group registered for project: ${project.title}`);
         return;
       }
 
@@ -1892,9 +1890,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
             }
           );
 
-          if (response.data.ok) {
-            console.log(`Vote notification sent to group ${groupChatId} for project ${project.title}`);
-          } else {
+          if (!response.data.ok) {
             console.error('Failed to send vote notification video:', response.data);
             // Fallback to text message
             await telegramService.sendTextMessage(botToken, groupChatId, message);
@@ -1910,7 +1906,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         }
       } else {
         // Video doesn't exist, send text message
-        console.log('new vote.mp4 not found, sending text message');
         await telegramService.sendTextMessage(botToken, groupChatId, message);
       }
 
