@@ -17,6 +17,7 @@ const telegramService = {
   
   // Store message IDs for cleanup
   lastTrendingMessages: [],
+  lastVoteMessages: [], // Store vote notification message IDs for cleanup
 
   // Load active groups from database
   loadActiveGroups: async () => {
@@ -1946,20 +1947,38 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       }
 
       // Also send to trending channel
+      // First, clean up ALL old vote messages
+      for (const msgId of telegramService.lastVoteMessages) {
+        await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, msgId);
+      }
+      telegramService.lastVoteMessages = [];
+
+      let trendingMessageId = null;
       if (videoExists) {
         try {
-          await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
+          trendingMessageId = await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
         } catch (error) {
           console.error('Error sending to trending channel:', error.message);
           // Fallback to text
           try {
-            await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
+            const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
+            if (result.success) {
+              trendingMessageId = result.messageId;
+            }
           } catch (textError) {
             console.error('Failed to send text to trending channel:', textError.message);
           }
         }
       } else {
-        await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
+        const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
+        if (result.success) {
+          trendingMessageId = result.messageId;
+        }
+      }
+
+      // Store the message ID for future cleanup
+      if (trendingMessageId) {
+        telegramService.lastVoteMessages.push(trendingMessageId);
       }
 
     } catch (error) {
