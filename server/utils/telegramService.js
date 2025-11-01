@@ -1654,6 +1654,12 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       // Send each project with voting buttons
       for (const project of userProjects) {
+        // Store the group ID if this is a group chat (negative chat IDs are groups)
+        if (chatId < 0 && (!project.telegramGroupId || project.telegramGroupId !== chatId.toString())) {
+          project.telegramGroupId = chatId.toString();
+          await project.save();
+          console.log(`Registered project ${project.title} to group ${chatId}`);
+        }
         // Get project rank based on bullish votes
         const allBubbles = await Ad.find({ 
           isBumped: true,
@@ -1830,6 +1836,89 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
     }
   },
 
+  // Send vote notification to registered group
+  sendVoteNotificationToGroup: async (project) => {
+    try {
+      // Only send if project has a registered group
+      if (!project.telegramGroupId) {
+        console.log(`No telegram group registered for project: ${project.title}`);
+        return;
+      }
+
+      const groupChatId = project.telegramGroupId;
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+      if (!botToken) {
+        console.error('TELEGRAM_BOT_TOKEN not configured');
+        return;
+      }
+
+      // Calculate project rank
+      const allBubbles = await Ad.find({ 
+        isBumped: true,
+        status: { $in: ['active', 'approved'] }
+      })
+      .sort({ bullishVotes: -1 })
+      .select('_id bullishVotes');
+      
+      const projectRank = allBubbles.findIndex(bubble => bubble._id.toString() === project._id.toString()) + 1;
+      const rankEmoji = projectRank === 1 ? '🥇' : projectRank === 2 ? '🥈' : projectRank === 3 ? '🥉' : '🔸';
+
+      // Create notification message
+      let message = `🎉 New Vote for ${project.title}!\n\n`;
+      message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
+      message += `🏆 Rank: ${rankEmoji} #${projectRank}`;
+
+      // Path to the new vote video
+      const videoPath = path.join(__dirname, '../../public/new vote.mp4');
+      const videoExists = fs.existsSync(videoPath);
+
+      if (videoExists) {
+        try {
+          // Send video with caption
+          const formData = new FormData();
+          formData.append('chat_id', groupChatId);
+          formData.append('video', fs.createReadStream(videoPath));
+          formData.append('caption', message);
+
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendVideo`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000, // 30 second timeout for video upload
+            }
+          );
+
+          if (response.data.ok) {
+            console.log(`Vote notification sent to group ${groupChatId} for project ${project.title}`);
+          } else {
+            console.error('Failed to send vote notification video:', response.data);
+            // Fallback to text message
+            await telegramService.sendTextMessage(botToken, groupChatId, message);
+          }
+        } catch (error) {
+          console.error('Error sending vote notification video:', error.message);
+          // Fallback to text message
+          try {
+            await telegramService.sendTextMessage(botToken, groupChatId, message);
+          } catch (textError) {
+            console.error('Failed to send text fallback:', textError.message);
+          }
+        }
+      } else {
+        // Video doesn't exist, send text message
+        console.log('new vote.mp4 not found, sending text message');
+        await telegramService.sendTextMessage(botToken, groupChatId, message);
+      }
+
+    } catch (error) {
+      console.error('Error sending vote notification to group:', error);
+    }
+  },
+
   // Process vote on project
   processVote: async (chatId, telegramUserId, projectId, voteType) => {
     try {
@@ -1875,8 +1964,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           
           await project.save();
 
-          await telegramService.sendBotMessage(chatId, 
-            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        await telegramService.sendBotMessage(chatId, 
+          `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        
+        // Send notification to registered group about vote update
+        await telegramService.sendVoteNotificationToGroup(project);
         }
       } else {
         // New vote - only award points for first vote on this project
@@ -1910,6 +2002,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
         await telegramService.sendBotMessage(chatId, 
           `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        
+        // Send notification to registered group about new vote
+        await telegramService.sendVoteNotificationToGroup(project);
       }
 
     } catch (error) {

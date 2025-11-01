@@ -150,6 +150,11 @@ const adSchema = new mongoose.Schema({
       }
     }],
     default: []
+  },
+  // Telegram group ID where this project was registered/shared
+  telegramGroupId: {
+    type: String,
+    default: null
   }
 });
 
