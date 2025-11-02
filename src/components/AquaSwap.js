@@ -63,8 +63,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // If a trading symbol was provided, switch to TradingView and set the symbol directly
       setChartProvider('tradingview');
       setTokenSearch(symbolParam.toUpperCase());
-      // Clean URL
-      window.history.replaceState({}, document.title, '/aquaswap');
+      // Keep URL parameters for shareability
+      // window.history.replaceState({}, document.title, '/aquaswap');
     } else if (tokenParam && blockchainParam) {
       // Set token search and chain based on URL parameters
       setTokenSearch(tokenParam);
@@ -72,8 +72,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       setSelectedChain(getChainForBlockchain(blockchainParam));
       setChartProvider('dexscreener');
       
-      // Clean up URL by removing the parameters
-      window.history.replaceState({}, document.title, '/aquaswap');
+      // Keep URL parameters for shareability - do not clean up
+      // window.history.replaceState({}, document.title, '/aquaswap');
     }
 
     // Cleanup: remove class when component unmounts
