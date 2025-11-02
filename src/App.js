@@ -2851,21 +2851,10 @@ function App() {
                                 {/* Background of bubble */}
                                 <div className="bubble-bg"></div>
                                 
-                                {/* Curved text at top */}
-                                <div 
-                                  className="bubble-text-curved"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (requireAuth()) {
-                                      setSelectedAdId(ad.id);
-                                      setShowBumpStore(true);
-                                    } else {
-                                      // Show login prompt for bump store access
-                                      showNotification('Please log in to access the bump store', 'info');
-                                      setShowLoginModal(true);
-                                    }
-                                  }}
-                                >
+                              {/* Curved text at top */}
+                              <div 
+                                className="bubble-text-curved"
+                              >
                                   <svg 
                                     width="100%" 
                                     height="40" 
