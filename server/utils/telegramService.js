@@ -1921,6 +1921,19 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
       message += `🏆 Rank: ${rankEmoji} #${projectRank}`;
 
+      // Create voting keyboard
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: "👍 Bullish", callback_data: "vote_bullish_" + project._id.toString() },
+            { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
+          ],
+          [
+            { text: "🔗 View on Aquads", url: "https://aquads.xyz" }
+          ]
+        ]
+      };
+
       // Path to the new vote video
       const videoPath = path.join(__dirname, '../../public/new vote.mp4');
       const videoExists = fs.existsSync(videoPath);
@@ -1931,18 +1944,38 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         
         if (videoExists) {
           try {
-            await telegramService.sendVideoToChat(groupChatId, videoPath, message);
+            const formData = new FormData();
+            formData.append('chat_id', groupChatId);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 30000,
+              }
+            );
           } catch (error) {
             console.error('Error sending to registered group:', error.message);
-            // Fallback to text
-            try {
-              await telegramService.sendTextMessage(botToken, groupChatId, message);
-            } catch (textError) {
-              console.error('Failed to send text fallback:', textError.message);
-            }
           }
         } else {
-          await telegramService.sendTextMessage(botToken, groupChatId, message);
+          try {
+            await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendMessage`,
+              {
+                chat_id: groupChatId,
+                text: message,
+                reply_markup: keyboard
+              }
+            );
+          } catch (error) {
+            console.error('Failed to send text to registered group:', error.message);
+          }
         }
       }
 
@@ -1956,23 +1989,44 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       let trendingMessageId = null;
       if (videoExists) {
         try {
-          trendingMessageId = await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
+          const formData = new FormData();
+          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+          formData.append('video', fs.createReadStream(videoPath));
+          formData.append('caption', message);
+          formData.append('reply_markup', JSON.stringify(keyboard));
+
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendVideo`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000,
+            }
+          );
+
+          if (response.data.ok) {
+            trendingMessageId = response.data.result.message_id;
+          }
         } catch (error) {
           console.error('Error sending to trending channel:', error.message);
-          // Fallback to text
-          try {
-            const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
-            if (result.success) {
-              trendingMessageId = result.messageId;
-            }
-          } catch (textError) {
-            console.error('Failed to send text to trending channel:', textError.message);
-          }
         }
       } else {
-        const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
-        if (result.success) {
-          trendingMessageId = result.messageId;
+        try {
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendMessage`,
+            {
+              chat_id: telegramService.TRENDING_CHANNEL_ID,
+              text: message,
+              reply_markup: keyboard
+            }
+          );
+          if (response.data.ok) {
+            trendingMessageId = response.data.result.message_id;
+          }
+        } catch (error) {
+          console.error('Failed to send text to trending channel:', error.message);
         }
       }
 
