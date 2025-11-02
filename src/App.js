@@ -356,6 +356,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
+  const [votingAdId, setVotingAdId] = useState(null); // Track which ad is currently being voted on
   
   // Initialize user presence tracking across all pages
   useUserPresence(currentUser);
@@ -1310,6 +1311,14 @@ function App() {
       return;
     }
     
+    // Prevent double-clicking - if already voting on this ad, do nothing
+    if (votingAdId === adId) {
+      return;
+    }
+    
+    // Set loading state for this specific ad
+    setVotingAdId(adId);
+    
     try {
       const response = await fetch(`${API_URL}/ads/${adId}/vote`, {
         method: 'POST',
@@ -1351,6 +1360,9 @@ function App() {
     } catch (error) {
       logger.error('Error voting on ad:', error);
       showNotification(error.message || 'Failed to vote', 'error');
+    } finally {
+      // Clear loading state when done
+      setVotingAdId(null);
     }
   };
 
@@ -2796,32 +2808,42 @@ function App() {
                               {/* Voting popup that appears on hover */}
                               <div className="vote-popup">
                                 <button 
-                                  className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
+                                  className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''} ${votingAdId === ad.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSentimentVote(ad.id, 'bearish');
                                   }}
+                                  disabled={votingAdId === ad.id}
                                   aria-label="Vote bearish"
                                 >
-                                  <img 
-                                    src="/Bearish.svg" 
-                                    alt="Bearish" 
-                                    className="w-4 h-4"
-                                  />
+                                  {votingAdId === ad.id ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <img 
+                                      src="/Bearish.svg" 
+                                      alt="Bearish" 
+                                      className="w-4 h-4"
+                                    />
+                                  )}
                                 </button>
                                 <button 
-                                  className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
+                                  className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''} ${votingAdId === ad.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSentimentVote(ad.id, 'bullish');
                                   }}
+                                  disabled={votingAdId === ad.id}
                                   aria-label="Vote bullish"
                                 >
-                                  <img 
-                                    src="/Bullish.svg" 
-                                    alt="Bullish" 
-                                    className="w-4 h-4"
-                                  />
+                                  {votingAdId === ad.id ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <img 
+                                      src="/Bullish.svg" 
+                                      alt="Bullish" 
+                                      className="w-4 h-4"
+                                    />
+                                  )}
                                 </button>
                               </div>
                               
