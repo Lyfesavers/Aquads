@@ -2019,7 +2019,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       topBubbles.forEach((bubble, index) => {
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔸';
-        const buyLink = `https://aquads.xyz/aquaswap?token=${bubble.pairAddress}&chain=${bubble.blockchain || 'ethereum'}`;
+        const buyLink = `https://aquads.xyz/aquaswap?token=${bubble.pairAddress}&blockchain=${bubble.blockchain || 'ethereum'}`;
         
         message += `${rankEmoji} #${index + 1} ${bubble.title}\n`;
         message += `📊 👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0}\n`;
