@@ -2019,9 +2019,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       topBubbles.forEach((bubble, index) => {
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔸';
+        const buyLink = `https://aquads.xyz/aquaswap?token=${bubble.pairAddress}&chain=${bubble.blockchain || 'ethereum'}`;
+        
         message += `${rankEmoji} #${index + 1} ${bubble.title}\n`;
         message += `📊 👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0}\n`;
-        message += `🔗 ${bubble.url}\n`;
+        message += `🔗 <a href="${buyLink}">Buy Now</a>\n`;
         message += `⛓️ ${bubble.blockchain || 'Ethereum'}\n\n`;
       });
 
@@ -2034,14 +2036,48 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       let messageId = null;
       if (videoExists) {
-        messageId = await telegramService.sendVideoToChat(telegramService.TRENDING_CHANNEL_ID, videoPath, message);
+        try {
+          const formData = new FormData();
+          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+          formData.append('video', fs.createReadStream(videoPath));
+          formData.append('caption', message);
+          formData.append('parse_mode', 'HTML');
+
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendVideo`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000,
+            }
+          );
+
+          if (response.data.ok) {
+            messageId = response.data.result.message_id;
+          }
+        } catch (error) {
+          console.error('Error sending bubble summary video:', error.message);
+        }
       }
 
       if (!messageId) {
         // Fallback to text
-        const result = await telegramService.sendTextMessage(botToken, telegramService.TRENDING_CHANNEL_ID, message);
-        if (result.success) {
-          messageId = result.messageId;
+        try {
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendMessage`,
+            {
+              chat_id: telegramService.TRENDING_CHANNEL_ID,
+              text: message,
+              parse_mode: 'HTML'
+            }
+          );
+          if (response.data.ok) {
+            messageId = response.data.result.message_id;
+          }
+        } catch (error) {
+          console.error('Error sending bubble summary text:', error.message);
         }
       }
 
