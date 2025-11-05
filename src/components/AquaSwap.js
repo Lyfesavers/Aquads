@@ -831,6 +831,63 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
+    
+    // ============ EVENT HANDLERS FOR WALLET CONNECTION & SWAP FEEDBACK ============
+    
+    // Wallet connection events
+    onWalletConnect: (wallet) => {
+      logger.info('Wallet connected to AquaSwap', { 
+        address: wallet?.address, 
+        chainId: wallet?.chainId 
+      });
+      
+      if (showNotification) {
+        showNotification('🎉 Wallet connected successfully!', 'success');
+      }
+    },
+    
+    onWalletDisconnect: () => {
+      logger.info('Wallet disconnected from AquaSwap');
+      
+      if (showNotification) {
+        showNotification('Wallet disconnected', 'info');
+      }
+    },
+    
+    // Swap lifecycle events
+    onRouteExecutionStarted: (route) => {
+      logger.info('Swap execution started', { route });
+      
+      if (showNotification) {
+        showNotification('🔄 Starting your swap...', 'info');
+      }
+    },
+    
+    onRouteExecutionCompleted: (route) => {
+      logger.info('Swap execution completed', { route });
+      
+      if (showNotification) {
+        showNotification('✅ Swap completed successfully!', 'success');
+      }
+    },
+    
+    onRouteExecutionFailed: (route, error) => {
+      logger.error('Swap execution failed', { route, error });
+      
+      if (showNotification) {
+        const errorMessage = error?.message || 'Swap failed. Please try again.';
+        showNotification(`❌ ${errorMessage}`, 'error');
+      }
+    },
+    
+    // Route update events for user feedback
+    onRouteExecutionUpdated: (route) => {
+      logger.info('Swap execution updated', { route });
+      // Optional: Show progress updates
+    },
+    
+    // ============ END OF EVENT HANDLERS ============
+    
     // Hide branding
     hiddenUI: ["poweredBy"],
     // Use compact variant

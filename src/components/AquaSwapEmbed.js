@@ -34,6 +34,87 @@ const AquaSwapEmbed = () => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
+    
+    // ============ EVENT HANDLERS FOR WALLET CONNECTION & SWAP FEEDBACK ============
+    
+    // Wallet connection events
+    onWalletConnect: (wallet) => {
+      logger.info('Wallet connected to AquaSwap Embed', { 
+        address: wallet?.address, 
+        chainId: wallet?.chainId 
+      });
+      
+      // Send message to parent window about wallet connection
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_WALLET_CONNECTED',
+          wallet: {
+            address: wallet?.address,
+            chainId: wallet?.chainId
+          },
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
+    onWalletDisconnect: () => {
+      logger.info('Wallet disconnected from AquaSwap Embed');
+      
+      // Send message to parent window about wallet disconnection
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_WALLET_DISCONNECTED',
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
+    // Swap lifecycle events
+    onRouteExecutionStarted: (route) => {
+      logger.info('Swap execution started in embed', { route });
+      
+      // Send message to parent window
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_SWAP_STARTED',
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
+    onRouteExecutionCompleted: (route) => {
+      logger.info('Swap execution completed in embed', { route });
+      
+      // Send message to parent window
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_SWAP_COMPLETED',
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
+    onRouteExecutionFailed: (route, error) => {
+      logger.error('Swap execution failed in embed', { route, error });
+      
+      // Send message to parent window
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_SWAP_FAILED',
+          error: error?.message || 'Unknown error',
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
+    // Route update events
+    onRouteExecutionUpdated: (route) => {
+      logger.info('Swap execution updated in embed', { route });
+      // Optional: Send progress updates to parent
+    },
+    
+    // ============ END OF EVENT HANDLERS ============
+    
     // Hide branding for clean embed
     hiddenUI: ["poweredBy", "toAddress", "fromAmount"],
     // Use compact variant for embedding
