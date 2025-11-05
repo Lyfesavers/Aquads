@@ -2602,12 +2602,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           
                           <div className="flex space-x-2">
                             {!ad.status || ad.status !== 'pending' ? (
-                              <button
-                                onClick={() => handleBumpClick(ad.id)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                              >
-                                Bump
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleBumpClick(ad.id)}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                                >
+                                  Bump
+                                </button>
+                                <a
+                                  href="https://t.me/+6rJbDLqdMxA3ZTUx"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded inline-flex items-center"
+                                  title="Book a free AMA session"
+                                >
+                                  Book Free AMA
+                                </a>
+                              </>
                             ) : (
                               <span className="text-yellow-500 px-3 py-1">
                                 Bump Pending
@@ -3636,9 +3647,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               
                               <div className="flex space-x-2">
                                 {!ad.status || ad.status !== 'pending' ? (
-                                  <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
-                                    Bump
-                                  </button>
+                                  <>
+                                    <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
+                                      Bump
+                                    </button>
+                                    <a
+                                      href="https://t.me/+6rJbDLqdMxA3ZTUx"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded inline-flex items-center"
+                                      title="Book a free AMA session"
+                                    >
+                                      Book Free AMA
+                                    </a>
+                                  </>
                                 ) : (
                                   <span className="text-yellow-500 px-3 py-1">
                                     Bump Pending
