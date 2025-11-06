@@ -2215,6 +2215,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
         await telegramService.sendBotMessage(chatId, 
           `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        
+        // Send notification to registered group about vote update
+        await telegramService.sendVoteNotificationToGroup(project);
         }
       } else {
         // New vote - only award points for first vote on this project
@@ -2248,6 +2251,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
         await telegramService.sendBotMessage(chatId, 
           `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        
+        // Send notification to registered group about new vote
+        await telegramService.sendVoteNotificationToGroup(project);
       }
 
     } catch (error) {
