@@ -129,6 +129,11 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
               </button>
             </div>
           </form>
+          <div className="mt-6 pt-4 border-t border-gray-700 text-center">
+            <p className="text-gray-400 text-xs">
+              Powered by <span className="text-blue-400 font-semibold">Aquads</span>
+            </p>
+          </div>
         </div>
       </div>
 
