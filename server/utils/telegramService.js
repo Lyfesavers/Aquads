@@ -18,6 +18,10 @@ const telegramService = {
   // Store message IDs for cleanup
   lastTrendingMessages: [],
   lastVoteMessages: [], // Store vote notification message IDs for cleanup
+  
+  // Queue system for vote notifications to prevent race conditions
+  voteNotificationQueue: [],
+  isProcessingVoteQueue: false,
 
   // Load active groups from database
   loadActiveGroups: async () => {
@@ -1895,8 +1899,43 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
     }
   },
 
-  // Send vote notification to registered group AND trending channel
+  // Process the vote notification queue
+  processVoteNotificationQueue: async () => {
+    if (telegramService.isProcessingVoteQueue || telegramService.voteNotificationQueue.length === 0) {
+      return;
+    }
+
+    telegramService.isProcessingVoteQueue = true;
+
+    while (telegramService.voteNotificationQueue.length > 0) {
+      const project = telegramService.voteNotificationQueue.shift();
+      
+      try {
+        await telegramService.sendVoteNotificationToGroupInternal(project);
+      } catch (error) {
+        console.error('Error processing vote notification from queue:', error);
+      }
+      
+      // Small delay to prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    telegramService.isProcessingVoteQueue = false;
+  },
+
+  // Send vote notification to registered group AND trending channel (add to queue)
   sendVoteNotificationToGroup: async (project) => {
+    // Add to queue instead of processing immediately
+    telegramService.voteNotificationQueue.push(project);
+    
+    // Start processing the queue
+    telegramService.processVoteNotificationQueue().catch(err => {
+      console.error('Error in vote notification queue processor:', err);
+    });
+  },
+
+  // Internal function that actually sends the notification
+  sendVoteNotificationToGroupInternal: async (project) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -1967,11 +2006,17 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       }
 
       // Also send to trending channel
-      // First, clean up ALL old vote messages
-      for (const msgId of telegramService.lastVoteMessages) {
-        await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, msgId);
-      }
+      // First, clean up ALL old vote messages - snapshot them to avoid race conditions
+      const messagesToDelete = [...telegramService.lastVoteMessages];
       telegramService.lastVoteMessages = [];
+      
+      // Delete old messages in parallel for faster cleanup
+      await Promise.all(
+        messagesToDelete.map(msgId => 
+          telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, msgId)
+            .catch(err => console.error(`Failed to delete message ${msgId}:`, err))
+        )
+      );
 
       let trendingMessageId = null;
       if (videoExists) {
