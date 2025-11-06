@@ -94,14 +94,14 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       ipAddress: req.clientIp, // Store client IP address
       deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null, // Store device fingerprint
       country: country || null, // Store country code
-      tokens: (req.body.userType || 'freelancer') === 'freelancer' ? 5 : 0, // Only give tokens to freelancers
+      tokens: (req.body.userType || 'freelancer') === 'freelancer' ? 2 : 0, // Only give tokens to freelancers
       tokenHistory: (req.body.userType || 'freelancer') === 'freelancer' ? [{
         type: 'purchase',
-        amount: 5,
+        amount: 2,
         reason: 'Signup bonus tokens',
         relatedId: null,
         balanceBefore: 0,
-        balanceAfter: 5,
+        balanceAfter: 2,
         createdAt: new Date()
       }] : [], // Empty token history for non-freelancers
       cv: {
@@ -918,7 +918,7 @@ router.post('/verify-email', async (req, res) => {
 
     // Create message based on user type
     const message = user.userType === 'freelancer' 
-      ? 'Email verified successfully! Points have been awarded. You also received 5 bonus tokens on signup.'
+      ? 'Email verified successfully! Points have been awarded. You also received 2 bonus tokens on signup.'
       : 'Email verified successfully! Points have been awarded.';
 
     res.json({ 
