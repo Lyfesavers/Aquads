@@ -2196,8 +2196,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       if (existingVote) {
         if (existingVote.voteType === voteType) {
-          await telegramService.sendBotMessage(chatId, 
-            `❌ You already voted ${voteType} on this project.`);
+          // Only send error message in private chats
+          if (chatId > 0) {
+            await telegramService.sendBotMessage(chatId, 
+              `❌ You already voted ${voteType} on this project.`);
+          }
         } else {
           // Update existing vote
           existingVote.voteType = voteType;
@@ -2213,8 +2216,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           
           await project.save();
 
-        await telegramService.sendBotMessage(chatId, 
-          `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        // Only send confirmation message in private chats, not in channels/groups
+        if (chatId > 0) {
+          await telegramService.sendBotMessage(chatId, 
+            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        }
         
         // Send notification to registered group about vote update
         await telegramService.sendVoteNotificationToGroup(project);
@@ -2249,8 +2255,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           }
         });
 
-        await telegramService.sendBotMessage(chatId, 
-          `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        // Only send confirmation message in private chats, not in channels/groups
+        if (chatId > 0) {
+          await telegramService.sendBotMessage(chatId, 
+            `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        }
         
         // Send notification to registered group about new vote
         await telegramService.sendVoteNotificationToGroup(project);
