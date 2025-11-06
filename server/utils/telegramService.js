@@ -1963,19 +1963,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           } catch (error) {
             console.error('Error sending to registered group:', error.message);
           }
-        } else {
-          try {
-            await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendMessage`,
-              {
-                chat_id: groupChatId,
-                text: message,
-                reply_markup: keyboard
-              }
-            );
-          } catch (error) {
-            console.error('Failed to send text to registered group:', error.message);
-          }
         }
       }
 
@@ -2011,22 +1998,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           }
         } catch (error) {
           console.error('Error sending to trending channel:', error.message);
-        }
-      } else {
-        try {
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendMessage`,
-            {
-              chat_id: telegramService.TRENDING_CHANNEL_ID,
-              text: message,
-              reply_markup: keyboard
-            }
-          );
-          if (response.data.ok) {
-            trendingMessageId = response.data.result.message_id;
-          }
-        } catch (error) {
-          console.error('Failed to send text to trending channel:', error.message);
         }
       }
 
