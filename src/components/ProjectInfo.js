@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
@@ -476,6 +476,13 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
                 Community Twitter raids
+              </li>
+              <li className="flex items-center">
+                <FaTelegram className="text-blue-400 mr-3" />
+                <span>
+                  Free Custom Telegram Bot
+                  <span className="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-xs">NEW!</span>
+                </span>
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />

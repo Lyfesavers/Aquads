@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 
 const BLOCKCHAIN_OPTIONS = [
@@ -763,6 +763,19 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                     <div>
                       <h4 className="font-semibold text-white">Community Twitter Raids</h4>
                       <p className="text-gray-300 text-sm">Access to our coordinated Twitter raid campaigns for viral social media exposure</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-blue-900/30 rounded-lg border-2 border-blue-500/50">
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-full">
+                      <FaTelegram className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white flex items-center gap-2">
+                        Free Custom Telegram Bot 
+                        <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">NEW!</span>
+                      </h4>
+                      <p className="text-gray-300 text-sm">Get your own customizable Telegram bot with custom branding, voting system, raid coordination, and community engagement tools - all managed through our platform!</p>
                     </div>
                   </div>
                   
