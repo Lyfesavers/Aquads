@@ -318,7 +318,7 @@ const telegramService = {
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
     } else if (text.startsWith('/bubbles')) {
-      await telegramService.handleBubblesCommand(chatId);
+      await telegramService.handleBubblesCommand(chatId, userId);
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
@@ -554,9 +554,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
   },
 
   // Handle /bubbles command
-  handleBubblesCommand: async (chatId) => {
+  handleBubblesCommand: async (chatId, telegramUserId) => {
     try {
-      await telegramService.sendTopBubblesNotification(chatId);
+      await telegramService.sendTopBubblesNotification(chatId, telegramUserId);
     } catch (error) {
       console.error('Bubbles command error:', error);
       await telegramService.sendBotMessage(chatId, 
@@ -1507,7 +1507,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
   },
 
   // Send top 10 bubbles with most bullish votes to specific group
-  sendTopBubblesNotification: async (chatId) => {
+  sendTopBubblesNotification: async (chatId, telegramUserId = null) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       
@@ -1517,6 +1517,24 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
       // Delete old bubble messages first
       await telegramService.deleteOldBubbleMessages(chatId);
+      
+      // Try to find the user's project with custom branding
+      let userCustomBranding = null;
+      if (telegramUserId) {
+        const user = await User.findOne({ telegramId: telegramUserId.toString() });
+        if (user) {
+          const userProject = await Ad.findOne({ 
+            owner: user.username,
+            isBumped: true,
+            status: { $in: ['active', 'approved'] },
+            customBrandingImage: { $ne: null }
+          }).select('customBrandingImage');
+          
+          if (userProject && userProject.customBrandingImage) {
+            userCustomBranding = userProject.customBrandingImage;
+          }
+        }
+      }
 
       // Get only bumped bubbles that are active or approved (same as website)
       const bumpedBubbles = await Ad.find({ 
@@ -1575,15 +1593,43 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       // Send to the specific group
       let result = false;
       
-      if (videoExists) {
-        // Send video with caption
-        const formData = new FormData();
-        formData.append('chat_id', chatId);
-        formData.append('video', fs.createReadStream(videoPath));
-        formData.append('caption', message);
-        formData.append('parse_mode', 'Markdown'); // Enable markdown parsing for links
+      try {
+        if (userCustomBranding) {
+          // Send user's custom branding image
+          const base64Data = userCustomBranding.split(',')[1];
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+          const formData = new FormData();
+          formData.append('chat_id', chatId);
+          formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
+          formData.append('caption', message);
+          formData.append('parse_mode', 'Markdown');
 
-        try {
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendPhoto`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000,
+            }
+          );
+
+          if (response.data.ok) {
+            result = true;
+            const messageId = response.data.result.message_id;
+            await telegramService.storeBubbleMessageId(chatId, messageId);
+            await telegramService.pinMessage(chatId, messageId);
+          }
+        } else if (videoExists) {
+          // Send default video with caption
+          const formData = new FormData();
+          formData.append('chat_id', chatId);
+          formData.append('video', fs.createReadStream(videoPath));
+          formData.append('caption', message);
+          formData.append('parse_mode', 'Markdown');
+
           const response = await axios.post(
             `https://api.telegram.org/bot${botToken}/sendVideo`,
             formData,
@@ -1591,40 +1637,34 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
               headers: {
                 ...formData.getHeaders(),
               },
-              timeout: 30000, // 30 second timeout for video upload
+              timeout: 30000,
             }
           );
 
           if (response.data.ok) {
             result = true;
             const messageId = response.data.result.message_id;
-            // Store message ID for cleanup
             await telegramService.storeBubbleMessageId(chatId, messageId);
-            // Pin the message
             await telegramService.pinMessage(chatId, messageId);
           }
-        } catch (error) {
-          console.error('Failed to send video, falling back to text message:', error.message);
-          // Fallback to text message if video fails
+        } else {
+          // Send text message if no media available
           const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
           if (textResult.success) {
             result = true;
             const messageId = textResult.messageId;
-            // Store message ID for cleanup
             await telegramService.storeBubbleMessageId(chatId, messageId);
-            // Pin the message
             await telegramService.pinMessage(chatId, messageId);
           }
         }
-      } else {
-        // Send text message if video doesn't exist
+      } catch (error) {
+        console.error('Failed to send media, falling back to text:', error.message);
+        // Fallback to text message
         const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
         if (textResult.success) {
           result = true;
           const messageId = textResult.messageId;
-          // Store message ID for cleanup
           await telegramService.storeBubbleMessageId(chatId, messageId);
-          // Pin the message
           await telegramService.pinMessage(chatId, messageId);
         }
       }
@@ -1709,16 +1749,42 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           ]
         };
 
-        // Debug: Log the keyboard structure
-        console.log('Keyboard structure:', JSON.stringify(keyboard, null, 2));
-
-        // Send with video if available
+        // Check if project has custom branding
+        const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
+        
+        // Send with custom branding or default video
         const videoPath = path.join(__dirname, '../../public/vote now .mp4');
         const videoExists = fs.existsSync(videoPath);
         
-        if (videoExists) {
-          try {
-            // Send video with caption and keyboard
+        try {
+          if (hasCustomBranding) {
+            // Send custom branding image
+            const base64Data = project.customBrandingImage.split(',')[1];
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            const response = await axios.post(
+              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 30000,
+              }
+            );
+
+            if (!response.data.ok) {
+              // Fallback to text message if image fails
+              await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+            }
+          } else if (videoExists) {
+            // Send default video with caption and keyboard
             const formData = new FormData();
             formData.append('chat_id', chatId);
             formData.append('video', fs.createReadStream(videoPath));
@@ -1732,7 +1798,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
                 headers: {
                   ...formData.getHeaders(),
                 },
-                timeout: 30000, // 30 second timeout for video upload
+                timeout: 30000,
               }
             );
 
@@ -1740,13 +1806,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
               // Fallback to text message if video fails
               await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
-          } catch (error) {
-            console.error('Failed to send video, falling back to text:', error.message);
-            // Fallback to text message
+          } else {
+            // Send text message without video
             await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
           }
-        } else {
-          // Send text message without video
+        } catch (error) {
+          console.error('Failed to send media, falling back to text:', error.message);
+          // Fallback to text message
           await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
         }
       }
@@ -2364,7 +2430,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       });
 
       await telegramService.sendBotMessage(chatId, 
-        `🎨 Upload your custom branding image!\n\n📋 Requirements:\n• Max size: 500KB\n• Format: JPG or PNG\n• Recommended: 1920×1080 or 1080×1080\n\nThis will appear in:\n✅ Vote notifications\n✅ /mybubble command\n✅ /bubbles trending list\n\n📤 Send your image now:`);
+        `🎨 Upload your custom branding image!\n\n📋 Requirements:\n• Max size: 500KB\n• Format: JPG or PNG\n• Recommended: 1920×1080 or 1080×1080\n\nThis will appear in:\n✅ Vote notifications for your project\n✅ /mybubble command (your project showcase)\n✅ /bubbles command (when you use it in your group)\n\n📤 Send your image now:`);
 
     } catch (error) {
       console.error('SetBranding command error:', error);
@@ -2476,7 +2542,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       telegramService.clearConversationState(telegramUserId);
       
       await telegramService.sendBotMessage(chatId, 
-        `✅ Custom branding saved successfully!\n\n🎨 Your image will now appear in:\n• Vote notifications\n• /mybubble command\n• /bubbles trending list\n\n📏 Image size: ${(fileSize / 1024).toFixed(1)}KB\n\n💡 Use /removebranding to remove it anytime.`);
+        `✅ Custom branding saved successfully!\n\n🎨 Your image will now appear in:\n• Vote notifications for your project\n• /mybubble command (your project showcase)\n• /bubbles command (when you use it in your group)\n\n📏 Image size: ${(fileSize / 1024).toFixed(1)}KB\n\n💡 Use /removebranding to remove it anytime.`);
       
       return true;
       
