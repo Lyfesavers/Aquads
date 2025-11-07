@@ -3151,16 +3151,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           const getDurationDisplay = (durationMs) => {
                             if (durationMs === -1) return 'Lifetime';
                             const days = durationMs / (24 * 60 * 60 * 1000);
-                            if (days === 90) return '3 Months';
-                            if (days === 180) return '6 Months';
                             return `${days} days`;
                           };
 
                           // Calculate price based on duration
                           const getPrice = (durationMs) => {
-                            if (durationMs === 90 * 24 * 60 * 60 * 1000) return 99;
-                            if (durationMs === 180 * 24 * 60 * 60 * 1000) return 150;
-                            if (durationMs === -1) return 300;
+                            if (durationMs === -1) return 150;
                             return 0;
                           };
 
