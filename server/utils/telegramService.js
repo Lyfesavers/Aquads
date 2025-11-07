@@ -489,68 +489,249 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
     }
   },
 
-  // Handle /help command
+  // Handle /help command - Show main menu
   handleHelpCommand: async (chatId) => {
-    const message = `📋 Aquads Bot - Complete Command Guide
+    const message = `🤖 Aquads Bot Help Menu
 
-📋 Requirements:
-• You MUST have an Aquads account to participate
-• Create account at: https://aquads.xyz
+Welcome! Choose a category below to learn more:`;
 
-🔗 Account Commands:
-• /link USERNAME - Link your Telegram to Aquads account (case sensitive)
-• /twitter [USERNAME] - Set or view your Twitter username for raids
-• /facebook [USERNAME] - Set or view your Facebook username for raids
-• /help - Show this help message
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🔗 Account Setup", callback_data: "help_account" },
+          { text: "💰 Raids", callback_data: "help_raids" }
+        ],
+        [
+          { text: "📊 Bubbles", callback_data: "help_bubbles" },
+          { text: "🎨 Branding", callback_data: "help_branding" }
+        ],
+        [
+          { text: "🚀 Quick Start", callback_data: "help_quickstart" },
+          { text: "📋 All Commands", callback_data: "help_all" }
+        ],
+        [
+          { text: "🌐 Visit Website", url: "https://aquads.xyz" }
+        ]
+      ]
+    };
 
-📋 Raid Commands:
-• /raids - View all available Twitter and Facebook raids
-• /createraid TWEET_URL - Create a new Twitter raid (2000 points)
+    await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+  },
 
-📋 Bubble Commands:
-• /bubbles - View top 10 bubbles with most bullish votes
-• /mybubble - View your projects with voting buttons
+  // Edit help menu - Main Menu
+  editHelpMenu: async (chatId, messageId) => {
+    const message = `🤖 Aquads Bot Help Menu
 
-🎨 Branding Commands (Free for bumped projects):
-• /setbranding - Upload custom branding image for your project
-• /removebranding - Remove custom branding and use default
+Welcome! Choose a category below to learn more:`;
 
-📝 Example Usage:
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🔗 Account Setup", callback_data: "help_account" },
+          { text: "💰 Raids", callback_data: "help_raids" }
+        ],
+        [
+          { text: "📊 Bubbles", callback_data: "help_bubbles" },
+          { text: "🎨 Branding", callback_data: "help_branding" }
+        ],
+        [
+          { text: "🚀 Quick Start", callback_data: "help_quickstart" },
+          { text: "📋 All Commands", callback_data: "help_all" }
+        ],
+        [
+          { text: "🌐 Visit Website", url: "https://aquads.xyz" }
+        ]
+      ]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Edit help section: Account Setup
+  editHelpAccount: async (chatId, messageId) => {
+    const message = `🔗 Account Setup
+
+Link your Aquads account to use the bot:
+
+• /link USERNAME
+  Connect your Telegram to Aquads account
+  (Username is case sensitive!)
+
+• /twitter USERNAME
+  Set your Twitter username for raids
+
+• /facebook USERNAME
+  Set your Facebook username for raids
+
+📱 Example:
 /link myusername
 /twitter mytwitter
 /facebook myfacebook
-/raids
-/bubbles
-/mybubble
-/createraid https://twitter.com/user/status/123456789
 
-💡 How Raids Work:
-1. Like, Retweet & Comment on Twitter posts OR Like, Share & Comment on Facebook posts
+💡 You must have an Aquads account first!
+Create one at: https://aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Edit help section: Raids
+  editHelpRaids: async (chatId, messageId) => {
+    const message = `💰 Raid Commands
+
+Earn points by completing Twitter & Facebook raids!
+
+• /raids
+  View all available raids
+
+• /createraid TWEET_URL
+  Create your own raid (costs 2000 points)
+
+💡 How it works:
+1. Like, Retweet & Comment on posts
 2. Use /raids to see available raids
-3. Click "Complete in Private Chat" button (easiest way!)
-4. Provide your username when prompted (or set it once with /twitter or /facebook)
-5. Wait for admin approval to receive points
+3. Click "Complete in Private Chat" button
+4. Earn points after admin approval
 
-🚀 Getting Started:
-1. Link your account: /link your_aquads_username
-2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
-3. View available raids: /raids
-4. Complete raids using the "Complete in Private Chat" buttons
-5. Create your own raids: /createraid (requires 2000 points)
-6. View your projects: /mybubble
+⏰ Raids expire after 48 hours
 
-🌐 Track points & claim rewards on: https://aquads.xyz
+🌐 Track points at: https://aquads.xyz`;
 
-⚠️ Important Notes:
-• Username is case sensitive when linking
-• You must manually interact with tweets before completing
-• Raids expire after 48 hours
-• Points are awarded after admin approval
-• You can redeem points for gift cards and rewards on the website
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
 
-💬 Need help? Contact support through the Aquads website.`;
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
 
-    await telegramService.sendBotMessage(chatId, message);
+  // Edit help section: Bubbles
+  editHelpBubbles: async (chatId, messageId) => {
+    const message = `📊 Bubble Commands
+
+Vote on projects and view trending bubbles!
+
+• /bubbles
+  View top 10 bubbles (most bullish votes)
+
+• /mybubble
+  View YOUR projects with voting buttons
+
+💡 How voting works:
+• Click 👍 Bullish or 👎 Bearish on any project
+• Earn 20 points for your first vote on each project
+• Help projects climb the rankings!
+
+🌐 Vote on website: https://aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Edit help section: Branding
+  editHelpBranding: async (chatId, messageId) => {
+    const message = `🎨 Custom Branding
+
+FREE for all bumped projects!
+
+• /setbranding
+  Upload your custom branding image
+
+• /removebranding
+  Remove custom branding
+
+📋 Requirements:
+• Max size: 500KB
+• Format: JPG or PNG
+• Recommended: 1920×1080
+
+✨ Your image appears in:
+• Vote notifications for your project
+• /mybubble showcase
+• /bubbles when you use it
+
+🚀 Bump your project at: https://aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Edit help section: Quick Start
+  editHelpQuickStart: async (chatId, messageId) => {
+    const message = `🚀 Quick Start Guide
+
+Get started in 3 easy steps:
+
+1️⃣ Link Your Account
+   /link your_aquads_username
+   (Create account at aquads.xyz first)
+
+2️⃣ Set Social Usernames
+   /twitter your_twitter
+   /facebook your_facebook
+
+3️⃣ Start Earning!
+   /raids - Complete raids for points
+   /mybubble - Share your project
+   /bubbles - Vote on projects
+
+💰 Redeem points for rewards at:
+https://aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Edit help section: All Commands
+  editHelpAll: async (chatId, messageId) => {
+    const message = `📋 All Commands
+
+🔗 Account:
+/link /twitter /facebook
+
+💰 Raids:
+/raids /createraid
+
+📊 Bubbles:
+/bubbles /mybubble
+
+🎨 Branding:
+/setbranding /removebranding
+
+🔧 Other:
+/help /cancel
+
+🌐 Full details & rewards:
+https://aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "◀️ Back to Menu", callback_data: "help_menu" }
+      ]]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
   },
 
   // Handle /bubbles command
@@ -1174,8 +1355,37 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       // Answer the callback query
       await telegramService.answerCallbackQuery(queryId);
 
-      // Check if it's a vote callback first
-      if (callbackQuery.data.startsWith('vote_')) {
+      // Check if it's a help menu callback
+      if (callbackQuery.data.startsWith('help_')) {
+        const helpSection = callbackQuery.data.replace('help_', '');
+        const messageId = callbackQuery.message.message_id;
+        
+        switch (helpSection) {
+          case 'menu':
+            await telegramService.editHelpMenu(chatId, messageId);
+            break;
+          case 'account':
+            await telegramService.editHelpAccount(chatId, messageId);
+            break;
+          case 'raids':
+            await telegramService.editHelpRaids(chatId, messageId);
+            break;
+          case 'bubbles':
+            await telegramService.editHelpBubbles(chatId, messageId);
+            break;
+          case 'branding':
+            await telegramService.editHelpBranding(chatId, messageId);
+            break;
+          case 'quickstart':
+            await telegramService.editHelpQuickStart(chatId, messageId);
+            break;
+          case 'all':
+            await telegramService.editHelpAll(chatId, messageId);
+            break;
+        }
+      }
+      // Check if it's a vote callback
+      else if (callbackQuery.data.startsWith('vote_')) {
         // Handle simplified vote callbacks
         const voteData = callbackQuery.data.split('_');
         const voteType = voteData[1]; // 'bullish' or 'bearish'
@@ -1213,6 +1423,29 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       return true;
     } catch (error) {
       console.error('Answer callback query error:', error.message);
+      return false;
+    }
+  },
+
+  // Edit message with inline keyboard
+  editMessageWithKeyboard: async (chatId, messageId, text, keyboard) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return false;
+
+    try {
+      await axios.post(
+        `https://api.telegram.org/bot${botToken}/editMessageText`,
+        {
+          chat_id: chatId,
+          message_id: messageId,
+          text: text,
+          reply_markup: keyboard
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error('Edit message error:', error.message);
       return false;
     }
   },
