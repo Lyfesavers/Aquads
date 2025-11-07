@@ -51,9 +51,7 @@ router.post('/', async (req, res) => {
       if (validDiscountCode) {
         // Calculate bump price based on duration
         let bumpPrice = 0;
-        if (duration === 90 * 24 * 60 * 60 * 1000) bumpPrice = 99; // 3 months
-        else if (duration === 180 * 24 * 60 * 60 * 1000) bumpPrice = 150; // 6 months
-        else if (duration === -1) bumpPrice = 300; // Lifetime
+        if (duration === -1) bumpPrice = 150; // Lifetime
         
         discountAmount = validDiscountCode.calculateDiscount(bumpPrice);
         appliedDiscountCode = validDiscountCode;

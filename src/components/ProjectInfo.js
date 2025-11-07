@@ -507,21 +507,13 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Bump Options</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$99-300</div>
+              <div className="text-4xl font-bold text-blue-400 mb-2">$150</div>
               <div className="text-gray-400">USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                3 Months: $99 USDC
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                6 Months: $150 USDC
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Lifetime: $300 USDC
+                Lifetime: $150 USDC
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />

@@ -5,9 +5,7 @@ import logger from '../utils/logger';
 import DiscountCodeInput from './DiscountCodeInput';
 
 const BUMP_OPTIONS = [
-  { duration: '3 months', price: 99, durationMs: 90 * 24 * 60 * 60 * 1000 },
-  { duration: '6 months', price: 150, durationMs: 180 * 24 * 60 * 60 * 1000 },
-  { duration: 'Lifetime', price: 300, durationMs: -1 }
+  { duration: 'Lifetime', price: 150, durationMs: -1 }
 ];
 
 const BLOCKCHAIN_OPTIONS = [
