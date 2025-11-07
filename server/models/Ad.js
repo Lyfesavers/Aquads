@@ -155,6 +155,19 @@ const adSchema = new mongoose.Schema({
   telegramGroupId: {
     type: String,
     default: null
+  },
+  // Custom branding image for Telegram notifications (base64 encoded)
+  customBrandingImage: {
+    type: String,
+    default: null
+  },
+  customBrandingImageSize: {
+    type: Number,
+    default: 0
+  },
+  customBrandingUploadedAt: {
+    type: Date,
+    default: null
   }
 });
 

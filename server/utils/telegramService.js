@@ -323,6 +323,10 @@ const telegramService = {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
       await telegramService.handleCreateRaidCommand(chatId, userId, text);
+    } else if (text.startsWith('/setbranding')) {
+      await telegramService.handleSetBrandingCommand(chatId, userId);
+    } else if (text.startsWith('/removebranding')) {
+      await telegramService.handleRemoveBrandingCommand(chatId, userId);
     } else if (text.startsWith('/cancel')) {
       // Cancel any ongoing conversation
       if (conversationState) {
@@ -506,6 +510,10 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
 • /mybubble - View your projects with voting buttons
+
+🎨 Branding Commands (Free for bumped projects):
+• /setbranding - Upload custom branding image for your project
+• /removebranding - Remove custom branding and use default
 
 📝 Example Usage:
 /link myusername
@@ -1973,7 +1981,10 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         ]
       };
 
-      // Path to the new vote video
+      // Check if project has custom branding
+      const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
+      
+      // Path to the new vote video (fallback)
       const videoPath = path.join(__dirname, '../../public/new vote.mp4');
       const videoExists = fs.existsSync(videoPath);
 
@@ -1981,8 +1992,30 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       if (project.telegramGroupId) {
         const groupChatId = project.telegramGroupId;
         
-        if (videoExists) {
-          try {
+        try {
+          if (hasCustomBranding) {
+            // Send custom branding image
+            const base64Data = project.customBrandingImage.split(',')[1];
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            const formData = new FormData();
+            formData.append('chat_id', groupChatId);
+            formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendPhoto`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 30000,
+              }
+            );
+          } else if (videoExists) {
+            // Send default video
             const formData = new FormData();
             formData.append('chat_id', groupChatId);
             formData.append('video', fs.createReadStream(videoPath));
@@ -1999,9 +2032,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
                 timeout: 30000,
               }
             );
-          } catch (error) {
-            console.error('Error sending to registered group:', error.message);
           }
+        } catch (error) {
+          console.error('Error sending to registered group:', error.message);
         }
       }
 
@@ -2019,8 +2052,35 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       );
 
       let trendingMessageId = null;
-      if (videoExists) {
-        try {
+      
+      try {
+        if (hasCustomBranding) {
+          // Send custom branding image to trending channel
+          const base64Data = project.customBrandingImage.split(',')[1];
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+          const formData = new FormData();
+          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+          formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
+          formData.append('caption', message);
+          formData.append('reply_markup', JSON.stringify(keyboard));
+
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendPhoto`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000,
+            }
+          );
+
+          if (response.data.ok) {
+            trendingMessageId = response.data.result.message_id;
+          }
+        } else if (videoExists) {
+          // Send default video to trending channel
           const formData = new FormData();
           formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
           formData.append('video', fs.createReadStream(videoPath));
@@ -2041,9 +2101,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           if (response.data.ok) {
             trendingMessageId = response.data.result.message_id;
           }
-        } catch (error) {
-          console.error('Error sending to trending channel:', error.message);
         }
+      } catch (error) {
+        console.error('Error sending to trending channel:', error.message);
       }
 
       // Store the message ID for future cleanup
@@ -2269,6 +2329,162 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       console.error('Process vote error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error processing vote. Please try again later.");
+    }
+  },
+
+  // Handle /setbranding command
+  handleSetBrandingCommand: async (chatId, telegramUserId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Find their bumped project
+      const bumpedProject = await Ad.findOne({ 
+        owner: user.username,
+        isBumped: true,
+        status: { $in: ['active', 'approved'] }
+      });
+      
+      if (!bumpedProject) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Custom branding is only available for bumped projects.\n\n🚀 Bump your project at: https://aquads.xyz");
+        return;
+      }
+
+      // Set conversation state to wait for image upload
+      telegramService.setConversationState(telegramUserId, {
+        action: 'waiting_branding_image',
+        projectId: bumpedProject._id.toString()
+      });
+
+      await telegramService.sendBotMessage(chatId, 
+        `🎨 Upload your custom branding image!\n\n📋 Requirements:\n• Max size: 500KB\n• Format: JPG or PNG\n• Recommended: 1920×1080 or 1080×1080\n\nThis will appear in:\n✅ Vote notifications\n✅ /mybubble command\n✅ /bubbles trending list\n\n📤 Send your image now:`);
+
+    } catch (error) {
+      console.error('SetBranding command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error setting branding. Please try again later.");
+    }
+  },
+
+  // Handle /removebranding command
+  handleRemoveBrandingCommand: async (chatId, telegramUserId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username");
+        return;
+      }
+
+      // Find their bumped project with branding
+      const project = await Ad.findOne({ 
+        owner: user.username,
+        isBumped: true,
+        status: { $in: ['active', 'approved'] },
+        customBrandingImage: { $ne: null }
+      });
+      
+      if (!project) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ You don't have any custom branding set.");
+        return;
+      }
+
+      // Remove branding
+      project.customBrandingImage = null;
+      project.customBrandingImageSize = 0;
+      project.customBrandingUploadedAt = null;
+      await project.save();
+
+      await telegramService.sendBotMessage(chatId, 
+        "✅ Custom branding removed! Default branding will be used for your project.");
+
+    } catch (error) {
+      console.error('RemoveBranding command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error removing branding. Please try again later.");
+    }
+  },
+
+  // Handle photo uploads for branding
+  handleBrandingImageUpload: async (chatId, telegramUserId, photo) => {
+    try {
+      const conversationState = telegramService.getConversationState(telegramUserId);
+      
+      if (!conversationState || conversationState.action !== 'waiting_branding_image') {
+        return false; // Not in branding upload state
+      }
+
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      
+      // Get the largest photo size
+      const largestPhoto = photo[photo.length - 1];
+      const fileId = largestPhoto.file_id;
+      
+      // Get file info to check size
+      const fileInfoResponse = await axios.get(
+        `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
+      );
+      
+      const fileInfo = fileInfoResponse.data.result;
+      const fileSize = fileInfo.file_size;
+      
+      // Check file size (500KB limit)
+      if (fileSize > 500000) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Image too large! Please upload an image under 500KB.\n\n💡 Tip: Compress your image at tinypng.com or similar service.");
+        return true;
+      }
+      
+      // Download the file
+      const filePath = fileInfo.file_path;
+      const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+      
+      const imageResponse = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+      const imageBuffer = Buffer.from(imageResponse.data);
+      const base64Image = imageBuffer.toString('base64');
+      
+      // Determine mime type from file extension
+      const ext = filePath.split('.').pop().toLowerCase();
+      const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+      const base64WithPrefix = `data:${mimeType};base64,${base64Image}`;
+      
+      // Update project with branding image
+      const project = await Ad.findById(conversationState.projectId);
+      
+      if (!project) {
+        await telegramService.sendBotMessage(chatId, "❌ Project not found.");
+        telegramService.clearConversationState(telegramUserId);
+        return true;
+      }
+      
+      project.customBrandingImage = base64WithPrefix;
+      project.customBrandingImageSize = fileSize;
+      project.customBrandingUploadedAt = new Date();
+      await project.save();
+      
+      // Clear conversation state
+      telegramService.clearConversationState(telegramUserId);
+      
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Custom branding saved successfully!\n\n🎨 Your image will now appear in:\n• Vote notifications\n• /mybubble command\n• /bubbles trending list\n\n📏 Image size: ${(fileSize / 1024).toFixed(1)}KB\n\n💡 Use /removebranding to remove it anytime.`);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Branding image upload error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error uploading image. Please try again.");
+      return true;
     }
   }
 

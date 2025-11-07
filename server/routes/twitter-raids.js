@@ -61,8 +61,23 @@ router.post('/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
     
-    if (update.message && update.message.text) {
-      await telegramService.handleCommand(update.message);
+    if (update.message) {
+      // Handle photo uploads (for branding)
+      if (update.message.photo) {
+        const chatId = update.message.chat.id;
+        const userId = update.message.from.id;
+        const handled = await telegramService.handleBrandingImageUpload(chatId, userId, update.message.photo);
+        // If not handled by branding, continue to command handler
+        if (!handled && update.message.caption) {
+          // Handle caption as command if photo wasn't for branding
+          update.message.text = update.message.caption;
+          await telegramService.handleCommand(update.message);
+        }
+      }
+      // Handle text messages
+      else if (update.message.text) {
+        await telegramService.handleCommand(update.message);
+      }
     }
     
     if (update.callback_query) {
