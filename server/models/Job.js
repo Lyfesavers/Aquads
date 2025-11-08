@@ -34,6 +34,7 @@ const jobSchema = new mongoose.Schema({
   contactEmail: { type: String, required: true },
   contactTelegram: String,
   contactDiscord: String,
+  applicationUrl: String,
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

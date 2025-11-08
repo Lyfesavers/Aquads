@@ -13,7 +13,8 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
     city: job?.location?.city || '',
     contactEmail: job?.contactEmail || '',
     contactTelegram: job?.contactTelegram || '',
-    contactDiscord: job?.contactDiscord || ''
+    contactDiscord: job?.contactDiscord || '',
+    applicationUrl: job?.applicationUrl || ''
   });
 
   const handleSubmit = async (e) => {
@@ -265,11 +266,12 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
 
               {/* Contact Information */}
               <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">Application & Contact Information</h3>
+                <p className="text-gray-400 text-sm mb-4">Candidates will see an "Apply Now" button. Choose how they should apply:</p>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Contact Email *
+                      Contact Email * (Backup/Default method)
                     </label>
                     <input
                       type="email"
@@ -280,11 +282,12 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                       value={formData.contactEmail}
                       onChange={handleChange}
                     />
+                    <p className="text-gray-400 text-xs mt-1">Used when no application URL is provided</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Telegram (Optional)
+                      Telegram (Optional - Alternative contact)
                     </label>
                     <input
                       type="text"
@@ -298,7 +301,7 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Discord (Optional)
+                      Discord (Optional - Alternative contact)
                     </label>
                     <input
                       type="text"
@@ -308,6 +311,21 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                       value={formData.contactDiscord}
                       onChange={handleChange}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Application URL (Optional - Primary method)
+                    </label>
+                    <input
+                      type="url"
+                      name="applicationUrl"
+                      placeholder="https://yourcompany.com/apply or your custom application form link"
+                      className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200"
+                      value={formData.applicationUrl}
+                      onChange={handleChange}
+                    />
+                    <p className="text-gray-400 text-xs mt-1">If provided, "Apply Now" will redirect here. Otherwise, it will use email. Additional contact methods will be shown as alternatives.</p>
                   </div>
                 </div>
               </div>

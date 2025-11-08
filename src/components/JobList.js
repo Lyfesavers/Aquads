@@ -231,39 +231,57 @@ Best regards,
                 )}
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400">How to Apply</h4>
-                  <div className="mt-2 space-y-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                  {/* Primary Apply Now Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (job.applicationUrl) {
+                        window.open(job.applicationUrl, '_blank', 'noopener,noreferrer');
+                      } else {
                         handleEmailClick(job);
-                      }}
-                      className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      <FaEnvelope />
-                      <span>{job.contactEmail}</span>
-                    </button>
-                    
-                    {job.contactTelegram && (
-                      <a
-                        href={`https://t.me/${job.contactTelegram.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
-                      >
-                        <FaTelegram />
-                        <span>{job.contactTelegram}</span>
-                      </a>
-                    )}
-                    
-                    {job.contactDiscord && (
-                      <div className="flex items-center space-x-2 text-blue-400">
-                        <FaDiscord />
-                        <span>{job.contactDiscord}</span>
+                      }
+                    }}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg transition-all duration-200 text-white font-semibold hover:shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center space-x-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Apply Now</span>
+                  </button>
+                  <p className="text-gray-400 text-xs mt-2 text-center">
+                    {job.applicationUrl ? 'You will be redirected to the application page' : 'Apply via email'}
+                  </p>
+
+                  {/* Alternative Contact Methods */}
+                  {(job.contactTelegram || job.contactDiscord) && (
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                      <p className="text-gray-400 text-xs mb-2 text-center">Or contact via:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {job.contactTelegram && (
+                          <a
+                            href={`https://t.me/${job.contactTelegram.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
+                          >
+                            <FaTelegram />
+                            <span className="text-sm">Telegram</span>
+                          </a>
+                        )}
+                        
+                        {job.contactDiscord && (
+                          <div 
+                            className="flex items-center space-x-2 px-3 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg border border-indigo-500/30"
+                            title={job.contactDiscord}
+                          >
+                            <FaDiscord />
+                            <span className="text-sm">{job.contactDiscord}</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
