@@ -117,10 +117,15 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
 // Delete job
 router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
-    const job = await Job.findOneAndDelete({
-      _id: req.params.id,
-      owner: req.user.userId
-    });
+    const user = await User.findById(req.user.userId);
+    
+    // Build query - admins can delete any job, regular users only their own
+    const query = { _id: req.params.id };
+    if (!user.isAdmin) {
+      query.owner = req.user.userId;
+    }
+
+    const job = await Job.findOneAndDelete(query);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });

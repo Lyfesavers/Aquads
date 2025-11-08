@@ -125,40 +125,63 @@ Best regards,
                   )}
                 </div>
                 
-                {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                {currentUser && (
                   <div className="flex space-x-2">
-                    {job.status === 'expired' && (
+                    {/* Owner controls */}
+                    {(currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                      <>
+                        {job.status === 'expired' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRefreshJob(job._id);
+                            }}
+                            className="text-blue-500 hover:text-blue-400 transition-colors"
+                            title="Refresh job (will move to top of listing)"
+                          >
+                            <FaRedo size={18} />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditJob(job);
+                          }}
+                          className="text-blue-500 hover:text-blue-400 transition-colors"
+                          title="Edit job"
+                        >
+                          <FaEdit size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Are you sure you want to delete this job?')) {
+                              onDeleteJob(job._id);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                          title="Delete job"
+                        >
+                          <FaTrash size={18} />
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Admin delete button (for all listings) */}
+                    {currentUser.isAdmin && (currentUser.userId !== job.owner && currentUser.userId !== job.owner._id) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRefreshJob(job._id);
+                          if (window.confirm('Are you sure you want to delete this job? (Admin action)')) {
+                            onDeleteJob(job._id);
+                          }
                         }}
-                        className="text-blue-500 hover:text-blue-400 transition-colors"
-                        title="Refresh job (will move to top of listing)"
+                        className="text-red-500 hover:text-red-400 transition-colors"
+                        title="Delete job (Admin)"
                       >
-                        <FaRedo size={18} />
+                        <FaTrash size={18} />
                       </button>
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditJob(job);
-                      }}
-                      className="text-blue-500 hover:text-blue-400 transition-colors"
-                    >
-                      <FaEdit size={18} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('Are you sure you want to delete this job?')) {
-                          onDeleteJob(job._id);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                    >
-                      <FaTrash size={18} />
-                    </button>
                   </div>
                 )}
               </div>
