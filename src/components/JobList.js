@@ -59,8 +59,8 @@ Best regards,
           <div className="p-4">
             <div className="flex justify-between items-start">
               <div className="flex items-start space-x-4">
-                {/* Profile image circle */}
-                <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                {/* Profile image square */}
+                <div className="w-16 h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
                   <img
                     src={job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`}
                     alt={job.ownerUsername}
