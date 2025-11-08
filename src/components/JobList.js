@@ -176,12 +176,12 @@ Best regards,
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-400">Description</h4>
-                  <p className="mt-1">{job.description}</p>
+                  <p className="mt-1 whitespace-pre-wrap">{job.description}</p>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-medium text-gray-400">Requirements</h4>
-                  <p className="mt-1">{job.requirements}</p>
+                  <p className="mt-1 whitespace-pre-wrap">{job.requirements}</p>
                 </div>
 
                 {/* Work Arrangement & Location Details */}
