@@ -1967,7 +1967,8 @@ https://aquads.xyz`;
         message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
         message += `🔗 URL: ${project.url}\n`;
         message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
-        message += `💡 Share this message to get votes on your project!`;
+        message += `💡 Share this message to get votes on your project!\n\n`;
+        message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
         // Create voting keyboard (simplified)
         const keyboard = {
@@ -2265,7 +2266,8 @@ https://aquads.xyz`;
       // Create notification message
       let message = `🎉 New Vote for ${project.title}!\n\n`;
       message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
-      message += `🏆 Rank: ${rankEmoji} #${projectRank}`;
+      message += `🏆 Rank: ${rankEmoji} #${projectRank}\n\n`;
+      message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
       // Create voting keyboard
       const keyboard = {
