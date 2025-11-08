@@ -1817,7 +1817,8 @@ https://aquads.xyz`;
       });
 
       message += `🌐 View all bubbles at: https://aquads.xyz\n`;
-      message += `💡 Vote on bubbles to earn points!`;
+      message += `💡 Vote on bubbles to earn points!\n\n`;
+      message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
       // Get the video file path
       const videoPath = path.join(__dirname, '../../public/trend.mp4');
