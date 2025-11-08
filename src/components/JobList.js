@@ -85,15 +85,10 @@ Best regards,
                     Posted by {job.ownerUsername} on {formatDate(job.createdAt)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {job.jobType === 'hiring' ? (
-                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">
-                        Hiring
-                      </span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">
-                        For Hire
-                      </span>
-                    )}
+                    {/* Hiring Badge */}
+                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">
+                      Hiring
+                    </span>
                     
                     {/* Work Arrangement Badge */}
                     {job.workArrangement && (

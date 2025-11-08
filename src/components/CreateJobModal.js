@@ -22,6 +22,7 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
       // Structure the location data properly
       const jobData = {
         ...formData,
+        jobType: 'hiring', // Always set to hiring
         location: {
           country: formData.country,
           city: formData.city
@@ -59,8 +60,8 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 shadow-lg">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-white">{job ? 'Edit Job' : 'Create New Job'}</h1>
-              <p className="text-indigo-100 text-sm mt-1">Post your job opportunity or availability</p>
+              <h1 className="text-3xl font-bold text-white">{job ? 'Edit Job' : 'Post a Job'}</h1>
+              <p className="text-indigo-100 text-sm mt-1">Find the perfect candidate for your position</p>
             </div>
             <button 
               onClick={onClose} 
@@ -77,43 +78,6 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Job Type Selection */}
-              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-                <label className="block text-lg font-semibold text-white mb-4">
-                  Job Type
-                </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="jobType"
-                      value="hiring"
-                      checked={formData.jobType === 'hiring'}
-                      onChange={handleChange}
-                      className="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 focus:ring-indigo-500 focus:ring-2"
-                    />
-                    <div>
-                      <span className="text-white font-medium">Hiring</span>
-                      <p className="text-gray-400 text-sm">I'm looking to hire someone</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="jobType"
-                      value="for-hire"
-                      checked={formData.jobType === 'for-hire'}
-                      onChange={handleChange}
-                      className="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 focus:ring-indigo-500 focus:ring-2"
-                    />
-                    <div>
-                      <span className="text-white font-medium">For Hire</span>
-                      <p className="text-gray-400 text-sm">I'm available for work</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
               {/* Job Title */}
               <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
                 <label className="block text-lg font-semibold text-white mb-3">
@@ -128,7 +92,7 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                   value={formData.title}
                   onChange={handleChange}
                 />
-                <p className="text-gray-400 text-sm mt-2">Be specific about the role or service you're offering</p>
+                <p className="text-gray-400 text-sm mt-2">Be specific about the role you're hiring for</p>
               </div>
 
               {/* Work Arrangement Section */}
@@ -231,12 +195,12 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                   name="description"
                   required
                   rows="6"
-                  placeholder="Describe the job requirements, responsibilities, or your skills and experience..."
+                  placeholder="Describe the job role, responsibilities, company culture, and what makes this opportunity great..."
                   className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200 resize-none"
                   value={formData.description}
                   onChange={handleChange}
                 />
-                <p className="text-gray-400 text-sm mt-2">Provide detailed information about the position or your expertise</p>
+                <p className="text-gray-400 text-sm mt-2">Provide detailed information about the position and your company</p>
               </div>
 
               {/* Requirements */}
@@ -248,12 +212,12 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                   name="requirements"
                   required
                   rows="4"
-                  placeholder="List specific skills, experience, or qualifications needed..."
+                  placeholder="List specific skills, experience, qualifications, and must-have requirements for candidates..."
                   className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200 resize-none"
                   value={formData.requirements}
                   onChange={handleChange}
                 />
-                <p className="text-gray-400 text-sm mt-2">Specify what you're looking for or what you can offer</p>
+                <p className="text-gray-400 text-sm mt-2">Specify what you're looking for in the ideal candidate</p>
               </div>
 
               {/* Pay Information */}
