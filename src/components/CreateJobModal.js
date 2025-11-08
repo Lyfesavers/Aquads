@@ -8,6 +8,9 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
     payAmount: job?.payAmount || '',
     payType: job?.payType || 'hourly',
     jobType: job?.jobType || 'hiring',
+    workArrangement: job?.workArrangement || 'remote',
+    country: job?.location?.country || '',
+    city: job?.location?.city || '',
     contactEmail: job?.contactEmail || '',
     contactTelegram: job?.contactTelegram || '',
     contactDiscord: job?.contactDiscord || ''
@@ -16,12 +19,24 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Structure the location data properly
+      const jobData = {
+        ...formData,
+        location: {
+          country: formData.country,
+          city: formData.city
+        }
+      };
+      // Remove the flat country/city fields
+      delete jobData.country;
+      delete jobData.city;
+
       if (job) {
         // If job exists, we're editing
-        await onCreateJob({ ...formData, _id: job._id });
+        await onCreateJob({ ...jobData, _id: job._id });
       } else {
         // New job creation
-        await onCreateJob(formData);
+        await onCreateJob(jobData);
       }
       onClose();
     } catch (error) {
@@ -114,6 +129,97 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                   onChange={handleChange}
                 />
                 <p className="text-gray-400 text-sm mt-2">Be specific about the role or service you're offering</p>
+              </div>
+
+              {/* Work Arrangement Section */}
+              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                <label className="block text-lg font-semibold text-white mb-4">
+                  Work Arrangement *
+                </label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <label className="flex items-center space-x-3 cursor-pointer flex-1 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all">
+                    <input
+                      type="radio"
+                      name="workArrangement"
+                      value="remote"
+                      checked={formData.workArrangement === 'remote'}
+                      onChange={handleChange}
+                      className="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 focus:ring-indigo-500 focus:ring-2"
+                    />
+                    <div>
+                      <span className="text-white font-medium">🌍 Remote</span>
+                      <p className="text-gray-400 text-sm">Work from anywhere</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3 cursor-pointer flex-1 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all">
+                    <input
+                      type="radio"
+                      name="workArrangement"
+                      value="hybrid"
+                      checked={formData.workArrangement === 'hybrid'}
+                      onChange={handleChange}
+                      className="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 focus:ring-indigo-500 focus:ring-2"
+                    />
+                    <div>
+                      <span className="text-white font-medium">🏢 Hybrid</span>
+                      <p className="text-gray-400 text-sm">Mix of remote & office</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center space-x-3 cursor-pointer flex-1 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all">
+                    <input
+                      type="radio"
+                      name="workArrangement"
+                      value="onsite"
+                      checked={formData.workArrangement === 'onsite'}
+                      onChange={handleChange}
+                      className="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 focus:ring-indigo-500 focus:ring-2"
+                    />
+                    <div>
+                      <span className="text-white font-medium">🏛️ On-site</span>
+                      <p className="text-gray-400 text-sm">In-office only</p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Conditional Location Fields */}
+                {(formData.workArrangement === 'onsite' || formData.workArrangement === 'hybrid') && (
+                  <div className="mt-6 pt-6 border-t border-gray-700/50">
+                    <h4 className="text-md font-semibold text-white mb-4">📍 Location Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Country *
+                        </label>
+                        <input
+                          type="text"
+                          name="country"
+                          required={formData.workArrangement !== 'remote'}
+                          placeholder="e.g., United States"
+                          className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200"
+                          value={formData.country}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          required={formData.workArrangement !== 'remote'}
+                          placeholder="e.g., New York"
+                          className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200"
+                          value={formData.city}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-gray-400 text-xs mt-2">
+                      Location is required for hybrid and on-site positions
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Description */}

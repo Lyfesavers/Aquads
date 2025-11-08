@@ -11,6 +11,26 @@ const jobSchema = new mongoose.Schema({
     required: true,
     enum: ['hiring', 'for-hire'] 
   },
+  workArrangement: {
+    type: String,
+    required: true,
+    enum: ['remote', 'hybrid', 'onsite'],
+    default: 'remote'
+  },
+  location: {
+    country: {
+      type: String,
+      required: function() {
+        return this.workArrangement === 'onsite' || this.workArrangement === 'hybrid';
+      }
+    },
+    city: {
+      type: String,
+      required: function() {
+        return this.workArrangement === 'onsite' || this.workArrangement === 'hybrid';
+      }
+    }
+  },
   contactEmail: { type: String, required: true },
   contactTelegram: String,
   contactDiscord: String,
@@ -36,6 +56,7 @@ jobSchema.index({ owner: 1 }); // For user's jobs
 jobSchema.index({ jobType: 1, status: 1 }); // For job type filtering
 jobSchema.index({ payAmount: -1, status: 1 }); // For salary-based sorting
 jobSchema.index({ status: 1, jobType: 1 }); // For status + job type queries
+jobSchema.index({ workArrangement: 1, status: 1 }); // For filtering by work arrangement
 
 
 module.exports = mongoose.model('Job', jobSchema);

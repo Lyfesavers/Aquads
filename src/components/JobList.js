@@ -84,7 +84,7 @@ Best regards,
                   <p className="text-sm text-gray-400">
                     Posted by {job.ownerUsername} on {formatDate(job.createdAt)}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {job.jobType === 'hiring' ? (
                       <span className="inline-block px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">
                         Hiring
@@ -92,6 +92,28 @@ Best regards,
                     ) : (
                       <span className="inline-block px-3 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">
                         For Hire
+                      </span>
+                    )}
+                    
+                    {/* Work Arrangement Badge */}
+                    {job.workArrangement && (
+                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                        job.workArrangement === 'remote' 
+                          ? 'bg-green-900/30 text-green-300 border border-green-500/30' 
+                          : job.workArrangement === 'hybrid'
+                          ? 'bg-blue-900/30 text-blue-300 border border-blue-500/30'
+                          : 'bg-purple-900/30 text-purple-300 border border-purple-500/30'
+                      }`}>
+                        {job.workArrangement === 'remote' && '🌍 Remote'}
+                        {job.workArrangement === 'hybrid' && '🏢 Hybrid'}
+                        {job.workArrangement === 'onsite' && '🏛️ On-site'}
+                      </span>
+                    )}
+                    
+                    {/* Location Badge (only for hybrid/onsite) */}
+                    {(job.workArrangement === 'hybrid' || job.workArrangement === 'onsite') && job.location && job.location.city && (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-gray-700/50 text-gray-300 border border-gray-600/30 rounded-full">
+                        📍 {job.location.city}, {job.location.country}
                       </span>
                     )}
                   </div>
@@ -161,6 +183,34 @@ Best regards,
                   <h4 className="text-sm font-medium text-gray-400">Requirements</h4>
                   <p className="mt-1">{job.requirements}</p>
                 </div>
+
+                {/* Work Arrangement & Location Details */}
+                {job.workArrangement && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400">Work Arrangement</h4>
+                    <div className="mt-1">
+                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                        job.workArrangement === 'remote' 
+                          ? 'bg-green-900/30 text-green-300 border border-green-500/30' 
+                          : job.workArrangement === 'hybrid'
+                          ? 'bg-blue-900/30 text-blue-300 border border-blue-500/30'
+                          : 'bg-purple-900/30 text-purple-300 border border-purple-500/30'
+                      }`}>
+                        {job.workArrangement === 'remote' && '🌍 Remote - Work from anywhere'}
+                        {job.workArrangement === 'hybrid' && '🏢 Hybrid - Mix of remote & office'}
+                        {job.workArrangement === 'onsite' && '🏛️ On-site - In-office only'}
+                      </span>
+                      {(job.workArrangement === 'hybrid' || job.workArrangement === 'onsite') && job.location && job.location.city && (
+                        <div className="mt-2">
+                          <p className="text-gray-300">
+                            📍 <span className="font-medium">Location:</span> {job.location.city}, {job.location.country}
+                            {job.workArrangement === 'hybrid' && <span className="text-gray-400 ml-1">(with remote flexibility)</span>}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h4 className="text-sm font-medium text-gray-400">How to Apply</h4>
