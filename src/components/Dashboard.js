@@ -100,6 +100,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     url: '',
     gif: ''
   });
+  const [approvingBannerId, setApprovingBannerId] = useState(null);
+  const [rejectingBannerId, setRejectingBannerId] = useState(null);
   // Affiliate management states
   const [affiliateSearchQuery, setAffiliateSearchQuery] = useState('');
   const [affiliateSearchResults, setAffiliateSearchResults] = useState([]);
@@ -821,6 +823,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleApproveBanner = async (bannerId) => {
+    setApprovingBannerId(bannerId);
     try {
       const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
         method: 'POST',
@@ -830,13 +833,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         }
       });
       if (!response.ok) throw new Error('Failed to approve banner');
-      fetchBannerAds();
+      
+      showNotification('Banner approved successfully!', 'success');
+      await fetchBannerAds();
     } catch (error) {
-      // Error approving banner
+      showNotification('Failed to approve banner', 'error');
+      console.error('Error approving banner:', error);
+    } finally {
+      setApprovingBannerId(null);
     }
   };
 
   const handleRejectBanner = async (bannerId, reason) => {
+    setRejectingBannerId(bannerId);
     try {
       const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
         method: 'POST',
@@ -847,9 +856,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         body: JSON.stringify({ reason })
       });
       if (!response.ok) throw new Error('Failed to reject banner');
-      fetchBannerAds();
+      
+      showNotification('Banner rejected successfully', 'success');
+      await fetchBannerAds();
     } catch (error) {
-      // Error rejecting banner
+      showNotification('Failed to reject banner', 'error');
+      console.error('Error rejecting banner:', error);
+    } finally {
+      setRejectingBannerId(null);
     }
   };
 
@@ -3370,11 +3384,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </div>
                             {banner.status === 'pending' && (
                               <div className="flex space-x-2 ml-4">
-                                <button onClick={() => handleApproveBanner(banner._id)} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold">
-                                  ✓ Approve
+                                <button 
+                                  onClick={() => handleApproveBanner(banner._id)} 
+                                  disabled={approvingBannerId === banner._id || rejectingBannerId === banner._id}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                >
+                                  {approvingBannerId === banner._id ? (
+                                    <>
+                                      <FaSpinner className="animate-spin mr-2" />
+                                      Processing...
+                                    </>
+                                  ) : (
+                                    <>✓ Approve</>
+                                  )}
                                 </button>
-                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handleRejectBanner(banner._id, reason); }} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
-                                  ✗ Reject
+                                <button 
+                                  onClick={() => { 
+                                    const reason = prompt('Enter rejection reason:'); 
+                                    if (reason) handleRejectBanner(banner._id, reason); 
+                                  }} 
+                                  disabled={approvingBannerId === banner._id || rejectingBannerId === banner._id}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                >
+                                  {rejectingBannerId === banner._id ? (
+                                    <>
+                                      <FaSpinner className="animate-spin mr-2" />
+                                      Processing...
+                                    </>
+                                  ) : (
+                                    <>✗ Reject</>
+                                  )}
                                 </button>
                               </div>
                             )}
