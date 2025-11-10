@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AquaSwap - Quick Token Swap</title>
   <link rel="stylesheet" href="popup.css">
+  <style>
+    html, body {
+      width: 440px !important;
+      height: 700px !important;
+      min-width: 440px !important;
+      min-height: 700px !important;
+    }
+  </style>
 </head>
 <body>
   <!-- Loading Screen -->
@@ -23,15 +30,15 @@
     <div class="extension-header">
       <div class="header-left">
         <img src="../icons/icon48.png" alt="AquaSwap" class="header-logo" onerror="this.style.display='none'">
-        <h1>AquaSwap</h1>
       </div>
       <div class="header-right">
         <a href="https://aquads.xyz" target="_blank" class="open-full-btn" title="Open full site">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
             <polyline points="15 3 21 3 21 9"></polyline>
             <line x1="10" y1="14" x2="21" y2="3"></line>
           </svg>
+          <span>Full Site</span>
         </a>
       </div>
     </div>
@@ -43,14 +50,15 @@
         src="https://aquads.xyz/embed/aquaswap"
         frameborder="0"
         allow="clipboard-write"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
+        allowtransparency="true"
       ></iframe>
     </div>
 
     <!-- Footer -->
     <div class="extension-footer">
-      <span class="footer-text">Powered by <a href="https://aquads.xyz" target="_blank">Aquads</a></span>
-      <span class="version">v1.0.0</span>
+      <span class="footer-text">Browser Extension</span>
+      <span class="version">v1.0.1</span>
     </div>
   </div>
 

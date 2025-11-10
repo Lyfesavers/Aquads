@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AquaSwap - Cross-Chain Token Swap",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Swap tokens instantly across any blockchain from any webpage. Powered by LiFi with the best rates across 20+ chains.",
   "icons": {
     "16": "icons/icon16.png",
@@ -29,7 +29,7 @@
     "https://*.aquads.xyz/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://aquads.xyz https://*.aquads.xyz;"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "web_accessible_resources": [
     {
