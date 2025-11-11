@@ -863,11 +863,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       }
     },
     
-    onRouteExecutionCompleted: (route) => {
+    onRouteExecutionCompleted: async (route) => {
       logger.info('Swap execution completed', { route });
       
       if (showNotification) {
         showNotification('✅ Swap completed successfully!', 'success');
+      }
+      
+      // Award 10 affiliate points if user is logged in
+      if (currentUser && currentUser.token) {
+        try {
+          const response = await fetch(`${API_URL}/api/points/award-swap`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            logger.info('Swap points awarded', { points: data.pointsAwarded });
+            
+            if (showNotification) {
+              showNotification(`🎉 +${data.pointsAwarded} points earned from swap!`, 'success');
+            }
+          }
+        } catch (error) {
+          logger.error('Error awarding swap points', { error });
+          // Don't show error to user - points are a bonus feature
+        }
       }
     },
     
