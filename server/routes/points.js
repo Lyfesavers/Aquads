@@ -374,14 +374,14 @@ router.post('/swap-completed', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Award 10 points for completing a swap
+    // Award 5 points for completing a swap
     const updatedUser = await User.findByIdAndUpdate(
       req.user.userId,
       {
-        $inc: { points: 10 },
+        $inc: { points: 5 },
         $push: {
           pointsHistory: {
-            amount: 10,
+            amount: 5,
             reason: 'Completed AquaSwap transaction',
             createdAt: new Date()
           }
@@ -392,7 +392,7 @@ router.post('/swap-completed', auth, async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Swap completed! +10 points earned',
+      message: 'Swap completed! +5 points earned',
       currentPoints: updatedUser.points
     });
     

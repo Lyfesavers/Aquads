@@ -56,7 +56,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     const handleSwapComplete = (route) => {
       logger.info('Swap completed via widget event', { route });
       
-      // Award 10 points if user is logged in
+      // Award 5 points if user is logged in
       if (currentUser) {
         // Get token from localStorage currentUser object (not a separate 'token' key)
         let token = null;
@@ -81,7 +81,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           .then(response => response.json())
           .then(data => {
             if (data.success && showNotification) {
-              showNotification('✅ Swap completed! +10 points earned', 'success');
+              showNotification('✅ Swap completed! +5 points earned', 'success');
             }
           })
           .catch(error => {
