@@ -863,49 +863,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       }
     },
     
-    onRouteExecutionCompleted: async (route) => {
+    onRouteExecutionCompleted: (route) => {
       logger.info('Swap execution completed', { route });
       
       if (showNotification) {
         showNotification('✅ Swap completed successfully!', 'success');
-      }
-      
-      // Award 10 affiliate points if user is logged in
-      console.log('🔍 Checking for points award. CurrentUser:', currentUser ? 'exists' : 'null', 'Token:', currentUser?.token ? 'exists' : 'missing');
-      
-      if (currentUser && currentUser.token) {
-        console.log('🎯 Attempting to award swap points...');
-        try {
-          const response = await fetch(`${API_URL}/api/points/award-swap`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentUser.token}`
-            }
-          });
-          
-          console.log('📡 Points API response status:', response.status);
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Points API success:', data);
-            logger.info('Swap points awarded', { points: data.pointsAwarded });
-            
-            if (showNotification) {
-              showNotification(`🎉 +${data.pointsAwarded} points earned from swap!`, 'success');
-            }
-          } else {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('❌ Points API error:', response.status, errorData);
-            logger.error('Failed to award swap points', { status: response.status, error: errorData });
-          }
-        } catch (error) {
-          console.error('❌ Exception awarding swap points:', error);
-          logger.error('Error awarding swap points', { error });
-          // Don't show error to user - points are a bonus feature
-        }
-      } else {
-        console.log('⚠️ No points awarded - user not logged in or token missing');
       }
     },
     

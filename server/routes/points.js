@@ -515,43 +515,6 @@ const revokeGameVotePoints = async (userId, gameId) => {
   }
 };
 
-// Award points for completing a swap
-router.post('/award-swap', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const SWAP_POINTS = 10; // Points awarded per swap
-    
-    // Find user
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Award points
-    user.points = (user.points || 0) + SWAP_POINTS;
-    user.lastActivity = new Date();
-    user.pointsHistory.push({
-      amount: SWAP_POINTS,
-      reason: 'Completed token swap',
-      createdAt: new Date()
-    });
-    
-    await user.save();
-    
-    console.log(`✅ Awarded ${SWAP_POINTS} points to user ${user.username} for swap`);
-    
-    res.json({
-      success: true,
-      message: `+${SWAP_POINTS} points earned!`,
-      currentPoints: user.points,
-      pointsAwarded: SWAP_POINTS
-    });
-  } catch (error) {
-    console.error('Error awarding swap points:', error);
-    res.status(500).json({ error: 'Failed to award points' });
-  }
-});
-
 // Export the router directly
 module.exports = router;
 
