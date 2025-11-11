@@ -21,12 +21,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const FALLBACK_TOKEN_EXAMPLES = [];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
-  // Debug: Check if currentUser is being passed to the component
-  console.log('🔍 [AQUASWAP DEBUG] Component rendered');
-  console.log('🔍 [AQUASWAP DEBUG] currentUser:', currentUser);
-  console.log('🔍 [AQUASWAP DEBUG] localStorage token:', localStorage.getItem('token'));
-  console.log('🔍 [AQUASWAP DEBUG] localStorage currentUser:', localStorage.getItem('currentUser'));
-  
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -60,7 +54,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Listen for swap completion using the proper event hook
   useEffect(() => {
     const handleSwapComplete = (route) => {
-      console.log('✅ [SWAP COMPLETE] Event fired!', route);
       logger.info('Swap completed via widget event', { route });
       
       // Award 10 points if user is logged in
@@ -74,14 +67,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             token = userData.token;
           }
         } catch (error) {
-          console.error('[SWAP POINTS] Error parsing currentUser from localStorage:', error);
+          logger.error('Error parsing currentUser from localStorage:', error);
         }
         
-        console.log('[SWAP POINTS] User logged in, token exists:', !!token);
-        
         if (token) {
-          console.log('[SWAP POINTS] Calling backend to award points...');
-          
           fetch(`${API_URL}/api/points/swap-completed`, {
             method: 'POST',
             headers: {
@@ -89,31 +78,26 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               'Content-Type': 'application/json'
             }
           })
-          .then(response => {
-            console.log('[SWAP POINTS] Backend response status:', response.status);
-            return response.json();
-          })
+          .then(response => response.json())
           .then(data => {
-            console.log('[SWAP POINTS] Backend response:', data);
             if (data.success && showNotification) {
               showNotification('✅ Swap completed! +10 points earned', 'success');
             }
           })
           .catch(error => {
-            console.error('[SWAP POINTS] Error:', error);
+            logger.error('Error awarding swap points:', error);
             // Still show success notification for the swap itself
             if (showNotification) {
               showNotification('✅ Swap completed successfully!', 'success');
             }
           });
         } else {
-          console.log('[SWAP POINTS] No token found in localStorage');
           if (showNotification) {
             showNotification('✅ Swap completed successfully!', 'success');
           }
         }
       } else {
-        console.log('[SWAP POINTS] User not logged in');
+        // User not logged in, just show swap success
         if (showNotification) {
           showNotification('✅ Swap completed successfully!', 'success');
         }
@@ -122,7 +106,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
     // Subscribe to the RouteExecutionCompleted event
     if (widgetEvents) {
-      console.log('[SWAP POINTS] Subscribing to widget events...');
       widgetEvents.on(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
     }
 
