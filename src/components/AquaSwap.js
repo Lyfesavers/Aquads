@@ -866,8 +866,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     onRouteExecutionCompleted: (route) => {
       logger.info('Swap execution completed', { route });
       
-      if (showNotification) {
-        showNotification('✅ Swap completed successfully!', 'success');
+      // Award 10 points for completed swap if user is logged in
+      if (currentUser) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          fetch(`${API_URL}/api/points/swap-completed`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success && showNotification) {
+              showNotification('✅ Swap completed! +10 points earned', 'success');
+            }
+          })
+          .catch(error => {
+            logger.error('Error awarding swap points:', error);
+            // Still show success notification for the swap itself
+            if (showNotification) {
+              showNotification('✅ Swap completed successfully!', 'success');
+            }
+          });
+        }
+      } else {
+        // User not logged in, just show swap success
+        if (showNotification) {
+          showNotification('✅ Swap completed successfully!', 'success');
+        }
       }
     },
     
