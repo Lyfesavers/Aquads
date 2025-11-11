@@ -21,6 +21,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const FALLBACK_TOKEN_EXAMPLES = [];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
+  // Debug: Check if currentUser is being passed to the component
+  console.log('🔍 [AQUASWAP DEBUG] Component rendered');
+  console.log('🔍 [AQUASWAP DEBUG] currentUser:', currentUser);
+  console.log('🔍 [AQUASWAP DEBUG] localStorage token:', localStorage.getItem('token'));
+  console.log('🔍 [AQUASWAP DEBUG] localStorage currentUser:', localStorage.getItem('currentUser'));
+  
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
