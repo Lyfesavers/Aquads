@@ -190,6 +190,10 @@ const Affiliate = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Every swap on AquaSwap</span>
+                          <span className="text-green-400 font-bold">5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Voting on project bubbles</span>
                           <span className="text-green-400 font-bold">20 pts</span>
                         </div>
