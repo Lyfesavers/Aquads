@@ -80,8 +80,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           })
           .then(response => response.json())
           .then(data => {
+            console.log('[NOTIFICATION DEBUG] Backend response data:', data);
+            console.log('[NOTIFICATION DEBUG] data.success:', data.success);
+            console.log('[NOTIFICATION DEBUG] showNotification exists:', !!showNotification);
+            
             if (data.success && showNotification) {
+              console.log('[NOTIFICATION DEBUG] Calling showNotification with points message');
               showNotification('✅ Swap completed! +5 points earned', 'success');
+            } else if (showNotification) {
+              console.log('[NOTIFICATION DEBUG] Calling showNotification without points message');
+              showNotification('✅ Swap completed successfully!', 'success');
             }
           })
           .catch(error => {
