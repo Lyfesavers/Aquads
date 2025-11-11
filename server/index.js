@@ -229,7 +229,20 @@ setTimeout(async () => {
 
 // Middleware
 const corsOptions = {
-  origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://www.aquads.xyz',
+      'https://aquads.xyz',
+      'http://localhost:3000'
+    ];
+    
+    // Allow chrome extension origins
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('chrome-extension://')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With', 'Cache-Control']
@@ -253,10 +266,20 @@ app.use(compression({
 
 // Add CORS headers middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://www.aquads.xyz');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://www.aquads.xyz',
+    'https://aquads.xyz',
+    'http://localhost:3000'
+  ];
+  
+  // Allow chrome extension origins
+  if (!origin || allowedOrigins.includes(origin) || origin.startsWith('chrome-extension://')) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();

@@ -1,12 +1,34 @@
 // AquaSwap Extension - Popup Script
 console.log('🌊 AquaSwap Extension loaded');
 
+// Check authentication first
+(async function checkAuth() {
+  const isAuth = await AuthService.isAuthenticated();
+  if (!isAuth) {
+    console.log('❌ Not authenticated, redirecting to login...');
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  // Load and display username
+  const user = await AuthService.getCurrentUser();
+  if (user) {
+    const userNameElement = document.getElementById('user-name');
+    if (userNameElement) {
+      userNameElement.textContent = user.username;
+    }
+  }
+  
+  console.log('✅ User authenticated');
+})();
+
 // DOM Elements
 const loading = document.getElementById('loading');
 const mainContent = document.getElementById('main-content');
 const errorScreen = document.getElementById('error-screen');
 const iframe = document.getElementById('swap-iframe');
 const retryBtn = document.getElementById('retry-btn');
+const logoutBtn = document.getElementById('logout-btn');
 
 // Configuration
 const IFRAME_TIMEOUT = 10000; // 10 seconds
@@ -176,6 +198,19 @@ window.addEventListener('message', (event) => {
     console.log('👛 Wallet connected:', event.data.address);
   }
 });
+
+/**
+ * Handle logout
+ */
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    const confirmed = confirm('Are you sure you want to logout?');
+    if (confirmed) {
+      await AuthService.logout();
+      window.location.href = 'login.html';
+    }
+  });
+}
 
 /**
  * Handle extension unload
