@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
-import { LiFiWidget } from '@lifi/widget';
+import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
@@ -47,6 +47,75 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  // LiFi Widget Events Hook - THE CORRECT WAY to listen to widget events
+  const widgetEvents = useWidgetEvents();
+
+  // Listen for swap completion using the proper event hook
+  useEffect(() => {
+    const handleSwapComplete = (route) => {
+      console.log('✅ [SWAP COMPLETE] Event fired!', route);
+      logger.info('Swap completed via widget event', { route });
+      
+      // Award 10 points if user is logged in
+      if (currentUser) {
+        const token = localStorage.getItem('token');
+        console.log('[SWAP POINTS] User logged in, token exists:', !!token);
+        
+        if (token) {
+          console.log('[SWAP POINTS] Calling backend to award points...');
+          
+          fetch(`${API_URL}/api/points/swap-completed`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => {
+            console.log('[SWAP POINTS] Backend response status:', response.status);
+            return response.json();
+          })
+          .then(data => {
+            console.log('[SWAP POINTS] Backend response:', data);
+            if (data.success && showNotification) {
+              showNotification('✅ Swap completed! +10 points earned', 'success');
+            }
+          })
+          .catch(error => {
+            console.error('[SWAP POINTS] Error:', error);
+            // Still show success notification for the swap itself
+            if (showNotification) {
+              showNotification('✅ Swap completed successfully!', 'success');
+            }
+          });
+        } else {
+          console.log('[SWAP POINTS] No token found');
+          if (showNotification) {
+            showNotification('✅ Swap completed successfully!', 'success');
+          }
+        }
+      } else {
+        console.log('[SWAP POINTS] User not logged in');
+        if (showNotification) {
+          showNotification('✅ Swap completed successfully!', 'success');
+        }
+      }
+    };
+
+    // Subscribe to the RouteExecutionCompleted event
+    if (widgetEvents) {
+      console.log('[SWAP POINTS] Subscribing to widget events...');
+      widgetEvents.on(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
+    }
+
+    // Cleanup: unsubscribe when component unmounts
+    return () => {
+      if (widgetEvents) {
+        widgetEvents.off(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
+      }
+    };
+  }, [widgetEvents, currentUser, showNotification]);
 
   // Initialize on component mount
   useEffect(() => {

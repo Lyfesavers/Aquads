@@ -365,6 +365,43 @@ router.post('/social-raids/complete', auth, requireEmailVerification, async (req
   }
 });
 
+// Route to award points for completed AquaSwap transaction
+router.post('/swap-completed', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Award 10 points for completing a swap
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        $inc: { points: 10 },
+        $push: {
+          pointsHistory: {
+            amount: 10,
+            reason: 'Completed AquaSwap transaction',
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Swap completed! +10 points earned',
+      currentPoints: updatedUser.points
+    });
+    
+  } catch (error) {
+    console.error('Error awarding swap points:', error);
+    res.status(500).json({ error: 'Failed to award swap points' });
+  }
+});
+
 function awardListingPoints(userId) {
   return User.findById(userId)
     .then(user => {
