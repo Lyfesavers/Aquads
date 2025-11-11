@@ -866,55 +866,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     onRouteExecutionCompleted: (route) => {
       logger.info('Swap execution completed', { route });
       
-      // Award 10 points for completed swap if user is logged in
-      console.log('[AQUASWAP POINTS] Swap completed callback fired');
-      console.log('[AQUASWAP POINTS] currentUser:', currentUser);
-      console.log('[AQUASWAP POINTS] API_URL:', API_URL);
-      
-      if (currentUser) {
-        const token = localStorage.getItem('token');
-        console.log('[AQUASWAP POINTS] Token exists:', !!token);
-        
-        if (token) {
-          console.log('[AQUASWAP POINTS] Calling backend to award points...');
-          
-          fetch(`${API_URL}/api/points/swap-completed`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          .then(response => {
-            console.log('[AQUASWAP POINTS] Backend response status:', response.status);
-            return response.json();
-          })
-          .then(data => {
-            console.log('[AQUASWAP POINTS] Backend response data:', data);
-            if (data.success && showNotification) {
-              showNotification('✅ Swap completed! +10 points earned', 'success');
-            }
-          })
-          .catch(error => {
-            console.error('[AQUASWAP POINTS] Error awarding swap points:', error);
-            logger.error('Error awarding swap points:', error);
-            // Still show success notification for the swap itself
-            if (showNotification) {
-              showNotification('✅ Swap completed successfully!', 'success');
-            }
-          });
-        } else {
-          console.log('[AQUASWAP POINTS] No token found, cannot award points');
-          if (showNotification) {
-            showNotification('✅ Swap completed successfully!', 'success');
-          }
-        }
-      } else {
-        console.log('[AQUASWAP POINTS] User not logged in, cannot award points');
-        // User not logged in, just show swap success
-        if (showNotification) {
-          showNotification('✅ Swap completed successfully!', 'success');
-        }
+      if (showNotification) {
+        showNotification('✅ Swap completed successfully!', 'success');
       }
     },
     
