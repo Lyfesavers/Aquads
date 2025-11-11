@@ -65,7 +65,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       // Award 10 points if user is logged in
       if (currentUser) {
-        const token = localStorage.getItem('token');
+        // Get token from localStorage currentUser object (not a separate 'token' key)
+        let token = null;
+        try {
+          const storedUser = localStorage.getItem('currentUser');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            token = userData.token;
+          }
+        } catch (error) {
+          console.error('[SWAP POINTS] Error parsing currentUser from localStorage:', error);
+        }
+        
         console.log('[SWAP POINTS] User logged in, token exists:', !!token);
         
         if (token) {
@@ -96,7 +107,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             }
           });
         } else {
-          console.log('[SWAP POINTS] No token found');
+          console.log('[SWAP POINTS] No token found in localStorage');
           if (showNotification) {
             showNotification('✅ Swap completed successfully!', 'success');
           }
