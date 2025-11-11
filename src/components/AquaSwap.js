@@ -43,6 +43,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
   const [loadingGasPrice, setLoadingGasPrice] = useState(false);
+  
+  // Points earned popup state
+  const [showPointsPopup, setShowPointsPopup] = useState(false);
+  const [pointsEarned, setPointsEarned] = useState(0);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -80,16 +84,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           })
           .then(response => response.json())
           .then(data => {
-            console.log('[NOTIFICATION DEBUG] Backend response data:', data);
-            console.log('[NOTIFICATION DEBUG] data.success:', data.success);
-            console.log('[NOTIFICATION DEBUG] showNotification exists:', !!showNotification);
-            
-            if (data.success && showNotification) {
-              console.log('[NOTIFICATION DEBUG] Calling showNotification with points message');
-              showNotification('✅ Swap completed! +5 points earned', 'success');
-            } else if (showNotification) {
-              console.log('[NOTIFICATION DEBUG] Calling showNotification without points message');
-              showNotification('✅ Swap completed successfully!', 'success');
+            // Show custom popup modal for points earned
+            if (data.success) {
+              setPointsEarned(5);
+              setShowPointsPopup(true);
+              // Auto-dismiss after 4 seconds
+              setTimeout(() => {
+                setShowPointsPopup(false);
+              }, 4000);
             }
           })
           .catch(error => {
@@ -1642,6 +1644,111 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
+      {/* Points Earned Popup Modal */}
+      {showPointsPopup && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 2147483647,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(5px)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={() => setShowPointsPopup(false)}
+        >
+          <div 
+            style={{
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              borderRadius: '20px',
+              padding: '40px 60px',
+              boxShadow: '0 20px 60px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.2)',
+              border: '3px solid rgba(255, 255, 255, 0.3)',
+              textAlign: 'center',
+              animation: 'bounceIn 0.5s ease-out',
+              transform: 'scale(1)',
+              maxWidth: '90%'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'rotate 1s ease-in-out' }}>
+              🎉
+            </div>
+            <h2 style={{ 
+              color: 'white', 
+              fontSize: '32px', 
+              fontWeight: 'bold', 
+              marginBottom: '15px',
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+            }}>
+              Swap Successful!
+            </h2>
+            <p style={{ 
+              color: 'white', 
+              fontSize: '24px', 
+              fontWeight: '600',
+              marginBottom: '10px',
+              textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            }}>
+              +{pointsEarned} Points Earned! 🌟
+            </p>
+            <p style={{ 
+              color: 'rgba(255, 255, 255, 0.9)', 
+              fontSize: '16px',
+              marginTop: '15px',
+              textShadow: '0 1px 4px rgba(0, 0, 0, 0.2)'
+            }}>
+              Keep swapping to earn more rewards!
+            </p>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes bounceIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.3);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.05);
+          }
+          70% {
+            transform: scale(0.9);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes rotate {
+          0%, 100% {
+            transform: rotate(0deg);
+          }
+          25% {
+            transform: rotate(-10deg);
+          }
+          75% {
+            transform: rotate(10deg);
+          }
+        }
+      `}</style>
 
     </div>
   );
