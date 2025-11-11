@@ -180,9 +180,17 @@
   color: #6b7280;
 }
 
+/* Helper text */
+.login-helper-text {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+}
+
 /* Version */
 .login-version {
-  margin-top: 24px;
+  margin-top: 16px;
   font-size: 11px;
   color: #6b7280;
 }
