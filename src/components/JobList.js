@@ -125,10 +125,12 @@ Best regards,
                       </span>
                     )}
                     
-                    {/* Location Badge (only for hybrid/onsite) */}
-                    {(job.workArrangement === 'hybrid' || job.workArrangement === 'onsite') && job.location && job.location.city && (
+                    {/* Location Badge - Show for all jobs that have location */}
+                    {job.location && (job.location.city || job.location.country) && (
                       <span className="inline-block px-3 py-1 text-xs font-semibold bg-gray-700/50 text-gray-300 border border-gray-600/30 rounded-full">
-                        📍 {job.location.city}, {job.location.country}
+                        📍 {job.location.city && job.location.country 
+                          ? `${job.location.city}, ${job.location.country}` 
+                          : job.location.country || job.location.city}
                       </span>
                     )}
                   </div>
@@ -142,7 +144,7 @@ Best regards,
                     {job.payType === 'percentage' ? (
                       `${job.payAmount}%`
                     ) : (
-                      `$${job.payAmount}/${job.payType}`
+                      `$${job.payAmount.toLocaleString()}/${job.payType}`
                     )}
                   </div>
                 ) : (

@@ -122,13 +122,30 @@ function mapRSSItemToJob(item) {
   // Parse salary from item data or description
   let salary = null;
   if (item.salary) {
-    // Salary from API
+    // Salary from API - detect if monthly or yearly
+    const salaryLower = item.salary.toLowerCase();
+    const isMonthly = salaryLower.includes('month') || salaryLower.includes('/mo');
+    const isYearly = salaryLower.includes('year') || salaryLower.includes('annual') || salaryLower.includes('/yr');
+    
     const salaryMatch = item.salary.match(/\$?(\d+)[kK]?/);
     if (salaryMatch) {
       const amount = parseInt(salaryMatch[1]);
+      const normalizedAmount = amount >= 1000 ? amount : amount * 1000;
+      
+      // Determine pay type
+      let payType = 'year'; // Default
+      if (isMonthly) {
+        payType = 'month';
+      } else if (isYearly) {
+        payType = 'year';
+      } else if (normalizedAmount < 20000) {
+        // If amount is less than 20k, likely monthly
+        payType = 'month';
+      }
+      
       salary = {
-        payAmount: amount >= 1000 ? amount : amount * 1000,
-        payType: 'yearly'
+        payAmount: normalizedAmount,
+        payType: payType
       };
     }
   } else {
@@ -139,9 +156,32 @@ function mapRSSItemToJob(item) {
   // Parse location from API data or description
   let locationInfo;
   if (item.location) {
+    // Parse location string - can be like "USA", "Europe", "Worldwide", etc.
+    const locationStr = item.location.trim();
+    let country = locationStr;
+    let city = '';
+    
+    // Check if it's a specific country or region
+    if (locationStr.toLowerCase().includes('worldwide') || locationStr.toLowerCase().includes('anywhere')) {
+      country = 'Worldwide';
+      city = 'Remote';
+    } else if (locationStr.includes(',')) {
+      // Format like "City, Country"
+      const parts = locationStr.split(',');
+      city = parts[0].trim();
+      country = parts[1].trim();
+    } else {
+      // Just country/region
+      country = locationStr;
+      city = '';
+    }
+    
     locationInfo = {
       workArrangement: 'remote',
-      location: { country: item.location, city: 'Remote' }
+      location: { 
+        country: country,
+        city: city || undefined
+      }
     };
   } else {
     locationInfo = parseLocation(description, category);
