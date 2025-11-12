@@ -1,26 +1,7 @@
-const Parser = require('rss-parser');
 const Job = require('../models/Job');
-const https = require('https');
+const axios = require('axios');
 
-const parser = new Parser({
-  timeout: 30000, // 30 second timeout
-  headers: {
-    'User-Agent': 'Aquads Job Board (Mozilla/5.0)',
-    'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*'
-  },
-  customFields: {
-    item: [
-      ['category', 'category'],
-      ['pubDate', 'pubDate'],
-      ['published', 'pubDate'],
-      ['link', 'link'],
-      ['guid', 'guid'],
-      ['id', 'guid']
-    ]
-  }
-});
-
-const REMOTIVE_RSS_URL = 'https://remotive.com/remote-jobs/rss-feed';
+const REMOTIVE_API_URL = 'https://remotive.com/api/remote-jobs';
 
 /**
  * Parse salary information from job title or description
@@ -211,63 +192,26 @@ function mapRSSItemToJob(item) {
 }
 
 /**
- * Sync jobs from Remotive RSS feed
+ * Sync jobs from Remotive API
  */
 async function syncRemotiveJobs() {
   const syncStartTime = new Date();
   console.log(`[Remotive Sync] Starting sync at ${syncStartTime.toISOString()}`);
   
   try {
-    // Fetch and parse RSS feed
-    console.log(`[Remotive Sync] Fetching feed from ${REMOTIVE_RSS_URL}`);
+    // Fetch jobs from Remotive API
+    console.log(`[Remotive Sync] Fetching jobs from ${REMOTIVE_API_URL}`);
     
-    // Try to fetch and parse the feed
-    let feed;
-    try {
-      feed = await parser.parseURL(REMOTIVE_RSS_URL);
-    } catch (parseError) {
-      console.error('[Remotive Sync] RSS Parse Error:', parseError.message);
-      console.log('[Remotive Sync] Attempting to use Remotive API instead...');
-      
-      // Try using Remotive's public API as fallback
-      const axios = require('axios');
-      const apiUrl = 'https://remotive.com/api/remote-jobs';
-      const response = await axios.get(apiUrl, {
-        headers: {
-          'User-Agent': 'Aquads Job Board',
-          'Accept': 'application/json'
-        },
-        timeout: 30000
-      });
-      
-      if (!response.data || !response.data.jobs) {
-        throw new Error('No jobs found in API response');
-      }
-      
-      // Convert API response to feed format
-      feed = {
-        items: response.data.jobs.slice(0, 100).map(job => ({
-          title: job.title,
-          link: job.url,
-          guid: job.id ? job.id.toString() : job.url,
-          pubDate: job.publication_date,
-          category: job.category,
-          content: job.description,
-          contentSnippet: job.description,
-          company: job.company_name,
-          companyLogo: job.company_logo || job.company_logo_url,
-          salary: job.salary,
-          jobType: job.job_type,
-          location: job.candidate_required_location,
-          tags: job.tags
-        }))
-      };
-      
-      console.log('[Remotive Sync] Successfully fetched from API');
-    }
+    const response = await axios.get(REMOTIVE_API_URL, {
+      headers: {
+        'User-Agent': 'Aquads Job Board',
+        'Accept': 'application/json'
+      },
+      timeout: 30000
+    });
     
-    if (!feed || !feed.items || feed.items.length === 0) {
-      console.log('[Remotive Sync] No items found in feed');
+    if (!response.data || !response.data.jobs) {
+      console.log('[Remotive Sync] No jobs found in API response');
       return {
         success: true,
         added: 0,
@@ -277,7 +221,26 @@ async function syncRemotiveJobs() {
       };
     }
     
-    console.log(`[Remotive Sync] Found ${feed.items.length} items in feed`);
+    // Convert API response to feed format for processing
+    const feed = {
+      items: response.data.jobs.slice(0, 100).map(job => ({
+        title: job.title,
+        link: job.url,
+        guid: job.id ? job.id.toString() : job.url,
+        pubDate: job.publication_date,
+        category: job.category,
+        content: job.description,
+        contentSnippet: job.description,
+        company: job.company_name,
+        companyLogo: job.company_logo || job.company_logo_url,
+        salary: job.salary,
+        jobType: job.job_type,
+        location: job.candidate_required_location,
+        tags: job.tags
+      }))
+    };
+    
+    console.log(`[Remotive Sync] Successfully fetched ${feed.items.length} jobs from API`);
     
     let added = 0;
     let updated = 0;
