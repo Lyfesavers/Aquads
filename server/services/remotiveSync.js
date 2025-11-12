@@ -122,53 +122,85 @@ function mapRSSItemToJob(item) {
   // Parse salary from item data or description
   let salary = null;
   if (item.salary) {
-    // Salary from API - detect if monthly or yearly
     const salaryStr = item.salary.toString();
     const salaryLower = salaryStr.toLowerCase();
     
-    // Log salary for debugging (will help see actual format)
-    console.log(`[Remotive] Parsing salary for "${title}": "${salaryStr}"`);
+    // Skip if it's not USD salary
+    const isUSD = salaryLower.includes('usd') || 
+                  salaryLower.includes('$') || 
+                  (!salaryLower.includes('yen') && 
+                   !salaryLower.includes('mxn') && 
+                   !salaryLower.includes('pln') && 
+                   !salaryLower.includes('inr') &&
+                   !salaryLower.includes(' rs ') &&
+                   !salaryLower.includes('cad') &&
+                   !salaryLower.includes('gbp') &&
+                   !salaryLower.includes('£') &&
+                   !salaryLower.includes('₱') &&
+                   !salaryLower.includes('php'));
     
     // Check for pay period indicators
+    const isHourly = salaryLower.includes('/hr') || 
+                     salaryLower.includes('per hour') ||
+                     salaryLower.includes('/hour');
     const isMonthly = salaryLower.includes('month') || 
                       salaryLower.includes('/mo') || 
-                      salaryLower.includes('per month') ||
-                      salaryLower.includes('pm');
+                      salaryLower.includes('per month');
     const isYearly = salaryLower.includes('year') || 
                      salaryLower.includes('annual') || 
                      salaryLower.includes('/yr') ||
-                     salaryLower.includes('per year') ||
-                     salaryLower.includes('pa');
+                     salaryLower.includes('per year');
     
-    // Extract numbers - handle ranges like "$5k-$8k" or just "$5k"
-    const salaryMatch = salaryStr.match(/\$?(\d+)[kK]?/);
-    if (salaryMatch) {
-      const amount = parseInt(salaryMatch[1]);
-      const normalizedAmount = amount >= 1000 ? amount : amount * 1000;
-      
-      // Determine pay type with better heuristics
-      let payType = 'year'; // Default assumption for salaries
-      
-      if (isMonthly) {
-        payType = 'month';
-      } else if (isYearly) {
-        payType = 'year';
-      } else {
-        // Heuristic: amounts under $30k are likely monthly
-        // amounts over $30k are likely yearly
-        if (normalizedAmount < 30000) {
+    // Skip if it's a benefits description (like "401k")
+    const isBenefits = salaryLower.includes('401k') || 
+                       salaryLower.includes('benefits');
+    
+    // Only process if it's USD and not benefits
+    if (isUSD && !isBenefits) {
+      // Extract numbers - handle ranges like "$5k-$8k", "$22/hr", or just "$5k"
+      const salaryMatch = salaryStr.match(/\$?(\d+,?\d*)[kK]?/);
+      if (salaryMatch) {
+        const amountStr = salaryMatch[1].replace(',', '');
+        const amount = parseInt(amountStr);
+        
+        // Determine pay type and normalize amount
+        let payType = 'year'; // Default assumption
+        let normalizedAmount = amount;
+        
+        if (isHourly) {
+          // Hourly rate - keep as is (don't multiply by 1000)
+          payType = 'hour';
+          normalizedAmount = amount;
+        } else if (isMonthly) {
           payType = 'month';
-        } else {
+          normalizedAmount = amount >= 1000 ? amount : amount * 1000;
+        } else if (isYearly) {
           payType = 'year';
+          normalizedAmount = amount >= 1000 ? amount : amount * 1000;
+        } else {
+          // Heuristic based on amount
+          if (amount < 100) {
+            // Small numbers are likely hourly
+            payType = 'hour';
+            normalizedAmount = amount;
+          } else if (amount < 1000) {
+            // Numbers in hundreds could be 500k salary
+            normalizedAmount = amount * 1000;
+            payType = 'year';
+          } else if (normalizedAmount < 30000) {
+            // Under 30k likely monthly
+            payType = 'month';
+          } else {
+            // Over 30k likely yearly
+            payType = 'year';
+          }
         }
+        
+        salary = {
+          payAmount: normalizedAmount,
+          payType: payType
+        };
       }
-      
-      console.log(`[Remotive] Detected payType: "${payType}" for amount: $${normalizedAmount}`);
-      
-      salary = {
-        payAmount: normalizedAmount,
-        payType: payType
-      };
     }
   } else {
     // Parse from description
