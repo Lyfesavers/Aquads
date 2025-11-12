@@ -73,12 +73,28 @@ Best regards,
                 </div>
 
                 <div>
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold text-white">{job.title}</h3>
                     {job.status === 'expired' && (
-                      <span className="ml-2 px-2 py-1 text-xs bg-red-900/50 text-red-400 rounded-full">
+                      <span className="px-2 py-1 text-xs bg-red-900/50 text-red-400 rounded-full">
                         Expired
                       </span>
+                    )}
+                    {job.source === 'remotive' && (
+                      <a 
+                        href={job.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full hover:bg-blue-500/30 transition-colors flex items-center gap-1"
+                        title="View on Remotive"
+                      >
+                        <span>via</span>
+                        <span className="font-semibold">Remotive</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
                     )}
                   </div>
                   <p className="text-sm text-gray-400">
@@ -117,15 +133,21 @@ Best regards,
 
               <div className="flex items-center space-x-4">
                 {/* Pay amount display */}
-                <div className="text-lg font-semibold text-green-400">
-                  {job.payType === 'percentage' ? (
-                    `${job.payAmount}%`
-                  ) : (
-                    `$${job.payAmount}/${job.payType}`
-                  )}
-                </div>
+                {job.payAmount && job.payType ? (
+                  <div className="text-lg font-semibold text-green-400">
+                    {job.payType === 'percentage' ? (
+                      `${job.payAmount}%`
+                    ) : (
+                      `$${job.payAmount}/${job.payType}`
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400 italic">
+                    Competitive
+                  </div>
+                )}
                 
-                {currentUser && (
+                {currentUser && job.source === 'user' && (
                   <div className="flex space-x-2">
                     {/* Owner controls */}
                     {(currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
@@ -167,7 +189,7 @@ Best regards,
                       </>
                     )}
                     
-                    {/* Admin delete button (for all listings) */}
+                    {/* Admin delete button (for user listings) */}
                     {currentUser.isAdmin && (currentUser.userId !== job.owner && currentUser.userId !== job.owner._id) && (
                       <button
                         onClick={(e) => {
@@ -183,6 +205,22 @@ Best regards,
                       </button>
                     )}
                   </div>
+                )}
+                
+                {/* Admin delete button for external jobs */}
+                {currentUser && currentUser.isAdmin && job.source === 'remotive' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this external job? (Admin action)')) {
+                        onDeleteJob(job._id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-400 transition-colors"
+                    title="Delete external job (Admin)"
+                  >
+                    <FaTrash size={18} />
+                  </button>
                 )}
               </div>
             </div>
@@ -235,7 +273,9 @@ Best regards,
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (job.applicationUrl) {
+                      if (job.source === 'remotive' && job.externalUrl) {
+                        window.open(job.externalUrl, '_blank', 'noopener,noreferrer');
+                      } else if (job.applicationUrl) {
                         window.open(job.applicationUrl, '_blank', 'noopener,noreferrer');
                       } else {
                         handleEmailClick(job);
@@ -246,14 +286,18 @@ Best regards,
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Apply Now</span>
+                    <span>{job.source === 'remotive' ? 'Apply on Remotive' : 'Apply Now'}</span>
                   </button>
                   <p className="text-gray-400 text-xs mt-2 text-center">
-                    {job.applicationUrl ? 'You will be redirected to the application page' : 'Apply via email'}
+                    {job.source === 'remotive' 
+                      ? 'You will be redirected to Remotive.com' 
+                      : job.applicationUrl 
+                        ? 'You will be redirected to the application page' 
+                        : 'Apply via email'}
                   </p>
 
-                  {/* Alternative Contact Methods */}
-                  {(job.contactTelegram || job.contactDiscord) && (
+                  {/* Alternative Contact Methods - Only for user jobs */}
+                  {job.source === 'user' && (job.contactTelegram || job.contactDiscord) && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
                       <p className="text-gray-400 text-xs mb-2 text-center">Or contact via:</p>
                       <div className="flex flex-wrap gap-2 justify-center">

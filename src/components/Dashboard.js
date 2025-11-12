@@ -279,8 +279,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           }
         });
         if (response.ok) {
-          const jobs = await response.json();
-          setUserJobs(jobs);
+          const data = await response.json();
+          // Handle both old and new response format
+          setUserJobs(data.jobs || data);
         }
       } catch (error) {
         // Error fetching user jobs

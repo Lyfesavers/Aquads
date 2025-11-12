@@ -166,9 +166,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [cvUserId, setCvUserId] = useState(null);
   const [cvUsername, setCvUsername] = useState(null);
   
-  // Pagination state
+  // Pagination state for services
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(21);
+  
+  // Pagination state for jobs
+  const [jobsPage, setJobsPage] = useState(1);
+  const [jobsPagination, setJobsPagination] = useState(null);
+  const [isLoadingMoreJobs, setIsLoadingMoreJobs] = useState(false);
 
 
   const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
@@ -830,8 +835,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     const loadJobs = async () => {
       try {
         setIsLoading(prevState => ({ ...prevState, jobs: true }));
-        const data = await fetchJobs();
-        setJobs(data);
+        const response = await fetchJobs(false, 1, 20); // First page, 20 items
+        setJobs(response.jobs || response); // Handle both old and new response format
+        setJobsPagination(response.pagination || null);
+        setJobsPage(1);
         setIsLoading(prevState => ({ ...prevState, jobs: false }));
       } catch (error) {
         logger.error('Error fetching jobs:', error);
@@ -848,6 +855,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
 
     loadJobs();
   }, []);
+
+  const handleLoadMoreJobs = async () => {
+    if (!jobsPagination?.hasMore || isLoadingMoreJobs) return;
+    
+    try {
+      setIsLoadingMoreJobs(true);
+      const nextPage = jobsPage + 1;
+      const response = await fetchJobs(false, nextPage, 20);
+      setJobs(prevJobs => [...prevJobs, ...(response.jobs || response)]);
+      setJobsPagination(response.pagination || null);
+      setJobsPage(nextPage);
+    } catch (error) {
+      logger.error('Error loading more jobs:', error);
+      showNotification('Failed to load more jobs', 'error');
+    } finally {
+      setIsLoadingMoreJobs(false);
+    }
+  };
 
   const handleRefreshJob = async (jobId) => {
     if (!currentUser) {
@@ -1377,13 +1402,39 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       <p className="text-gray-400">Loading jobs...</p>
                     </div>
                   ) : jobs.length > 0 ? (
-                    <JobList
-                      jobs={jobs}
-                      currentUser={currentUser}
-                      onEditJob={setJobToEdit}
-                      onDeleteJob={handleDeleteJob}
-                      onRefreshJob={handleRefreshJob}
-                    />
+                    <>
+                      <JobList
+                        jobs={jobs}
+                        currentUser={currentUser}
+                        onEditJob={setJobToEdit}
+                        onDeleteJob={handleDeleteJob}
+                        onRefreshJob={handleRefreshJob}
+                      />
+                      {jobsPagination?.hasMore && (
+                        <div className="mt-6 text-center">
+                          <button
+                            onClick={handleLoadMoreJobs}
+                            disabled={isLoadingMoreJobs}
+                            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center space-x-2 mx-auto"
+                          >
+                            {isLoadingMoreJobs ? (
+                              <>
+                                <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                                <span>Loading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                                <span>Load More Jobs</span>
+                                <span className="text-sm opacity-75">({jobsPagination.total - jobs.length} more)</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-8 text-gray-400">
                       No jobs found. <a href="#" onClick={(e) => {e.preventDefault(); setShowJobModal(true);}} className="text-blue-400 hover:underline">Post a job?</a>

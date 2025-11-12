@@ -25,9 +25,10 @@ router.get('/', async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    // Update status of expired jobs
+    // Update status of expired user jobs (not external jobs)
     await Job.updateMany(
       { 
+        source: 'user',
         createdAt: { $lt: thirtyDaysAgo },
         status: 'active'
       },
@@ -41,10 +42,32 @@ router.get('/', async (req, res) => {
       query.status = 'active';
     }
 
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20; // Default 20 jobs per page
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination info
+    const totalJobs = await Job.countDocuments(query);
+    
+    // Fetch jobs with pagination
+    // Sort by source first (user jobs first), then by createdAt (newest first)
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
-      .sort({ createdAt: -1 });
-    res.json(jobs);
+      .sort({ source: 1, createdAt: -1 }) // User jobs first, then by date
+      .skip(skip)
+      .limit(limit);
+    
+    res.json({
+      jobs,
+      pagination: {
+        total: totalJobs,
+        page,
+        limit,
+        totalPages: Math.ceil(totalJobs / limit),
+        hasMore: skip + jobs.length < totalJobs
+      }
+    });
   } catch (error) {
     console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });

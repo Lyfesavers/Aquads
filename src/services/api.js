@@ -808,13 +808,19 @@ export const resetPassword = async (username, referralCode, newPassword) => {
 };
 
 // Add these job-related API functions
-export const fetchJobs = async (includeExpired = false) => {
-  logger.log('Fetching jobs...');
+export const fetchJobs = async (includeExpired = false, page = 1, limit = 20) => {
+  logger.log('Fetching jobs...', { page, limit, includeExpired });
   try {
     // Check for auth token - this might be needed for some job listings
     const authHeader = getAuthHeader();
     
-    const queryParams = includeExpired ? '?includeExpired=true' : '';
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (includeExpired) params.append('includeExpired', 'true');
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    const queryParams = params.toString() ? `?${params.toString()}` : '';
     const response = await fetch(`${API_URL}/jobs${queryParams}`, {
       headers: {
         ...authHeader

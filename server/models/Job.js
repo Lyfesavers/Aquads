@@ -4,8 +4,8 @@ const jobSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   requirements: { type: String, required: true },
-  payAmount: { type: Number, required: true },
-  payType: { type: String, required: true },
+  payAmount: { type: Number, required: false }, // Optional for external jobs
+  payType: { type: String, required: false }, // Optional for external jobs
   jobType: { 
     type: String, 
     required: true,
@@ -31,14 +31,21 @@ const jobSchema = new mongoose.Schema({
       }
     }
   },
-  contactEmail: { type: String, required: true },
+  contactEmail: { 
+    type: String, 
+    required: function() {
+      return this.source === 'user'; // Only required for user jobs
+    }
+  },
   contactTelegram: String,
   contactDiscord: String,
   applicationUrl: String,
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: function() {
+      return this.source === 'user'; // Only required for user jobs
+    }
   },
   ownerUsername: { type: String, required: true },
   ownerImage: String,
@@ -47,6 +54,28 @@ const jobSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'filled', 'expired'],
     default: 'active'
+  },
+  // External job source fields
+  source: {
+    type: String,
+    enum: ['user', 'remotive'],
+    default: 'user',
+    index: true
+  },
+  externalUrl: {
+    type: String,
+    required: function() {
+      return this.source !== 'user'; // Required for external jobs
+    }
+  },
+  externalId: {
+    type: String,
+    sparse: true, // Allows null but ensures unique when present
+    index: true
+  },
+  lastSynced: {
+    type: Date,
+    default: Date.now
   }
 });
 

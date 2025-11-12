@@ -28,6 +28,8 @@ const socketModule = require('./socket');
 const ipLimiter = require('./middleware/ipLimiter');
 const deviceLimiter = require('./middleware/deviceLimiter');
 const telegramService = require('./utils/telegramService');
+const cron = require('node-cron');
+const { syncRemotiveJobs } = require('./services/remotiveSync');
 
 const app = express();
 const server = http.createServer(app);
@@ -244,6 +246,27 @@ setTimeout(async () => {
     console.error('[Daily GM Message] Error sending initial GM message:', error);
   }
 }, 15000); // Wait 15 seconds after server start
+
+// Cron job for syncing Remotive jobs every 8 hours
+// Runs at 12:00 AM, 8:00 AM, and 4:00 PM daily
+cron.schedule('0 */8 * * *', async () => {
+  try {
+    console.log('[Remotive Sync] Starting scheduled sync...');
+    await syncRemotiveJobs();
+  } catch (error) {
+    console.error('[Remotive Sync] Error in scheduled sync:', error);
+  }
+});
+
+// Sync Remotive jobs on server start (after a delay to ensure DB is ready)
+setTimeout(async () => {
+  try {
+    console.log('[Remotive Sync] Running initial sync on server start...');
+    await syncRemotiveJobs();
+  } catch (error) {
+    console.error('[Remotive Sync] Error in initial sync:', error);
+  }
+}, 20000); // Wait 20 seconds after server start
 
 // Middleware
 const corsOptions = {
