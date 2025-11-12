@@ -1,13 +1,21 @@
 const Parser = require('rss-parser');
 const Job = require('../models/Job');
+const https = require('https');
 
 const parser = new Parser({
+  timeout: 30000, // 30 second timeout
+  headers: {
+    'User-Agent': 'Aquads Job Board (Mozilla/5.0)',
+    'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*'
+  },
   customFields: {
     item: [
       ['category', 'category'],
       ['pubDate', 'pubDate'],
+      ['published', 'pubDate'],
       ['link', 'link'],
-      ['guid', 'guid']
+      ['guid', 'guid'],
+      ['id', 'guid']
     ]
   }
 });
@@ -93,9 +101,12 @@ function cleanHTML(html) {
 }
 
 /**
- * Extract company name from title or content
+ * Extract company name from title, content, or item
  */
-function extractCompany(title, description) {
+function extractCompany(title, description, item = {}) {
+  // First check if company name is directly provided (from API)
+  if (item.company) return item.company;
+  
   // Common patterns: "Position at Company" or "Company - Position"
   const atPattern = /at\s+([^-\n]+)/i;
   const dashPattern = /^([^-]+)\s+-/;
@@ -117,7 +128,7 @@ function mapRSSItemToJob(item) {
   const title = cleanHTML(item.title);
   const description = cleanHTML(item.contentSnippet || item.content || item.description);
   const category = item.category || 'General';
-  const company = extractCompany(title, description);
+  const company = extractCompany(title, description, item);
   
   // Parse salary (may be null)
   const salary = parseSalary(title, description);
@@ -159,7 +170,46 @@ async function syncRemotiveJobs() {
   try {
     // Fetch and parse RSS feed
     console.log(`[Remotive Sync] Fetching feed from ${REMOTIVE_RSS_URL}`);
-    const feed = await parser.parseURL(REMOTIVE_RSS_URL);
+    
+    // Try to fetch and parse the feed
+    let feed;
+    try {
+      feed = await parser.parseURL(REMOTIVE_RSS_URL);
+    } catch (parseError) {
+      console.error('[Remotive Sync] RSS Parse Error:', parseError.message);
+      console.log('[Remotive Sync] Attempting to use Remotive API instead...');
+      
+      // Try using Remotive's public API as fallback
+      const axios = require('axios');
+      const apiUrl = 'https://remotive.com/api/remote-jobs';
+      const response = await axios.get(apiUrl, {
+        headers: {
+          'User-Agent': 'Aquads Job Board',
+          'Accept': 'application/json'
+        },
+        timeout: 30000
+      });
+      
+      if (!response.data || !response.data.jobs) {
+        throw new Error('No jobs found in API response');
+      }
+      
+      // Convert API response to feed format
+      feed = {
+        items: response.data.jobs.slice(0, 100).map(job => ({
+          title: job.title,
+          link: job.url,
+          guid: job.id ? job.id.toString() : job.url,
+          pubDate: job.publication_date,
+          category: job.category,
+          content: job.description,
+          contentSnippet: job.description ? job.description.substring(0, 500) : '',
+          company: job.company_name
+        }))
+      };
+      
+      console.log('[Remotive Sync] Successfully fetched from API');
+    }
     
     if (!feed || !feed.items || feed.items.length === 0) {
       console.log('[Remotive Sync] No items found in feed');
