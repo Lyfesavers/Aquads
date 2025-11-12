@@ -227,6 +227,24 @@ setTimeout(async () => {
   }
 }, 10000); // Wait 10 seconds after server start
 
+// Periodic task for sending daily GM message to all groups
+setInterval(async () => {
+  try {
+    await telegramService.sendDailyGMMessage();
+  } catch (error) {
+    console.error('[Daily GM Message] Error in daily GM task:', error);
+  }
+}, 24 * 60 * 60 * 1000); // Run every 24 hours
+
+// Send initial GM message on server start (after a delay to ensure DB is ready)
+setTimeout(async () => {
+  try {
+    await telegramService.sendDailyGMMessage();
+  } catch (error) {
+    console.error('[Daily GM Message] Error sending initial GM message:', error);
+  }
+}, 15000); // Wait 15 seconds after server start
+
 // Middleware
 const corsOptions = {
   origin: function (origin, callback) {

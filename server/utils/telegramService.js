@@ -2788,6 +2788,61 @@ https://aquads.xyz`;
         "❌ Error uploading image. Please try again.");
       return true;
     }
+  },
+
+  // Send daily GM GM message to all linked groups
+  sendDailyGMMessage: async () => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      
+      if (!botToken) {
+        console.error('TELEGRAM_BOT_TOKEN not configured');
+        return;
+      }
+
+      // Get all active groups (including the default chat ID)
+      const groupsToNotify = new Set(telegramService.activeGroups);
+      const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+      if (defaultChatId) {
+        groupsToNotify.add(defaultChatId);
+      }
+
+      if (groupsToNotify.size === 0) {
+        console.log('No active groups to send GM message to');
+        return;
+      }
+
+      // Construct the GM message
+      const message = `🌅 GM GM everyone! ☀️
+
+Wishing you all a blessed day from Aquads.xyz! 💙
+
+Let's make today amazing! 🚀`;
+
+      // Send to all groups
+      let successCount = 0;
+      for (const chatId of groupsToNotify) {
+        try {
+          const result = await telegramService.sendBotMessage(chatId, message);
+          if (result.success) {
+            successCount++;
+            console.log(`✅ GM message sent to chat ${chatId}`);
+          }
+        } catch (error) {
+          console.error(`Failed to send GM message to group ${chatId}:`, error.message);
+          // Remove failed group from active groups
+          telegramService.activeGroups.delete(chatId);
+          await telegramService.saveActiveGroups();
+        }
+      }
+
+      console.log(`📨 Daily GM message sent to ${successCount}/${groupsToNotify.size} groups`);
+      return successCount > 0;
+
+    } catch (error) {
+      console.error('Daily GM message failed:', error.message);
+      return false;
+    }
   }
 
 
