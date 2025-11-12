@@ -171,6 +171,7 @@ function mapRSSItemToJob(item) {
           // Hourly rate - keep as is (don't multiply by 1000)
           payType = 'hour';
           normalizedAmount = amount;
+          console.log(`[Remotive] Hourly rate detected: $${normalizedAmount}/hour`);
         } else if (isMonthly) {
           payType = 'month';
           normalizedAmount = amount >= 1000 ? amount : amount * 1000;
@@ -352,7 +353,17 @@ async function syncRemotiveJobs() {
         });
         
         if (existingJob) {
-          // Update lastSynced timestamp
+          // Update existing job with all new data
+          existingJob.title = jobData.title;
+          existingJob.description = jobData.description;
+          existingJob.requirements = jobData.requirements;
+          existingJob.payAmount = jobData.payAmount;
+          existingJob.payType = jobData.payType;
+          existingJob.workArrangement = jobData.workArrangement;
+          existingJob.location = jobData.location;
+          existingJob.ownerUsername = jobData.ownerUsername;
+          existingJob.companyLogo = jobData.companyLogo;
+          existingJob.externalUrl = jobData.externalUrl;
           existingJob.lastSynced = syncStartTime;
           await existingJob.save();
           updated++;
