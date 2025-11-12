@@ -123,25 +123,47 @@ function mapRSSItemToJob(item) {
   let salary = null;
   if (item.salary) {
     // Salary from API - detect if monthly or yearly
-    const salaryLower = item.salary.toLowerCase();
-    const isMonthly = salaryLower.includes('month') || salaryLower.includes('/mo');
-    const isYearly = salaryLower.includes('year') || salaryLower.includes('annual') || salaryLower.includes('/yr');
+    const salaryStr = item.salary.toString();
+    const salaryLower = salaryStr.toLowerCase();
     
-    const salaryMatch = item.salary.match(/\$?(\d+)[kK]?/);
+    // Log salary for debugging (will help see actual format)
+    console.log(`[Remotive] Parsing salary for "${title}": "${salaryStr}"`);
+    
+    // Check for pay period indicators
+    const isMonthly = salaryLower.includes('month') || 
+                      salaryLower.includes('/mo') || 
+                      salaryLower.includes('per month') ||
+                      salaryLower.includes('pm');
+    const isYearly = salaryLower.includes('year') || 
+                     salaryLower.includes('annual') || 
+                     salaryLower.includes('/yr') ||
+                     salaryLower.includes('per year') ||
+                     salaryLower.includes('pa');
+    
+    // Extract numbers - handle ranges like "$5k-$8k" or just "$5k"
+    const salaryMatch = salaryStr.match(/\$?(\d+)[kK]?/);
     if (salaryMatch) {
       const amount = parseInt(salaryMatch[1]);
       const normalizedAmount = amount >= 1000 ? amount : amount * 1000;
       
-      // Determine pay type
-      let payType = 'year'; // Default
+      // Determine pay type with better heuristics
+      let payType = 'year'; // Default assumption for salaries
+      
       if (isMonthly) {
         payType = 'month';
       } else if (isYearly) {
         payType = 'year';
-      } else if (normalizedAmount < 20000) {
-        // If amount is less than 20k, likely monthly
-        payType = 'month';
+      } else {
+        // Heuristic: amounts under $30k are likely monthly
+        // amounts over $30k are likely yearly
+        if (normalizedAmount < 30000) {
+          payType = 'month';
+        } else {
+          payType = 'year';
+        }
       }
+      
+      console.log(`[Remotive] Detected payType: "${payType}" for amount: $${normalizedAmount}`);
       
       salary = {
         payAmount: normalizedAmount,
