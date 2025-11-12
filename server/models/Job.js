@@ -3,7 +3,13 @@ const mongoose = require('mongoose');
 const jobSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  requirements: { type: String, required: true },
+  requirements: { 
+    type: String, 
+    required: function() {
+      return this.source === 'user'; // Only required for user jobs
+    },
+    default: 'See job description for requirements'
+  },
   payAmount: { type: Number, required: false }, // Optional for external jobs
   payType: { type: String, required: false }, // Optional for external jobs
   jobType: { 
@@ -49,6 +55,7 @@ const jobSchema = new mongoose.Schema({
   },
   ownerUsername: { type: String, required: true },
   ownerImage: String,
+  companyLogo: String, // For external jobs (Remotive)
   createdAt: { type: Date, default: Date.now },
   status: {
     type: String,

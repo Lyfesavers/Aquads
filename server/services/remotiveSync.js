@@ -90,6 +90,10 @@ function cleanHTML(html) {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<h[1-6][^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -97,6 +101,10 @@ function cleanHTML(html) {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double newlines
     .trim();
 }
 
@@ -130,20 +138,61 @@ function mapRSSItemToJob(item) {
   const category = item.category || 'General';
   const company = extractCompany(title, description, item);
   
-  // Parse salary (may be null)
-  const salary = parseSalary(title, description);
+  // Parse salary from item data or description
+  let salary = null;
+  if (item.salary) {
+    // Salary from API
+    const salaryMatch = item.salary.match(/\$?(\d+)[kK]?/);
+    if (salaryMatch) {
+      const amount = parseInt(salaryMatch[1]);
+      salary = {
+        payAmount: amount >= 1000 ? amount : amount * 1000,
+        payType: 'yearly'
+      };
+    }
+  } else {
+    // Parse from description
+    salary = parseSalary(title, description);
+  }
   
-  // Parse location
-  const locationInfo = parseLocation(description, category);
+  // Parse location from API data or description
+  let locationInfo;
+  if (item.location) {
+    locationInfo = {
+      workArrangement: 'remote',
+      location: { country: item.location, city: 'Remote' }
+    };
+  } else {
+    locationInfo = parseLocation(description, category);
+  }
   
-  // Extract requirements from description (use first part as requirements)
-  const descriptionParts = description.split('\n\n');
-  const requirements = descriptionParts.length > 1 ? descriptionParts[1] : 'See job description for requirements';
+  // Extract requirements from description
+  // Split by common section headers
+  const descLower = description.toLowerCase();
+  let requirements = 'See job description for requirements';
+  
+  if (descLower.includes('requirements:') || descLower.includes('qualifications:')) {
+    const reqStart = Math.max(
+      descLower.indexOf('requirements:'),
+      descLower.indexOf('qualifications:')
+    );
+    if (reqStart > -1) {
+      const reqSection = description.substring(reqStart);
+      const nextSection = reqSection.search(/\n\n[A-Z]/);
+      requirements = nextSection > -1 ? reqSection.substring(0, nextSection) : reqSection.substring(0, 500);
+    }
+  } else {
+    // Use second paragraph as fallback
+    const descriptionParts = description.split('\n\n');
+    if (descriptionParts.length > 1) {
+      requirements = descriptionParts[1].substring(0, 500);
+    }
+  }
   
   return {
     title: title,
     description: description,
-    requirements: requirements,
+    requirements: requirements.trim() || 'See job description for requirements',
     payAmount: salary?.payAmount || null,
     payType: salary?.payType || null,
     jobType: 'hiring', // Remotive jobs are all hiring positions
@@ -151,6 +200,7 @@ function mapRSSItemToJob(item) {
     location: locationInfo.location,
     ownerUsername: company,
     ownerImage: null,
+    companyLogo: item.companyLogo || null, // Store company logo
     status: 'active',
     source: 'remotive',
     externalUrl: item.link,
@@ -203,8 +253,13 @@ async function syncRemotiveJobs() {
           pubDate: job.publication_date,
           category: job.category,
           content: job.description,
-          contentSnippet: job.description ? job.description.substring(0, 500) : '',
-          company: job.company_name
+          contentSnippet: job.description,
+          company: job.company_name,
+          companyLogo: job.company_logo || job.company_logo_url,
+          salary: job.salary,
+          jobType: job.job_type,
+          location: job.candidate_required_location,
+          tags: job.tags
         }))
       };
       

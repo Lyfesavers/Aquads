@@ -62,7 +62,11 @@ Best regards,
                 {/* Profile image square */}
                 <div className="w-16 h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
                   <img
-                    src={job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`}
+                    src={
+                      job.source === 'remotive' && job.companyLogo 
+                        ? job.companyLogo 
+                        : job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`
+                    }
                     alt={job.ownerUsername}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -231,13 +235,17 @@ Best regards,
             <div className="p-4 border-t border-gray-700 bg-gray-800/50">
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400">Description</h4>
-                  <p className="mt-1 whitespace-pre-wrap">{job.description}</p>
+                  <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
+                  <div className="mt-1 whitespace-pre-wrap text-gray-200 leading-relaxed">
+                    {job.description}
+                  </div>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400">Requirements</h4>
-                  <p className="mt-1 whitespace-pre-wrap">{job.requirements}</p>
+                  <h4 className="text-sm font-medium text-gray-400 mb-2">Requirements</h4>
+                  <div className="mt-1 whitespace-pre-wrap text-gray-200 leading-relaxed">
+                    {job.requirements}
+                  </div>
                 </div>
 
                 {/* Work Arrangement & Location Details */}
