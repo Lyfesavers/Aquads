@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo } from 'react-icons/fa';
 
-const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob }) => {
+const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
 
   const toggleExpand = (jobId) => {
@@ -283,6 +283,18 @@ Best regards,
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      
+                      // Check if user is logged in
+                      if (!currentUser) {
+                        if (onLoginRequired) {
+                          onLoginRequired();
+                        } else {
+                          alert('Please login to apply for this job');
+                        }
+                        return;
+                      }
+                      
+                      // Proceed with application
                       if (job.source === 'remotive' && job.externalUrl) {
                         window.open(job.externalUrl, '_blank', 'noopener,noreferrer');
                       } else if (job.applicationUrl) {
@@ -299,38 +311,59 @@ Best regards,
                     <span>{job.source === 'remotive' ? 'Apply on Remotive' : 'Apply Now'}</span>
                   </button>
                   <p className="text-gray-400 text-xs mt-2 text-center">
-                    {job.source === 'remotive' 
-                      ? 'You will be redirected to Remotive.com' 
-                      : job.applicationUrl 
-                        ? 'You will be redirected to the application page' 
-                        : 'Apply via email'}
+                    {!currentUser 
+                      ? '🔒 Login required to apply' 
+                      : job.source === 'remotive' 
+                        ? 'You will be redirected to Remotive.com' 
+                        : job.applicationUrl 
+                          ? 'You will be redirected to the application page' 
+                          : 'Apply via email'}
                   </p>
 
                   {/* Alternative Contact Methods - Only for user jobs */}
                   {job.source === 'user' && (job.contactTelegram || job.contactDiscord) && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
-                      <p className="text-gray-400 text-xs mb-2 text-center">Or contact via:</p>
+                      <p className="text-gray-400 text-xs mb-2 text-center">
+                        {currentUser ? 'Or contact via:' : '🔒 Login to view contact options'}
+                      </p>
                       <div className="flex flex-wrap gap-2 justify-center">
                         {job.contactTelegram && (
-                          <a
-                            href={`https://t.me/${job.contactTelegram.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
-                          >
-                            <FaTelegram />
-                            <span className="text-sm">Telegram</span>
-                          </a>
+                          currentUser ? (
+                            <a
+                              href={`https://t.me/${job.contactTelegram.replace('@', '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
+                            >
+                              <FaTelegram />
+                              <span className="text-sm">Telegram</span>
+                            </a>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onLoginRequired) {
+                                  onLoginRequired();
+                                } else {
+                                  alert('Please login to view contact options');
+                                }
+                              }}
+                              className="flex items-center space-x-2 px-3 py-2 bg-gray-600/30 text-gray-400 rounded-lg border border-gray-600/30 cursor-pointer hover:bg-gray-600/40"
+                            >
+                              <FaTelegram />
+                              <span className="text-sm">Telegram (Login Required)</span>
+                            </button>
+                          )
                         )}
                         
                         {job.contactDiscord && (
                           <div 
                             className="flex items-center space-x-2 px-3 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg border border-indigo-500/30"
-                            title={job.contactDiscord}
+                            title={currentUser ? job.contactDiscord : '🔒 Login to view'}
                           >
                             <FaDiscord />
-                            <span className="text-sm">{job.contactDiscord}</span>
+                            <span className="text-sm">{currentUser ? job.contactDiscord : '🔒 Login Required'}</span>
                           </div>
                         )}
                       </div>

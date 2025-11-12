@@ -1409,6 +1409,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                         onEditJob={setJobToEdit}
                         onDeleteJob={handleDeleteJob}
                         onRefreshJob={handleRefreshJob}
+                        onLoginRequired={handleLoginClick}
                       />
                       {jobsPagination?.hasMore && (
                         <div className="mt-6 text-center">
