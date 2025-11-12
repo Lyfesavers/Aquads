@@ -57,10 +57,11 @@ Best regards,
           onClick={() => toggleExpand(job._id)}
         >
           <div className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex items-start space-x-4">
+            {/* Mobile-first responsive layout */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
                 {/* Profile image square */}
-                <div className="w-16 h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
                   <img
                     src={
                       job.source === 'remotive' && job.companyLogo 
@@ -76,11 +77,11 @@ Best regards,
                   />
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-white">{job.title}</h3>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base sm:text-lg font-semibold text-white break-words">{job.title}</h3>
                     {job.status === 'expired' && (
-                      <span className="px-2 py-1 text-xs bg-red-900/50 text-red-400 rounded-full">
+                      <span className="px-2 py-0.5 sm:py-1 text-xs bg-red-900/50 text-red-400 rounded-full whitespace-nowrap">
                         Expired
                       </span>
                     )}
@@ -90,7 +91,7 @@ Best regards,
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full hover:bg-blue-500/30 transition-colors flex items-center gap-1"
+                        className="px-2 py-0.5 sm:py-1 text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full hover:bg-blue-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
                         title="View on Remotive"
                       >
                         <span>via</span>
@@ -101,18 +102,37 @@ Best regards,
                       </a>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400">
+                  
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
                     Posted by {job.ownerUsername} on {formatDate(job.createdAt)}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  
+                  {/* Pay amount display - shown on mobile below title */}
+                  <div className="mt-2 sm:hidden">
+                    {job.payAmount && job.payType ? (
+                      <div className="text-base font-semibold text-green-400">
+                        💰 {job.payType === 'percentage' ? (
+                          `${job.payAmount}%`
+                        ) : (
+                          `$${job.payAmount.toLocaleString()}/${job.payType}`
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-400 italic">
+                        💰 Competitive
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
                     {/* Hiring Badge */}
-                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">
+                    <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full whitespace-nowrap">
                       Hiring
                     </span>
                     
                     {/* Work Arrangement Badge */}
                     {job.workArrangement && (
-                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
                         job.workArrangement === 'remote' 
                           ? 'bg-green-900/30 text-green-300 border border-green-500/30' 
                           : job.workArrangement === 'hybrid'
@@ -127,7 +147,7 @@ Best regards,
                     
                     {/* Location Badge - Show for all jobs that have location */}
                     {job.location && (job.location.city || job.location.country) && (
-                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-gray-700/50 text-gray-300 border border-gray-600/30 rounded-full">
+                      <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold bg-gray-700/50 text-gray-300 border border-gray-600/30 rounded-full">
                         📍 {job.location.city && job.location.country 
                           ? `${job.location.city}, ${job.location.country}` 
                           : job.location.country || job.location.city}
@@ -137,10 +157,11 @@ Best regards,
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
-                {/* Pay amount display */}
+              {/* Desktop pay and actions - hidden on mobile */}
+              <div className="hidden sm:flex items-center space-x-3 lg:space-x-4 flex-shrink-0">
+                {/* Pay amount display - desktop */}
                 {job.payAmount && job.payType ? (
-                  <div className="text-lg font-semibold text-green-400">
+                  <div className="text-base lg:text-lg font-semibold text-green-400 whitespace-nowrap">
                     {job.payType === 'percentage' ? (
                       `${job.payAmount}%`
                     ) : (
@@ -148,7 +169,7 @@ Best regards,
                     )}
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-400 italic">
+                  <div className="text-sm text-gray-400 italic whitespace-nowrap">
                     Competitive
                   </div>
                 )}
@@ -229,23 +250,85 @@ Best regards,
                   </button>
                 )}
               </div>
+              
+              {/* Mobile action buttons - shown at bottom on mobile */}
+              {currentUser && (job.source === 'user' || (currentUser.isAdmin && job.source === 'remotive')) && (
+                <div className="sm:hidden flex justify-end space-x-2">
+                  {job.source === 'user' && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                    <>
+                      {job.status === 'expired' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRefreshJob(job._id);
+                          }}
+                          className="text-blue-500 hover:text-blue-400 transition-colors p-2"
+                          title="Refresh job"
+                        >
+                          <FaRedo size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditJob(job);
+                        }}
+                        className="text-blue-500 hover:text-blue-400 transition-colors p-2"
+                        title="Edit job"
+                      >
+                        <FaEdit size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm('Are you sure you want to delete this job?')) {
+                            onDeleteJob(job._id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-400 transition-colors p-2"
+                        title="Delete job"
+                      >
+                        <FaTrash size={16} />
+                      </button>
+                    </>
+                  )}
+                  
+                  {currentUser.isAdmin && (
+                    (job.source === 'user' && currentUser.userId !== job.owner && currentUser.userId !== job.owner._id) || 
+                    job.source === 'remotive'
+                  ) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Are you sure you want to delete this job? (Admin action)')) {
+                          onDeleteJob(job._id);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-400 transition-colors p-2"
+                      title="Delete job (Admin)"
+                    >
+                      <FaTrash size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Expanded Content */}
           {expandedJobId === job._id && (
-            <div className="p-4 border-t border-gray-700 bg-gray-800/50">
-              <div className="space-y-4">
+            <div className="p-3 sm:p-4 border-t border-gray-700 bg-gray-800/50">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
-                  <div className="mt-1 whitespace-pre-wrap text-gray-200 leading-relaxed">
+                  <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
                     {job.description}
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Requirements</h4>
-                  <div className="mt-1 whitespace-pre-wrap text-gray-200 leading-relaxed">
+                  <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
                     {job.requirements}
                   </div>
                 </div>
@@ -253,9 +336,9 @@ Best regards,
                 {/* Work Arrangement & Location Details */}
                 {job.workArrangement && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-400">Work Arrangement</h4>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Work Arrangement</h4>
                     <div className="mt-1">
-                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-block px-2 sm:px-3 py-1 text-xs font-semibold rounded-full ${
                         job.workArrangement === 'remote' 
                           ? 'bg-green-900/30 text-green-300 border border-green-500/30' 
                           : job.workArrangement === 'hybrid'
@@ -268,9 +351,9 @@ Best regards,
                       </span>
                       {(job.workArrangement === 'hybrid' || job.workArrangement === 'onsite') && job.location && job.location.city && (
                         <div className="mt-2">
-                          <p className="text-gray-300">
+                          <p className="text-sm sm:text-base text-gray-300 break-words">
                             📍 <span className="font-medium">Location:</span> {job.location.city}, {job.location.country}
-                            {job.workArrangement === 'hybrid' && <span className="text-gray-400 ml-1">(with remote flexibility)</span>}
+                            {job.workArrangement === 'hybrid' && <span className="text-gray-400 ml-1 block sm:inline">(with remote flexibility)</span>}
                           </p>
                         </div>
                       )}
@@ -322,7 +405,7 @@ Best regards,
 
                   {/* Alternative Contact Methods - Only for user jobs */}
                   {job.source === 'user' && (job.contactTelegram || job.contactDiscord) && (
-                    <div className="mt-4 pt-4 border-t border-gray-700">
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-700">
                       <p className="text-gray-400 text-xs mb-2 text-center">
                         {currentUser ? 'Or contact via:' : '🔒 Login to view contact options'}
                       </p>
@@ -334,10 +417,10 @@ Best regards,
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30"
+                              className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors border border-blue-500/30 text-sm"
                             >
-                              <FaTelegram />
-                              <span className="text-sm">Telegram</span>
+                              <FaTelegram size={16} />
+                              <span>Telegram</span>
                             </a>
                           ) : (
                             <button
@@ -349,21 +432,22 @@ Best regards,
                                   alert('Please login to view contact options');
                                 }
                               }}
-                              className="flex items-center space-x-2 px-3 py-2 bg-gray-600/30 text-gray-400 rounded-lg border border-gray-600/30 cursor-pointer hover:bg-gray-600/40"
+                              className="flex items-center space-x-2 px-3 py-2 bg-gray-600/30 text-gray-400 rounded-lg border border-gray-600/30 cursor-pointer hover:bg-gray-600/40 text-sm"
                             >
-                              <FaTelegram />
-                              <span className="text-sm">Telegram (Login Required)</span>
+                              <FaTelegram size={16} />
+                              <span className="hidden sm:inline">Telegram (Login Required)</span>
+                              <span className="sm:hidden">Login Required</span>
                             </button>
                           )
                         )}
                         
                         {job.contactDiscord && (
                           <div 
-                            className="flex items-center space-x-2 px-3 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg border border-indigo-500/30"
+                            className="flex items-center space-x-2 px-3 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg border border-indigo-500/30 text-sm break-all"
                             title={currentUser ? job.contactDiscord : '🔒 Login to view'}
                           >
-                            <FaDiscord />
-                            <span className="text-sm">{currentUser ? job.contactDiscord : '🔒 Login Required'}</span>
+                            <FaDiscord size={16} className="flex-shrink-0" />
+                            <span className="break-all">{currentUser ? job.contactDiscord : '🔒 Login Required'}</span>
                           </div>
                         )}
                       </div>
