@@ -12,7 +12,7 @@ const parser = new Parser({
   }
 });
 
-const REMOTIVE_RSS_URL = 'https://remotive.com/feed';
+const REMOTIVE_RSS_URL = 'https://remotive.com/remote-jobs/rss-feed';
 
 /**
  * Parse salary information from job title or description
