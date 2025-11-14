@@ -1,4 +1,13 @@
 require('dotenv').config();
+
+// Validate critical environment variables on startup
+if (!process.env.JWT_SECRET) {
+  console.error('❌ CRITICAL ERROR: JWT_SECRET environment variable is not set!');
+  console.error('   Authentication will not work without this variable.');
+  console.error('   Please set JWT_SECRET in your environment variables.');
+  process.exit(1);
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -668,7 +677,7 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
     // Generate token for auto-login
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType, referredBy: user.referredBy },
-      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
@@ -752,7 +761,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
     // Generate new token with updated username if changed
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType, referredBy: user.referredBy },
-      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
