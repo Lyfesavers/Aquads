@@ -39,6 +39,7 @@ const deviceLimiter = require('./middleware/deviceLimiter');
 const telegramService = require('./utils/telegramService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
+const { sanitizeForRegex } = require('./utils/security');
 
 const app = express();
 const server = http.createServer(app);
@@ -293,6 +294,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Add request ID middleware (early in chain for better traceability)
+const requestIdMiddleware = require('./middleware/requestId');
+app.use(requestIdMiddleware);
 
 // Add compression middleware for better performance
 app.use(compression({
@@ -653,8 +658,9 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
     }
 
     // Check if username exists (case-insensitive)
+    const sanitizedUsername = sanitizeForRegex(username);
     const existingUser = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     });
     
     if (existingUser) {
@@ -722,9 +728,10 @@ app.put('/api/users/profile', auth, async (req, res) => {
 
     // If username is being changed, check if new username is available
     if (username && username !== user.username) {
+      const sanitizedUsername = sanitizeForRegex(username);
       const existingUser = await User.findOne({
         _id: { $ne: user._id },
-        username: { $regex: new RegExp(`^${username}$`, 'i') }
+        username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
       });
       
       if (existingUser) {

@@ -11,6 +11,8 @@ const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
 const { emitAffiliateEarningUpdate } = require('../socket');
+const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
+const auditLogger = require('../utils/auditLogger');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -61,8 +63,9 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     }
 
     // Check if username already exists (case-insensitive)
+    const sanitizedUsername = sanitizeForRegex(username);
     const existingUsername = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     });
     if (existingUsername) {
       return res.status(400).json({ error: 'Username already exists' });
@@ -226,20 +229,30 @@ router.post('/login', async (req, res) => {
     // Determine if the identifier is an email or username
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
     
+    // Sanitize input to prevent NoSQL injection
+    const sanitizedIdentifier = sanitizeForRegex(loginIdentifier);
+    
     let user;
     if (isEmail) {
       // Find user by email (case-insensitive)
       user = await User.findOne({ 
-        email: { $regex: new RegExp(`^${loginIdentifier}$`, 'i') }
+        email: { $regex: new RegExp(`^${sanitizedIdentifier}$`, 'i') }
       });
     } else {
       // Find user by username (case-insensitive)
       user = await User.findOne({ 
-        username: { $regex: new RegExp(`^${loginIdentifier}$`, 'i') }
+        username: { $regex: new RegExp(`^${sanitizedIdentifier}$`, 'i') }
       });
     }
     
     if (!user) {
+      // Log failed login attempt (user not found)
+      auditLogger.logFailedLogin(
+        loginIdentifier,
+        req.ip || req.headers['x-forwarded-for'] || 'unknown',
+        'User not found',
+        req.headers['user-agent']
+      );
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
@@ -273,6 +286,13 @@ router.post('/login', async (req, res) => {
     }
 
     if (!isMatch) {
+      // Log failed login attempt (wrong password)
+      auditLogger.logFailedLogin(
+        loginIdentifier,
+        req.ip || req.headers['x-forwarded-for'] || 'unknown',
+        'Invalid password',
+        req.headers['user-agent']
+      );
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
@@ -307,6 +327,15 @@ router.post('/login', async (req, res) => {
     user.refreshToken = refreshToken;
     user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     await user.save();
+
+    // Log successful login
+    auditLogger.logSuccessfulLogin(
+      user._id,
+      user.username,
+      req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      user.isAdmin,
+      req.headers['user-agent']
+    );
 
     // Return user data and both tokens
     res.json({
@@ -343,26 +372,31 @@ router.post('/refresh-token', async (req, res) => {
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     } catch (error) {
+      auditLogger.logTokenRefresh(null, null, req.ip || req.headers['x-forwarded-for'] || 'unknown', false);
       return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
 
     // Check if it's a refresh token
     if (decoded.tokenType !== 'refresh') {
+      auditLogger.logTokenRefresh(decoded.userId, null, req.ip || req.headers['x-forwarded-for'] || 'unknown', false);
       return res.status(401).json({ error: 'Invalid token type' });
     }
 
     // Find user and verify refresh token matches stored token
     const user = await User.findById(decoded.userId);
     if (!user) {
+      auditLogger.logTokenRefresh(decoded.userId, null, req.ip || req.headers['x-forwarded-for'] || 'unknown', false);
       return res.status(401).json({ error: 'User not found' });
     }
 
     // Verify refresh token matches stored token and hasn't expired
     if (user.refreshToken !== refreshToken) {
+      auditLogger.logTokenRefresh(user._id, user.username, req.ip || req.headers['x-forwarded-for'] || 'unknown', false);
       return res.status(401).json({ error: 'Refresh token mismatch' });
     }
 
     if (user.refreshTokenExpiry && user.refreshTokenExpiry < new Date()) {
+      auditLogger.logTokenRefresh(user._id, user.username, req.ip || req.headers['x-forwarded-for'] || 'unknown', false);
       return res.status(401).json({ error: 'Refresh token expired' });
     }
 
@@ -392,6 +426,14 @@ router.post('/refresh-token', async (req, res) => {
     user.refreshToken = newRefreshToken;
     user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     await user.save();
+
+    // Log successful token refresh
+    auditLogger.logTokenRefresh(
+      user._id,
+      user.username,
+      req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      true
+    );
 
     res.json({
       token: newToken,
@@ -588,8 +630,9 @@ router.post('/request-password-reset', async (req, res) => {
     }
 
     // Find user by username and verify referral code (case-insensitive for username)
+    const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     });
 
     if (!user || user.referralCode !== referralCode) {
@@ -630,8 +673,9 @@ router.post('/reset-password', async (req, res) => {
     }
 
     // Find user by username and verify referral code
+    const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     });
 
     if (!user || user.referralCode !== referralCode || !user.resetToken || !user.resetTokenExpiry || user.resetTokenExpiry < Date.now()) {
@@ -665,8 +709,9 @@ router.post('/verify-referral', auth, async (req, res) => {
     }
 
     // Find user by username
+    const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     });
 
     if (!user) {
@@ -735,11 +780,12 @@ router.get('/by-username/:username', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Don't remove the @ symbol, just trim whitespace
+    // Don't remove the @ symbol, just trim whitespace and sanitize
     const cleanUsername = req.params.username.trim();
+    const sanitizedUsername = sanitizeForRegex(cleanUsername);
 
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${cleanUsername}$`, 'i') }  // Case-insensitive match
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }  // Case-insensitive match
     });
     
     if (!user) {
@@ -861,10 +907,11 @@ router.get('/multiple-device-registrations', auth, async (req, res) => {
 router.get('/verify/:username', async (req, res) => {
   try {
     const username = req.params.username.trim();
+    const sanitizedUsername = sanitizeForRegex(username);
 
     // Find user by username (case-insensitive)
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
     }).select('username image createdAt isVipAffiliate isAdmin userType');
     
     if (!user) {

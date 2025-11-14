@@ -14,6 +14,7 @@ const mongoose = require('mongoose');
 const { adminRateLimit } = require('../middleware/rateLimiter');
 const telegramService = require('../utils/telegramService');
 const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calculateAdvancedFraudScore } = require('../utils/fraudDetection');
+const { validateSearchQuery } = require('../utils/security');
 
 // Middleware to check if user is admin
 const isAdmin = async (req, res, next) => {
@@ -248,14 +249,16 @@ router.get('/search-users', auth, isAdmin, async (req, res) => {
   try {
     const { query, limit = 20 } = req.query;
     
-    if (!query || query.length < 2) {
-      return res.status(400).json({ error: 'Search query must be at least 2 characters' });
+    // Validate and sanitize search query
+    const validation = validateSearchQuery(query, 2, 100);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
 
     const users = await User.find({
       $or: [
-        { username: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } }
+        { username: { $regex: validation.sanitized, $options: 'i' } },
+        { email: { $regex: validation.sanitized, $options: 'i' } }
       ]
     })
     .select('username email createdAt affiliateCount points ipAddress country cv')
