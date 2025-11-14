@@ -497,8 +497,8 @@ userSchema.methods.generateMemberId = function() {
 // Hash password before saving
 userSchema.pre('save', async function(next) {
   try {
-    // Only hash the password if it has been modified (or is new)
-    if (this.isModified('password')) {
+    // Only hash the password if it has been modified (or is new) AND is not already hashed
+    if (this.isModified('password') && !this.password.startsWith('$2b$')) {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
       next();

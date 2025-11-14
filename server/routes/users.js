@@ -247,9 +247,12 @@ router.post('/login', async (req, res) => {
       if (password === user.password) {
         isMatch = true;
         // Hash the password immediately for security (one-time migration)
+        // Note: Pre-save hook will skip hashing since password is already hashed
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
-        await user.save();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        user.password = hashedPassword;
+        // Use updateOne to bypass pre-save hook for this specific case
+        await User.updateOne({ _id: user._id }, { password: hashedPassword });
         console.log(`Password hashed for user: ${user.username} (legacy plain text converted)`);
       } else {
         isMatch = false;
