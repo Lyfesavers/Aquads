@@ -309,6 +309,14 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
+  refreshToken: {
+    type: String,
+    default: null
+  },
+  refreshTokenExpiry: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

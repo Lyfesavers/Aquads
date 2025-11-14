@@ -165,14 +165,26 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Signup bonus points will be awarded after email verification
 
 
-    // Generate JWT token (don't include emailVerified since user hasn't verified yet)
+    // Generate access token (short-lived: 15 minutes)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '15m' }
     );
 
-    // Return user data and token with verification info
+    // Generate refresh token (long-lived: 7 days)
+    const refreshToken = jwt.sign(
+      { userId: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Store refresh token in database
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await user.save();
+
+    // Return user data and both tokens with verification info
     return res.status(201).json({
       userId: user._id,
       username: user.username,
@@ -180,9 +192,10 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       image: user.image,
       referralCode: user.referralCode,
       referredBy: user.referredBy, // Include referredBy for affiliate detection
+      token,
+      refreshToken,
       userType: user.userType,
       cv: user.cv, // Include CV data for display name functionality
-      token,
       emailVerified: false,
       verificationRequired: true,
       verificationCode: verificationCode, // Send code to frontend for EmailJS
@@ -275,16 +288,27 @@ router.post('/login', async (req, res) => {
 
     // Update last activity on successful login
     user.lastActivity = new Date();
-    await user.save();
 
-    // Generate JWT token
+    // Generate access token (short-lived: 15 minutes)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '15m' }
     );
 
-    // Return user data and token
+    // Generate refresh token (long-lived: 7 days)
+    const refreshToken = jwt.sign(
+      { userId: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Store refresh token in database
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await user.save();
+
+    // Return user data and both tokens
     res.json({
       userId: user._id,
       username: user.username,
@@ -295,12 +319,105 @@ router.post('/login', async (req, res) => {
       userType: user.userType,
       referredBy: user.referredBy, // Include referredBy for affiliate detection
       cv: user.cv, // Include CV data for display name functionality
-      token
+      token,
+      refreshToken
     });
 
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Refresh access token
+router.post('/refresh-token', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token is required' });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    // Check if it's a refresh token
+    if (decoded.tokenType !== 'refresh') {
+      return res.status(401).json({ error: 'Invalid token type' });
+    }
+
+    // Find user and verify refresh token matches stored token
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Verify refresh token matches stored token and hasn't expired
+    if (user.refreshToken !== refreshToken) {
+      return res.status(401).json({ error: 'Refresh token mismatch' });
+    }
+
+    if (user.refreshTokenExpiry && user.refreshTokenExpiry < new Date()) {
+      return res.status(401).json({ error: 'Refresh token expired' });
+    }
+
+    // Check if user is suspended
+    if (user.suspended) {
+      return res.status(403).json({ 
+        error: 'Account suspended',
+        message: 'Your account has been suspended. Please contact support for more information.'
+      });
+    }
+
+    // Generate new access token
+    const newToken = jwt.sign(
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    // Optionally rotate refresh token (more secure)
+    const newRefreshToken = jwt.sign(
+      { userId: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Update refresh token in database
+    user.refreshToken = newRefreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await user.save();
+
+    res.json({
+      token: newToken,
+      refreshToken: newRefreshToken
+    });
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ error: 'Error refreshing token' });
+  }
+});
+
+// Logout / Revoke refresh token
+router.post('/logout', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (user) {
+      // Clear refresh token
+      user.refreshToken = null;
+      user.refreshTokenExpiry = null;
+      await user.save();
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Error logging out' });
   }
 });
 
