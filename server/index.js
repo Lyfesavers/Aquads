@@ -742,9 +742,13 @@ app.put('/api/users/profile', auth, async (req, res) => {
     if (currentPassword && newPassword) {
       // Verify current password
       let isMatch = false;
+      
+      // Check if password is hashed
       if (user.password.startsWith('$2b$')) {
+        // Password is hashed - use bcrypt comparison
         isMatch = await bcrypt.compare(currentPassword, user.password);
       } else {
+        // Password is plain text (legacy) - compare directly
         isMatch = currentPassword === user.password;
       }
 
@@ -752,7 +756,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
         return res.status(400).json({ error: 'Current password is incorrect' });
       }
 
-      // Hash and set new password
+      // Set new password - pre-save hook will hash it automatically
       user.password = newPassword;
     }
 

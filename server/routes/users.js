@@ -230,24 +230,30 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
-    // Handle different password formats
+    // Handle password verification - always use bcrypt
     let isMatch = false;
     
-    // For admin or test account with plain text password
-    if ((user.isAdmin || user.username === 'test') && password === user.password) {
-      isMatch = true;
-    } 
-    // For hashed passwords
-    else if (user.password.startsWith('$2b$')) {
+    // Check if password is hashed (starts with $2b$)
+    if (user.password.startsWith('$2b$')) {
+      // Password is hashed - use bcrypt comparison
       try {
         isMatch = await bcrypt.compare(password, user.password);
       } catch (error) {
         console.error('Password comparison error:', error);
+        isMatch = false;
       }
-    }
-    // For any other plain text passwords
-    else {
-      isMatch = password === user.password;
+    } else {
+      // Password is plain text (legacy) - compare and hash on successful login
+      if (password === user.password) {
+        isMatch = true;
+        // Hash the password immediately for security (one-time migration)
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+        console.log(`Password hashed for user: ${user.username} (legacy plain text converted)`);
+      } else {
+        isMatch = false;
+      }
     }
 
     if (!isMatch) {
@@ -358,22 +364,22 @@ router.put('/profile', auth, async (req, res) => {
     if (currentPassword && newPassword) {
       let isValidPassword = false;
       
-      // For admin or test account with plain text password
-      if ((user.isAdmin || user.username === 'test') && currentPassword === user.password) {
-        isValidPassword = true;
-      } 
-      // For hashed passwords
-      else if (user.password.startsWith('$2b$')) {
+      // Check if password is hashed
+      if (user.password.startsWith('$2b$')) {
+        // Password is hashed - use bcrypt comparison
         isValidPassword = await bcrypt.compare(currentPassword, user.password);
-      }
-      // For any other plain text passwords
-      else {
-        isValidPassword = currentPassword === user.password;
+      } else {
+        // Password is plain text (legacy) - compare directly
+        if (currentPassword === user.password) {
+          isValidPassword = true;
+        }
       }
 
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Current password is incorrect' });
       }
+      
+      // Set new password - pre-save hook will hash it automatically
       user.password = newPassword;
     }
 
