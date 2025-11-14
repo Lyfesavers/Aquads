@@ -37,10 +37,12 @@ let refreshPromise = null;
 const refreshAccessToken = async () => {
   // If already refreshing, return the existing promise
   if (isRefreshing && refreshPromise) {
+    console.log('🔄 Token refresh already in progress, waiting...');
     return refreshPromise;
   }
 
   isRefreshing = true;
+  console.log('🔄 Starting token refresh...');
   refreshPromise = (async () => {
     try {
       const savedUser = localStorage.getItem('currentUser');
@@ -53,6 +55,7 @@ const refreshAccessToken = async () => {
         throw new Error('No refresh token available');
       }
 
+      console.log('🔄 Calling refresh-token endpoint...');
       const response = await originalFetch(`${API_URL}/users/refresh-token`, {
         method: 'POST',
         headers: {
@@ -62,10 +65,15 @@ const refreshAccessToken = async () => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Token refresh failed:', response.status, errorData);
         throw new Error('Failed to refresh token');
       }
 
       const data = await response.json();
+      console.log('✅ Token refreshed successfully!');
+      console.log('   New access token (first 20 chars):', data.token.substring(0, 20) + '...');
+      console.log('   New refresh token (first 20 chars):', data.refreshToken.substring(0, 20) + '...');
       
       // Update stored user data with new tokens
       const updatedUser = {
@@ -75,6 +83,7 @@ const refreshAccessToken = async () => {
       };
       
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      console.log('💾 Updated tokens in localStorage');
       
       // Update socket auth
       socket.auth = { token: data.token };
@@ -84,6 +93,7 @@ const refreshAccessToken = async () => {
 
       return data.token;
     } catch (error) {
+      console.error('❌ Token refresh error:', error);
       logger.error('Token refresh error:', error);
       // Clear user data on refresh failure
       localStorage.removeItem('currentUser');
@@ -135,24 +145,34 @@ window.fetch = async function(url, options = {}) {
 
   // If 401 and we have a refresh token, try to refresh
   if (response.status === 401) {
+    console.log('⚠️ Received 401 Unauthorized, checking for refresh token...');
     try {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
         const user = JSON.parse(savedUser);
         // Only try refresh if we have a refresh token (new users)
         if (user.refreshToken) {
+          console.log('🔄 Refresh token found, attempting automatic refresh...');
           try {
             const newToken = await refreshAccessToken();
             // Retry original request with new token
             headers['Authorization'] = `Bearer ${newToken}`;
+            console.log('🔄 Retrying original request with new token...');
             response = await originalFetch(url, { ...options, headers });
+            console.log('✅ Request retried successfully:', response.status);
           } catch (refreshError) {
+            console.error('❌ Refresh failed, returning 401:', refreshError);
             // If refresh fails, return original 401 response
             return response;
           }
+        } else {
+          console.log('ℹ️ No refresh token available (legacy token), user needs to re-login');
         }
+      } else {
+        console.log('ℹ️ No user data found, cannot refresh');
       }
     } catch (error) {
+      console.error('❌ Error during refresh attempt:', error);
       // Return original 401 response on error
       return response;
     }
@@ -347,6 +367,17 @@ export const loginUser = async (credentials) => {
     }
 
     const userData = await response.json();
+    
+    // Log refresh token info
+    if (userData.refreshToken) {
+      console.log('✅ Login successful with refresh tokens!');
+      console.log('   Access token (first 20 chars):', userData.token.substring(0, 20) + '...');
+      console.log('   Refresh token (first 20 chars):', userData.refreshToken.substring(0, 20) + '...');
+      console.log('   Access token expires in: 1 minute (testing mode)');
+      console.log('   Refresh token expires in: 7 days');
+    } else {
+      console.log('ℹ️ Login successful (legacy token - 24h expiration)');
+    }
     
     // Store user data in a more robust way
     try {
