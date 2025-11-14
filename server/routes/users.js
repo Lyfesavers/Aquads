@@ -165,14 +165,14 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Signup bonus points will be awarded after email verification
 
 
-    // Generate access token (short-lived: 1 minute for testing)
+    // Generate access token (1 minute for testing)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
       { expiresIn: '1m' }
     );
 
-    // Generate refresh token (long-lived: 7 days)
+    // Generate refresh token (7 days)
     const refreshToken = jwt.sign(
       { userId: user._id, tokenType: 'refresh' },
       process.env.JWT_SECRET,
@@ -192,10 +192,10 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       image: user.image,
       referralCode: user.referralCode,
       referredBy: user.referredBy, // Include referredBy for affiliate detection
-      token,
-      refreshToken,
       userType: user.userType,
       cv: user.cv, // Include CV data for display name functionality
+      token,
+      refreshToken,
       emailVerified: false,
       verificationRequired: true,
       verificationCode: verificationCode, // Send code to frontend for EmailJS
@@ -289,14 +289,14 @@ router.post('/login', async (req, res) => {
     // Update last activity on successful login
     user.lastActivity = new Date();
 
-    // Generate access token (short-lived: 1 minute for testing)
+    // Generate access token (1 minute for testing)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
       { expiresIn: '1m' }
     );
 
-    // Generate refresh token (long-lived: 7 days)
+    // Generate refresh token (7 days)
     const refreshToken = jwt.sign(
       { userId: user._id, tokenType: 'refresh' },
       process.env.JWT_SECRET,
@@ -381,7 +381,7 @@ router.post('/refresh-token', async (req, res) => {
       { expiresIn: '1m' }
     );
 
-    // Optionally rotate refresh token (more secure)
+    // Rotate refresh token (more secure)
     const newRefreshToken = jwt.sign(
       { userId: user._id, tokenType: 'refresh' },
       process.env.JWT_SECRET,
@@ -401,23 +401,6 @@ router.post('/refresh-token', async (req, res) => {
   } catch (error) {
     console.error('Refresh token error:', error);
     res.status(500).json({ error: 'Error refreshing token' });
-  }
-});
-
-// Logout / Revoke refresh token
-router.post('/logout', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (user) {
-      // Clear refresh token
-      user.refreshToken = null;
-      user.refreshTokenExpiry = null;
-      await user.save();
-    }
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({ error: 'Error logging out' });
   }
 });
 
