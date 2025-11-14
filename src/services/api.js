@@ -139,21 +139,28 @@ const fetchWithAuth = async (url, options = {}) => {
         // Only try refresh if we have a refresh token (new users)
         if (user.refreshToken) {
           console.log('🔄 Refresh token found, attempting automatic refresh...');
-          const newToken = await refreshAccessToken();
-          // Retry original request with new token
-          headers['Authorization'] = `Bearer ${newToken}`;
-          console.log('🔄 Retrying original request with new token...');
-          response = await fetch(url, { ...options, headers });
-          console.log('✅ Request retried successfully:', response.status);
+          try {
+            const newToken = await refreshAccessToken();
+            // Retry original request with new token
+            headers['Authorization'] = `Bearer ${newToken}`;
+            console.log('🔄 Retrying original request with new token...');
+            response = await fetch(url, { ...options, headers });
+            console.log('✅ Request retried successfully:', response.status);
+          } catch (refreshError) {
+            console.error('❌ Token refresh failed:', refreshError);
+            // If refresh fails, return 401 - user will need to re-login
+            return response;
+          }
         } else {
           console.log('ℹ️ No refresh token available (legacy token), user needs to re-login');
         }
         // If no refresh token, return 401 (user needs to re-login - same as current behavior)
+      } else {
+        console.log('ℹ️ No user data found, cannot refresh');
       }
     } catch (error) {
-      console.error('❌ Refresh failed, returning 401:', error);
-      // Refresh failed - return original 401 response
-      // Frontend should handle logout
+      console.error('❌ Error during refresh attempt:', error);
+      // Return original 401 response
       return response;
     }
   }
@@ -218,11 +225,10 @@ export const fetchAds = async () => {
 
 // Create new ad
 export const createAd = async (adData) => {
-  const response = await fetch(`${API_URL}/ads`, {
+  const response = await fetchWithAuth(`${API_URL}/ads`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(adData),
   });
@@ -345,7 +351,7 @@ export const loginUser = async (credentials) => {
       console.log('✅ Login successful with refresh tokens!');
       console.log('   Access token (first 20 chars):', userData.token.substring(0, 20) + '...');
       console.log('   Refresh token (first 20 chars):', userData.refreshToken.substring(0, 20) + '...');
-      console.log('   Access token expires in: 15 minutes');
+      console.log('   Access token expires in: 1 minute (testing mode)');
       console.log('   Refresh token expires in: 7 days');
     }
     
@@ -383,37 +389,65 @@ export const verifyToken = async (token = null) => {
       token = user.token;
     }
     
-    // Use the token to verify
-    const response = await fetch(`${API_URL}/verify-token`, {
+    // Use fetchWithAuth to automatically handle token refresh on 401
+    const response = await fetchWithAuth(`${API_URL}/verify-token`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
+      // If still 401 after refresh attempt, token is invalid
+      if (response.status === 401) {
+        console.log('⚠️ Token verification failed after refresh attempt');
+        // Clear invalid tokens
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          // If no refresh token, this is a legacy token that expired
+          if (!user.refreshToken) {
+            console.log('ℹ️ Legacy token expired, user needs to re-login');
+          }
+        }
+        return null;
+      }
       throw new Error('Token verification failed');
     }
 
     // If verifyToken returns user data from server, parse it
     const data = await response.json();
     
+    // Update stored tokens if they were refreshed
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      // If tokens were refreshed, update localStorage
+      if (data.token && data.token !== user.token) {
+        user.token = data.token;
+        if (data.refreshToken) {
+          user.refreshToken = data.refreshToken;
+        }
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        console.log('💾 Tokens updated after verification');
+      }
+    }
+    
     // If the server returns user data, use it and ensure socket connection
     if (data && data.userId) {
       // Make sure socket is connected with current token
-      socket.auth = { token: data.token || token };
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      socket.auth = { token: currentUser.token || token };
       if (!socket.connected) {
         socket.connect();
       }
       
       // Store updated user data
-      localStorage.setItem('currentUser', JSON.stringify(data));
-      return data;
+      localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, ...data }));
+      return { ...currentUser, ...data };
     }
     
     // Otherwise, get the user data from localStorage and ensure socket connection
-    const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
       // Make sure socket is connected with current token
