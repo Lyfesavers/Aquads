@@ -13,6 +13,7 @@ const deviceLimiter = require('../middleware/deviceLimiter');
 const { emitAffiliateEarningUpdate } = require('../socket');
 const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
 const auditLogger = require('../utils/auditLogger');
+const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -27,7 +28,7 @@ const registrationLimiter = rateLimit({
 const tempTokenStore = new Map();
 
 // Register new user
-router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), async (req, res) => {
+router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), validateRegistration, async (req, res) => {
   try {
     const { username, fullName, email, password, image, referralCode, deviceFingerprint, country } = req.body;
 
@@ -214,7 +215,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', validateLogin, async (req, res) => {
   try {
     const { identifier, username, password } = req.body;
     
@@ -279,7 +280,7 @@ router.post('/login', async (req, res) => {
         user.password = hashedPassword;
         // Use updateOne to bypass pre-save hook for this specific case
         await User.updateOne({ _id: user._id }, { password: hashedPassword });
-        console.log(`Password hashed for user: ${user.username} (legacy plain text converted)`);
+        // Password hashed for legacy user (logged via audit logger if needed)
       } else {
         isMatch = false;
       }

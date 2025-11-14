@@ -49,17 +49,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       currency
     } = req.body;
 
-    // Print all fields for debugging
-    console.log('Invoice fields:', {
-      bookingId, 
-      dueDate, 
-      hasItems: !!items && items.length > 0,
-      itemsCount: items?.length,
-      description,
-      paymentLink,
-      auth: !!req.user,
-      userId: req.user?.userId
-    });
+    // Processing invoice creation
 
     // Validate required fields
     if (!bookingId) {
@@ -87,16 +77,9 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    console.log('Booking found:', booking._id);
-    console.log('Request user:', req.user.userId);
-    console.log('Booking seller:', booking.sellerId);
-    console.log('Booking buyer:', booking.buyerId);
-
     // Check if sellerId is a string or ObjectId and convert as needed
     const sellerIdString = booking.sellerId.toString ? booking.sellerId.toString() : booking.sellerId;
     const userIdString = req.user.userId.toString ? req.user.userId.toString() : req.user.userId;
-
-    console.log('Comparing user IDs:', { sellerIdString, userIdString });
 
     // Check if seller is the one creating the invoice
     if (sellerIdString !== userIdString) {

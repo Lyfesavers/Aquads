@@ -135,7 +135,7 @@ const updateAdSize = async (ad) => {
           // Emit WebSocket event for the updated ad immediately
           if (result) {
             socket.emitAdUpdate('update', result);
-            console.log(`[BUMP EXPIRED] Ad ${ad.id} shrunk to ${newSize}px - broadcasted to all clients`);
+            // Bump expired, ad shrunk
           }
           return;
         } catch (updateError) {
@@ -154,7 +154,7 @@ const updateAdSize = async (ad) => {
         // Emit WebSocket event for the updated ad immediately
         if (result) {
           socket.emitAdUpdate('update', result);
-          console.log(`[BUMP ACTIVE] Ad ${ad.id} maximized to ${MAX_SIZE}px - broadcasted to all clients`);
+          // Bump active, ad maximized
         }
       }
       return;
@@ -182,7 +182,7 @@ const updateAdSize = async (ad) => {
       // Emit WebSocket event for the updated ad immediately
       if (result) {
         socket.emitAdUpdate('update', result);
-        console.log(`[SHRINK] Ad ${ad.id} shrunk from ${ad.size}px to ${newSize}px - broadcasted to all clients`);
+        // Ad size updated
       }
     }
   } catch (error) {

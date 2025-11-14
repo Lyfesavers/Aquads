@@ -16,8 +16,7 @@ const updateTokenCache = async (force = false) => {
 
   try {
 
-    console.log('=== TOKEN CACHE UPDATE STARTING ===');
-    console.log('Using CoinGecko API - free tier with 10,000 calls/month (updating every 4.5 minutes - 9,600 calls/month)');
+    // Token cache update starting (using CoinGecko API)
     
     // Using CoinGecko API - much more generous free tier
     const response = await axios.get(
@@ -45,15 +44,11 @@ const updateTokenCache = async (force = false) => {
       return null;
     }
 
-    console.log(`Successfully fetched ${response.data.length} tokens from CoinGecko`);
+    // Successfully fetched tokens from CoinGecko
 
     const tokens = response.data.map((item, index) => {
       if (!item || !item.id || !item.symbol) {
-        console.log(`Skipping token - missing data:`, {
-          hasId: !!item?.id,
-          hasSymbol: !!item?.symbol,
-          name: item?.name
-        });
+        // Skipping token - missing required data
         return null;
       }
 
@@ -81,26 +76,12 @@ const updateTokenCache = async (force = false) => {
         lastUpdated: new Date()
       };
 
-      // Log token data for debugging
-      if (index < 3) { // Log first 3 tokens for debugging
-        console.log(`Token ${index + 1} data:`, {
-          id: token.id,
-          name: token.name,
-          price: token.currentPrice,
-          marketCap: token.marketCap,
-          volume: token.totalVolume,
-          high24h: token.high24h,
-          low24h: token.low24h,
-          circulatingSupply: token.circulatingSupply,
-          priceChange24h: token.priceChange24h,
-          priceChangePercentage24h: token.priceChangePercentage24h
-        });
-      }
+      // Token data processed
 
       return token;
     }).filter(token => token && token.id && token.symbol && token.name);
 
-    console.log(`Processed ${tokens.length} valid tokens`);
+    // Processed valid tokens
 
     if (tokens.length === 0) {
       console.error('No valid tokens in response');
@@ -120,7 +101,7 @@ const updateTokenCache = async (force = false) => {
     await Token.bulkWrite(bulkOps, { ordered: false });
     lastUpdateTime = now;
 
-    console.log(`Successfully updated/inserted ${tokens.length} tokens in database`);
+    // Successfully updated/inserted tokens in database
 
     // Emit WebSocket event for real-time token updates
     try {
@@ -152,7 +133,7 @@ setInterval(() => {
 // Manual refresh endpoint for debugging
 router.post('/refresh', async (req, res) => {
   try {
-    console.log('Manual token refresh requested');
+    // Manual token refresh requested
     const tokens = await updateTokenCache(true);
     if (tokens) {
       res.json({ 

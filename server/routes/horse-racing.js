@@ -174,12 +174,7 @@ const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
   // Determine if player should win based on adjusted psychology
   const shouldPlayerWin = Math.random() < adjustedWinRate;
   
-  // Enhanced logging for high-level play
-  if (userPoints > 4000) {
-    console.log(`🎰 HIGH LEVEL PLAY: Points: ${userPoints}, Bet: ${betAmount} (${(betPercentage * 100).toFixed(1)}%), Base Win Rate: ${(psychology.winRate * 100).toFixed(1)}%, Adjusted: ${(adjustedWinRate * 100).toFixed(1)}%`);
-  }
-  
-  // Psychology system active: [phase: ${psychology.phase}, winRate: ${(psychology.winRate * 100).toFixed(1)}%, adjustedWinRate: ${(adjustedWinRate * 100).toFixed(1)}%, result: ${shouldPlayerWin ? 'WIN' : 'LOSS'}]
+  // High-level play detected (points > 4000)
   
   let raceResults;
   

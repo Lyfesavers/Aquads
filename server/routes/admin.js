@@ -15,6 +15,7 @@ const { adminRateLimit } = require('../middleware/rateLimiter');
 const telegramService = require('../utils/telegramService');
 const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calculateAdvancedFraudScore } = require('../utils/fraudDetection');
 const { validateSearchQuery } = require('../utils/security');
+const { validateSearchQuery: validateSearchQueryMiddleware } = require('../middleware/inputValidation');
 
 // Middleware to check if user is admin
 const isAdmin = async (req, res, next) => {
@@ -245,7 +246,7 @@ router.get('/top-affiliates', auth, isAdmin, async (req, res) => {
 });
 
 // Search users by username or email
-router.get('/search-users', auth, isAdmin, async (req, res) => {
+router.get('/search-users', auth, isAdmin, validateSearchQueryMiddleware, async (req, res) => {
   try {
     const { query, limit = 20 } = req.query;
     
@@ -743,7 +744,7 @@ router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
       'membership.nextBillingDate': { $lte: now }
     });
     
-    console.log(`[Manual Renewal] Processing ${usersNeedingRenewal.length} memberships...`);
+    // Processing membership renewals
     
     for (const user of usersNeedingRenewal) {
       try {
@@ -771,7 +772,7 @@ router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
           await user.save();
           results.renewed++;
           
-          console.log(`[Manual Renewal] ✓ Renewed: ${user.username} (${user._id})`);
+          // Membership renewed successfully
         } else {
           // Insufficient points - enter grace period
           if (!user.membership.gracePeriodEnds) {
@@ -782,7 +783,7 @@ router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
             await user.save();
             results.gracePeriod++;
             
-            console.log(`[Manual Renewal] ⚠ Grace period: ${user.username} (${user._id})`);
+            // Membership in grace period
           }
         }
       } catch (error) {
@@ -820,7 +821,7 @@ router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
           await user.save();
           results.renewed++;
           
-          console.log(`[Manual Renewal] ✓ Late renewal: ${user.username} (${user._id})`);
+          // Late membership renewal successful
         } else {
           // Deactivate membership
           user.membership.isActive = false;
@@ -830,7 +831,7 @@ router.post('/process-membership-renewals', auth, isAdmin, async (req, res) => {
           await user.save();
           results.expired++;
           
-          console.log(`[Manual Renewal] ✗ Expired: ${user.username} (${user._id})`);
+          // Membership expired
         }
       } catch (error) {
         console.error(`[Manual Renewal] Error for user ${user._id}:`, error);

@@ -284,7 +284,7 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
               $set: { isWatermarked: false } 
             }
           );
-          console.log(`Updated watermark flags for completed booking ${booking._id}`);
+          // Watermark flags updated
         } catch (watermarkUpdateError) {
           console.error('Error updating watermark flags:', watermarkUpdateError);
           // Don't fail the booking completion if watermark update fails
@@ -542,11 +542,7 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
     const { bookingId } = req.params;
     const { message } = req.body;
     
-    console.log('Received message request with data:', { 
-      bookingId, 
-      hasMessage: !!message, 
-      hasFile: !!req.file 
-    });
+    // Processing booking message
     
     // Validate message if there's no file attachment
     if (!req.file && (!message || message.trim() === '')) {
@@ -1207,13 +1203,7 @@ router.get('/notification/:id', auth, async (req, res) => {
       return res.redirect('/dashboard');
     }
     
-    console.log('Found notification:', {
-      type: notification.type,
-      relatedModel: notification.relatedModel,
-      relatedId: notification.relatedId,
-      link: notification.link,
-      isRead: notification.isRead
-    });
+    // Processing notification
     
     // Mark it as read
     notification.isRead = true;

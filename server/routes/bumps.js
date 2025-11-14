@@ -138,12 +138,7 @@ router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
       return res.status(404).json({ error: 'Ad not found. The bump request exists but the ad may have been deleted.' });
     }
 
-    console.log('Updated Ad:', {
-      id: ad.id,
-      bumpDuration: ad.bumpDuration,
-      bumpedAt: ad.bumpedAt?.toISOString(),
-      bumpExpiresAt: ad.bumpExpiresAt?.toISOString()
-    });
+    // Ad updated successfully
 
     // Record affiliate commission if applicable
     try {
@@ -186,7 +181,7 @@ router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
     // Also emit ad update immediately so all clients see the bump
     const socket = require('../socket');
     socket.emitAdUpdate('update', ad);
-    console.log(`[BUMP APPROVED] Ad ${adId} bumped - broadcasted to all clients`);
+    // Bump approved and broadcasted
 
     res.json({ bumpRequest, ad });
   } catch (error) {
@@ -244,7 +239,7 @@ router.post('/reject', auth, emitAdEvent('update'), async (req, res) => {
     // Also emit ad update immediately so all clients see the rejection
     const socket = require('../socket');
     socket.emitAdUpdate('update', ad);
-    console.log(`[BUMP REJECTED] Ad ${adId} bump rejected - broadcasted to all clients`);
+    // Bump rejected and broadcasted
 
     res.json({ bumpRequest, ad });
   } catch (error) {
