@@ -4,9 +4,9 @@ The official browser extension for AquaSwap - enabling instant cross-chain token
 
 ## 📋 Overview
 
-This lightweight browser extension provides quick access to AquaSwap's powerful cross-chain swap functionality powered by LiFi. Users can swap tokens across 20+ blockchains without leaving their current webpage.
+This lightweight browser extension provides quick access to AquaSwap's powerful cross-chain swap functionality. Users can swap tokens across 50+ blockchains without leaving their current webpage.
 
-**Version:** 1.0.0  
+**Version:** 1.0.2  
 **Compatible with:** Chrome, Edge, Brave, and other Chromium-based browsers
 
 ---
@@ -14,8 +14,8 @@ This lightweight browser extension provides quick access to AquaSwap's powerful 
 ## 🚀 Features
 
 - ✅ **Instant Access**: Click extension icon to open swap interface anywhere
-- ✅ **Cross-Chain Swaps**: Swap between 20+ blockchain networks
-- ✅ **Best Rates**: Powered by LiFi aggregator for optimal pricing
+- ✅ **Cross-Chain Swaps**: Swap between 50+ blockchain networks
+- ✅ **Best Rates**: Optimal pricing across multiple chains
 - ✅ **Lightweight**: Only ~500KB - loads your existing embed
 - ✅ **Secure**: No sensitive data stored locally
 - ✅ **Right-Click Menu**: Context menu for quick access
@@ -129,16 +129,16 @@ tar -a -c -f ..\aquaswap-extension.zip *
 Name: AquaSwap - Cross-Chain Token Swap
 
 Short Description:
-Swap tokens instantly across 20+ blockchains from any webpage. Powered by LiFi.
+Swap tokens instantly across 50+ blockchains from any webpage. Powered by Aquads.
 
 Detailed Description:
 🌊 AquaSwap - The Ultimate Cross-Chain Swap Extension
 
-Swap cryptocurrency tokens seamlessly across any blockchain without leaving your current webpage. Powered by LiFi aggregator for the best rates across 20+ chains including Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Solana, and more.
+Swap cryptocurrency tokens seamlessly across any blockchain without leaving your current webpage. Powered by Aquads for the best rates across 50+ chains including Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Solana, and more.
 
 ✨ KEY FEATURES:
-• Cross-chain swaps across 20+ networks
-• Best rates via LiFi aggregator
+• Cross-chain swaps across 50+ networks
+• Best rates via Aquads aggregator
 • Instant access from any webpage
 • Secure wallet connections
 • Beautiful, intuitive interface
@@ -205,7 +205,7 @@ When you need to release an update:
 
 1. **Update version in manifest.json**:
    ```json
-   "version": "1.0.1"  // Increment version
+   "version": "1.0.2"  // Current version
    ```
 
 2. **Test changes locally** using "Load unpacked"
@@ -327,7 +327,7 @@ chrome.action.openPopup();              // Open popup programmatically
 
 ## 📝 Changelog
 
-### Version 1.0.0 (Initial Release)
+### Version 1.0.2 (Current Release)
 - ✅ Basic popup with swap interface
 - ✅ iframe embedding of aquads.xyz/embed/aquaswap
 - ✅ Wallet connection support
