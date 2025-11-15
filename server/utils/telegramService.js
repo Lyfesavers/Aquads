@@ -590,7 +590,7 @@ Earn points by completing Twitter & Facebook raids!
   View all available raids
 
 • /createraid TWEET_URL
-  Create your own raid (costs 2000 points)
+  Create your own raid (free raids used first if available, otherwise 2000 points)
 
 💡 How it works:
 1. Like, Retweet & Comment on posts
@@ -2078,7 +2078,7 @@ https://aquads.xyz`;
       
       if (!tweetUrl) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please provide a tweet URL.\n\n📝 Usage: /createraid TWEET_URL\n\n💡 Example: /createraid https://twitter.com/user/status/123456789\n\n💰 Cost: 2000 points");
+          "❌ Please provide a tweet URL.\n\n📝 Usage: /createraid TWEET_URL\n\n💡 Example: /createraid https://twitter.com/user/status/123456789\n\n🆓 Free raids are used first if available, otherwise costs 2000 points");
         return;
       }
 
@@ -2093,19 +2093,58 @@ https://aquads.xyz`;
       const tweetId = tweetIdMatch[1];
       const POINTS_REQUIRED = 2000;
 
-      // Check if user has enough points
-      if (user.points < POINTS_REQUIRED) {
-        await telegramService.sendBotMessage(chatId, 
-          `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.\n\n💡 Earn points by completing raids: /raids`);
-        return;
-      }
-
       // Create the raid using the same logic as the website
       const TwitterRaid = require('../models/TwitterRaid');
       
       // Generate default title and description
       const title = `Twitter Raid by @${user.username}`;
       const description = `Help boost this tweet! Like, retweet, and comment to earn 50 points.`;
+      
+      // Check if user has free raids available
+      const eligibility = user.checkFreeRaidEligibility();
+
+      if (eligibility.eligible) {
+        // Use free raid
+        const usage = await user.useFreeRaid();
+        
+        const raid = new TwitterRaid({
+          tweetId,
+          tweetUrl,
+          title,
+          description,
+          points: 50, // Fixed points for raids
+          createdBy: user._id,
+          isPaid: false,
+          paymentStatus: 'approved', // Free raids are automatically approved
+          active: true,
+          paidWithPoints: false, // Not paid with points (it's a free raid)
+          pointsSpent: 0 // No points spent
+        });
+
+        await raid.save();
+
+        // Send success message for free raid
+        await telegramService.sendBotMessage(chatId, 
+          `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 50 points.`);
+
+        // Send Telegram notification to all users about the new raid
+        await telegramService.sendRaidNotification({
+          tweetUrl: raid.tweetUrl,
+          points: raid.points,
+          title: raid.title,
+          description: raid.description
+        });
+
+        return;
+      }
+
+      // No free raids available, use points
+      // Check if user has enough points
+      if (user.points < POINTS_REQUIRED) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.\n\n💡 Earn points by completing raids: /raids`);
+        return;
+      }
       
       const raid = new TwitterRaid({
         tweetId,
