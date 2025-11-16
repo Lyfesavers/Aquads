@@ -115,8 +115,8 @@ const AquaSwapEmbed = () => {
     
     // ============ END OF EVENT HANDLERS ============
     
-    // Hide branding for clean embed
-    hiddenUI: ["poweredBy", "toAddress", "fromAmount"],
+    // Hide branding for clean embed (keep fromAmount and toAddress visible for route requests)
+    hiddenUI: ["poweredBy"],
     // Use compact variant for embedding
     variant: "compact",
     // Dark appearance
