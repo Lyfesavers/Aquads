@@ -31,6 +31,14 @@
       <div class="header-left">
         <img src="../icons/icon48.png" alt="AquaSwap" class="header-logo" onerror="this.style.display='none'">
         <span id="user-name" class="user-name">Loading...</span>
+        <span id="affiliate-points" class="affiliate-points" title="Affiliate Points">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+          <span id="points-value">-</span>
+        </span>
       </div>
       <div class="header-right">
         <a href="https://aquads.xyz" target="_blank" class="open-full-btn" title="Open full site">
@@ -51,8 +59,128 @@
       </div>
     </div>
 
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button id="tab-swap" class="tab-button active">Swap</button>
+      <button id="tab-advisor" class="tab-button">Token Advisor</button>
+    </div>
+
+    <!-- Token Advisor Section -->
+    <div id="token-advisor" class="token-advisor" style="display: none;">
+      <div class="token-advisor-header">
+        <div class="token-advisor-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+          <span>Token Advisor</span>
+        </div>
+        <button id="close-advisor" class="close-advisor-btn" title="Close" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div id="advisor-loading" class="advisor-loading">
+        <div class="advisor-spinner"></div>
+        <p>Analyzing token...</p>
+      </div>
+
+      <div id="advisor-content" class="advisor-content" style="display: none;">
+        <div class="token-info-header">
+          <div class="token-symbol-display">
+            <span id="advisor-token-symbol" class="token-symbol">-</span>
+            <span id="advisor-token-name" class="token-name"></span>
+          </div>
+          <div id="advisor-verdict" class="advisor-verdict">
+            <span class="verdict-label">Degen Score</span>
+            <span id="verdict-text" class="verdict-text">-</span>
+          </div>
+        </div>
+
+        <div id="advisor-reasons" class="advisor-reasons" style="display: none;"></div>
+        <div id="advisor-meta" class="advisor-meta" style="display: none;"></div>
+
+        <div class="advisor-stats">
+          <div class="stat-item" id="stat-rating">
+            <span class="stat-label">Community Rating</span>
+            <div class="stat-value">
+              <span id="advisor-rating" class="rating-stars">-</span>
+              <span id="advisor-rating-count" class="rating-count"></span>
+            </div>
+          </div>
+          <div class="stat-item" id="stat-change">
+            <span class="stat-label">24h Change</span>
+            <span id="advisor-24h-change" class="stat-value change-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-change1h">
+            <span class="stat-label">1h Change</span>
+            <span id="advisor-1h-change" class="stat-value change-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-marketcap">
+            <span class="stat-label">Market Cap</span>
+            <span id="advisor-market-cap" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-fdv">
+            <span class="stat-label">FDV</span>
+            <span id="advisor-fdv" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-price">
+            <span class="stat-label">Price</span>
+            <span id="advisor-price" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-liquidity">
+            <span class="stat-label">Liquidity</span>
+            <span id="advisor-liquidity" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-volume">
+            <span class="stat-label">Volume (24h)</span>
+            <span id="advisor-volume" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-age">
+            <span class="stat-label">Pair Age</span>
+            <span id="advisor-age" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-boost">
+            <span class="stat-label">Boost Votes</span>
+            <span id="advisor-boost" class="stat-value">-</span>
+          </div>
+          <div class="stat-item" id="stat-security">
+            <span class="stat-label">Security</span>
+            <span id="advisor-security" class="stat-value">-</span>
+          </div>
+        </div>
+
+        <div id="advisor-actions" class="advisor-actions">
+          <button id="swap-token-btn" class="action-btn primary-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Swap on AquaSwap
+          </button>
+          <button id="view-details-btn" class="action-btn secondary-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            View Details
+          </button>
+        </div>
+
+        <div id="advisor-error" class="advisor-error" style="display: none;">
+          <p id="error-message">Token not found in our database.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Swap Interface via iframe -->
-    <div class="swap-container">
+    <div id="swap-container" class="swap-container">
       <iframe 
         id="swap-iframe"
         src="https://aquads.xyz/embed/aquaswap"
@@ -83,6 +211,9 @@
 
   <script src="auth.js"></script>
   <script src="popup.js"></script>
+
+  <!-- Toast -->
+  <div id="copy-toast" class="toast" style="display:none;">Copied</div>
 </body>
 </html>
 
