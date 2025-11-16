@@ -121,8 +121,8 @@ const AquaSwapEmbed = () => {
     variant: "compact",
     // Dark appearance
     appearance: "dark",
-    // Enable URL building for mobile deep linking
-    buildUrl: true,
+    // Disable URL building in iframe to prevent invalid route requests from URL params
+    buildUrl: false, // Disable in iframe to prevent auto-fetching routes from URL parameters
     // Wallet configuration
     walletConfig: {
       usePartialWalletManagement: true,
@@ -136,12 +136,17 @@ const AquaSwapEmbed = () => {
         },
       },
     },
-    // SDK configuration for better performance
+    // SDK configuration for better performance (matches main swap page exactly)
     sdkConfig: {
       routeOptions: {
         order: 'FASTEST',
         allowPartialRoutes: true,
-        maxPriceImpact: 0.5,
+        maxPriceImpact: 0.5, // 50% max price impact
+      },
+      rpcUrls: {
+        // Add your RPC URLs here if you have custom ones
+        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
+        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
       },
     },
     // Enhanced theme configuration for embedding
