@@ -254,12 +254,34 @@ window.addEventListener('message', (event) => {
   dbg('Message from iframe:', event.data);
   
   // Handle specific messages if needed
-  if (event.data.type === 'swap-completed') {
-    dbg('✅ Swap completed!');
-    // Could show notification or update badge
+  if (event.data.type === 'swap-completed' || event.data.type === 'AQUASWAP_SWAP_COMPLETED') {
+    dbg('✅ Swap completed! Awarding points...');
+    (async () => {
+      try {
+        const { authToken } = await chrome.storage.local.get(['authToken']);
+        if (authToken) {
+          const res = await fetch('https://aquads.onrender.com/api/points/swap-completed', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (res.ok) {
+            await loadAffiliatePoints();
+          } else {
+            dbg('Swap points award failed with status:', res.status);
+          }
+        } else {
+          dbg('No auth token present; cannot award points');
+        }
+      } catch (e) {
+        console.error('Error awarding swap points from extension:', e);
+      }
+    })();
   }
   
-  if (event.data.type === 'wallet-connected') {
+  if (event.data.type === 'wallet-connected' || event.data.type === 'AQUASWAP_WALLET_CONNECTED') {
     dbg('👛 Wallet connected:', event.data.address);
   }
 });
