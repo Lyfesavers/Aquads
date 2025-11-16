@@ -26,7 +26,7 @@ const AquaSwapEmbed = () => {
 
   // LiFi Widget configuration optimized for embedding
   const widgetConfig = {
-    integrator: "aquaswap-embed",
+    integrator: "aquaswap", // Use same integrator as main swap (registered in LI.FI dashboard)
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
@@ -113,6 +113,23 @@ const AquaSwapEmbed = () => {
       // Optional: Send progress updates to parent
     },
     
+    // Route finding events - CRITICAL for debugging iframe route issues
+    onRouteFound: (route) => {
+      logger.info('✅ Route found in embed', { route });
+    },
+    
+    onRouteNotFound: (error) => {
+      logger.error('❌ Route NOT found in embed', { error });
+      // Send error to parent for debugging
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'AQUASWAP_ROUTE_ERROR',
+          error: error?.message || 'Route not found',
+          timestamp: Date.now()
+        }, '*');
+      }
+    },
+    
     // ============ END OF EVENT HANDLERS ============
     
     // Hide branding for clean embed (keep fromAmount and toAddress visible for route requests)
@@ -121,13 +138,22 @@ const AquaSwapEmbed = () => {
     variant: "compact",
     // Dark appearance
     appearance: "dark",
-    // CRITICAL: Disable URL building in iframe to prevent auto-fetching routes from URL parameters
-    // The widget reads URL params with buildUrl: true, causing invalid route requests in iframe
-    // Routes should only be fetched when user provides valid input, not from URL params
-    buildUrl: false,
-    // Wallet configuration
+    // Minimize widget size (matches main swap exactly)
+    containerStyle: {
+      maxWidth: "100%",
+      padding: "8px",
+    },
+    // Compact design settings (matches main swap exactly)
+    design: {
+      compact: true,
+    },
+    // Enable URL building for mobile deep linking (matches main swap)
+    buildUrl: true,
+    // Wallet configuration - using partial management for mobile Solana support
     walletConfig: {
+      // Enable partial wallet management to handle mobile Solana limitations
       usePartialWalletManagement: true,
+      // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         metadata: {
@@ -138,12 +164,21 @@ const AquaSwapEmbed = () => {
         },
       },
     },
-    // SDK configuration for better performance
+    // SDK configuration for better performance (matches main swap exactly)
     sdkConfig: {
+      // Improved route options for better performance and user experience
       routeOptions: {
+        // Prioritize speed and success rate
         order: 'FASTEST',
+        // Allow partial routes for better UX
         allowPartialRoutes: true,
-        maxPriceImpact: 0.5,
+        // Maximum number of routes to fetch for better performance
+        maxPriceImpact: 0.5, // 50% max price impact
+      },
+      rpcUrls: {
+        // Add your RPC URLs here if you have custom ones
+        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
+        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
       },
     },
     // Enhanced theme configuration for embedding
@@ -197,7 +232,7 @@ const AquaSwapEmbed = () => {
 
       {/* Swap Widget */}
       <div className="embed-widget">
-        <LiFiWidget integrator="aquaswap-embed" config={widgetConfig} />
+        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
       </div>
 
       {/* Footer with Powered by Aquads and description */}
