@@ -121,8 +121,10 @@ const AquaSwapEmbed = () => {
     variant: "compact",
     // Dark appearance
     appearance: "dark",
-    // Enable URL building for mobile deep linking
-    buildUrl: true,
+    // CRITICAL: Disable URL building in iframe to prevent auto-fetching routes from URL parameters
+    // The widget reads URL params with buildUrl: true, causing invalid route requests in iframe
+    // Routes should only be fetched when user provides valid input, not from URL params
+    buildUrl: false,
     // Wallet configuration
     walletConfig: {
       usePartialWalletManagement: true,
