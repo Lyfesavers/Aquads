@@ -10,11 +10,32 @@ const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET;
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;
 
 const AquaSwapEmbed = () => {
+  // CRITICAL: Clear swap-related URL parameters IMMEDIATELY on component initialization
+  // This must happen before widget renders to prevent auto-fetching routes with invalid params
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramsToRemove = ['fromChain', 'toChain', 'fromToken', 'toToken', 'fromAmount', 'toAmount'];
+    let urlChanged = false;
+    
+    paramsToRemove.forEach(param => {
+      if (urlParams.has(param)) {
+        urlParams.delete(param);
+        urlChanged = true;
+      }
+    });
+
+    // Update URL without swap parameters BEFORE widget initializes
+    if (urlChanged && window.history && window.history.replaceState) {
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }
+
   const [embedOptions, setEmbedOptions] = useState({
     hideLogo: false
   });
 
-  // Parse URL parameters
+  // Parse URL parameters (only for hideLogo, swap params already cleared above)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const hideLogo = urlParams.get('hideLogo') === 'true';
