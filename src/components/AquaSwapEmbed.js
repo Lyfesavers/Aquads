@@ -121,11 +121,23 @@ const AquaSwapEmbed = () => {
     variant: "compact",
     // Dark appearance
     appearance: "dark",
-    // Disable URL building in iframe to prevent invalid route requests from URL params
-    buildUrl: false, // Disable in iframe to prevent auto-fetching routes from URL parameters
+    // Minimize widget size (matches main swap)
+    containerStyle: {
+      maxWidth: "100%",
+      padding: "8px",
+    },
+    // Compact design settings (matches main swap)
+    design: {
+      compact: true,
+    },
+    // Disable URL building in iframe to prevent auto-fetching routes from URL parameters
+    // This is the ROOT CAUSE - URL params in iframe trigger invalid route requests
+    buildUrl: false,
     // Wallet configuration
     walletConfig: {
+      // Enable partial wallet management to handle mobile Solana limitations
       usePartialWalletManagement: true,
+      // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         metadata: {
@@ -136,11 +148,15 @@ const AquaSwapEmbed = () => {
         },
       },
     },
-    // SDK configuration for better performance (matches main swap page exactly)
+    // SDK configuration for better performance (matches main swap exactly)
     sdkConfig: {
+      // Improved route options for better performance and user experience
       routeOptions: {
+        // Prioritize speed and success rate
         order: 'FASTEST',
+        // Allow partial routes for better UX
         allowPartialRoutes: true,
+        // Maximum number of routes to fetch for better performance
         maxPriceImpact: 0.5, // 50% max price impact
       },
       rpcUrls: {
