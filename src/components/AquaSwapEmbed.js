@@ -10,32 +10,11 @@ const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET;
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;
 
 const AquaSwapEmbed = () => {
-  // CRITICAL: Clear swap-related URL parameters IMMEDIATELY on component initialization
-  // This must happen before widget renders to prevent auto-fetching routes with invalid params
-  if (typeof window !== 'undefined') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramsToRemove = ['fromChain', 'toChain', 'fromToken', 'toToken', 'fromAmount', 'toAmount'];
-    let urlChanged = false;
-    
-    paramsToRemove.forEach(param => {
-      if (urlParams.has(param)) {
-        urlParams.delete(param);
-        urlChanged = true;
-      }
-    });
-
-    // Update URL without swap parameters BEFORE widget initializes
-    if (urlChanged && window.history && window.history.replaceState) {
-      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-      window.history.replaceState({}, '', newUrl);
-    }
-  }
-
   const [embedOptions, setEmbedOptions] = useState({
     hideLogo: false
   });
 
-  // Parse URL parameters (only for hideLogo, swap params already cleared above)
+  // Parse URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const hideLogo = urlParams.get('hideLogo') === 'true';
@@ -142,23 +121,11 @@ const AquaSwapEmbed = () => {
     variant: "compact",
     // Dark appearance
     appearance: "dark",
-    // Minimize widget size (matches main swap)
-    containerStyle: {
-      maxWidth: "100%",
-      padding: "8px",
-    },
-    // Compact design settings (matches main swap)
-    design: {
-      compact: true,
-    },
-    // Disable URL building in iframe to prevent auto-fetching routes from URL parameters
-    // This is the ROOT CAUSE - URL params in iframe trigger invalid route requests
-    buildUrl: false,
+    // Enable URL building for mobile deep linking
+    buildUrl: true,
     // Wallet configuration
     walletConfig: {
-      // Enable partial wallet management to handle mobile Solana limitations
       usePartialWalletManagement: true,
-      // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         metadata: {
@@ -169,21 +136,12 @@ const AquaSwapEmbed = () => {
         },
       },
     },
-    // SDK configuration for better performance (matches main swap exactly)
+    // SDK configuration for better performance
     sdkConfig: {
-      // Improved route options for better performance and user experience
       routeOptions: {
-        // Prioritize speed and success rate
         order: 'FASTEST',
-        // Allow partial routes for better UX
         allowPartialRoutes: true,
-        // Maximum number of routes to fetch for better performance
-        maxPriceImpact: 0.5, // 50% max price impact
-      },
-      rpcUrls: {
-        // Add your RPC URLs here if you have custom ones
-        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
-        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
+        maxPriceImpact: 0.5,
       },
     },
     // Enhanced theme configuration for embedding
