@@ -1416,20 +1416,20 @@ https://aquads.xyz`;
       const platformEmoji = isFacebook ? '📘' : '🐦';
 
       // Construct the message
-      const message = `🎉 Raid Completed!
+      const message = `🎉 Someone Just Raided!
 
 ${platformEmoji} ${platformName} Raid
-👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} completed the raid
+👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} just completed a raid
 💰 Reward: ${completionData.points} points
 
-🌐 Track all raids: /raids
+🌐 Track all raids: [@aquadsbumpbot](https://t.me/aquadsbumpbot)
 💡 Complete more raids to earn points!`;
 
       // Send to all groups
       let successCount = 0;
       for (const chatId of groupsToNotify) {
         try {
-          const result = await telegramService.sendBotMessage(chatId, message);
+          const result = await telegramService.sendBotMessageWithMarkdown(chatId, message);
           if (result.success) {
             successCount++;
             // Store message ID for cleanup
