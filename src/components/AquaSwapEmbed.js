@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LiFiWidget } from '@lifi/widget';
+import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwapEmbed.css';
 
@@ -14,6 +14,9 @@ const AquaSwapEmbed = () => {
     hideLogo: false
   });
 
+  // LiFi Widget Events Hook - THE CORRECT WAY to listen to widget events (same as main swap)
+  const widgetEvents = useWidgetEvents();
+
   // Parse URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -23,6 +26,56 @@ const AquaSwapEmbed = () => {
       hideLogo
     });
   }, []);
+
+  // Listen for swap completion using the proper event hook (same as main swap page)
+  useEffect(() => {
+    const handleSwapComplete = (route) => {
+      logger.info('✅ Swap completed via widget event hook in embed', { route });
+      
+      // Send message to parent window (extension) to award 5 affiliate points
+      if (window.parent !== window) {
+        const message = {
+          type: 'AQUASWAP_SWAP_COMPLETED',
+          timestamp: Date.now(),
+          route: route ? {
+            fromChain: route.fromChain,
+            toChain: route.toChain,
+            fromToken: route.fromToken,
+            toToken: route.toToken
+          } : null
+        };
+        
+        logger.info('📤 Sending swap completion message to parent window (from event hook)', message);
+        
+        // Send to parent window (extension popup)
+        window.parent.postMessage(message, '*');
+        
+        // Also try with specific origin for better compatibility
+        try {
+          window.parent.postMessage(message, window.location.origin);
+        } catch (e) {
+          logger.warn('Could not send message with specific origin, using wildcard:', e);
+        }
+      } else {
+        logger.warn('Not in iframe context, cannot send message to parent');
+      }
+    };
+
+    // Subscribe to the RouteExecutionCompleted event (same as main swap)
+    if (widgetEvents) {
+      widgetEvents.on(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
+      logger.info('✅ Subscribed to RouteExecutionCompleted event');
+    } else {
+      logger.warn('⚠️ widgetEvents not available, using callback fallback');
+    }
+
+    // Cleanup: unsubscribe when component unmounts
+    return () => {
+      if (widgetEvents) {
+        widgetEvents.off(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
+      }
+    };
+  }, [widgetEvents]);
 
   // LiFi Widget configuration optimized for embedding
   const widgetConfig = {
