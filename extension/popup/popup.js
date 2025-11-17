@@ -243,23 +243,26 @@ async function trackExtensionOpen() {
 }
 
 /**
- * Listen for messages from iframe (optional - for future features)
+ * Listen for messages from iframe (swap completion for points)
  */
 window.addEventListener('message', (event) => {
-  // Verify origin
-  if (event.origin !== 'https://aquads.xyz') {
+  // Verify origin - allow both www and non-www versions
+  const allowedOrigins = ['https://aquads.xyz', 'https://www.aquads.xyz'];
+  if (!allowedOrigins.includes(event.origin)) {
+    dbg('Message from unauthorized origin:', event.origin);
     return;
   }
   
   dbg('Message from iframe:', event.data);
   
-  // Handle specific messages if needed
+  // Handle swap completion - award 5 affiliate points
   if (event.data.type === 'swap-completed' || event.data.type === 'AQUASWAP_SWAP_COMPLETED') {
-    dbg('✅ Swap completed! Awarding points...');
+    dbg('✅ Swap completed! Awarding 5 affiliate points...');
     (async () => {
       try {
         const { authToken } = await chrome.storage.local.get(['authToken']);
         if (authToken) {
+          dbg('Making API call to award swap points...');
           const res = await fetch('https://aquads.onrender.com/api/points/swap-completed', {
             method: 'POST',
             headers: {
@@ -267,22 +270,26 @@ window.addEventListener('message', (event) => {
               'Content-Type': 'application/json'
             }
           });
+          
+          const data = await res.json().catch(() => ({}));
+          
           if (res.ok) {
-            await loadAffiliatePoints();
+            dbg('✅ Points awarded successfully!', data);
+            await loadAffiliatePoints(); // Refresh points display
           } else {
-            dbg('Swap points award failed with status:', res.status);
+            dbg('❌ Swap points award failed with status:', res.status, data);
           }
         } else {
-          dbg('No auth token present; cannot award points');
+          dbg('⚠️ No auth token present; cannot award points');
         }
       } catch (e) {
-        console.error('Error awarding swap points from extension:', e);
+        console.error('❌ Error awarding swap points from extension:', e);
       }
     })();
   }
   
   if (event.data.type === 'wallet-connected' || event.data.type === 'AQUASWAP_WALLET_CONNECTED') {
-    dbg('👛 Wallet connected:', event.data.address);
+    dbg('👛 Wallet connected:', event.data.wallet?.address || event.data.address);
   }
 });
 

@@ -83,14 +83,34 @@ const AquaSwapEmbed = () => {
     },
     
     onRouteExecutionCompleted: (route) => {
-      logger.info('Swap execution completed in embed', { route });
+      logger.info('✅ Swap execution completed in embed', { route });
       
-      // Send message to parent window
+      // Send message to parent window (extension) to award 5 affiliate points
       if (window.parent !== window) {
-        window.parent.postMessage({
+        const message = {
           type: 'AQUASWAP_SWAP_COMPLETED',
-          timestamp: Date.now()
-        }, '*');
+          timestamp: Date.now(),
+          route: route ? {
+            fromChain: route.fromChain,
+            toChain: route.toChain,
+            fromToken: route.fromToken,
+            toToken: route.toToken
+          } : null
+        };
+        
+        logger.info('📤 Sending swap completion message to parent window', message);
+        
+        // Send to parent window (extension popup)
+        window.parent.postMessage(message, '*');
+        
+        // Also try with specific origin for better compatibility
+        try {
+          window.parent.postMessage(message, window.location.origin);
+        } catch (e) {
+          logger.warn('Could not send message with specific origin, using wildcard:', e);
+        }
+      } else {
+        logger.warn('Not in iframe context, cannot send message to parent');
       }
     },
     
