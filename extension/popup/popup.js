@@ -3,6 +3,100 @@ const DEBUG_LOGS = false;
 const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
 dbg('🌊 AquaSwap Extension loaded');
 
+// Socket.io connection for real-time points updates
+let socket = null;
+
+/**
+ * Initialize socket connection for real-time points updates
+ */
+async function initSocket() {
+  try {
+    const storage = await chrome.storage.local.get(['authToken', 'user']);
+    if (!storage.authToken || !storage.user) {
+      console.log('No auth token or user, skipping socket connection');
+      return;
+    }
+
+    // Connect to socket server
+    socket = io('https://aquads.onrender.com', {
+      auth: {
+        token: storage.authToken
+      },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+
+    socket.on('connect', () => {
+      console.log('✅ Socket connected for real-time points updates');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('⚠️ Socket disconnected');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    // Listen for real-time points updates
+    socket.on('affiliateEarningUpdate', async (data) => {
+      console.log('📊 Real-time points update received:', data);
+      
+      // Get current user to check if update is for them
+      const currentStorage = await chrome.storage.local.get(['user']);
+      const currentUser = currentStorage.user;
+      
+      if (!currentUser) return;
+      
+      // Check if this update is for the current user
+      const currentUserId = currentUser.userId || currentUser.id;
+      if (data.affiliateId && data.affiliateId.toString() === currentUserId?.toString()) {
+        if (data.newTotalPoints !== undefined) {
+          console.log('✅ Updating points display via socket (instant):', data.newTotalPoints);
+          updatePointsDisplay(data.newTotalPoints);
+          
+          // Optional: Show a brief visual indicator that points were updated
+          const pointsElement = document.getElementById('points-value');
+          if (pointsElement && data.pointsAwarded) {
+            // Brief highlight animation
+            pointsElement.style.transition = 'all 0.3s ease';
+            pointsElement.style.color = '#00ff00';
+            setTimeout(() => {
+              pointsElement.style.color = '';
+            }, 500);
+          }
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error initializing socket:', error);
+  }
+}
+
+/**
+ * Update points display in UI
+ */
+function updatePointsDisplay(points) {
+  const pointsElement = document.getElementById('points-value');
+  if (pointsElement) {
+    pointsElement.textContent = points.toLocaleString();
+  }
+}
+
+/**
+ * Disconnect socket when popup closes
+ */
+function disconnectSocket() {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+    console.log('Socket disconnected');
+  }
+}
+
 // Check authentication first
 (async function checkAuth() {
   const isAuth = await AuthService.isAuthenticated();
@@ -19,6 +113,9 @@ dbg('🌊 AquaSwap Extension loaded');
     if (userNameElement) {
       userNameElement.textContent = user.username;
     }
+    
+    // Initialize socket for real-time points updates
+    initSocket();
     
     // Load and display affiliate points
     loadAffiliatePoints();
@@ -279,8 +376,9 @@ window.addEventListener('message', (event) => {
         const data = await res.json().catch(() => ({}));
         
         if (res.ok) {
-          console.log('✅ Points awarded successfully!', data);
-          await loadAffiliatePoints(); // Refresh points display
+          console.log('✅ Points awarded successfully! Points will update via socket in real-time.');
+          // Points update via socket - no API refresh needed to avoid race conditions
+          // Socket update is instant and reliable
         } else if (res.status === 401) {
           // Token expired - log user out and redirect to login
           console.log('🔒 Session expired, logging out...');

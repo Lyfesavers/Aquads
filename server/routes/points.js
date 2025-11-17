@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
+const { emitAffiliateEarningUpdate } = require('../socket');
 
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
@@ -389,6 +390,15 @@ router.post('/swap-completed', auth, async (req, res) => {
       },
       { new: true }
     );
+    
+    // Emit real-time socket update for points (for extension and website)
+    emitAffiliateEarningUpdate({
+      affiliateId: req.user.userId,
+      type: 'swap_completed',
+      pointsAwarded: 5,
+      newTotalPoints: updatedUser.points,
+      reason: 'Completed AquaSwap transaction'
+    });
     
     res.json({
       success: true,
