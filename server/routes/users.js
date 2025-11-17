@@ -310,11 +310,15 @@ router.post('/login', validateLogin, async (req, res) => {
     // Update last activity on successful login
     user.lastActivity = new Date();
 
-    // Generate access token (15 minutes)
+    // Detect if request is from Chrome extension (for longer token expiration)
+    const isExtension = req.headers.origin && req.headers.origin.startsWith('chrome-extension://');
+    const tokenExpiration = isExtension ? '1h' : '15m'; // 1 hour for extension, 15 minutes for web
+
+    // Generate access token (1 hour for extension, 15 minutes for web)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: tokenExpiration }
     );
 
     // Generate refresh token (7 days)
