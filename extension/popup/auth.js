@@ -31,6 +31,7 @@ class AuthService {
       // Store auth data in Chrome storage (same format as website localStorage)
       await chrome.storage.local.set({
         authToken: userData.token,
+        refreshToken: userData.refreshToken, // Store refresh token for automatic token refresh
         user: {
           userId: userData.userId,
           username: userData.username,
@@ -56,6 +57,7 @@ class AuthService {
     try {
       await chrome.storage.local.remove([
         'authToken',
+        'refreshToken',
         'user',
         'isLoggedIn',
         'loginTimestamp'
@@ -93,6 +95,56 @@ class AuthService {
     } catch (error) {
       console.error('Get user error:', error);
       return null;
+    }
+  }
+
+  /**
+   * Refresh access token using refresh token
+   * This is called automatically when access token expires (401 errors)
+   */
+  static async refreshToken() {
+    try {
+      const result = await chrome.storage.local.get(['refreshToken']);
+      
+      if (!result.refreshToken) {
+        console.warn('No refresh token available');
+        return { success: false, error: 'No refresh token available' };
+      }
+
+      const response = await fetch(`${API_URL}/users/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: result.refreshToken })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Token refresh failed:', error);
+        
+        // If refresh token is invalid/expired, user needs to log in again
+        if (response.status === 401) {
+          await this.logout();
+        }
+        
+        return { success: false, error: error.error || 'Token refresh failed' };
+      }
+
+      const data = await response.json();
+      
+      // Update stored tokens
+      await chrome.storage.local.set({
+        authToken: data.token,
+        refreshToken: data.refreshToken, // Update refresh token (token rotation)
+        loginTimestamp: Date.now()
+      });
+
+      console.log('✅ Token refreshed successfully');
+      return { success: true, token: data.token, refreshToken: data.refreshToken };
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return { success: false, error: error.message };
     }
   }
 }

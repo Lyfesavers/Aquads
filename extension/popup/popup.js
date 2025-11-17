@@ -257,16 +257,23 @@ window.addEventListener('message', (event) => {
   
   // Handle swap completion - award 5 affiliate points
   if (event.data.type === 'swap-completed' || event.data.type === 'AQUASWAP_SWAP_COMPLETED') {
-    dbg('✅ Swap completed! Awarding 5 affiliate points...');
+    console.log('✅ Swap completed! Awarding 5 affiliate points...');
     (async () => {
       try {
-        const { authToken } = await chrome.storage.local.get(['authToken']);
-        if (authToken) {
-          dbg('Making API call to award swap points...');
+        // Helper function to make API call with automatic token refresh
+        const awardPointsWithRetry = async (retryCount = 0) => {
+          const storage = await chrome.storage.local.get(['authToken', 'isLoggedIn', 'user', 'refreshToken']);
+          
+          if (!storage.authToken) {
+            console.warn('⚠️ No auth token present; cannot award points. User may need to log in again.');
+            return;
+          }
+
+          console.log('Making API call to award swap points...');
           const res = await fetch('https://aquads.onrender.com/api/points/swap-completed', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${authToken}`,
+              'Authorization': `Bearer ${storage.authToken}`,
               'Content-Type': 'application/json'
             }
           });
@@ -274,14 +281,35 @@ window.addEventListener('message', (event) => {
           const data = await res.json().catch(() => ({}));
           
           if (res.ok) {
-            dbg('✅ Points awarded successfully!', data);
+            console.log('✅ Points awarded successfully!', data);
             await loadAffiliatePoints(); // Refresh points display
-          } else {
-            dbg('❌ Swap points award failed with status:', res.status, data);
+            return;
           }
-        } else {
-          dbg('⚠️ No auth token present; cannot award points');
-        }
+          
+          // If 401 and we have a refresh token, try to refresh and retry
+          if (res.status === 401 && storage.refreshToken && retryCount === 0) {
+            console.log('🔄 Access token expired, refreshing token...');
+            const refreshResult = await AuthService.refreshToken();
+            
+            if (refreshResult.success) {
+              console.log('✅ Token refreshed, retrying points award...');
+              // Retry the request with new token (only once)
+              return awardPointsWithRetry(1);
+            } else {
+              console.error('❌ Token refresh failed:', refreshResult.error);
+              console.warn('⚠️ Please log out and log back in to continue earning points.');
+            }
+          } else {
+            console.error('❌ Swap points award failed:', {
+              status: res.status,
+              statusText: res.statusText,
+              error: data.error || data.message || 'Unknown error',
+              data: data
+            });
+          }
+        };
+
+        await awardPointsWithRetry();
       } catch (e) {
         console.error('❌ Error awarding swap points from extension:', e);
       }
@@ -307,11 +335,11 @@ if (logoutBtn) {
 }
 
 /**
- * Load and display affiliate points
+ * Load and display affiliate points (with automatic token refresh)
  */
-async function loadAffiliatePoints() {
+async function loadAffiliatePoints(retryCount = 0) {
   try {
-    const result = await chrome.storage.local.get(['authToken']);
+    const result = await chrome.storage.local.get(['authToken', 'refreshToken']);
     if (!result.authToken) {
       console.log('No auth token found');
       return;
@@ -326,6 +354,18 @@ async function loadAffiliatePoints() {
     });
 
     if (!response.ok) {
+      // If 401 and we have a refresh token, try to refresh and retry
+      if (response.status === 401 && result.refreshToken && retryCount === 0) {
+        console.log('🔄 Access token expired while loading points, refreshing token...');
+        const refreshResult = await AuthService.refreshToken();
+        
+        if (refreshResult.success) {
+          console.log('✅ Token refreshed, retrying points load...');
+          // Retry the request with new token (only once)
+          return loadAffiliatePoints(1);
+        }
+      }
+      
       throw new Error('Failed to fetch points');
     }
 
