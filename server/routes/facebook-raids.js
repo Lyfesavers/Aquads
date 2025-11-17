@@ -318,6 +318,17 @@ router.post('/:raidId/complete', auth, requireEmailVerification, facebookRaidRat
     });
     await notification.save();
 
+    // Send Telegram notification to all groups
+    telegramService.sendRaidCompletionNotification({
+      userId: req.user.id,
+      raidId: raid._id.toString(),
+      raidTitle: raid.title,
+      platform: 'Facebook',
+      points: raid.points || 50
+    }).catch(err => {
+      console.error('Error sending raid completion notification:', err);
+    });
+
     res.json({
       message: 'Facebook raid completed successfully! Your submission is pending admin approval.',
       completion

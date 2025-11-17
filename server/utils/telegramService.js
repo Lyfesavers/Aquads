@@ -23,6 +23,10 @@ const telegramService = {
   voteNotificationQueue: [],
   isProcessingVoteQueue: false,
 
+  // Queue system for raid completion notifications to prevent race conditions
+  raidCompletionQueue: [],
+  isProcessingRaidCompletionQueue: false,
+
   // Load active groups from database
   loadActiveGroups: async () => {
     try {
@@ -1034,6 +1038,17 @@ https://aquads.xyz`;
         lastActivity: new Date()
       });
 
+      // Send Telegram notification to all groups
+      telegramService.sendRaidCompletionNotification({
+        userId: user._id.toString(),
+        raidId: raid._id.toString(),
+        raidTitle: raid.title,
+        platform: platform,
+        points: raid.points || 50
+      }).catch(err => {
+        console.error('Error sending raid completion notification:', err);
+      });
+
       await telegramService.sendBotMessage(chatId, 
         `✅ ${platform} Raid Submitted Successfully!
 
@@ -1254,6 +1269,186 @@ https://aquads.xyz`;
       console.log(`🧹 Cleared all stored raid message IDs from database`);
     } catch (error) {
       console.error('Error deleting old raid messages:', error.message);
+    }
+  },
+
+  // Delete old raid completion messages
+  deleteOldRaidCompletionMessages: async () => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return;
+
+    try {
+      // Load message IDs from database
+      const settings = await BotSettings.findOne({ key: 'raidCompletionMessageIds' });
+      const completionMessageIds = settings?.value || {};
+      
+      const chatCount = Object.keys(completionMessageIds).length;
+      const totalMessages = Object.values(completionMessageIds).flat().length;
+      
+      console.log(`🗑️ Deleting old raid completion messages from ${chatCount} chats (${totalMessages} total messages)`);
+      
+      if (chatCount === 0) {
+        console.log(`ℹ️ No stored raid completion messages found to delete`);
+        return;
+      }
+
+      for (const [chatId, messageIds] of Object.entries(completionMessageIds)) {
+        for (const messageId of messageIds) {
+          try {
+            await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
+              chat_id: chatId,
+              message_id: messageId
+            });
+            console.log(`✅ Deleted old raid completion message ${messageId} from chat ${chatId}`);
+          } catch (error) {
+            // Message might already be deleted or bot doesn't have permission
+            console.log(`❌ Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
+          }
+        }
+      }
+      
+      // Clear the stored message IDs from database
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidCompletionMessageIds' },
+        { value: {}, updatedAt: new Date() },
+        { upsert: true }
+      );
+      console.log(`🧹 Cleared all stored raid completion message IDs from database`);
+    } catch (error) {
+      console.error('Error deleting old raid completion messages:', error.message);
+    }
+  },
+
+  // Store raid completion message ID for cleanup
+  storeRaidCompletionMessageId: async (chatId, messageId) => {
+    try {
+      const chatIdStr = chatId.toString();
+      
+      // Get existing message IDs from database
+      const settings = await BotSettings.findOne({ key: 'raidCompletionMessageIds' });
+      const existingData = settings?.value || {};
+      
+      // Add new message ID
+      if (!existingData[chatIdStr]) {
+        existingData[chatIdStr] = [];
+      }
+      existingData[chatIdStr].push(messageId);
+      
+      // Save back to database
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidCompletionMessageIds' },
+        { value: existingData, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing raid completion message ID:', error);
+    }
+  },
+
+  // Process the raid completion notification queue
+  processRaidCompletionQueue: async () => {
+    if (telegramService.isProcessingRaidCompletionQueue || telegramService.raidCompletionQueue.length === 0) {
+      return;
+    }
+
+    telegramService.isProcessingRaidCompletionQueue = true;
+
+    while (telegramService.raidCompletionQueue.length > 0) {
+      const completionData = telegramService.raidCompletionQueue.shift();
+      
+      try {
+        await telegramService.sendRaidCompletionNotificationInternal(completionData);
+      } catch (error) {
+        console.error('Error processing raid completion notification from queue:', error);
+      }
+      
+      // Small delay to prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    telegramService.isProcessingRaidCompletionQueue = false;
+  },
+
+  // Send raid completion notification to all groups (add to queue)
+  sendRaidCompletionNotification: async (completionData) => {
+    // Add to queue instead of processing immediately
+    telegramService.raidCompletionQueue.push(completionData);
+    
+    // Start processing the queue
+    telegramService.processRaidCompletionQueue().catch(err => {
+      console.error('Error in raid completion queue processor:', err);
+    });
+  },
+
+  // Internal function that actually sends the completion notification
+  sendRaidCompletionNotificationInternal: async (completionData) => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+      if (!botToken) {
+        console.error('TELEGRAM_BOT_TOKEN not configured');
+        return;
+      }
+
+      // Delete old completion messages first
+      await telegramService.deleteOldRaidCompletionMessages();
+
+      // Get all active groups (including the default chat ID)
+      const groupsToNotify = new Set(telegramService.activeGroups);
+      const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+      if (defaultChatId) {
+        groupsToNotify.add(defaultChatId);
+      }
+
+      if (groupsToNotify.size === 0) {
+        console.log('No active groups to send raid completion notification to');
+        return;
+      }
+
+      // Get user info
+      const user = await User.findById(completionData.userId).select('username telegramUsername');
+      const username = user?.username || 'User';
+      const telegramUsername = user?.telegramUsername ? `@${user.telegramUsername}` : '';
+
+      // Determine platform
+      const isFacebook = completionData.platform === 'Facebook';
+      const platformName = isFacebook ? 'Facebook' : 'Twitter';
+      const platformEmoji = isFacebook ? '📘' : '🐦';
+
+      // Construct the message
+      const message = `🎉 Raid Completed!
+
+${platformEmoji} ${platformName} Raid
+👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} completed the raid
+💰 Reward: ${completionData.points} points
+
+🌐 Track all raids: /raids
+💡 Complete more raids to earn points!`;
+
+      // Send to all groups
+      let successCount = 0;
+      for (const chatId of groupsToNotify) {
+        try {
+          const result = await telegramService.sendBotMessage(chatId, message);
+          if (result.success) {
+            successCount++;
+            // Store message ID for cleanup
+            await telegramService.storeRaidCompletionMessageId(chatId, result.messageId);
+          }
+        } catch (error) {
+          console.error(`Failed to send completion notification to group ${chatId}:`, error.message);
+          // Remove failed group from active groups
+          telegramService.activeGroups.delete(chatId);
+          await telegramService.saveActiveGroups();
+        }
+      }
+
+      console.log(`📨 Raid completion notification sent to ${successCount}/${groupsToNotify.size} groups`);
+      return successCount > 0;
+
+    } catch (error) {
+      console.error('Raid completion notification failed:', error.message);
+      return false;
     }
   },
 
@@ -1624,6 +1819,17 @@ https://aquads.xyz`;
       // Update user activity
       await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
 
+      // Send Telegram notification to all groups
+      telegramService.sendRaidCompletionNotification({
+        userId: user._id.toString(),
+        raidId: raid._id.toString(),
+        raidTitle: raid.title,
+        platform: platform,
+        points: raid.points || 50
+      }).catch(err => {
+        console.error('Error sending raid completion notification:', err);
+      });
+
       // Success message
       await telegramService.sendBotMessage(chatId, 
         `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${username}\n💰 Reward: ${raid.points} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
@@ -1727,6 +1933,17 @@ https://aquads.xyz`;
 
       // Update user activity
       await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
+
+      // Send Telegram notification to all groups
+      telegramService.sendRaidCompletionNotification({
+        userId: user._id.toString(),
+        raidId: raid._id.toString(),
+        raidTitle: raid.title,
+        platform: platform,
+        points: state.raidPoints || raid.points || 50
+      }).catch(err => {
+        console.error('Error sending raid completion notification:', err);
+      });
 
       // Success message
       await telegramService.sendBotMessage(chatId, 

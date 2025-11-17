@@ -483,6 +483,17 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         ipAddress: ipAddress,
         trustScore: userTrustScore
       });
+
+      // Send Telegram notification to all groups
+      telegramService.sendRaidCompletionNotification({
+        userId: userId,
+        raidId: raid._id.toString(),
+        raidTitle: raid.title,
+        platform: 'Twitter',
+        points: raid.points || 50
+      }).catch(err => {
+        console.error('Error sending raid completion notification:', err);
+      });
       
       const successResponse = {
         success: true,
