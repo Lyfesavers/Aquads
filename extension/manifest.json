@@ -37,7 +37,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://cdn.socket.io; object-src 'self'; connect-src 'self' https://aquads.onrender.com wss://aquads.onrender.com"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://aquads.onrender.com wss://aquads.onrender.com"
   },
   "homepage_url": "https://aquads.xyz",
   "author": "Aquads Team"
