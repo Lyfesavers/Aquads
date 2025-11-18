@@ -154,9 +154,14 @@ function init() {
     }
   }, IFRAME_TIMEOUT);
 
-  // Listen for iframe load
+  // Listen for iframe load BEFORE setting src
   iframe.addEventListener('load', handleIframeLoad);
   iframe.addEventListener('error', handleIframeError);
+
+  // Set src AFTER listeners are attached to prevent race condition
+  if (iframe && !iframe.src) {
+    iframe.src = AQUADS_URL;
+  }
 
   // Set up retry button
   if (retryBtn) {
@@ -280,9 +285,18 @@ function retryLoad() {
   iframeLoaded = false;
   loading.style.display = 'flex';
   errorScreen.style.display = 'none';
+  mainContent.style.display = 'none';
   
-  // Reload iframe
-  iframe.src = iframe.src;
+  // Clear existing timeout
+  if (loadTimeout) {
+    clearTimeout(loadTimeout);
+  }
+  
+  // Reload iframe by setting src to empty then back to URL
+  iframe.src = '';
+  setTimeout(() => {
+    iframe.src = AQUADS_URL;
+  }, 100);
   
   // Set new timeout
   loadTimeout = setTimeout(() => {
