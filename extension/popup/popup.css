@@ -507,6 +507,22 @@ html, body {
   color: #ef4444;
 }
 
+.advisor-verdict.danger {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #dc2626;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 .advisor-verdict.neutral {
   background: rgba(156, 163, 175, 0.15);
   border: 1px solid rgba(156, 163, 175, 0.3);
@@ -533,6 +549,36 @@ html, body {
   margin: 4px 0 8px 0;
   color: #6b7280;
   font-size: 10px;
+}
+
+.advisor-recommendation {
+  margin: 8px 0 4px 0;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  color: #e5e7eb;
+  font-size: 12px;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.advisor-disclaimer {
+  margin: 12px 0 8px 0;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 10px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.advisor-disclaimer strong {
+  color: #f87171;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .advisor-stats {

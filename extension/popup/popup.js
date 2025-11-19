@@ -782,6 +782,15 @@ async function analyzeToken(detected) {
     const verdictTextElement = document.getElementById('verdict-text');
     verdictElement.className = `advisor-verdict ${verdict.class}`;
     verdictTextElement.textContent = verdict.text;
+    
+    // Update recommendation if available
+    if (verdictInfo.verdict.recommendation) {
+      const recommendationEl = document.getElementById('advisor-recommendation');
+      if (recommendationEl) {
+        recommendationEl.textContent = verdictInfo.verdict.recommendation;
+        recommendationEl.style.display = 'block';
+      }
+    }
 
     // Reasons + meta
     const reasonsEl = document.getElementById('advisor-reasons');
@@ -906,11 +915,15 @@ async function fetchDexScreenerPrimary(tokenIdentifier, chain, symbolHint) {
       fdv: best.fdv || 0,
       liquidityUsd: Number(best.liquidity?.usd) || 0,
       priceChange1h: best.priceChange?.h1 ?? null,
+      priceChange6h: best.priceChange?.h6 ?? null,
       priceChange24h: best.priceChange?.h24 ?? (best.priceChange24h ?? null),
       pairCreatedAt: best.pairCreatedAt || null,
       address: base.address || null,
       volume24hUsd: (best.volume?.h24 != null ? Number(best.volume.h24) : (best.volume24h || null)),
-      txns24h: (best.txns?.h24 != null ? Number(best.txns.h24) : (best.txns24h || null))
+      txns24h: (best.txns?.h24 != null ? Number(best.txns.h24) : (best.txns24h || null)),
+      buyCount24h: best.buys?.h24 ?? null,
+      sellCount24h: best.sells?.h24 ?? null,
+      priceChange: best.priceChange || null
     };
   } catch (e) {
     console.warn('DexScreener primary failed:', e);
@@ -919,74 +932,433 @@ async function fetchDexScreenerPrimary(tokenIdentifier, chain, symbolHint) {
 }
 
 /**
- * Compute verdict with clear rules using DexScreener metrics
+ * Comprehensive degen score calculation using all available DexScreener data
+ * This provides investment risk assessment based on multiple factors
  */
 function computeDexScreenerVerdict({ token, avgRating, ds }) {
   const reasons = [];
+  const riskFactors = [];
+  const positiveFactors = [];
 
+  // Extract all available data
   const marketCap = token.marketCap || 0;
   const price24 = token.priceChangePercentage24h;
   const liq = ds ? (ds.liquidityUsd || 0) : 0;
   const h1 = ds && ds.priceChange1h != null ? Number(ds.priceChange1h) : null;
+  const h6 = ds && ds.priceChange6h != null ? Number(ds.priceChange6h) : null;
   const fdv = ds ? (ds.fdv || 0) : 0;
   const vol24 = ds ? (ds.volume24hUsd || 0) : 0;
+  const txns24h = ds ? (ds.txns24h || 0) : 0;
+  const buyCount = ds ? (ds.buyCount24h || 0) : 0;
+  const sellCount = ds ? (ds.sellCount24h || 0) : 0;
   const ageMs = ds && ds.pairCreatedAt ? (Date.now() - Number(ds.pairCreatedAt)) : null;
   const ageDays = ageMs != null ? Math.max(0, Math.floor(ageMs / (1000*60*60*24))) : null;
 
-  // Score (0-100), center at 50
+  // Start with neutral score (50/100)
   let score = 50;
+  let riskScore = 0; // Lower is better (0-100, where 0 = no risk, 100 = extreme risk)
 
-  // Liquidity
-  if (liq >= 1_000_000) score += 30;
-  else if (liq >= 500_000) score += 25;
-  else if (liq >= 200_000) score += 15;
-  else if (liq >= 100_000) score += 8;
-  else if (liq < 50_000) score -= 25;
-  else score -= 10;
+  // ========== LIQUIDITY ANALYSIS (Critical for exit ability) ==========
+  const liquidityScore = calculateLiquidityScore(liq, marketCap, vol24);
+  score += liquidityScore.points;
+  riskScore += liquidityScore.risk;
+  if (liquidityScore.reason) {
+    if (liquidityScore.points > 0) positiveFactors.push(liquidityScore.reason);
+    else riskFactors.push(liquidityScore.reason);
+  }
 
-  // Volume 24h
-  if (vol24 >= 2_000_000) score += 20;
-  else if (vol24 >= 1_000_000) score += 15;
-  else if (vol24 >= 250_000) score += 8;
-  else if (vol24 < 25_000) score -= 15;
-  else score -= 5;
+  // ========== VOLUME & TRADING ACTIVITY ==========
+  const volumeScore = calculateVolumeScore(vol24, marketCap, liq, txns24h);
+  score += volumeScore.points;
+  riskScore += volumeScore.risk;
+  if (volumeScore.reason) {
+    if (volumeScore.points > 0) positiveFactors.push(volumeScore.reason);
+    else riskFactors.push(volumeScore.reason);
+  }
 
-  // Size (MCAP/FDV)
+  // ========== MARKET CAP & VALUATION ==========
   const size = Math.max(marketCap, fdv);
-  if (size >= 100_000_000) score += 10;
-  else if (size >= 10_000_000) score += 8;
-  else if (size >= 3_000_000) score += 4;
-  else if (size < 1_000_000) score -= 5;
-
-  // Momentum
-  if (h1 != null && h1 >= 0) score += 5;
-  if (price24 != null) {
-    if (price24 >= 0 && price24 <= 15) score += 10;
-    else if (price24 > 15 && price24 <= 30) score += 5;
-    else if (price24 < 0 && price24 >= -10) score -= 5;
-    else if (price24 < -25) score -= 20;
+  const mcapScore = calculateMarketCapScore(size, fdv, marketCap);
+  score += mcapScore.points;
+  riskScore += mcapScore.risk;
+  if (mcapScore.reason) {
+    if (mcapScore.points > 0) positiveFactors.push(mcapScore.reason);
+    else riskFactors.push(mcapScore.reason);
   }
 
-  // Age
-  if (ageDays != null) {
-    if (ageDays >= 90) score += 10;
-    else if (ageDays >= 30) score += 6;
-    else if (ageDays < 2 && price24 != null && price24 > 25) score -= 10;
+  // ========== PRICE MOMENTUM & VOLATILITY ==========
+  const momentumScore = calculateMomentumScore(h1, h6, price24);
+  score += momentumScore.points;
+  riskScore += momentumScore.risk;
+  if (momentumScore.reason) {
+    if (momentumScore.points > 0) positiveFactors.push(momentumScore.reason);
+    else riskFactors.push(momentumScore.reason);
   }
 
-  // Build reasons from the biggest drivers
-  if (liq >= 500_000) reasons.push('Deep liquidity');
-  if (vol24 >= 250_000) reasons.push('Strong 24h volume');
-  if (h1 != null && h1 >= 0) reasons.push('Positive 1h momentum');
-  if (price24 != null && price24 >= 0 && price24 <= 15) reasons.push('Healthy 24h trend');
-  if (size >= 100_000_000) reasons.push('Large cap stability');
-  if (ageDays != null && ageDays >= 30) reasons.push('Established pair');
-  if (price24 != null && price24 < -25) reasons.push('Severe 24h drawdown');
-  if (ageDays != null && ageDays < 2 && price24 != null && price24 > 25) reasons.push('New + rapid pump');
+  // ========== BUY/SELL PRESSURE ==========
+  const buySellScore = calculateBuySellScore(buyCount, sellCount, txns24h);
+  score += buySellScore.points;
+  riskScore += buySellScore.risk;
+  if (buySellScore.reason) {
+    if (buySellScore.points > 0) positiveFactors.push(buySellScore.reason);
+    else riskFactors.push(buySellScore.reason);
+  }
 
+  // ========== PAIR AGE & ESTABLISHMENT ==========
+  const ageScore = calculateAgeScore(ageDays, price24, h1);
+  score += ageScore.points;
+  riskScore += ageScore.risk;
+  if (ageScore.reason) {
+    if (ageScore.points > 0) positiveFactors.push(ageScore.reason);
+    else riskFactors.push(ageScore.reason);
+  }
+
+  // ========== COMMUNITY RATING (if available) ==========
+  if (avgRating > 0) {
+    const ratingPoints = (avgRating / 5) * 10; // Max 10 points
+    score += ratingPoints;
+    if (avgRating >= 4) positiveFactors.push(`Strong community rating (${avgRating.toFixed(1)}/5)`);
+    else if (avgRating < 2.5) riskFactors.push(`Low community rating (${avgRating.toFixed(1)}/5)`);
+  }
+
+  // ========== VOLUME/LIQUIDITY RATIO (Critical risk indicator) ==========
+  const volLiqRatio = liq > 0 ? vol24 / liq : 0;
+  if (volLiqRatio > 5) {
+    riskScore += 15;
+    riskFactors.push('Very high volume/liquidity ratio (potential rug risk)');
+  } else if (volLiqRatio > 2) {
+    riskScore += 8;
+    riskFactors.push('High volume/liquidity ratio');
+  } else if (volLiqRatio < 0.1 && vol24 > 0) {
+    score += 5;
+    positiveFactors.push('Healthy volume/liquidity ratio');
+  }
+
+  // ========== FINAL SCORE CALCULATION ==========
   score = Math.max(0, Math.min(100, Math.round(score)));
-  const klass = score >= 70 ? 'good' : (score >= 40 ? 'caution' : 'warning');
-  return { verdict: { text: `Degen Score: ${score}/100`, class: klass }, reasons, confidence: (score >= 70 ? 'Medium' : 'Low') };
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+
+  // Determine verdict based on score and risk
+  let verdict;
+  let recommendation;
+  let confidence;
+
+  if (riskScore >= 70) {
+    // Extreme risk - always avoid
+    verdict = { text: 'AVOID - Extreme Risk', class: 'danger' };
+    recommendation = 'DO NOT INVEST';
+    confidence = 'High';
+    reasons.push(...riskFactors.slice(0, 3));
+  } else if (score >= 75 && riskScore < 30) {
+    // Strong buy signal
+    verdict = { text: 'STRONG BUY', class: 'good' };
+    recommendation = 'Favorable investment opportunity';
+    confidence = 'Medium-High';
+    reasons.push(...positiveFactors.slice(0, 4));
+  } else if (score >= 60 && riskScore < 40) {
+    // Buy signal
+    verdict = { text: 'BUY', class: 'good' };
+    recommendation = 'Consider investing';
+    confidence = 'Medium';
+    reasons.push(...positiveFactors.slice(0, 3));
+    if (riskFactors.length > 0) reasons.push(`⚠️ ${riskFactors[0]}`);
+  } else if (score >= 45 && riskScore < 50) {
+    // Caution
+    verdict = { text: 'CAUTION', class: 'caution' };
+    recommendation = 'Research thoroughly before investing';
+    confidence = 'Low-Medium';
+    reasons.push(...positiveFactors.slice(0, 2));
+    reasons.push(...riskFactors.slice(0, 2));
+  } else if (score >= 30) {
+    // High risk
+    verdict = { text: 'HIGH RISK', class: 'warning' };
+    recommendation = 'Not recommended - high risk';
+    confidence = 'Medium';
+    reasons.push(...riskFactors.slice(0, 3));
+    if (positiveFactors.length > 0) reasons.push(positiveFactors[0]);
+  } else {
+    // Very high risk
+    verdict = { text: 'AVOID', class: 'danger' };
+    recommendation = 'DO NOT INVEST - Multiple red flags';
+    confidence = 'High';
+    reasons.push(...riskFactors.slice(0, 4));
+  }
+
+  return {
+    verdict: { 
+      text: `${verdict.text} (${score}/100)`, 
+      class: verdict.class,
+      recommendation: recommendation
+    },
+    reasons: reasons.length > 0 ? reasons : ['Insufficient data for analysis'],
+    confidence: confidence,
+    riskScore: riskScore,
+    score: score
+  };
+}
+
+// Helper functions for scoring components
+
+function calculateLiquidityScore(liq, marketCap, vol24) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  // Absolute liquidity thresholds
+  if (liq >= 1_000_000) {
+    points += 25;
+    reason = 'Excellent liquidity ($1M+)';
+  } else if (liq >= 500_000) {
+    points += 20;
+    reason = 'Strong liquidity ($500K+)';
+  } else if (liq >= 200_000) {
+    points += 12;
+    reason = 'Good liquidity ($200K+)';
+  } else if (liq >= 100_000) {
+    points += 6;
+    reason = 'Moderate liquidity ($100K+)';
+  } else if (liq >= 50_000) {
+    points -= 5;
+    risk += 10;
+    reason = 'Low liquidity - exit risk';
+  } else if (liq > 0) {
+    points -= 15;
+    risk += 25;
+    reason = 'Very low liquidity - high exit risk';
+  } else {
+    points -= 30;
+    risk += 40;
+    reason = 'No liquidity data - extreme risk';
+  }
+
+  // Liquidity relative to market cap (should be at least 5-10%)
+  if (marketCap > 0 && liq > 0) {
+    const liqRatio = (liq / marketCap) * 100;
+    if (liqRatio >= 10) {
+      points += 5;
+    } else if (liqRatio < 2) {
+      risk += 15;
+      if (!reason) reason = 'Liquidity too low relative to market cap';
+    }
+  }
+
+  return { points, risk, reason };
+}
+
+function calculateVolumeScore(vol24, marketCap, liq, txns24h) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  // Absolute volume
+  if (vol24 >= 2_000_000) {
+    points += 18;
+    reason = 'Very high trading volume';
+  } else if (vol24 >= 1_000_000) {
+    points += 14;
+    reason = 'High trading volume';
+  } else if (vol24 >= 250_000) {
+    points += 8;
+    reason = 'Moderate trading volume';
+  } else if (vol24 >= 50_000) {
+    points += 3;
+  } else if (vol24 > 0 && vol24 < 10_000) {
+    points -= 10;
+    risk += 15;
+    reason = 'Very low trading volume';
+  } else if (vol24 === 0) {
+    points -= 20;
+    risk += 25;
+    reason = 'No trading volume - dead token';
+  }
+
+  // Transaction count (indicates real trading vs wash trading)
+  if (txns24h > 0) {
+    const avgTxSize = vol24 / txns24h;
+    if (txns24h >= 1000 && avgTxSize < 5000) {
+      points += 5;
+      reason = reason || 'Healthy transaction distribution';
+    } else if (txns24h < 50 && vol24 > 100_000) {
+      risk += 10;
+      reason = reason || 'Suspicious: high volume, few transactions';
+    }
+  }
+
+  return { points, risk, reason };
+}
+
+function calculateMarketCapScore(size, fdv, marketCap) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  // Market cap size
+  if (size >= 100_000_000) {
+    points += 12;
+    reason = 'Large cap - more established';
+  } else if (size >= 10_000_000) {
+    points += 8;
+    reason = 'Mid cap';
+  } else if (size >= 3_000_000) {
+    points += 4;
+  } else if (size >= 1_000_000) {
+    points += 1;
+  } else if (size > 0) {
+    points -= 5;
+    risk += 10;
+    reason = 'Micro cap - high volatility risk';
+  } else {
+    risk += 15;
+    reason = 'No market cap data';
+  }
+
+  // FDV vs Market Cap (high FDV relative to MC = low circulating supply = potential dump risk)
+  if (marketCap > 0 && fdv > 0) {
+    const fdvRatio = fdv / marketCap;
+    if (fdvRatio > 10) {
+      risk += 12;
+      reason = reason || 'Very high FDV/MC ratio - unlock risk';
+    } else if (fdvRatio > 5) {
+      risk += 6;
+    }
+  }
+
+  return { points, risk, reason };
+}
+
+function calculateMomentumScore(h1, h6, price24) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  // 24h momentum (most important)
+  if (price24 != null) {
+    if (price24 >= 0 && price24 <= 15) {
+      points += 12;
+      reason = 'Healthy 24h price trend';
+    } else if (price24 > 15 && price24 <= 30) {
+      points += 6;
+      reason = 'Strong 24h gains';
+    } else if (price24 > 30 && price24 <= 50) {
+      points += 2;
+      risk += 8;
+      reason = 'Very high 24h gains - potential pump';
+    } else if (price24 > 50) {
+      points -= 10;
+      risk += 20;
+      reason = 'Extreme pump - likely unsustainable';
+    } else if (price24 < 0 && price24 >= -10) {
+      points -= 3;
+      risk += 5;
+    } else if (price24 < -10 && price24 >= -25) {
+      points -= 8;
+      risk += 12;
+      reason = 'Significant 24h decline';
+    } else if (price24 < -25) {
+      points -= 15;
+      risk += 25;
+      reason = 'Severe 24h crash';
+    }
+  }
+
+  // 1h momentum (short-term trend)
+  if (h1 != null) {
+    if (h1 > 20) {
+      risk += 8;
+      reason = reason || 'Extreme 1h pump';
+    } else if (h1 < -20) {
+      risk += 10;
+      reason = reason || 'Sharp 1h decline';
+    } else if (h1 >= 0 && h1 <= 10) {
+      points += 3;
+    }
+  }
+
+  // 6h momentum (medium-term trend)
+  if (h6 != null) {
+    if (h6 > 30) {
+      risk += 5;
+    } else if (h6 < -30) {
+      risk += 8;
+    }
+  }
+
+  // Volatility check (large swings = risk)
+  if (h1 != null && price24 != null) {
+    const volatility = Math.abs(h1 - price24);
+    if (volatility > 30) {
+      risk += 10;
+      reason = reason || 'High price volatility';
+    }
+  }
+
+  return { points, risk, reason };
+}
+
+function calculateBuySellScore(buyCount, sellCount, txns24h) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  if (buyCount > 0 && sellCount > 0) {
+    const buyRatio = buyCount / (buyCount + sellCount);
+    
+    if (buyRatio >= 0.6) {
+      points += 5;
+      reason = 'Buy pressure exceeds sells';
+    } else if (buyRatio <= 0.3) {
+      points -= 8;
+      risk += 10;
+      reason = 'Heavy sell pressure';
+    }
+  } else if (txns24h > 0 && (buyCount === 0 || sellCount === 0)) {
+    risk += 5;
+    reason = 'Unbalanced buy/sell activity';
+  }
+
+  return { points, risk, reason };
+}
+
+function calculateAgeScore(ageDays, price24, h1) {
+  let points = 0;
+  let risk = 0;
+  let reason = null;
+
+  if (ageDays != null) {
+    if (ageDays >= 180) {
+      points += 12;
+      reason = 'Well-established pair (6+ months)';
+    } else if (ageDays >= 90) {
+      points += 8;
+      reason = 'Established pair (3+ months)';
+    } else if (ageDays >= 30) {
+      points += 5;
+      reason = 'Mature pair (1+ month)';
+    } else if (ageDays >= 7) {
+      points += 2;
+    } else if (ageDays >= 2) {
+      points -= 3;
+      risk += 5;
+    } else if (ageDays < 2) {
+      points -= 10;
+      risk += 15;
+      reason = 'Very new pair - high risk';
+      
+      // New pair + extreme pump = major red flag
+      if (price24 != null && price24 > 25) {
+        risk += 20;
+        reason = 'NEW + PUMP - Likely scam/rug';
+      } else if (h1 != null && h1 > 30) {
+        risk += 15;
+        reason = 'NEW + Extreme pump - high risk';
+      }
+    }
+  } else {
+    risk += 5;
+    reason = 'Unknown pair age';
+  }
+
+  return { points, risk, reason };
 }
 /**
  * Fetch minimal token data from DexScreener for fallback
