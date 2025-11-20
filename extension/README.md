@@ -6,7 +6,7 @@ The official browser extension for AquaSwap - enabling instant cross-chain token
 
 This lightweight browser extension provides quick access to AquaSwap's powerful cross-chain swap functionality. Users can swap tokens across 50+ blockchains without leaving their current webpage.
 
-**Version:** 1.0.5  
+**Version:** 1.4.1  
 **Compatible with:** Chrome, Edge, Brave, and other Chromium-based browsers
 
 ---
@@ -204,7 +204,7 @@ When you need to release an update:
 
 1. **Update version in manifest.json**:
    ```json
-   "version": "1.0.5"  // Current version
+   "version": "1.4.1"  // Current version
    ```
 
 2. **Test changes locally** using "Load unpacked"
@@ -326,7 +326,15 @@ chrome.action.openPopup();              // Open popup programmatically
 
 ## 📝 Changelog
 
-### Version 1.0.5 (Current Release)
+### Version 1.4.1 (Current Release)
+- ✨ Added Dextools support - token advisor now works on Dextools pages
+- ✨ Improved chain mapping with 30+ chain name variations
+- ✨ Enhanced token detection for Dextools URLs
+- 🐛 Removed error logs for Chrome Web Store compliance
+- ✅ Improved "Token Not Found" UI with helpful messages
+- ✅ Using DexScreener API for both DexScreener and Dextools pages
+
+### Version 1.0.5
 - 🐛 Fixed race condition causing intermittent loading failures
 - 🐛 Fixed iframe load event not being caught when extension opens
 - ✅ Improved retry mechanism for failed loads
