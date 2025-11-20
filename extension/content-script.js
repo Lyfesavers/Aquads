@@ -28,6 +28,24 @@
       return dexscreenerMatch[2];
     }
     
+    // Dextools patterns
+    // Format: dextools.io/app/en/chain/pair-explorer/address or /app/chain/pair-explorer/address
+    // Also supports: dextools.io/app/chain/pair-explorer/address
+    if (hostname.includes('dextools.io')) {
+      // Dextools URL pattern: /app/[lang/]chain/pair-explorer/address
+      const dextoolsMatch = pathname.match(/\/app\/(?:[^\/]+\/)?([^\/]+)\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i);
+      if (dextoolsMatch && dextoolsMatch[2]) {
+        dbg('🌊 AquaSwap: Dextools token detected:', dextoolsMatch[2]);
+        return dextoolsMatch[2];
+      }
+      // Alternative pattern: /app/pair-explorer/address (chain might be in query params)
+      const dextoolsAltMatch = pathname.match(/\/app\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i);
+      if (dextoolsAltMatch && dextoolsAltMatch[1]) {
+        dbg('🌊 AquaSwap: Dextools token detected (alt pattern):', dextoolsAltMatch[1]);
+        return dextoolsAltMatch[1];
+      }
+    }
+    
     // Common DEX URL patterns
     const patterns = [
       // Uniswap patterns
@@ -72,8 +90,10 @@
    * Detect token from page content
    */
   function detectTokenFromContent() {
+    const hostname = window.location.hostname;
+    
     // For DexScreener, look for token address in specific elements
-    if (window.location.hostname.includes('dexscreener.com')) {
+    if (hostname.includes('dexscreener.com')) {
       // Try to find token address in common DexScreener elements
       const addressSelectors = [
         '[data-testid*="address"]',
@@ -88,6 +108,39 @@
         const elements = document.querySelectorAll(selector);
         for (const el of elements) {
           const text = el.textContent || el.href || '';
+          // Try EVM first
+          let addressMatch = text.match(/0x[a-fA-F0-9]{40}/);
+          if (addressMatch) {
+            dbg('🌊 AquaSwap: Token detected from content element (EVM):', addressMatch[0]);
+            return addressMatch[0];
+          }
+          // Try Solana base58 pattern
+          addressMatch = text.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/);
+          if (addressMatch) {
+            dbg('🌊 AquaSwap: Token detected from content element (Solana):', addressMatch[0]);
+            return addressMatch[0];
+          }
+        }
+      }
+    }
+    
+    // For Dextools, look for token address in specific elements
+    if (hostname.includes('dextools.io')) {
+      const addressSelectors = [
+        '[data-address]',
+        '[data-contract-address]',
+        '[class*="address"]',
+        '[class*="contract"]',
+        'a[href*="0x"]',
+        'a[href*="/pair-explorer/"]',
+        'code',
+        '[data-testid*="address"]'
+      ];
+      
+      for (const selector of addressSelectors) {
+        const elements = document.querySelectorAll(selector);
+        for (const el of elements) {
+          const text = el.textContent || el.getAttribute('data-address') || el.getAttribute('data-contract-address') || el.href || '';
           // Try EVM first
           let addressMatch = text.match(/0x[a-fA-F0-9]{40}/);
           if (addressMatch) {
@@ -161,6 +214,44 @@
         return chainMatch[1];
       }
     }
+    
+    // For Dextools, extract chain from pathname
+    // Format: /app/[lang/]chain/pair-explorer/address
+    if (hostname.includes('dextools.io')) {
+      const dextoolsChainMatch = pathname.match(/\/app\/(?:[^\/]+\/)?([^\/]+)\/pair-explorer\//i);
+      if (dextoolsChainMatch) {
+        const chainName = dextoolsChainMatch[1].toLowerCase();
+        // Map Dextools chain names to standard names
+        const chainMap = {
+          'eth': 'ethereum', 'ethereum': 'ethereum',
+          'bsc': 'bsc', 'binance': 'bsc', 'bnb': 'bsc',
+          'polygon': 'polygon', 'matic': 'polygon',
+          'arbitrum': 'arbitrum', 'arb': 'arbitrum',
+          'optimism': 'optimism', 'op': 'optimism',
+          'base': 'base',
+          'avalanche': 'avalanche', 'avax': 'avalanche',
+          'fantom': 'fantom', 'ftm': 'fantom',
+          'solana': 'solana', 'sol': 'solana',
+          'sui': 'sui',
+          'zksync': 'zksync', 'zksync-era': 'zksync',
+          'celo': 'celo',
+          'scroll': 'scroll',
+          'moonbeam': 'moonbeam',
+          'moonriver': 'moonriver',
+          'cronos': 'cronos',
+          'harmony': 'harmony',
+          'near': 'near',
+          'aptos': 'aptos'
+        };
+        return chainMap[chainName] || chainName;
+      }
+      // Check URL params for chain
+      const urlParams = new URLSearchParams(window.location.search);
+      const chainParam = urlParams.get('chain');
+      if (chainParam) {
+        return chainParam.toLowerCase();
+      }
+    }
 
     if (hostname.includes('pancakeswap') || url.includes('bsc') || url.includes('binance')) {
       return 'bsc';
@@ -197,11 +288,22 @@
     const url = window.location.href;
     const pathname = window.location.pathname;
     
+    const hostname = window.location.hostname;
+    
     // DexScreener: must have /chain/address pattern (supports EVM 40-64 or Solana base58)
-    if (window.location.hostname.includes('dexscreener.com')) {
+    if (hostname.includes('dexscreener.com')) {
       const isTokenPage = /^\/[^\/]+\/(0x[a-fA-F0-9]{40,64}|[1-9A-HJ-NP-Za-km-z]{32,44})/i.test(pathname);
       if (!isTokenPage) {
         dbg('🌊 AquaSwap: On DexScreener but not a token detail page');
+        return null;
+      }
+    }
+    
+    // Dextools: must have /pair-explorer/address pattern
+    if (hostname.includes('dextools.io')) {
+      const isTokenPage = /\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i.test(pathname);
+      if (!isTokenPage) {
+        dbg('🌊 AquaSwap: On Dextools but not a token detail page');
         return null;
       }
     }

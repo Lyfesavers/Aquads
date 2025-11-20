@@ -37,7 +37,7 @@ async function initSocket() {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      dbg('Socket connection error:', error);
     });
 
     // Listen for real-time points updates
@@ -72,7 +72,7 @@ async function initSocket() {
     });
 
   } catch (error) {
-    console.error('Error initializing socket:', error);
+    dbg('Error initializing socket:', error);
   }
 }
 
@@ -149,7 +149,7 @@ function init() {
   // Set up iframe load timeout
   loadTimeout = setTimeout(() => {
     if (!iframeLoaded) {
-      console.error('Iframe failed to load within timeout');
+      dbg('Iframe failed to load within timeout');
       showError();
     }
   }, IFRAME_TIMEOUT);
@@ -258,7 +258,7 @@ function handleIframeLoad() {
  * Handle iframe load error
  */
 function handleIframeError() {
-  console.error('❌ Iframe failed to load');
+  dbg('❌ Iframe failed to load');
   showError();
 }
 
@@ -322,9 +322,9 @@ async function loadPreferences() {
     if (result.lastUsed) {
       dbg('Last used:', new Date(result.lastUsed));
     }
-  } catch (error) {
-    console.error('Error loading preferences:', error);
-  }
+    } catch (error) {
+      dbg('Error loading preferences:', error);
+    }
 }
 
 /**
@@ -349,7 +349,7 @@ async function trackExtensionOpen() {
     
     dbg(`Extension opened ${openCount} times`);
   } catch (error) {
-    console.error('Error tracking usage:', error);
+    dbg('Error tracking usage:', error);
   }
 }
 
@@ -400,7 +400,7 @@ window.addEventListener('message', (event) => {
           alert('Your session has expired. Please log in again to continue earning points.');
           window.location.href = 'login.html';
         } else {
-          console.error('❌ Swap points award failed:', {
+          dbg('❌ Swap points award failed:', {
             status: res.status,
             statusText: res.statusText,
             error: data.error || data.message || 'Unknown error',
@@ -408,7 +408,7 @@ window.addEventListener('message', (event) => {
           });
         }
       } catch (e) {
-        console.error('❌ Error awarding swap points from extension:', e);
+        dbg('❌ Error awarding swap points from extension:', e);
       }
     })();
   }
@@ -470,7 +470,7 @@ async function loadAffiliatePoints() {
       pointsElement.textContent = points.toLocaleString();
     }
   } catch (error) {
-    console.error('Error loading affiliate points:', error);
+    dbg('Error loading affiliate points:', error);
     const pointsElement = document.getElementById('points-value');
     if (pointsElement) {
       pointsElement.textContent = '0';
@@ -494,6 +494,7 @@ async function checkForTokenOnPage() {
 
     // Check if we're on a token detail page (not homepage/search)
     // DexScreener token pages: dexscreener.com/chain/0x...
+    // Dextools token pages: dextools.io/app/chain/pair-explorer/address
     // Uniswap token pages: app.uniswap.org/tokens/0x... or /swap?inputCurrency=0x...
     // PancakeSwap token pages: pancakeswap.finance/swap?inputCurrency=0x...
     
@@ -501,6 +502,8 @@ async function checkForTokenOnPage() {
     const isTokenDetailPage = 
       // DexScreener: must have chain and address in path (EVM 0x... or Solana base58)
       /dexscreener\.com\/[^\/]+\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i.test(url) ||
+      // Dextools: must have /pair-explorer/address in path
+      /dextools\.io\/.*\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i.test(url) ||
       // Uniswap: token detail page or swap with token selected
       /app\.uniswap\.org\/tokens\/0x/i.test(url) ||
       /app\.uniswap\.org\/swap.*[input|output]Currency=0x/i.test(url) ||
@@ -516,32 +519,52 @@ async function checkForTokenOnPage() {
 
     dbg('🌊 AquaSwap: Token detail page detected, checking for token...');
 
-    // Send message to content script to detect token
-    chrome.tabs.sendMessage(tab.id, { action: 'detectToken' }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('🌊 AquaSwap: Content script error:', chrome.runtime.lastError.message);
-        // Fallback: parse directly from URL and analyze
-        const parsed = parseTokenFromUrl(url);
-        if (parsed && parsed.token) {
-          analyzeToken(parsed);
-        } else {
-          // Content script might not be loaded yet, try again
-          setTimeout(() => checkForTokenOnPage(), 500);
-        }
-        return;
-      }
-
-      dbg('🌊 AquaSwap: Response from content script:', response);
-
-      if (response && response.success && response.data && response.data.token) {
-        dbg('🌊 AquaSwap: Token detected:', response.data);
-        analyzeToken(response.data);
+    // For Dextools pages, use URL parsing directly (content script not reliable)
+    // For other pages, try content script first, then fallback to URL parsing
+    const isDextools = url.includes('dextools.io');
+    
+    if (isDextools) {
+      // Dextools: Parse URL directly (no content script needed)
+      const parsed = parseTokenFromUrl(url);
+      if (parsed && parsed.token) {
+        dbg('🌊 AquaSwap: Token detected from URL (Dextools):', parsed);
+        analyzeToken(parsed);
       } else {
-        dbg('🌊 AquaSwap: No token detected on this token page');
+        dbg('🌊 AquaSwap: No token found in Dextools URL');
       }
-    });
+    } else {
+      // Other sites: Try content script first, then fallback to URL parsing
+      chrome.tabs.sendMessage(tab.id, { action: 'detectToken' }, (response) => {
+        if (chrome.runtime.lastError) {
+          // Content script not available - use URL fallback
+          dbg('🌊 AquaSwap: Content script not available, using URL fallback');
+          const parsed = parseTokenFromUrl(url);
+          if (parsed && parsed.token) {
+            analyzeToken(parsed);
+          }
+          return;
+        }
+
+        dbg('🌊 AquaSwap: Response from content script:', response);
+
+        if (response && response.success && response.data && response.data.token) {
+          dbg('🌊 AquaSwap: Token detected:', response.data);
+          analyzeToken(response.data);
+        } else {
+          // Fallback to URL parsing if content script didn't find token
+          const parsed = parseTokenFromUrl(url);
+          if (parsed && parsed.token) {
+            dbg('🌊 AquaSwap: Token detected from URL fallback:', parsed);
+            analyzeToken(parsed);
+          } else {
+            dbg('🌊 AquaSwap: No token detected on this token page');
+          }
+        }
+      });
+    }
   } catch (error) {
-    console.error('🌊 AquaSwap: Error checking for token:', error);
+    // Don't log errors to console (affects Chrome Web Store review)
+    dbg('🌊 AquaSwap: Error checking for token:', error);
   }
 }
 
@@ -558,6 +581,105 @@ function parseTokenFromUrl(url) {
         token: m[2],
         address: m[2],
         chain: m[1].toLowerCase(),
+        symbolHint: null,
+        url,
+        timestamp: Date.now()
+      };
+    }
+    // Dextools: /app/[lang/]chain/pair-explorer/address
+    const dextoolsMatch = url.match(/dextools\.io\/app\/(?:[^\/]+\/)?([^\/]+)\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i);
+    if (dextoolsMatch) {
+      const chainName = dextoolsMatch[1].toLowerCase().trim();
+      // Comprehensive chain mapping: Dextools chain names -> DexScreener standard names
+      // Handles all common variations and edge cases
+      const chainMap = {
+        // Ethereum variations
+        'eth': 'ethereum', 'ethereum': 'ethereum', 'ether': 'ethereum', 'mainnet': 'ethereum',
+        // BSC variations
+        'bsc': 'bsc', 'binance': 'bsc', 'bnb': 'bsc', 'binance-smart-chain': 'bsc', 'binancesmartchain': 'bsc',
+        // Polygon variations
+        'polygon': 'polygon', 'matic': 'polygon', 'polygon-pos': 'polygon', 'polygonpos': 'polygon',
+        // Arbitrum variations
+        'arbitrum': 'arbitrum', 'arb': 'arbitrum', 'arbitrum-one': 'arbitrum', 'arbitrumone': 'arbitrum',
+        // Optimism variations
+        'optimism': 'optimism', 'op': 'optimism', 'optimistic-ethereum': 'optimism', 'optimisticethereum': 'optimism',
+        // Base
+        'base': 'base', 'base-mainnet': 'base', 'basemainnet': 'base',
+        // Avalanche variations
+        'avalanche': 'avalanche', 'avax': 'avalanche', 'avalanche-c': 'avalanche', 'avalanchec': 'avalanche', 'c-chain': 'avalanche', 'cchain': 'avalanche',
+        // Fantom variations
+        'fantom': 'fantom', 'ftm': 'fantom', 'fantom-opera': 'fantom', 'fantomopera': 'fantom',
+        // Solana variations
+        'solana': 'solana', 'sol': 'solana', 'sol-mainnet': 'solana', 'solmainnet': 'solana',
+        // Sui
+        'sui': 'sui', 'sui-mainnet': 'sui', 'suimainnet': 'sui',
+        // zkSync variations
+        'zksync': 'zksync', 'zksync-era': 'zksync', 'zksyncera': 'zksync', 'zksync-era-mainnet': 'zksync', 'zksynceramainnet': 'zksync',
+        // Celo
+        'celo': 'celo', 'celo-mainnet': 'celo', 'celomainnet': 'celo',
+        // Scroll
+        'scroll': 'scroll', 'scroll-mainnet': 'scroll', 'scrollmainnet': 'scroll',
+        // Moonbeam
+        'moonbeam': 'moonbeam', 'moonbeam-mainnet': 'moonbeam', 'moonbeammainnet': 'moonbeam',
+        // Moonriver
+        'moonriver': 'moonriver', 'moonriver-mainnet': 'moonriver', 'moonrivermainnet': 'moonriver',
+        // Cronos
+        'cronos': 'cronos', 'cronos-mainnet': 'cronos', 'cronosmainnet': 'cronos',
+        // Harmony
+        'harmony': 'harmony', 'harmony-one': 'harmony', 'harmonyone': 'harmony', 'harmony-mainnet': 'harmony', 'harmonymainnet': 'harmony',
+        // Near
+        'near': 'near', 'near-mainnet': 'near', 'nearmainnet': 'near',
+        // Aptos
+        'aptos': 'aptos', 'aptos-mainnet': 'aptos', 'aptosmainnet': 'aptos',
+        // Additional chains
+        'fantom': 'fantom', 'ftm': 'fantom',
+        'gnosis': 'gnosis', 'xdai': 'gnosis', 'gnosis-chain': 'gnosis', 'gnosischain': 'gnosis',
+        'metis': 'metis', 'metis-andromeda': 'metis', 'metisandromeda': 'metis',
+        'boba': 'boba', 'boba-network': 'boba', 'bobanetwork': 'boba',
+        'aurora': 'aurora', 'aurora-mainnet': 'aurora', 'auroramainnet': 'aurora',
+        'klaytn': 'klaytn', 'klaytn-mainnet': 'klaytn', 'klaytnmainnet': 'klaytn',
+        'linea': 'linea', 'linea-mainnet': 'linea', 'lineamainnet': 'linea',
+        'mantle': 'mantle', 'mantle-mainnet': 'mantle', 'mantlemainnet': 'mantle',
+        'blast': 'blast', 'blast-mainnet': 'blast', 'blastmainnet': 'blast'
+      };
+      
+      // Normalize chain name: remove hyphens, underscores, convert to lowercase
+      const normalizedChainName = chainName.replace(/[-_]/g, '').toLowerCase();
+      
+      // Try exact match first
+      let mappedChain = chainMap[chainName] || chainMap[normalizedChainName];
+      
+      // If no match, try partial matching for common patterns
+      if (!mappedChain) {
+        // Check for common suffixes/prefixes
+        if (chainName.includes('eth') || chainName.includes('ethereum')) mappedChain = 'ethereum';
+        else if (chainName.includes('bsc') || chainName.includes('binance')) mappedChain = 'bsc';
+        else if (chainName.includes('polygon') || chainName.includes('matic')) mappedChain = 'polygon';
+        else if (chainName.includes('arbitrum') || chainName.includes('arb')) mappedChain = 'arbitrum';
+        else if (chainName.includes('optimism') || chainName.includes('op')) mappedChain = 'optimism';
+        else if (chainName.includes('base')) mappedChain = 'base';
+        else if (chainName.includes('avalanche') || chainName.includes('avax')) mappedChain = 'avalanche';
+        else if (chainName.includes('fantom') || chainName.includes('ftm')) mappedChain = 'fantom';
+        else if (chainName.includes('solana') || chainName.includes('sol')) mappedChain = 'solana';
+        else if (chainName.includes('sui')) mappedChain = 'sui';
+        else if (chainName.includes('zksync')) mappedChain = 'zksync';
+        else if (chainName.includes('celo')) mappedChain = 'celo';
+        else if (chainName.includes('scroll')) mappedChain = 'scroll';
+        else if (chainName.includes('moonbeam')) mappedChain = 'moonbeam';
+        else if (chainName.includes('moonriver')) mappedChain = 'moonriver';
+        else if (chainName.includes('cronos')) mappedChain = 'cronos';
+        else if (chainName.includes('harmony')) mappedChain = 'harmony';
+        else if (chainName.includes('near')) mappedChain = 'near';
+        else if (chainName.includes('aptos')) mappedChain = 'aptos';
+      }
+      
+      // Final fallback: use original chain name (DexScreener API is flexible)
+      const finalChain = mappedChain || chainName;
+      
+      return {
+        token: dextoolsMatch[2],
+        address: dextoolsMatch[2],
+        chain: finalChain,
         symbolHint: null,
         url,
         timestamp: Date.now()
@@ -601,8 +723,9 @@ async function analyzeToken(detected) {
   advisorError.style.display = 'none';
 
   try {
-    // PRIMARY SOURCE: DexScreener API based on the detected address/symbol
+    // Use DexScreener API for all sites (works for both DexScreener and Dextools pages)
     const dsPrimary = await fetchDexScreenerPrimary(tokenIdentifier, chain, symbolHint);
+    const dataSource = dsPrimary ? 'DexScreener' : null;
 
     // Fallback: our DB (symbol/name driven)
     let token = null;
@@ -804,7 +927,7 @@ async function analyzeToken(detected) {
     }
     const metaEl = document.getElementById('advisor-meta');
     if (metaEl) {
-      const source = dsPrimary ? 'DexScreener API' : 'Aquads DB';
+      const source = dataSource || (dsPrimary ? 'DexScreener API' : 'Aquads DB');
       const conf = verdictInfo.confidence;
       metaEl.style.display = 'block';
       metaEl.textContent = `Confidence: ${conf} • Data source: ${source}`;
@@ -852,18 +975,72 @@ async function analyzeToken(detected) {
     advisorContent.style.display = 'block';
 
   } catch (error) {
-    console.error('Error analyzing token:', error);
+    // Don't log errors to console (affects Chrome Web Store review)
+    // Show user-friendly message in UI instead
     advisorLoading.style.display = 'none';
-    advisorError.style.display = 'block';
-    const msg = (symbolHint && symbolHint !== tokenIdentifier)
-      ? `Could not resolve "${symbolHint}" (${tokenIdentifier}) from DexScreener.`
-      : `Token "${tokenIdentifier}" not found from DexScreener.`;
-    document.getElementById('error-message').textContent = msg;
+    advisorContent.style.display = 'block';
+    advisorError.style.display = 'none';
+    
+    // Show token not found message in the advisor content area
+    const tokenSymbolEl = document.getElementById('advisor-token-symbol');
+    const tokenNameEl = document.getElementById('advisor-token-name');
+    const verdictEl = document.getElementById('advisor-verdict');
+    const verdictTextEl = document.getElementById('verdict-text');
+    const recommendationEl = document.getElementById('advisor-recommendation');
+    const reasonsEl = document.getElementById('advisor-reasons');
+    const metaEl = document.getElementById('advisor-meta');
+    
+    // Display token identifier
+    if (tokenSymbolEl) tokenSymbolEl.textContent = tokenIdentifier || 'Unknown';
+    if (tokenNameEl) {
+      const addrToShow = detectedAddress || tokenIdentifier || 'N/A';
+      tokenNameEl.textContent = addrToShow;
+    }
+    
+    // Show "Not Found" verdict
+    if (verdictEl) {
+      verdictEl.className = 'advisor-verdict caution';
+      if (verdictTextEl) {
+        verdictTextEl.textContent = 'TOKEN NOT FOUND';
+      }
+    }
+    
+    // Show helpful message
+    if (recommendationEl) {
+      recommendationEl.textContent = 'This token may not be listed on DexScreener yet, or the data is unavailable. Please verify the token address and try again.';
+      recommendationEl.style.display = 'block';
+    }
+    
+    if (reasonsEl) {
+      reasonsEl.textContent = 'Token data not available from DexScreener API';
+      reasonsEl.style.display = 'block';
+    }
+    
+    if (metaEl) {
+      metaEl.textContent = 'Data source: DexScreener API • Status: Not found';
+      metaEl.style.display = 'block';
+    }
+    
+    // Hide all stats since we don't have data
+    const statContainers = ['stat-rating', 'stat-change', 'stat-change1h', 'stat-marketcap', 
+                           'stat-fdv', 'stat-price', 'stat-liquidity', 'stat-volume', 
+                           'stat-age', 'stat-boost', 'stat-security'];
+    statContainers.forEach(statId => {
+      const container = document.getElementById(statId);
+      if (container) container.style.display = 'none';
+    });
+    
+    // Hide action buttons or show message
+    const swapBtn = document.getElementById('swap-token-btn');
+    const viewBtn = document.getElementById('view-details-btn');
+    if (swapBtn) swapBtn.style.display = 'none';
+    if (viewBtn) viewBtn.style.display = 'none';
   }
 }
 
 /**
  * DexScreener Primary API (address/symbol)
+ * Used for both DexScreener and Dextools pages
  */
 async function fetchDexScreenerPrimary(tokenIdentifier, chain, symbolHint) {
   try {
