@@ -58,7 +58,7 @@ const RotatingBanner = () => {
 
   return (
     <div 
-      className="container mx-auto px-4 mb-4"
+      className="container mx-auto px-2 sm:px-4 mb-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -115,13 +115,15 @@ const RotatingBanner = () => {
 // AquaSwap Banner Component
 const AquaSwapBanner = () => {
   return (
-    <div 
-      className="rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full"
+    <Link
+      to="/aquaswap"
+      className="block rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full sm:no-underline"
       style={{
         background: 'linear-gradient(to right, #51159D, #6B21A8, #51159D)',
         borderColor: '#FEBC10',
         borderWidth: '2px',
-        boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)'
+        boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)',
+        cursor: 'pointer'
       }}
     >
       {/* Animated background effects */}
@@ -153,20 +155,21 @@ const AquaSwapBanner = () => {
             />
           </div>
           
-          <div>
-            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
-              🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-xs sm:text-base mb-0.5 sm:mb-1 flex flex-wrap items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
+              <span className="hidden sm:inline">🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!</span>
+              <span className="sm:hidden">🚀 AquaSwap BEX</span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse whitespace-nowrap" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
                 LIVE
               </span>
             </h3>
-            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#FEF3C7'}}>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#FEBC10'}}></span>
-                Swap & bridge across 50+ blockchains
+            <p className="text-xs sm:text-sm mb-0.5 sm:mb-1" style={{color: '#FEF3C7'}}>
+              <span className="flex items-center gap-1 flex-wrap">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse flex-shrink-0" style={{background: '#FEBC10'}}></span>
+                <span>Swap & bridge across 50+ blockchains</span>
+                <span className="hidden sm:inline" style={{color: '#FEBC10'}}>•</span>
+                <span className="hidden sm:inline font-semibold" style={{color: '#FCD34D'}}>Best rates & speed</span>
               </span>
-              <span className="hidden sm:inline" style={{color: '#FEBC10'}}>•</span>
-              <span className="hidden sm:inline font-semibold" style={{color: '#FCD34D'}}>Best rates & speed</span>
             </p>
             
             {/* Feature highlights */}
@@ -184,8 +187,8 @@ const AquaSwapBanner = () => {
           </div>
         </div>
         
-        {/* Enhanced launch button */}
-        <div className="relative">
+        {/* Enhanced launch button - Hidden on mobile */}
+        <div className="relative hidden sm:block">
           <Link
             to="/aquaswap"
             className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
@@ -194,6 +197,7 @@ const AquaSwapBanner = () => {
               color: '#51159D',
               boxShadow: '0 10px 25px rgba(254, 188, 16, 0.4)'
             }}
+            onClick={(e) => e.stopPropagation()}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'linear-gradient(to right, #FCD34D, #FDE68A)';
               e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.6)';
@@ -216,7 +220,7 @@ const AquaSwapBanner = () => {
       <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D, #FEBC10)'}}>
         <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -225,13 +229,17 @@ const ChromeExtensionBanner = () => {
   const extensionUrl = "https://chromewebstore.google.com/detail/ofppakgepmejdbfajgmbjlgoighgbpfd?utm_source=item-share-cb";
   
   return (
-    <div 
-      className="rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full"
+    <a
+      href={extensionUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full sm:no-underline"
       style={{
         background: 'linear-gradient(to right, #FCD34D, #FEBC10, #FCD34D)',
         borderColor: '#6B21A8',
         borderWidth: '2px',
-        boxShadow: '0 10px 25px rgba(252, 211, 77, 0.3)'
+        boxShadow: '0 10px 25px rgba(252, 211, 77, 0.3)',
+        cursor: 'pointer'
       }}
     >
       {/* Animated background effects */}
@@ -267,20 +275,22 @@ const ChromeExtensionBanner = () => {
             </div>
           </div>
           
-          <div>
-            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#6B21A8'}}>
-              🌐 Get AquaSwap Extension - Swap & Analyze Tokens Instantly!
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)', color: '#FCD34D'}}>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-xs sm:text-base mb-0.5 sm:mb-1 flex flex-wrap items-center gap-1 sm:gap-2" style={{color: '#6B21A8'}}>
+              <span className="hidden sm:inline">🌐 Get AquaSwap Extension - Swap & Analyze Tokens Instantly!</span>
+              <span className="sm:hidden">🌐 AquaSwap Extension</span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse whitespace-nowrap" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)', color: '#FCD34D'}}>
                 FREE
               </span>
             </h3>
-            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#78350F'}}>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#6B21A8'}}></span>
-                <span className="font-semibold" style={{color: '#7C3AED'}}>✨ Token Advisor</span> - Get instant token analysis on DexScreener & Dextools
+            <p className="text-xs sm:text-sm mb-0.5 sm:mb-1" style={{color: '#78350F'}}>
+              <span className="flex items-center gap-1 flex-wrap">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse flex-shrink-0" style={{background: '#6B21A8'}}></span>
+                <span className="font-semibold" style={{color: '#7C3AED'}}>✨ Token Advisor</span>
+                <span className="hidden sm:inline">- Get instant token analysis on DexScreener & Dextools</span>
+                <span className="hidden sm:inline" style={{color: '#6B21A8'}}>•</span>
+                <span className="hidden sm:inline font-semibold" style={{color: '#7C3AED'}}>Swap from any page</span>
               </span>
-              <span className="hidden sm:inline" style={{color: '#6B21A8'}}>•</span>
-              <span className="hidden sm:inline font-semibold" style={{color: '#7C3AED'}}>Swap from any page</span>
             </p>
             
             {/* Feature highlights - Strong selling points with Token Advisor featured */}
@@ -301,8 +311,8 @@ const ChromeExtensionBanner = () => {
           </div>
         </div>
         
-        {/* Enhanced install button */}
-        <div className="relative">
+        {/* Enhanced install button - Hidden on mobile */}
+        <div className="relative hidden sm:block">
           <a
             href={extensionUrl}
             target="_blank"
@@ -313,6 +323,7 @@ const ChromeExtensionBanner = () => {
               color: '#FCD34D',
               boxShadow: '0 10px 25px rgba(107, 33, 168, 0.4)'
             }}
+            onClick={(e) => e.stopPropagation()}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'linear-gradient(to right, #7C3AED, #8B5CF6)';
               e.currentTarget.style.boxShadow = '0 10px 25px rgba(107, 33, 168, 0.6)';
@@ -335,7 +346,7 @@ const ChromeExtensionBanner = () => {
       <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED, #6B21A8)'}}>
         <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
       </div>
-    </div>
+    </a>
   );
 };
 
