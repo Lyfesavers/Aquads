@@ -49,6 +49,7 @@ import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import MemberVerification from './components/MemberVerification';
 import BannerDisplay from './components/BannerDisplay';
+import RotatingBanner from './components/RotatingBanner';
 import useUserPresence from './hooks/useUserPresence';
 
 import ProjectInfo from './components/ProjectInfo';
@@ -2641,103 +2642,8 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
-                  {/* AquaSwap Banner - positioned between token banner and filter controls */}
-                  <div className="container mx-auto px-4 mb-4">
-                    <div className="aquaswap-banner rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg" style={{background: 'linear-gradient(to right, #51159D, #6B21A8, #51159D)', borderColor: '#FEBC10', borderWidth: '2px', boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)'}}>
-                      {/* Animated background effects */}
-                      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.3), transparent)'}}></div>
-                      
-                      {/* Floating blockchain icons */}
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
-                        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
-                        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
-                        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
-                        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
-                        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
-                      </div>
-                      
-                      {/* Animated border glow */}
-                      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(254, 188, 16, 0.5), rgba(81, 21, 157, 0.5), rgba(254, 188, 16, 0.5))'}}></div>
-                      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(81, 21, 157, 0.9)'}}></div>
-                      
-                      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          {/* Enhanced logo with glow effect */}
-                          <div className="relative">
-                            <img 
-                              src="/AquaSwap.svg" 
-                              alt="AquaSwap" 
-                              className="w-8 h-8 sm:w-10 sm:h-10 filter drop-shadow-lg flex-shrink-0"
-                              style={{filter: 'drop-shadow(0 0 10px rgba(254, 188, 16, 0.8))'}}
-                            />
-                          </div>
-                          
-                          <div>
-                            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
-                              🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!
-                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
-                                LIVE
-                              </span>
-                            </h3>
-                            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#FEF3C7'}}>
-                              <span className="flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#FEBC10'}}></span>
-                                Swap & bridge across 50+ blockchains
-                              </span>
-                              <span className="hidden sm:inline" style={{color: '#FEBC10'}}>•</span>
-                              <span className="hidden sm:inline font-semibold" style={{color: '#FCD34D'}}>Best rates & speed</span>
-                            </p>
-                            
-                            {/* Feature highlights */}
-                            <div className="flex flex-wrap gap-1">
-                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
-                                ⚡ Instant Swaps
-                              </span>
-                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
-                                🔗 Cross-Chain
-                              </span>
-                              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
-                                💰 Best Rates
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Enhanced launch button */}
-                        <div className="relative">
-                          <a
-                            href="/aquaswap"
-                            className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
-                            style={{
-                              background: 'linear-gradient(to right, #FEBC10, #FCD34D)',
-                              color: '#51159D',
-                              boxShadow: '0 10px 25px rgba(254, 188, 16, 0.4)'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'linear-gradient(to right, #FCD34D, #FDE68A)';
-                              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.6)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'linear-gradient(to right, #FEBC10, #FCD34D)';
-                              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.4)';
-                            }}
-                          >
-                            <span>Buy Crypto</span>
-                            <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
-                            
-                            {/* Button glow effect */}
-                            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)'}}></div>
-                          </a>
-                        </div>
-                      </div>
-                      
-                      {/* Animated wave effect at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D, #FEBC10)'}}>
-                        <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Rotating Banner - AquaSwap & Chrome Extension */}
+                  <RotatingBanner />
 
                   {/* Filter controls */}
                   <div className="container mx-auto px-4">

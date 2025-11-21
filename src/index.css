@@ -1008,6 +1008,37 @@ body {
 .particle-2 { top: 50%; left: 40%; --tx: 60px; --ty: 80px; }
 /* ... add more particle positions as needed ... */
 
+/* Rotating Banner Animations */
+@keyframes bannerFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bannerFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.banner-fade-in {
+  animation: bannerFadeIn 1s ease-in-out;
+}
+
+.banner-fade-out {
+  animation: bannerFadeOut 1s ease-in-out;
+}
+
 @keyframes shine {
   0% {
     transform: translateX(-100%);
