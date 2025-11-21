@@ -58,13 +58,13 @@ const RotatingBanner = () => {
 
   return (
     <div 
-      className="container mx-auto px-2 sm:px-4 mb-4"
+      className="container mx-auto px-4 mb-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <div className="relative">
         {/* Banner Container */}
-        <div className="relative overflow-hidden rounded-lg sm:rounded-xl shadow-lg" style={{ minHeight: 'auto' }}>
+        <div className="relative overflow-hidden rounded-lg shadow-lg" style={{ minHeight: '120px' }}>
           {/* AquaSwap Banner */}
           <div
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
@@ -85,15 +85,15 @@ const RotatingBanner = () => {
         </div>
 
         {/* Progress Indicators */}
-        <div className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
           {banners.map((_, index) => (
             <button
               key={index}
               onClick={() => goToBanner(index)}
-              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 touch-manipulation ${
+              className={`h-2 rounded-full transition-all duration-300 ${
                 currentIndex === index
-                  ? 'w-6 sm:w-8 bg-white/80'
-                  : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/60 active:bg-white/70'
+                  ? 'w-8 bg-white/80'
+                  : 'w-2 bg-white/40 hover:bg-white/60'
               }`}
               aria-label={`Go to banner ${index + 1}`}
             />
@@ -101,7 +101,7 @@ const RotatingBanner = () => {
         </div>
 
         {/* Progress Bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 sm:h-1 bg-white/20 z-20">
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-20">
           <div
             className="h-full bg-white/60 transition-all duration-50 ease-linear"
             style={{ width: `${progress}%` }}
@@ -112,324 +112,206 @@ const RotatingBanner = () => {
   );
 };
 
-// AquaSwap Banner Component - Premium Design (Fully Responsive)
+// AquaSwap Banner Component
 const AquaSwapBanner = () => {
   return (
     <div 
-      className="rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 relative overflow-hidden shadow-2xl"
+      className="rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full"
       style={{
-        background: 'linear-gradient(135deg, #51159D 0%, #6B21A8 50%, #51159D 100%)',
-        border: '2px solid #FEBC10',
-        boxShadow: '0 20px 40px rgba(81, 21, 157, 0.4), 0 0 30px rgba(254, 188, 16, 0.2)',
-        minHeight: 'auto'
+        background: 'linear-gradient(to right, #51159D, #6B21A8, #51159D)',
+        borderColor: '#FEBC10',
+        borderWidth: '2px',
+        boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)'
       }}
     >
-      {/* Animated gradient overlay */}
-      <div className="absolute inset-0 opacity-30" style={{
-        background: 'linear-gradient(135deg, rgba(254, 188, 16, 0.1) 0%, transparent 50%, rgba(254, 188, 16, 0.1) 100%)',
-        animation: 'shimmer 3s ease-in-out infinite'
-      }}></div>
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 opacity-10" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.2), transparent)'}}></div>
       
-      <div className="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 lg:gap-6">
-        {/* Left Section - Branding */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0 w-full lg:w-auto justify-center lg:justify-start">
-          <div className="relative">
-            <img 
-              src="/AquaSwap.svg" 
-              alt="AquaSwap" 
-              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 filter drop-shadow-2xl"
-              style={{filter: 'drop-shadow(0 0 20px rgba(254, 188, 16, 0.9))'}}
-            />
-          </div>
-          <div className="flex-1 lg:flex-none">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold mb-1 sm:mb-2 text-center lg:text-left" style={{color: '#FEBC10', textShadow: '0 2px 10px rgba(254, 188, 16, 0.5)'}}>
+      <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        {/* Left Section - Logo & Title */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+          <img 
+            src="/AquaSwap.svg" 
+            alt="AquaSwap" 
+            className="w-10 h-10 sm:w-12 sm:h-12 filter drop-shadow-lg flex-shrink-0"
+            style={{filter: 'drop-shadow(0 0 10px rgba(254, 188, 16, 0.8))'}}
+          />
+          <div>
+            <h3 className="font-bold text-sm sm:text-base mb-1 flex items-center gap-2" style={{color: '#FEBC10'}}>
               AquaSwap BEX
-            </h3>
-            <div className="flex items-center gap-1.5 sm:gap-2 justify-center lg:justify-start">
-              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold animate-pulse" style={{
-                background: 'linear-gradient(135deg, #FEBC10, #FCD34D)',
-                color: '#51159D',
-                boxShadow: '0 4px 12px rgba(254, 188, 16, 0.4)'
-              }}>
+              <span className="text-xs px-2 py-0.5 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
                 LIVE
               </span>
-              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold" style={{
-                background: 'rgba(254, 188, 16, 0.25)',
-                color: '#FCD34D',
-                border: '1px solid rgba(254, 188, 16, 0.5)'
-              }}>
-                Cross-Chain
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center Section - Features */}
-        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 w-full lg:max-w-4xl">
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(254, 188, 16, 0.4)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🔗</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>50+ Chains</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#FEF3C7', opacity: 0.9}}>
-              <span className="hidden sm:inline">Ethereum, BSC, Polygon, Solana & more</span>
-              <span className="sm:hidden">50+ blockchains</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(254, 188, 16, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">⚡</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Instant</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#FEF3C7', opacity: 0.9}}>
-              <span className="hidden sm:inline">Lightning fast swaps</span>
-              <span className="sm:hidden">Fast swaps</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(254, 188, 16, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">💰</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Best Rates</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#FEF3C7', opacity: 0.9}}>
-              <span className="hidden sm:inline">Optimal pricing</span>
-              <span className="sm:hidden">Great rates</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(254, 188, 16, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🌉</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Bridge</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#FEF3C7', opacity: 0.9}}>
-              <span className="hidden sm:inline">Cross-chain support</span>
-              <span className="sm:hidden">Cross-chain</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(254, 188, 16, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🔒</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Secure</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#FEF3C7', opacity: 0.9}}>
-              <span className="hidden sm:inline">Audited & safe</span>
-              <span className="sm:hidden">Audited</span>
+            </h3>
+            <p className="text-xs sm:text-sm" style={{color: '#FEF3C7'}}>
+              Swap & bridge across 50+ blockchains
             </p>
           </div>
         </div>
-
-        {/* Right Section - CTA */}
-        <div className="flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-end">
+        
+        {/* Center Section - Feature Stats */}
+        <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 md:gap-4 px-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
+            <span className="text-base sm:text-lg">🔗</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>50+</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Chains</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
+            <span className="text-base sm:text-lg">⚡</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Instant</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Swaps</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
+            <span className="text-base sm:text-lg">💰</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Best</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Rates</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right Section - CTA Button */}
+        <div className="flex-shrink-0">
           <Link
             to="/aquaswap"
-            className="relative px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-2xl flex items-center justify-center gap-2 group w-full sm:w-auto touch-manipulation"
+            className="relative px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
-              background: 'linear-gradient(135deg, #FEBC10, #FCD34D)',
+              background: 'linear-gradient(to right, #FEBC10, #FCD34D)',
               color: '#51159D',
-              boxShadow: '0 10px 30px rgba(254, 188, 16, 0.5)',
-              minHeight: '44px'
+              boxShadow: '0 10px 25px rgba(254, 188, 16, 0.4)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #FCD34D, #FDE68A)';
-              e.currentTarget.style.boxShadow = '0 15px 40px rgba(254, 188, 16, 0.7)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #FCD34D, #FDE68A)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.6)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #FEBC10, #FCD34D)';
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(254, 188, 16, 0.5)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #FEBC10, #FCD34D)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(254, 188, 16, 0.4)';
             }}
           >
             <span>Buy Crypto</span>
-            <span className="text-base sm:text-lg group-hover:translate-x-1 transition-transform duration-300">🚀</span>
-            <div className="absolute inset-0 rounded-lg sm:rounded-xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-300 -z-10" style={{
-              background: 'linear-gradient(135deg, #FEBC10, #FCD34D)'
-            }}></div>
+            <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
+            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)'}}></div>
           </Link>
         </div>
       </div>
+      
     </div>
   );
 };
 
-// Chrome Extension Banner Component - Premium Design (Fully Responsive)
+// Chrome Extension Banner Component (Gold base with purple accents)
 const ChromeExtensionBanner = () => {
   const extensionUrl = "https://chromewebstore.google.com/detail/ofppakgepmejdbfajgmbjlgoighgbpfd?utm_source=item-share-cb";
   
   return (
     <div 
-      className="rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 relative overflow-hidden shadow-2xl"
+      className="rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full"
       style={{
-        background: 'linear-gradient(135deg, #FCD34D 0%, #FEBC10 50%, #FCD34D 100%)',
-        border: '2px solid #6B21A8',
-        boxShadow: '0 20px 40px rgba(252, 211, 77, 0.4), 0 0 30px rgba(107, 33, 168, 0.2)',
-        minHeight: 'auto'
+        background: 'linear-gradient(to right, #FCD34D, #FEBC10, #FCD34D)',
+        borderColor: '#6B21A8',
+        borderWidth: '2px',
+        boxShadow: '0 10px 25px rgba(252, 211, 77, 0.3)'
       }}
     >
-      {/* Animated gradient overlay */}
-      <div className="absolute inset-0 opacity-30" style={{
-        background: 'linear-gradient(135deg, rgba(107, 33, 168, 0.1) 0%, transparent 50%, rgba(107, 33, 168, 0.1) 100%)',
-        animation: 'shimmer 3s ease-in-out infinite'
-      }}></div>
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 opacity-10" style={{background: 'linear-gradient(to right, transparent, rgba(107, 33, 168, 0.2), transparent)'}}></div>
       
-      <div className="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 lg:gap-6">
-        {/* Left Section - Branding */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0 w-full lg:w-auto justify-center lg:justify-start">
+      <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        {/* Left Section - Icon & Title */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
           <div 
-            className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl flex items-center justify-center shadow-2xl"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{
               background: 'linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)',
-              filter: 'drop-shadow(0 0 20px rgba(107, 33, 168, 0.9))',
-              boxShadow: '0 10px 30px rgba(107, 33, 168, 0.5)'
+              filter: 'drop-shadow(0 0 10px rgba(107, 33, 168, 0.8))',
+              boxShadow: '0 0 15px rgba(107, 33, 168, 0.5)'
             }}
           >
-            <span className="text-white text-lg sm:text-xl md:text-2xl font-bold">🌊</span>
+            <span className="text-white text-sm sm:text-base font-bold">🌊</span>
           </div>
-          <div className="flex-1 lg:flex-none">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold mb-1 sm:mb-2 text-center lg:text-left" style={{color: '#6B21A8', textShadow: '0 2px 10px rgba(107, 33, 168, 0.5)'}}>
+          <div>
+            <h3 className="font-bold text-sm sm:text-base mb-1 flex items-center gap-2" style={{color: '#6B21A8'}}>
               AquaSwap Extension
-            </h3>
-            <div className="flex items-center gap-1.5 sm:gap-2 justify-center lg:justify-start">
-              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold animate-pulse" style={{
-                background: 'linear-gradient(135deg, #6B21A8, #7C3AED)',
-                color: '#FCD34D',
-                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.4)'
-              }}>
+              <span className="text-xs px-2 py-0.5 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)', color: '#FCD34D'}}>
                 FREE
               </span>
-              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold" style={{
-                background: 'rgba(107, 33, 168, 0.25)',
-                color: '#7C3AED',
-                border: '1px solid rgba(107, 33, 168, 0.5)'
-              }}>
-                5.0 ⭐
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center Section - Features */}
-        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 w-full lg:max-w-4xl">
-          {/* Token Advisor - Featured */}
-          <div className="bg-white/15 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border-2" style={{
-            borderColor: 'rgba(107, 33, 168, 0.5)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), 0 0 20px rgba(107, 33, 168, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-            background: 'linear-gradient(135deg, rgba(107, 33, 168, 0.2), rgba(124, 58, 237, 0.15))'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🎯</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Token Advisor</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#78350F', opacity: 0.9}}>
-              <span className="hidden sm:inline">AI analysis on DexScreener & Dextools</span>
-              <span className="sm:hidden">AI token analysis</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(107, 33, 168, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">⚡</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Instant</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#78350F', opacity: 0.9}}>
-              <span className="hidden sm:inline">Swap from any page</span>
-              <span className="sm:hidden">Any page</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(107, 33, 168, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🔗</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>50+ Chains</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#78350F', opacity: 0.9}}>
-              <span className="hidden sm:inline">Multi-chain support</span>
-              <span className="sm:hidden">Multi-chain</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(107, 33, 168, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">🔒</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>100% Secure</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#78350F', opacity: 0.9}}>
-              <span className="hidden sm:inline">No data stored</span>
-              <span className="sm:hidden">Secure</span>
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-md sm:rounded-lg p-2 sm:p-3 border" style={{
-            borderColor: 'rgba(107, 33, 168, 0.3)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}>
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-              <span className="text-base sm:text-lg">💰</span>
-              <span className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Best Rates</span>
-            </div>
-            <p className="text-[10px] sm:text-xs leading-tight" style={{color: '#78350F', opacity: 0.9}}>
-              <span className="hidden sm:inline">Optimal pricing</span>
-              <span className="sm:hidden">Great rates</span>
+            </h3>
+            <p className="text-xs sm:text-sm" style={{color: '#78350F'}}>
+              <span className="font-semibold" style={{color: '#7C3AED'}}>Token Advisor</span> - Swap & analyze from any page
             </p>
           </div>
         </div>
-
-        {/* Right Section - CTA */}
-        <div className="flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-end">
+        
+        {/* Center Section - Feature Stats */}
+        <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 md:gap-4 px-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border-2" style={{borderColor: 'rgba(107, 33, 168, 0.5)', boxShadow: '0 0 10px rgba(107, 33, 168, 0.3)'}}>
+            <span className="text-base sm:text-lg">🎯</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Token</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Advisor</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
+            <span className="text-base sm:text-lg">⚡</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Instant</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Swaps</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
+            <span className="text-base sm:text-lg">🔗</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>50+</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Chains</div>
+            </div>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
+            <span className="text-base sm:text-lg">🔒</span>
+            <div>
+              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Secure</div>
+              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>100%</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right Section - CTA Button */}
+        <div className="flex-shrink-0">
           <a
             href={extensionUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-2xl flex items-center justify-center gap-2 group w-full sm:w-auto touch-manipulation"
+            className="relative px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
-              background: 'linear-gradient(135deg, #6B21A8, #7C3AED)',
+              background: 'linear-gradient(to right, #6B21A8, #7C3AED)',
               color: '#FCD34D',
-              boxShadow: '0 10px 30px rgba(107, 33, 168, 0.5)',
-              minHeight: '44px'
+              boxShadow: '0 10px 25px rgba(107, 33, 168, 0.4)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #7C3AED, #8B5CF6)';
-              e.currentTarget.style.boxShadow = '0 15px 40px rgba(107, 33, 168, 0.7)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #7C3AED, #8B5CF6)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(107, 33, 168, 0.6)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #6B21A8, #7C3AED)';
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(107, 33, 168, 0.5)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #6B21A8, #7C3AED)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(107, 33, 168, 0.4)';
             }}
           >
             <span>Install Now</span>
-            <span className="text-base sm:text-lg group-hover:translate-x-1 transition-transform duration-300">⬇️</span>
-            <div className="absolute inset-0 rounded-lg sm:rounded-xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-300 -z-10" style={{
-              background: 'linear-gradient(135deg, #6B21A8, #7C3AED)'
-            }}></div>
+            <span className="group-hover:translate-x-1 transition-transform duration-300">⬇️</span>
+            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)'}}></div>
           </a>
         </div>
       </div>
+      
     </div>
   );
 };

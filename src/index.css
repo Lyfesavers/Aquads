@@ -1039,52 +1039,6 @@ body {
   animation: bannerFadeOut 1s ease-in-out;
 }
 
-/* Shimmer animation for premium banners */
-@keyframes shimmer {
-  0%, 100% {
-    opacity: 0.2;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 0.4;
-    transform: translateX(100%);
-  }
-}
-
-/* Responsive Banner Styles */
-@media (max-width: 640px) {
-  /* Mobile optimizations */
-  .banner-container {
-    min-height: auto !important;
-  }
-  
-  /* Touch-friendly buttons */
-  button, a[role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Better text readability on mobile */
-  .banner-text {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  /* Tablet optimizations */
-  .banner-container {
-    min-height: 130px;
-  }
-}
-
-@media (min-width: 1025px) {
-  /* Desktop optimizations */
-  .banner-container {
-    min-height: 140px;
-  }
-}
-
 @keyframes shine {
   0% {
     transform: translateX(-100%);
