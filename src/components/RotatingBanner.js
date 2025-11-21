@@ -124,63 +124,71 @@ const AquaSwapBanner = () => {
         boxShadow: '0 10px 25px rgba(81, 21, 157, 0.3)'
       }}
     >
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 opacity-10" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.2), transparent)'}}></div>
+      {/* Animated background effects */}
+      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.3), transparent)'}}></div>
       
-      <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-        {/* Left Section - Logo & Title */}
-        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-          <img 
-            src="/AquaSwap.svg" 
-            alt="AquaSwap" 
-            className="w-10 h-10 sm:w-12 sm:h-12 filter drop-shadow-lg flex-shrink-0"
-            style={{filter: 'drop-shadow(0 0 10px rgba(254, 188, 16, 0.8))'}}
-          />
+      {/* Floating blockchain icons */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
+        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
+        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
+        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
+        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
+        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
+      </div>
+      
+      {/* Animated border glow */}
+      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(254, 188, 16, 0.5), rgba(81, 21, 157, 0.5), rgba(254, 188, 16, 0.5))'}}></div>
+      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(81, 21, 157, 0.9)'}}></div>
+      
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Enhanced logo with glow effect */}
+          <div className="relative">
+            <img 
+              src="/AquaSwap.svg" 
+              alt="AquaSwap" 
+              className="w-8 h-8 sm:w-10 sm:h-10 filter drop-shadow-lg flex-shrink-0"
+              style={{filter: 'drop-shadow(0 0 10px rgba(254, 188, 16, 0.8))'}}
+            />
+          </div>
+          
           <div>
-            <h3 className="font-bold text-sm sm:text-base mb-1 flex items-center gap-2" style={{color: '#FEBC10'}}>
-              AquaSwap BEX
-              <span className="text-xs px-2 py-0.5 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
+            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
+              🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
                 LIVE
               </span>
             </h3>
-            <p className="text-xs sm:text-sm" style={{color: '#FEF3C7'}}>
-              Swap & bridge across 50+ blockchains
+            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#FEF3C7'}}>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#FEBC10'}}></span>
+                Swap & bridge across 50+ blockchains
+              </span>
+              <span className="hidden sm:inline" style={{color: '#FEBC10'}}>•</span>
+              <span className="hidden sm:inline font-semibold" style={{color: '#FCD34D'}}>Best rates & speed</span>
             </p>
-          </div>
-        </div>
-        
-        {/* Center Section - Feature Stats */}
-        <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 md:gap-4 px-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
-            <span className="text-base sm:text-lg">🔗</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>50+</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Chains</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
-            <span className="text-base sm:text-lg">⚡</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Instant</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Swaps</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(254, 188, 16, 0.3)'}}>
-            <span className="text-base sm:text-lg">💰</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#FCD34D'}}>Best</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#FEF3C7', opacity: 0.8}}>Rates</div>
+            
+            {/* Feature highlights */}
+            <div className="flex flex-wrap gap-1">
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
+                ⚡ Instant Swaps
+              </span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
+                🔗 Cross-Chain
+              </span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(254, 188, 16, 0.2)', color: '#FCD34D', border: '1px solid rgba(254, 188, 16, 0.4)'}}>
+                💰 Best Rates
+              </span>
             </div>
           </div>
         </div>
         
-        {/* Right Section - CTA Button */}
-        <div className="flex-shrink-0">
+        {/* Enhanced launch button */}
+        <div className="relative">
           <Link
             to="/aquaswap"
-            className="relative px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
+            className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
               background: 'linear-gradient(to right, #FEBC10, #FCD34D)',
               color: '#51159D',
@@ -197,11 +205,17 @@ const AquaSwapBanner = () => {
           >
             <span>Buy Crypto</span>
             <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
+            
+            {/* Button glow effect */}
             <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)'}}></div>
           </Link>
         </div>
       </div>
       
+      {/* Animated wave effect at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D, #FEBC10)'}}>
+        <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+      </div>
     </div>
   );
 };
@@ -220,77 +234,80 @@ const ChromeExtensionBanner = () => {
         boxShadow: '0 10px 25px rgba(252, 211, 77, 0.3)'
       }}
     >
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 opacity-10" style={{background: 'linear-gradient(to right, transparent, rgba(107, 33, 168, 0.2), transparent)'}}></div>
+      {/* Animated background effects */}
+      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(107, 33, 168, 0.3), transparent)'}}></div>
       
-      <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-        {/* Left Section - Icon & Title */}
-        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-          <div 
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)',
-              filter: 'drop-shadow(0 0 10px rgba(107, 33, 168, 0.8))',
-              boxShadow: '0 0 15px rgba(107, 33, 168, 0.5)'
-            }}
-          >
-            <span className="text-white text-sm sm:text-base font-bold">🌊</span>
+      {/* Floating browser/extension icons - featuring Token Advisor */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>🎯</div>
+        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>⚡</div>
+        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>🌐</div>
+        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🚀</div>
+        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>💎</div>
+        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>⭐</div>
+      </div>
+      
+      {/* Animated border glow */}
+      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(107, 33, 168, 0.5), rgba(252, 211, 77, 0.5), rgba(107, 33, 168, 0.5))'}}></div>
+      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(252, 211, 77, 0.9)'}}></div>
+      
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Chrome Extension Icon */}
+          <div className="relative">
+            <div 
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)',
+                filter: 'drop-shadow(0 0 10px rgba(107, 33, 168, 0.8))',
+                boxShadow: '0 0 15px rgba(107, 33, 168, 0.5)'
+              }}
+            >
+              <span className="text-white text-xs sm:text-sm font-bold">🌊</span>
+            </div>
           </div>
+          
           <div>
-            <h3 className="font-bold text-sm sm:text-base mb-1 flex items-center gap-2" style={{color: '#6B21A8'}}>
-              AquaSwap Extension
-              <span className="text-xs px-2 py-0.5 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)', color: '#FCD34D'}}>
+            <h3 className="font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2" style={{color: '#6B21A8'}}>
+              🌐 Get AquaSwap Extension - Swap & Analyze Tokens Instantly!
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)', color: '#FCD34D'}}>
                 FREE
               </span>
             </h3>
-            <p className="text-xs sm:text-sm" style={{color: '#78350F'}}>
-              <span className="font-semibold" style={{color: '#7C3AED'}}>Token Advisor</span> - Swap & analyze from any page
+            <p className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1" style={{color: '#78350F'}}>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse" style={{background: '#6B21A8'}}></span>
+                <span className="font-semibold" style={{color: '#7C3AED'}}>✨ Token Advisor</span> - Get instant token analysis on DexScreener & Dextools
+              </span>
+              <span className="hidden sm:inline" style={{color: '#6B21A8'}}>•</span>
+              <span className="hidden sm:inline font-semibold" style={{color: '#7C3AED'}}>Swap from any page</span>
             </p>
-          </div>
-        </div>
-        
-        {/* Center Section - Feature Stats */}
-        <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 md:gap-4 px-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border-2" style={{borderColor: 'rgba(107, 33, 168, 0.5)', boxShadow: '0 0 10px rgba(107, 33, 168, 0.3)'}}>
-            <span className="text-base sm:text-lg">🎯</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Token</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Advisor</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
-            <span className="text-base sm:text-lg">⚡</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Instant</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Swaps</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
-            <span className="text-base sm:text-lg">🔗</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>50+</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>Chains</div>
-            </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md bg-white/10 backdrop-blur-sm border" style={{borderColor: 'rgba(107, 33, 168, 0.3)'}}>
-            <span className="text-base sm:text-lg">🔒</span>
-            <div>
-              <div className="text-xs sm:text-sm font-bold" style={{color: '#7C3AED'}}>Secure</div>
-              <div className="text-[10px] sm:text-xs" style={{color: '#78350F', opacity: 0.9}}>100%</div>
+            
+            {/* Feature highlights - Strong selling points with Token Advisor featured */}
+            <div className="flex flex-wrap gap-1">
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-semibold" style={{background: 'rgba(107, 33, 168, 0.3)', color: '#7C3AED', border: '2px solid rgba(107, 33, 168, 0.6)', boxShadow: '0 0 8px rgba(107, 33, 168, 0.4)'}}>
+                🎯 Token Advisor
+              </span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(107, 33, 168, 0.2)', color: '#7C3AED', border: '1px solid rgba(107, 33, 168, 0.4)'}}>
+                ⚡ Instant Swaps
+              </span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(107, 33, 168, 0.2)', color: '#7C3AED', border: '1px solid rgba(107, 33, 168, 0.4)'}}>
+                🔒 100% Secure
+              </span>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(107, 33, 168, 0.2)', color: '#7C3AED', border: '1px solid rgba(107, 33, 168, 0.4)'}}>
+                50+ Chains
+              </span>
             </div>
           </div>
         </div>
         
-        {/* Right Section - CTA Button */}
-        <div className="flex-shrink-0">
+        {/* Enhanced install button */}
+        <div className="relative">
           <a
             href={extensionUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
+            className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
               background: 'linear-gradient(to right, #6B21A8, #7C3AED)',
               color: '#FCD34D',
@@ -305,13 +322,19 @@ const ChromeExtensionBanner = () => {
               e.currentTarget.style.boxShadow = '0 10px 25px rgba(107, 33, 168, 0.4)';
             }}
           >
-            <span>Install Now</span>
+            <span>Install Extension</span>
             <span className="group-hover:translate-x-1 transition-transform duration-300">⬇️</span>
+            
+            {/* Button glow effect */}
             <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED)'}}></div>
           </a>
         </div>
       </div>
       
+      {/* Animated wave effect at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #6B21A8, #7C3AED, #6B21A8)'}}>
+        <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+      </div>
     </div>
   );
 };
