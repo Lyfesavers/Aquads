@@ -1,5 +1,7 @@
 // Login Screen Logic
-console.log('🔐 Login screen loaded');
+const DEBUG_LOGS = false;
+const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+dbg('🔐 Login screen loaded');
 
 const form = document.getElementById('login-form');
 const identifierInput = document.getElementById('identifier');
@@ -38,16 +40,16 @@ form.addEventListener('submit', async (e) => {
     const result = await AuthService.login(identifier, password);
     
     if (result.success) {
-      console.log('✅ Login successful');
+      dbg('✅ Login successful');
       // Redirect to main popup
       window.location.href = 'popup.html';
     } else {
-      console.error('❌ Login failed:', result.error);
+      dbg('❌ Login failed:', result.error);
       showError(result.error || 'Login failed. Please try again.');
       setLoading(false);
     }
   } catch (error) {
-    console.error('❌ Login error:', error);
+    dbg('❌ Login error:', error);
     showError('An unexpected error occurred. Please try again.');
     setLoading(false);
   }
@@ -68,7 +70,7 @@ function setLoading(isLoading) {
 (async () => {
   const isAuth = await AuthService.isAuthenticated();
   if (isAuth) {
-    console.log('✅ Already logged in, redirecting...');
+    dbg('✅ Already logged in, redirecting...');
     window.location.href = 'popup.html';
   }
 })();

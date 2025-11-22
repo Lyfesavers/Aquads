@@ -65,11 +65,11 @@
         if (pattern.param) {
           const value = urlParams.get(pattern.param);
           if (value) {
-            console.log('🌊 AquaSwap: Token detected from param:', value);
+            dbg('🌊 AquaSwap: Token detected from param:', value);
             return value;
           }
         }
-        console.log('🌊 AquaSwap: Token detected from regex:', match[1]);
+        dbg('🌊 AquaSwap: Token detected from regex:', match[1]);
         return match[1];
       }
     }
@@ -78,11 +78,11 @@
     const tokenParam = urlParams.get('token') || urlParams.get('address') || 
                       urlParams.get('inputCurrency') || urlParams.get('outputCurrency');
     if (tokenParam) {
-      console.log('🌊 AquaSwap: Token detected from URL param:', tokenParam);
+      dbg('🌊 AquaSwap: Token detected from URL param:', tokenParam);
       return tokenParam;
     }
 
-    console.log('🌊 AquaSwap: No token found in URL');
+    dbg('🌊 AquaSwap: No token found in URL');
     return null;
   }
 
@@ -176,7 +176,7 @@
     // Try Solana base58 in page text as last resort
     const solMatches = text.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
     if (solMatches && solMatches.length > 0) {
-      console.log('🌊 AquaSwap: Token detected from page content (Solana):', solMatches[0]);
+      dbg('🌊 AquaSwap: Token detected from page content (Solana):', solMatches[0]);
       return solMatches[0];
     }
 

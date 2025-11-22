@@ -1,4 +1,7 @@
 // AquaSwap Extension - Authentication Service
+const DEBUG_LOGS = false;
+const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+
 const API_URL = 'https://aquads.onrender.com/api';
 
 class AuthService {
@@ -44,7 +47,7 @@ class AuthService {
 
       return { success: true, user: userData };
     } catch (error) {
-      console.error('Login error:', error);
+      dbg('Login error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -62,7 +65,7 @@ class AuthService {
       ]);
       return { success: true };
     } catch (error) {
-      console.error('Logout error:', error);
+      dbg('Logout error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -75,7 +78,7 @@ class AuthService {
       const result = await chrome.storage.local.get(['authToken', 'isLoggedIn']);
       return !!(result.authToken && result.isLoggedIn);
     } catch (error) {
-      console.error('Auth check error:', error);
+      dbg('Auth check error:', error);
       return false;
     }
   }
@@ -91,7 +94,7 @@ class AuthService {
       }
       return null;
     } catch (error) {
-      console.error('Get user error:', error);
+      dbg('Get user error:', error);
       return null;
     }
   }

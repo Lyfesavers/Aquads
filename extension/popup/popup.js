@@ -13,7 +13,7 @@ async function initSocket() {
   try {
     const storage = await chrome.storage.local.get(['authToken', 'user']);
     if (!storage.authToken || !storage.user) {
-      console.log('No auth token or user, skipping socket connection');
+      dbg('No auth token or user, skipping socket connection');
       return;
     }
 
@@ -29,11 +29,11 @@ async function initSocket() {
     });
 
     socket.on('connect', () => {
-      console.log('✅ Socket connected for real-time points updates');
+      dbg('✅ Socket connected for real-time points updates');
     });
 
     socket.on('disconnect', () => {
-      console.log('⚠️ Socket disconnected');
+      dbg('⚠️ Socket disconnected');
     });
 
     socket.on('connect_error', (error) => {
@@ -42,7 +42,7 @@ async function initSocket() {
 
     // Listen for real-time points updates
     socket.on('affiliateEarningUpdate', async (data) => {
-      console.log('📊 Real-time points update received:', data);
+      dbg('📊 Real-time points update received:', data);
       
       // Get current user to check if update is for them
       const currentStorage = await chrome.storage.local.get(['user']);
@@ -54,7 +54,7 @@ async function initSocket() {
       const currentUserId = currentUser.userId || currentUser.id;
       if (data.affiliateId && data.affiliateId.toString() === currentUserId?.toString()) {
         if (data.newTotalPoints !== undefined) {
-          console.log('✅ Updating points display via socket (instant):', data.newTotalPoints);
+          dbg('✅ Updating points display via socket (instant):', data.newTotalPoints);
           updatePointsDisplay(data.newTotalPoints);
           
           // Optional: Show a brief visual indicator that points were updated
@@ -93,7 +93,7 @@ function disconnectSocket() {
   if (socket) {
     socket.disconnect();
     socket = null;
-    console.log('Socket disconnected');
+    dbg('Socket disconnected');
   }
 }
 
@@ -101,7 +101,7 @@ function disconnectSocket() {
 (async function checkAuth() {
   const isAuth = await AuthService.isAuthenticated();
   if (!isAuth) {
-    console.log('❌ Not authenticated, redirecting to login...');
+    dbg('❌ Not authenticated, redirecting to login...');
     window.location.href = 'login.html';
     return;
   }
@@ -368,17 +368,17 @@ window.addEventListener('message', (event) => {
   
   // Handle swap completion - award 5 affiliate points
   if (event.data.type === 'swap-completed' || event.data.type === 'AQUASWAP_SWAP_COMPLETED') {
-    console.log('✅ Swap completed! Awarding 5 affiliate points...');
+    dbg('✅ Swap completed! Awarding 5 affiliate points...');
     (async () => {
       try {
         const storage = await chrome.storage.local.get(['authToken', 'isLoggedIn', 'user']);
         
         if (!storage.authToken) {
-          console.warn('⚠️ No auth token present; cannot award points. User may need to log in again.');
+          dbg('⚠️ No auth token present; cannot award points. User may need to log in again.');
           return;
         }
 
-        console.log('Making API call to award swap points...');
+        dbg('Making API call to award swap points...');
         const res = await fetch('https://aquads.onrender.com/api/points/swap-completed', {
           method: 'POST',
           headers: {
@@ -390,12 +390,12 @@ window.addEventListener('message', (event) => {
         const data = await res.json().catch(() => ({}));
         
         if (res.ok) {
-          console.log('✅ Points awarded successfully! Points will update via socket in real-time.');
+          dbg('✅ Points awarded successfully! Points will update via socket in real-time.');
           // Points update via socket - no API refresh needed to avoid race conditions
           // Socket update is instant and reliable
         } else if (res.status === 401) {
           // Token expired - log user out and redirect to login
-          console.log('🔒 Session expired, logging out...');
+          dbg('🔒 Session expired, logging out...');
           await AuthService.logout();
           alert('Your session has expired. Please log in again to continue earning points.');
           window.location.href = 'login.html';
@@ -438,7 +438,7 @@ async function loadAffiliatePoints() {
   try {
     const result = await chrome.storage.local.get(['authToken']);
     if (!result.authToken) {
-      console.log('No auth token found');
+      dbg('No auth token found');
       return;
     }
 
@@ -453,7 +453,7 @@ async function loadAffiliatePoints() {
     if (!response.ok) {
       // If 401, token expired - log user out
       if (response.status === 401) {
-        console.log('🔒 Session expired, logging out...');
+        dbg('🔒 Session expired, logging out...');
         await AuthService.logout();
         alert('Your session has expired. Please log in again.');
         window.location.href = 'login.html';
@@ -783,7 +783,7 @@ async function analyzeToken(detected) {
         }
       }
     } catch (error) {
-      console.log('No reviews found for token');
+      dbg('No reviews found for token');
     }
 
     // Calculate data-driven verdict using DexScreener metrics
@@ -1103,7 +1103,7 @@ async function fetchDexScreenerPrimary(tokenIdentifier, chain, symbolHint) {
       priceChange: best.priceChange || null
     };
   } catch (e) {
-    console.warn('DexScreener primary failed:', e);
+    dbg('DexScreener primary failed:', e);
     return null;
   }
 }
@@ -1588,7 +1588,7 @@ async function fetchDexScreenerData(tokenIdentifier, chain, symbolHint) {
     };
     return stats;
   } catch (e) {
-    console.warn('DexScreener fallback failed:', e);
+    dbg('DexScreener fallback failed:', e);
     return null;
   }
 }
@@ -1722,7 +1722,7 @@ function closeAdvisor() {
  * Handle extension unload
  */
 window.addEventListener('beforeunload', () => {
-  console.log('🌊 AquaSwap extension closing');
+  dbg('🌊 AquaSwap extension closing');
 });
 
 // Initialize when DOM is ready

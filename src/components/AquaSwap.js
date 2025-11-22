@@ -225,7 +225,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         }
         
       } catch (error) {
-        console.error('Error fetching bubble tokens:', error);
+        logger.error('Error fetching bubble tokens:', error);
         // Keep existing popular tokens or empty array on error
         setPopularTokens([]);
       }
@@ -246,7 +246,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         const gasPriceData = await getGasPrice(selectedChain);
         setGasPrice(gasPriceData);
       } catch (error) {
-        console.error('Error fetching gas price:', error);
+        logger.error('Error fetching gas price:', error);
         setGasPrice(null);
       } finally {
         setLoadingGasPrice(false);
@@ -394,7 +394,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);

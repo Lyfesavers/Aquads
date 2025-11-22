@@ -1,9 +1,11 @@
 // AquaSwap Extension - Background Service Worker
-console.log('🌊 AquaSwap background service worker started');
+const DEBUG_LOGS = false;
+const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+dbg('🌊 AquaSwap background service worker started');
 
 // Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('Extension installed:', details.reason);
+  dbg('Extension installed:', details.reason);
   
   if (details.reason === 'install') {
     // Set default preferences
@@ -12,14 +14,14 @@ chrome.runtime.onInstalled.addListener((details) => {
       installedAt: Date.now(),
       openCount: 0
     }).then(() => {
-      console.log('Preferences saved');
+      dbg('Preferences saved');
       
       // Open welcome page
       chrome.tabs.create({
         url: 'https://aquads.xyz/swap?extension=installed'
       });
     }).catch(err => {
-      console.error('Error saving preferences:', err);
+      dbg('Error saving preferences:', err);
     });
   }
 });
@@ -45,4 +47,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-console.log('✅ AquaSwap background service worker ready');
+dbg('✅ AquaSwap background service worker ready');
