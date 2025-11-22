@@ -5,8 +5,8 @@
   'use strict';
 
   const API_URL = 'https://aquads.onrender.com/api';
-  const DEBUG_LOGS = false;
-  const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+  // No-op debug function to keep console clean
+  const dbg = () => {};
 
   /**
    * Detect token from URL patterns

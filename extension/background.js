@@ -1,6 +1,6 @@
 // AquaSwap Extension - Background Service Worker
-const DEBUG_LOGS = false;
-const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+// No-op debug function to keep console clean
+const dbg = () => {};
 dbg('🌊 AquaSwap background service worker started');
 
 // Handle extension installation

@@ -1,6 +1,8 @@
 // Login Screen Logic
-const DEBUG_LOGS = false;
-const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+// Use global dbg function (defined in auth.js) - no-op to keep console clean
+if (typeof window.dbg === 'undefined') {
+  window.dbg = () => {}; // No-op function as fallback
+}
 dbg('🔐 Login screen loaded');
 
 const form = document.getElementById('login-form');

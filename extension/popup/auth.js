@@ -1,6 +1,8 @@
 // AquaSwap Extension - Authentication Service
-const DEBUG_LOGS = false;
-const dbg = (...args) => { if (DEBUG_LOGS) console.log(...args); };
+// Global debug function - no-op to keep console clean
+if (typeof window.dbg === 'undefined') {
+  window.dbg = () => {}; // No-op function
+}
 
 const API_URL = 'https://aquads.onrender.com/api';
 
