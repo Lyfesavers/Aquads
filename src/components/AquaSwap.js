@@ -82,16 +82,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               'Content-Type': 'application/json'
             }
           })
-          .then(response => response.json())
-          .then(data => {
-            // Show custom popup modal for points earned
-            if (data.success) {
-              setPointsEarned(5);
-              setShowPointsPopup(true);
-              // Auto-dismiss after 4 seconds
-              setTimeout(() => {
-                setShowPointsPopup(false);
-              }, 4000);
+          .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            
+            // Check if response is ok before processing (same as extension)
+            if (response.ok) {
+              // Show custom popup modal for points earned
+              if (data.success) {
+                setPointsEarned(5);
+                setShowPointsPopup(true);
+                // Auto-dismiss after 4 seconds
+                setTimeout(() => {
+                  setShowPointsPopup(false);
+                }, 4000);
+                logger.info('✅ Points awarded successfully!');
+              }
+            } else if (response.status === 401) {
+              // Token expired - user needs to log in again
+              logger.warn('🔒 Session expired, cannot award points. User may need to log in again.');
+              logger.error('Swap points API error:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: data.error || data.message || 'Unknown error'
+              });
+            } else {
+              logger.error('❌ Swap points award failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: data.error || data.message || 'Unknown error',
+                data: data
+              });
             }
           })
           .catch(error => {
