@@ -14,6 +14,7 @@
   function detectTokenFromURL() {
     const url = window.location.href;
     const pathname = window.location.pathname;
+    const hostname = window.location.hostname;
     const urlParams = new URLSearchParams(window.location.search);
     
     dbg('🌊 AquaSwap: Checking URL:', url);
@@ -31,7 +32,7 @@
     // Dextools patterns
     // Format: dextools.io/app/en/chain/pair-explorer/address or /app/chain/pair-explorer/address
     // Also supports: dextools.io/app/chain/pair-explorer/address
-    if (hostname.includes('dextools.io')) {
+    if (hostname && hostname.includes('dextools.io')) {
       // Dextools URL pattern: /app/[lang/]chain/pair-explorer/address
       const dextoolsMatch = pathname.match(/\/app\/(?:[^\/]+\/)?([^\/]+)\/pair-explorer\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i);
       if (dextoolsMatch && dextoolsMatch[2]) {

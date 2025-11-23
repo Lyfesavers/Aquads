@@ -516,6 +516,7 @@ async function checkForTokenOnPage() {
     
     if (!isTokenDetailPage) {
       dbg('🌊 AquaSwap: Not on a token detail page');
+      // Don't show any error - just silently return
       return;
     }
 
@@ -560,6 +561,8 @@ async function checkForTokenOnPage() {
             analyzeToken(parsed);
           } else {
             dbg('🌊 AquaSwap: No token detected on this token page');
+            // Don't call analyzeToken - just silently return
+            return;
           }
         }
       });
@@ -706,6 +709,12 @@ function parseTokenFromUrl(url) {
  * Analyze token and show advisor
  */
 async function analyzeToken(detected) {
+  // Validate input - don't proceed if no token data
+  if (!detected || !detected.token) {
+    dbg('🌊 AquaSwap: analyzeToken called without valid token data');
+    return;
+  }
+
   const tokenIdentifier = detected.token;
   const chain = detected.chain;
   const symbolHint = detected.symbolHint;
@@ -977,8 +986,15 @@ async function analyzeToken(detected) {
     advisorContent.style.display = 'block';
 
   } catch (error) {
-    // Don't log errors to console (affects Chrome Web Store review)
-    // Show user-friendly message in UI instead
+    // Silently handle errors - don't log to console (affects Chrome Web Store review)
+    // Only show user-friendly message in UI if we have a valid token identifier
+    if (!tokenIdentifier) {
+      // No token to analyze - just hide loading and return
+      advisorLoading.style.display = 'none';
+      return;
+    }
+    
+    // Show user-friendly message in UI instead of throwing errors
     advisorLoading.style.display = 'none';
     advisorContent.style.display = 'block';
     advisorError.style.display = 'none';
