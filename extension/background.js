@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     // Set default preferences
     chrome.storage.local.set({
-      version: '1.4.1',
+      version: '1.4.2',
       installedAt: Date.now(),
       openCount: 0
     }).then(() => {
