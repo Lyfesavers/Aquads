@@ -222,10 +222,12 @@ const AquaSwapEmbed = () => {
     },
     // Enable URL building for mobile deep linking (matches main swap)
     buildUrl: true,
-    // Wallet configuration - using partial management for mobile Solana support
+    // Wallet configuration - disable partial management in iframe for proper balance fetching
     walletConfig: {
-      // Enable partial wallet management to handle mobile Solana limitations
-      usePartialWalletManagement: true,
+      // Disable partial wallet management in iframe context to ensure proper token balance fetching
+      // When in iframe, WalletConnect + partial management can fail to fetch balances correctly
+      // The main website can keep usePartialWalletManagement for mobile Solana support
+      usePartialWalletManagement: window.parent === window ? true : false,
       // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
