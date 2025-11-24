@@ -165,21 +165,47 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
 /**
  * Extract jobs from careers page HTML
  */
-function extractJobsFromHTML(html, baseUrl) {
+function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
   const dom = new JSDOM(html);
   const document = dom.window.document;
   const jobs = [];
 
-  // Common selectors for job listings
+  // Use the careers page URL's domain as the base (handles subdomains like jobs.solana.com)
+  let actualBaseUrl = baseUrl;
+  if (careersPageUrl) {
+    try {
+      const careersUrlObj = new URL(careersPageUrl);
+      actualBaseUrl = `${careersUrlObj.protocol}//${careersUrlObj.host}`;
+    } catch (e) {
+      // Fallback to original baseUrl
+    }
+  }
+
+  // Common selectors for job listings (more comprehensive)
   const jobSelectors = [
+    // Direct job links
     'a[href*="/jobs/"]',
     'a[href*="/careers/"]',
     'a[href*="/openings/"]',
+    'a[href*="/positions/"]',
+    'a[href*="/opportunities/"]',
+    // Class-based selectors
     '[class*="job"] a',
     '[class*="position"] a',
     '[class*="opening"] a',
+    '[class*="opportunity"] a',
+    '[class*="role"] a',
+    '[class*="vacancy"] a',
+    // Data attribute selectors
     '[data-job-id]',
-    '[data-position-id]'
+    '[data-position-id]',
+    '[data-job-url]',
+    '[data-apply-url]',
+    // Common job listing containers
+    'article a',
+    '[role="article"] a',
+    '.job-listing a',
+    '.position-listing a'
   ];
 
   const foundLinks = new Set();
@@ -196,27 +222,59 @@ function extractJobsFromHTML(html, baseUrl) {
         // Build full URL - handle all cases
         let jobUrl = href.trim();
         
-        // If it's already a full URL, use it
+        // Skip invalid URLs
+        if (jobUrl.startsWith('#') || jobUrl.startsWith('javascript:') || jobUrl.startsWith('mailto:')) {
+          continue;
+        }
+        
+        // If it's already a full URL, use it (but validate domain)
         if (jobUrl.startsWith('http://') || jobUrl.startsWith('https://')) {
-          // Already absolute, use as is
+          // Already absolute, but check if it's from same domain or subdomain
+          try {
+            const urlObj = new URL(jobUrl);
+            const careersUrlObj = new URL(careersPageUrl || actualBaseUrl);
+            // Allow same domain or subdomain
+            const careersDomain = careersUrlObj.hostname.replace(/^www\./, '');
+            const jobDomain = urlObj.hostname.replace(/^www\./, '');
+            
+            // Check if same domain or subdomain (e.g., jobs.company.com and company.com)
+            const careersBase = careersDomain.split('.').slice(-2).join('.');
+            const jobBase = jobDomain.split('.').slice(-2).join('.');
+            
+            if (careersBase !== jobBase) {
+              // Different domain, might be external - skip or allow based on preference
+              // For now, we'll allow it if it's clearly a job URL
+              if (!jobUrl.match(/\/jobs?\/|\/careers?\/|\/openings?\/|\/positions?\//i)) {
+                continue;
+              }
+            }
+          } catch (e) {
+            // Invalid URL, skip
+            continue;
+          }
         } 
         // If it starts with //, add https:
         else if (jobUrl.startsWith('//')) {
           jobUrl = `https:${jobUrl}`;
         }
-        // If it starts with /, it's absolute path
+        // If it starts with /, it's absolute path - use actualBaseUrl (handles subdomains)
         else if (jobUrl.startsWith('/')) {
-          jobUrl = `${baseUrl}${jobUrl}`;
-        }
-        // If it starts with # or javascript:, skip it
-        else if (jobUrl.startsWith('#') || jobUrl.startsWith('javascript:')) {
-          continue;
+          jobUrl = `${actualBaseUrl}${jobUrl}`;
         }
         // Otherwise, it's a relative path
         else {
-          // Remove any query params or fragments for base path
-          const basePath = baseUrl.replace(/\/$/, '');
-          jobUrl = `${basePath}/${jobUrl}`;
+          // Get the directory from careers page URL for relative paths
+          try {
+            const careersUrlObj = new URL(careersPageUrl || actualBaseUrl);
+            const careersPath = careersUrlObj.pathname.substring(0, careersUrlObj.pathname.lastIndexOf('/') + 1);
+            // Remove leading slash from jobUrl if present, then combine
+            const cleanJobUrl = jobUrl.replace(/^\//, '');
+            jobUrl = `${actualBaseUrl}${careersPath}${cleanJobUrl}`;
+          } catch (e) {
+            // Fallback: just append to base
+            const basePath = actualBaseUrl.replace(/\/$/, '');
+            jobUrl = `${basePath}/${jobUrl}`;
+          }
         }
 
         // Clean up the URL (remove fragments, normalize)
@@ -344,8 +402,8 @@ router.get('/check-careers', async (req, res) => {
               }
             });
 
-            // Extract jobs from HTML
-            const jobs = extractJobsFromHTML(htmlResponse.data, baseUrl);
+            // Extract jobs from HTML (pass careers page URL to use correct domain)
+            const jobs = extractJobsFromHTML(htmlResponse.data, baseUrl, url);
 
             return res.json({
               found: true,
