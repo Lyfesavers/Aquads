@@ -216,7 +216,28 @@ function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
       const elements = document.querySelectorAll(selector);
       
       for (const element of elements) {
-        const href = element.getAttribute('href');
+        // Try multiple ways to get the href
+        let href = element.getAttribute('href') || 
+                   element.getAttribute('data-href') ||
+                   element.getAttribute('data-url') ||
+                   element.getAttribute('data-job-url') ||
+                   element.getAttribute('data-apply-url');
+        
+        // Also check if there's a data attribute with the job ID that we can construct
+        if (!href) {
+          const jobId = element.getAttribute('data-job-id') || 
+                       element.getAttribute('data-position-id');
+          if (jobId) {
+            // Try to construct URL from job ID
+            try {
+              const careersUrlObj = new URL(careersPageUrl || actualBaseUrl);
+              href = `${careersUrlObj.origin}/jobs/${jobId}`;
+            } catch (e) {
+              continue;
+            }
+          }
+        }
+        
         if (!href) continue;
 
         // Build full URL - handle all cases
@@ -229,10 +250,16 @@ function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
         
         // If it's already a full URL, use it (but validate domain)
         if (jobUrl.startsWith('http://') || jobUrl.startsWith('https://')) {
-          // Already absolute, but check if it's from same domain or subdomain
+          // Already absolute - validate it's a job URL
           try {
             const urlObj = new URL(jobUrl);
             const careersUrlObj = new URL(careersPageUrl || actualBaseUrl);
+            
+            // Check if it's a job detail page (not just a listing page)
+            const path = urlObj.pathname.toLowerCase();
+            const isJobDetailPage = path.match(/\/(jobs?|careers?|openings?|positions?)\/[^\/]+\//) || 
+                                   path.match(/\/(jobs?|careers?|openings?|positions?)\/[^\/]+$/);
+            
             // Allow same domain or subdomain
             const careersDomain = careersUrlObj.hostname.replace(/^www\./, '');
             const jobDomain = urlObj.hostname.replace(/^www\./, '');
@@ -241,12 +268,9 @@ function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
             const careersBase = careersDomain.split('.').slice(-2).join('.');
             const jobBase = jobDomain.split('.').slice(-2).join('.');
             
-            if (careersBase !== jobBase) {
-              // Different domain, might be external - skip or allow based on preference
-              // For now, we'll allow it if it's clearly a job URL
-              if (!jobUrl.match(/\/jobs?\/|\/careers?\/|\/openings?\/|\/positions?\//i)) {
-                continue;
-              }
+            // Must be same base domain and look like a job URL
+            if (careersBase !== jobBase || (!isJobDetailPage && !path.includes('/jobs') && !path.includes('/careers'))) {
+              continue;
             }
           } catch (e) {
             // Invalid URL, skip
@@ -266,10 +290,12 @@ function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
           // Get the directory from careers page URL for relative paths
           try {
             const careersUrlObj = new URL(careersPageUrl || actualBaseUrl);
-            const careersPath = careersUrlObj.pathname.substring(0, careersUrlObj.pathname.lastIndexOf('/') + 1);
+            const careersPath = careersUrlObj.pathname;
+            // If careers path ends with /, use it, otherwise get parent directory
+            const basePath = careersPath.endsWith('/') ? careersPath : careersPath.substring(0, careersPath.lastIndexOf('/') + 1);
             // Remove leading slash from jobUrl if present, then combine
             const cleanJobUrl = jobUrl.replace(/^\//, '');
-            jobUrl = `${actualBaseUrl}${careersPath}${cleanJobUrl}`;
+            jobUrl = `${actualBaseUrl}${basePath}${cleanJobUrl}`;
           } catch (e) {
             // Fallback: just append to base
             const basePath = actualBaseUrl.replace(/\/$/, '');
@@ -277,12 +303,49 @@ function extractJobsFromHTML(html, baseUrl, careersPageUrl) {
           }
         }
 
-        // Clean up the URL (remove fragments, normalize)
+        // Clean up the URL (normalize, but keep fragments like #content)
         try {
           const urlObj = new URL(jobUrl);
-          jobUrl = urlObj.href; // This normalizes the URL
+          // Reconstruct URL to keep hash fragments
+          jobUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}${urlObj.search}${urlObj.hash}`;
         } catch (e) {
           // Invalid URL, skip
+          continue;
+        }
+        
+        // Additional validation: URL should look like a job detail page
+        // Skip if it's just the careers listing page itself
+        const urlLower = jobUrl.toLowerCase();
+        const isListingPage = urlLower.match(/\/jobs\/?$|\/careers\/?$|\/openings\/?$|\/positions\/?$/) ||
+                             urlLower === careersPageUrl.toLowerCase();
+        
+        if (isListingPage) {
+          continue; // Skip the listing page itself
+        }
+        
+        // Must contain job-related path segments
+        const looksLikeJobPage = urlLower.includes('/jobs/') || 
+                                 urlLower.includes('/careers/') || 
+                                 urlLower.includes('/openings/') ||
+                                 urlLower.includes('/positions/') ||
+                                 urlLower.match(/\/job\/|\/position\/|\/opening\//);
+        
+        if (!looksLikeJobPage) {
+          // Skip if it doesn't look like a job page (might be a category or filter link)
+          continue;
+        }
+        
+        // Additional check: job URLs usually have more path segments than listing pages
+        // e.g., /jobs/123-title vs just /jobs
+        try {
+          const urlObj = new URL(jobUrl);
+          const pathSegments = urlObj.pathname.split('/').filter(s => s.length > 0);
+          // Job detail pages usually have at least 2-3 path segments
+          // e.g., ['jobs', '123-title'] or ['companies', 'company-id', 'jobs', 'job-id']
+          if (pathSegments.length < 2) {
+            continue; // Too short, probably not a job detail page
+          }
+        } catch (e) {
           continue;
         }
 
@@ -404,6 +467,12 @@ router.get('/check-careers', async (req, res) => {
 
             // Extract jobs from HTML (pass careers page URL to use correct domain)
             const jobs = extractJobsFromHTML(htmlResponse.data, baseUrl, url);
+
+            // Log for debugging (remove in production if needed)
+            console.log(`[Job Search] Found ${jobs.length} jobs for ${cleanDomain}`);
+            if (jobs.length > 0) {
+              console.log(`[Job Search] Sample job URL: ${jobs[0].url}`);
+            }
 
             return res.json({
               found: true,
