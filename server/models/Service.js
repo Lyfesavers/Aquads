@@ -27,6 +27,15 @@ const serviceSchema = new mongoose.Schema({
       'database-admin',
       'devops-engineer',
       'qa-tester',
+      // AI/ML Categories
+      'prompt-engineer',
+      'ai-trainer',
+      'ml-engineer',
+      'ai-consultant',
+      'ai-content-specialist',
+      'llm-developer',
+      'ai-integration-specialist',
+      'ai-ethics-specialist',
       // Design Categories
       'ui-ux-designer',
       'graphic-designer',

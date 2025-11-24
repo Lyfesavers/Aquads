@@ -192,6 +192,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     { id: 'database-admin', name: 'Database Admin', icon: '🗄️' },
     { id: 'devops-engineer', name: 'DevOps Engineer', icon: '⚙️' },
     { id: 'qa-tester', name: 'QA Tester', icon: '🔬' },
+    // AI/ML Categories
+    { id: 'prompt-engineer', name: 'Prompt Engineer', icon: '🤖' },
+    { id: 'ai-trainer', name: 'AI Trainer', icon: '📚' },
+    { id: 'ml-engineer', name: 'ML Engineer', icon: '🧠' },
+    { id: 'ai-consultant', name: 'AI Consultant', icon: '💡' },
+    { id: 'ai-content-specialist', name: 'AI Content Specialist', icon: '✍️' },
+    { id: 'llm-developer', name: 'LLM Developer', icon: '🔧' },
+    { id: 'ai-integration-specialist', name: 'AI Integration Specialist', icon: '🔌' },
+    { id: 'ai-ethics-specialist', name: 'AI Ethics Specialist', icon: '⚖️' },
     // Design Categories
     { id: 'ui-ux-designer', name: 'UI/UX Designer', icon: '🎨' },
     { id: 'graphic-designer', name: 'Graphic Designer', icon: '🖌️' },
