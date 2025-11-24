@@ -205,32 +205,46 @@ function showToast(message) {
 function setupTabs() {
   const tabSwap = document.getElementById('tab-swap');
   const tabAdvisor = document.getElementById('tab-advisor');
+  const tabJobAdvisor = document.getElementById('tab-job-advisor');
   const swapContainer = document.getElementById('swap-container');
   const advisor = document.getElementById('token-advisor');
+  const jobAdvisor = document.getElementById('job-advisor');
 
   // Expose a small controller so other handlers can switch tabs programmatically
   window.__AQUA_EXT__ = window.__AQUA_EXT__ || {};
   window.__AQUA_EXT__.activateTab = (name) => {
+    // Reset all tabs
+    tabSwap.classList.remove('active');
+    tabAdvisor.classList.remove('active');
+    if (tabJobAdvisor) tabJobAdvisor.classList.remove('active');
+    swapContainer.style.display = 'none';
+    advisor.style.display = 'none';
+    if (jobAdvisor) jobAdvisor.style.display = 'none';
+
     if (name === 'swap') {
       tabSwap.classList.add('active');
-      tabAdvisor.classList.remove('active');
       swapContainer.style.display = 'block';
-      advisor.style.display = 'none';
-    } else {
+    } else if (name === 'advisor') {
       tabAdvisor.classList.add('active');
-      tabSwap.classList.remove('active');
       advisor.style.display = 'block';
-      swapContainer.style.display = 'none';
       // When entering advisor tab, analyze current page
       advisor.querySelector('#advisor-loading').style.display = 'block';
       advisor.querySelector('#advisor-content').style.display = 'none';
       advisor.querySelector('#advisor-error').style.display = 'none';
       checkForTokenOnPage();
+    } else if (name === 'job-advisor') {
+      if (tabJobAdvisor) tabJobAdvisor.classList.add('active');
+      if (jobAdvisor) {
+        jobAdvisor.style.display = 'block';
+        // When entering job advisor tab, check for careers page
+        checkForJobsOnPage();
+      }
     }
   };
 
   if (tabSwap) tabSwap.onclick = () => window.__AQUA_EXT__.activateTab('swap');
   if (tabAdvisor) tabAdvisor.onclick = () => window.__AQUA_EXT__.activateTab('advisor');
+  if (tabJobAdvisor) tabJobAdvisor.onclick = () => window.__AQUA_EXT__.activateTab('job-advisor');
 
   // Default to swap tab
   window.__AQUA_EXT__.activateTab('swap');
@@ -1734,6 +1748,140 @@ function closeAdvisor() {
   
   if (advisor) advisor.style.display = 'none';
   if (swapContainer) swapContainer.style.display = 'block';
+}
+
+/**
+ * Check for jobs/careers page on current page
+ */
+async function checkForJobsOnPage() {
+  try {
+    const jobAdvisor = document.getElementById('job-advisor');
+    const jobAdvisorLoading = document.getElementById('job-advisor-loading');
+    const jobAdvisorContent = document.getElementById('job-advisor-content');
+    const jobAdvisorFound = document.getElementById('job-advisor-found');
+    const jobAdvisorNotFound = document.getElementById('job-advisor-not-found');
+    const jobAdvisorError = document.getElementById('job-advisor-error');
+    const companyNameEl = document.getElementById('job-advisor-company');
+    const careersPageLink = document.getElementById('careers-page-link');
+
+    if (!jobAdvisor) return;
+
+    // Show loading
+    jobAdvisorLoading.style.display = 'block';
+    jobAdvisorContent.style.display = 'none';
+    jobAdvisorFound.style.display = 'none';
+    jobAdvisorNotFound.style.display = 'none';
+    jobAdvisorError.style.display = 'none';
+
+    // Get current active tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url) {
+      jobAdvisorLoading.style.display = 'none';
+      jobAdvisorError.style.display = 'block';
+      jobAdvisorContent.style.display = 'block';
+      return;
+    }
+
+    // Check if URL is valid (http/https)
+    if (!tab.url.startsWith('http://') && !tab.url.startsWith('https://')) {
+      jobAdvisorLoading.style.display = 'none';
+      jobAdvisorNotFound.style.display = 'block';
+      jobAdvisorContent.style.display = 'block';
+      if (companyNameEl) companyNameEl.textContent = 'Current Page';
+      return;
+    }
+
+    // Detect company from content script
+    let companyInfo = null;
+    try {
+      chrome.tabs.sendMessage(tab.id, { action: 'detectCompany' }, (response) => {
+        if (chrome.runtime.lastError) {
+          // Content script not available - extract from URL
+          const url = new URL(tab.url);
+          companyInfo = {
+            company: url.hostname.replace(/^www\./, '').split('.')[0],
+            domain: url.hostname
+          };
+          checkCareersPage(companyInfo, tab.url);
+        } else if (response && response.success && response.data) {
+          companyInfo = response.data;
+          checkCareersPage(companyInfo, tab.url);
+        } else {
+          // Fallback: extract from URL
+          const url = new URL(tab.url);
+          companyInfo = {
+            company: url.hostname.replace(/^www\./, '').split('.')[0],
+            domain: url.hostname
+          };
+          checkCareersPage(companyInfo, tab.url);
+        }
+      });
+    } catch (error) {
+      // Fallback: extract from URL
+      const url = new URL(tab.url);
+      companyInfo = {
+        company: url.hostname.replace(/^www\./, '').split('.')[0],
+        domain: url.hostname
+      };
+      checkCareersPage(companyInfo, tab.url);
+    }
+
+    // Function to check careers page
+    async function checkCareersPage(companyInfo, currentUrl) {
+      try {
+        if (companyNameEl) {
+          companyNameEl.textContent = companyInfo.company || 'Current Website';
+        }
+
+        // Call backend to check for careers page
+        const domain = companyInfo.domain || new URL(currentUrl).hostname;
+        const response = await fetch(`https://aquads.onrender.com/api/jobs/check-careers?domain=${encodeURIComponent(domain)}`);
+
+        if (!response.ok) {
+          throw new Error('Failed to check careers page');
+        }
+
+        const data = await response.json();
+
+        // Hide loading, show content
+        jobAdvisorLoading.style.display = 'none';
+        jobAdvisorContent.style.display = 'block';
+
+        if (data.found && data.url) {
+          // Careers page found!
+          jobAdvisorFound.style.display = 'block';
+          jobAdvisorNotFound.style.display = 'none';
+          jobAdvisorError.style.display = 'none';
+          
+          if (careersPageLink) {
+            careersPageLink.href = data.url;
+          }
+        } else {
+          // No careers page found
+          jobAdvisorFound.style.display = 'none';
+          jobAdvisorNotFound.style.display = 'block';
+          jobAdvisorError.style.display = 'none';
+        }
+      } catch (error) {
+        dbg('Error checking careers page:', error);
+        jobAdvisorLoading.style.display = 'none';
+        jobAdvisorContent.style.display = 'block';
+        jobAdvisorFound.style.display = 'none';
+        jobAdvisorNotFound.style.display = 'none';
+        jobAdvisorError.style.display = 'block';
+      }
+    }
+
+  } catch (error) {
+    dbg('Error in checkForJobsOnPage:', error);
+    const jobAdvisorLoading = document.getElementById('job-advisor-loading');
+    const jobAdvisorContent = document.getElementById('job-advisor-content');
+    const jobAdvisorError = document.getElementById('job-advisor-error');
+    
+    if (jobAdvisorLoading) jobAdvisorLoading.style.display = 'none';
+    if (jobAdvisorContent) jobAdvisorContent.style.display = 'block';
+    if (jobAdvisorError) jobAdvisorError.style.display = 'block';
+  }
 }
 
 /**

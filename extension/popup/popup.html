@@ -63,6 +63,7 @@
     <div class="tab-bar">
       <button id="tab-swap" class="tab-button active">Swap</button>
       <button id="tab-advisor" class="tab-button">Token Advisor</button>
+      <button id="tab-job-advisor" class="tab-button">Job Advisor</button>
     </div>
 
     <!-- Token Advisor Section -->
@@ -192,6 +193,48 @@
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-top-navigation-by-user-activation"
         allowtransparency="true"
       ></iframe>
+    </div>
+
+    <!-- Job Advisor Section -->
+    <div id="job-advisor" class="job-advisor" style="display: none;">
+      <div class="job-advisor-header">
+        <div class="job-advisor-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Job Advisor</span>
+        </div>
+      </div>
+      
+      <div id="job-advisor-loading" class="job-advisor-loading">
+        <div class="advisor-spinner"></div>
+        <p>Checking for careers page...</p>
+      </div>
+
+      <div id="job-advisor-content" class="job-advisor-content" style="display: none;">
+        <div class="company-info-header">
+          <div class="company-name-display">
+            <span id="job-advisor-company" class="company-name">-</span>
+          </div>
+        </div>
+
+        <div id="job-advisor-found" class="job-advisor-found" style="display: none;">
+          <p class="found-message">✅ Careers page found!</p>
+          <a id="careers-page-link" href="#" target="_blank" class="careers-page-link">
+            View Open Positions →
+          </a>
+        </div>
+
+        <div id="job-advisor-not-found" class="job-advisor-not-found" style="display: none;">
+          <p>No careers page found for this website.</p>
+          <p class="not-found-hint">They may not have a public careers page, or it might be under a different URL.</p>
+        </div>
+
+        <div id="job-advisor-error" class="job-advisor-error" style="display: none;">
+          <p>Unable to check for careers page. Please try again later.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->

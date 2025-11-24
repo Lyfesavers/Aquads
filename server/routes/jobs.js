@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
+const axios = require('axios');
 
 // Debug route
 router.get('/test', (req, res) => {
@@ -157,6 +158,72 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
     res.json({ message: 'Job deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete job' });
+  }
+});
+
+/**
+ * Check if website has a careers/jobs page
+ * GET /api/jobs/check-careers?domain=github.com
+ */
+router.get('/check-careers', async (req, res) => {
+  try {
+    const domain = req.query.domain?.trim();
+    
+    if (!domain) {
+      return res.status(400).json({ error: 'Domain is required' });
+    }
+
+    // Remove protocol if present
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const baseUrl = `https://${cleanDomain}`;
+
+    // Common career page paths
+    const careersPaths = [
+      '/careers',
+      '/jobs',
+      '/work-with-us',
+      '/join-us',
+      '/careers/jobs',
+      '/open-positions',
+      '/hiring',
+      '/we-are-hiring',
+      '/careers/opportunities'
+    ];
+
+    // Check each path
+    for (const path of careersPaths) {
+      try {
+        const url = `${baseUrl}${path}`;
+        const response = await axios.head(url, {
+          timeout: 5000,
+          validateStatus: (status) => status < 500,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (response.status === 200) {
+          return res.json({
+            found: true,
+            url: url,
+            domain: cleanDomain
+          });
+        }
+      } catch (err) {
+        // Continue to next path
+        continue;
+      }
+    }
+
+    // No careers page found
+    return res.json({
+      found: false,
+      domain: cleanDomain
+    });
+
+  } catch (error) {
+    console.error('Error checking careers page:', error);
+    res.status(500).json({ error: 'Failed to check for careers page' });
   }
 });
 
