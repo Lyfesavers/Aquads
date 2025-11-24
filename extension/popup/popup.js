@@ -1853,8 +1853,41 @@ async function checkForJobsOnPage() {
           jobAdvisorNotFound.style.display = 'none';
           jobAdvisorError.style.display = 'none';
           
+          // Update message
+          const foundMessageText = document.getElementById('found-message-text');
+          if (foundMessageText) {
+            if (data.jobs && data.jobs.length > 0) {
+              foundMessageText.textContent = `✅ Found ${data.jobs.length} ${data.jobs.length === 1 ? 'job' : 'jobs'}!`;
+            } else {
+              foundMessageText.textContent = '✅ Careers page found!';
+            }
+          }
+
+          // Display jobs if available
+          const jobsList = document.getElementById('job-advisor-jobs-list');
+          if (jobsList && data.jobs && data.jobs.length > 0) {
+            jobsList.innerHTML = '';
+            data.jobs.forEach((job, index) => {
+              const jobItem = document.createElement('div');
+              jobItem.className = 'job-item';
+              jobItem.innerHTML = `
+                <div class="job-item-title">${job.title}</div>
+                <div class="job-item-meta">
+                  <span class="job-item-location">📍 ${job.location}</span>
+                </div>
+                <a href="${job.url}" target="_blank" class="job-item-link">View Job →</a>
+              `;
+              jobsList.appendChild(jobItem);
+            });
+          } else if (jobsList) {
+            // No jobs extracted, show link to careers page
+            jobsList.innerHTML = '<p style="text-align: center; color: #9ca3af; font-size: 13px;">Click below to view all positions</p>';
+          }
+          
+          // Show careers page link
           if (careersPageLink) {
             careersPageLink.href = data.url;
+            careersPageLink.style.display = 'block';
           }
         } else {
           // No careers page found

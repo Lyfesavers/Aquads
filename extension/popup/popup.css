@@ -770,7 +770,6 @@ html, body {
 }
 
 .job-advisor-found {
-  text-align: center;
   padding: 20px;
 }
 
@@ -778,7 +777,72 @@ html, body {
   font-size: 16px;
   font-weight: 600;
   color: #22c55e;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.job-advisor-jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.job-item {
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.job-item:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.job-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.job-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.job-item-location {
+  color: #9ca3af;
+}
+
+.job-item-link {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.job-item-link:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 .careers-page-link {

@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const axios = require('axios');
+const { JSDOM } = require('jsdom');
 
 // Debug route
 router.get('/test', (req, res) => {
@@ -162,7 +163,99 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
 });
 
 /**
- * Check if website has a careers/jobs page
+ * Extract jobs from careers page HTML
+ */
+function extractJobsFromHTML(html, baseUrl) {
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+  const jobs = [];
+
+  // Common selectors for job listings
+  const jobSelectors = [
+    'a[href*="/jobs/"]',
+    'a[href*="/careers/"]',
+    'a[href*="/openings/"]',
+    '[class*="job"] a',
+    '[class*="position"] a',
+    '[class*="opening"] a',
+    '[data-job-id]',
+    '[data-position-id]'
+  ];
+
+  const foundLinks = new Set();
+
+  // Try each selector
+  for (const selector of jobSelectors) {
+    try {
+      const elements = document.querySelectorAll(selector);
+      
+      for (const element of elements) {
+        const href = element.getAttribute('href');
+        if (!href) continue;
+
+        // Build full URL
+        let jobUrl = href;
+        if (href.startsWith('/')) {
+          jobUrl = `${baseUrl}${href}`;
+        } else if (!href.startsWith('http')) {
+          jobUrl = `${baseUrl}/${href}`;
+        }
+
+        // Skip if we've already found this job
+        if (foundLinks.has(jobUrl)) continue;
+        foundLinks.add(jobUrl);
+
+        // Extract job title
+        let title = element.textContent?.trim() || '';
+        // Try to find title in parent elements
+        if (!title || title.length < 3) {
+          const parent = element.closest('[class*="job"], [class*="position"], [class*="opening"], li, div');
+          if (parent) {
+            const titleEl = parent.querySelector('h1, h2, h3, h4, [class*="title"], [class*="name"]');
+            if (titleEl) title = titleEl.textContent?.trim() || '';
+          }
+        }
+
+        // Extract location (common patterns)
+        let location = '';
+        const parent = element.closest('[class*="job"], [class*="position"], li, div');
+        if (parent) {
+          const locationEl = parent.querySelector('[class*="location"], [class*="city"], [class*="place"]');
+          if (locationEl) {
+            location = locationEl.textContent?.trim() || '';
+          } else {
+            // Try to find location in text
+            const text = parent.textContent || '';
+            const locationMatch = text.match(/(Remote|Hybrid|On-site|Onsite|[A-Z][a-z]+(?:,\s*[A-Z]{2})?)/i);
+            if (locationMatch) location = locationMatch[1];
+          }
+        }
+
+        // Only add if we have a valid title and URL
+        if (title && title.length > 3 && jobUrl.includes('http')) {
+          jobs.push({
+            title: title.substring(0, 150), // Limit title length
+            location: location || 'Not specified',
+            url: jobUrl,
+            company: baseUrl.replace(/^https?:\/\//, '').split('/')[0]
+          });
+
+          // Limit to 20 jobs
+          if (jobs.length >= 20) break;
+        }
+      }
+
+      if (jobs.length > 0) break; // Found jobs, stop trying other selectors
+    } catch (err) {
+      continue;
+    }
+  }
+
+  return jobs;
+}
+
+/**
+ * Check if website has a careers/jobs page and extract jobs
  * GET /api/jobs/check-careers?domain=github.com
  */
 router.get('/check-careers', async (req, res) => {
@@ -194,7 +287,9 @@ router.get('/check-careers', async (req, res) => {
     for (const path of careersPaths) {
       try {
         const url = `${baseUrl}${path}`;
-        const response = await axios.head(url, {
+        
+        // First check if page exists
+        const headResponse = await axios.head(url, {
           timeout: 5000,
           validateStatus: (status) => status < 500,
           headers: {
@@ -202,12 +297,37 @@ router.get('/check-careers', async (req, res) => {
           }
         });
         
-        if (response.status === 200) {
-          return res.json({
-            found: true,
-            url: url,
-            domain: cleanDomain
-          });
+        if (headResponse.status === 200) {
+          // Page exists, now fetch and parse it
+          try {
+            const htmlResponse = await axios.get(url, {
+              timeout: 10000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              }
+            });
+
+            // Extract jobs from HTML
+            const jobs = extractJobsFromHTML(htmlResponse.data, baseUrl);
+
+            return res.json({
+              found: true,
+              url: url,
+              domain: cleanDomain,
+              jobs: jobs,
+              jobsCount: jobs.length
+            });
+          } catch (htmlError) {
+            // Couldn't fetch HTML, but page exists - return URL only
+            return res.json({
+              found: true,
+              url: url,
+              domain: cleanDomain,
+              jobs: [],
+              jobsCount: 0
+            });
+          }
         }
       } catch (err) {
         // Continue to next path
@@ -218,7 +338,9 @@ router.get('/check-careers', async (req, res) => {
     // No careers page found
     return res.json({
       found: false,
-      domain: cleanDomain
+      domain: cleanDomain,
+      jobs: [],
+      jobsCount: 0
     });
 
   } catch (error) {
