@@ -193,12 +193,39 @@ function extractJobsFromHTML(html, baseUrl) {
         const href = element.getAttribute('href');
         if (!href) continue;
 
-        // Build full URL
-        let jobUrl = href;
-        if (href.startsWith('/')) {
-          jobUrl = `${baseUrl}${href}`;
-        } else if (!href.startsWith('http')) {
-          jobUrl = `${baseUrl}/${href}`;
+        // Build full URL - handle all cases
+        let jobUrl = href.trim();
+        
+        // If it's already a full URL, use it
+        if (jobUrl.startsWith('http://') || jobUrl.startsWith('https://')) {
+          // Already absolute, use as is
+        } 
+        // If it starts with //, add https:
+        else if (jobUrl.startsWith('//')) {
+          jobUrl = `https:${jobUrl}`;
+        }
+        // If it starts with /, it's absolute path
+        else if (jobUrl.startsWith('/')) {
+          jobUrl = `${baseUrl}${jobUrl}`;
+        }
+        // If it starts with # or javascript:, skip it
+        else if (jobUrl.startsWith('#') || jobUrl.startsWith('javascript:')) {
+          continue;
+        }
+        // Otherwise, it's a relative path
+        else {
+          // Remove any query params or fragments for base path
+          const basePath = baseUrl.replace(/\/$/, '');
+          jobUrl = `${basePath}/${jobUrl}`;
+        }
+
+        // Clean up the URL (remove fragments, normalize)
+        try {
+          const urlObj = new URL(jobUrl);
+          jobUrl = urlObj.href; // This normalizes the URL
+        } catch (e) {
+          // Invalid URL, skip
+          continue;
         }
 
         // Skip if we've already found this job
@@ -231,8 +258,17 @@ function extractJobsFromHTML(html, baseUrl) {
           }
         }
 
+        // Validate URL is actually a valid HTTP/HTTPS URL
+        let isValidUrl = false;
+        try {
+          const testUrl = new URL(jobUrl);
+          isValidUrl = testUrl.protocol === 'http:' || testUrl.protocol === 'https:';
+        } catch (e) {
+          isValidUrl = false;
+        }
+
         // Only add if we have a valid title and URL
-        if (title && title.length > 3 && jobUrl.includes('http')) {
+        if (title && title.length > 3 && isValidUrl) {
           jobs.push({
             title: title.substring(0, 150), // Limit title length
             location: location || 'Not specified',
