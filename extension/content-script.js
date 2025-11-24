@@ -356,28 +356,6 @@
   }
 
   /**
-   * Detect company/domain from current page
-   */
-  function detectCompany() {
-    const hostname = window.location.hostname;
-    const url = window.location.href;
-    
-    // Remove www. prefix
-    const domain = hostname.replace(/^www\./, '');
-    
-    // Extract company name from domain (e.g., github.com -> GitHub)
-    const domainParts = domain.split('.');
-    const baseDomain = domainParts[0];
-    const companyName = baseDomain.charAt(0).toUpperCase() + baseDomain.slice(1);
-    
-    return {
-      company: companyName,
-      domain: hostname,
-      url: url
-    };
-  }
-
-  /**
    * Listen for messages from popup
    */
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -387,12 +365,6 @@
       dbg('🌊 AquaSwap: Sending response:', { success: true, data: tokenInfo });
       sendResponse({ success: true, data: tokenInfo });
       return true; // Keep channel open for async response
-    }
-    if (request.action === 'detectCompany') {
-      const companyInfo = detectCompany();
-      dbg('🌊 AquaSwap: Company detected:', companyInfo);
-      sendResponse({ success: true, data: companyInfo });
-      return true;
     }
     return false;
   });
