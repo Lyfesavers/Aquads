@@ -177,7 +177,8 @@
 /* Professional trading layout - always side by side on desktop */
 .trading-interface.with-charts {
   flex-direction: row;
-  height: calc(100vh - 100px);
+  min-height: calc(100vh - 100px);
+  overflow: visible; /* Allow scrolling to content below */
 }
 
 /* Left Side - Swap Widget - Responsive sizing for chart space */
@@ -395,6 +396,7 @@
   flex-direction: column;
   min-width: 800px; /* Reasonable minimum while maintaining side-by-side layout */
   width: 100%;
+  overflow: visible; /* Allow scrolling past the chart */
 }
 
 /* Chart Header - Much more compact */
@@ -1142,10 +1144,11 @@
   flex: 1;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible; /* Allow scrolling past the chart */
   position: relative;
   min-height: 700px;
   height: calc(100vh - 80px); /* Reduced header space for much taller charts */
+  max-height: calc(100vh - 80px); /* Prevent growing beyond viewport */
   display: flex;
   flex-direction: column;
 }

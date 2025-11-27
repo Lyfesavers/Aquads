@@ -241,6 +241,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           throw new Error('Failed to fetch services');
         }
         const data = await response.json();
+        logger.info('Featured services loaded:', data.services?.length || 0);
         setFeaturedServices(data.services || []);
       } catch (error) {
         logger.error('Error fetching featured services:', error);
