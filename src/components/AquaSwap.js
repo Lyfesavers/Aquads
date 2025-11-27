@@ -20,6 +20,59 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Fallback popular token examples if ads can't be loaded
 const FALLBACK_TOKEN_EXAMPLES = [];
 
+const CHAIN_TO_BLOCKCHAIN_PARAM = {
+  'ether': 'ethereum',
+  'eth': 'ethereum',
+  'ethereum': 'ethereum',
+  'bnb': 'bsc',
+  'bsc': 'bsc',
+  'polygon': 'polygon',
+  'matic': 'polygon',
+  'solana': 'solana',
+  'sol': 'solana',
+  'avalanche': 'avalanche',
+  'avax': 'avalanche',
+  'arbitrum': 'arbitrum',
+  'arb': 'arbitrum',
+  'optimism': 'optimism',
+  'op': 'optimism',
+  'base': 'base',
+  'fantom': 'fantom',
+  'ftm': 'fantom',
+  'cronos': 'cronos',
+  'celo': 'celo',
+  'harmony': 'harmony',
+  'near': 'near',
+  'sui': 'sui',
+  'aptos': 'aptos',
+  'ton': 'ton',
+  'stellar': 'stellar',
+  'algorand': 'algorand',
+  'hedera': 'hedera',
+  'icp': 'icp',
+  'elrond': 'elrond',
+  'multiversx': 'elrond',
+  'terra': 'terra',
+  'xrp': 'xrp',
+  'litecoin': 'litecoin',
+  'bitcoin': 'bitcoin',
+  'tron': 'tron',
+  'tezos': 'tezos',
+  'zilliqa': 'zilliqa',
+  'oasis': 'oasis',
+  'stacks': 'stacks',
+  'kadena': 'kadena',
+  'injective': 'injective',
+  'kava': 'kava',
+  'moonriver': 'moonriver',
+  'moonbeam': 'moonbeam',
+  'flow': 'flow',
+  'cardano': 'cardano',
+  'polkadot': 'polkadot',
+  'cosmos': 'cosmos',
+  'kaspa': 'kaspa'
+};
+
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
@@ -181,6 +234,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (chartProvider !== 'dexscreener') {
+      return;
+    }
+    const trimmedToken = (tokenSearch || '').trim();
+    const isValidPairAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedToken) || /^[A-Za-z0-9\-_]{15,100}$/.test(trimmedToken) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmedToken);
+    if (!isValidPairAddress) {
+      return;
+    }
+    updateAquaswapUrl(trimmedToken, selectedChain);
+  }, [tokenSearch, selectedChain, chartProvider]);
+
   // Fetch bubble ads and convert to popular tokens
   useEffect(() => {
     const fetchBubbleTokens = async () => {
@@ -325,6 +390,28 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     const mappedChain = chainMap[normalizedBlockchain] || 'ether';
     
     return mappedChain;
+  };
+
+  const getBlockchainParamForChain = (chain) => {
+    if (!chain) {
+      return 'ethereum';
+    }
+    const normalizedChain = chain.toLowerCase().trim();
+    return CHAIN_TO_BLOCKCHAIN_PARAM[normalizedChain] || normalizedChain || 'ethereum';
+  };
+
+  const updateAquaswapUrl = (tokenValue, chainValue) => {
+    if (typeof window === 'undefined' || !tokenValue) {
+      return;
+    }
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set('token', tokenValue);
+    if (chainValue) {
+      searchParams.set('blockchain', getBlockchainParamForChain(chainValue));
+    }
+    const newSearch = searchParams.toString();
+    const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash || ''}`;
+    window.history.replaceState({}, '', newUrl);
   };
 
   // Enhanced search functionality

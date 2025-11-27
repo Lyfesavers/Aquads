@@ -7,6 +7,183 @@
   const API_URL = 'https://aquads.onrender.com/api';
   // No-op debug function to keep console clean
   const dbg = () => {};
+  const AQUASWAP_PATH_MATCHERS = ['/aquaswap', '/swap', '/embed/aquaswap'];
+  const AQUASWAP_CHAIN_MAP = {
+    'ether': 'ethereum',
+    'eth': 'ethereum',
+    'ethereum': 'ethereum',
+    'mainnet': 'ethereum',
+    'bsc': 'bsc',
+    'bnb': 'bsc',
+    'binance': 'bsc',
+    'binance smart chain': 'bsc',
+    'polygon': 'polygon',
+    'matic': 'polygon',
+    'solana': 'solana',
+    'sol': 'solana',
+    'avalanche': 'avalanche',
+    'avax': 'avalanche',
+    'arbitrum': 'arbitrum',
+    'arb': 'arbitrum',
+    'optimism': 'optimism',
+    'op': 'optimism',
+    'base': 'base',
+    'fantom': 'fantom',
+    'ftm': 'fantom',
+    'cronos': 'cronos',
+    'celo': 'celo',
+    'harmony': 'harmony',
+    'near': 'near',
+    'sui': 'sui',
+    'aptos': 'aptos',
+    'ton': 'ton',
+    'stellar': 'stellar',
+    'algorand': 'algorand',
+    'hedera': 'hedera',
+    'icp': 'icp',
+    'elrond': 'elrond',
+    'multiversx': 'elrond',
+    'terra': 'terra',
+    'xrp': 'xrp',
+    'litecoin': 'litecoin',
+    'bitcoin': 'bitcoin',
+    'tron': 'tron',
+    'tezos': 'tezos',
+    'zilliqa': 'zilliqa',
+    'oasis': 'oasis',
+    'stacks': 'stacks',
+    'kadena': 'kadena',
+    'injective': 'injective',
+    'kava': 'kava',
+    'moonriver': 'moonriver',
+    'moonbeam': 'moonbeam',
+    'flow': 'flow',
+    'cardano': 'cardano',
+    'polkadot': 'polkadot',
+    'cosmos': 'cosmos',
+    'kaspa': 'kaspa'
+  };
+  
+  function isAquaswapHost(hostname) {
+    if (!hostname) return false;
+    const host = hostname.toLowerCase();
+    return host.includes('aquads') || host.includes('aquaswap') || host === 'localhost' || host === '127.0.0.1';
+  }
+  
+  function isAquaswapPage(hostname, pathname) {
+    if (!isAquaswapHost(hostname)) {
+      return false;
+    }
+    const path = (pathname || '').toLowerCase();
+    return AQUASWAP_PATH_MATCHERS.some(segment => path.includes(segment));
+  }
+  
+  function normalizeAquaswapChain(chainCandidate) {
+    if (!chainCandidate) return null;
+    const normalized = chainCandidate.toLowerCase().trim();
+    return AQUASWAP_CHAIN_MAP[normalized] || normalized || null;
+  }
+  
+  function isValidTokenValue(value) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (/^0x[a-fA-F0-9]{40,64}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^[A-Za-z0-9\-_]{15,100}$/.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  }
+  
+  function getAquaswapSelectedChain() {
+    const select = document.querySelector('.chain-select');
+    if (select && select.value) {
+      return normalizeAquaswapChain(select.value);
+    }
+    return null;
+  }
+  
+  function getAquaswapSymbolHint() {
+    const activePair = document.querySelector('.pair-btn.active .pair-name');
+    if (activePair && activePair.textContent) {
+      const text = activePair.textContent.trim();
+      if (text) {
+        return text.split('/')[0].replace(/[^A-Z0-9\-]/gi, '').slice(0, 12) || null;
+      }
+    }
+    const pairsName = document.querySelector('.pairs-token-name');
+    if (pairsName && pairsName.textContent) {
+      return pairsName.textContent.trim().replace(/[^A-Z0-9\-]/gi, '').slice(0, 12) || null;
+    }
+    return null;
+  }
+  
+  function extractDexscreenerFromIframe() {
+    const iframe = document.querySelector('#dexscreener-widget') || document.querySelector('iframe[src*="dexscreener.com"]');
+    if (iframe && iframe.src) {
+      const match = iframe.src.match(/dexscreener\.com\/([^\/]+)\/([^\/\?]+)/i);
+      if (match && match[2]) {
+        return {
+          token: decodeURIComponent(match[2]),
+          chain: normalizeAquaswapChain(match[1])
+        };
+      }
+    }
+    return null;
+  }
+  
+  function detectTokenFromAquaswap(hostname, pathname) {
+    if (!isAquaswapPage(hostname, pathname)) {
+      return null;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    let tokenCandidate = isValidTokenValue(params.get('token')) || 
+                         isValidTokenValue(params.get('pair')) || 
+                         isValidTokenValue(params.get('address'));
+    let chain = normalizeAquaswapChain(params.get('blockchain')) || normalizeAquaswapChain(params.get('chain'));
+    
+    if (!tokenCandidate) {
+      const searchInput = document.querySelector('.token-search-input');
+      tokenCandidate = isValidTokenValue(searchInput && searchInput.value);
+    }
+    
+    let iframeInfo = null;
+    if (!tokenCandidate) {
+      iframeInfo = extractDexscreenerFromIframe();
+      if (iframeInfo) {
+        tokenCandidate = iframeInfo.token;
+        chain = chain || iframeInfo.chain;
+      }
+    } else if (!chain) {
+      iframeInfo = extractDexscreenerFromIframe();
+      if (iframeInfo && iframeInfo.chain) {
+        chain = iframeInfo.chain;
+      }
+    }
+    
+    if (!chain) {
+      chain = getAquaswapSelectedChain();
+    }
+    
+    if (!tokenCandidate) {
+      return null;
+    }
+    
+    return {
+      token: tokenCandidate,
+      address: tokenCandidate,
+      chain: chain || 'ethereum',
+      symbolHint: getAquaswapSymbolHint(),
+      url: window.location.href,
+      timestamp: Date.now()
+    };
+  }
 
   /**
    * Detect token from URL patterns
@@ -288,8 +465,17 @@
     // First check if we're actually on a token detail page
     const url = window.location.href;
     const pathname = window.location.pathname;
-    
     const hostname = window.location.hostname;
+    
+    if (isAquaswapPage(hostname, pathname)) {
+      const aquaswapToken = detectTokenFromAquaswap(hostname, pathname);
+      if (aquaswapToken) {
+        dbg('🌊 AquaSwap: Token detected on AquaSwap page', aquaswapToken);
+        return aquaswapToken;
+      }
+      dbg('🌊 AquaSwap: On AquaSwap page without active token selection');
+      return null;
+    }
     
     // DexScreener: must have /chain/address pattern (supports EVM 40-64 or Solana base58)
     if (hostname.includes('dexscreener.com')) {

@@ -501,7 +501,19 @@ async function checkForTokenOnPage() {
     // PancakeSwap token pages: pancakeswap.finance/swap?inputCurrency=0x...
     
     const url = tab.url || '';
+    let isAquaswapPage = false;
+    try {
+      const parsedUrl = new URL(url);
+      const host = (parsedUrl.hostname || '').toLowerCase();
+      const path = (parsedUrl.pathname || '').toLowerCase();
+      const hostMatch = host.includes('aquads') || host.includes('aquaswap') || host === 'localhost' || host === '127.0.0.1';
+      const pathMatch = path.includes('/swap') || path.includes('/aquaswap');
+      isAquaswapPage = hostMatch && pathMatch;
+    } catch (_) {
+      isAquaswapPage = false;
+    }
     const isTokenDetailPage = 
+      isAquaswapPage ||
       // DexScreener: must have chain and address in path (EVM 0x... or Solana base58)
       /dexscreener\.com\/[^\/]+\/(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})/i.test(url) ||
       // Dextools: must have /pair-explorer/address in path
@@ -576,6 +588,76 @@ async function checkForTokenOnPage() {
 /**
  * Fallback URL parser (no content script)
  */
+const URL_CHAIN_MAP = {
+  'ether': 'ethereum',
+  'eth': 'ethereum',
+  'ethereum': 'ethereum',
+  'bsc': 'bsc',
+  'bnb': 'bsc',
+  'binance': 'bsc',
+  'polygon': 'polygon',
+  'matic': 'polygon',
+  'solana': 'solana',
+  'sol': 'solana',
+  'avalanche': 'avalanche',
+  'avax': 'avalanche',
+  'arbitrum': 'arbitrum',
+  'arb': 'arbitrum',
+  'optimism': 'optimism',
+  'op': 'optimism',
+  'base': 'base',
+  'fantom': 'fantom',
+  'ftm': 'fantom',
+  'cronos': 'cronos',
+  'celo': 'celo',
+  'harmony': 'harmony',
+  'near': 'near',
+  'sui': 'sui',
+  'aptos': 'aptos',
+  'ton': 'ton',
+  'stellar': 'stellar',
+  'algorand': 'algorand',
+  'hedera': 'hedera',
+  'icp': 'icp',
+  'elrond': 'elrond',
+  'multiversx': 'elrond',
+  'terra': 'terra',
+  'xrp': 'xrp',
+  'litecoin': 'litecoin',
+  'bitcoin': 'bitcoin',
+  'tron': 'tron',
+  'tezos': 'tezos',
+  'zilliqa': 'zilliqa',
+  'oasis': 'oasis',
+  'stacks': 'stacks',
+  'kadena': 'kadena',
+  'injective': 'injective',
+  'kava': 'kava',
+  'moonriver': 'moonriver',
+  'moonbeam': 'moonbeam',
+  'flow': 'flow',
+  'cardano': 'cardano',
+  'polkadot': 'polkadot',
+  'cosmos': 'cosmos',
+  'kaspa': 'kaspa'
+};
+
+function normalizeChainFromUrl(chainCandidate) {
+  if (!chainCandidate) return null;
+  const normalized = decodeURIComponent(chainCandidate).toLowerCase().trim();
+  return URL_CHAIN_MAP[normalized] || normalized || null;
+}
+
+function sanitizeTokenFromUrl(tokenCandidate) {
+  if (!tokenCandidate) return null;
+  const cleaned = decodeURIComponent(tokenCandidate).trim();
+  if (!cleaned) return null;
+  if (/^0x[a-fA-F0-9]{40,64}$/.test(cleaned)) return cleaned;
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(cleaned)) return cleaned;
+  if (/^[A-Za-z0-9\-_]{15,100}$/.test(cleaned)) return cleaned;
+  return null;
+}
+
 function parseTokenFromUrl(url) {
   try {
     if (!url) return null;
@@ -689,6 +771,23 @@ function parseTokenFromUrl(url) {
         url,
         timestamp: Date.now()
       };
+    }
+    // AquaSwap hosted token pages with explicit query params
+    const aquaswapMatch = url.match(/aquads\.xyz\/.*?(?:swap|aquaswap)[^?]*[?&](?:token|pair|address)=([^&#]+)/i);
+    if (aquaswapMatch) {
+      const tokenValue = sanitizeTokenFromUrl(aquaswapMatch[1]);
+      if (tokenValue) {
+        const chainMatch = url.match(/(?:blockchain|chain)=([^&#]+)/i);
+        const chainValue = normalizeChainFromUrl(chainMatch ? chainMatch[1] : '');
+        return {
+          token: tokenValue,
+          address: tokenValue,
+          chain: chainValue || 'ethereum',
+          symbolHint: null,
+          url,
+          timestamp: Date.now()
+        };
+      }
     }
     // Uniswap: tokens/0x... or swap?inputCurrency=0x...
     const uniToken = url.match(/tokens\/(0x[a-fA-F0-9]{40})/i) || url.match(/[?&](?:inputCurrency|outputCurrency)=(0x[a-fA-F0-9]{40})/i);
