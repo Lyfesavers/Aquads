@@ -797,4 +797,117 @@ router.post('/:id/book', auth, async (req, res) => {
   }
 });
 
+// Get random featured services (4+ stars, different categories)
+router.get('/featured-random', async (req, res) => {
+  try {
+    const { limit = 3 } = req.query;
+    const limitNum = Math.min(parseInt(limit), 10); // Cap at 10
+
+    // Fetch all active services with 4+ stars
+    const services = await Service.find({
+      status: 'active',
+      rating: { $gte: 4.0 }
+    })
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+
+    if (!services || services.length === 0) {
+      return res.json({ services: [] });
+    }
+
+    // Get service IDs for batch review query
+    const serviceIds = services.map(service => service._id);
+
+    // Fetch all reviews for these services in a single query
+    const reviewAggregation = await ServiceReview.aggregate([
+      {
+        $match: { serviceId: { $in: serviceIds } }
+      },
+      {
+        $group: {
+          _id: '$serviceId',
+          avgRating: { $avg: '$rating' },
+          reviewCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = {};
+    reviewAggregation.forEach(review => {
+      reviewMap[review._id.toString()] = {
+        rating: Math.round(review.avgRating * 10) / 10,
+        reviews: review.reviewCount
+      };
+    });
+
+    // Add review data to each service
+    const servicesWithReviews = await Promise.all(services.map(async (service) => {
+      const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
+      
+      // Calculate completion rate
+      const totalBookings = await Booking.countDocuments({ service: service._id });
+      const completedBookings = await Booking.countDocuments({
+        service: service._id,
+        status: 'completed'
+      });
+      const completionRate = totalBookings > 0 ? Math.round((completedBookings / totalBookings) * 100) : 0;
+
+      return {
+        ...service.toObject(),
+        rating: reviewData.rating,
+        reviews: reviewData.reviews,
+        completionRate
+      };
+    }));
+
+    // Group services by category
+    const servicesByCategory = {};
+    servicesWithReviews.forEach(service => {
+      const cat = service.category || 'other';
+      if (!servicesByCategory[cat]) {
+        servicesByCategory[cat] = [];
+      }
+      servicesByCategory[cat].push(service);
+    });
+
+    // Get array of categories
+    const categories = Object.keys(servicesByCategory);
+    
+    // Shuffle categories for randomness
+    const shuffledCategories = categories.sort(() => Math.random() - 0.5);
+
+    // Pick one service from each category until we have enough
+    const selectedServices = [];
+    const usedCategories = new Set();
+    
+    for (let i = 0; i < shuffledCategories.length && selectedServices.length < limitNum; i++) {
+      const category = shuffledCategories[i];
+      const categoryServices = servicesByCategory[category];
+      
+      if (categoryServices && categoryServices.length > 0 && !usedCategories.has(category)) {
+        // Pick random service from this category
+        const randomService = categoryServices[Math.floor(Math.random() * categoryServices.length)];
+        selectedServices.push(randomService);
+        usedCategories.add(category);
+      }
+    }
+
+    // If we don't have enough services (fewer categories than limit), fill with random services
+    if (selectedServices.length < limitNum) {
+      const remainingServices = servicesWithReviews.filter(s => 
+        !selectedServices.find(sel => sel._id.toString() === s._id.toString())
+      );
+      
+      const shuffledRemaining = remainingServices.sort(() => Math.random() - 0.5);
+      const needed = limitNum - selectedServices.length;
+      selectedServices.push(...shuffledRemaining.slice(0, needed));
+    }
+
+    res.json({ services: selectedServices });
+  } catch (error) {
+    console.error('Error fetching featured services:', error);
+    res.status(500).json({ message: 'Error fetching featured services', error: error.message });
+  }
+});
+
 module.exports = router; 

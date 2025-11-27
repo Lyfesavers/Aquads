@@ -101,6 +101,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [showPointsPopup, setShowPointsPopup] = useState(false);
   const [pointsEarned, setPointsEarned] = useState(0);
 
+  // Featured services state
+  const [featuredServices, setFeaturedServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -227,6 +231,26 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // Keep URL parameters for shareability - do not clean up
       // window.history.replaceState({}, document.title, '/aquaswap');
     }
+
+    // Fetch featured services on mount
+    const fetchFeaturedServices = async () => {
+      setLoadingServices(true);
+      try {
+        const response = await fetch(`${API_URL}/api/services/featured-random?limit=3`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch services');
+        }
+        const data = await response.json();
+        setFeaturedServices(data.services || []);
+      } catch (error) {
+        logger.error('Error fetching featured services:', error);
+        setFeaturedServices([]);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchFeaturedServices();
 
     // Cleanup: remove class when component unmounts
     return () => {
@@ -1750,6 +1774,102 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
         </div>
       </div>
+
+      {/* Hire Expert Section */}
+      {featuredServices.length > 0 && (
+        <div className="hire-expert-section">
+          <div className="hire-expert-container">
+            <div className="hire-expert-header">
+              <div className="hire-expert-icon">💼</div>
+              <div className="hire-expert-title-group">
+                <h2 className="hire-expert-title">Need Expert Help?</h2>
+                <p className="hire-expert-subtitle">Professional services from verified freelancers</p>
+              </div>
+            </div>
+
+            <div className="hire-expert-cards">
+              {featuredServices.map((service) => (
+                <div key={service._id} className="hire-expert-card">
+                  <div className="hire-expert-card-inner">
+                    <div className="hire-expert-avatar-section">
+                      {service.seller?.image ? (
+                        <img 
+                          src={service.seller.image} 
+                          alt={service.seller.username}
+                          className="hire-expert-avatar"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="hire-expert-avatar-placeholder"
+                        style={{ display: service.seller?.image ? 'none' : 'flex' }}
+                      >
+                        {service.seller?.username?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      {service.seller?.isOnline && (
+                        <div className="hire-expert-online-badge" title="Online now"></div>
+                      )}
+                    </div>
+
+                    <div className="hire-expert-content">
+                      <h3 className="hire-expert-service-title" title={service.title}>
+                        {service.title}
+                      </h3>
+                      
+                      <div className="hire-expert-seller-name">
+                        by {service.seller?.username || 'Unknown'}
+                      </div>
+
+                      {service.category && (
+                        <div className="hire-expert-category">
+                          {service.category}
+                        </div>
+                      )}
+
+                      <div className="hire-expert-stats">
+                        <div className="hire-expert-rating">
+                          <span className="hire-expert-stars">
+                            {'⭐'.repeat(Math.round(service.rating || 0))}
+                          </span>
+                          <span className="hire-expert-rating-text">
+                            {(service.rating || 0).toFixed(1)} ({service.reviews || 0})
+                          </span>
+                        </div>
+                        
+                        <div className="hire-expert-price">
+                          From ${service.price || 0}
+                        </div>
+                      </div>
+
+                      {service.completionRate > 0 && (
+                        <div className="hire-expert-completion">
+                          {service.completionRate}% completion rate
+                        </div>
+                      )}
+                    </div>
+
+                    <Link 
+                      to={`/service/${service.slug}`}
+                      className="hire-expert-cta"
+                    >
+                      View Service →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hire-expert-footer">
+              <Link to="/marketplace" className="hire-expert-view-all">
+                Browse All Services →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Points Earned Popup Modal */}
       {showPointsPopup && (

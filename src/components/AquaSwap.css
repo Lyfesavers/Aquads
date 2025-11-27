@@ -2151,3 +2151,459 @@
     height: 24px;
   }
 }
+
+/* ============================================
+   HIRE EXPERT SECTION - Professional Design
+   ============================================ */
+
+.hire-expert-section {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.95) 0%, rgba(20, 20, 20, 0.98) 100%);
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  padding: 60px 20px 80px 20px;
+  margin-top: 40px;
+}
+
+.hire-expert-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.hire-expert-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.hire-expert-icon {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 12px rgba(0, 212, 255, 0.3));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.hire-expert-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-expert-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.hire-expert-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Cards Grid */
+.hire-expert-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+/* Individual Card */
+.hire-expert-card {
+  background: linear-gradient(145deg, rgba(30, 30, 30, 0.95) 0%, rgba(25, 25, 25, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.hire-expert-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #00d4ff 0%, #0099cc 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.hire-expert-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 212, 255, 0.15), 0 0 0 1px rgba(0, 212, 255, 0.1);
+}
+
+.hire-expert-card:hover::before {
+  opacity: 1;
+}
+
+.hire-expert-card-inner {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+/* Avatar Section */
+.hire-expert-avatar-section {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.hire-expert-avatar,
+.hire-expert-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 212, 255, 0.3);
+  object-fit: cover;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.hire-expert-card:hover .hire-expert-avatar,
+.hire-expert-card:hover .hire-expert-avatar-placeholder {
+  border-color: rgba(0, 212, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.hire-expert-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 153, 204, 0.2) 100%);
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00d4ff;
+}
+
+.hire-expert-online-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  background: #10b981;
+  border: 3px solid rgba(30, 30, 30, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Content */
+.hire-expert-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.hire-expert-service-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8rem;
+  transition: color 0.3s ease;
+}
+
+.hire-expert-card:hover .hire-expert-service-title {
+  color: #00d4ff;
+}
+
+.hire-expert-seller-name {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+.hire-expert-category {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #00d4ff;
+  text-transform: capitalize;
+  font-weight: 500;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.hire-expert-card:hover .hire-expert-category {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+/* Stats */
+.hire-expert-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 16px;
+}
+
+.hire-expert-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.hire-expert-stars {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
+}
+
+.hire-expert-rating-text {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.hire-expert-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #10b981;
+  text-align: right;
+  flex: 1;
+}
+
+.hire-expert-completion {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* CTA Button */
+.hire-expert-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.hire-expert-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.hire-expert-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.4);
+}
+
+.hire-expert-cta:hover::before {
+  left: 100%;
+}
+
+.hire-expert-cta:active {
+  transform: translateY(0);
+}
+
+/* Footer */
+.hire-expert-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.hire-expert-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.hire-expert-view-all:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  transform: translateX(4px);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .hire-expert-section {
+    padding: 50px 16px 60px 16px;
+  }
+
+  .hire-expert-cards {
+    gap: 24px;
+  }
+
+  .hire-expert-title {
+    font-size: 2rem;
+  }
+
+  .hire-expert-subtitle {
+    font-size: 1rem;
+  }
+
+  .hire-expert-icon {
+    font-size: 3rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hire-expert-section {
+    padding: 40px 12px 50px 12px;
+    margin-top: 30px;
+  }
+
+  .hire-expert-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 35px;
+  }
+
+  .hire-expert-icon {
+    font-size: 2.5rem;
+  }
+
+  .hire-expert-title {
+    font-size: 1.75rem;
+  }
+
+  .hire-expert-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .hire-expert-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .hire-expert-card-inner {
+    padding: 24px;
+  }
+
+  .hire-expert-avatar-section {
+    width: 70px;
+    height: 70px;
+  }
+
+  .hire-expert-avatar,
+  .hire-expert-avatar-placeholder {
+    width: 70px;
+    height: 70px;
+  }
+
+  .hire-expert-service-title {
+    font-size: 1.1rem;
+  }
+
+  .hire-expert-stats {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .hire-expert-rating,
+  .hire-expert-price {
+    text-align: center;
+  }
+
+  .hire-expert-price {
+    font-size: 1.2rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .hire-expert-section {
+    padding: 30px 10px 40px 10px;
+  }
+
+  .hire-expert-title {
+    font-size: 1.5rem;
+  }
+
+  .hire-expert-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .hire-expert-card-inner {
+    padding: 20px;
+  }
+
+  .hire-expert-cta {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .hire-expert-view-all {
+    padding: 10px 24px;
+    font-size: 0.95rem;
+  }
+}
