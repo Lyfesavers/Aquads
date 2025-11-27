@@ -1852,7 +1852,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     </div>
 
                     <Link 
-                      to={`/service/${service.slug}`}
+                      to={`/service/${service.title.replace(/\s+/g, '-').replace(/\//g, '-').toLowerCase()}-${service._id}`}
                       className="hire-expert-cta"
                     >
                       View Service →
