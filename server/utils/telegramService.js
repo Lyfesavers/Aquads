@@ -146,6 +146,19 @@ const telegramService = {
             formData.append('chat_id', chatId);
             formData.append('video', fs.createReadStream(videoPath));
             formData.append('caption', message);
+            
+            // Add "Hire an Expert" button
+            const keyboard = {
+              inline_keyboard: [
+                [
+                  {
+                    text: '👨‍💼 Hire an Expert',
+                    url: 'https://aquads.xyz/marketplace'
+                  }
+                ]
+              ]
+            };
+            formData.append('reply_markup', JSON.stringify(keyboard));
 
             const response = await axios.post(
               `https://api.telegram.org/bot${botToken}/sendVideo`,
@@ -197,11 +210,24 @@ const telegramService = {
   // Fallback method for text-only messages
   sendTextMessage: async (botToken, chatId, message) => {
     try {
+      // Add "Hire an Expert" button
+      const keyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: '👨‍💼 Hire an Expert',
+              url: 'https://aquads.xyz/marketplace'
+            }
+          ]
+        ]
+      };
+
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
           chat_id: chatId,
           text: message,
+          reply_markup: keyboard
         }
       );
 
@@ -1080,11 +1106,24 @@ https://aquads.xyz`;
     if (!botToken) return { success: false };
 
     try {
+      // Add "Hire an Expert" button to all messages
+      const keyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: '👨‍💼 Hire an Expert',
+              url: 'https://aquads.xyz/marketplace'
+            }
+          ]
+        ]
+      };
+
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
           chat_id: chatId,
           text: message,
+          reply_markup: keyboard
         }
       );
 
@@ -1509,8 +1548,33 @@ ${platformEmoji} ${platformName} Raid
         text: message,
       };
 
+      // Add "Hire an Expert" button to the keyboard
       if (keyboard) {
-        payload.reply_markup = keyboard;
+        // Clone the keyboard to avoid modifying the original
+        const enhancedKeyboard = {
+          inline_keyboard: [
+            ...keyboard.inline_keyboard,
+            [
+              {
+                text: '👨‍💼 Hire an Expert',
+                url: 'https://aquads.xyz/marketplace'
+              }
+            ]
+          ]
+        };
+        payload.reply_markup = enhancedKeyboard;
+      } else {
+        // If no keyboard provided, just add the "Hire an Expert" button
+        payload.reply_markup = {
+          inline_keyboard: [
+            [
+              {
+                text: '👨‍💼 Hire an Expert',
+                url: 'https://aquads.xyz/marketplace'
+              }
+            ]
+          ]
+        };
       }
 
       const response = await axios.post(
@@ -2055,6 +2119,19 @@ ${platformEmoji} ${platformName} Raid
           formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
           formData.append('caption', message);
           formData.append('parse_mode', 'Markdown');
+          
+          // Add "Hire an Expert" button
+          const keyboard = {
+            inline_keyboard: [
+              [
+                {
+                  text: '👨‍💼 Hire an Expert',
+                  url: 'https://aquads.xyz/marketplace'
+                }
+              ]
+            ]
+          };
+          formData.append('reply_markup', JSON.stringify(keyboard));
 
           const response = await axios.post(
             `https://api.telegram.org/bot${botToken}/sendPhoto`,
@@ -2080,6 +2157,19 @@ ${platformEmoji} ${platformName} Raid
           formData.append('video', fs.createReadStream(videoPath));
           formData.append('caption', message);
           formData.append('parse_mode', 'Markdown');
+          
+          // Add "Hire an Expert" button
+          const keyboard = {
+            inline_keyboard: [
+              [
+                {
+                  text: '👨‍💼 Hire an Expert',
+                  url: 'https://aquads.xyz/marketplace'
+                }
+              ]
+            ]
+          };
+          formData.append('reply_markup', JSON.stringify(keyboard));
 
           const response = await axios.post(
             `https://api.telegram.org/bot${botToken}/sendVideo`,
@@ -2442,6 +2532,19 @@ ${platformEmoji} ${platformName} Raid
       formData.append('chat_id', chatId);
       formData.append('video', fs.createReadStream(videoPath));
       formData.append('caption', caption);
+      
+      // Add "Hire an Expert" button
+      const keyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: '👨‍💼 Hire an Expert',
+              url: 'https://aquads.xyz/marketplace'
+            }
+          ]
+        ]
+      };
+      formData.append('reply_markup', JSON.stringify(keyboard));
 
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendVideo`,
@@ -2730,6 +2833,19 @@ ${platformEmoji} ${platformName} Raid
           formData.append('video', fs.createReadStream(videoPath));
           formData.append('caption', message);
           formData.append('parse_mode', 'HTML');
+          
+          // Add "Hire an Expert" button
+          const keyboard = {
+            inline_keyboard: [
+              [
+                {
+                  text: '👨‍💼 Hire an Expert',
+                  url: 'https://aquads.xyz/marketplace'
+                }
+              ]
+            ]
+          };
+          formData.append('reply_markup', JSON.stringify(keyboard));
 
           const response = await axios.post(
             `https://api.telegram.org/bot${botToken}/sendVideo`,
