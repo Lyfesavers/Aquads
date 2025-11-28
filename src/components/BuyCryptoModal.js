@@ -7,23 +7,24 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
   const hasOpenedPopup = useRef(false);
 
-  // Reset ref when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      hasOpenedPopup.current = false;
-    }
-  }, [isOpen]);
-
   // Open MoonPay in centered popup window automatically
   useEffect(() => {
-    if (!isOpen || hasOpenedPopup.current) {
+    if (!isOpen) {
+      // Reset ref when modal closes
+      hasOpenedPopup.current = false;
       return;
     }
 
-    hasOpenedPopup.current = true;
+    // Skip if already opened during this session
+    if (hasOpenedPopup.current) {
+      return;
+    }
 
     // Small delay to show modal first
     const popupTimer = setTimeout(() => {
+      // Mark as opened BEFORE opening to prevent race conditions
+      hasOpenedPopup.current = true;
+
       const width = 450;
       const height = 650;
       const left = (window.screen.width - width) / 2;
@@ -37,6 +38,7 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
 
       if (!popup) {
         alert('Please allow popups to buy crypto with MoonPay');
+        hasOpenedPopup.current = false; // Reset if failed to open
       }
     }, 300);
 
