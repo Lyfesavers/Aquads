@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { FaTimes, FaCreditCard } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
@@ -57,9 +58,9 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
     return null;
   }
 
-  console.log('Rendering modal overlay...');
+  console.log('Rendering modal overlay with Portal...');
 
-  return (
+  const modalContent = (
     <div 
       className="buy-crypto-modal-overlay" 
       onClick={onClose}
@@ -127,6 +128,12 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
         </div>
       </div>
     </div>
+  );
+
+  // Use React Portal to render at document body level
+  return ReactDOM.createPortal(
+    modalContent,
+    document.body
   );
 };
 

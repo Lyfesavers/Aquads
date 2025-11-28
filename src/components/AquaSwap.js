@@ -5,6 +5,7 @@ import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
+import BuyCryptoModal from './BuyCryptoModal';
 import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
 import './AquaSwap.css';
@@ -73,7 +74,7 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'kaspa': 'kaspa'
 };
 
-const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
+const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -100,6 +101,9 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
   // Points earned popup state
   const [showPointsPopup, setShowPointsPopup] = useState(false);
   const [pointsEarned, setPointsEarned] = useState(0);
+
+  // Buy Crypto Modal state
+  const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
@@ -1212,12 +1216,8 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
               </button>
               <button 
                 onClick={() => {
-                  console.log('Buy button clicked, onOpenBuyCrypto:', onOpenBuyCrypto);
-                  if (onOpenBuyCrypto) {
-                    onOpenBuyCrypto();
-                  } else {
-                    console.error('onOpenBuyCrypto is not defined');
-                  }
+                  console.log('Buy button clicked - opening modal');
+                  setShowBuyCryptoModal(true);
                 }}
                 className="fiat-purchase-button"
                 title="Buy crypto with fiat currency"
@@ -1269,12 +1269,8 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
             </button>
             <button 
               onClick={() => {
-                console.log('Buy button clicked (mobile), onOpenBuyCrypto:', onOpenBuyCrypto);
-                if (onOpenBuyCrypto) {
-                  onOpenBuyCrypto();
-                } else {
-                  console.error('onOpenBuyCrypto is not defined');
-                }
+                console.log('Buy button clicked (mobile) - opening modal');
+                setShowBuyCryptoModal(true);
               }}
               className="fiat-purchase-button"
               title="Buy crypto with fiat currency"
@@ -1992,6 +1988,11 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
         }
       `}</style>
 
+      {/* Buy Crypto Modal */}
+      <BuyCryptoModal
+        isOpen={showBuyCryptoModal}
+        onClose={() => setShowBuyCryptoModal(false)}
+      />
     </div>
   );
 };
