@@ -7,44 +7,48 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
   const hasOpenedPopup = useRef(false);
 
-  // Open MoonPay in centered popup window automatically
+  // Reset ref when modal closes
   useEffect(() => {
-    if (isOpen && !hasOpenedPopup.current) {
-      hasOpenedPopup.current = true;
-
-      // Small delay to show modal first
-      const popupTimer = setTimeout(() => {
-        const width = 450;
-        const height = 650;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-        
-        const popup = window.open(
-          moonpayUrl,
-          'MoonPayBuyCrypto',
-          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
-        );
-
-        if (!popup) {
-          alert('Please allow popups to buy crypto with MoonPay');
-        }
-      }, 300);
-
-      // Auto-close modal after 2 seconds
-      const closeTimer = setTimeout(() => {
-        onClose();
-      }, 2000);
-
-      return () => {
-        clearTimeout(popupTimer);
-        clearTimeout(closeTimer);
-      };
-    }
-
-    // Reset the ref when modal closes
     if (!isOpen) {
       hasOpenedPopup.current = false;
     }
+  }, [isOpen]);
+
+  // Open MoonPay in centered popup window automatically
+  useEffect(() => {
+    if (!isOpen || hasOpenedPopup.current) {
+      return;
+    }
+
+    hasOpenedPopup.current = true;
+
+    // Small delay to show modal first
+    const popupTimer = setTimeout(() => {
+      const width = 450;
+      const height = 650;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      
+      const popup = window.open(
+        moonpayUrl,
+        'MoonPayBuyCrypto',
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
+
+      if (!popup) {
+        alert('Please allow popups to buy crypto with MoonPay');
+      }
+    }, 300);
+
+    // Auto-close modal after 2 seconds
+    const closeTimer = setTimeout(() => {
+      onClose();
+    }, 2000);
+
+    return () => {
+      clearTimeout(popupTimer);
+      clearTimeout(closeTimer);
+    };
   }, [isOpen, onClose, moonpayUrl]);
 
   // Prevent body scroll when modal is open
