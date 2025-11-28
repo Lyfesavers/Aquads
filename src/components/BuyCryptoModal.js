@@ -5,6 +5,11 @@ import './BuyCryptoModal.css';
 const BuyCryptoModal = ({ isOpen, onClose }) => {
   const [selectedProvider, setSelectedProvider] = useState('moonpay');
 
+  // Debug logging
+  useEffect(() => {
+    console.log('BuyCryptoModal isOpen:', isOpen);
+  }, [isOpen]);
+
   // Provider configurations - embedded widgets
   const providers = {
     moonpay: {

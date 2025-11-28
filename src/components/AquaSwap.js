@@ -1211,11 +1211,18 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
                 {showEmbedCode ? '❌ Close' : '🔗 Embed'}
               </button>
               <button 
-                onClick={onOpenBuyCrypto}
+                onClick={() => {
+                  console.log('Buy button clicked, onOpenBuyCrypto:', onOpenBuyCrypto);
+                  if (onOpenBuyCrypto) {
+                    onOpenBuyCrypto();
+                  } else {
+                    console.error('onOpenBuyCrypto is not defined');
+                  }
+                }}
                 className="fiat-purchase-button"
-                title="Buy crypto with credit/debit card"
+                title="Buy crypto with fiat currency"
               >
-                💳 Buy Card
+                💳 Fiat to Crypto
               </button>
             </div>
           </div>
@@ -1261,11 +1268,18 @@ const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
               {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
             </button>
             <button 
-              onClick={onOpenBuyCrypto}
+              onClick={() => {
+                console.log('Buy button clicked (mobile), onOpenBuyCrypto:', onOpenBuyCrypto);
+                if (onOpenBuyCrypto) {
+                  onOpenBuyCrypto();
+                } else {
+                  console.error('onOpenBuyCrypto is not defined');
+                }
+              }}
               className="fiat-purchase-button"
-              title="Buy crypto with credit/debit card"
+              title="Buy crypto with fiat currency"
             >
-              💳 Buy with Card
+              💳 Fiat to Crypto
             </button>
           </div>
         </div>
