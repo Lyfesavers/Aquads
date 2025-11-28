@@ -45,7 +45,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
-import TransakPage from './components/TransakPage';
+import BuyCryptoPage from './components/BuyCryptoPage';
 import VerifyUser from './components/VerifyUser';
 import MemberVerification from './components/MemberVerification';
 import BannerDisplay from './components/BannerDisplay';
@@ -3307,7 +3307,7 @@ function App() {
             } />
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/buy-crypto" element={<BuyCryptoPage currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
