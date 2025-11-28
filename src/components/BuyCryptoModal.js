@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { FaTimes, FaCreditCard } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
+  const hasOpenedPopup = useRef(false);
 
   // Open MoonPay in centered popup window automatically
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasOpenedPopup.current) {
+      hasOpenedPopup.current = true;
+
       // Small delay to show modal first
       const popupTimer = setTimeout(() => {
         const width = 450;
@@ -37,7 +40,12 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
         clearTimeout(closeTimer);
       };
     }
-  }, [isOpen, onClose]);
+
+    // Reset the ref when modal closes
+    if (!isOpen) {
+      hasOpenedPopup.current = false;
+    }
+  }, [isOpen, onClose, moonpayUrl]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
