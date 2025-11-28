@@ -7,12 +7,16 @@
     <meta name="theme-color" content="#51159D" />
     <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
     
-    <!-- Content Security Policy for ChangeNOW and TradingView integration -->
+    <!-- Content Security Policy for Payment Providers and TradingView integration -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self' https:;
       script-src 'self' 'unsafe-inline' 'unsafe-eval' 
-        https://*.changenow.io
-        https://changenow.io
+        https://*.moonpay.com
+        https://buy.moonpay.com
+        https://*.ramp.network
+        https://buy.ramp.network
+        https://*.mercuryo.io
+        https://exchange.mercuryo.io
         https://*.google.com 
         https://*.mintfunnel.co
         https://*.app.mintfunnel.co
@@ -34,14 +38,14 @@
       img-src 'self' https: data: blob:;
       font-src 'self' https: data:;
       connect-src 'self' https: wss: ws:;
-      frame-src 'self' https: https://*.mintfunnel.co https://*.app.mintfunnel.co https://*.changenow.io https://changenow.io;
+      frame-src 'self' https: https://*.mintfunnel.co https://*.app.mintfunnel.co https://*.moonpay.com https://buy.moonpay.com https://*.ramp.network https://buy.ramp.network https://*.mercuryo.io https://exchange.mercuryo.io;
       media-src 'self' https: data: blob:;
       object-src 'none';
       base-uri 'self';
       form-action 'self' https: https://*.mintfunnel.co https://*.app.mintfunnel.co;
     ">
     
-    <!-- Permissions Policy for ChangeNOW functionality -->
+    <!-- Permissions Policy for Payment Providers -->
     <meta http-equiv="Permissions-Policy" content="
       camera=*, 
       microphone=*, 

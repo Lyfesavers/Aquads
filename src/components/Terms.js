@@ -65,8 +65,8 @@ const Terms = () => {
                 <p className="mb-2">Aquads.xyz is a Web3 platform offering:</p>
                 <ul className="list-disc pl-6 mb-4 space-y-2">
                   <li><span className="text-blue-400 font-semibold">Freelancer Hub (Lead Generator):</span> A directory and referral service connecting Freelancers to Employers; Aquads does not process payments or contract work.</li>
-                  <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers ChangeNOW and LiFi.</li>
-                  <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through ChangeNOW and LiFi.</li>
+                  <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers LiFi.</li>
+                  <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through MoonPay, Ramp Network, Mercuryo and LiFi.</li>
                   <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings, free tier and paid bump options.</li>
                   <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Campaigns managed by Coinbound.io and other PR partners (Forbes, Yahoo Finance, Benzinga).</li>
                   <li><span className="text-blue-400 font-semibold">Game Hub:</span> Play‑to‑earn events, mini‑games, and token rewards operated by Aquads.</li>
@@ -90,7 +90,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">4. Third‑Party Service Partners</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">4.1 List of Partners.</span> Services rely on third parties: ChangeNOW, LiFi (swap/on‑ramp/off‑ramp), Coinbound.io (marketing/PR), PR outlets (Forbes, Benzinga, Yahoo Finance), and others.</p>
+                <p><span className="text-blue-400 font-semibold">4.1 List of Partners.</span> Services rely on third parties: MoonPay, Ramp Network, Mercuryo, LiFi (swap/on‑ramp/off‑ramp), Coinbound.io (marketing/PR), PR outlets (Forbes, Benzinga, Yahoo Finance), and others.</p>
                 <p><span className="text-blue-400 font-semibold">4.2 Disclaimers.</span> Aquads is not responsible for partner performance, fees, KYC/AML processes, or availability. You agree that use of third-party services is subject to their own terms and policies.</p>
                 <p><span className="text-blue-400 font-semibold">4.3 Referrals & Affiliates.</span> Aquads may receive referral fees. We will disclose affiliate relationships where required by law.</p>
               </div>
@@ -139,7 +139,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">9. KYC, AML & Sanctions Screening</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">9.1 Performed by Partners.</span> Identity verification and AML checks are conducted by ChangeNOW, LiFi, and other providers.</p>
+                <p><span className="text-blue-400 font-semibold">9.1 Performed by Partners.</span> Identity verification and AML checks are conducted by MoonPay, Ramp Network, Mercuryo, LiFi, and other providers.</p>
                 <p><span className="text-blue-400 font-semibold">9.2 Right to Block.</span> Aquads may restrict or terminate user access based on partner findings or sanction lists (e.g., OFAC).</p>
               </div>
             </section>
@@ -148,7 +148,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">10. Data, Privacy & Cookies</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">10.1 Privacy Policy.</span> We maintain a separate Privacy Policy detailing what personal data we collect and how we use it. We do not collect or store wallet addresses—onboarding, identity verification, and wallet linking are managed entirely by our third-party providers (e.g., ChangeNOW, LiFi, Reown).</p>
+                <p><span className="text-blue-400 font-semibold">10.1 Privacy Policy.</span> We maintain a separate Privacy Policy detailing what personal data we collect and how we use it. We do not collect or store wallet addresses—onboarding, identity verification, and wallet linking are managed entirely by our third-party providers (e.g., MoonPay, Ramp Network, Mercuryo, LiFi, Reown).</p>
                 
                 <div>
                   <p><span className="text-blue-400 font-semibold">10.2 Data Collected.</span> We may collect:</p>
@@ -172,7 +172,7 @@ const Terms = () => {
                 <div>
                   <p><span className="text-blue-400 font-semibold">10.4 Data Sharing.</span> We share data only with:</p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
-                    <li>Third-party service partners (ChangeNOW, LiFi, Coinbound.io, Reown) as required to deliver Services</li>
+                    <li>Third-party service partners (MoonPay, Ramp Network, Mercuryo, LiFi, Coinbound.io, Reown) as required to deliver Services</li>
                     <li>Analytics and performance providers under strict confidentiality</li>
                   </ul>
                 </div>

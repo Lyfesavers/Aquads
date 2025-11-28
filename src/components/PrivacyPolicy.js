@@ -75,7 +75,7 @@ const PrivacyPolicy = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-3 text-blue-300">1.3 Third-Party Data</h3>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li><span className="text-blue-400 font-semibold">Service Partners:</span> We receive identity verification and transaction data from ChangeNOW, LiFi, and Reown, and marketing performance data from Coinbound.io.</li>
+                    <li><span className="text-blue-400 font-semibold">Service Partners:</span> We receive identity verification and transaction data from MoonPay, Ramp Network, Mercuryo, LiFi, and Reown, and marketing performance data from Coinbound.io.</li>
                     <li><span className="text-blue-400 font-semibold">Public Sources:</span> Information you make publicly available (e.g., social profiles) if you link them to your account.</li>
                   </ul>
                 </div>
@@ -105,7 +105,7 @@ const PrivacyPolicy = () => {
                   <h3 className="text-lg font-semibold mb-3 text-blue-300">3.1 Third-Party Partners</h3>
                   <p className="mb-3">We share necessary data with:</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li><span className="text-blue-400 font-semibold">ChangeNOW & LiFi:</span> For on-ramp/off-ramp transactions and cross-chain swaps.</li>
+                    <li><span className="text-blue-400 font-semibold">MoonPay, Ramp Network, Mercuryo & LiFi:</span> For on-ramp/off-ramp transactions and cross-chain swaps.</li>
                     <li><span className="text-blue-400 font-semibold">Reown:</span> For wallet linking and identity confirmation.</li>
                     <li><span className="text-blue-400 font-semibold">Coinbound.io & PR Outlets:</span> For marketing campaigns and publications.</li>
                     <li><span className="text-blue-400 font-semibold">Analytics Providers:</span> For performance tracking (e.g., Google Analytics).</li>
