@@ -4,8 +4,6 @@ import { FaTimes, FaCreditCard } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  const [selectedProvider, setSelectedProvider] = useState('moonpay');
-
   // Debug logging
   useEffect(() => {
     console.log('BuyCryptoModal rendered! isOpen:', isOpen);
@@ -14,21 +12,32 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Provider configurations - embedded widgets
-  const providers = {
-    moonpay: {
-      name: 'MoonPay',
-      embedUrl: 'https://buy.moonpay.com?colorCode=%237D00FF',
-      color: '#7D00FF'
-    },
-    mercuryo: {
-      name: 'Mercuryo',
-      embedUrl: 'https://exchange.mercuryo.io/?theme=dark&type=buy&currency=BTC&fiat_currency=USD&fiat_amount=100',
-      color: '#00B8D9'
-    }
-  };
+  const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
 
-  const currentProvider = providers[selectedProvider];
+  // Open MoonPay in centered popup window automatically
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to show modal first
+      const timer = setTimeout(() => {
+        const width = 450;
+        const height = 650;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+        
+        const popup = window.open(
+          moonpayUrl,
+          'MoonPayBuyCrypto',
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
+
+        if (!popup) {
+          alert('Please allow popups to buy crypto with MoonPay');
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -99,32 +108,20 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Provider Tabs */}
-        <div className="modal-provider-tabs">
-          <button 
-            className={`provider-tab ${selectedProvider === 'moonpay' ? 'active' : ''}`}
-            onClick={() => setSelectedProvider('moonpay')}
-            style={{ '--provider-color': providers.moonpay.color }}
-          >
-            MoonPay
-          </button>
-          <button 
-            className={`provider-tab ${selectedProvider === 'mercuryo' ? 'active' : ''}`}
-            onClick={() => setSelectedProvider('mercuryo')}
-            style={{ '--provider-color': providers.mercuryo.color }}
-          >
-            Mercuryo
-          </button>
-        </div>
-
-        {/* Widget Content */}
+        {/* MoonPay Loading */}
         <div className="modal-content">
-          <iframe
-            title={`Buy Crypto with ${currentProvider.name}`}
-            src={currentProvider.embedUrl}
-            className="modal-iframe"
-            allow="accelerometer; autoplay; camera; gyroscope; payment"
-          />
+          <div className="moonpay-loading">
+            <div className="loading-spinner-large"></div>
+            <h3>Opening MoonPay...</h3>
+            <p>A secure window will open to complete your purchase</p>
+            <div className="loading-features">
+              <div className="feature-item">✓ Credit & Debit Cards</div>
+              <div className="feature-item">✓ Bank Transfers</div>
+              <div className="feature-item">✓ Apple Pay & Google Pay</div>
+              <div className="feature-item">✓ Instant Delivery</div>
+            </div>
+            <p className="popup-note">If the window didn't open, please allow popups and try again</p>
+          </div>
         </div>
       </div>
     </div>
