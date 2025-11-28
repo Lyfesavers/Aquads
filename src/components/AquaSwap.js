@@ -1215,10 +1215,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 {showEmbedCode ? '❌ Close' : '🔗 Embed'}
               </button>
               <button 
-                onClick={() => {
-                  console.log('Buy button clicked - opening modal');
-                  setShowBuyCryptoModal(true);
-                }}
+                onClick={() => setShowBuyCryptoModal(true)}
                 className="fiat-purchase-button"
                 title="Buy crypto with fiat currency"
               >
@@ -1268,10 +1265,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
             </button>
             <button 
-              onClick={() => {
-                console.log('Buy button clicked (mobile) - opening modal');
-                setShowBuyCryptoModal(true);
-              }}
+              onClick={() => setShowBuyCryptoModal(true)}
               className="fiat-purchase-button"
               title="Buy crypto with fiat currency"
             >

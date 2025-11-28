@@ -4,21 +4,13 @@ import { FaTimes, FaCreditCard } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  // Debug logging
-  useEffect(() => {
-    console.log('BuyCryptoModal rendered! isOpen:', isOpen);
-    if (isOpen) {
-      console.log('Modal should be visible now!');
-    }
-  }, [isOpen]);
-
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
 
   // Open MoonPay in centered popup window automatically
   useEffect(() => {
     if (isOpen) {
       // Small delay to show modal first
-      const timer = setTimeout(() => {
+      const popupTimer = setTimeout(() => {
         const width = 450;
         const height = 650;
         const left = (window.screen.width - width) / 2;
@@ -35,9 +27,17 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
         }
       }, 300);
 
-      return () => clearTimeout(timer);
+      // Auto-close modal after 2 seconds
+      const closeTimer = setTimeout(() => {
+        onClose();
+      }, 2000);
+
+      return () => {
+        clearTimeout(popupTimer);
+        clearTimeout(closeTimer);
+      };
     }
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -63,11 +63,8 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen) {
-    console.log('Modal not open, returning null');
     return null;
   }
-
-  console.log('Rendering modal overlay with Portal...');
 
   const modalContent = (
     <div 
