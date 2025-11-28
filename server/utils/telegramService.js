@@ -2627,7 +2627,9 @@ ${platformEmoji} ${platformName} Raid
       let message = `🎉 New Vote for ${project.title}!\n\n`;
       message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
       message += `🏆 Rank: ${rankEmoji} #${projectRank}\n\n`;
-      message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
+      message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending\n\n`;
+      message += `👍 React to this post for 1 point!\n`;
+      message += `💰 Link your account: @aquadsbumpbot`;
 
       // Create voting keyboard
       const keyboard = {
@@ -2819,7 +2821,9 @@ ${platformEmoji} ${platformName} Raid
       });
 
       message += `━━━━━━━━━━━━━━━━━━━━\n`;
-      message += `💎 Vote on your favorites at aquads.xyz`;
+      message += `💎 Vote on your favorites at aquads.xyz\n\n`;
+      message += `👍 React to this post for 1 point!\n`;
+      message += `💰 Link your account: @aquadsbumpbot`;
 
       // Send with video
       const videoPath = path.join(__dirname, '../../public/trend.mp4');
@@ -3213,6 +3217,105 @@ Let's make today amazing! 🚀`;
 
     } catch (error) {
       console.error('Daily GM message failed:', error.message);
+      return false;
+    }
+  },
+
+  // Handle reaction updates from Telegram
+  handleReaction: async (reactionUpdate) => {
+    try {
+      const chatId = reactionUpdate.chat.id.toString();
+      const telegramUserId = reactionUpdate.user.id.toString();
+      const messageId = reactionUpdate.message_id.toString();
+      const newReactions = reactionUpdate.new_reaction || [];
+      const oldReactions = reactionUpdate.old_reaction || [];
+      
+      // Only process reactions in the TRENDING channel
+      if (chatId !== telegramService.TRENDING_CHANNEL_ID) {
+        return;
+      }
+      
+      // Only process NEW reactions (not changes/removals)
+      if (newReactions.length <= oldReactions.length) {
+        return;
+      }
+      
+      // Award points
+      await telegramService.awardReactionPoints(telegramUserId, messageId, chatId);
+      
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+    }
+  },
+
+  // Award points for reactions
+  awardReactionPoints: async (telegramUserId, messageId, chatId) => {
+    try {
+      const TelegramReaction = require('../models/TelegramReaction');
+      
+      // Find user by telegram ID
+      const user = await User.findOne({ telegramId: telegramUserId });
+      
+      if (!user) {
+        console.log(`User not linked for telegram ID: ${telegramUserId}`);
+        return;
+      }
+      
+      // Check if they already got points for THIS message
+      const existingReaction = await TelegramReaction.findOne({
+        userId: user._id,
+        messageId: messageId
+      });
+      
+      if (existingReaction) {
+        console.log(`User ${user.username} already reacted to message ${messageId}`);
+        return;
+      }
+      
+      // Award 1 point
+      const POINTS = 1;
+      user.points += POINTS;
+      user.pointsHistory.push({
+        amount: POINTS,
+        reason: 'Reacted to Trending Channel post',
+        createdAt: new Date()
+      });
+      await user.save();
+      
+      // Record the reaction
+      await TelegramReaction.create({
+        userId: user._id,
+        telegramUserId: telegramUserId,
+        messageId: messageId,
+        chatId: chatId,
+        points: POINTS,
+        reactedAt: new Date()
+      });
+      
+      console.log(`✅ Awarded ${POINTS} point to ${user.username} for reaction to message ${messageId}`);
+      
+      // Send confirmation DM
+      try {
+        await telegramService.sendBotMessage(telegramUserId, 
+          `✅ +${POINTS} point for reacting to Trending Channel!\n\n💰 Total points: ${user.points}`
+        );
+      } catch (dmError) {
+        // User might have blocked bot or never started chat - that's okay
+        console.log(`Could not send DM to user ${telegramUserId}: ${dmError.message}`);
+      }
+      
+    } catch (error) {
+      console.error('Error awarding reaction points:', error);
+    }
+  },
+
+  // Send direct message to user
+  sendDirectMessage: async (userId, message) => {
+    try {
+      const result = await telegramService.sendBotMessage(userId, message);
+      return result.success;
+    } catch (error) {
+      console.error(`Error sending DM to user ${userId}:`, error.message);
       return false;
     }
   }
