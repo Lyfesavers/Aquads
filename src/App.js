@@ -341,6 +341,11 @@ function App() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showBumpReminderModal, setShowBumpReminderModal] = useState(false);
   const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
+
+  // Debug modal state
+  useEffect(() => {
+    console.log('App.js - showBuyCryptoModal state changed:', showBuyCryptoModal);
+  }, [showBuyCryptoModal]);
   const [unbumpedAd, setUnbumpedAd] = useState(null);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);

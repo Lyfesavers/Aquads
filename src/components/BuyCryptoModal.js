@@ -7,7 +7,10 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
 
   // Debug logging
   useEffect(() => {
-    console.log('BuyCryptoModal isOpen:', isOpen);
+    console.log('BuyCryptoModal rendered! isOpen:', isOpen);
+    if (isOpen) {
+      console.log('Modal should be visible now!');
+    }
   }, [isOpen]);
 
   // Provider configurations - embedded widgets
@@ -49,11 +52,38 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('Modal not open, returning null');
+    return null;
+  }
+
+  console.log('Rendering modal overlay...');
 
   return (
-    <div className="buy-crypto-modal-overlay" onClick={onClose}>
-      <div className="buy-crypto-modal" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="buy-crypto-modal-overlay" 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999999,
+        background: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      <div 
+        className="buy-crypto-modal" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          zIndex: 1000000
+        }}
+      >
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
