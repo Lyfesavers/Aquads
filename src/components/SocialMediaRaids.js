@@ -82,8 +82,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [newRaid, setNewRaid] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Retweet, Like & Comment to earn 50 points!',
-    points: 50
+    description: 'Retweet, Like & Comment to earn 20 points!',
+    points: 20
   });
   
   // For points-based raid creation
@@ -91,7 +91,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [pointsRaidData, setPointsRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Retweet, Like & Comment to earn 50 points!'
+    description: 'Retweet, Like & Comment to earn 20 points!'
   });
 
   // For free raid creation
@@ -99,7 +99,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [freeRaidData, setFreeRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Retweet, Like & Comment to earn 50 points!'
+    description: 'Retweet, Like & Comment to earn 20 points!'
   });
   const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
@@ -687,8 +687,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     const raidData = {
       ...newRaid,
       title: 'Twitter Raid',
-      description: 'Retweet, Like & Comment to earn 50 points!',
-      points: 50
+      description: 'Retweet, Like & Comment to earn 20 points!',
+      points: 20
     };
     
     setSubmitting(true);
@@ -713,8 +713,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setNewRaid({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!',
-        points: 50
+        description: 'Retweet, Like & Comment to earn 20 points!',
+        points: 20
       });
       setShowCreateForm(false);
       
@@ -795,7 +795,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setFreeRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!'
+        description: 'Retweet, Like & Comment to earn 20 points!'
       });
       setShowFreeRaidForm(false);
       
@@ -978,7 +978,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setPointsRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!'
+        description: 'Retweet, Like & Comment to earn 20 points!'
       });
       setShowPointsCreateForm(false);
       
@@ -1148,9 +1148,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <br />
                   • Title: "Twitter Raid"
                   <br />
-                  • Description: "Retweet, Like & Comment to earn 50 points!"
+                  • Description: "Retweet, Like & Comment to earn 20 points!"
                   <br />
-                  • Points: 50
+                  • Points: 20
                 </p>
               </div>
               

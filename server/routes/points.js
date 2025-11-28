@@ -296,7 +296,7 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
       throw new Error(`User with ID ${userId} not found`);
     }
     
-    const pointAmount = 50; // Default point amount
+    const pointAmount = 20; // Default point amount
     
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -357,7 +357,7 @@ router.post('/social-raids/complete', auth, requireEmailVerification, async (req
     
     res.json({
       success: true,
-      message: `Successfully completed ${platform} raid and earned 50 points!`,
+      message: `Successfully completed ${platform} raid and earned 20 points!`,
       currentPoints: updatedUser.points
     });
     
@@ -499,11 +499,11 @@ const awardGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: 50 },
+        $inc: { points: 20 },
         lastActivity: new Date(), // Update activity when points are awarded
         $push: {
           pointsHistory: {
-            amount: 50,
+            amount: 20,
             reason: reason,
             gameId: gameId,
             createdAt: new Date()
@@ -542,11 +542,11 @@ const revokeGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: -50 },
+        $inc: { points: -20 },
         lastActivity: new Date(), // Update activity when points are revoked
         $push: {
           pointsHistory: {
-            amount: -50,
+            amount: -20,
             reason: 'Removed vote for a game',
             gameId: gameId,
             createdAt: new Date()

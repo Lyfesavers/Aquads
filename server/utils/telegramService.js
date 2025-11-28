@@ -112,7 +112,7 @@ const telegramService = {
       // Construct the message text
       const message = `🚀 New ${platformName} Available!
 
-💰 Reward: ${raidData.points || 50} points
+💰 Reward: ${raidData.points || 20} points
 🎯 Task: ${taskDescription}
 
 🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}
@@ -1070,7 +1070,7 @@ https://aquads.xyz`;
         raidId: raid._id.toString(),
         raidTitle: raid.title,
         platform: platform,
-        points: raid.points || 50
+        points: raid.points || 20
       }).catch(err => {
         console.error('Error sending raid completion notification:', err);
       });
@@ -1889,7 +1889,7 @@ ${platformEmoji} ${platformName} Raid
         raidId: raid._id.toString(),
         raidTitle: raid.title,
         platform: platform,
-        points: raid.points || 50
+        points: raid.points || 20
       }).catch(err => {
         console.error('Error sending raid completion notification:', err);
       });
@@ -2004,7 +2004,7 @@ ${platformEmoji} ${platformName} Raid
         raidId: raid._id.toString(),
         raidTitle: raid.title,
         platform: platform,
-        points: state.raidPoints || raid.points || 50
+        points: state.raidPoints || raid.points || 20
       }).catch(err => {
         console.error('Error sending raid completion notification:', err);
       });
@@ -2405,7 +2405,7 @@ ${platformEmoji} ${platformName} Raid
       
       // Generate default title and description
       const title = `Twitter Raid by @${user.username}`;
-      const description = `Help boost this tweet! Like, retweet, and comment to earn 50 points.`;
+      const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
       
       // Check if user has free raids available
       const eligibility = user.checkFreeRaidEligibility();
@@ -2419,7 +2419,7 @@ ${platformEmoji} ${platformName} Raid
           tweetUrl,
           title,
           description,
-          points: 50, // Fixed points for raids
+          points: 20, // Fixed points for raids
           createdBy: user._id,
           isPaid: false,
           paymentStatus: 'approved', // Free raids are automatically approved
@@ -2432,7 +2432,7 @@ ${platformEmoji} ${platformName} Raid
 
         // Send success message for free raid
         await telegramService.sendBotMessage(chatId, 
-          `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 50 points.`);
+          `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
 
         // Send Telegram notification to all users about the new raid
         await telegramService.sendRaidNotification({
@@ -2458,7 +2458,7 @@ ${platformEmoji} ${platformName} Raid
         tweetUrl,
         title,
         description,
-        points: 50, // Fixed points for raids
+        points: 20, // Fixed points for raids
         createdBy: user._id,
         isPaid: false, // Not a paid raid (it's a points raid)
         paymentStatus: 'approved', // Automatically approved since we're deducting points
@@ -2484,7 +2484,7 @@ ${platformEmoji} ${platformName} Raid
 
       // Send success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 50 points.`);
+        `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
 
       // Send Telegram notification to all users about the new raid
       await telegramService.sendRaidNotification({

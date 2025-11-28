@@ -244,7 +244,7 @@ function init(server) {
                   raidId: raid._id,
                   raidTitle: raid.title,
                   raidTweetUrl: raid.tweetUrl,
-                  pointsAmount: raid.points || 50,
+                  pointsAmount: raid.points || 20,
                   user: completion.userId,
                   twitterUsername: completion.twitterUsername,
                   verificationMethod: completion.verificationMethod,

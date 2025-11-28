@@ -81,8 +81,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [newRaid, setNewRaid] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 50 points!',
-    points: 50
+    description: 'Like, Share & Comment to earn 20 points!',
+    points: 20
   });
   
   // For points-based raid creation
@@ -90,7 +90,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [pointsRaidData, setPointsRaidData] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 50 points!'
+    description: 'Like, Share & Comment to earn 20 points!'
   });
 
   // For free raid creation
@@ -98,7 +98,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [freeRaidData, setFreeRaidData] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 50 points!'
+    description: 'Like, Share & Comment to earn 20 points!'
   });
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
 
@@ -290,7 +290,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setFreeRaidData({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 50 points!'
+          description: 'Like, Share & Comment to earn 20 points!'
         });
         fetchRaids();
         checkFreeRaidEligibility();
@@ -338,8 +338,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setNewRaid({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 50 points!',
-          points: 50
+          description: 'Like, Share & Comment to earn 20 points!',
+          points: 20
         });
         fetchRaids();
         showNotification('Facebook raid created successfully!', 'success');
@@ -386,7 +386,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setPointsRaidData({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 50 points!'
+          description: 'Like, Share & Comment to earn 20 points!'
         });
         fetchRaids();
         fetchUserPoints(); // Refresh points balance
@@ -609,8 +609,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                 Enter the URL of the Facebook post you want users to interact with.
                 <br />A new raid will be created with standard values:
                 <br />• Title: "Facebook Raid"
-                <br />• Description: "Like, Share & Comment to earn 50 points!"
-                <br />• Points: 50
+                <br />• Description: "Like, Share & Comment to earn 20 points!"
+                <br />• Points: 20
               </p>
             </div>
             <button 

@@ -153,7 +153,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       tweetUrl,
       title,
       description,
-      points: points || 50,
+      points: points || 20,
       createdBy: req.user.id,
       isPaid: false,
       paymentStatus: 'approved' // Admin created raids are automatically approved
@@ -212,7 +212,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       tweetUrl,
       title,
       description,
-      points: 50, // Fixed points for raids
+      points: 20, // Fixed points for raids
       createdBy: req.user.id,
       isPaid: false, // Not a paid raid (it's a points raid)
       paymentStatus: 'approved', // Automatically approved since we're deducting points
@@ -423,7 +423,7 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
 
     // Create a pending completion that requires admin approval
     try {
-      const pointsAmount = raid.points || 50;
+      const pointsAmount = raid.points || 20;
       const user = await User.findById(userId);
       
       if (!user) {
@@ -469,7 +469,7 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         raidId: raid._id,
         raidTitle: raid.title,
         raidTweetUrl: raid.tweetUrl,
-        pointsAmount: raid.points || 50,
+        pointsAmount: raid.points || 20,
         user: {
           _id: userId,
           username: user.username,
@@ -490,7 +490,7 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         raidId: raid._id.toString(),
         raidTitle: raid.title,
         platform: 'Twitter',
-        points: raid.points || 50
+        points: raid.points || 20
       }).catch(err => {
         console.error('Error sending raid completion notification:', err);
       });
@@ -551,7 +551,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     // Award points to user
     const user = await User.findById(completion.userId);
     if (user) {
-      const points = raid.points || 50;
+      const points = raid.points || 20;
       user.points = (user.points || 0) + points;
       user.lastActivity = new Date(); // Update activity when points are awarded
       user.pointsHistory.push({
@@ -775,7 +775,7 @@ router.get('/completions/pending', auth, async (req, res) => {
             raidId: raid._id,
             raidTitle: raid.title,
             raidTweetUrl: raid.tweetUrl,
-            pointsAmount: raid.points || 50,
+            pointsAmount: raid.points || 20,
             user: completion.userId,
             twitterUsername: completion.twitterUsername,
             verificationMethod: completion.verificationMethod,
@@ -932,7 +932,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       tweetUrl,
       title,
       description,
-      points: 50, // Fixed points for free raids
+      points: 20, // Fixed points for free raids
       createdBy: req.user.id,
       isPaid: false,
       paymentStatus: 'approved', // Free raids are automatically approved

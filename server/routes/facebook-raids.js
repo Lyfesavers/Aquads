@@ -97,7 +97,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       postUrl,
       title,
       description,
-      points: points || 50,
+      points: points || 20,
       createdBy: req.user.id,
       isPaid: false,
       paymentStatus: 'approved' // Admin created raids are automatically approved
@@ -155,7 +155,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       postUrl,
       title,
       description,
-      points: 50, // Fixed points for raids
+      points: 20, // Fixed points for raids
       createdBy: req.user.id,
       isPaid: false, // Not a paid raid (it's a points raid)
       paymentStatus: 'approved', // Automatically approved since we're deducting points
@@ -234,7 +234,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       postUrl,
       title,
       description,
-      points: 50, // Fixed points for free raids
+      points: 20, // Fixed points for free raids
       createdBy: req.user.id,
       isPaid: false,
       paymentStatus: 'approved', // Free raids are automatically approved
@@ -324,7 +324,7 @@ router.post('/:raidId/complete', auth, requireEmailVerification, facebookRaidRat
       raidId: raid._id.toString(),
       raidTitle: raid.title,
       platform: 'Facebook',
-      points: raid.points || 50
+      points: raid.points || 20
     }).catch(err => {
       console.error('Error sending raid completion notification:', err);
     });
