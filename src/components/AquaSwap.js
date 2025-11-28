@@ -73,7 +73,7 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'kaspa': 'kaspa'
 };
 
-const AquaSwap = ({ currentUser, showNotification }) => {
+const AquaSwap = ({ currentUser, showNotification, onOpenBuyCrypto }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -1210,13 +1210,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               >
                 {showEmbedCode ? '❌ Close' : '🔗 Embed'}
               </button>
-              <Link 
-                to="/buy-crypto"
+              <button 
+                onClick={onOpenBuyCrypto}
                 className="fiat-purchase-button"
                 title="Buy crypto with credit/debit card"
               >
                 💳 Buy Card
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -1260,13 +1260,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             >
               {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
             </button>
-            <Link 
-              to="/buy-crypto"
+            <button 
+              onClick={onOpenBuyCrypto}
               className="fiat-purchase-button"
               title="Buy crypto with credit/debit card"
             >
               💳 Buy with Card
-            </Link>
+            </button>
           </div>
         </div>
       </div>

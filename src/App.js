@@ -45,7 +45,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
-import BuyCryptoPage from './components/BuyCryptoPage';
+import BuyCryptoModal from './components/BuyCryptoModal';
 import VerifyUser from './components/VerifyUser';
 import MemberVerification from './components/MemberVerification';
 import BannerDisplay from './components/BannerDisplay';
@@ -340,6 +340,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showBumpReminderModal, setShowBumpReminderModal] = useState(false);
+  const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
   const [unbumpedAd, setUnbumpedAd] = useState(null);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -3135,6 +3136,12 @@ function App() {
                   />
                 )}
 
+                {/* Buy Crypto Modal */}
+                <BuyCryptoModal
+                  isOpen={showBuyCryptoModal}
+                  onClose={() => setShowBuyCryptoModal(false)}
+                />
+
                 {/* Full-screen vote popup */}
                 {votePopup && (
                   <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/70 backdrop-blur-md">
@@ -3305,9 +3312,8 @@ function App() {
                 openMintFunnelPlatform={openMintFunnelPlatform}
               />
             } />
-            <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/buy-crypto" element={<BuyCryptoPage currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} onOpenBuyCrypto={() => setShowBuyCryptoModal(true)} />} />
+            <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} onOpenBuyCrypto={() => setShowBuyCryptoModal(true)} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
