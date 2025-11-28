@@ -7,7 +7,7 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
   const hasOpenedPopup = useRef(false);
 
-  // Open MoonPay in centered popup window automatically
+  // Open MoonPay popup once when modal opens
   useEffect(() => {
     if (!isOpen) {
       // Reset ref when modal closes
@@ -20,11 +20,11 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
       return;
     }
 
+    // Mark as opened immediately to prevent multiple popups
+    hasOpenedPopup.current = true;
+
     // Small delay to show modal first
     const popupTimer = setTimeout(() => {
-      // Mark as opened BEFORE opening to prevent race conditions
-      hasOpenedPopup.current = true;
-
       const width = 450;
       const height = 650;
       const left = (window.screen.width - width) / 2;
@@ -42,16 +42,25 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
       }
     }, 300);
 
-    // Auto-close modal after 2 seconds
+    return () => {
+      clearTimeout(popupTimer);
+    };
+  }, [isOpen, moonpayUrl]);
+
+  // Auto-close modal after 2 seconds (separate effect)
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     const closeTimer = setTimeout(() => {
       onClose();
     }, 2000);
 
     return () => {
-      clearTimeout(popupTimer);
       clearTimeout(closeTimer);
     };
-  }, [isOpen, onClose, moonpayUrl]);
+  }, [isOpen, onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
