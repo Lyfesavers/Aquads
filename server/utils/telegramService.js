@@ -3215,6 +3215,222 @@ Let's make today amazing! 🚀`;
       console.error('Daily GM message failed:', error.message);
       return false;
     }
+  },
+
+  // Private engagement group ID
+  ENGAGEMENT_GROUP_ID: '-1002412665250',
+
+  // Handle messages in engagement group
+  handleEngagementMessage: async (message) => {
+    try {
+      const chatId = message.chat.id.toString();
+      const telegramUserId = message.from.id.toString();
+      const isBot = message.from.is_bot;
+
+      // Only process messages in the engagement group
+      if (chatId !== telegramService.ENGAGEMENT_GROUP_ID) {
+        return;
+      }
+
+      // Ignore bot messages
+      if (isBot) {
+        return;
+      }
+
+      // Award points for daily message
+      await telegramService.awardDailyMessagePoints(telegramUserId, chatId);
+
+    } catch (error) {
+      console.error('Error handling engagement message:', error);
+    }
+  },
+
+  // Handle reactions in engagement group
+  handleEngagementReaction: async (reactionUpdate) => {
+    try {
+      const chatId = reactionUpdate.chat.id.toString();
+      const telegramUserId = reactionUpdate.user.id.toString();
+      const newReactions = reactionUpdate.new_reaction || [];
+      const oldReactions = reactionUpdate.old_reaction || [];
+
+      // Only process reactions in the engagement group
+      if (chatId !== telegramService.ENGAGEMENT_GROUP_ID) {
+        return;
+      }
+
+      // Only process NEW reactions (not changes/removals)
+      if (newReactions.length <= oldReactions.length) {
+        return;
+      }
+
+      // Award points for daily reaction
+      await telegramService.awardDailyReactionPoints(telegramUserId, chatId);
+
+    } catch (error) {
+      console.error('Error handling engagement reaction:', error);
+    }
+  },
+
+  // Award points for daily message (2.5 points, once per day)
+  awardDailyMessagePoints: async (telegramUserId, groupId) => {
+    try {
+      const TelegramDailyEngagement = require('../models/TelegramDailyEngagement');
+      
+      // Find user by telegram ID
+      const user = await User.findOne({ telegramId: telegramUserId });
+      
+      if (!user) {
+        console.log(`User not linked for telegram ID: ${telegramUserId}`);
+        return;
+      }
+
+      // Get today's date string (YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+
+      // Check if user already messaged today
+      let engagement = await TelegramDailyEngagement.findOne({
+        userId: user._id,
+        groupId: groupId,
+        date: today
+      });
+
+      // If already messaged today, don't award points
+      if (engagement && engagement.hasMessagedToday) {
+        console.log(`User ${user.username} already earned message points today`);
+        return;
+      }
+
+      // Award 2.5 points
+      const POINTS = 2.5;
+      user.points += POINTS;
+      user.pointsHistory.push({
+        amount: POINTS,
+        reason: 'Daily message in Aquads group',
+        createdAt: new Date()
+      });
+      await user.save();
+
+      // Create or update engagement record
+      if (!engagement) {
+        engagement = await TelegramDailyEngagement.create({
+          userId: user._id,
+          telegramUserId: telegramUserId,
+          groupId: groupId,
+          date: today,
+          hasMessagedToday: true,
+          messagePoints: POINTS,
+          firstMessageAt: new Date()
+        });
+      } else {
+        engagement.hasMessagedToday = true;
+        engagement.messagePoints = POINTS;
+        engagement.firstMessageAt = new Date();
+        await engagement.save();
+      }
+
+      console.log(`✅ Awarded ${POINTS} points to ${user.username} for daily message`);
+
+      // Send confirmation DM
+      try {
+        const reactionStatus = engagement.hasReactedToday ? '✅' : '⏳';
+        const totalToday = engagement.messagePoints + engagement.reactionPoints;
+        
+        await telegramService.sendBotMessage(telegramUserId, 
+          `✅ +${POINTS} points for daily message!\n\n📊 Today's Progress:\n✅ Message: Done\n${reactionStatus} Reaction: ${engagement.hasReactedToday ? 'Done' : 'Pending'}\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`
+        );
+      } catch (dmError) {
+        console.log(`Could not send DM to user ${telegramUserId}: ${dmError.message}`);
+      }
+
+    } catch (error) {
+      // Handle duplicate key error silently (race condition)
+      if (error.code === 11000) {
+        console.log(`Race condition: User already earned message points today`);
+        return;
+      }
+      console.error('Error awarding daily message points:', error);
+    }
+  },
+
+  // Award points for daily reaction (2.5 points, once per day)
+  awardDailyReactionPoints: async (telegramUserId, groupId) => {
+    try {
+      const TelegramDailyEngagement = require('../models/TelegramDailyEngagement');
+      
+      // Find user by telegram ID
+      const user = await User.findOne({ telegramId: telegramUserId });
+      
+      if (!user) {
+        console.log(`User not linked for telegram ID: ${telegramUserId}`);
+        return;
+      }
+
+      // Get today's date string (YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+
+      // Check if user already reacted today
+      let engagement = await TelegramDailyEngagement.findOne({
+        userId: user._id,
+        groupId: groupId,
+        date: today
+      });
+
+      // If already reacted today, don't award points
+      if (engagement && engagement.hasReactedToday) {
+        console.log(`User ${user.username} already earned reaction points today`);
+        return;
+      }
+
+      // Award 2.5 points
+      const POINTS = 2.5;
+      user.points += POINTS;
+      user.pointsHistory.push({
+        amount: POINTS,
+        reason: 'Daily reaction in Aquads group',
+        createdAt: new Date()
+      });
+      await user.save();
+
+      // Create or update engagement record
+      if (!engagement) {
+        engagement = await TelegramDailyEngagement.create({
+          userId: user._id,
+          telegramUserId: telegramUserId,
+          groupId: groupId,
+          date: today,
+          hasReactedToday: true,
+          reactionPoints: POINTS,
+          firstReactionAt: new Date()
+        });
+      } else {
+        engagement.hasReactedToday = true;
+        engagement.reactionPoints = POINTS;
+        engagement.firstReactionAt = new Date();
+        await engagement.save();
+      }
+
+      console.log(`✅ Awarded ${POINTS} points to ${user.username} for daily reaction`);
+
+      // Send confirmation DM
+      try {
+        const messageStatus = engagement.hasMessagedToday ? '✅' : '⏳';
+        const totalToday = engagement.messagePoints + engagement.reactionPoints;
+        
+        await telegramService.sendBotMessage(telegramUserId, 
+          `✅ +${POINTS} points for daily reaction!\n\n📊 Today's Progress:\n${messageStatus} Message: ${engagement.hasMessagedToday ? 'Done' : 'Pending'}\n✅ Reaction: Done\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`
+        );
+      } catch (dmError) {
+        console.log(`Could not send DM to user ${telegramUserId}: ${dmError.message}`);
+      }
+
+    } catch (error) {
+      // Handle duplicate key error silently (race condition)
+      if (error.code === 11000) {
+        console.log(`Race condition: User already earned reaction points today`);
+        return;
+      }
+      console.error('Error awarding daily reaction points:', error);
+    }
   }
 
 

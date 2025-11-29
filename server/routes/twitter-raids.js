@@ -61,6 +61,10 @@ router.post('/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
     
+    // Always respond 200 OK quickly to Telegram
+    res.json({ ok: true });
+    
+    // Process updates asynchronously
     if (update.message) {
       // Handle photo uploads (for branding)
       if (update.message.photo) {
@@ -78,17 +82,22 @@ router.post('/telegram-webhook', async (req, res) => {
       else if (update.message.text) {
         await telegramService.handleCommand(update.message);
       }
+      
+      // Track engagement in private group (messages)
+      await telegramService.handleEngagementMessage(update.message);
     }
     
     if (update.callback_query) {
       await telegramService.handleCallbackQuery(update.callback_query);
     }
     
-    res.json({ ok: true });
+    // Handle reactions for daily engagement points
+    if (update.message_reaction) {
+      await telegramService.handleEngagementReaction(update.message_reaction);
+    }
     
   } catch (error) {
     console.error('Webhook processing error:', error);
-    res.status(500).json({ error: 'Failed to process webhook' });
   }
 });
 
