@@ -189,6 +189,14 @@ const Affiliate = () => {
                   <div className="bg-gray-700/50 rounded-lg p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-purple-900/20 px-2 rounded">
+                          <span className="text-gray-300">💬 Daily Telegram message</span>
+                          <span className="text-purple-400 font-bold">2.5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-purple-900/20 px-2 rounded">
+                          <span className="text-gray-300">👍 Daily Telegram reaction</span>
+                          <span className="text-purple-400 font-bold">2.5 pts</span>
+                        </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Every swap on AquaSwap</span>
                           <span className="text-green-400 font-bold">5 pts</span>
@@ -209,12 +217,12 @@ const Affiliate = () => {
                           <span className="text-gray-300">Game votes in GameHub</span>
                           <span className="text-green-400 font-bold">20 pts</span>
                         </div>
+                      </div>
+                      <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Hosting X spaces (1hr min, discuss Aquads, recorded)</span>
                           <span className="text-green-400 font-bold">100 pts</span>
                         </div>
-                      </div>
-                      <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Affiliate lists service/ad</span>
                           <span className="text-green-400 font-bold">20 pts</span>
@@ -228,6 +236,11 @@ const Affiliate = () => {
                           <span className="text-green-400 font-bold">1000 pts</span>
                         </div>
                       </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-purple-900/30 border border-purple-600/50 rounded-lg">
+                      <p className="text-sm text-purple-300">
+                        💡 <strong>New!</strong> Join our Telegram group and link your account with @aquadsbumpbot to earn up to 5 points daily!
+                      </p>
                     </div>
                   </div>
                 </div>
