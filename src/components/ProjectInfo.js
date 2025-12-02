@@ -537,11 +537,31 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                Priority positioning
+                Maximum size bubble on main page
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                Enhanced visibility
+                Priority positioning & enhanced visibility
+              </li>
+              <li className="flex items-center">
+                <FaTrophy className="text-yellow-400 mr-3" />
+                Vote ranking & trending across ecosystem
+              </li>
+              <li className="flex items-center">
+                <FaTwitter className="text-blue-400 mr-3" />
+                Free daily community raids
+              </li>
+              <li className="flex items-center">
+                <FaTelegram className="text-blue-400 mr-3" />
+                Free custom Telegram bot
+              </li>
+              <li className="flex items-center">
+                <FaMicrophone className="text-purple-400 mr-3" />
+                <span className="font-semibold">Live yappers promote your project on streams!</span>
+              </li>
+              <li className="flex items-center text-sm text-blue-300">
+                <FaStar className="text-yellow-400 mr-3" />
+                <span className="italic">All Base Listing perks included when bumped to max size!</span>
               </li>
             </ul>
                          {userHasProjects && (
