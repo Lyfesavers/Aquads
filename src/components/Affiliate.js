@@ -220,8 +220,8 @@ const Affiliate = () => {
                       </div>
                       <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
-                          <span className="text-gray-300">Hosting X spaces (1hr min, discuss Aquads, recorded)</span>
-                          <span className="text-green-400 font-bold">100 pts</span>
+                          <span className="text-gray-300">Hosting/Pitching on live streams & spaces (see details below)</span>
+                          <span className="text-green-400 font-bold">100 pts/day max</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Affiliate lists service/ad</span>
@@ -241,6 +241,48 @@ const Affiliate = () => {
                       <p className="text-sm text-purple-300">
                         💡 <strong>New!</strong> Join our Telegram group and link your account with @aquadsbumpbot to earn up to 5 points daily!
                       </p>
+                    </div>
+
+                    {/* Streaming/Spaces Details */}
+                    <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-600/50 rounded-lg">
+                      <h4 className="text-lg font-semibold mb-3 text-blue-400">📺 Live Streaming & Spaces - Earn 100 Points Per Day</h4>
+                      <p className="text-gray-300 mb-3">
+                        Host or pitch on live streams and spaces across multiple platforms including X (Twitter), Facebook, Instagram, YouTube, Twitch, Kick, and any other streaming platform!
+                      </p>
+                      
+                      <div className="space-y-3 text-sm text-gray-300">
+                        <div className="bg-gray-800/50 rounded p-3">
+                          <h5 className="text-indigo-400 font-semibold mb-2">Option 1: Hosting a Stream/Space</h5>
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li>Minimum 5 members in audience</li>
+                            <li>Minimum 1 hour duration</li>
+                            <li>Must YAP about Aquads and its features</li>
+                          </ul>
+                        </div>
+
+                        <div className="bg-gray-800/50 rounded p-3">
+                          <h5 className="text-indigo-400 font-semibold mb-2">Option 2: Pitching in a Space</h5>
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li>Minimum 5 people in the space</li>
+                            <li>Must YAP about Aquads and its features</li>
+                            <li>Pitch quality determines approval</li>
+                          </ul>
+                        </div>
+
+                        <div className="bg-gray-800/50 rounded p-3">
+                          <h5 className="text-yellow-400 font-semibold mb-2">⚠️ Requirements for Both Options:</h5>
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li>Must display Aquads logo in your profile picture OR use QR code generated from your dashboard</li>
+                            <li>Stream/space must be recorded</li>
+                            <li>Must send us the link to the recorded stream/space for verification</li>
+                            <li>Maximum 100 points per day (multiple streams/spaces earn 100 points total but greatly increase approval chances)</li>
+                          </ul>
+                        </div>
+
+                        <p className="text-blue-300 italic mt-2">
+                          💡 <strong>Pro Tip:</strong> Hosting multiple streams or participating in multiple spaces per day doesn't earn extra points beyond 100, but it significantly increases your chances of approval and shows your dedication to the Aquads community!
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -284,23 +326,6 @@ const Affiliate = () => {
                      </p>
                    </div>
 
-                   <div className="bg-gray-700/50 rounded-lg p-6 mb-4">
-                     <h4 className="text-lg font-semibold mb-3 text-indigo-400">Dots and Boxes Game Power-ups:</h4>
-                     <p className="text-gray-300 mb-3">
-                       Use your points to purchase power-ups in our Dots and Boxes game! These power-ups give you extra moves to help you win against the AI opponent.
-                     </p>
-                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
-                       <span className="text-gray-300">2 Extra Moves Power-up</span>
-                       <span className="text-red-400 font-bold">500 pts</span>
-                     </div>
-                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
-                       <span className="text-gray-300">4 Extra Moves Power-up</span>
-                       <span className="text-red-400 font-bold">900 pts</span>
-                     </div>
-                     <p className="text-sm text-gray-400 mt-3">
-                       * Power-ups give you additional moves in a single turn to capture more boxes and win the game
-                     </p>
-                   </div>
                  </div>
 
                 <div>
@@ -312,7 +337,6 @@ const Affiliate = () => {
                     <li>Demonstrate your commitment to the Web3 freelancing ecosystem</li>
                     <li>Earn additional incentives on top of commission payments</li>
                     <li>Create your own social media raids to promote projects and earn engagement</li>
-                    <li>Purchase power-ups in our Dots and Boxes game to enhance your gaming experience</li>
                   </ul>
                 </div>
 
