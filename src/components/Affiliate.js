@@ -274,6 +274,7 @@ const Affiliate = () => {
                           <ul className="list-disc list-inside space-y-1 ml-2">
                             <li><strong>Aquads</strong> - Our platform and all its features</li>
                             <li><strong>Featured Projects</strong> - Any project with a bubble on the main page that is bumped to maximum size</li>
+                            <li><strong>IMPORTANT:</strong> When promoting other projects, you MUST tell your audience to check them out or buy a bag using the Aquads platform!</li>
                             <li><strong>Note:</strong> Shrinked bubbles do NOT count - only maximum size bubbles qualify!</li>
                           </ul>
                         </div>
