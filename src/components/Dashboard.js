@@ -2501,7 +2501,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 5 points for every swap completed on AquaSwap</p>
                       <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 20 points for completing social media raids</p>
-                      <p>• Earn 100 points for pitching in a X space with minimum 5 people in it (must be recorded, pitch quality determines approval)</p>
+                      <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
                       <p>• Earn 20 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>
                       <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
