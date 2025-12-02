@@ -256,7 +256,7 @@ const Affiliate = () => {
                           <ul className="list-disc list-inside space-y-1 ml-2">
                             <li>Minimum 5 members in audience</li>
                             <li>Minimum 1 hour duration</li>
-                            <li>Must YAP about Aquads and its features</li>
+                            <li>Must YAP about Aquads and its features OR any project listed in our maximally-sized bubbles on the main page</li>
                           </ul>
                         </div>
 
@@ -264,8 +264,17 @@ const Affiliate = () => {
                           <h5 className="text-indigo-400 font-semibold mb-2">Option 2: Pitching in a Space</h5>
                           <ul className="list-disc list-inside space-y-1 ml-2">
                             <li>Minimum 5 people in the space</li>
-                            <li>Must YAP about Aquads and its features</li>
+                            <li>Must YAP about Aquads and its features OR any project listed in our maximally-sized bubbles on the main page</li>
                             <li>Pitch quality determines approval</li>
+                          </ul>
+                        </div>
+
+                        <div className="bg-green-900/30 rounded p-3 border border-green-600/50">
+                          <h5 className="text-green-400 font-semibold mb-2">✨ What You Can YAP About:</h5>
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li><strong>Aquads</strong> - Our platform and all its features</li>
+                            <li><strong>Featured Projects</strong> - Any project with a bubble on the main page that is bumped to maximum size</li>
+                            <li><strong>Note:</strong> Shrinked bubbles do NOT count - only maximum size bubbles qualify!</li>
                           </ul>
                         </div>
 
