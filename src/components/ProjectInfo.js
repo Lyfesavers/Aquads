@@ -414,6 +414,19 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               Launch targeted CPC campaigns across 1500+ crypto and mainstream platforms. Reach millions of potential investors with precision targeting and real-time analytics.
             </p>
           </div>
+
+          {/* Advantage 13 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-purple-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-lg">
+                <FaMicrophone className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">Live Yappers Promote Your Project</h3>
+            </div>
+            <p className="text-gray-300">
+              Get your bumped bubble promoted live on X Spaces, YouTube, Twitch, Kick, and more! Community yappers host and pitch your project to active audiences across all major streaming platforms - free organic exposure that drives real engagement.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -491,6 +504,13 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
                 $50 ad credit to run paid ads
+              </li>
+              <li className="flex items-center">
+                <FaMicrophone className="text-purple-400 mr-3" />
+                <span>
+                  Live yappers promote your project on streams & spaces
+                  <span className="ml-2 bg-purple-500 text-white px-2 py-0.5 rounded text-xs">HOT!</span>
+                </span>
               </li>
             </ul>
                          <button
