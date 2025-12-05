@@ -19,6 +19,44 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
   const [totalTVL, setTotalTVL] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
 
+  // Savings Calculator state
+  const [weeklyContribution, setWeeklyContribution] = useState(20);
+  const [apy, setApy] = useState(4);
+  const [years, setYears] = useState(40);
+  const [savingsResult, setSavingsResult] = useState(null);
+  const [isCalculatorExpanded, setIsCalculatorExpanded] = useState(false);
+
+  // Calculate savings function
+  const calculateSavings = () => {
+    const weekly = parseFloat(weeklyContribution) || 0;
+    const annualRate = parseFloat(apy) / 100 || 0;
+    const yearsValue = parseFloat(years) || 0;
+
+    const weeklyRate = annualRate / 52;
+    const totalWeeks = yearsValue * 52;
+    let balance = 0;
+
+    // Compound weekly + add contributions
+    for (let i = 0; i < totalWeeks; i++) {
+      balance = balance * (1 + weeklyRate) + weekly;
+    }
+
+    const withdrawalFeeRate = 0.025; // 2.5%
+    const feeAmount = balance * withdrawalFeeRate;
+    const finalAfterFee = balance - feeAmount;
+    const totalContributed = weekly * totalWeeks;
+    const totalEarnings = balance - totalContributed;
+
+    setSavingsResult({
+      finalBalance: balance,
+      withdrawalFee: feeAmount,
+      finalAfterFee: finalAfterFee,
+      totalContributed: totalContributed,
+      totalEarnings: totalEarnings
+    });
+    setIsCalculatorExpanded(true);
+  };
+
   // Header state variables
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -417,6 +455,119 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
           </div>
         </div>
 
+        {/* USDC Savings Growth Calculator */}
+        <div className="savings-calculator-section">
+          <div className="savings-calculator-container">
+            <div className="calculator-header">
+              <div className="calculator-icon">💰</div>
+              <div className="calculator-title-group">
+                <h3 className="calculator-title">Savings Growth Calculator</h3>
+                <p className="calculator-subtitle">See how your savings can grow over time with compound interest</p>
+              </div>
+            </div>
+
+            <div className="calculator-inputs">
+              <div className="calculator-input-group">
+                <label className="calculator-label">
+                  <span className="label-icon">💵</span>
+                  Weekly
+                </label>
+                <div className="input-wrapper">
+                  <span className="input-prefix">$</span>
+                  <input
+                    type="number"
+                    value={weeklyContribution}
+                    onChange={(e) => setWeeklyContribution(e.target.value)}
+                    className="calculator-input"
+                    min="1"
+                    placeholder="20"
+                  />
+                </div>
+              </div>
+
+              <div className="calculator-input-group">
+                <label className="calculator-label">
+                  <span className="label-icon">📈</span>
+                  APY
+                </label>
+                <div className="input-wrapper">
+                  <input
+                    type="number"
+                    value={apy}
+                    onChange={(e) => setApy(e.target.value)}
+                    className="calculator-input"
+                    step="0.1"
+                    min="0.1"
+                    placeholder="4"
+                  />
+                  <span className="input-suffix">%</span>
+                </div>
+              </div>
+
+              <div className="calculator-input-group">
+                <label className="calculator-label">
+                  <span className="label-icon">📅</span>
+                  Years
+                </label>
+                <div className="input-wrapper">
+                  <input
+                    type="number"
+                    value={years}
+                    onChange={(e) => setYears(e.target.value)}
+                    className="calculator-input"
+                    min="1"
+                    max="50"
+                    placeholder="40"
+                  />
+                </div>
+              </div>
+
+              <button 
+                onClick={calculateSavings}
+                className="calculator-btn"
+              >
+                <span className="btn-text">Calculate</span>
+                <span className="btn-icon">→</span>
+              </button>
+            </div>
+
+            {/* Results Panel */}
+            {savingsResult && isCalculatorExpanded && (
+              <div className="calculator-results">
+                <div className="result-card contributed">
+                  <span className="result-label">Total Contributed</span>
+                  <span className="result-value">
+                    ${savingsResult.totalContributed.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  </span>
+                </div>
+                <div className="result-card earnings">
+                  <span className="result-label">Interest Earned</span>
+                  <span className="result-value highlight-green">
+                    +${savingsResult.totalEarnings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  </span>
+                </div>
+                <div className="result-card balance">
+                  <span className="result-label">Final Balance</span>
+                  <span className="result-value">
+                    ${savingsResult.finalBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  </span>
+                </div>
+                <div className="result-card fee">
+                  <span className="result-label">Withdrawal Fee (2.5%)</span>
+                  <span className="result-value highlight-amber">
+                    -${savingsResult.withdrawalFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  </span>
+                </div>
+                <div className="result-card final">
+                  <span className="result-label">You Take Home</span>
+                  <span className="result-value highlight-blue">
+                    ${savingsResult.finalAfterFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Direct to Savings Pools - No Tabs Needed */}
         <SavingsPools 
