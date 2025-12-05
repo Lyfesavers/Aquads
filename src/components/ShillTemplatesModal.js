@@ -187,7 +187,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
             )}
             <div className="shill-token-details">
               <h2 className="shill-modal-title">
-                Share <span className="token-highlight">{isLoadingToken ? '...' : `$${tokenSymbol}`}</span>
+                Shill <span className="token-highlight">{isLoadingToken ? '...' : `$${tokenSymbol}`}</span>
               </h2>
               <p className="shill-modal-subtitle">
                 {isLoadingToken ? 'Loading token info...' : 'Help spread the word!'}

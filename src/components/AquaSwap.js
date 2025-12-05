@@ -1700,15 +1700,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       )}
                     </div>
                     
-                    {/* Share Token Button - Shows when token is loaded */}
+                    {/* Shill Token Button - Shows when token is loaded */}
                     {tokenSearch && (
                       <button
                         className="aquaswap-share-btn"
                         onClick={() => setShowShillModal(true)}
-                        title="Share this token on social media"
+                        title="Shill this token on social media"
                       >
                         <FaShareAlt />
-                        <span>Share</span>
+                        <span>Shill it</span>
                       </button>
                     )}
                   </div>
