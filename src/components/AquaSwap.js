@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
+import { FaShareAlt } from 'react-icons/fa';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
+import ShillTemplatesModal from './ShillTemplatesModal';
 import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
 import './AquaSwap.css';
@@ -104,6 +106,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Buy Crypto Modal state
   const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
+
+  // Shill Templates Modal state
+  const [showShillModal, setShowShillModal] = useState(false);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
@@ -1759,7 +1764,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             )}
           </div>
           
-          <div className="chart-container">
+          <div className="chart-container" style={{ position: 'relative' }}>
+            {/* Floating Share Button - Only shows when a token is loaded */}
+            {tokenSearch && chartProvider === 'dexscreener' && (
+              <button
+                className="aquaswap-share-float-btn"
+                onClick={() => setShowShillModal(true)}
+                title="Share this token on social media"
+              >
+                <FaShareAlt />
+                <span>Share</span>
+              </button>
+            )}
+            
             {chartProvider === 'tradingview' && (
               <div 
                 ref={tradingViewRef}
@@ -1986,6 +2003,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <BuyCryptoModal
         isOpen={showBuyCryptoModal}
         onClose={() => setShowBuyCryptoModal(false)}
+      />
+
+      {/* Shill Templates Modal */}
+      <ShillTemplatesModal
+        isOpen={showShillModal}
+        onClose={() => setShowShillModal(false)}
+        tokenData={{
+          name: activeTokenName || 'Token',
+          symbol: activeTokenName || 'TOKEN',
+          pairAddress: tokenSearch,
+          chainId: selectedChain,
+          blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain
+        }}
       />
     </div>
   );

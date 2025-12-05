@@ -1,0 +1,665 @@
+/* ============================================
+   SHILL TEMPLATES MODAL - Modern & Unique UI
+   ============================================ */
+
+/* Overlay */
+.shill-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.shill-modal-overlay.closing {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Modal Container */
+.shill-modal {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16162a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 50px -10px rgba(0, 0, 0, 0.5),
+    0 0 100px -20px rgba(99, 102, 241, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shill-modal.closing {
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.shill-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.shill-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shill-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.shill-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Close Button */
+.shill-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: #a0a0a0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shill-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+/* Header */
+.shill-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shill-token-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shill-token-logo-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.shill-token-logo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.shill-token-logo-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+  z-index: -1;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.shill-token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shill-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.token-highlight {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shill-modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.shill-price-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.price-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.price-change {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.price-change.positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.price-change.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Section Styles */
+.shill-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Platform Selection */
+.shill-platform-section {
+  padding: 20px 24px;
+}
+
+.shill-platform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.shill-platform-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.shill-platform-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shill-platform-btn.twitter::before {
+  background: linear-gradient(135deg, rgba(29, 161, 242, 0.15) 0%, rgba(29, 161, 242, 0.05) 100%);
+}
+
+.shill-platform-btn.telegram::before {
+  background: linear-gradient(135deg, rgba(0, 136, 204, 0.15) 0%, rgba(0, 136, 204, 0.05) 100%);
+}
+
+.shill-platform-btn:hover::before {
+  opacity: 1;
+}
+
+.shill-platform-btn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.shill-platform-btn.twitter:hover {
+  border-color: rgba(29, 161, 242, 0.4);
+  box-shadow: 0 8px 30px -10px rgba(29, 161, 242, 0.3);
+}
+
+.shill-platform-btn.telegram:hover {
+  border-color: rgba(0, 136, 204, 0.4);
+  box-shadow: 0 8px 30px -10px rgba(0, 136, 204, 0.3);
+}
+
+.platform-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: relative;
+}
+
+.shill-platform-btn.twitter .platform-icon-wrapper {
+  background: linear-gradient(135deg, #1DA1F2 0%, #0d8ecf 100%);
+}
+
+.shill-platform-btn.telegram .platform-icon-wrapper {
+  background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+}
+
+.platform-icon {
+  font-size: 1.75rem;
+  color: #fff;
+}
+
+.platform-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.platform-arrow {
+  font-size: 1.25rem;
+  color: #6b7280;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.shill-platform-btn:hover .platform-arrow {
+  transform: translateX(4px);
+  color: #fff;
+}
+
+/* Templates Section */
+.shill-templates-section {
+  padding: 20px 24px;
+}
+
+.shill-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.shill-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shill-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.shill-section-header .shill-section-title {
+  flex: 1;
+  margin: 0;
+}
+
+.selected-platform-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.shill-templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Template Card */
+.shill-template-card {
+  position: relative;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.shill-template-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shill-template-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(4px);
+}
+
+.shill-template-card:hover::before {
+  opacity: 1;
+}
+
+.template-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.template-emoji {
+  font-size: 1.25rem;
+}
+
+.template-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.template-preview {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.template-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--card-gradient);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.9;
+}
+
+.template-share-btn:hover {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.template-share-btn .share-icon {
+  font-size: 0.75rem;
+}
+
+/* Footer */
+.shill-modal-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.shill-utility-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.shill-utility-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shill-utility-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.utility-icon {
+  font-size: 0.9rem;
+}
+
+.utility-icon.success {
+  color: #10b981;
+}
+
+.shill-footer-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .shill-modal {
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
+  }
+
+  .shill-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .shill-modal-header {
+    padding: 20px 20px 16px;
+  }
+
+  .shill-platform-section,
+  .shill-templates-section {
+    padding: 16px 20px;
+  }
+
+  .shill-modal-footer {
+    padding: 14px 20px 20px;
+  }
+
+  .shill-platform-btn {
+    padding: 20px 12px;
+  }
+
+  .platform-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .platform-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .shill-modal-overlay,
+  .shill-modal,
+  .shill-platform-btn,
+  .shill-template-card,
+  .shill-token-logo-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   FLOATING SHARE BUTTON FOR AQUASWAP
+   ============================================ */
+
+.aquaswap-share-float-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px -5px rgba(99, 102, 241, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.aquaswap-share-float-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.aquaswap-share-float-btn:hover::before {
+  opacity: 1;
+}
+
+.aquaswap-share-float-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -5px rgba(99, 102, 241, 0.6);
+}
+
+.aquaswap-share-float-btn svg,
+.aquaswap-share-float-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.aquaswap-share-float-btn svg {
+  font-size: 1rem;
+}
+
+/* Mobile adjustments for floating button */
+@media (max-width: 768px) {
+  .aquaswap-share-float-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    top: 8px;
+    right: 8px;
+  }
+  
+  .aquaswap-share-float-btn span {
+    display: none;
+  }
+  
+  .aquaswap-share-float-btn svg {
+    font-size: 1.1rem;
+  }
+}
+
