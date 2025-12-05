@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
+import { FaShareAlt } from 'react-icons/fa';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
+import ShillTemplatesModal from './ShillTemplatesModal';
 import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
 import './AquaSwap.css';
@@ -93,6 +95,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Token pairs navigation state
   const [tokenPairs, setTokenPairs] = useState([]); // Store all pairs for selected token
   const [activeTokenName, setActiveTokenName] = useState(''); // Track which token's pairs we're showing
+  const [activeTokenData, setActiveTokenData] = useState(null); // Store full token data for sharing
 
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
@@ -104,6 +107,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Buy Crypto Modal state
   const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
+
+  // Shill Templates Modal state
+  const [showShillModal, setShowShillModal] = useState(false);
+  const [selectedTokenForShill, setSelectedTokenForShill] = useState(null);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
@@ -591,6 +598,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     setTokenPairs(samePairs);
     setActiveTokenName(result.name);
     
+    // Store full token data for sharing
+    setActiveTokenData({
+      name: result.name,
+      symbol: result.symbol,
+      pairAddress: result.pairAddress,
+      chainId: result.chainId,
+      blockchain: result.chainId,
+      logo: result.logo,
+      priceUsd: result.priceUsd,
+      priceChange24h: result.priceChange24h,
+      volume24h: result.volume24h,
+      liquidityUsd: result.liquidityUsd
+    });
+    
     // Set all required state for chart loading
     setTokenSearch(result.pairAddress);
     setSearchInput(result.pairAddress); // Also update the search input to show the selected address
@@ -1034,6 +1055,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const handlePopularTokenClick = (token) => {
     setTokenSearch(token.address);
     setSelectedChain(token.chain);
+    setActiveTokenName(token.name);
+    
+    // Store token data for sharing
+    setActiveTokenData({
+      name: token.name,
+      symbol: token.name, // Using name as symbol for trending tokens
+      pairAddress: token.address,
+      chainId: token.chain,
+      blockchain: token.blockchain || token.chain,
+      logo: token.logo,
+      bullishVotes: token.bullishVotes
+    });
   };
 
   // LI.FI Widget configuration following official documentation
@@ -1616,6 +1649,29 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                         ref={searchInputRef}
                       />
                       
+                      {/* Share Token Button - Only show when a token is loaded */}
+                      {tokenSearch && (
+                        <button
+                          className="share-token-btn"
+                          onClick={() => {
+                            // Use full token data if available, otherwise build from state
+                            const tokenData = activeTokenData || {
+                              name: activeTokenName || tokenSearch.substring(0, 8) + '...',
+                              symbol: activeTokenName || 'TOKEN',
+                              pairAddress: tokenSearch,
+                              chainId: selectedChain,
+                              blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain
+                            };
+                            setSelectedTokenForShill(tokenData);
+                            setShowShillModal(true);
+                          }}
+                          title="Share this token on social media"
+                        >
+                          <FaShareAlt />
+                          <span className="share-btn-text">Share</span>
+                        </button>
+                      )}
+                      
                       {/* Search Results Dropdown */}
                       {showSearchResults && (
                         <div className="search-results-dropdown">
@@ -1986,6 +2042,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <BuyCryptoModal
         isOpen={showBuyCryptoModal}
         onClose={() => setShowBuyCryptoModal(false)}
+      />
+
+      {/* Shill Templates Modal */}
+      <ShillTemplatesModal
+        isOpen={showShillModal}
+        onClose={() => {
+          setShowShillModal(false);
+          setSelectedTokenForShill(null);
+        }}
+        tokenData={selectedTokenForShill}
       />
     </div>
   );
