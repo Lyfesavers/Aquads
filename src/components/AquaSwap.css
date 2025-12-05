@@ -1189,6 +1189,16 @@
   line-height: 1.3;
 }
 
+.swap-footer .swap-points-note {
+  margin-top: 6px;
+  font-weight: 600;
+  color: #10b981;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Banner positioning - responsive */
 .banner-mobile-only {
   display: none; /* Hidden by default, shown only on mobile */
