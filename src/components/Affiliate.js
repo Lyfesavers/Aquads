@@ -202,6 +202,10 @@ const Affiliate = () => {
                           <span className="text-green-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">📢 Daily shill from DEX charts</span>
+                          <span className="text-green-400 font-bold">5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Voting on project bubbles</span>
                           <span className="text-green-400 font-bold">20 pts</span>
                         </div>

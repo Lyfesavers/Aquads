@@ -2499,6 +2499,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 2.5 points for sending a message in our Telegram group (once per day)</p>
                       <p>• Earn 2.5 points for reacting to posts in our Telegram group (once per day)</p>
                       <p>• Earn 5 points for every swap completed on AquaSwap</p>
+                      <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 20 points for completing social media raids</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
