@@ -1041,6 +1041,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const handlePopularTokenClick = (token) => {
     setTokenSearch(token.address);
     setSelectedChain(token.chain);
+    setActiveTokenName(token.name || '');
+    setActiveTokenSymbol(token.name || ''); // For trending tokens, name is usually the ticker
   };
 
   // LI.FI Widget configuration following official documentation

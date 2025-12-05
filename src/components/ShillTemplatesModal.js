@@ -6,6 +6,8 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [copiedContract, setCopiedContract] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [fetchedTokenInfo, setFetchedTokenInfo] = useState(null);
+  const [isLoadingToken, setIsLoadingToken] = useState(false);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -13,15 +15,51 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       setSelectedPlatform(null);
       setCopiedContract(false);
       setIsClosing(false);
+      setFetchedTokenInfo(null);
     }
   }, [isOpen]);
 
+  // Fetch token info from DEXScreener if we don't have symbol
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      const pairAddr = tokenData?.pairAddress || tokenData?.address || '';
+      const chain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
+      const hasSymbol = tokenData?.symbol && tokenData.symbol !== 'TOKEN' && tokenData.symbol !== tokenData.name;
+      
+      if (isOpen && pairAddr && !hasSymbol) {
+        setIsLoadingToken(true);
+        try {
+          const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chain}/${pairAddr}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.pair) {
+              setFetchedTokenInfo({
+                symbol: data.pair.baseToken?.symbol || '',
+                name: data.pair.baseToken?.name || '',
+                priceUsd: data.pair.priceUsd,
+                priceChange24h: data.pair.priceChange?.h24,
+                logo: data.pair.info?.imageUrl
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch token info:', error);
+        } finally {
+          setIsLoadingToken(false);
+        }
+      }
+    };
+    
+    fetchTokenInfo();
+  }, [isOpen, tokenData]);
+
   if (!isOpen) return null;
 
-  // Extract token data - prioritize symbol, then name
-  const tokenName = tokenData?.name || tokenData?.symbol || 'Token';
-  // Get the actual ticker symbol - check multiple possible sources
+  // Extract token data - use fetched info if available, then fall back to props
+  const tokenName = fetchedTokenInfo?.name || tokenData?.name || tokenData?.symbol || 'Token';
+  // Get the actual ticker symbol - prioritize fetched data
   const tokenSymbol = (
+    fetchedTokenInfo?.symbol ||
     tokenData?.symbol || 
     tokenData?.ticker || 
     tokenData?.name || 
@@ -29,9 +67,9 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
   ).toUpperCase().replace(/[^A-Z0-9]/g, ''); // Clean up symbol
   const pairAddress = tokenData?.pairAddress || tokenData?.address || '';
   const blockchain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
-  const tokenLogo = tokenData?.logo || tokenData?.image || null;
-  const priceUsd = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : null;
-  const priceChange = tokenData?.priceChange24h ? parseFloat(tokenData.priceChange24h).toFixed(2) : null;
+  const tokenLogo = fetchedTokenInfo?.logo || tokenData?.logo || tokenData?.image || null;
+  const priceUsd = (fetchedTokenInfo?.priceUsd || tokenData?.priceUsd) ? parseFloat(fetchedTokenInfo?.priceUsd || tokenData?.priceUsd).toFixed(6) : null;
+  const priceChange = (fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h) ? parseFloat(fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h).toFixed(2) : null;
 
   // Generate URLs - Link back to AquaSwap to retain traffic & swap fees!
   const aquaSwapUrl = `https://aquads.xyz/aquaswap?token=${pairAddress}&blockchain=${blockchain}`;
@@ -134,12 +172,14 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
             )}
             <div className="shill-token-details">
               <h2 className="shill-modal-title">
-                Share <span className="token-highlight">${tokenSymbol}</span>
+                Share <span className="token-highlight">{isLoadingToken ? '...' : `$${tokenSymbol}`}</span>
               </h2>
-              <p className="shill-modal-subtitle">Help spread the word!</p>
+              <p className="shill-modal-subtitle">
+                {isLoadingToken ? 'Loading token info...' : 'Help spread the word!'}
+              </p>
             </div>
           </div>
-          {priceUsd && (
+          {priceUsd && !isLoadingToken && (
             <div className="shill-price-badge">
               <span className="price-value">${priceUsd}</span>
               {priceChange && (
