@@ -95,6 +95,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Token pairs navigation state
   const [tokenPairs, setTokenPairs] = useState([]); // Store all pairs for selected token
   const [activeTokenName, setActiveTokenName] = useState(''); // Track which token's pairs we're showing
+  const [activeTokenSymbol, setActiveTokenSymbol] = useState(''); // Track the token ticker symbol
 
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
@@ -595,6 +596,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     );
     setTokenPairs(samePairs);
     setActiveTokenName(result.name);
+    setActiveTokenSymbol(result.symbol || result.name); // Store the ticker symbol
     
     // Set all required state for chart loading
     setTokenSearch(result.pairAddress);
@@ -1688,6 +1690,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                         </div>
                       )}
                     </div>
+                    
+                    {/* Share Token Button - Shows when token is loaded */}
+                    {tokenSearch && (
+                      <button
+                        className="aquaswap-share-btn"
+                        onClick={() => setShowShillModal(true)}
+                        title="Share this token on social media"
+                      >
+                        <FaShareAlt />
+                        <span>Share</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1764,19 +1778,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             )}
           </div>
           
-          <div className="chart-container" style={{ position: 'relative' }}>
-            {/* Floating Share Button - Only shows when a token is loaded */}
-            {tokenSearch && chartProvider === 'dexscreener' && (
-              <button
-                className="aquaswap-share-float-btn"
-                onClick={() => setShowShillModal(true)}
-                title="Share this token on social media"
-              >
-                <FaShareAlt />
-                <span>Share</span>
-              </button>
-            )}
-            
+          <div className="chart-container">
             {chartProvider === 'tradingview' && (
               <div 
                 ref={tradingViewRef}
@@ -2011,7 +2013,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         onClose={() => setShowShillModal(false)}
         tokenData={{
           name: activeTokenName || 'Token',
-          symbol: activeTokenName || 'TOKEN',
+          symbol: activeTokenSymbol || activeTokenName || 'TOKEN',
           pairAddress: tokenSearch,
           chainId: selectedChain,
           blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain

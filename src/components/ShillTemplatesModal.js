@@ -18,34 +18,41 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
 
   if (!isOpen) return null;
 
-  // Extract token data
+  // Extract token data - prioritize symbol, then name
   const tokenName = tokenData?.name || tokenData?.symbol || 'Token';
-  const tokenSymbol = tokenData?.symbol?.toUpperCase() || tokenName?.toUpperCase() || 'TOKEN';
+  // Get the actual ticker symbol - check multiple possible sources
+  const tokenSymbol = (
+    tokenData?.symbol || 
+    tokenData?.ticker || 
+    tokenData?.name || 
+    'TOKEN'
+  ).toUpperCase().replace(/[^A-Z0-9]/g, ''); // Clean up symbol
   const pairAddress = tokenData?.pairAddress || tokenData?.address || '';
   const blockchain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
   const tokenLogo = tokenData?.logo || tokenData?.image || null;
   const priceUsd = tokenData?.priceUsd ? parseFloat(tokenData.priceUsd).toFixed(6) : null;
   const priceChange = tokenData?.priceChange24h ? parseFloat(tokenData.priceChange24h).toFixed(2) : null;
 
-  // Generate URLs
-  const dexScreenerUrl = `https://dexscreener.com/${blockchain}/${pairAddress}`;
+  // Generate URLs - Link back to AquaSwap to retain traffic & swap fees!
+  const aquaSwapUrl = `https://aquads.xyz/aquaswap?token=${pairAddress}&blockchain=${blockchain}`;
+  const dexScreenerUrl = `https://dexscreener.com/${blockchain}/${pairAddress}`; // Keep for footer utility
 
-  // Tweet templates
+  // Tweet templates - using @_Aquads_ (official Twitter handle)
   const templates = [
     {
       id: 'discovery',
       emoji: '🔥',
       label: 'New Discovery',
       gradient: 'linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)',
-      text: `🔥 Just discovered $${tokenSymbol} on @AquadsApp!\n\nChart looking interesting 👀\n\n📊 ${dexScreenerUrl}\n\n#${tokenSymbol} #Crypto #DeFi`,
-      preview: `Just discovered $${tokenSymbol} on @AquadsApp! Chart looking interesting 👀`
+      text: `🔥 Just discovered $${tokenSymbol} on @_Aquads_!\n\nChart looking interesting 👀\n\n📊 ${aquaSwapUrl}\n\n#${tokenSymbol} #Crypto #DeFi`,
+      preview: `Just discovered $${tokenSymbol} on @_Aquads_! Chart looking interesting 👀`
     },
     {
       id: 'bullish',
       emoji: '🚀',
       label: 'Bullish Call',
       gradient: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
-      text: `🚀 $${tokenSymbol} is one to watch!\n\n${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}% 📈` : 'Community is paying attention 👀'}\n\nChart: ${dexScreenerUrl}\n\n#${tokenSymbol} #Altcoins`,
+      text: `🚀 $${tokenSymbol} is one to watch!\n\n${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}% 📈` : 'Community is paying attention 👀'}\n\nSwap: ${aquaSwapUrl}\n\n#${tokenSymbol} #Altcoins`,
       preview: `$${tokenSymbol} is one to watch! ${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}%` : 'Community watching'}`
     },
     {
@@ -53,15 +60,15 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       emoji: '💎',
       label: 'Hidden Gem',
       gradient: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
-      text: `💎 Hidden gem alert: $${tokenSymbol}\n\nFound this on @AquadsApp - worth checking out!\n\nDYOR: ${dexScreenerUrl}\n\nNFA 🔍`,
-      preview: `Hidden gem alert: $${tokenSymbol} - Found on @AquadsApp, worth checking out!`
+      text: `💎 Hidden gem alert: $${tokenSymbol}\n\nFound this on @_Aquads_ - check it out!\n\n🔄 ${aquaSwapUrl}\n\nNFA DYOR 🔍`,
+      preview: `Hidden gem alert: $${tokenSymbol} - Found on @_Aquads_, worth checking out!`
     },
     {
       id: 'simple',
       emoji: '👀',
       label: 'Quick Share',
       gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-      text: `$${tokenSymbol} 👀\n\n${priceUsd ? `Price: $${priceUsd}` : ''}\n\n${dexScreenerUrl}`,
+      text: `$${tokenSymbol} 👀\n\n${priceUsd ? `Price: $${priceUsd}\n\n` : ''}${aquaSwapUrl}`,
       preview: `$${tokenSymbol} 👀 ${priceUsd ? `- $${priceUsd}` : ''}`
     }
   ];
@@ -81,7 +88,8 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
       window.open(twitterUrl, 'twitter-share', 'width=550,height=420,scrollbars=yes');
     } else if (selectedPlatform === 'telegram') {
-      const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(dexScreenerUrl)}&text=${encodeURIComponent(text)}`;
+      // Link to AquaSwap to retain traffic
+      const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(aquaSwapUrl)}&text=${encodeURIComponent(text)}`;
       window.open(telegramUrl, 'telegram-share', 'width=550,height=420,scrollbars=yes');
     }
     
