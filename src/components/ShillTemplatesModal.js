@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { FaTwitter, FaTelegram, FaCopy, FaCheck, FaExternalLinkAlt, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import './ShillTemplatesModal.css';
 
-const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [copiedContract, setCopiedContract] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [fetchedTokenInfo, setFetchedTokenInfo] = useState(null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
+  const [showPointsMessage, setShowPointsMessage] = useState(false);
+  const [alreadyShilledToday, setAlreadyShilledToday] = useState(false);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -16,6 +20,8 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       setCopiedContract(false);
       setIsClosing(false);
       setFetchedTokenInfo(null);
+      setShowPointsMessage(false);
+      setAlreadyShilledToday(false);
     }
   }, [isOpen]);
 
@@ -97,7 +103,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       emoji: '🔥',
       label: 'New Discovery',
       gradient: 'linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)',
-      text: `🔥 Just discovered $${tokenSymbol} on @_Aquads_!\n\nChart looking interesting 👀\n\n📊 ${aquaSwapUrl}\n\n#${tokenSymbol} #Crypto #DeFi`,
+      text: `🔥 Just discovered $${tokenSymbol} on @_Aquads_!\n\nChart looking interesting 👀\n\n📊 ${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads #Crypto #DeFi`,
       preview: `Just discovered $${tokenSymbol} on @_Aquads_! Chart looking interesting 👀`
     },
     {
@@ -105,7 +111,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       emoji: '🚀',
       label: 'Bullish Call',
       gradient: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
-      text: `🚀 $${tokenSymbol} is one to watch!\n\n${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}% 📈` : 'Community is paying attention 👀'}\n\nSwap: ${aquaSwapUrl}\n\n#${tokenSymbol} #Altcoins`,
+      text: `🚀 $${tokenSymbol} is one to watch!\n\n${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}% 📈` : 'Community is paying attention 👀'}\n\nSwap: ${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads #Altcoins`,
       preview: `$${tokenSymbol} is one to watch! ${priceChange ? `24h: ${priceChange > 0 ? '+' : ''}${priceChange}%` : 'Community watching'}`
     },
     {
@@ -113,7 +119,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       emoji: '💎',
       label: 'Hidden Gem',
       gradient: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
-      text: `💎 Hidden gem alert: $${tokenSymbol}\n\nFound this on @_Aquads_ - check it out!\n\n🔄 ${aquaSwapUrl}\n\nNFA DYOR 🔍`,
+      text: `💎 Hidden gem alert: $${tokenSymbol}\n\nFound this on @_Aquads_ - check it out!\n\n🔄 ${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads #HiddenGem\n\nNFA DYOR 🔍`,
       preview: `Hidden gem alert: $${tokenSymbol} - Found on @_Aquads_, worth checking out!`
     },
     {
@@ -121,7 +127,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       emoji: '👀',
       label: 'Quick Share',
       gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-      text: `$${tokenSymbol} 👀\n\n${priceUsd ? `Price: $${priceUsd}\n\n` : ''}${aquaSwapUrl}`,
+      text: `$${tokenSymbol} 👀\n\n${priceUsd ? `Price: $${priceUsd}\n\n` : ''}${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads`,
       preview: `$${tokenSymbol} 👀 ${priceUsd ? `- $${priceUsd}` : ''}`
     }
   ];
@@ -134,9 +140,33 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
     }, 200);
   };
 
-  const handleShare = (template) => {
+  const handleShare = async (template) => {
     const text = template.text;
     
+    // Award shill points if user is logged in (once daily)
+    if (currentUser) {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/points/shill-completed`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        
+        // Check if already claimed today
+        if (data.alreadyClaimed) {
+          setAlreadyShilledToday(true);
+        }
+        setShowPointsMessage(true);
+      } catch (error) {
+        console.error('Failed to award shill points:', error);
+      }
+    }
+    
+    // Open social platform
     if (selectedPlatform === 'twitter') {
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
       window.open(twitterUrl, 'twitter-share', 'width=550,height=420,scrollbars=yes');
@@ -146,7 +176,10 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
       window.open(telegramUrl, 'telegram-share', 'width=550,height=420,scrollbars=yes');
     }
     
-    handleClose();
+    // Delay close to show points message
+    setTimeout(() => {
+      handleClose();
+    }, currentUser ? 1500 : 0);
   };
 
   const handleCopyContract = async () => {
@@ -276,6 +309,20 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Points Message Overlay */}
+        {showPointsMessage && currentUser && (
+          <div className="shill-points-overlay">
+            <div className="shill-points-message">
+              <span className="points-icon">{alreadyShilledToday ? '⏰' : '🎯'}</span>
+              <span className={`points-text ${alreadyShilledToday ? 'already-claimed' : ''}`}>
+                {alreadyShilledToday 
+                  ? 'Shill again tomorrow for points!' 
+                  : '5 points will be added after completion!'}
+              </span>
             </div>
           </div>
         )}

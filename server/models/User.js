@@ -338,6 +338,10 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
+  lastShillPointsDate: {
+    type: Date,
+    default: null
+  },
   // Account suspension
   suspended: {
     type: Boolean,

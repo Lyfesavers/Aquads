@@ -412,6 +412,67 @@ router.post('/swap-completed', auth, async (req, res) => {
   }
 });
 
+// Route to award points for shilling a token (once daily)
+router.post('/shill-completed', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user already claimed shill points today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (user.lastShillPointsDate && user.lastShillPointsDate >= today) {
+      return res.json({
+        success: true,
+        alreadyClaimed: true,
+        message: 'Points will be added after completion',
+        currentPoints: user.points
+      });
+    }
+    
+    // Award 5 points for shilling
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        $inc: { points: 5 },
+        $set: { lastShillPointsDate: new Date() },
+        $push: {
+          pointsHistory: {
+            amount: 5,
+            reason: 'Shared token on social media (daily shill)',
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    
+    // Emit real-time socket update for points
+    emitAffiliateEarningUpdate({
+      affiliateId: req.user.userId,
+      type: 'shill_completed',
+      pointsAwarded: 5,
+      newTotalPoints: updatedUser.points,
+      reason: 'Shared token on social media'
+    });
+    
+    res.json({
+      success: true,
+      alreadyClaimed: false,
+      message: 'Points will be added after completion',
+      currentPoints: updatedUser.points
+    });
+    
+  } catch (error) {
+    console.error('Error awarding shill points:', error);
+    res.status(500).json({ error: 'Failed to award shill points' });
+  }
+});
+
 function awardListingPoints(userId) {
   return User.findById(userId)
     .then(user => {

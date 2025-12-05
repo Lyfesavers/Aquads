@@ -2027,6 +2027,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           chainId: selectedChain,
           blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain
         }}
+        currentUser={currentUser}
       />
     </div>
   );
