@@ -2704,7 +2704,8 @@ function App() {
                                   const tokenAddress = ad.pairAddress || ad.contractAddress;
                                   if (tokenAddress && tokenAddress.trim()) {
                                     const blockchain = ad.blockchain || 'ethereum';
-                                    window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
+                                    const tokenName = ad.title || '';
+                                    window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}&name=${encodeURIComponent(tokenName)}`;
                                   }
                                   // If no pair/contract address, do nothing (no redirect)
                                 }

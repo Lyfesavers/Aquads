@@ -23,7 +23,22 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData }) => {
   useEffect(() => {
     const fetchTokenInfo = async () => {
       const pairAddr = tokenData?.pairAddress || tokenData?.address || '';
-      const chain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
+      const rawChain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
+      
+      // Map chain names to DEXScreener format
+      const chainMapping = {
+        'ether': 'ethereum',
+        'eth': 'ethereum',
+        'sol': 'solana',
+        'bnb': 'bsc',
+        'avax': 'avalanche',
+        'arb': 'arbitrum',
+        'op': 'optimism',
+        'ftm': 'fantom',
+        'matic': 'polygon'
+      };
+      const chain = chainMapping[rawChain.toLowerCase()] || rawChain.toLowerCase();
+      
       const hasSymbol = tokenData?.symbol && tokenData.symbol !== 'TOKEN' && tokenData.symbol !== tokenData.name;
       
       if (isOpen && pairAddr && !hasSymbol) {

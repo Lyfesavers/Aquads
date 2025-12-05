@@ -238,6 +238,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       setSelectedChain(getChainForBlockchain(blockchainParam));
       setChartProvider('dexscreener');
       
+      // Check for token name parameter (from bubble clicks)
+      const nameParam = urlParams.get('name');
+      if (nameParam) {
+        setActiveTokenName(nameParam);
+        setActiveTokenSymbol(nameParam); // Use name as symbol for bubbles
+      }
+      
       // Keep URL parameters for shareability - do not clean up
       // window.history.replaceState({}, document.title, '/aquaswap');
     }
