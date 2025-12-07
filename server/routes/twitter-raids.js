@@ -557,15 +557,17 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     completion.approvedAt = new Date();
     completion.pointsAwarded = true;
 
-    // Award points to user
+    // Award points to user - check if admin specified custom points (for verified accounts)
     const user = await User.findById(completion.userId);
     if (user) {
-      const points = raid.points || 20;
+      // Use admin-specified points if provided, otherwise use raid default or 20
+      const points = req.body.points || raid.points || 20;
+      const isVerifiedBonus = req.body.points === 50;
       user.points = (user.points || 0) + points;
       user.lastActivity = new Date(); // Update activity when points are awarded
       user.pointsHistory.push({
         amount: points,
-        reason: `Twitter raid approved: ${raid.title}`,
+        reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`,
         socialRaidId: raid._id,
         createdAt: new Date()
       });
@@ -577,7 +579,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
           type: 'points_awarded',
           pointsAwarded: points,
           newTotalPoints: user.points,
-          reason: `Twitter raid approved: ${raid.title}`
+          reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`
         });
          }
 

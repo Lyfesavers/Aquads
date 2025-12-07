@@ -1660,14 +1660,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
 
   // Add these functions to handle Twitter raid completion approvals and rejections
-  const handleApproveTwitterRaid = async (completion) => {
+  // points parameter: 20 for regular accounts, 50 for verified (blue checkmark) accounts
+  const handleApproveTwitterRaid = async (completion, points = 20) => {
     try {
       const response = await fetch(`${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({ points })
       });
       
       if (!response.ok) {
@@ -1676,7 +1678,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
       
       const result = await response.json();
-      alert(result.message || 'Completion approved successfully!');
+      const verifiedText = points === 50 ? ' (verified account bonus!)' : '';
+      alert(result.message || `Completion approved successfully! ${points} points awarded${verifiedText}`);
     } catch (error) {
       alert('Error approving completion: ' + error.message);
     }
@@ -1737,14 +1740,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleApproveFacebookRaid = async (completion) => {
+  // points parameter: 20 for regular accounts, 50 for verified (blue checkmark) accounts
+  const handleApproveFacebookRaid = async (completion, points = 20) => {
     try {
       const response = await fetch(`${API_URL}/facebook-raids/${completion.raidId}/approve/${completion.completionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({ points })
       });
       
       if (!response.ok) {
@@ -1756,7 +1761,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       // Refresh the list of pending completions
       fetchPendingFacebookRaids();
-      alert(result.message || 'Facebook raid completion approved successfully!');
+      const verifiedText = points === 50 ? ' (verified account bonus!)' : '';
+      alert(result.message || `Facebook raid completion approved successfully! ${points} points awarded${verifiedText}`);
     } catch (error) {
       alert('Error approving Facebook raid completion: ' + error.message);
     }
@@ -1901,10 +1907,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                   <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => handleApproveTwitterRaid(completion)}
+                      onClick={() => handleApproveTwitterRaid(completion, 20)}
                       className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
                     >
-                      ✓ Approve ({completion.pointsAmount} pts)
+                      ✓ Approve (20 pts)
+                    </button>
+                    <button
+                      onClick={() => handleApproveTwitterRaid(completion, 50)}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded hover:from-blue-600 hover:to-cyan-600 font-medium flex items-center justify-center gap-1"
+                      title="Use for verified blue checkmark accounts"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                      </svg>
+                      Verified (50 pts)
                     </button>
                     <button
                       onClick={() => handleRejectTwitterRaidClick(completion)}
@@ -2033,10 +2049,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                   <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => handleApproveFacebookRaid(completion)}
+                      onClick={() => handleApproveFacebookRaid(completion, 20)}
                       className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
                     >
-                      ✓ Approve ({completion.raidPoints} pts)
+                      ✓ Approve (20 pts)
+                    </button>
+                    <button
+                      onClick={() => handleApproveFacebookRaid(completion, 50)}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded hover:from-blue-600 hover:to-cyan-600 font-medium flex items-center justify-center gap-1"
+                      title="Use for verified blue checkmark accounts"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                      </svg>
+                      Verified (50 pts)
                     </button>
                     <button
                       onClick={() => handleRejectFacebookRaidClick(completion)}
@@ -2501,7 +2527,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 5 points for every swap completed on AquaSwap</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 20 points for voting on a project bubble</p>
-                      <p>• Earn 20 points for completing social media raids</p>
+                      <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
                       <p>• Earn 20 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>

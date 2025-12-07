@@ -366,11 +366,14 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
     completion.approvedAt = new Date();
     completion.verified = true;
 
-    // Award points to user
+    // Award points to user - check if admin specified custom points (for verified accounts)
     if (!completion.pointsAwarded) {
       const user = await User.findById(completion.userId);
       if (user) {
-        user.points += raid.points;
+        // Use admin-specified points if provided, otherwise use raid default
+        const points = req.body.points || raid.points || 20;
+        const isVerifiedBonus = req.body.points === 50;
+        user.points += points;
         await user.save();
         completion.pointsAwarded = true;
 
@@ -378,7 +381,7 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
         const notification = new Notification({
           userId: completion.userId,
           type: 'status',
-          message: `Your Facebook raid completion for "${raid.title}" has been approved! You earned ${raid.points} points.`,
+          message: `Your Facebook raid completion for "${raid.title}" has been approved! You earned ${points} points${isVerifiedBonus ? ' (verified account bonus)' : ''}.`,
           relatedId: raid._id,
           relatedModel: 'FacebookRaid'
         });
