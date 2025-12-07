@@ -65,13 +65,18 @@ const Terms = () => {
                 <p className="mb-2">Aquads.xyz is a Web3 platform offering:</p>
                 <ul className="list-disc pl-6 mb-4 space-y-2">
                   <li><span className="text-blue-400 font-semibold">Freelancer Hub (Lead Generator):</span> A directory and referral service connecting Freelancers to Employers; Aquads does not process payments or contract work.</li>
-                  <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers LiFi.</li>
+                  <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers LiFi, available on the website and as a Chrome browser extension for swapping tokens from any webpage.</li>
                   <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through MoonPay, Ramp Network, Mercuryo and LiFi.</li>
-                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings, free tier and paid bump options.</li>
+                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings with paid advertising placements and optional visibility bump packages.</li>
                   <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Campaigns managed by Coinbound.io and other PR partners (Forbes, Yahoo Finance, Benzinga).</li>
                   <li><span className="text-blue-400 font-semibold">Game Hub:</span> Play‑to‑earn events, mini‑games, and token rewards operated by Aquads.</li>
-                  <li><span className="text-blue-400 font-semibold">Savings & Staking Hub:</span> Third-party integrations for yield and staking services.</li>
+                  <li><span className="text-blue-400 font-semibold">Savings & Staking Hub (AquaFi):</span> Third-party integrations for yield and staking services.</li>
+                  <li><span className="text-blue-400 font-semibold">Affiliate & Referral Program:</span> Users can earn points and commissions by referring new users and project listings to the platform through unique referral codes.</li>
+                  <li><span className="text-blue-400 font-semibold">Points & Rewards System:</span> A platform-wide points system where users earn points through various activities including referrals, social media raids, and platform engagement; points may be redeemed for platform benefits.</li>
+                  <li><span className="text-blue-400 font-semibold">Social Media Raids:</span> Organized Twitter/X and Facebook engagement campaigns where users earn points by completing social media interactions.</li>
+                  <li><span className="text-blue-400 font-semibold">Partner Marketplace:</span> A marketplace where users with active membership can access exclusive discounts and rewards from partner businesses using their accumulated points.</li>
                   <li><span className="text-blue-400 font-semibold">Telegram Mini‑App:</span> Access to core Services within Telegram's interface.</li>
+                  <li><span className="text-blue-400 font-semibold">Chrome Browser Extension:</span> The AquaSwap Chrome extension enabling cross-chain token swaps directly from any webpage without leaving your current browser tab.</li>
                 </ul>
               </div>
             </section>
