@@ -127,11 +127,13 @@ const Terms = () => {
 
             {/* Section 8 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">8. Game Hub & Rewards</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">8. Game Hub, Rewards & Platform Integrity</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
                 <p><span className="text-blue-400 font-semibold">8.1 Service Rules.</span> Participation in Game Hub events is subject to rules posted with each event. Aquads may modify or cancel events at any time.</p>
                 <p><span className="text-blue-400 font-semibold">8.2 Reward Distribution.</span> Token rewards are governed by separate distribution policies; you are solely responsible for tax and reporting requirements.</p>
-                <p><span className="text-blue-400 font-semibold">8.3 Anti‑Fraud.</span> Aquads reserves the right to disqualify users for fraud, abuse, or manipulation.</p>
+                <p><span className="text-blue-400 font-semibold">8.3 Anti‑Fraud & Platform Integrity Policy.</span> Users are strictly prohibited from engaging in any form of cheating, gaming, manipulation, or fraudulent activity across the entire Aquads platform. This includes but is not limited to: artificially inflating affiliate points, referrals, or commissions; creating fake or duplicate accounts; using bots, scripts, or automated systems; self-referrals or coordinated fraud schemes; manipulating Game Hub events, rewards, or leaderboards; exploiting system vulnerabilities; or any activity that circumvents the intended use of any platform feature.</p>
+                <p><span className="text-blue-400 font-semibold">8.4 Consequences of Violation.</span> Aquads reserves the sole and absolute right to suspend or permanently terminate any account suspected of fraudulent or abusive activity. Upon suspension or termination for fraud, all accumulated points, pending commissions, rewards, and any other platform benefits shall be immediately and permanently forfeited without compensation or notice. Aquads is not required to provide evidence, detailed justification, or prior warning for such decisions. Users found in violation may also be permanently banned from creating future accounts on the platform.</p>
+                <p><span className="text-blue-400 font-semibold">8.5 Right to Investigate & Act.</span> Aquads reserves the right to monitor user activity, investigate suspicious behavior, and take any action deemed necessary to protect platform integrity. This includes but is not limited to: reviewing account activity patterns, analyzing referral networks, auditing point accumulation, and coordinating with fraud detection systems. By using the platform, you consent to such monitoring and agree that Aquads may act upon its findings at its sole discretion.</p>
               </div>
             </section>
 
