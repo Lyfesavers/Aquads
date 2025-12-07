@@ -544,6 +544,10 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                <span className="text-blue-400 mt-1">•</span>
                <span>Facebook account must not be shadow banned or suspended</span>
              </li>
+             <li className="flex items-start gap-2">
+               <span className="text-blue-400 mt-1">•</span>
+               <span>Must have the <strong>Aquads logo</strong> in your profile picture</span>
+             </li>
            </ul>
          </div>
        </div>

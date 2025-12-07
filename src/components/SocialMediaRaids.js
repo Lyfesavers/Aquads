@@ -1110,6 +1110,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <span className="text-yellow-400 mr-2">•</span>
                   <span>Twitter account must not be <strong>shadow banned</strong> or <strong>suspended</strong></span>
                 </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Must have the <strong>Aquads logo</strong> in your profile picture</span>
+                </div>
               </div>
             </div>
           </div>
