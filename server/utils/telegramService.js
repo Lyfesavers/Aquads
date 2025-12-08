@@ -2009,8 +2009,14 @@ To maximize your project's exposure:
 📱 <b>Add the bot to your project's group:</b>
 
 1. Open your project's Telegram group
-2. Add @aquadsbumpbot as a member
-3. Make the bot an admin (to send messages)`;
+2. Add @aquadsbumpbot to the group
+3. Go to group settings → Administrators
+4. Add @aquadsbumpbot as admin with <b>FULL rights</b>
+
+⚠️ <b>Important:</b> The bot needs full admin rights to:
+• Send vote notifications
+• Pin trending messages
+• Post project updates`;
 
     const keyboard = {
       inline_keyboard: [
