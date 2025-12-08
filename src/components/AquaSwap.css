@@ -160,14 +160,16 @@
 /* Main Trading Interface - Professional Layout */
 .trading-interface {
   display: flex;
-  min-height: calc(100vh - 120px);
+  min-height: 600px;
   gap: 0;
   margin: 0;
   padding: 0;
   /* Hide scrollbar but keep scrolling functionality */
-  overflow: auto;
+  overflow: visible;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  position: relative;
+  z-index: 1;
 }
 
 .trading-interface::-webkit-scrollbar {
@@ -177,7 +179,9 @@
 /* Professional trading layout - always side by side on desktop */
 .trading-interface.with-charts {
   flex-direction: row;
-  min-height: calc(100vh - 100px);
+  min-height: 600px;
+  height: auto;
+  max-height: calc(100vh - 180px);
   overflow: visible; /* Allow scrolling to content below */
 }
 
@@ -1844,17 +1848,21 @@
     box-shadow: 0 4px 12px rgba(255, 165, 0, 0.2);
   }
 
-  /* Desktop trading interface - maximize space */
+  /* Desktop trading interface - maximize space but allow content below */
   .trading-interface {
-    min-height: calc(100vh - 50px);
+    min-height: 600px;
+    max-height: calc(100vh - 180px);
   }
 
   .trading-interface.with-charts {
-    height: calc(100vh - 50px);
+    height: auto;
+    min-height: 600px;
+    max-height: calc(100vh - 180px);
   }
 
   .chart-container {
-    height: calc(100vh - 50px);
+    height: 100%;
+    min-height: 550px;
   }
 }
 
@@ -2647,5 +2655,116 @@
   .hire-expert-view-all {
     padding: 10px 24px;
     font-size: 0.95rem;
+  }
+}
+
+/* ========================================
+   CURRENCY CONVERTER BAR - POSITIONING
+   ======================================== */
+
+/* Wrapper ensures converter stays below trading interface */
+.currency-converter-wrapper {
+  position: relative;
+  z-index: 50;
+  width: 100%;
+  display: block;
+  clear: both;
+  flex-shrink: 0;
+  margin-top: 0;
+  background: #0a0e1b;
+}
+
+/* Ensure currency converter is properly placed below trading interface */
+.aquaswap-page > .currency-converter-wrapper,
+.aquaswap-page > .currency-converter-bar {
+  position: relative;
+  z-index: 50;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* Fix trading interface to not use viewport-based heights that cause overlap */
+
+/* Tablet to small laptop screens */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .trading-interface.with-charts {
+    min-height: 500px;
+    height: 500px;
+    max-height: 550px;
+    overflow: hidden;
+  }
+  
+  .chart-section {
+    min-height: 500px;
+    height: 500px;
+  }
+  
+  .swap-section {
+    min-height: 500px;
+    height: 500px;
+    overflow-y: auto;
+  }
+  
+  .currency-converter-wrapper {
+    margin-top: 0;
+  }
+}
+
+/* Medium laptops */
+@media (min-width: 1201px) and (max-width: 1440px) {
+  .trading-interface.with-charts {
+    min-height: 550px;
+    height: 550px;
+    max-height: 600px;
+    overflow: hidden;
+  }
+  
+  .chart-section {
+    min-height: 550px;
+    height: 550px;
+  }
+  
+  .swap-section {
+    min-height: 550px;
+    height: 550px;
+    overflow-y: auto;
+  }
+}
+
+/* Large laptops and monitors */
+@media (min-width: 1441px) and (max-width: 1800px) {
+  .trading-interface.with-charts {
+    min-height: 600px;
+    height: calc(100vh - 220px);
+    max-height: 700px;
+    overflow: hidden;
+  }
+  
+  .chart-section {
+    min-height: 600px;
+  }
+  
+  .swap-section {
+    min-height: 600px;
+    overflow-y: auto;
+  }
+}
+
+/* Very large screens */
+@media (min-width: 1801px) {
+  .trading-interface.with-charts {
+    min-height: 650px;
+    height: calc(100vh - 250px);
+    max-height: 800px;
+    overflow: hidden;
+  }
+  
+  .chart-section {
+    min-height: 650px;
+  }
+  
+  .swap-section {
+    min-height: 650px;
+    overflow-y: auto;
   }
 }

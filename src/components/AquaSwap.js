@@ -1811,7 +1811,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       </div>
 
       {/* Currency Converter Bar */}
-      <CurrencyConverter />
+      <div className="currency-converter-wrapper">
+        <CurrencyConverter />
+      </div>
 
       {/* Hire Expert Section */}
       {featuredServices.length > 0 && (
