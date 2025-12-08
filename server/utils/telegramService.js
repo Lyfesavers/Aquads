@@ -407,8 +407,8 @@ const telegramService = {
     const existingUser = await User.findOne({ telegramId: userId.toString() });
     
     if (existingUser) {
-      // Already linked - show main menu
-      await telegramService.showMainMenu(chatId, existingUser);
+      // Already linked - show help menu (same as /help command)
+      await telegramService.handleHelpCommand(chatId);
       return;
     }
 
@@ -1778,37 +1778,6 @@ Let's get you set up in <b>30 seconds!</b> 👇`;
     await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
   },
 
-  // Show main menu for returning/linked users
-  showMainMenu: async (chatId, user) => {
-    const message = `👋 <b>Welcome back, ${user.username}!</b>
-
-💰 Points: <b>${user.points || 0}</b>
-
-🚀 What would you like to do?`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "🎯 Raids", callback_data: "action_raids" },
-          { text: "🔥 Trending", callback_data: "action_bubbles" }
-        ],
-        [
-          { text: "📊 My Projects", callback_data: "action_mybubble" },
-          { text: "🗳️ Vote & Earn", callback_data: "action_vote" }
-        ],
-        [
-          { text: "📝 Create Raid", callback_data: "action_createraid" },
-          { text: "⚙️ Settings", callback_data: "action_settings" }
-        ],
-        [
-          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
-        ]
-      ]
-    };
-
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
-  },
-
   // Step 1: Ask if they have an account
   showOnboardingStep1: async (chatId, messageId = null) => {
     const message = `📝 <b>Step 1 of 3: Link Your Account</b>
@@ -2426,12 +2395,8 @@ Tap to update:`;
         }
 
         case 'action_menu': {
-          const user = await User.findOne({ telegramId: userId.toString() });
-          if (user) {
-            await telegramService.showMainMenu(chatId, user);
-          } else {
-            await telegramService.showWelcomeScreen(chatId, null);
-          }
+          // Show help menu (edits the current message)
+          await telegramService.editHelpMenu(chatId, messageId);
           break;
         }
 
