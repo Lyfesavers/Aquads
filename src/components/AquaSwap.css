@@ -163,12 +163,12 @@
 /* Main Trading Interface - Professional Layout */
 .trading-interface {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 500px;
   gap: 0;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
   position: relative;
@@ -182,10 +182,10 @@
 /* Professional trading layout - always side by side on desktop */
 .trading-interface.with-charts {
   flex-direction: row;
-  flex: 1 1 auto;
-  min-height: 500px;
-  max-height: none;
-  overflow: hidden;
+  flex: 0 0 auto;
+  min-height: 600px;
+  height: auto;
+  overflow: visible;
 }
 
 /* Left Side - Swap Widget - Responsive sizing for chart space */
@@ -388,9 +388,10 @@
     display: none; /* Chrome/Safari/Webkit */
   }
   
-  /* Maximize chart height on smaller screens */
+  /* Fixed chart height on smaller screens */
   .chart-container {
-    height: calc(100vh - 120px); /* Less header space on smaller screens */
+    height: 550px;
+    max-height: 600px;
   }
 }
 
@@ -1145,16 +1146,16 @@
   }
 }
 
-/* Chart container - maximized space */
+/* Chart container - fixed height to prevent overlap */
 .chart-container {
   flex: 1;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 0;
-  overflow: visible; /* Allow scrolling past the chart */
+  overflow: hidden;
   position: relative;
-  min-height: 700px;
-  height: calc(100vh - 80px); /* Reduced header space for much taller charts */
-  max-height: calc(100vh - 80px); /* Prevent growing beyond viewport */
+  min-height: 500px;
+  height: 600px;
+  max-height: 700px;
   display: flex;
   flex-direction: column;
 }
@@ -1166,7 +1167,7 @@
   border: none;
   border-radius: 0;
   background: rgba(0, 0, 0, 0.2);
-  min-height: 700px;
+  min-height: 500px;
   transform: scale(1);
   transform-origin: 0 0;
 }
@@ -1564,14 +1565,15 @@
     padding: 1px 3px;
   }
   
-  /* MAXIMIZE CHART SPACE */
+  /* Fixed chart height on mobile */
   .chart-container {
-    min-height: 450px;
-    height: calc(100vh - 200px);
+    min-height: 400px;
+    height: 450px;
+    max-height: 500px;
   }
 
   .chart-container iframe {
-    min-height: 450px;
+    min-height: 400px;
     min-width: 0;
   }
   
@@ -1684,18 +1686,19 @@
     padding: 3px 5px;
   }
   
-  /* Maximize chart on small screens */
+  /* Fixed chart height on small screens */
   .chart-container {
-    min-height: 400px;
-    height: calc(100vh - 180px);
+    min-height: 350px;
+    height: 400px;
+    max-height: 450px;
   }
   
   .chart-container iframe {
-    min-height: 400px;
+    min-height: 350px;
   }
   
   .chart-section {
-    min-height: 450px;
+    min-height: 400px;
   }
 }
 
@@ -2670,37 +2673,73 @@
   z-index: 50;
   width: 100%;
   flex: 0 0 auto;
-  background: #0a0e1b;
-  margin-top: 0;
+  background: transparent;
 }
 
-/* Add spacing on smaller PC screens where chart takes more vertical space */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .currency-converter-wrapper {
-    margin-top: 80px;
+/* ========================================
+   RESPONSIVE CHART HEIGHTS FOR PC SCREENS
+   ======================================== */
+
+/* Small laptops (1024px - 1200px) */
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .chart-container {
+    height: 480px;
+    max-height: 520px;
+  }
+  
+  .trading-interface.with-charts {
+    min-height: 520px;
+  }
+  
+  .swap-section {
+    min-height: 520px;
   }
 }
 
-@media (min-width: 1025px) and (max-width: 1200px) {
-  .currency-converter-wrapper {
-    margin-top: 60px;
-  }
-}
-
+/* Medium laptops (1201px - 1366px) */
 @media (min-width: 1201px) and (max-width: 1366px) {
-  .currency-converter-wrapper {
-    margin-top: 45px;
+  .chart-container {
+    height: 520px;
+    max-height: 560px;
+  }
+  
+  .trading-interface.with-charts {
+    min-height: 560px;
+  }
+  
+  .swap-section {
+    min-height: 560px;
   }
 }
 
+/* Standard laptops (1367px - 1440px) */
 @media (min-width: 1367px) and (max-width: 1440px) {
-  .currency-converter-wrapper {
-    margin-top: 30px;
+  .chart-container {
+    height: 560px;
+    max-height: 620px;
+  }
+  
+  .trading-interface.with-charts {
+    min-height: 600px;
+  }
+  
+  .swap-section {
+    min-height: 600px;
   }
 }
 
+/* Large screens (1441px+) */
 @media (min-width: 1441px) {
-  .currency-converter-wrapper {
-    margin-top: 0;
+  .chart-container {
+    height: 650px;
+    max-height: 750px;
+  }
+  
+  .trading-interface.with-charts {
+    min-height: 680px;
+  }
+  
+  .swap-section {
+    min-height: 680px;
   }
 }
