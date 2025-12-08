@@ -912,56 +912,41 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
       
-      // Calculate actual available width and determine if we need to scale
-      // DEXScreener needs ~1100px+ to show full desktop layout with sidebars
+      // Calculate actual available width and set iframe accordingly
       const screenWidth = window.innerWidth;
-      const containerWidth = dexScreenerRef.current.offsetWidth || (screenWidth - 300);
+      let swapWidth, iframeWidth;
       
-      // Force desktop layout by using scale trick for smaller screens
-      const desktopMinWidth = 1200; // Width needed for DEXScreener desktop view
-      const needsScaling = containerWidth < desktopMinWidth && screenWidth >= 768;
-      
-      if (needsScaling) {
-        // Scale trick: Set iframe to desktop width, then scale to fit container
-        const scale = Math.max(0.5, containerWidth / desktopMinWidth); // Min 50% scale
-        
-        iframe.width = desktopMinWidth;
-        iframe.height = Math.round(700 / scale); // Compensate height for scale
-        iframe.style.width = `${desktopMinWidth}px`;
-        iframe.style.height = '100%';
-        iframe.style.minHeight = `${Math.round(700 / scale)}px`;
-        iframe.style.transform = `scale(${scale})`;
-        iframe.style.transformOrigin = 'top left';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '0px';
-        iframe.style.display = 'block';
-        iframe.frameBorder = '0';
-        iframe.scrolling = 'no';
-        
-        // Container needs to clip the scaled content and set proper height
-        dexScreenerRef.current.style.overflow = 'hidden';
-        dexScreenerRef.current.style.height = `${Math.round(700 * scale) + 100}px`;
-        dexScreenerRef.current.style.minHeight = `${Math.round(700 * scale)}px`;
+      if (screenWidth >= 2560) {
+        swapWidth = 380;
+        iframeWidth = '1200'; // Large monitors - works perfectly
+      } else if (screenWidth >= 1920) {
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Full HD
+      } else if (screenWidth >= 1600) {
+        swapWidth = 300;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Large laptops
+      } else if (screenWidth >= 1440) {
+        swapWidth = 290;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
+      } else if (screenWidth >= 1366) {
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        // Large screens or mobile - use natural sizing
-        iframe.width = '100%';
-        iframe.height = '100%';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '0px';
-        iframe.style.minHeight = '700px';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.flex = '1';
-        iframe.style.display = 'block';
-        iframe.style.transform = 'none';
-        iframe.frameBorder = '0';
-        iframe.scrolling = 'no';
-        
-        // Reset container styles
-        dexScreenerRef.current.style.overflow = 'visible';
-        dexScreenerRef.current.style.height = '100%';
-        dexScreenerRef.current.style.minHeight = '700px';
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
+      
+      iframe.width = iframeWidth;
+      iframe.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '0px';
+      iframe.style.minHeight = '700px';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.flex = '1';
+      iframe.style.display = 'block';
+      iframe.frameBorder = '0';
+      iframe.scrolling = 'no';
       
       // Convert chain names to DEXScreener format
       const dexScreenerChainMap = {
