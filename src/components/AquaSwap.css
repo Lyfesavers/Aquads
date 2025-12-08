@@ -2675,15 +2675,27 @@
 }
 
 /* Add spacing on smaller PC screens where chart takes more vertical space */
-@media (min-width: 769px) and (max-width: 1200px) {
+@media (min-width: 769px) and (max-width: 1024px) {
   .currency-converter-wrapper {
-    margin-top: 20px;
+    margin-top: 80px;
   }
 }
 
-@media (min-width: 1201px) and (max-width: 1440px) {
+@media (min-width: 1025px) and (max-width: 1200px) {
   .currency-converter-wrapper {
-    margin-top: 12px;
+    margin-top: 60px;
+  }
+}
+
+@media (min-width: 1201px) and (max-width: 1366px) {
+  .currency-converter-wrapper {
+    margin-top: 45px;
+  }
+}
+
+@media (min-width: 1367px) and (max-width: 1440px) {
+  .currency-converter-wrapper {
+    margin-top: 30px;
   }
 }
 
