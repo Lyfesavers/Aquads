@@ -369,13 +369,13 @@
 
 @media (max-width: 1366px) {
   .swap-section {
-    flex: 0 0 280px; /* Compact for HD laptops - gives chart more room */
+    flex: 0 0 320px; /* More room for HD laptops - gives chart ~996px */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
   }
   
   .swap-section.collapsed {
-    flex: 0 0 55px;
+    flex: 0 0 60px; /* Maintain collapsed size */
   }
   
   .swap-section::-webkit-scrollbar {
@@ -384,37 +384,7 @@
   
   /* Maximize chart height on smaller screens */
   .chart-container {
-    height: calc(100vh - 120px);
-  }
-}
-
-@media (max-width: 1280px) {
-  .swap-section {
-    flex: 0 0 270px;
-  }
-  
-  .swap-section.collapsed {
-    flex: 0 0 55px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .swap-section {
-    flex: 0 0 265px;
-  }
-  
-  .swap-section.collapsed {
-    flex: 0 0 50px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .swap-section {
-    flex: 0 0 260px;
-  }
-  
-  .swap-section.collapsed {
-    flex: 0 0 50px;
+    height: calc(100vh - 120px); /* Less header space on smaller screens */
   }
 }
 
