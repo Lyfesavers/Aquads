@@ -921,19 +921,30 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         iframeWidth = '1200'; // Large monitors - works perfectly
       } else if (screenWidth >= 1920) {
         swapWidth = 320;
-        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Full HD
+        iframeWidth = Math.max(1000, screenWidth - swapWidth - 50).toString(); // Full HD
       } else if (screenWidth >= 1600) {
         swapWidth = 300;
-        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Large laptops
+        iframeWidth = Math.max(900, screenWidth - swapWidth - 50).toString(); // Large laptops
       } else if (screenWidth >= 1440) {
         swapWidth = 290;
-        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
+        iframeWidth = Math.max(800, screenWidth - swapWidth - 50).toString(); // Standard laptops
       } else if (screenWidth >= 1366) {
-        swapWidth = 320;
-        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
+        swapWidth = 280;
+        iframeWidth = Math.max(700, screenWidth - swapWidth - 50).toString(); // HD laptops
+      } else if (screenWidth >= 1200) {
+        swapWidth = 265;
+        iframeWidth = Math.max(600, screenWidth - swapWidth - 50).toString(); // Medium laptops
+      } else if (screenWidth >= 1024) {
+        swapWidth = 260;
+        iframeWidth = Math.max(500, screenWidth - swapWidth - 50).toString(); // Small laptops
+      } else if (screenWidth >= 768) {
+        // Tablet/small laptop - still side by side but compact
+        swapWidth = 250;
+        iframeWidth = Math.max(400, screenWidth - swapWidth - 40).toString();
       } else {
-        swapWidth = 320;
-        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
+        // Mobile - full width (column layout)
+        swapWidth = screenWidth;
+        iframeWidth = (screenWidth - 20).toString(); // Full width minus padding
       }
       
       iframe.width = iframeWidth;
