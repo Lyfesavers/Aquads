@@ -912,56 +912,41 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
       
-      // Get the actual container width
-      const containerWidth = dexScreenerRef.current.offsetWidth || 800;
+      // Calculate actual available width and set iframe accordingly
       const screenWidth = window.innerWidth;
+      let swapWidth, iframeWidth;
       
-      // DEXScreener needs ~1100px+ to show full desktop layout
-      // For smaller containers, we use the scale trick: render at 1200px, scale down to fit
-      const desktopWidth = 1200;
-      const needsScaling = containerWidth < desktopWidth && screenWidth >= 768;
-      
-      if (needsScaling) {
-        // Calculate scale to fit container
-        const scale = containerWidth / desktopWidth;
-        
-        // Create a wrapper div to handle the scaling
-        const wrapper = document.createElement('div');
-        wrapper.style.width = '100%';
-        wrapper.style.height = '100%';
-        wrapper.style.overflow = 'hidden';
-        wrapper.style.position = 'relative';
-        
-        // Set iframe to desktop width - DEXScreener will show full layout
-        iframe.width = desktopWidth;
-        iframe.height = Math.round(700 / scale); // Adjust height to compensate for scale
-        iframe.style.width = `${desktopWidth}px`;
-        iframe.style.height = '100%';
-        iframe.style.minHeight = `${Math.round(700 / scale)}px`;
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '0px';
-        iframe.style.transform = `scale(${scale})`;
-        iframe.style.transformOrigin = 'top left';
-        iframe.style.display = 'block';
-        iframe.frameBorder = '0';
-        iframe.scrolling = 'no';
-        
-        // Store wrapper reference so we can append iframe to it later
-        iframe._wrapper = wrapper;
+      if (screenWidth >= 2560) {
+        swapWidth = 380;
+        iframeWidth = '1200'; // Large monitors - works perfectly
+      } else if (screenWidth >= 1920) {
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Full HD
+      } else if (screenWidth >= 1600) {
+        swapWidth = 300;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Large laptops
+      } else if (screenWidth >= 1440) {
+        swapWidth = 290;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
+      } else if (screenWidth >= 1366) {
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        // Large screens - use natural 100% sizing
-        iframe.width = '100%';
-        iframe.height = '100%';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '0px';
-        iframe.style.minHeight = '700px';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.flex = '1';
-        iframe.style.display = 'block';
-        iframe.frameBorder = '0';
-        iframe.scrolling = 'no';
+        swapWidth = 320;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
+      
+      iframe.width = iframeWidth;
+      iframe.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '0px';
+      iframe.style.minHeight = '700px';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.flex = '1';
+      iframe.style.display = 'block';
+      iframe.frameBorder = '0';
+      iframe.scrolling = 'no';
       
       // Convert chain names to DEXScreener format
       const dexScreenerChainMap = {
@@ -1041,18 +1026,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.setAttribute('allowfullscreen', '');
       iframe.setAttribute('allow', 'fullscreen');
       
-      // Clear loading indicator and add iframe (with wrapper if scaling)
+      // Clear loading indicator and add iframe
       if (dexScreenerRef.current) {
         dexScreenerRef.current.innerHTML = '';
-        
-        if (iframe._wrapper) {
-          // Scaling mode: append iframe to wrapper, then wrapper to container
-          iframe._wrapper.appendChild(iframe);
-          dexScreenerRef.current.appendChild(iframe._wrapper);
-        } else {
-          // Normal mode: append iframe directly
-          dexScreenerRef.current.appendChild(iframe);
-        }
+        dexScreenerRef.current.appendChild(iframe);
       }
       
     } else if (chartProvider === 'dexscreener' && dexScreenerRef.current && !tokenSearch.trim()) {
