@@ -1,0 +1,551 @@
+/* Currency Converter Bar Styles */
+/* Matches AquaSwap dark theme with cyan accents */
+
+.currency-converter-bar {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(26, 31, 58, 0.95) 100%);
+  border-top: 1px solid rgba(0, 212, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  padding: 12px 16px;
+  position: relative;
+  overflow: visible;
+}
+
+/* Subtle glow effect */
+.currency-converter-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+}
+
+.converter-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Title Section */
+.converter-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.converter-icon {
+  font-size: 1.4rem;
+}
+
+.converter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Amount Input */
+.converter-input-group {
+  flex-shrink: 0;
+}
+
+.converter-amount-input {
+  width: 110px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: right;
+  transition: all 0.2s ease;
+}
+
+.converter-amount-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.converter-amount-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Hide number input spinners */
+.converter-amount-input::-webkit-outer-spin-button,
+.converter-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.converter-amount-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Currency Selector */
+.converter-currency-selector {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.currency-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.currency-select-btn:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.currency-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.currency-code {
+  font-weight: 600;
+}
+
+.dropdown-arrow {
+  font-size: 0.6rem;
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.6);
+  transition: transform 0.2s ease;
+}
+
+/* Currency Dropdown */
+.currency-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  max-height: 350px;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.currency-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.currency-search-input:focus {
+  outline: none;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.currency-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.currency-list {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.currency-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.currency-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.currency-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 3px;
+}
+
+.currency-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
+
+.currency-group-label {
+  padding: 8px 10px 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #00d4ff;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  margin-bottom: 4px;
+}
+
+.currency-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.currency-option:hover {
+  background: rgba(0, 212, 255, 0.15);
+}
+
+.currency-option.active {
+  background: rgba(0, 212, 255, 0.25);
+  border-left: 2px solid #00d4ff;
+}
+
+.currency-option .currency-icon {
+  width: 24px;
+  font-size: 1.1rem;
+}
+
+.currency-option .currency-code {
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.currency-option .currency-name {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+/* Swap Button */
+.converter-swap-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 50%;
+  color: #00d4ff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.converter-swap-btn:hover {
+  background: rgba(0, 212, 255, 0.3);
+  transform: rotate(180deg);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+}
+
+/* Equals Sign */
+.converter-equals {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0 8px;
+}
+
+/* Result Display */
+.converter-result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  min-width: 140px;
+}
+
+.result-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #10b981;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.result-currency {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(16, 185, 129, 0.8);
+}
+
+.result-loading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-dot {
+  width: 6px;
+  height: 6px;
+  background: #00d4ff;
+  border-radius: 50%;
+  animation: loadingPulse 1s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.result-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+}
+
+/* Popular Pairs Section */
+.converter-popular {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.popular-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.popular-pairs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.popular-pair-btn {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.popular-pair-btn:hover {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+}
+
+.popular-pair-btn.active {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+  color: #00d4ff;
+}
+
+/* Last Updated Indicator */
+.converter-updated {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+}
+
+.update-dot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.update-text {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .converter-popular {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .currency-converter-bar {
+    padding: 14px 12px;
+  }
+
+  .converter-container {
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .converter-title {
+    width: 100%;
+    justify-content: center;
+    padding-right: 0;
+    border-right: none;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .converter-amount-input {
+    width: 90px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+  .currency-select-btn {
+    padding: 8px 10px;
+    min-width: 85px;
+    font-size: 0.85rem;
+  }
+
+  .converter-result {
+    min-width: 120px;
+    padding: 8px 10px;
+  }
+
+  .result-value {
+    font-size: 0.9rem;
+  }
+
+  .popular-pairs {
+    justify-content: center;
+  }
+
+  .converter-updated {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-left: 0;
+  }
+
+  .currency-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 320px;
+    max-height: 70vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .converter-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .converter-title {
+    padding-bottom: 8px;
+  }
+
+  .converter-input-group,
+  .converter-currency-selector,
+  .converter-swap-btn,
+  .converter-equals,
+  .converter-result {
+    flex-shrink: 0;
+  }
+
+  /* Create a row for input elements */
+  .converter-container > .converter-input-group,
+  .converter-container > .converter-currency-selector:first-of-type,
+  .converter-container > .converter-swap-btn {
+    display: inline-flex;
+  }
+
+  .converter-amount-input {
+    width: 100%;
+    max-width: 120px;
+  }
+
+  .popular-label {
+    display: none;
+  }
+
+  .popular-pair-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+

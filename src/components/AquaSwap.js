@@ -8,6 +8,7 @@ import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
 import ShillTemplatesModal from './ShillTemplatesModal';
+import CurrencyConverter from './CurrencyConverter';
 import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
 import './AquaSwap.css';
@@ -1808,6 +1809,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
         </div>
       </div>
+
+      {/* Currency Converter Bar */}
+      <CurrencyConverter />
 
       {/* Hire Expert Section */}
       {featuredServices.length > 0 && (
