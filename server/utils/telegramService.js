@@ -1873,8 +1873,8 @@ Type the username you use to login on aquads.xyz 👇
     await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
   },
 
-  // Step 2: Twitter setup
-  showOnboardingStep2_Twitter: async (chatId, username) => {
+  // Step 2: Twitter setup (edits existing message)
+  showOnboardingStep2_Twitter: async (chatId, messageId, username) => {
     const message = `✅ <b>Account Linked: ${username}</b>
 
 📱 <b>Step 2 of 3: Twitter/X Username</b>
@@ -1891,11 +1891,15 @@ Just type your handle below 👇 (without the @)`;
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Step 3: Facebook setup
-  showOnboardingStep3_Facebook: async (chatId, twitterSet) => {
+  // Step 3: Facebook setup (edits existing message)
+  showOnboardingStep3_Facebook: async (chatId, messageId, twitterSet) => {
     const twitterMsg = twitterSet ? `✅ Twitter: @${twitterSet}\n\n` : '';
     
     const message = `${twitterMsg}📘 <b>Step 3 of 3: Facebook Username (Optional)</b>
@@ -1912,11 +1916,15 @@ Type your name below or skip 👇`;
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Ask what brings them here (user type selection)
-  showUserTypeSelection: async (chatId) => {
+  // Ask what brings them here (user type selection) - edits existing message
+  showUserTypeSelection: async (chatId, messageId) => {
     const message = `🎯 <b>Almost done! What brings you to Aquads?</b>
 
 This helps us show you the right features:`;
@@ -1929,11 +1937,15 @@ This helps us show you the right features:`;
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Show raider tips
-  showRaiderTips: async (chatId, showProjectSetupNext = false) => {
+  // Show raider tips (edits existing message)
+  showRaiderTips: async (chatId, messageId, showProjectSetupNext = false) => {
     const message = `🎯 <b>Raiding Quick Tips</b>
 
 How to earn points:
@@ -1948,14 +1960,18 @@ How to earn points:
     const keyboard = {
       inline_keyboard: showProjectSetupNext 
         ? [[{ text: "✅ Got it! Next: My Project →", callback_data: "onboard_project_setup" }]]
-        : [[{ text: "✅ Got it! Show me the menu", callback_data: "onboard_complete_raider" }]]
+        : [[{ text: "✅ Done! Show me commands", callback_data: "onboard_complete" }]]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Project owner: Add bot to group
-  showProjectSetup_AddBot: async (chatId) => {
+  // Project owner: Add bot to group (edits existing message)
+  showProjectSetup_AddBot: async (chatId, messageId) => {
     const message = `🚀 <b>Project Setup: Step 1</b>
 
 To maximize your project's exposure:
@@ -1969,15 +1985,19 @@ To maximize your project's exposure:
     const keyboard = {
       inline_keyboard: [
         [{ text: "✅ I've Added the Bot", callback_data: "onboard_bot_added" }],
-        [{ text: "⏭️ I'll Do This Later", callback_data: "onboard_skip_project" }]
+        [{ text: "⏭️ I'll Do This Later", callback_data: "onboard_complete" }]
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Project owner: Use /mybubble
-  showProjectSetup_MyBubble: async (chatId) => {
+  // Project owner: Use /mybubble (edits existing message)
+  showProjectSetup_MyBubble: async (chatId, messageId) => {
     const message = `📢 <b>Project Setup: Step 2</b>
 
 Go to your group and type:
@@ -1992,15 +2012,19 @@ This will:
     const keyboard = {
       inline_keyboard: [
         [{ text: "✅ Done! What's Next? →", callback_data: "onboard_mybubble_done" }],
-        [{ text: "⏭️ Skip for Now", callback_data: "onboard_skip_project" }]
+        [{ text: "⏭️ Skip for Now", callback_data: "onboard_complete" }]
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Project owner: Branding setup
-  showProjectSetup_Branding: async (chatId) => {
+  // Project owner: Branding setup (edits existing message)
+  showProjectSetup_Branding: async (chatId, messageId) => {
     const message = `🎨 <b>Project Setup: Step 3 (Optional)</b>
 
 Make your project stand out! Add a custom image that shows in all vote notifications.
@@ -2017,104 +2041,19 @@ Your branding appears in:
     const keyboard = {
       inline_keyboard: [
         [{ text: "🎨 Set Branding Now", callback_data: "onboard_set_branding" }],
-        [{ text: "⏭️ Skip for Now", callback_data: "onboard_complete_project" }]
+        [{ text: "✅ Done! Show me commands", callback_data: "onboard_complete" }]
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
-  // Show completion screen for raiders
-  showCompletionScreen_Raider: async (chatId, user) => {
-    const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '⏭️ Not set';
-    const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '⏭️ Not set';
-
-    const message = `🎉 <b>You're All Set!</b>
-
-━━━━━━━━━━━━━━━━━━━━
-📋 <b>Your Profile</b>
-━━━━━━━━━━━━━━━━━━━━
-👤 Aquads: ${user.username}
-🐦 Twitter: ${twitter}
-📘 Facebook: ${facebook}
-💰 Points: ${user.points || 0}
-━━━━━━━━━━━━━━━━━━━━
-
-🚀 What would you like to do?`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "🎯 Complete Raids", callback_data: "action_raids" },
-          { text: "🔥 View Trending", callback_data: "action_bubbles" }
-        ],
-        [
-          { text: "🗳️ Vote & Earn", callback_data: "action_vote" },
-          { text: "⚙️ Settings", callback_data: "action_settings" }
-        ],
-        [
-          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
-        ]
-      ]
-    };
-
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
-  },
-
-  // Show completion screen for project owners
-  showCompletionScreen_ProjectOwner: async (chatId, user, groupRegistered = false, brandingSet = false) => {
-    const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '⏭️ Not set';
-    const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '⏭️ Not set';
-    const groupStatus = groupRegistered ? '✅ Registered' : '⏭️ Not set';
-    const brandingStatus = brandingSet ? '✅ Set' : '⏭️ Not set';
-
-    const message = `🎉 <b>You're Fully Set Up!</b>
-
-━━━━━━━━━━━━━━━━━━━━
-📋 <b>Your Profile</b>
-━━━━━━━━━━━━━━━━━━━━
-👤 Aquads: ${user.username}
-🐦 Twitter: ${twitter}
-📘 Facebook: ${facebook}
-💰 Points: ${user.points || 0}
-
-━━━━━━━━━━━━━━━━━━━━
-🚀 <b>Your Project Setup</b>
-━━━━━━━━━━━━━━━━━━━━
-📢 Group: ${groupStatus}
-🎨 Branding: ${brandingStatus}
-━━━━━━━━━━━━━━━━━━━━
-
-🚀 What would you like to do?`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "📊 My Projects", callback_data: "action_mybubble" },
-          { text: "🔥 View Trending", callback_data: "action_bubbles" }
-        ],
-        [
-          { text: "🎯 Complete Raids", callback_data: "action_raids" },
-          { text: "🗳️ Vote & Earn", callback_data: "action_vote" }
-        ],
-        [
-          { text: "📝 Create a Raid", callback_data: "action_createraid" },
-          { text: "🎨 Edit Branding", callback_data: "action_branding" }
-        ],
-        [
-          { text: "⚙️ Settings", callback_data: "action_settings" }
-        ],
-        [
-          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
-        ]
-      ]
-    };
-
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
-  },
-
-  // Show browse menu (for users who skip setup)
-  showBrowseMenu: async (chatId) => {
+  // Show browse menu (for users who skip setup) - edits existing message
+  showBrowseMenu: async (chatId, messageId) => {
     const message = `📖 <b>Browse Mode</b>
 
 You can explore without linking an account, but you'll need to link to:
@@ -2139,7 +2078,11 @@ You can explore without linking an account, but you'll need to link to:
       ]
     };
 
-    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
   },
 
   // Show settings menu
@@ -2179,6 +2122,7 @@ Tap to update:`;
   handleOnboardingUsernameInput: async (chatId, telegramUserId, text, state) => {
     try {
       const inputText = text.trim();
+      const messageId = state.messageId; // Get stored messageId for editing
 
       if (state.action === 'onboarding_aquads_username') {
         // Verify Aquads username exists
@@ -2215,13 +2159,13 @@ Tap to update:`;
 
         // Update state and show Twitter step
         telegramService.setConversationState(telegramUserId, {
+          ...state,
           action: 'onboarding_twitter',
           userId: user._id.toString(),
-          username: user.username,
-          userType: state.userType || null
+          username: user.username
         });
 
-        await telegramService.showOnboardingStep2_Twitter(chatId, user.username);
+        await telegramService.showOnboardingStep2_Twitter(chatId, messageId, user.username);
       }
       else if (state.action === 'onboarding_twitter') {
         // Validate and save Twitter username
@@ -2247,7 +2191,7 @@ Tap to update:`;
           twitterUsername: cleanUsername
         });
 
-        await telegramService.showOnboardingStep3_Facebook(chatId, cleanUsername);
+        await telegramService.showOnboardingStep3_Facebook(chatId, messageId, cleanUsername);
       }
       else if (state.action === 'onboarding_facebook') {
         // Save Facebook username (more lenient validation)
@@ -2272,7 +2216,7 @@ Tap to update:`;
           facebookUsername: cleanUsername
         });
 
-        await telegramService.showUserTypeSelection(chatId);
+        await telegramService.showUserTypeSelection(chatId, messageId);
       }
       else if (state.action === 'settings_twitter') {
         // Update Twitter from settings
@@ -2319,20 +2263,24 @@ Tap to update:`;
   handleOnboardingCallback: async (chatId, userId, messageId, callbackData) => {
     try {
       const state = telegramService.getConversationState(userId) || {};
+      // Store messageId in state for use by text input handlers
+      const stateWithMessageId = { ...state, messageId };
 
       switch (callbackData) {
         case 'onboard_start':
+          telegramService.setConversationState(userId, { ...stateWithMessageId, action: 'onboarding_start' });
           await telegramService.showOnboardingStep1(chatId, messageId);
           break;
 
         case 'onboard_browse':
-          await telegramService.showBrowseMenu(chatId);
+          telegramService.clearConversationState(userId);
+          await telegramService.showBrowseMenu(chatId, messageId);
           break;
 
         case 'onboard_has_account':
           telegramService.setConversationState(userId, {
-            action: 'onboarding_aquads_username',
-            userType: state.userType || null
+            ...stateWithMessageId,
+            action: 'onboarding_aquads_username'
           });
           await telegramService.showUsernamePrompt(chatId, messageId);
           break;
@@ -2342,23 +2290,22 @@ Tap to update:`;
           break;
 
         case 'onboard_back_step1':
-          telegramService.clearConversationState(userId);
+          telegramService.setConversationState(userId, { ...stateWithMessageId, action: 'onboarding_start' });
           await telegramService.showOnboardingStep1(chatId, messageId);
           break;
 
         case 'onboard_skip_all':
           telegramService.clearConversationState(userId);
-          await telegramService.showBrowseMenu(chatId);
+          await telegramService.showBrowseMenu(chatId, messageId);
           break;
 
         case 'onboard_skip_twitter': {
-          const user = await User.findById(state.userId);
           telegramService.setConversationState(userId, {
-            ...state,
+            ...stateWithMessageId,
             action: 'onboarding_facebook',
             twitterUsername: null
           });
-          await telegramService.showOnboardingStep3_Facebook(chatId, null);
+          await telegramService.showOnboardingStep3_Facebook(chatId, messageId, null);
           break;
         }
 
@@ -2366,95 +2313,82 @@ Tap to update:`;
           const user = await User.findById(state.userId);
           if (user) {
             telegramService.setConversationState(userId, {
+              ...stateWithMessageId,
               action: 'onboarding_twitter',
               userId: state.userId,
               username: user.username
             });
-            await telegramService.showOnboardingStep2_Twitter(chatId, user.username);
+            await telegramService.showOnboardingStep2_Twitter(chatId, messageId, user.username);
           }
           break;
         }
 
         case 'onboard_skip_facebook': {
           telegramService.setConversationState(userId, {
-            ...state,
-            action: 'onboarding_user_type',
-            facebookUsername: null
+            ...stateWithMessageId,
+            action: 'onboarding_user_type'
           });
-          await telegramService.showUserTypeSelection(chatId);
+          await telegramService.showUserTypeSelection(chatId, messageId);
           break;
         }
 
         case 'onboard_type_raider': {
-          const user = await User.findById(state.userId);
-          telegramService.clearConversationState(userId);
-          await telegramService.showRaiderTips(chatId, false);
+          telegramService.setConversationState(userId, { ...stateWithMessageId, action: 'onboarding_raider_tips' });
+          await telegramService.showRaiderTips(chatId, messageId, false);
           break;
         }
 
         case 'onboard_type_project': {
           telegramService.setConversationState(userId, {
-            ...state,
+            ...stateWithMessageId,
             action: 'onboarding_project_setup',
             userType: 'project'
           });
-          await telegramService.showProjectSetup_AddBot(chatId);
+          await telegramService.showProjectSetup_AddBot(chatId, messageId);
           break;
         }
 
         case 'onboard_type_both': {
           telegramService.setConversationState(userId, {
-            ...state,
+            ...stateWithMessageId,
             action: 'onboarding_project_setup',
             userType: 'both'
           });
-          await telegramService.showRaiderTips(chatId, true);
+          await telegramService.showRaiderTips(chatId, messageId, true);
           break;
         }
 
         case 'onboard_project_setup': {
-          await telegramService.showProjectSetup_AddBot(chatId);
+          telegramService.setConversationState(userId, { ...stateWithMessageId, action: 'onboarding_project_setup' });
+          await telegramService.showProjectSetup_AddBot(chatId, messageId);
           break;
         }
 
         case 'onboard_bot_added': {
-          await telegramService.showProjectSetup_MyBubble(chatId);
+          await telegramService.showProjectSetup_MyBubble(chatId, messageId);
           break;
         }
 
         case 'onboard_mybubble_done': {
           telegramService.setConversationState(userId, {
-            ...state,
+            ...stateWithMessageId,
             groupRegistered: true
           });
-          await telegramService.showProjectSetup_Branding(chatId);
+          await telegramService.showProjectSetup_Branding(chatId, messageId);
           break;
         }
 
         case 'onboard_set_branding': {
-          const user = await User.findOne({ telegramId: userId.toString() });
           telegramService.clearConversationState(userId);
-          // Trigger branding flow
+          // Trigger branding flow (this sends a new message, which is fine)
           await telegramService.handleSetBrandingCommand(chatId, userId);
           break;
         }
 
-        case 'onboard_skip_project':
-        case 'onboard_complete_project': {
-          const user = await User.findById(state.userId) || await User.findOne({ telegramId: userId.toString() });
+        case 'onboard_complete': {
+          // Show help menu at completion - uses existing help menu which edits the message
           telegramService.clearConversationState(userId);
-          if (user) {
-            await telegramService.showCompletionScreen_ProjectOwner(chatId, user, state.groupRegistered || false, false);
-          }
-          break;
-        }
-
-        case 'onboard_complete_raider': {
-          const user = await User.findById(state.userId) || await User.findOne({ telegramId: userId.toString() });
-          telegramService.clearConversationState(userId);
-          if (user) {
-            await telegramService.showCompletionScreen_Raider(chatId, user);
-          }
+          await telegramService.editHelpMenu(chatId, messageId);
           break;
         }
 
