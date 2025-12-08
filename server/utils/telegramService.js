@@ -362,7 +362,7 @@ const telegramService = {
     } else if (text.startsWith('/facebook')) {
       await telegramService.handleFacebookCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
-      await telegramService.handleHelpCommand(chatId);
+      await telegramService.handleHelpCommand(chatId, userId);
     } else if (text.startsWith('/bubbles')) {
       await telegramService.handleBubblesCommand(chatId, userId);
     } else if (text.startsWith('/mybubble')) {
@@ -408,7 +408,7 @@ const telegramService = {
     
     if (existingUser) {
       // Already linked - show help menu (same as /help command)
-      await telegramService.handleHelpCommand(chatId);
+      await telegramService.handleHelpCommand(chatId, userId);
       return;
     }
 
@@ -519,10 +519,40 @@ const telegramService = {
   },
 
   // Handle /help command - Show main menu
-  handleHelpCommand: async (chatId) => {
-    const message = `🤖 Aquads Bot Help Menu
+  handleHelpCommand: async (chatId, telegramUserId = null) => {
+    // Check if user is linked and get their profile info
+    let profileSection = '';
+    
+    if (telegramUserId) {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (user) {
+        const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
+        const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
+        
+        // Check if user has a bumped project with branding
+        const bumpedProject = await Ad.findOne({
+          owner: user.username,
+          isBumped: true,
+          status: { $in: ['active', 'approved'] }
+        }).select('customBrandingImage');
+        
+        const branding = bumpedProject?.customBrandingImage ? '✅ Set' : '❌ Not set';
+        
+        profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
+🐦 Twitter: ${twitter}
+📘 Facebook: ${facebook}
+🎨 Branding: ${branding}
 
-Welcome! Choose a category below to learn more:`;
+━━━━━━━━━━━━━━━━━━━━
+
+`;
+      }
+    }
+    
+    const message = `🤖 <b>Aquads Bot</b>
+
+${profileSection}Select a category below:`;
 
     const keyboard = {
       inline_keyboard: [
@@ -544,14 +574,44 @@ Welcome! Choose a category below to learn more:`;
       ]
     };
 
-    await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
   },
 
-  // Edit help menu - Main Menu
-  editHelpMenu: async (chatId, messageId) => {
-    const message = `🤖 Aquads Bot Help Menu
+  // Edit help menu - Main Menu (with user profile if available)
+  editHelpMenu: async (chatId, messageId, telegramUserId = null) => {
+    // Check if user is linked and get their profile info
+    let profileSection = '';
+    
+    if (telegramUserId) {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (user) {
+        const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
+        const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
+        
+        // Check if user has a bumped project with branding
+        const bumpedProject = await Ad.findOne({
+          owner: user.username,
+          isBumped: true,
+          status: { $in: ['active', 'approved'] }
+        }).select('customBrandingImage');
+        
+        const branding = bumpedProject?.customBrandingImage ? '✅ Set' : '❌ Not set';
+        
+        profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
+🐦 Twitter: ${twitter}
+📘 Facebook: ${facebook}
+🎨 Branding: ${branding}
 
-Welcome! Choose a category below to learn more:`;
+━━━━━━━━━━━━━━━━━━━━
+
+`;
+      }
+    }
+    
+    const message = `🤖 <b>Aquads Bot</b>
+
+${profileSection}Select a category below:`;
 
     const keyboard = {
       inline_keyboard: [
@@ -1628,7 +1688,7 @@ ${platformEmoji} ${platformName} Raid
         
         switch (helpSection) {
           case 'menu':
-            await telegramService.editHelpMenu(chatId, messageId);
+            await telegramService.editHelpMenu(chatId, messageId, userId);
             break;
           case 'account':
             await telegramService.editHelpAccount(chatId, messageId);
@@ -1711,6 +1771,7 @@ ${platformEmoji} ${platformName} Raid
           chat_id: chatId,
           message_id: messageId,
           text: text,
+          parse_mode: 'HTML',
           reply_markup: keyboard
         }
       );
@@ -2357,7 +2418,7 @@ Tap to update:`;
         case 'onboard_complete': {
           // Show help menu at completion - uses existing help menu which edits the message
           telegramService.clearConversationState(userId);
-          await telegramService.editHelpMenu(chatId, messageId);
+          await telegramService.editHelpMenu(chatId, messageId, userId);
           break;
         }
 
@@ -2396,7 +2457,7 @@ Tap to update:`;
 
         case 'action_menu': {
           // Show help menu (edits the current message)
-          await telegramService.editHelpMenu(chatId, messageId);
+          await telegramService.editHelpMenu(chatId, messageId, userId);
           break;
         }
 
