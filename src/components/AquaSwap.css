@@ -2510,13 +2510,19 @@
 /* Large laptops */
 @media (max-width: 1440px) {
   .hire-expert-section {
-    margin-top: 180px;
+    margin-top: 200px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .hire-expert-section {
+    margin-top: 350px; /* Extra space for 1366px screens where DEX shows mobile layout */
   }
 }
 
 @media (max-width: 1280px) {
   .hire-expert-section {
-    margin-top: 280px;
+    margin-top: 400px;
   }
 }
 
