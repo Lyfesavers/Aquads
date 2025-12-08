@@ -2171,12 +2171,12 @@
 
 .hire-expert-section {
   width: 100%;
-  background: linear-gradient(180deg, rgb(15, 15, 15) 0%, rgb(20, 20, 20) 100%);
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.95) 0%, rgba(20, 20, 20, 0.98) 100%);
   border-top: 1px solid rgba(0, 212, 255, 0.15);
   padding: 60px 20px 80px 20px;
   margin-top: 40px;
   position: relative;
-  z-index: 10; /* Render above chart overflow */
+  z-index: 5;
 }
 
 .hire-expert-container {
