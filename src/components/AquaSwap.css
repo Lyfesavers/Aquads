@@ -2174,7 +2174,7 @@
   background: linear-gradient(180deg, rgba(15, 15, 15, 0.95) 0%, rgba(20, 20, 20, 0.98) 100%);
   border-top: 1px solid rgba(0, 212, 255, 0.15);
   padding: 60px 20px 80px 20px;
-  margin-top: 40px; /* Default for large screens */
+  margin-top: 100px; /* Default for large screens (1920px+) */
   position: relative;
   z-index: 5;
 }
@@ -2510,13 +2510,13 @@
 /* Large laptops */
 @media (max-width: 1440px) {
   .hire-expert-section {
-    margin-top: 80px;
+    margin-top: 180px;
   }
 }
 
 @media (max-width: 1280px) {
   .hire-expert-section {
-    margin-top: 150px;
+    margin-top: 280px;
   }
 }
 
@@ -2524,7 +2524,7 @@
 @media (max-width: 1024px) {
   .hire-expert-section {
     padding: 50px 16px 60px 16px;
-    margin-top: 250px; /* More space on smaller laptops where chart takes more room */
+    margin-top: 400px; /* More space on smaller laptops where chart takes more room */
   }
 
   .hire-expert-cards {
@@ -2546,7 +2546,7 @@
 
 @media (max-width: 900px) {
   .hire-expert-section {
-    margin-top: 350px; /* Even more space on very small laptops */
+    margin-top: 500px; /* Even more space on very small laptops */
   }
 }
 
