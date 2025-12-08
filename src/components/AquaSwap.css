@@ -369,13 +369,13 @@
 
 @media (max-width: 1366px) {
   .swap-section {
-    flex: 0 0 320px; /* More room for HD laptops - gives chart ~996px */
+    flex: 0 0 280px; /* Compact for HD laptops */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
   }
   
   .swap-section.collapsed {
-    flex: 0 0 60px; /* Maintain collapsed size */
+    flex: 0 0 55px;
   }
   
   .swap-section::-webkit-scrollbar {
@@ -384,7 +384,27 @@
   
   /* Maximize chart height on smaller screens */
   .chart-container {
-    height: calc(100vh - 120px); /* Less header space on smaller screens */
+    height: calc(100vh - 120px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .swap-section {
+    flex: 0 0 270px; /* More compact for 1280px screens */
+  }
+  
+  .swap-section.collapsed {
+    flex: 0 0 55px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .swap-section {
+    flex: 0 0 265px; /* Compact for smaller laptops */
+  }
+  
+  .swap-section.collapsed {
+    flex: 0 0 50px;
   }
 }
 
@@ -394,7 +414,7 @@
   background: rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  min-width: 800px; /* Reasonable minimum while maintaining side-by-side layout */
+  min-width: 0; /* Allow chart to shrink on smaller laptops */
   width: 100%;
   overflow: visible; /* Allow scrolling past the chart */
 }
@@ -1264,36 +1284,33 @@
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Responsive Design - Optimized */
+/* Responsive Design - Small Laptops (1024px) - Keep side-by-side layout */
 @media (max-width: 1024px) {
-  .trading-interface.with-charts {
-    flex-direction: column;
-    height: auto;
-  }
-  
+  /* Keep row layout on small laptops - just make it more compact */
   .swap-section {
-    flex: none;
+    flex: 0 0 260px;
     padding: 8px 10px 14px 10px;
     min-height: auto;
   }
   
   .swap-section.collapsed {
-    flex: none;
-    height: auto;
-    min-height: 80px;
-    padding: 8px 12px;
+    flex: 0 0 50px;
   }
   
   .chart-section {
-    min-height: 500px;
     min-width: 0;
+  }
+  
+  .chart-container {
+    min-height: 500px;
   }
   
   .chart-container iframe {
     min-width: 0;
+    min-height: 500px;
   }
   
-  /* Tablet optimized controls */
+  /* Compact controls for small laptops */
   .chart-header {
     padding: 6px 10px;
   }
@@ -1323,10 +1340,10 @@
   
   .chain-select {
     flex: 1;
-    min-width: 120px;
+    min-width: 100px;
   }
   
-  /* Gas price indicator on tablet */
+  /* Gas price indicator on small laptops */
   .gas-price-indicator,
   .gas-price-loading {
     margin-left: 0;
@@ -1346,30 +1363,24 @@
     flex-direction: row;
     justify-content: center;
     min-width: auto;
-    height: 34px;
-    font-size: 0.75rem;
+    height: 32px;
+    font-size: 0.7rem;
+    padding: 4px 8px;
   }
   
-  /* Mobile collapse button adjustments */
-  .swap-collapse-toggle {
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    margin-bottom: 8px;
-    justify-content: center;
-    border-radius: 4px;
-  }
-  
-  .swap-section.collapsed .swap-collapse-toggle {
-    margin-bottom: 8px;
-    min-height: 60px;
-    font-size: 1.4rem;
-    padding: 12px 8px;
+  .provider-desc {
+    display: none; /* Hide descriptions on small laptops to save space */
   }
 }
 
+/* Mobile Layout - Column/stacked layout for phones and small tablets */
 @media (max-width: 768px) {
+  /* Switch to column layout on mobile only */
+  .trading-interface.with-charts {
+    flex-direction: column;
+    height: auto;
+  }
+  
   .header-section {
     padding: 4px 8px;
   }
@@ -1403,12 +1414,41 @@
   }
   
   .swap-section {
+    flex: none;
+    width: 100%;
     padding: 6px 8px 10px 8px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .swap-section.collapsed {
+    flex: none;
+    height: auto;
     padding: 6px 8px;
     min-height: 350px;
+  }
+  
+  .chart-section {
+    min-height: 500px;
+    min-width: 0;
+  }
+  
+  /* Mobile collapse button adjustments */
+  .swap-collapse-toggle {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin-bottom: 8px;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  
+  .swap-section.collapsed .swap-collapse-toggle {
+    margin-bottom: 8px;
+    min-height: 60px;
+    font-size: 1.4rem;
+    padding: 12px 8px;
   }
   
   /* Mobile collapsed content adjustments */
