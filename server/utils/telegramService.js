@@ -27,6 +27,13 @@ const telegramService = {
   raidCompletionQueue: [],
   isProcessingRaidCompletionQueue: false,
 
+  // Cache video file IDs to avoid re-uploading (Telegram best practice)
+  cachedVideoFileIds: {
+    trend: null,
+    vote: null,
+    raid: null
+  },
+
   // Load active groups from database
   loadActiveGroups: async () => {
     try {
@@ -2965,15 +2972,8 @@ Tap to update:`;
             await telegramService.storeBubbleMessageId(chatId, messageId);
             await telegramService.pinMessage(chatId, messageId);
           }
-        } else if (videoExists) {
-          // Send default video with caption
-          const formData = new FormData();
-          formData.append('chat_id', chatId);
-          formData.append('video', fs.createReadStream(videoPath));
-          formData.append('caption', message);
-          formData.append('parse_mode', 'Markdown');
-          
-          // Add "Hire an Expert" button
+        } else if (videoExists || telegramService.cachedVideoFileIds.trend) {
+          // Send default video with caption (use cached file_id if available)
           const keyboard = {
             inline_keyboard: [
               [
@@ -2984,18 +2984,48 @@ Tap to update:`;
               ]
             ]
           };
-          formData.append('reply_markup', JSON.stringify(keyboard));
 
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendVideo`,
-            formData,
-            {
-              headers: {
-                ...formData.getHeaders(),
+          let response;
+          
+          if (telegramService.cachedVideoFileIds.trend) {
+            // Use cached file_id (much faster, no re-upload needed)
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              {
+                chat_id: chatId,
+                video: telegramService.cachedVideoFileIds.trend,
+                caption: message,
+                parse_mode: 'Markdown',
+                reply_markup: keyboard
               },
-              timeout: 30000,
+              { timeout: 15000 }
+            );
+          } else {
+            // First time - upload the video file
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
+            formData.append('parse_mode', 'Markdown');
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 60000, // Increased timeout for first upload
+              }
+            );
+            
+            // Cache the file_id for future use
+            if (response.data.ok && response.data.result.video) {
+              telegramService.cachedVideoFileIds.trend = response.data.result.video.file_id;
+              console.log('📹 Cached trend video file_id for faster future sends');
             }
-          );
+          }
 
           if (response.data.ok) {
             result = true;
@@ -3140,24 +3170,48 @@ Tap to update:`;
               // Fallback to text message if image fails
               await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
-          } else if (videoExists) {
-            // Send default video with caption and keyboard
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('video', fs.createReadStream(videoPath));
-            formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            const response = await axios.post(
-              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendVideo`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
+          } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
+            // Send default video with caption and keyboard (use cached file_id if available)
+            let response;
+            const botToken = process.env.TELEGRAM_BOT_TOKEN;
+            
+            if (telegramService.cachedVideoFileIds.vote) {
+              // Use cached file_id (much faster)
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                {
+                  chat_id: chatId,
+                  video: telegramService.cachedVideoFileIds.vote,
+                  caption: message,
+                  reply_markup: keyboard
                 },
-                timeout: 30000,
+                { timeout: 15000 }
+              );
+            } else {
+              // First time - upload the video file
+              const formData = new FormData();
+              formData.append('chat_id', chatId);
+              formData.append('video', fs.createReadStream(videoPath));
+              formData.append('caption', message);
+              formData.append('reply_markup', JSON.stringify(keyboard));
+
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                formData,
+                {
+                  headers: {
+                    ...formData.getHeaders(),
+                  },
+                  timeout: 60000, // Increased timeout for first upload
+                }
+              );
+              
+              // Cache the file_id for future use
+              if (response.data.ok && response.data.result.video) {
+                telegramService.cachedVideoFileIds.vote = response.data.result.video.file_id;
+                console.log('📹 Cached vote video file_id for faster future sends');
               }
-            );
+            }
 
             if (!response.data.ok) {
               // Fallback to text message if video fails
@@ -3490,24 +3544,47 @@ Tap to update:`;
                 timeout: 30000,
               }
             );
-          } else if (videoExists) {
-            // Send default video
-            const formData = new FormData();
-            formData.append('chat_id', groupChatId);
-            formData.append('video', fs.createReadStream(videoPath));
-            formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendVideo`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
+          } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
+            // Send default video (use cached file_id if available)
+            let response;
+            
+            if (telegramService.cachedVideoFileIds.vote) {
+              // Use cached file_id (much faster)
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                {
+                  chat_id: groupChatId,
+                  video: telegramService.cachedVideoFileIds.vote,
+                  caption: message,
+                  reply_markup: keyboard
                 },
-                timeout: 30000,
+                { timeout: 15000 }
+              );
+            } else {
+              // First time - upload the video file
+              const formData = new FormData();
+              formData.append('chat_id', groupChatId);
+              formData.append('video', fs.createReadStream(videoPath));
+              formData.append('caption', message);
+              formData.append('reply_markup', JSON.stringify(keyboard));
+
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                formData,
+                {
+                  headers: {
+                    ...formData.getHeaders(),
+                  },
+                  timeout: 60000, // Increased timeout for first upload
+                }
+              );
+              
+              // Cache the file_id for future use
+              if (response.data.ok && response.data.result.video) {
+                telegramService.cachedVideoFileIds.vote = response.data.result.video.file_id;
+                console.log('📹 Cached vote video file_id for faster future sends');
               }
-            );
+            }
           }
         } catch (error) {
           console.error('Error sending to registered group:', error.message);
@@ -3555,26 +3632,49 @@ Tap to update:`;
           if (response.data.ok) {
             trendingMessageId = response.data.result.message_id;
           }
-        } else if (videoExists) {
-          // Send default video to trending channel
-          const formData = new FormData();
-          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
-          formData.append('video', fs.createReadStream(videoPath));
-          formData.append('caption', message);
-          formData.append('reply_markup', JSON.stringify(keyboard));
-
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendVideo`,
-            formData,
-            {
-              headers: {
-                ...formData.getHeaders(),
+        } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
+          // Send default video to trending channel (use cached file_id if available)
+          let response;
+          
+          if (telegramService.cachedVideoFileIds.vote) {
+            // Use cached file_id (much faster)
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              {
+                chat_id: telegramService.TRENDING_CHANNEL_ID,
+                video: telegramService.cachedVideoFileIds.vote,
+                caption: message,
+                reply_markup: keyboard
               },
-              timeout: 30000,
-            }
-          );
+              { timeout: 15000 }
+            );
+          } else {
+            // First time - upload the video file
+            const formData = new FormData();
+            formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
 
-          if (response.data.ok) {
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 60000, // Increased timeout for first upload
+              }
+            );
+            
+            // Cache the file_id for future use
+            if (response.data.ok && response.data.result.video) {
+              telegramService.cachedVideoFileIds.vote = response.data.result.video.file_id;
+              console.log('📹 Cached vote video file_id for faster future sends');
+            }
+          }
+
+          if (response && response.data.ok) {
             trendingMessageId = response.data.result.message_id;
           }
         }
@@ -3640,38 +3740,62 @@ Tap to update:`;
       const videoPath = path.join(__dirname, '../../public/trend.mp4');
       const videoExists = fs.existsSync(videoPath);
 
-      let messageId = null;
-      if (videoExists) {
-        try {
-          const formData = new FormData();
-          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
-          formData.append('video', fs.createReadStream(videoPath));
-          formData.append('caption', message);
-          formData.append('parse_mode', 'HTML');
-          
-          // Add "Hire an Expert" button
-          const keyboard = {
-            inline_keyboard: [
-              [
-                {
-                  text: '👨‍💼 Hire an Expert',
-                  url: 'https://aquads.xyz/marketplace'
-                }
-              ]
-            ]
-          };
-          formData.append('reply_markup', JSON.stringify(keyboard));
-
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendVideo`,
-            formData,
+      // Add "Hire an Expert" button
+      const keyboard = {
+        inline_keyboard: [
+          [
             {
-              headers: {
-                ...formData.getHeaders(),
-              },
-              timeout: 30000,
+              text: '👨‍💼 Hire an Expert',
+              url: 'https://aquads.xyz/marketplace'
             }
-          );
+          ]
+        ]
+      };
+
+      let messageId = null;
+      if (videoExists || telegramService.cachedVideoFileIds.trend) {
+        try {
+          let response;
+          
+          if (telegramService.cachedVideoFileIds.trend) {
+            // Use cached file_id (much faster)
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              {
+                chat_id: telegramService.TRENDING_CHANNEL_ID,
+                video: telegramService.cachedVideoFileIds.trend,
+                caption: message,
+                parse_mode: 'HTML',
+                reply_markup: keyboard
+              },
+              { timeout: 15000 }
+            );
+          } else {
+            // First time - upload the video file
+            const formData = new FormData();
+            formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
+            formData.append('parse_mode', 'HTML');
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 60000, // Increased timeout for first upload
+              }
+            );
+            
+            // Cache the file_id for future use
+            if (response.data.ok && response.data.result.video) {
+              telegramService.cachedVideoFileIds.trend = response.data.result.video.file_id;
+              console.log('📹 Cached trend video file_id for faster future sends');
+            }
+          }
 
           if (response.data.ok) {
             messageId = response.data.result.message_id;
