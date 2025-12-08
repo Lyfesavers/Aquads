@@ -314,10 +314,19 @@ const telegramService = {
     // Check if user is in conversation state
     const conversationState = telegramService.getConversationState(userId);
     
-    if (conversationState && conversationState.action === 'waiting_username' && !text.startsWith('/')) {
-      // User is providing Twitter username
-      await telegramService.handleUsernameInput(chatId, userId, text, conversationState);
-      return;
+    if (conversationState && !text.startsWith('/')) {
+      // Check for onboarding-related states
+      if (conversationState.action.startsWith('onboarding_') || 
+          conversationState.action.startsWith('settings_')) {
+        await telegramService.handleOnboardingUsernameInput(chatId, userId, text, conversationState);
+        return;
+      }
+      
+      // Check for raid completion state (existing functionality)
+      if (conversationState.action === 'waiting_username') {
+        await telegramService.handleUsernameInput(chatId, userId, text, conversationState);
+        return;
+      }
     }
 
     // Handle commands - redirect group commands to private chat (except /bubbles)
@@ -387,34 +396,17 @@ const telegramService = {
       return;
     }
 
-    const message = `🚀 Welcome to Aquads Bot!
+    // Check if user is already linked
+    const existingUser = await User.findOne({ telegramId: userId.toString() });
+    
+    if (existingUser) {
+      // Already linked - show main menu
+      await telegramService.showMainMenu(chatId, existingUser);
+      return;
+    }
 
-Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Facebook raids and earn points.
-
-📋 Requirements:
-• You MUST have an Aquads account to participate
-• Create account at: https://aquads.xyz
-
-📋 Quick Start:
-1. Link your account: /link your_aquads_username
-2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
-3. View raids: /raids
-4. Complete raids: Use the "Complete in Private Chat" buttons
-
-🔗 Available Commands:
-• /link USERNAME - Link your Telegram to Aquads account
-• /twitter [USERNAME] - Set or view your Twitter username for raids
-• /facebook [USERNAME] - Set or view your Facebook username for raids
-• /raids - View available Twitter and Facebook raids
-• /createraid TWEET_URL - Create a new Twitter raid (2000 points)
-• /mybubble - View your projects
-• /help - Show detailed command guide
-
-🌐 Track points & claim rewards on: https://aquads.xyz
-
-💡 First step: Link your account with /link your_aquads_username, then set your usernames with /twitter your_twitter_username and /facebook your_facebook_username`;
-
-    await telegramService.sendBotMessage(chatId, message);
+    // New user - show guided welcome screen
+    await telegramService.showWelcomeScreen(chatId, username);
   },
 
   // Handle /twitter command
@@ -1609,15 +1601,23 @@ ${platformEmoji} ${platformName} Raid
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id;
     const queryId = callbackQuery.id;
+    const messageId = callbackQuery.message.message_id;
 
     try {
       // Answer the callback query
       await telegramService.answerCallbackQuery(queryId);
 
+      // Check if it's an onboarding, action, or settings callback
+      if (callbackQuery.data.startsWith('onboard_') || 
+          callbackQuery.data.startsWith('action_') || 
+          callbackQuery.data.startsWith('settings_')) {
+        await telegramService.handleOnboardingCallback(chatId, userId, messageId, callbackQuery.data);
+        return;
+      }
+
       // Check if it's a help menu callback
       if (callbackQuery.data.startsWith('help_')) {
         const helpSection = callbackQuery.data.replace('help_', '');
-        const messageId = callbackQuery.message.message_id;
         
         switch (helpSection) {
           case 'menu':
@@ -1652,10 +1652,15 @@ ${platformEmoji} ${platformName} Raid
         await telegramService.processVote(chatId, userId, projectId, voteType);
       } else {
         // Parse callback data for other actions (like raids)
-        const callbackData = JSON.parse(callbackQuery.data);
-        
-        if (callbackData.action === 'complete') {
-          await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+        try {
+          const callbackData = JSON.parse(callbackQuery.data);
+          
+          if (callbackData.action === 'complete') {
+            await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+          }
+        } catch (parseError) {
+          // Not JSON, might be a simple callback - ignore
+          console.log('Unknown callback data:', callbackQuery.data);
         }
       }
 
@@ -1708,6 +1713,816 @@ ${platformEmoji} ${platformName} Raid
       return false;
     }
   },
+
+  // Send message with inline keyboard (clean version without auto-added buttons)
+  sendMessageWithKeyboard: async (chatId, text, keyboard) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return null;
+
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          chat_id: chatId,
+          text: text,
+          reply_markup: keyboard,
+          parse_mode: 'HTML'
+        }
+      );
+      
+      if (response.data.ok) {
+        return response.data.result.message_id;
+      }
+      return null;
+    } catch (error) {
+      console.error('Send message with keyboard error:', error.message);
+      return null;
+    }
+  },
+
+  // ==========================================
+  // ONBOARDING WIZARD FUNCTIONS
+  // ==========================================
+
+  // Show welcome screen for new users
+  showWelcomeScreen: async (chatId, username) => {
+    const message = `🚀 <b>Welcome to Aquads Bot!</b>
+
+Hey${username ? ` @${username}` : ''}! 👋
+
+Earn points by:
+• 🎯 Completing Twitter & Facebook raids
+• 🗳️ Voting on projects (bullish/bearish)
+• 📈 Getting your project trending
+
+Let's get you set up in <b>30 seconds!</b> 👇`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "✨ Start Quick Setup", callback_data: "onboard_start" }],
+        [
+          { text: "📖 Just Browsing", callback_data: "onboard_browse" },
+          { text: "❓ Help", callback_data: "help_menu" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show main menu for returning/linked users
+  showMainMenu: async (chatId, user) => {
+    const message = `👋 <b>Welcome back, ${user.username}!</b>
+
+💰 Points: <b>${user.points || 0}</b>
+
+🚀 What would you like to do?`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🎯 Raids", callback_data: "action_raids" },
+          { text: "🔥 Trending", callback_data: "action_bubbles" }
+        ],
+        [
+          { text: "📊 My Projects", callback_data: "action_mybubble" },
+          { text: "🗳️ Vote & Earn", callback_data: "action_vote" }
+        ],
+        [
+          { text: "📝 Create Raid", callback_data: "action_createraid" },
+          { text: "⚙️ Settings", callback_data: "action_settings" }
+        ],
+        [
+          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Step 1: Ask if they have an account
+  showOnboardingStep1: async (chatId, messageId = null) => {
+    const message = `📝 <b>Step 1 of 3: Link Your Account</b>
+
+Do you have an Aquads account?
+
+💡 If you registered on aquads.xyz, tap "Yes"`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "✅ Yes, I have an account", callback_data: "onboard_has_account" }],
+        [{ text: "🆕 No, I need to create one", callback_data: "onboard_no_account" }],
+        [{ text: "⏭️ Skip for now", callback_data: "onboard_skip_all" }]
+      ]
+    };
+
+    if (messageId) {
+      await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+    } else {
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+    }
+  },
+
+  // Show create account redirect
+  showCreateAccountRedirect: async (chatId, messageId) => {
+    const message = `🌐 <b>Create Your Account</b>
+
+Tap below to register on Aquads (takes ~1 minute).
+
+✅ Secure email verification
+✅ Full account features
+✅ Track your points & rewards
+
+After creating your account, come back and tap
+"I've Created My Account" to continue! 👇`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🌐 Create Account on Aquads.xyz", url: "https://aquads.xyz?action=register&from=telegram" }],
+        [{ text: "✅ I've Created My Account", callback_data: "onboard_has_account" }],
+        [{ text: "⬅️ Back", callback_data: "onboard_back_step1" }]
+      ]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Ask for Aquads username
+  showUsernamePrompt: async (chatId, messageId) => {
+    const message = `📝 <b>What's your Aquads username?</b>
+
+Type the username you use to login on aquads.xyz 👇
+
+(Just type it below, no command needed)`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "⬅️ Back", callback_data: "onboard_back_step1" }]
+      ]
+    };
+
+    await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+  },
+
+  // Step 2: Twitter setup
+  showOnboardingStep2_Twitter: async (chatId, username) => {
+    const message = `✅ <b>Account Linked: ${username}</b>
+
+📱 <b>Step 2 of 3: Twitter/X Username</b>
+
+This is used for Twitter raids.
+Just type your handle below 👇 (without the @)`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "⏭️ Skip", callback_data: "onboard_skip_twitter" },
+          { text: "⬅️ Back", callback_data: "onboard_back_step1" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Step 3: Facebook setup
+  showOnboardingStep3_Facebook: async (chatId, twitterSet) => {
+    const twitterMsg = twitterSet ? `✅ Twitter: @${twitterSet}\n\n` : '';
+    
+    const message = `${twitterMsg}📘 <b>Step 3 of 3: Facebook Username (Optional)</b>
+
+Used for Facebook raids.
+Type your name below or skip 👇`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "⏭️ Skip", callback_data: "onboard_skip_facebook" },
+          { text: "⬅️ Back", callback_data: "onboard_back_step2" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Ask what brings them here (user type selection)
+  showUserTypeSelection: async (chatId) => {
+    const message = `🎯 <b>Almost done! What brings you to Aquads?</b>
+
+This helps us show you the right features:`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🎯 I want to complete raids & earn points", callback_data: "onboard_type_raider" }],
+        [{ text: "🚀 I have a project to promote", callback_data: "onboard_type_project" }],
+        [{ text: "🔄 Both - I raid AND have a project", callback_data: "onboard_type_both" }]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show raider tips
+  showRaiderTips: async (chatId, showProjectSetupNext = false) => {
+    const message = `🎯 <b>Raiding Quick Tips</b>
+
+How to earn points:
+
+1️⃣ Tap "🎯 Raids" to see available raids
+2️⃣ Like, RT, Comment on the post
+3️⃣ Submit your completion
+4️⃣ Earn points after admin approval!
+
+💰 Points can be redeemed at aquads.xyz`;
+
+    const keyboard = {
+      inline_keyboard: showProjectSetupNext 
+        ? [[{ text: "✅ Got it! Next: My Project →", callback_data: "onboard_project_setup" }]]
+        : [[{ text: "✅ Got it! Show me the menu", callback_data: "onboard_complete_raider" }]]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Project owner: Add bot to group
+  showProjectSetup_AddBot: async (chatId) => {
+    const message = `🚀 <b>Project Setup: Step 1</b>
+
+To maximize your project's exposure:
+
+📱 <b>Add the bot to your project's group:</b>
+
+1. Open your project's Telegram group
+2. Add @aquadsbumpbot as a member
+3. Make the bot an admin (to send messages)`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "✅ I've Added the Bot", callback_data: "onboard_bot_added" }],
+        [{ text: "⏭️ I'll Do This Later", callback_data: "onboard_skip_project" }]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Project owner: Use /mybubble
+  showProjectSetup_MyBubble: async (chatId) => {
+    const message = `📢 <b>Project Setup: Step 2</b>
+
+Go to your group and type:
+
+<code>/mybubble</code>
+
+This will:
+✅ Register your group for vote notifications
+✅ Post your project with voting buttons
+✅ Let your community vote directly`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "✅ Done! What's Next? →", callback_data: "onboard_mybubble_done" }],
+        [{ text: "⏭️ Skip for Now", callback_data: "onboard_skip_project" }]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Project owner: Branding setup
+  showProjectSetup_Branding: async (chatId) => {
+    const message = `🎨 <b>Project Setup: Step 3 (Optional)</b>
+
+Make your project stand out! Add a custom image that shows in all vote notifications.
+
+📋 Requirements:
+• JPEG or PNG format
+• Recommended: 1920×1080
+
+Your branding appears in:
+• Vote notifications
+• /mybubble showcase
+• Trending updates`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🎨 Set Branding Now", callback_data: "onboard_set_branding" }],
+        [{ text: "⏭️ Skip for Now", callback_data: "onboard_complete_project" }]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show completion screen for raiders
+  showCompletionScreen_Raider: async (chatId, user) => {
+    const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '⏭️ Not set';
+    const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '⏭️ Not set';
+
+    const message = `🎉 <b>You're All Set!</b>
+
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Your Profile</b>
+━━━━━━━━━━━━━━━━━━━━
+👤 Aquads: ${user.username}
+🐦 Twitter: ${twitter}
+📘 Facebook: ${facebook}
+💰 Points: ${user.points || 0}
+━━━━━━━━━━━━━━━━━━━━
+
+🚀 What would you like to do?`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🎯 Complete Raids", callback_data: "action_raids" },
+          { text: "🔥 View Trending", callback_data: "action_bubbles" }
+        ],
+        [
+          { text: "🗳️ Vote & Earn", callback_data: "action_vote" },
+          { text: "⚙️ Settings", callback_data: "action_settings" }
+        ],
+        [
+          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show completion screen for project owners
+  showCompletionScreen_ProjectOwner: async (chatId, user, groupRegistered = false, brandingSet = false) => {
+    const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '⏭️ Not set';
+    const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '⏭️ Not set';
+    const groupStatus = groupRegistered ? '✅ Registered' : '⏭️ Not set';
+    const brandingStatus = brandingSet ? '✅ Set' : '⏭️ Not set';
+
+    const message = `🎉 <b>You're Fully Set Up!</b>
+
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Your Profile</b>
+━━━━━━━━━━━━━━━━━━━━
+👤 Aquads: ${user.username}
+🐦 Twitter: ${twitter}
+📘 Facebook: ${facebook}
+💰 Points: ${user.points || 0}
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 <b>Your Project Setup</b>
+━━━━━━━━━━━━━━━━━━━━
+📢 Group: ${groupStatus}
+🎨 Branding: ${brandingStatus}
+━━━━━━━━━━━━━━━━━━━━
+
+🚀 What would you like to do?`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "📊 My Projects", callback_data: "action_mybubble" },
+          { text: "🔥 View Trending", callback_data: "action_bubbles" }
+        ],
+        [
+          { text: "🎯 Complete Raids", callback_data: "action_raids" },
+          { text: "🗳️ Vote & Earn", callback_data: "action_vote" }
+        ],
+        [
+          { text: "📝 Create a Raid", callback_data: "action_createraid" },
+          { text: "🎨 Edit Branding", callback_data: "action_branding" }
+        ],
+        [
+          { text: "⚙️ Settings", callback_data: "action_settings" }
+        ],
+        [
+          { text: "🌐 Open Aquads.xyz", url: "https://aquads.xyz" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show browse menu (for users who skip setup)
+  showBrowseMenu: async (chatId) => {
+    const message = `📖 <b>Browse Mode</b>
+
+You can explore without linking an account, but you'll need to link to:
+• Complete raids & earn points
+• Vote on projects
+• Create raids
+
+🔗 Link anytime with: /link your_username`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🔥 View Trending", callback_data: "action_bubbles" },
+          { text: "❓ Help", callback_data: "help_menu" }
+        ],
+        [
+          { text: "✨ Start Setup", callback_data: "onboard_start" }
+        ],
+        [
+          { text: "🌐 Create Account", url: "https://aquads.xyz?action=register&from=telegram" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Show settings menu
+  showSettingsMenu: async (chatId, user) => {
+    const twitter = user.twitterUsername ? `@${user.twitterUsername}` : 'Not set';
+    const facebook = user.facebookUsername ? `@${user.facebookUsername}` : 'Not set';
+
+    const message = `⚙️ <b>Settings</b>
+
+👤 Account: ${user.username}
+🐦 Twitter: ${twitter}
+📘 Facebook: ${facebook}
+💰 Points: ${user.points || 0}
+
+Tap to update:`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🐦 Update Twitter", callback_data: "settings_twitter" },
+          { text: "📘 Update Facebook", callback_data: "settings_facebook" }
+        ],
+        [
+          { text: "🎨 Set Branding", callback_data: "action_branding" },
+          { text: "🗑️ Remove Branding", callback_data: "settings_remove_branding" }
+        ],
+        [
+          { text: "⬅️ Back to Menu", callback_data: "action_menu" }
+        ]
+      ]
+    };
+
+    await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+  },
+
+  // Handle onboarding username input
+  handleOnboardingUsernameInput: async (chatId, telegramUserId, text, state) => {
+    try {
+      const inputText = text.trim();
+
+      if (state.action === 'onboarding_aquads_username') {
+        // Verify Aquads username exists
+        const user = await User.findOne({ 
+          username: { $regex: new RegExp(`^${inputText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+        });
+
+        if (!user) {
+          await telegramService.sendBotMessage(chatId, 
+            `❌ Username "${inputText}" not found.\n\nPlease check your username and try again, or create an account at aquads.xyz`);
+          return;
+        }
+
+        // Check if already linked to another Telegram
+        if (user.telegramId && user.telegramId !== telegramUserId.toString()) {
+          await telegramService.sendBotMessage(chatId, 
+            `❌ This account is already linked to another Telegram.\n\nIf this is your account, please contact support.`);
+          telegramService.clearConversationState(telegramUserId);
+          return;
+        }
+
+        // Check if this Telegram is already linked to another account
+        const existingLink = await User.findOne({ telegramId: telegramUserId.toString() });
+        if (existingLink && existingLink._id.toString() !== user._id.toString()) {
+          await telegramService.sendBotMessage(chatId, 
+            `❌ Your Telegram is already linked to: ${existingLink.username}\n\nContact support to change this.`);
+          telegramService.clearConversationState(telegramUserId);
+          return;
+        }
+
+        // Link the account
+        user.telegramId = telegramUserId.toString();
+        await user.save();
+
+        // Update state and show Twitter step
+        telegramService.setConversationState(telegramUserId, {
+          action: 'onboarding_twitter',
+          userId: user._id.toString(),
+          username: user.username,
+          userType: state.userType || null
+        });
+
+        await telegramService.showOnboardingStep2_Twitter(chatId, user.username);
+      }
+      else if (state.action === 'onboarding_twitter') {
+        // Validate and save Twitter username
+        const cleanUsername = inputText.replace('@', '').trim();
+        const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+
+        if (!usernameRegex.test(cleanUsername)) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid username. Use letters, numbers, underscores only (max 15 chars).\n\nTry again:");
+          return;
+        }
+
+        const user = await User.findById(state.userId);
+        if (user) {
+          user.twitterUsername = cleanUsername;
+          await user.save();
+        }
+
+        // Move to Facebook step
+        telegramService.setConversationState(telegramUserId, {
+          ...state,
+          action: 'onboarding_facebook',
+          twitterUsername: cleanUsername
+        });
+
+        await telegramService.showOnboardingStep3_Facebook(chatId, cleanUsername);
+      }
+      else if (state.action === 'onboarding_facebook') {
+        // Save Facebook username (more lenient validation)
+        const cleanUsername = inputText.replace('@', '').trim();
+
+        if (cleanUsername.length < 1 || cleanUsername.length > 50) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid username. Please try again:");
+          return;
+        }
+
+        const user = await User.findById(state.userId);
+        if (user) {
+          user.facebookUsername = cleanUsername;
+          await user.save();
+        }
+
+        // Move to user type selection
+        telegramService.setConversationState(telegramUserId, {
+          ...state,
+          action: 'onboarding_user_type',
+          facebookUsername: cleanUsername
+        });
+
+        await telegramService.showUserTypeSelection(chatId);
+      }
+      else if (state.action === 'settings_twitter') {
+        // Update Twitter from settings
+        const cleanUsername = inputText.replace('@', '').trim();
+        const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+
+        if (!usernameRegex.test(cleanUsername)) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid username. Use letters, numbers, underscores only (max 15 chars).");
+          telegramService.clearConversationState(telegramUserId);
+          return;
+        }
+
+        const user = await User.findOne({ telegramId: telegramUserId.toString() });
+        if (user) {
+          user.twitterUsername = cleanUsername;
+          await user.save();
+          await telegramService.sendBotMessage(chatId, `✅ Twitter updated: @${cleanUsername}`);
+          await telegramService.showSettingsMenu(chatId, user);
+        }
+        telegramService.clearConversationState(telegramUserId);
+      }
+      else if (state.action === 'settings_facebook') {
+        // Update Facebook from settings
+        const cleanUsername = inputText.replace('@', '').trim();
+
+        const user = await User.findOne({ telegramId: telegramUserId.toString() });
+        if (user) {
+          user.facebookUsername = cleanUsername;
+          await user.save();
+          await telegramService.sendBotMessage(chatId, `✅ Facebook updated: @${cleanUsername}`);
+          await telegramService.showSettingsMenu(chatId, user);
+        }
+        telegramService.clearConversationState(telegramUserId);
+      }
+
+    } catch (error) {
+      console.error('Onboarding username input error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error processing input. Please try again.");
+    }
+  },
+
+  // Handle onboarding callback queries
+  handleOnboardingCallback: async (chatId, userId, messageId, callbackData) => {
+    try {
+      const state = telegramService.getConversationState(userId) || {};
+
+      switch (callbackData) {
+        case 'onboard_start':
+          await telegramService.showOnboardingStep1(chatId, messageId);
+          break;
+
+        case 'onboard_browse':
+          await telegramService.showBrowseMenu(chatId);
+          break;
+
+        case 'onboard_has_account':
+          telegramService.setConversationState(userId, {
+            action: 'onboarding_aquads_username',
+            userType: state.userType || null
+          });
+          await telegramService.showUsernamePrompt(chatId, messageId);
+          break;
+
+        case 'onboard_no_account':
+          await telegramService.showCreateAccountRedirect(chatId, messageId);
+          break;
+
+        case 'onboard_back_step1':
+          telegramService.clearConversationState(userId);
+          await telegramService.showOnboardingStep1(chatId, messageId);
+          break;
+
+        case 'onboard_skip_all':
+          telegramService.clearConversationState(userId);
+          await telegramService.showBrowseMenu(chatId);
+          break;
+
+        case 'onboard_skip_twitter': {
+          const user = await User.findById(state.userId);
+          telegramService.setConversationState(userId, {
+            ...state,
+            action: 'onboarding_facebook',
+            twitterUsername: null
+          });
+          await telegramService.showOnboardingStep3_Facebook(chatId, null);
+          break;
+        }
+
+        case 'onboard_back_step2': {
+          const user = await User.findById(state.userId);
+          if (user) {
+            telegramService.setConversationState(userId, {
+              action: 'onboarding_twitter',
+              userId: state.userId,
+              username: user.username
+            });
+            await telegramService.showOnboardingStep2_Twitter(chatId, user.username);
+          }
+          break;
+        }
+
+        case 'onboard_skip_facebook': {
+          telegramService.setConversationState(userId, {
+            ...state,
+            action: 'onboarding_user_type',
+            facebookUsername: null
+          });
+          await telegramService.showUserTypeSelection(chatId);
+          break;
+        }
+
+        case 'onboard_type_raider': {
+          const user = await User.findById(state.userId);
+          telegramService.clearConversationState(userId);
+          await telegramService.showRaiderTips(chatId, false);
+          break;
+        }
+
+        case 'onboard_type_project': {
+          telegramService.setConversationState(userId, {
+            ...state,
+            action: 'onboarding_project_setup',
+            userType: 'project'
+          });
+          await telegramService.showProjectSetup_AddBot(chatId);
+          break;
+        }
+
+        case 'onboard_type_both': {
+          telegramService.setConversationState(userId, {
+            ...state,
+            action: 'onboarding_project_setup',
+            userType: 'both'
+          });
+          await telegramService.showRaiderTips(chatId, true);
+          break;
+        }
+
+        case 'onboard_project_setup': {
+          await telegramService.showProjectSetup_AddBot(chatId);
+          break;
+        }
+
+        case 'onboard_bot_added': {
+          await telegramService.showProjectSetup_MyBubble(chatId);
+          break;
+        }
+
+        case 'onboard_mybubble_done': {
+          telegramService.setConversationState(userId, {
+            ...state,
+            groupRegistered: true
+          });
+          await telegramService.showProjectSetup_Branding(chatId);
+          break;
+        }
+
+        case 'onboard_set_branding': {
+          const user = await User.findOne({ telegramId: userId.toString() });
+          telegramService.clearConversationState(userId);
+          // Trigger branding flow
+          await telegramService.handleSetBrandingCommand(chatId, userId);
+          break;
+        }
+
+        case 'onboard_skip_project':
+        case 'onboard_complete_project': {
+          const user = await User.findById(state.userId) || await User.findOne({ telegramId: userId.toString() });
+          telegramService.clearConversationState(userId);
+          if (user) {
+            await telegramService.showCompletionScreen_ProjectOwner(chatId, user, state.groupRegistered || false, false);
+          }
+          break;
+        }
+
+        case 'onboard_complete_raider': {
+          const user = await User.findById(state.userId) || await User.findOne({ telegramId: userId.toString() });
+          telegramService.clearConversationState(userId);
+          if (user) {
+            await telegramService.showCompletionScreen_Raider(chatId, user);
+          }
+          break;
+        }
+
+        // Action callbacks
+        case 'action_raids':
+          await telegramService.handleRaidsCommand(chatId, userId);
+          break;
+
+        case 'action_bubbles':
+        case 'action_vote':
+          await telegramService.handleBubblesCommand(chatId, userId);
+          break;
+
+        case 'action_mybubble':
+          await telegramService.handleMyBubbleCommand(chatId, userId);
+          break;
+
+        case 'action_createraid':
+          await telegramService.sendBotMessage(chatId, 
+            "📝 To create a raid, use:\n\n/createraid TWEET_URL\n\nExample:\n/createraid https://twitter.com/user/status/123456");
+          break;
+
+        case 'action_branding':
+          await telegramService.handleSetBrandingCommand(chatId, userId);
+          break;
+
+        case 'action_settings': {
+          const user = await User.findOne({ telegramId: userId.toString() });
+          if (user) {
+            await telegramService.showSettingsMenu(chatId, user);
+          } else {
+            await telegramService.sendBotMessage(chatId, "❌ Please link your account first: /link your_username");
+          }
+          break;
+        }
+
+        case 'action_menu': {
+          const user = await User.findOne({ telegramId: userId.toString() });
+          if (user) {
+            await telegramService.showMainMenu(chatId, user);
+          } else {
+            await telegramService.showWelcomeScreen(chatId, null);
+          }
+          break;
+        }
+
+        case 'settings_twitter': {
+          telegramService.setConversationState(userId, { action: 'settings_twitter' });
+          await telegramService.sendBotMessage(chatId, "🐦 Type your new Twitter username (without @):");
+          break;
+        }
+
+        case 'settings_facebook': {
+          telegramService.setConversationState(userId, { action: 'settings_facebook' });
+          await telegramService.sendBotMessage(chatId, "📘 Type your new Facebook username:");
+          break;
+        }
+
+        case 'settings_remove_branding': {
+          await telegramService.handleRemoveBrandingCommand(chatId, userId);
+          break;
+        }
+
+        default:
+          console.log('Unknown onboarding callback:', callbackData);
+      }
+    } catch (error) {
+      console.error('Onboarding callback error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error processing request. Please try again.");
+    }
+  },
+
+  // ==========================================
+  // END ONBOARDING WIZARD FUNCTIONS
+  // ==========================================
 
   // Start raid completion flow
   startRaidCompletion: async (chatId, telegramUserId, raidId) => {
