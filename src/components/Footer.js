@@ -35,7 +35,7 @@ const Footer = () => {
                   <span>Telegram</span>
                 </a>
                 <a
-                  href="https://discord.gg/6zrsCgkf"
+                  href="https://discord.gg/kyVqbT9A8x"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
