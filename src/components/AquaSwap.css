@@ -2671,4 +2671,24 @@
   width: 100%;
   flex: 0 0 auto;
   background: #0a0e1b;
+  margin-top: 0;
+}
+
+/* Add spacing on smaller PC screens where chart takes more vertical space */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .currency-converter-wrapper {
+    margin-top: 20px;
+  }
+}
+
+@media (min-width: 1201px) and (max-width: 1440px) {
+  .currency-converter-wrapper {
+    margin-top: 12px;
+  }
+}
+
+@media (min-width: 1441px) {
+  .currency-converter-wrapper {
+    margin-top: 0;
+  }
 }
