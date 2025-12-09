@@ -28,6 +28,11 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usernameValidation, setUsernameValidation] = useState({
+    minLength: false,
+    validChars: true  // true by default since empty string has no invalid chars
+  });
+  const [usernameFocused, setUsernameFocused] = useState(false);
 
   // Add countries list
   const countries = [
@@ -312,6 +317,19 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     });
   }, [formData.password]);
 
+  // Validate username as user types
+  useEffect(() => {
+    const username = formData.username;
+    setUsernameValidation({
+      minLength: username.length >= 3 && username.length <= 20,
+      validChars: username.length === 0 || /^[a-zA-Z0-9_-]+$/.test(username)
+    });
+  }, [formData.username]);
+
+  const isUsernameValid = () => {
+    return formData.username.length > 0 && Object.values(usernameValidation).every(value => value === true);
+  };
+
   const validateImageUrl = async (url) => {
     try {
       const response = await fetch(url);
@@ -358,6 +376,16 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     // Validate required fields
     if (!formData.username || !formData.fullName || !formData.password || !formData.email) {
       setError('Username, full name, password, and email are required');
+      return;
+    }
+
+    // Validate username requirements
+    if (!isUsernameValid()) {
+      if (!usernameValidation.validChars) {
+        setError('Username can only contain letters, numbers, underscores and hyphens (no spaces)');
+      } else if (!usernameValidation.minLength) {
+        setError('Username must be between 3 and 20 characters');
+      }
       return;
     }
 
@@ -551,10 +579,44 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
+                onFocus={() => setUsernameFocused(true)}
+                onBlur={() => setUsernameFocused(false)}
                 required
                 placeholder="Enter username (used for login)"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                  formData.username && isUsernameValid()
+                    ? "focus:ring-green-500 border border-green-500"
+                    : formData.username && !usernameValidation.validChars
+                    ? "focus:ring-red-500 border border-red-500"
+                    : "focus:ring-blue-500"
+                }`}
               />
+              
+              {/* Username requirements checklist */}
+              {(usernameFocused || formData.username) && (
+                <div className="mt-2 p-3 bg-gray-700 rounded space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    {usernameValidation.minLength ? (
+                      <FaCheck className="text-green-500" />
+                    ) : (
+                      <FaTimes className="text-red-500" />
+                    )}
+                    <span className={usernameValidation.minLength ? "text-green-500" : "text-red-500"}>
+                      Between 3 and 20 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    {usernameValidation.validChars ? (
+                      <FaCheck className="text-green-500" />
+                    ) : (
+                      <FaTimes className="text-red-500" />
+                    )}
+                    <span className={usernameValidation.validChars ? "text-green-500" : "text-red-500"}>
+                      Only letters, numbers, underscores and hyphens (no spaces)
+                    </span>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-gray-400 mt-1">Your unique username for login and identification</p>
             </div>
             <div>

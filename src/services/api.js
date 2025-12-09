@@ -442,8 +442,13 @@ export const register = async (userData) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      const errorData = await response.json();
+      // Check for specific validation errors array from the server
+      if (errorData.errors && errorData.errors.length > 0) {
+        const errorMessages = errorData.errors.map(e => e.message).join('. ');
+        throw new Error(errorMessages);
+      }
+      throw new Error(errorData.error || 'Registration failed');
     }
 
     const data = await response.json();
