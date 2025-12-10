@@ -479,8 +479,8 @@ async function syncCryptoJobsListJobs() {
     let updated = 0;
     let errors = 0;
     
-    // Process each item from the feed (limit to 100 most recent)
-    const itemsToProcess = feed.items.slice(0, 100);
+    // Process ALL items from the feed (no limit)
+    const itemsToProcess = feed.items;
     
     for (const item of itemsToProcess) {
       try {

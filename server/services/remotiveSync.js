@@ -429,9 +429,9 @@ async function syncRemotiveJobs() {
       };
     }
     
-    // Convert API response to feed format for processing
+    // Convert API response to feed format for processing (no limit - get ALL jobs)
     const feed = {
-      items: response.data.jobs.slice(0, 100).map(job => ({
+      items: response.data.jobs.map(job => ({
         title: job.title,
         link: job.url,
         guid: job.id ? job.id.toString() : job.url,
