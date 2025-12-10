@@ -1605,8 +1605,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="siacoin">Siacoin</option>
                     </select>
 
-                    {/* Gas Price Indicator */}
-                    {gasPrice && !loadingGasPrice && (
+                    {/* Gas Price Indicator - Keep showing existing value during refresh to prevent layout shift */}
+                    {gasPrice && (
                       <div className={`gas-price-indicator gas-level-${getGasPriceLevel(gasPrice)}`} title={`Fast: ${formatGasPrice({ ...gasPrice, price: gasPrice.fast })} | Standard: ${formatGasPrice(gasPrice)} | Slow: ${formatGasPrice({ ...gasPrice, price: gasPrice.slow })}`}>
                         <span className="gas-icon">⛽</span>
                         <span className="gas-value">{formatGasPrice(gasPrice)}</span>
@@ -1614,7 +1614,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       </div>
                     )}
                     
-                    {loadingGasPrice && (
+                    {/* Only show loading spinner on initial load when there's no gas data yet */}
+                    {loadingGasPrice && !gasPrice && (
                       <div className="gas-price-loading">
                         <span className="gas-icon">⛽</span>
                         <span className="gas-loading-spinner"></span>
