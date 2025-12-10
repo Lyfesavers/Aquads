@@ -159,7 +159,7 @@ const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, 
   );
 };
 
-const BookingConversation = ({ booking, currentUser, onClose, showNotification }) => {
+const BookingConversation = ({ booking, currentUser, onClose, showNotification, isFullScreen = false }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -1256,24 +1256,47 @@ ${currentUser.username}`;
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 shadow-lg w-full max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-        <h3 className="text-xl text-blue-400 font-semibold">
-          Conversation: {booking?.serviceId?.title || 'Loading...'}
-        </h3>
-        <div className="flex items-center gap-2">
+    <div className={`bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-2xl w-full mx-auto border border-gray-700/50 ${
+      isFullScreen 
+        ? 'p-6 lg:p-8 max-w-none' 
+        : 'p-4 lg:p-6 max-w-6xl lg:max-w-7xl'
+    }`}>
+      <div className="flex justify-between items-center mb-5 border-b border-gray-700/70 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <span className="text-xl lg:text-2xl">💬</span>
+          </div>
+          <div>
+            <h3 className="text-xl lg:text-2xl text-white font-bold">
+              {booking?.serviceId?.title || 'Loading...'}
+            </h3>
+            <p className="text-sm text-gray-400">
+              {booking?.status === 'confirmed' ? '🟢 Active conversation' : 
+               booking?.status === 'completed' ? '✅ Completed' : 
+               booking?.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {!isFullScreen && (
+            <button 
+              onClick={openInNewWindow}
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-sm flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-purple-500/25"
+              title="Open in new window for full experience"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span className="hidden sm:inline">Expand</span>
+            </button>
+          )}
           <button 
-            onClick={openInNewWindow}
-            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center gap-1"
-            title="Open in new window"
+            onClick={onClose} 
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-700/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all duration-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            <span className="hidden sm:inline">New Window</span>
-          </button>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">
-            ✖
           </button>
         </div>
       </div>
@@ -1294,10 +1317,18 @@ ${currentUser.username}`;
         </div>
       ) : (
         <>
-          <div className="h-[60vh] md:h-[65vh] overflow-y-auto mb-4 p-2 bg-gray-900 rounded-lg">
+          <div className={`overflow-y-auto mb-5 p-3 lg:p-6 bg-gray-900/80 rounded-xl border border-gray-700/30 ${
+            isFullScreen 
+              ? 'h-[60vh] md:h-[70vh] lg:h-[72vh] xl:h-[75vh]' 
+              : 'h-[60vh] md:h-[65vh] lg:h-[68vh]'
+          }`}>
             {!messages || messages.length === 0 ? (
-              <div className="text-gray-500 text-center my-8">
-                No messages yet. Start the conversation!
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-4xl">💭</span>
+                </div>
+                <p className="text-gray-400 text-lg font-medium">No messages yet</p>
+                <p className="text-gray-500 text-sm mt-1">Start the conversation below!</p>
               </div>
             ) : (
               messages.map((msg, index) => {
@@ -1307,36 +1338,37 @@ ${currentUser.username}`;
                   console.warn('Invalid message object:', msg);
                   return null; // Skip invalid messages
                 }
+                const isOwnMessage = isCurrentUserMessage(sender);
                 return (
                 <div 
                   key={msg._id || `msg-${index}`}
-                  className={`mb-3 flex ${isCurrentUserMessage(sender) ? 'justify-end' : 'justify-start'}`}
+                  className={`mb-4 flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
-                    className={`max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-4 py-2 ${
-                      isCurrentUserMessage(sender) 
-                        ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-gray-700 text-white rounded-bl-none'
-                    } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500' : ''}`}
+                    className={`max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl xl:max-w-2xl rounded-2xl px-5 py-3 shadow-lg ${
+                      isOwnMessage 
+                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-md' 
+                        : 'bg-gray-700/90 text-white rounded-bl-md border border-gray-600/30'
+                    } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500 !rounded-l-md' : ''}`}
                   >
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center mb-2 gap-4">
                       <span className="font-semibold text-sm">
                         {getDisplayName(sender) || 'Unknown'}
-                        {msg.isInitialRequirements && ' (Initial Requirements)'}
+                        {msg.isInitialRequirements && (
+                          <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">Initial Requirements</span>
+                        )}
                       </span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs opacity-75">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-xs opacity-70">
                           {formatMessageTime(msg.createdAt)}
                         </span>
                         {/* Read receipts - only show for messages sent by current user */}
-                        {isCurrentUserMessage(sender) && !msg.isInitialRequirements && (
-                          <span className="text-xs ml-1" title={msg.isRead ? 'Read' : 'Delivered'}>
+                        {isOwnMessage && !msg.isInitialRequirements && (
+                          <span className="text-xs" title={msg.isRead ? 'Read' : 'Delivered'}>
                             {msg.isRead ? (
-                              // Double check (read)
-                              <span className="text-yellow-400">✓✓</span>
+                              <span className="text-emerald-400">✓✓</span>
                             ) : (
-                              // Single check (delivered)
-                              <span className="text-yellow-400">✓</span>
+                              <span className="text-gray-400">✓</span>
                             )}
                           </span>
                         )}
@@ -1362,51 +1394,60 @@ ${currentUser.username}`;
           
           {/* Reply Templates Section for Sellers */}
           {isSeller && (
-            <div className="mb-4">
+            <div className="mb-5">
               <button
                 onClick={() => setShowReplyTemplates(!showReplyTemplates)}
-                className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm mb-2"
+                className="flex items-center px-4 py-2.5 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-sm transition-all border border-purple-500/30"
               >
                 <span className="mr-2">📝</span>
-                {showReplyTemplates ? 'Hide' : 'Show'} Reply Templates
+                {showReplyTemplates ? 'Hide' : 'Show'} Quick Replies
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-2 transition-transform ${showReplyTemplates ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
               
               {showReplyTemplates && (
-                <div className="bg-gray-700 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
-                  <h4 className="text-white font-semibold mb-3">Quick Reply Templates</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-gray-700/50 rounded-xl p-5 mt-3 max-h-64 overflow-y-auto border border-gray-600/30">
+                  <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
+                    <span className="text-purple-400">⚡</span> Quick Reply Templates
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {replyTemplates.map((template, index) => (
                       <button
                         key={index}
                         onClick={() => insertTemplate(template)}
-                        className="text-left p-3 bg-gray-600 hover:bg-gray-500 rounded text-sm text-white border border-gray-500 hover:border-gray-400 transition-colors"
+                        className="text-left p-4 bg-gray-600/50 hover:bg-gray-600 rounded-xl text-sm text-white border border-gray-500/30 hover:border-purple-500/50 transition-all group"
                       >
-                        <div className="font-medium text-blue-400 mb-1">{template.title}</div>
-                        <div className="text-xs text-gray-300 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        <div className="font-medium text-purple-400 mb-2 group-hover:text-purple-300">{template.title}</div>
+                        <div className="text-xs text-gray-400 overflow-hidden leading-relaxed" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                           {template.message.substring(0, 100)}...
                         </div>
                       </button>
                     ))}
                   </div>
-                  <div className="mt-3 text-xs text-gray-400">
-                    💡 Click any template to insert it into your message box, then customize as needed.
+                  <div className="mt-4 text-xs text-gray-400 flex items-center gap-2 bg-gray-800/50 rounded-lg p-3">
+                    <span>💡</span>
+                    <span>Click any template to insert it, then customize as needed.</span>
                   </div>
                 </div>
               )}
             </div>
           )}
           
-          <form onSubmit={handleSendMessage} className="space-y-3">
+          <form onSubmit={handleSendMessage} className="space-y-4">
             {/* Show selected attachment if any */}
             {attachment && (
-              <div className="flex items-center bg-gray-700 rounded-lg p-2">
-                <span className="text-sm text-gray-300 flex-grow truncate mr-2">
+              <div className="flex items-center bg-gray-700/70 rounded-xl p-3 border border-gray-600/50">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
+                  <span>📎</span>
+                </div>
+                <span className="text-sm text-gray-200 flex-grow truncate mr-2">
                   {attachment.name}
                 </span>
                 <button
                   type="button"
                   onClick={handleRemoveAttachment}
-                  className="text-red-400 hover:text-red-300"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
                 >
                   ✕
                 </button>
@@ -1415,31 +1456,31 @@ ${currentUser.username}`;
 
             {/* Voice recording controls */}
             {isRecording && (
-              <div className="flex items-center bg-red-900 rounded-lg p-3 border border-red-600">
+              <div className="flex items-center bg-red-900/50 rounded-xl p-4 border border-red-600/50">
                 <div className="flex items-center flex-grow">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mr-3 animate-pulse"></div>
-                  <span className="text-red-300 text-sm mr-3">Recording...</span>
-                  <span className="text-white font-mono text-sm">{formatDuration(recordingDuration)}</span>
+                  <div className="w-4 h-4 bg-red-500 rounded-full mr-3 animate-pulse shadow-lg shadow-red-500/50"></div>
+                  <span className="text-red-300 text-sm mr-4 font-medium">Recording...</span>
+                  <span className="text-white font-mono text-lg bg-red-500/20 px-3 py-1 rounded-lg">{formatDuration(recordingDuration)}</span>
                 </div>
                 <button
                   type="button"
                   onClick={stopVoiceRecording}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
                 >
-                  Stop
+                  ⏹ Stop
                 </button>
               </div>
             )}
 
             {/* Voice recording preview */}
             {voiceRecording && audioPreview && !isRecording && (
-              <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-300">🎙️ Voice Message ({formatDuration(recordingDuration)})</span>
+              <div className="bg-gray-700/70 rounded-xl p-4 border border-gray-600/50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-200 font-medium">🎙️ Voice Message ({formatDuration(recordingDuration)})</span>
                   <button
                     type="button"
                     onClick={discardVoiceRecording}
-                    className="text-red-400 hover:text-red-300 text-sm"
+                    className="text-red-400 hover:text-red-300 text-sm hover:bg-red-500/20 px-3 py-1 rounded-lg transition-colors"
                   >
                     ✕ Discard
                   </button>
@@ -1447,7 +1488,7 @@ ${currentUser.username}`;
                 <audio 
                   controls 
                   src={audioPreview}
-                  className="w-full"
+                  className="w-full rounded-lg"
                   style={{ height: '40px' }}
                 >
                   Your browser does not support the audio element.
@@ -1455,21 +1496,26 @@ ${currentUser.username}`;
               </div>
             )}
             
-            <div className="flex gap-2">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message here..."
-                className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
-                disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
-              />
+            <div className="flex gap-3">
+              <div className="flex-grow relative">
+                <textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  className={`w-full bg-gray-700/70 text-white rounded-xl p-4 resize-none border border-gray-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none ${
+                    isFullScreen ? 'h-24 lg:h-28' : 'h-20 lg:h-24'
+                  }`}
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                />
+              </div>
               
               <div className="flex flex-col gap-2 justify-end">
                 <button
                   type="button"
                   onClick={handleAttachmentClick}
-                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+                  className="w-11 h-11 flex items-center justify-center bg-gray-700/70 hover:bg-gray-600 text-white rounded-xl border border-gray-600/50 transition-all hover:border-gray-500"
                   disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording || voiceRecording}
+                  title="Attach file"
                 >
                   📎
                 </button>
@@ -1477,12 +1523,13 @@ ${currentUser.username}`;
                 <button
                   type="button"
                   onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-                  className={`px-3 py-2 rounded text-white ${
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
                     isRecording 
-                      ? 'bg-red-600 hover:bg-red-700' 
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
+                      ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  } text-white`}
                   disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || attachment}
+                  title={isRecording ? 'Stop recording' : 'Record voice message'}
                 >
                   {isRecording ? '⏹️' : '🎙️'}
                 </button>
@@ -1490,13 +1537,16 @@ ${currentUser.username}`;
                 <button
                   type="submit"
                   disabled={(!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording}
-                  className={`px-4 py-2 rounded ${
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
                     (!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording
-                      ? 'bg-gray-600 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
+                      ? 'bg-gray-600/50 cursor-not-allowed text-gray-400'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/25'
+                  }`}
+                  title="Send message"
                 >
-                  Send
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1504,26 +1554,27 @@ ${currentUser.username}`;
           
           {/* Add invoice and email buttons for sellers when booking is confirmed */}
           {isSeller && booking && booking.status === 'confirmed' && (
-            <div className="mb-3 flex gap-2">
+            <div className="mt-4 flex gap-3">
               <button
                 onClick={handleCreateInvoice}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm flex items-center"
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl text-sm flex items-center font-medium shadow-lg shadow-emerald-500/20 transition-all"
               >
-                <span className="mr-1">📝</span> Create Invoice
+                <span className="mr-2">📝</span> Create Invoice
               </button>
               <button
                 onClick={handleSendEmail}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm flex items-center"
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm flex items-center font-medium shadow-lg shadow-blue-500/20 transition-all"
                 title="Send completed work via email"
               >
-                <span className="mr-1">📧</span> Send Email
+                <span className="mr-2">📧</span> Send Email
               </button>
             </div>
           )}
           
           {booking && (booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
-            <div className="text-amber-500 text-sm mt-2 text-center">
-              This conversation is now locked because the booking is {booking.status}.
+            <div className="mt-4 py-3 px-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-sm text-center">
+              <span className="mr-2">🔒</span>
+              This conversation is locked because the booking is <span className="font-semibold">{booking.status}</span>
             </div>
           )}
         </>
