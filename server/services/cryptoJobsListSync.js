@@ -60,32 +60,143 @@ function parseSalary(title, description) {
 }
 
 /**
- * Clean and format HTML content to plain text
+ * Clean and format HTML content to well-structured plain text
  */
 function cleanHTML(html) {
   if (!html) return '';
   
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<h[1-6][^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
+  let text = html;
+  
+  // First, normalize whitespace within tags but preserve intentional breaks
+  text = text.replace(/>\s+</g, '> <');
+  
+  // Handle headings - add double newline before and after, make them stand out
+  text = text.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n📌 $1\n\n');
+  text = text.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n📌 $1\n\n');
+  text = text.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n▸ $1\n\n');
+  text = text.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '\n\n▸ $1\n\n');
+  text = text.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '\n\n$1\n\n');
+  text = text.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '\n\n$1\n\n');
+  
+  // Handle strong/bold text - keep inline but emphasize
+  text = text.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '$1');
+  text = text.replace(/<b[^>]*>(.*?)<\/b>/gi, '$1');
+  
+  // Handle emphasis/italic
+  text = text.replace(/<em[^>]*>(.*?)<\/em>/gi, '$1');
+  text = text.replace(/<i[^>]*>(.*?)<\/i>/gi, '$1');
+  
+  // Handle line breaks
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  
+  // Handle horizontal rules
+  text = text.replace(/<hr\s*\/?>/gi, '\n────────────────\n');
+  
+  // Handle blockquotes
+  text = text.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, '\n│ $1\n');
+  
+  // Handle unordered lists - process list items first
+  text = text.replace(/<ul[^>]*>/gi, '\n');
+  text = text.replace(/<\/ul>/gi, '\n');
+  
+  // Handle ordered lists
+  text = text.replace(/<ol[^>]*>/gi, '\n');
+  text = text.replace(/<\/ol>/gi, '\n');
+  
+  // Handle list items with bullet points
+  text = text.replace(/<li[^>]*>/gi, '  • ');
+  text = text.replace(/<\/li>/gi, '\n');
+  
+  // Handle divs as paragraph breaks
+  text = text.replace(/<\/div>/gi, '\n');
+  text = text.replace(/<div[^>]*>/gi, '');
+  
+  // Handle paragraphs
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<p[^>]*>/gi, '');
+  
+  // Handle tables simply
+  text = text.replace(/<\/tr>/gi, '\n');
+  text = text.replace(/<\/td>/gi, ' | ');
+  text = text.replace(/<\/th>/gi, ' | ');
+  text = text.replace(/<table[^>]*>/gi, '\n');
+  text = text.replace(/<\/table>/gi, '\n');
+  
+  // Remove remaining HTML tags
+  text = text.replace(/<[^>]+>/g, '');
+  
+  // Decode HTML entities
+  text = text
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, '/')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, '–')
+    .replace(/&#8212;/g, '—')
+    .replace(/&#8230;/g, '...')
+    .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  // Clean up whitespace
+  text = text
+    .replace(/[ \t]+/g, ' ')           // Multiple spaces/tabs to single space
+    .replace(/ \n/g, '\n')             // Remove trailing spaces before newlines
+    .replace(/\n /g, '\n')             // Remove leading spaces after newlines
+    .replace(/\n{4,}/g, '\n\n\n')      // Max 3 consecutive newlines
+    .replace(/\n{3}/g, '\n\n')         // Reduce triple newlines to double
     .trim();
+  
+  return text;
+}
+
+/**
+ * Format job description for better readability
+ */
+function formatJobContent(content) {
+  if (!content) return '';
+  
+  let formatted = cleanHTML(content);
+  
+  // Add section headers if they exist but aren't formatted
+  const sectionPatterns = [
+    { pattern: /^(about\s+(?:the\s+)?(?:role|position|job|company|us|team))[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(responsibilities|what\s+you['']?ll\s+do|your\s+role)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(requirements?|qualifications?|what\s+we['']?re\s+looking\s+for|what\s+you['']?ll\s+need|must\s+have|skills?)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(nice\s+to\s+have|preferred|bonus\s+points?)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(benefits?|perks?|what\s+we\s+offer|compensation)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(how\s+to\s+apply|application\s+process)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+    { pattern: /^(about\s+(?:the\s+)?company|who\s+we\s+are)[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },
+  ];
+  
+  for (const { pattern, replacement } of sectionPatterns) {
+    formatted = formatted.replace(pattern, replacement);
+  }
+  
+  // Convert common text patterns to bullet points if not already
+  // Match lines that start with - or * followed by content
+  formatted = formatted.replace(/^[\-\*]\s+/gm, '  • ');
+  
+  // Convert numbered items to cleaner format
+  formatted = formatted.replace(/^(\d+)\.\s+/gm, '  $1. ');
+  
+  // Ensure proper spacing after section headers
+  formatted = formatted.replace(/(📋[^\n]+)\n([^\n])/g, '$1\n\n$2');
+  
+  // Clean up any remaining issues
+  formatted = formatted
+    .replace(/\n{4,}/g, '\n\n\n')
+    .replace(/^\s+/gm, (match) => match.length > 4 ? '    ' : match) // Limit indentation
+    .trim();
+  
+  return formatted;
 }
 
 /**
@@ -172,25 +283,69 @@ function parseLocation(item, description) {
  * Extract requirements from description
  */
 function extractRequirements(description) {
-  const descLower = description.toLowerCase();
-  
-  // Look for requirements section
+  // Look for requirements section with various headers
   const reqPatterns = [
-    /requirements?:?\s*([\s\S]*?)(?=\n\n[A-Z]|responsibilities|benefits|about|how to apply|$)/i,
-    /qualifications?:?\s*([\s\S]*?)(?=\n\n[A-Z]|responsibilities|benefits|about|how to apply|$)/i,
-    /what you['']?ll need:?\s*([\s\S]*?)(?=\n\n[A-Z]|responsibilities|benefits|about|how to apply|$)/i,
-    /must have:?\s*([\s\S]*?)(?=\n\n[A-Z]|responsibilities|benefits|about|how to apply|$)/i
+    /(?:📋\s*)?requirements?[:\s]*([\s\S]*?)(?=📋|────|$)/i,
+    /(?:📋\s*)?qualifications?[:\s]*([\s\S]*?)(?=📋|────|$)/i,
+    /(?:📋\s*)?what you['']?ll need[:\s]*([\s\S]*?)(?=📋|────|$)/i,
+    /(?:📋\s*)?what we['']?re looking for[:\s]*([\s\S]*?)(?=📋|────|$)/i,
+    /(?:📋\s*)?must have[:\s]*([\s\S]*?)(?=📋|────|$)/i,
+    /(?:📋\s*)?skills?[:\s]*([\s\S]*?)(?=📋|────|$)/i
   ];
   
   for (const pattern of reqPatterns) {
     const match = description.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim().substring(0, 1000);
+    if (match && match[1] && match[1].trim().length > 20) {
+      return match[1].trim().substring(0, 1500);
     }
   }
   
-  // Fallback: use first 500 chars of description
-  return description.substring(0, 500).trim() || 'See job description for requirements';
+  // Fallback: look for bullet-point style requirements
+  const bulletPattern = /(?:•[^\n]+\n?){3,}/;
+  const bulletMatch = description.match(bulletPattern);
+  if (bulletMatch) {
+    return bulletMatch[0].trim().substring(0, 1000);
+  }
+  
+  // Last fallback: use first portion of description
+  return description.substring(0, 600).trim() || 'See job description for requirements';
+}
+
+/**
+ * Format requirements section for better readability
+ */
+function formatRequirements(requirements) {
+  if (!requirements) return 'See job description for requirements';
+  
+  let formatted = requirements;
+  
+  // Ensure bullet points are properly formatted
+  formatted = formatted.replace(/^[\-\*]\s+/gm, '• ');
+  
+  // If no bullets, try to create them from numbered items
+  if (!formatted.includes('•')) {
+    formatted = formatted.replace(/^(\d+)\.\s+/gm, '• ');
+  }
+  
+  // If still no structure, try to split by common separators
+  if (!formatted.includes('•') && !formatted.includes('\n')) {
+    // Split long text by sentences that look like requirements
+    const sentences = formatted.split(/(?<=[.!])\s+/);
+    if (sentences.length > 2) {
+      formatted = sentences
+        .filter(s => s.trim().length > 10)
+        .map(s => '• ' + s.trim())
+        .join('\n');
+    }
+  }
+  
+  // Clean up extra whitespace
+  formatted = formatted
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+/gm, '')
+    .trim();
+  
+  return formatted || 'See job description for requirements';
 }
 
 /**
@@ -198,7 +353,10 @@ function extractRequirements(description) {
  */
 function mapRSSItemToJob(item) {
   const title = cleanHTML(item.title || '');
-  const description = cleanHTML(item.contentSnippet || item.content || item.description || '');
+  const rawContent = item.contentSnippet || item.content || item.description || '';
+  
+  // Format description with improved structure
+  const description = formatJobContent(rawContent);
   const company = extractCompany(title, item);
   
   // Parse salary
@@ -209,8 +367,9 @@ function mapRSSItemToJob(item) {
   // Parse location
   const locationInfo = parseLocation(item, description);
   
-  // Extract requirements
-  const requirements = extractRequirements(description);
+  // Extract and format requirements
+  const rawRequirements = extractRequirements(description);
+  const requirements = formatRequirements(rawRequirements);
   
   // Get company logo if available
   let companyLogo = null;
