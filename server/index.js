@@ -39,6 +39,7 @@ const deviceLimiter = require('./middleware/deviceLimiter');
 const telegramService = require('./utils/telegramService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
+const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
 const { sanitizeForRegex } = require('./utils/security');
 
 const app = express();
@@ -262,6 +263,17 @@ cron.schedule('0 */8 * * *', async () => {
   }
 });
 
+// Cron job for syncing CryptoJobsList jobs every 8 hours
+// Runs at 2:00 AM, 10:00 AM, and 6:00 PM daily (offset from Remotive to spread load)
+cron.schedule('0 2,10,18 * * *', async () => {
+  try {
+    console.log('[CryptoJobsList Sync] Starting scheduled sync...');
+    await syncCryptoJobsListJobs();
+  } catch (error) {
+    console.error('[CryptoJobsList Sync] Error in scheduled sync:', error);
+  }
+});
+
 // Sync Remotive jobs on server start (after a delay to ensure DB is ready)
 setTimeout(async () => {
   try {
@@ -271,6 +283,16 @@ setTimeout(async () => {
     console.error('[Remotive Sync] Error in initial sync:', error);
   }
 }, 20000); // Wait 20 seconds after server start
+
+// Sync CryptoJobsList jobs on server start (with offset to avoid overloading)
+setTimeout(async () => {
+  try {
+    console.log('[CryptoJobsList Sync] Running initial sync on server start...');
+    await syncCryptoJobsListJobs();
+  } catch (error) {
+    console.error('[CryptoJobsList Sync] Error in initial sync:', error);
+  }
+}, 30000); // Wait 30 seconds after server start (10s after Remotive)
 
 // Middleware
 const corsOptions = {
