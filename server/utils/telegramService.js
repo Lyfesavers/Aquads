@@ -3265,8 +3265,8 @@ Tap to update:`;
 
         await raid.save();
 
-        // Send success message for free raid
-        await telegramService.sendBotMessage(chatId, 
+        // Send success message for free raid (to user's private chat)
+        await telegramService.sendBotMessage(telegramUserId, 
           `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
 
         // Send Telegram notification to all users about the new raid
@@ -3317,8 +3317,8 @@ Tap to update:`;
         user.save()
       ]);
 
-      // Send success message
-      await telegramService.sendBotMessage(chatId, 
+      // Send success message (to user's private chat)
+      await telegramService.sendBotMessage(telegramUserId, 
         `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
 
       // Send Telegram notification to all users about the new raid
