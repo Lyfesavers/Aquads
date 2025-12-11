@@ -30,16 +30,24 @@
   from = "/how-to/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
-  force = false
-  conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*Crawler*,*spider*,*Spider*,*preview*,*Preview*,facebookexternalhit*,Facebot*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Applebot*,Googlebot*,bingbot*,Pinterestbot*,redditbot*,Embedly*,*Quora*,Showyoubot*,outbrain*,vkShare*,W3C_Validator*,Iframely*,*OpenGraph*,curl*,wget*,python*,Go-http-client*,HeadlessChrome*,Puppeteer*,*fetch*,*http*"}
 
 # Serve prerendered version for bots only - AquaSwap token pages
 [[redirects]]
   from = "/aquaswap"
   to = "/.netlify/functions/prerender-aquaswap"
   status = 200
-  force = false
-  conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*,Slackbot*,LinkedInBot*,Discordbot*,WhatsApp*,TelegramBot*"}
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*Crawler*,*spider*,*Spider*,*preview*,*Preview*,facebookexternalhit*,Facebot*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Applebot*,Googlebot*,bingbot*,Pinterestbot*,redditbot*,Embedly*,*Quora*,Showyoubot*,outbrain*,vkShare*,W3C_Validator*,Iframely*,*OpenGraph*,curl*,wget*,python*,Go-http-client*,HeadlessChrome*,Puppeteer*,*fetch*,*http*"}
+
+# GUARANTEED share route - ALWAYS prerenders (use this for sharing if bot detection fails)
+# Use: /share/token?token=xxx&blockchain=xxx
+[[redirects]]
+  from = "/share/token"
+  to = "/.netlify/functions/prerender-aquaswap"
+  status = 200
+  force = true
 
 # Handle service pages
 [[redirects]]
