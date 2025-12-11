@@ -31,7 +31,8 @@ const telegramService = {
   cachedVideoFileIds: {
     trend: null,
     vote: null,
-    raid: null
+    raid: null,
+    raidCompletion: null
   },
 
   // Load active groups from database
@@ -1546,15 +1547,84 @@ ${platformEmoji} ${platformName} Raid
 🌐 Track all raids: [@aquadsbumpbot](https://t.me/aquadsbumpbot)
 💡 Complete more raids to earn points!`;
 
+      // Get the video file path
+      const videoPath = path.join(__dirname, '../../public/Just Raided.mp4');
+      const videoExists = fs.existsSync(videoPath);
+
+      // Add button
+      const keyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: '🚀 Join Raids',
+              url: 'https://t.me/aquadsbumpbot'
+            }
+          ]
+        ]
+      };
+
       // Send to all groups
       let successCount = 0;
       for (const chatId of groupsToNotify) {
         try {
-          const result = await telegramService.sendBotMessageWithMarkdown(chatId, message);
-          if (result.success) {
-            successCount++;
-            // Store message ID for cleanup
-            await telegramService.storeRaidCompletionMessageId(chatId, result.messageId);
+          if (videoExists || telegramService.cachedVideoFileIds.raidCompletion) {
+            // Send video with caption (use cached file_id if available)
+            let response;
+            
+            if (telegramService.cachedVideoFileIds.raidCompletion) {
+              // Use cached file_id (much faster, no re-upload needed)
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                {
+                  chat_id: chatId,
+                  video: telegramService.cachedVideoFileIds.raidCompletion,
+                  caption: message,
+                  parse_mode: 'Markdown',
+                  reply_markup: keyboard
+                },
+                { timeout: 15000 }
+              );
+            } else {
+              // First time - upload the video file
+              const formData = new FormData();
+              formData.append('chat_id', chatId);
+              formData.append('video', fs.createReadStream(videoPath));
+              formData.append('caption', message);
+              formData.append('parse_mode', 'Markdown');
+              formData.append('reply_markup', JSON.stringify(keyboard));
+
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                formData,
+                {
+                  headers: {
+                    ...formData.getHeaders(),
+                  },
+                  timeout: 60000, // Increased timeout for first upload
+                }
+              );
+              
+              // Cache the file_id for future use
+              if (response.data.ok && response.data.result.video) {
+                telegramService.cachedVideoFileIds.raidCompletion = response.data.result.video.file_id;
+                console.log('📹 Cached raid completion video file_id for faster future sends');
+              }
+            }
+
+            if (response.data.ok) {
+              successCount++;
+              const messageId = response.data.result.message_id;
+              // Store message ID for cleanup
+              await telegramService.storeRaidCompletionMessageId(chatId, messageId);
+            }
+          } else {
+            // Fallback to text message if video doesn't exist
+            const result = await telegramService.sendBotMessageWithMarkdown(chatId, message);
+            if (result.success) {
+              successCount++;
+              // Store message ID for cleanup
+              await telegramService.storeRaidCompletionMessageId(chatId, result.messageId);
+            }
           }
         } catch (error) {
           console.error(`Failed to send completion notification to group ${chatId}:`, error.message);
