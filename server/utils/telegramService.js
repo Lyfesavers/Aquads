@@ -140,43 +140,66 @@ const telegramService = {
 ⏰ Available for 48 hours!`;
 
       // Get the video file path
-      const videoPath = path.join(__dirname, '../../public/RAIDNEW.mp4');
+      const videoPath = path.join(__dirname, '../../public/New Raid.mp4');
       const videoExists = fs.existsSync(videoPath);
+      
+      // Add "Hire an Expert" button
+      const keyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: '👨‍💼 Hire an Expert',
+              url: 'https://aquads.xyz/marketplace'
+            }
+          ]
+        ]
+      };
       
       // Send to all groups
       let successCount = 0;
       for (const chatId of groupsToNotify) {
         try {
-          if (videoExists) {
-            // Send video with caption
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('video', fs.createReadStream(videoPath));
-            formData.append('caption', message);
+          if (videoExists || telegramService.cachedVideoFileIds.raid) {
+            // Send video with caption (use cached file_id if available)
+            let response;
             
-            // Add "Hire an Expert" button
-            const keyboard = {
-              inline_keyboard: [
-                [
-                  {
-                    text: '👨‍💼 Hire an Expert',
-                    url: 'https://aquads.xyz/marketplace'
-                  }
-                ]
-              ]
-            };
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            const response = await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendVideo`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
+            if (telegramService.cachedVideoFileIds.raid) {
+              // Use cached file_id (much faster, no re-upload needed)
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                {
+                  chat_id: chatId,
+                  video: telegramService.cachedVideoFileIds.raid,
+                  caption: message,
+                  reply_markup: keyboard
                 },
-                timeout: 30000, // 30 second timeout for video upload
+                { timeout: 15000 }
+              );
+            } else {
+              // First time - upload the video file
+              const formData = new FormData();
+              formData.append('chat_id', chatId);
+              formData.append('video', fs.createReadStream(videoPath));
+              formData.append('caption', message);
+              formData.append('reply_markup', JSON.stringify(keyboard));
+
+              response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                formData,
+                {
+                  headers: {
+                    ...formData.getHeaders(),
+                  },
+                  timeout: 60000, // Increased timeout for first upload
+                }
+              );
+              
+              // Cache the file_id for future use
+              if (response.data.ok && response.data.result.video) {
+                telegramService.cachedVideoFileIds.raid = response.data.result.video.file_id;
+                console.log('📹 Cached raid video file_id for faster future sends');
               }
-            );
+            }
 
             if (response.data.ok) {
               successCount++;
@@ -3354,8 +3377,8 @@ Tap to update:`;
     }
   },
 
-  // Send video to a chat
-  sendVideoToChat: async (chatId, videoPath, caption) => {
+  // Send video to a chat (with optional caching support)
+  sendVideoToChat: async (chatId, videoPath, caption, cacheKey = null) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       if (!botToken) {
@@ -3363,11 +3386,6 @@ Tap to update:`;
         return null;
       }
 
-      const formData = new FormData();
-      formData.append('chat_id', chatId);
-      formData.append('video', fs.createReadStream(videoPath));
-      formData.append('caption', caption);
-      
       // Add "Hire an Expert" button
       const keyboard = {
         inline_keyboard: [
@@ -3379,18 +3397,47 @@ Tap to update:`;
           ]
         ]
       };
-      formData.append('reply_markup', JSON.stringify(keyboard));
 
-      const response = await axios.post(
-        `https://api.telegram.org/bot${botToken}/sendVideo`,
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
+      let response;
+      
+      // Check if we have a cached file_id for this video
+      if (cacheKey && telegramService.cachedVideoFileIds[cacheKey]) {
+        // Use cached file_id (much faster, no re-upload needed)
+        response = await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendVideo`,
+          {
+            chat_id: chatId,
+            video: telegramService.cachedVideoFileIds[cacheKey],
+            caption: caption,
+            reply_markup: keyboard
           },
-          timeout: 30000,
+          { timeout: 15000 }
+        );
+      } else {
+        // First time - upload the video file
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('video', fs.createReadStream(videoPath));
+        formData.append('caption', caption);
+        formData.append('reply_markup', JSON.stringify(keyboard));
+
+        response = await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendVideo`,
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+            },
+            timeout: 60000, // Increased timeout for first upload
+          }
+        );
+        
+        // Cache the file_id for future use if cacheKey provided
+        if (cacheKey && response.data.ok && response.data.result.video) {
+          telegramService.cachedVideoFileIds[cacheKey] = response.data.result.video.file_id;
+          console.log(`📹 Cached ${cacheKey} video file_id for faster future sends`);
         }
-      );
+      }
 
       if (response.data.ok) {
         return response.data.result.message_id;
