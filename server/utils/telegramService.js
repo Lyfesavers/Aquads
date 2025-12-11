@@ -309,7 +309,7 @@ const telegramService = {
       const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         url: webhookUrl,
         drop_pending_updates: true,
-        allowed_updates: ['message', 'callback_query']
+        allowed_updates: ['message', 'callback_query', 'message_reaction']
       });
       
       if (setWebhookResult.data.ok) {
