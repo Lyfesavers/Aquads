@@ -3528,7 +3528,7 @@ Tap to update:`;
       const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
       
       // Path to the new vote video (fallback)
-      const videoPath = path.join(__dirname, '../../public/new vote.mp4');
+      const videoPath = path.join(__dirname, '../../public/New_vote.mp4');
       const videoExists = fs.existsSync(videoPath);
 
       // Send to registered group (if exists)
