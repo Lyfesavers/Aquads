@@ -256,6 +256,117 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
+// Dynamic meta tags middleware for AquaSwap token pages
+app.get('/aquaswap', async (req, res, next) => {
+  try {
+    const tokenAddress = req.query.token;
+    const blockchain = req.query.blockchain;
+    
+    if (tokenAddress && blockchain) {
+      // Fetch token data from DexScreener API (using native fetch in Node 18+)
+      
+      // Try pairs endpoint first (for pair addresses)
+      let dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${blockchain}/${tokenAddress}`);
+      let dexData = await dexResponse.json();
+      
+      // If no pair found, try tokens endpoint (for token addresses)
+      if (!dexData.pair && !dexData.pairs?.length) {
+        dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+        dexData = await dexResponse.json();
+      }
+      
+      // Get the pair data (either from pair or pairs array)
+      const pair = dexData.pair || (dexData.pairs && dexData.pairs.length > 0 ? dexData.pairs[0] : null);
+      
+      if (pair) {
+        // Read the index.html file
+        let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+        
+        // Extract token data
+        const baseToken = pair.baseToken || {};
+        const symbol = baseToken.symbol || 'TOKEN';
+        const name = baseToken.name || symbol;
+        const priceUsd = pair.priceUsd ? parseFloat(pair.priceUsd) : 0;
+        const priceChange24h = pair.priceChange?.h24 || 0;
+        const marketCap = pair.marketCap || pair.fdv || 0;
+        const volume24h = pair.volume?.h24 || 0;
+        const liquidity = pair.liquidity?.usd || 0;
+        const chainId = pair.chainId || blockchain;
+        
+        // Get token image from DexScreener or fallback
+        const tokenImage = pair.info?.imageUrl || 'https://www.aquads.xyz/logo712.png';
+        
+        // Format numbers for display
+        const formatNumber = (num) => {
+          if (num >= 1000000000) return `$${(num / 1000000000).toFixed(2)}B`;
+          if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
+          if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
+          return `$${num.toFixed(2)}`;
+        };
+        
+        const formatPrice = (price) => {
+          if (price < 0.00001) return `$${price.toExponential(2)}`;
+          if (price < 0.01) return `$${price.toFixed(6)}`;
+          if (price < 1) return `$${price.toFixed(4)}`;
+          return `$${price.toFixed(2)}`;
+        };
+        
+        // Create formatted title and description
+        const priceChangeSign = priceChange24h >= 0 ? '+' : '';
+        const priceChangeFormatted = `${priceChangeSign}${priceChange24h.toFixed(1)}%`;
+        
+        const ogTitle = `$${symbol} │ ${formatPrice(priceUsd)} │ ${priceChangeFormatted} 24h`;
+        const ogDescription = `MCAP: ${formatNumber(marketCap)} • 24h Vol: ${formatNumber(volume24h)} • Liq: ${formatNumber(liquidity)} • Trade ${symbol} on Aquads DEX`;
+        
+        // Escape function for HTML safety
+        const escapeHtml = (string) => {
+          if (!string) return '';
+          return String(string)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        };
+        
+        // Create clean URL
+        const cleanUrl = `${req.protocol}://${req.get('host')}/aquaswap?token=${tokenAddress}&blockchain=${blockchain}`;
+        
+        // Create injected meta tags
+        const injectedMeta = `
+<!-- START: Dynamic Meta Tags for AquaSwap Token: ${symbol} -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@_Aquads">
+<meta name="twitter:title" content="${escapeHtml(ogTitle)}">
+<meta name="twitter:description" content="${escapeHtml(ogDescription)}">
+<meta name="twitter:image" content="${escapeHtml(tokenImage)}">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aquads DEX">
+<meta property="og:url" content="${escapeHtml(cleanUrl)}">
+<meta property="og:title" content="${escapeHtml(ogTitle)}">
+<meta property="og:description" content="${escapeHtml(ogDescription)}">
+<meta property="og:image" content="${escapeHtml(tokenImage)}">
+
+<meta name="description" content="${escapeHtml(ogDescription)}">
+<!-- END: Dynamic Meta Tags -->
+`;
+        
+        // Insert the new meta tags at the beginning of the head
+        indexHtml = indexHtml.replace('<head>', '<head>' + injectedMeta);
+        
+        // Update the title
+        indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>$${escapeHtml(symbol)} - ${escapeHtml(name)} │ Aquads DEX</title>`);
+        
+        return res.send(indexHtml);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling AquaSwap dynamic meta tags:', error);
+  }
+  next();
+});
+
 // Dynamic meta tags middleware for blog posts - make it work with the existing API routes
 app.get('/learn', async (req, res, next) => {
   try {
