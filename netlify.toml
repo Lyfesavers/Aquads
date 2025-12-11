@@ -25,13 +25,21 @@
   status = 200
   force = true
 
-# Serve prerendered version for bots only
+# Serve prerendered version for bots only - Blog posts
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
+
+# Serve prerendered version for bots only - AquaSwap token pages
+[[redirects]]
+  from = "/aquaswap"
+  to = "/.netlify/functions/prerender-aquaswap"
+  status = 200
+  force = false
+  conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*,Slackbot*,LinkedInBot*,Discordbot*,WhatsApp*,TelegramBot*"}
 
 # Handle service pages
 [[redirects]]
