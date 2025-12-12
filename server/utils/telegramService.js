@@ -141,7 +141,7 @@ const telegramService = {
 ⏰ Available for 48 hours!`;
 
       // Get the video file path
-      const videoPath = path.join(__dirname, '../../public/New Raid.mp4');
+      const videoPath = path.join(__dirname, '../../public/raidtime.mp4');
       const videoExists = fs.existsSync(videoPath);
       
       // Add "Hire an Expert" button
