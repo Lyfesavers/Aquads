@@ -12,5 +12,8 @@
 # Duck Hunt game clean URL
 /duck-hunt-game /duck-hunt-game.html 200
 
+# AquaSwap token share URL - ALWAYS prerender
+/share/aquaswap /.netlify/functions/prerender-aquaswap 200!
+
 # Default SPA redirect (keep this last)
 /* /index.html 200
