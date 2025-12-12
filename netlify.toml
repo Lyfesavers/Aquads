@@ -41,6 +41,14 @@
   force = true
   conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*"}
 
+# GUARANTEED share URL - ALWAYS prerenders (no User-Agent check)
+# Use this URL for sharing: /share/aquaswap?token=xxx&blockchain=xxx
+[[redirects]]
+  from = "/share/aquaswap"
+  to = "/.netlify/functions/prerender-aquaswap"
+  status = 200
+  force = true
+
 # Handle service pages
 [[redirects]]
   from = "/service/*"
