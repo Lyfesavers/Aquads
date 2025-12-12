@@ -93,7 +93,8 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
   const priceChange = (fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h) ? parseFloat(fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h).toFixed(2) : null;
 
   // Generate URLs - Link back to AquaSwap to retain traffic & swap fees!
-  const aquaSwapUrl = `https://aquads.xyz/aquaswap?token=${pairAddress}&blockchain=${blockchain}`;
+  // Use /share/aquaswap for proper social media meta tags (token image, price, etc.)
+  const aquaSwapUrl = `https://aquads.xyz/share/aquaswap?token=${pairAddress}&blockchain=${blockchain}`;
   const dexScreenerUrl = `https://dexscreener.com/${blockchain}/${pairAddress}`; // Keep for footer utility
 
   // Tweet templates - using @_Aquads_ (official Twitter handle)
