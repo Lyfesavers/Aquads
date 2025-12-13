@@ -1796,7 +1796,9 @@ ${platformEmoji} ${platformName} Raid
             await telegramService.editHelpBranding(chatId, messageId);
             break;
           case 'quickstart':
-            await telegramService.editHelpQuickStart(chatId, messageId);
+            // Start the automated setup process (same as /start)
+            telegramService.setConversationState(userId, { messageId, action: 'onboarding_start' });
+            await telegramService.showOnboardingStep1(chatId, messageId);
             break;
           case 'all':
             await telegramService.editHelpAll(chatId, messageId);
