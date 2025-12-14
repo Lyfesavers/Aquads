@@ -269,6 +269,8 @@ const Affiliate = () => {
                           <ul className="list-disc list-inside space-y-1 ml-2">
                             <li>Minimum 5 people in the space</li>
                             <li>Must YAP about Aquads and its features OR any project listed in our maximally-sized bubbles on the main page</li>
+                            <li>When pitching in other spaces, must pitch in a minimum of 3 spaces</li>
+                            <li>Minimum 20 minutes of being in the speaker role per space</li>
                             <li>Pitch quality determines approval</li>
                           </ul>
                         </div>
