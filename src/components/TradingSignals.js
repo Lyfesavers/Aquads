@@ -73,8 +73,11 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [updateInterval, setUpdateInterval] = useState(10000); // Start with 10 seconds
   const panelRef = useRef(null);
   const refreshIntervalRef = useRef(null);
+  const lastPriceRef = useRef(null);
+  const lastSignalTypeRef = useRef(null);
 
   // Calculate trading signals from DEX Screener data
   const calculateSignals = useCallback((pairData) => {
@@ -292,6 +295,49 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
 
       if (pair) {
         const signals = calculateSignals(pair);
+        const currentPrice = parseFloat(pair.priceUsd || 0);
+        const currentSignalType = signals?.signal?.label;
+        
+        // Adaptive interval based on volatility and signal changes
+        let newInterval = 10000; // Default 10 seconds
+        
+        // Check for significant price movement (volatility detection)
+        if (lastPriceRef.current && currentPrice > 0) {
+          const priceChangePercent = Math.abs((currentPrice - lastPriceRef.current) / lastPriceRef.current) * 100;
+          
+          // High volatility (>2% price change) = faster updates (5 seconds)
+          if (priceChangePercent > 2) {
+            newInterval = 5000;
+          }
+          // Medium volatility (0.5-2%) = normal updates (10 seconds)
+          else if (priceChangePercent > 0.5) {
+            newInterval = 10000;
+          }
+          // Low volatility (<0.5%) = slower updates (15 seconds)
+          else {
+            newInterval = 15000;
+          }
+        }
+        
+        // If signal type changed, update immediately on next cycle (keep fast interval)
+        if (lastSignalTypeRef.current && lastSignalTypeRef.current !== currentSignalType) {
+          // Signal changed - keep fast polling for next few cycles
+          newInterval = Math.min(newInterval, 8000);
+        }
+        
+        // Update interval if it changed significantly (>2 seconds difference)
+        // Use functional update to avoid dependency issues
+        setUpdateInterval(prev => {
+          if (Math.abs(newInterval - prev) > 2000) {
+            return newInterval;
+          }
+          return prev;
+        });
+        
+        // Store current state for next comparison
+        lastPriceRef.current = currentPrice;
+        lastSignalTypeRef.current = currentSignalType;
+        
         setSignalData(signals);
         setLastUpdate(new Date());
         // Notify parent component of signal update
@@ -316,16 +362,36 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
   // Fetch data when token changes (always, not just when visible)
   useEffect(() => {
     if (tokenAddress) {
-      fetchSignalData();
+      // Reset tracking when token changes
+      lastPriceRef.current = null;
+      lastSignalTypeRef.current = null;
+      setUpdateInterval(10000); // Reset to default
       
-      // Auto-refresh every 30 seconds
-      refreshIntervalRef.current = setInterval(fetchSignalData, 30000);
+      // Initial fetch
+      fetchSignalData();
     } else {
       // Clear signal when no token
       setSignalData(null);
+      lastPriceRef.current = null;
+      lastSignalTypeRef.current = null;
       if (onSignalUpdate) {
         onSignalUpdate(null);
       }
+    }
+  }, [tokenAddress, fetchSignalData, onSignalUpdate]);
+
+  // Adaptive polling interval - updates when updateInterval changes
+  useEffect(() => {
+    if (tokenAddress && updateInterval > 0) {
+      // Clear existing interval
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      
+      // Set new interval with adaptive timing
+      refreshIntervalRef.current = setInterval(() => {
+        fetchSignalData();
+      }, updateInterval);
     }
 
     return () => {
@@ -333,7 +399,7 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [tokenAddress, fetchSignalData, onSignalUpdate]);
+  }, [tokenAddress, updateInterval, fetchSignalData]);
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -488,9 +554,14 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
 
             {/* Update Info */}
             <div className="signals-footer">
-              <span className="update-time">
-                ⏱️ Updated {lastUpdate ? `${Math.round((Date.now() - lastUpdate.getTime()) / 1000)}s ago` : 'just now'}
-              </span>
+              <div className="update-info">
+                <span className="update-time">
+                  ⏱️ Updated {lastUpdate ? `${Math.round((Date.now() - lastUpdate.getTime()) / 1000)}s ago` : 'just now'}
+                </span>
+                <span className="update-frequency">
+                  {updateInterval <= 5000 ? '⚡ Fast' : updateInterval <= 10000 ? '🔄 Normal' : '🐢 Slow'} ({Math.round(updateInterval / 1000)}s)
+                </span>
+              </div>
               <button className="refresh-btn" onClick={fetchSignalData} disabled={loading}>
                 {loading ? '⟳' : '🔄'} Refresh
               </button>
@@ -499,6 +570,10 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
             {/* Disclaimer */}
             <div className="signals-disclaimer">
               ⚠️ Not financial advice. Trading crypto involves significant risk. Always DYOR.
+              <br />
+              <span style={{ fontSize: '0.6rem', opacity: 0.8 }}>
+                Update frequency adapts to volatility (5-15s). Signals use 5m/1h/6h/24h timeframes.
+              </span>
             </div>
           </>
         ) : (
