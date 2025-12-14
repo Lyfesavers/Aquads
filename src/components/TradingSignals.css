@@ -1,0 +1,655 @@
+/* TradingSignals.css - Signal Algorithm Dropdown Panel */
+
+/* Panel Container - Positioned to not cover chart */
+.trading-signals-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 212, 255, 0.1);
+  z-index: 1000;
+  animation: slideDown 0.2s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.signals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.signals-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #00d4ff;
+  letter-spacing: 0.5px;
+}
+
+.signals-icon {
+  font-size: 1.1rem;
+}
+
+.signals-close {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.signals-close:hover {
+  color: #ffffff;
+}
+
+/* Content Area */
+.signals-content {
+  padding: 14px;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.5) transparent;
+}
+
+.signals-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.signals-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.signals-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.5);
+  border-radius: 2px;
+}
+
+/* Loading State */
+.signals-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  gap: 12px;
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
+
+.signals-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 212, 255, 0.2);
+  border-top: 3px solid #00d4ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.signals-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  color: #f87171;
+  font-size: 0.85rem;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+}
+
+.retry-btn {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.retry-btn:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+/* Main Signal Badge */
+.main-signal {
+  text-align: center;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.signal-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.signal-icon {
+  font-size: 1.8rem;
+}
+
+.signal-label {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--signal-color);
+  letter-spacing: 1px;
+  text-shadow: 0 0 20px var(--signal-color);
+}
+
+.signal-confidence {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.confidence-bar {
+  width: 100%;
+  max-width: 200px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+}
+
+.confidence-value {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+/* Indicators Section */
+.indicators-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.indicator-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.indicator-icon {
+  font-size: 0.9rem;
+  width: 20px;
+  text-align: center;
+}
+
+.indicator-name {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  flex: 0 0 70px;
+}
+
+.indicator-value {
+  flex: 1;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.indicator-value.bullish {
+  color: #10b981;
+}
+
+.indicator-value.bearish {
+  color: #ef4444;
+}
+
+.indicator-value.neutral {
+  color: #f59e0b;
+}
+
+/* Trading Levels */
+.trading-levels {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.level-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.level-row:last-child {
+  border-bottom: none;
+}
+
+.level-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.level-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.level-value.target {
+  color: #10b981;
+}
+
+.level-value.stop {
+  color: #ef4444;
+}
+
+/* Footer */
+.signals-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 10px;
+}
+
+.update-time {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.refresh-btn {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: #00d4ff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Disclaimer */
+.signals-disclaimer {
+  font-size: 0.65rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  line-height: 1.4;
+}
+
+/* Empty State */
+.signals-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+/* Signal Button Styling */
+.signal-algo-btn {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(0, 212, 255, 0.15) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #a78bfa;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.signal-algo-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(0, 212, 255, 0.25) 100%);
+  border-color: #a78bfa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.signal-algo-btn.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(0, 212, 255, 0.3) 100%);
+  border-color: #a78bfa;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.signal-algo-btn .btn-icon {
+  font-size: 1rem;
+}
+
+/* Pulse animation for active signals */
+.signal-algo-btn.has-signal::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse-signal 2s infinite;
+}
+
+@keyframes pulse-signal {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+}
+
+/* Container for positioning the dropdown */
+.signal-algo-container {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .trading-signals-panel {
+    width: 300px;
+  }
+
+  .signal-label {
+    font-size: 1.2rem;
+  }
+
+  .signal-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile Landscape & Small Tablets */
+@media (max-width: 768px) {
+  .trading-signals-panel {
+    position: fixed;
+    top: auto;
+    bottom: 60px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+    max-height: 50vh;
+    border-radius: 16px;
+  }
+
+  .signals-content {
+    max-height: calc(50vh - 60px);
+  }
+
+  .signal-algo-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  .signal-algo-btn span:not(.btn-icon) {
+    display: none;
+  }
+
+  .signal-algo-btn .btn-icon {
+    font-size: 1.1rem;
+  }
+
+  .main-signal {
+    padding: 12px;
+  }
+
+  .signal-label {
+    font-size: 1.1rem;
+  }
+
+  .indicator-row {
+    padding: 6px 8px;
+  }
+
+  .indicator-name {
+    flex: 0 0 60px;
+    font-size: 0.75rem;
+  }
+
+  .indicator-value {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .trading-signals-panel {
+    bottom: 50px;
+    right: 8px;
+    left: 8px;
+    border-radius: 12px;
+    max-height: 55vh;
+  }
+
+  .signals-header {
+    padding: 10px 12px;
+  }
+
+  .signals-title {
+    font-size: 0.8rem;
+  }
+
+  .signals-content {
+    padding: 10px;
+    max-height: calc(55vh - 50px);
+  }
+
+  .main-signal {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .signal-badge {
+    gap: 8px;
+  }
+
+  .signal-icon {
+    font-size: 1.3rem;
+  }
+
+  .signal-label {
+    font-size: 1rem;
+  }
+
+  .confidence-bar {
+    max-width: 160px;
+  }
+
+  .indicators-section {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .indicator-row {
+    padding: 5px 6px;
+    gap: 6px;
+  }
+
+  .indicator-icon {
+    font-size: 0.8rem;
+    width: 16px;
+  }
+
+  .indicator-name {
+    flex: 0 0 55px;
+    font-size: 0.7rem;
+  }
+
+  .indicator-value {
+    font-size: 0.7rem;
+  }
+
+  .trading-levels {
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .level-row {
+    padding: 5px 0;
+  }
+
+  .level-label,
+  .level-value {
+    font-size: 0.7rem;
+  }
+
+  .signals-footer {
+    padding-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .update-time {
+    font-size: 0.65rem;
+  }
+
+  .refresh-btn {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
+
+  .signals-disclaimer {
+    font-size: 0.6rem;
+    padding: 6px;
+  }
+
+  /* Button on mobile - icon only */
+  .signal-algo-btn {
+    padding: 5px 6px;
+    min-width: 32px;
+    justify-content: center;
+  }
+
+  .signal-algo-btn span:not(.btn-icon) {
+    display: none;
+  }
+
+  .signal-algo-btn .btn-icon {
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .trading-signals-panel {
+    right: 4px;
+    left: 4px;
+    bottom: 45px;
+  }
+
+  .signals-header {
+    padding: 8px 10px;
+  }
+
+  .signals-title {
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .signals-content {
+    padding: 8px;
+  }
+
+  .indicator-name {
+    flex: 0 0 50px;
+  }
+}
+
+/* Landscape mode on mobile - side panel */
+@media (max-height: 500px) and (orientation: landscape) {
+  .trading-signals-panel {
+    position: fixed;
+    top: 10px;
+    bottom: 10px;
+    right: 10px;
+    left: auto;
+    width: 280px;
+    max-height: none;
+  }
+
+  .signals-content {
+    max-height: calc(100vh - 80px);
+  }
+}
+

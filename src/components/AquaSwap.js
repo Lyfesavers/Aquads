@@ -8,6 +8,7 @@ import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
 import ShillTemplatesModal from './ShillTemplatesModal';
+import TradingSignals, { SIGNAL_TYPES } from './TradingSignals';
 import CurrencyConverter from './CurrencyConverter';
 import { getGasPrice, formatGasPrice, getGasPriceLevel, getGasPriceLevelText } from '../services/gasPriceService';
 
@@ -111,6 +112,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Shill Templates Modal state
   const [showShillModal, setShowShillModal] = useState(false);
+
+  // Trading Signals state
+  const [showSignalsPanel, setShowSignalsPanel] = useState(false);
+  const [currentSignal, setCurrentSignal] = useState(null);
+  const signalButtonRef = useRef(null);
+
+  // Clear signal when switching chart providers or token changes
+  useEffect(() => {
+    if (chartProvider !== 'dexscreener' || !tokenSearch) {
+      setCurrentSignal(null);
+      setShowSignalsPanel(false);
+    }
+  }, [chartProvider, tokenSearch]);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
@@ -1713,6 +1727,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                         <FaShareAlt />
                         <span>Shill it</span>
                       </button>
+                    )}
+
+                    {/* Trading Signals Button - Shows when token is loaded */}
+                    {tokenSearch && chartProvider === 'dexscreener' && (
+                      <div className="signal-algo-container">
+                        <button
+                          ref={signalButtonRef}
+                          className={`signal-algo-btn ${showSignalsPanel ? 'active' : ''} ${currentSignal ? 'has-signal' : ''} ${currentSignal ? `signal-${currentSignal.signal.label.toLowerCase().replace(/\s+/g, '-')}` : ''}`}
+                          onClick={() => setShowSignalsPanel(!showSignalsPanel)}
+                          title={currentSignal ? `${currentSignal.signal.label} - ${currentSignal.confidence}% confidence` : "View trading signals for this token"}
+                          style={currentSignal ? {
+                            '--signal-color': currentSignal.signal.color,
+                            background: `linear-gradient(135deg, ${currentSignal.signal.color}15 0%, ${currentSignal.signal.color}25 100%)`,
+                            borderColor: `${currentSignal.signal.color}60`,
+                            color: currentSignal.signal.color
+                          } : {}}
+                        >
+                          <span className="btn-icon">{currentSignal ? currentSignal.signal.icon : '🎯'}</span>
+                          <span>{currentSignal ? currentSignal.signal.label : 'Signals'}</span>
+                        </button>
+                        <TradingSignals
+                          tokenAddress={tokenSearch}
+                          chain={selectedChain}
+                          tokenSymbol={activeTokenSymbol || activeTokenName}
+                          isVisible={showSignalsPanel}
+                          onClose={() => setShowSignalsPanel(false)}
+                          buttonRef={signalButtonRef}
+                          onSignalUpdate={setCurrentSignal}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

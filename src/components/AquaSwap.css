@@ -2664,6 +2664,229 @@
 }
 
 /* ========================================
+   AQUASWAP ACTION BUTTONS
+   ======================================== */
+
+/* Share/Shill Button */
+.aquaswap-share-btn {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(0, 212, 255, 0.15) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.aquaswap-share-btn:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(0, 212, 255, 0.25) 100%);
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.aquaswap-share-btn svg {
+  font-size: 0.9rem;
+}
+
+/* Signal Algo Container for dropdown positioning */
+.signal-algo-container {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Signal Algo Button */
+.signal-algo-btn {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(0, 212, 255, 0.15) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #a78bfa;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.signal-algo-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(0, 212, 255, 0.25) 100%);
+  border-color: #a78bfa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.signal-algo-btn.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(0, 212, 255, 0.3) 100%);
+  border-color: #a78bfa;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Signal-specific button styles */
+.signal-algo-btn.has-signal {
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--signal-color);
+}
+
+.signal-algo-btn.has-signal:hover {
+  background: linear-gradient(135deg, var(--signal-color)25 0%, var(--signal-color)35 100%);
+  border-color: var(--signal-color);
+  box-shadow: 0 4px 20px var(--signal-color)40;
+  transform: translateY(-1px);
+}
+
+.signal-algo-btn.has-signal.active {
+  background: linear-gradient(135deg, var(--signal-color)30 0%, var(--signal-color)40 100%);
+  border-color: var(--signal-color);
+  box-shadow: 0 0 20px var(--signal-color)50;
+}
+
+/* Strong Buy - Green */
+.signal-algo-btn.signal-strong-buy {
+  animation: pulse-glow-green 2s ease-in-out infinite;
+}
+
+/* Buy - Light Green */
+.signal-algo-btn.signal-buy {
+  animation: pulse-glow-green 3s ease-in-out infinite;
+}
+
+/* Hold - Orange */
+.signal-algo-btn.signal-hold {
+  animation: none;
+}
+
+/* Sell - Orange-Red */
+.signal-algo-btn.signal-sell {
+  animation: pulse-glow-red 3s ease-in-out infinite;
+}
+
+/* Strong Sell - Red */
+.signal-algo-btn.signal-strong-sell {
+  animation: pulse-glow-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-green {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--signal-color)40;
+  }
+  50% {
+    box-shadow: 0 0 15px var(--signal-color)60, 0 0 25px var(--signal-color)40;
+  }
+}
+
+@keyframes pulse-glow-red {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--signal-color)40;
+  }
+  50% {
+    box-shadow: 0 0 15px var(--signal-color)60, 0 0 25px var(--signal-color)40;
+  }
+}
+
+.signal-algo-btn .btn-icon {
+  font-size: 1rem;
+}
+
+/* Pulse indicator for active signals */
+.signal-algo-btn.has-signal::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--signal-color);
+  border-radius: 50%;
+  animation: pulse-signal 2s infinite;
+  box-shadow: 0 0 8px var(--signal-color);
+}
+
+@keyframes pulse-signal {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+}
+
+/* Mobile styles for action buttons */
+@media (max-width: 768px) {
+  .aquaswap-share-btn,
+  .signal-algo-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  .aquaswap-share-btn span {
+    display: none;
+  }
+
+  /* Show signal label on tablet, but keep icon visible */
+  .signal-algo-btn.has-signal span:not(.btn-icon) {
+    display: inline;
+    font-size: 0.65rem;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .signal-algo-btn:not(.has-signal) span:not(.btn-icon) {
+    display: none;
+  }
+
+  .aquaswap-share-btn svg,
+  .signal-algo-btn .btn-icon {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .aquaswap-share-btn,
+  .signal-algo-btn {
+    padding: 5px 6px;
+    min-width: 32px;
+    justify-content: center;
+  }
+
+  /* On small mobile, show icon + abbreviated signal if available */
+  .signal-algo-btn.has-signal {
+    min-width: auto;
+    padding: 5px 8px;
+  }
+
+  .signal-algo-btn.has-signal span:not(.btn-icon) {
+    display: inline;
+    font-size: 0.6rem;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .signal-algo-btn:not(.has-signal) span:not(.btn-icon) {
+    display: none;
+  }
+
+  .aquaswap-share-btn svg,
+  .signal-algo-btn .btn-icon {
+    font-size: 1rem;
+  }
+}
+
+/* ========================================
    CURRENCY CONVERTER BAR - POSITIONING
    ======================================== */
 
