@@ -12,6 +12,9 @@ const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
   
+  // Store group IDs that have opted-in to community raid cross-posting
+  raidCrossPostingGroups: new Set(),
+  
   // Trending channel ID for all vote notifications and daily bubble updates
   TRENDING_CHANNEL_ID: '-1003255823970',
   
@@ -59,6 +62,33 @@ const telegramService = {
       );
     } catch (error) {
       console.error('Error saving active groups:', error);
+    }
+  },
+
+  // Load opted-in groups for community raids from database
+  loadRaidCrossPostingGroups: async () => {
+    try {
+      const settings = await BotSettings.findOne({ key: 'raidCrossPostingGroups' });
+      if (settings && settings.value) {
+        telegramService.raidCrossPostingGroups = new Set(settings.value);
+        console.log(`Loaded ${telegramService.raidCrossPostingGroups.size} opted-in groups for community raids`);
+      }
+    } catch (error) {
+      console.error('Error loading raid cross-posting groups:', error);
+    }
+  },
+
+  // Save opted-in groups for community raids to database
+  saveRaidCrossPostingGroups: async () => {
+    try {
+      const groupsArray = Array.from(telegramService.raidCrossPostingGroups);
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidCrossPostingGroups' },
+        { value: groupsArray, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error saving raid cross-posting groups:', error);
     }
   },
 
@@ -127,9 +157,42 @@ const telegramService = {
       // Delete old raid messages first
       await telegramService.deleteOldRaidMessages();
 
-      // Get all active groups (including the default chat ID)
-      const groupsToNotify = new Set(telegramService.activeGroups);
+      // Determine which groups to notify based on source and opt-in status
+      const groupsToNotify = new Set();
+      const sourceChatId = raidData.sourceChatId ? raidData.sourceChatId.toString() : null;
+      const isAdmin = raidData.isAdmin === true;
       const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+
+      // Admin-created raids go to all active groups
+      if (isAdmin) {
+        // Add all active groups
+        telegramService.activeGroups.forEach(groupId => {
+          groupsToNotify.add(groupId);
+        });
+      } else if (sourceChatId) {
+        // User-created raid from a specific group
+        // Always send to source group
+        groupsToNotify.add(sourceChatId);
+        
+        // Check if source group is opted-in to community raids
+        const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+        
+        if (isOptedIn) {
+          // Source group is opted-in: send to all opted-in groups
+          telegramService.raidCrossPostingGroups.forEach(groupId => {
+            groupsToNotify.add(groupId);
+          });
+        }
+        // If not opted-in, only source group gets the raid (already added above)
+      } else {
+        // No source group specified (shouldn't happen for user-created raids, but handle gracefully)
+        // Default: send to all active groups (fallback behavior)
+        telegramService.activeGroups.forEach(groupId => {
+          groupsToNotify.add(groupId);
+        });
+      }
+
+      // Always include main Aquads group (if configured)
       if (defaultChatId) {
         groupsToNotify.add(defaultChatId);
       }
@@ -314,6 +377,9 @@ const telegramService = {
 
     // Load active groups from database
     await telegramService.loadActiveGroups();
+    
+    // Load opted-in groups for community raids from database
+    await telegramService.loadRaidCrossPostingGroups();
 
     // Test bot configuration
     try {
@@ -390,9 +456,18 @@ const telegramService = {
       }
     }
 
-    // Handle commands - redirect group commands to private chat (except /bubbles)
+    // Handle group-only commands first (raidin/raidout)
+    if (text.startsWith('/raidin')) {
+      await telegramService.handleRaidInCommand(chatId, userId, chatType);
+      return;
+    } else if (text.startsWith('/raidout')) {
+      await telegramService.handleRaidOutCommand(chatId, userId, chatType);
+      return;
+    }
+
+    // Handle commands - redirect group commands to private chat (except /bubbles, /raidin, /raidout)
     if (chatType === 'group' || chatType === 'supergroup') {
-      // In group chats, redirect most commands to private chat, but allow /bubbles
+      // In group chats, redirect most commands to private chat, but allow /bubbles, /raidin, /raidout
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
         
@@ -422,7 +497,7 @@ const telegramService = {
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
-      await telegramService.handleCreateRaidCommand(chatId, userId, text);
+      await telegramService.handleCreateRaidCommand(chatId, userId, text, chatType);
     } else if (text.startsWith('/setbranding')) {
       await telegramService.handleSetBrandingCommand(chatId, userId);
     } else if (text.startsWith('/removebranding')) {
@@ -2541,6 +2616,15 @@ Tap to update:`;
             ...stateWithMessageId,
             groupRegistered: true
           });
+          await telegramService.showProjectSetup_GroupRaid(chatId, messageId);
+          break;
+        }
+
+        case 'onboard_groupraid_done': {
+          telegramService.setConversationState(userId, {
+            ...stateWithMessageId,
+            groupRaidSetup: true
+          });
           await telegramService.showProjectSetup_Branding(chatId, messageId);
           break;
         }
@@ -3194,6 +3278,17 @@ Tap to update:`;
         return;
       }
 
+      // Link group ID to user account if this is a group chat (negative chat IDs are groups)
+      if (chatId < 0) {
+        const groupIdStr = chatId.toString();
+        // Store the group ID on user account if not already set or different
+        if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
+          user.telegramGroupId = groupIdStr;
+          await user.save();
+          console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
+        }
+      }
+
       // Send each project with voting buttons
       for (const project of userProjects) {
         // Store the group ID if this is a group chat (negative chat IDs are groups)
@@ -3335,7 +3430,7 @@ Tap to update:`;
   },
 
   // Handle /createraid command
-  handleCreateRaidCommand: async (chatId, telegramUserId, text) => {
+  handleCreateRaidCommand: async (chatId, telegramUserId, text, chatType) => {
     try {
       // Check if user is linked
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
@@ -3344,6 +3439,18 @@ Tap to update:`;
         await telegramService.sendBotMessage(chatId, 
           "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         return;
+      }
+
+      // Determine source chat ID (only if called from a group)
+      const sourceChatId = (chatType === 'group' || chatType === 'supergroup') ? chatId.toString() : null;
+      
+      // If called from a group, link the group to user account
+      if (sourceChatId) {
+        if (!user.telegramGroupId || user.telegramGroupId !== sourceChatId) {
+          user.telegramGroupId = sourceChatId;
+          await user.save();
+          console.log(`✅ Linked group ${sourceChatId} to user account ${user.username} via /createraid`);
+        }
       }
 
       // Parse command format: /createraid TWEET_URL
@@ -3396,17 +3503,47 @@ Tap to update:`;
 
         await raid.save();
 
-        // Send success message for free raid (to user's private chat)
-        await telegramService.sendBotMessage(telegramUserId, 
-          `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
-
-        // Send Telegram notification to all users about the new raid
+        // Send Telegram notification about the new raid
         await telegramService.sendRaidNotification({
           tweetUrl: raid.tweetUrl,
           points: raid.points,
           title: raid.title,
-          description: raid.description
+          description: raid.description,
+          sourceChatId: sourceChatId,
+          isAdmin: false
         });
+
+        // Check if group is linked and opted-in, provide helpful message
+        let successMessage = `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live!`;
+        
+        if (sourceChatId) {
+          // Group is linked (raid created from group)
+          const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+          if (isOptedIn) {
+            successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+          } else {
+            successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private to your group only.`;
+          }
+          successMessage += `\n\n✅ Raid sent to your group!`;
+        } else {
+          // No group linked (raid created from private chat)
+          if (!user.telegramGroupId) {
+            successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin to enable community raids\n   OR /raidout to keep raids private\n\nThis will link your group and allow raids to be sent there.`;
+          } else {
+            // Group is linked but raid wasn't created from group
+            const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
+            if (isOptedIn) {
+              successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+            } else {
+              successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
+            }
+            successMessage += `\n\n✅ Raid sent to your linked group!`;
+          }
+        }
+        
+        successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
+
+        await telegramService.sendBotMessage(telegramUserId, successMessage);
 
         return;
       }
@@ -3448,22 +3585,152 @@ Tap to update:`;
         user.save()
       ]);
 
-      // Send success message (to user's private chat)
-      await telegramService.sendBotMessage(telegramUserId, 
-        `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 20 points.`);
-
-      // Send Telegram notification to all users about the new raid
+      // Send Telegram notification about the new raid
       await telegramService.sendRaidNotification({
         tweetUrl: raid.tweetUrl,
         points: raid.points,
         title: raid.title,
-        description: raid.description
+        description: raid.description,
+        sourceChatId: sourceChatId,
+        isAdmin: false
       });
+
+      // Check if group is linked and opted-in, provide helpful message
+      let successMessage = `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live!`;
+      
+      if (sourceChatId) {
+        // Group is linked (raid created from group)
+        const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+        if (isOptedIn) {
+          successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+        } else {
+          successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private to your group only.`;
+        }
+        successMessage += `\n\n✅ Raid sent to your group!`;
+      } else {
+        // No group linked (raid created from private chat)
+        if (!user.telegramGroupId) {
+          successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin to enable community raids\n   OR /raidout to keep raids private\n\nThis will link your group and allow raids to be sent there.`;
+        } else {
+          // Group is linked but raid wasn't created from group
+          const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
+          if (isOptedIn) {
+            successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+          } else {
+            successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
+          }
+          successMessage += `\n\n✅ Raid sent to your linked group!`;
+        }
+      }
+      
+      successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
+
+      await telegramService.sendBotMessage(telegramUserId, successMessage);
 
     } catch (error) {
       console.error('CreateRaid command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error creating raid. Please try again later.");
+    }
+  },
+
+  // Handle /raidin command (group-only, opts group into community raids)
+  handleRaidInCommand: async (chatId, telegramUserId, chatType) => {
+    try {
+      // This command only works in groups
+      if (chatType !== 'group' && chatType !== 'supergroup') {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ This command only works in group chats.\n\n💡 Add the bot to your Telegram group and use /raidin there to enable community raids.");
+        return;
+      }
+
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      const groupIdStr = chatId.toString();
+      
+      // Link group ID to user account
+      if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
+        user.telegramGroupId = groupIdStr;
+        await user.save();
+        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
+      }
+
+      // Add group to opted-in list if not already
+      if (!telegramService.raidCrossPostingGroups.has(groupIdStr)) {
+        telegramService.raidCrossPostingGroups.add(groupIdStr);
+        await telegramService.saveRaidCrossPostingGroups();
+        console.log(`✅ Group ${groupIdStr} opted-in to community raids`);
+      }
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Community Raids Enabled!\n\n` +
+        `📢 Your group is now part of the community raid network:\n\n` +
+        `✅ Your raids will be sent to all other opted-in groups\n` +
+        `✅ You'll receive raids from all other opted-in groups\n` +
+        `✅ Your group is registered to your account: @${user.username}\n\n` +
+        `💡 Use /raidout to disable this feature anytime\n` +
+        `🌐 Manage your account: https://aquads.xyz`);
+    } catch (error) {
+      console.error('RaidIn command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error enabling community raids. Please try again later.");
+    }
+  },
+
+  // Handle /raidout command (group-only, opts group out of community raids)
+  handleRaidOutCommand: async (chatId, telegramUserId, chatType) => {
+    try {
+      // This command only works in groups
+      if (chatType !== 'group' && chatType !== 'supergroup') {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ This command only works in group chats.\n\n💡 Add the bot to your Telegram group and use /raidout there to disable community raids.");
+        return;
+      }
+
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      const groupIdStr = chatId.toString();
+      
+      // Link group ID to user account (even when opting out, we still track the group)
+      if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
+        user.telegramGroupId = groupIdStr;
+        await user.save();
+        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
+      }
+
+      // Remove group from opted-in list if it was opted-in
+      if (telegramService.raidCrossPostingGroups.has(groupIdStr)) {
+        telegramService.raidCrossPostingGroups.delete(groupIdStr);
+        await telegramService.saveRaidCrossPostingGroups();
+        console.log(`✅ Group ${groupIdStr} opted-out of community raids`);
+      }
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Community Raids Disabled\n\n` +
+        `📢 Your group has left the community raid network:\n\n` +
+        `❌ Your raids will only be sent to this group\n` +
+        `❌ You won't receive raids from other groups\n` +
+        `✅ Your group is still registered to your account: @${user.username}\n\n` +
+        `💡 Use /raidin to re-enable community raids anytime\n` +
+        `🌐 Manage your account: https://aquads.xyz`);
+    } catch (error) {
+      console.error('RaidOut command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error disabling community raids. Please try again later.");
     }
   },
 

@@ -105,13 +105,14 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 
     await raid.save();
     
-    // Send Telegram notification
+    // Send Telegram notification (admin raids go to all groups)
     telegramService.sendRaidNotification({
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
       description: raid.description,
-      platform: 'Facebook'
+      platform: 'Facebook',
+      isAdmin: true
     });
     
     res.status(201).json(raid);
@@ -179,19 +180,36 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       user.save()
     ]);
     
-    // Send Telegram notification
+    // Send Telegram notification (use user's linked group if available)
+    const sourceChatId = user.telegramGroupId || null;
     telegramService.sendRaidNotification({
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
       description: raid.description,
-      platform: 'Facebook'
+      platform: 'Facebook',
+      sourceChatId: sourceChatId,
+      isAdmin: false
     });
     
+    // Build response message with group setup tip if needed
+    let responseMessage = `Facebook raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`;
+    
+    if (!sourceChatId) {
+      responseMessage += `\n\n💡 Tip: Link your Telegram group to receive raids! Go to your Telegram group and use /raidin or /raidout to connect your group.`;
+    } else {
+      // Check if group is opted-in
+      const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+      if (!isOptedIn) {
+        responseMessage += `\n\n💡 Tip: Use /raidin in your Telegram group to share raids with other groups, or /raidout to keep raids private.`;
+      }
+    }
+    
     res.status(201).json({ 
-      message: `Facebook raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`,
+      message: responseMessage,
       raid,
-      pointsRemaining: user.points
+      pointsRemaining: user.points,
+      groupLinked: !!sourceChatId
     });
   } catch (error) {
     console.error('Error creating Facebook raid with points:', error);
@@ -245,17 +263,33 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
 
     await raid.save();
     
-    // Send Telegram notification
+    // Send Telegram notification (use user's linked group if available)
+    const sourceChatId = user.telegramGroupId || null;
     telegramService.sendRaidNotification({
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
       description: raid.description,
-      platform: 'Facebook'
+      platform: 'Facebook',
+      sourceChatId: sourceChatId,
+      isAdmin: false
     });
     
+    // Build response message with group setup tip if needed
+    let responseMessage = 'Free Facebook raid created successfully!';
+    
+    if (!sourceChatId) {
+      responseMessage += `\n\n💡 Tip: Link your Telegram group to receive raids! Go to your Telegram group and use /raidin or /raidout to connect your group.`;
+    } else {
+      // Check if group is opted-in
+      const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+      if (!isOptedIn) {
+        responseMessage += `\n\n💡 Tip: Use /raidin in your Telegram group to share raids with other groups, or /raidout to keep raids private.`;
+      }
+    }
+    
     res.status(201).json({ 
-      message: 'Free Facebook raid created successfully!',
+      message: responseMessage,
       raid,
       usage
     });

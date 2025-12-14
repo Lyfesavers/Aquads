@@ -64,6 +64,10 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  telegramGroupId: {
+    type: String,
+    default: null
+  },
   twitterUsername: {
     type: String,
     default: null,
