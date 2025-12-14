@@ -62,6 +62,30 @@ const telegramService = {
     }
   },
 
+  // Check if error indicates bot was kicked/removed from group (not just permission issue)
+  shouldRemoveGroupFromActive: (error) => {
+    if (!error) return false;
+    
+    const errorMessage = error.message || error.response?.data?.description || '';
+    const lowerError = errorMessage.toLowerCase();
+    
+    // Errors that indicate bot is not a member of the group
+    const removalErrors = [
+      'chat not found',
+      'bot is not a member',
+      'bot was kicked',
+      'bot was removed',
+      'group chat was deleted',
+      'supergroup chat was deleted',
+      'channel chat was deleted',
+      'chat_id is empty',
+      'bad request: chat not found'
+    ];
+    
+    // Check if error indicates removal (not just permission issue)
+    return removalErrors.some(err => lowerError.includes(err));
+  },
+
   // Pin a message in a chat
   pinMessage: async (chatId, messageId) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -223,10 +247,16 @@ const telegramService = {
           }
         } catch (error) {
           console.error(`Failed to send to group ${chatId}:`, error.message);
-          // Remove failed group from active groups
-          telegramService.activeGroups.delete(chatId);
-          // Save to database when removing group
-          telegramService.saveActiveGroups();
+          // Only remove group if bot was actually kicked/removed, not just permission issues
+          if (telegramService.shouldRemoveGroupFromActive(error)) {
+            const chatIdStr = String(chatId);
+            telegramService.activeGroups.delete(chatIdStr);
+            console.log(`🗑️ Removed group ${chatIdStr} from active groups (bot was kicked/removed)`);
+            // Save to database when removing group
+            await telegramService.saveActiveGroups();
+          } else {
+            console.log(`⚠️ Keeping group ${chatId} in active groups (permission issue, bot still member)`);
+          }
         }
       }
 
@@ -1628,9 +1658,15 @@ ${platformEmoji} ${platformName} Raid
           }
         } catch (error) {
           console.error(`Failed to send completion notification to group ${chatId}:`, error.message);
-          // Remove failed group from active groups
-          telegramService.activeGroups.delete(chatId);
-          await telegramService.saveActiveGroups();
+          // Only remove group if bot was actually kicked/removed, not just permission issues
+          if (telegramService.shouldRemoveGroupFromActive(error)) {
+            const chatIdStr = String(chatId);
+            telegramService.activeGroups.delete(chatIdStr);
+            console.log(`🗑️ Removed group ${chatIdStr} from active groups (bot was kicked/removed)`);
+            await telegramService.saveActiveGroups();
+          } else {
+            console.log(`⚠️ Keeping group ${chatId} in active groups (permission issue, bot still member)`);
+          }
         }
       }
 
@@ -4226,9 +4262,15 @@ Let's make today amazing! 🚀`;
           }
         } catch (error) {
           console.error(`Failed to send GM message to group ${chatId}:`, error.message);
-          // Remove failed group from active groups
-          telegramService.activeGroups.delete(chatId);
-          await telegramService.saveActiveGroups();
+          // Only remove group if bot was actually kicked/removed, not just permission issues
+          if (telegramService.shouldRemoveGroupFromActive(error)) {
+            const chatIdStr = String(chatId);
+            telegramService.activeGroups.delete(chatIdStr);
+            console.log(`🗑️ Removed group ${chatIdStr} from active groups (bot was kicked/removed)`);
+            await telegramService.saveActiveGroups();
+          } else {
+            console.log(`⚠️ Keeping group ${chatId} in active groups (permission issue, bot still member)`);
+          }
         }
       }
 
