@@ -48,6 +48,14 @@
   font-size: 0.85rem;
   color: #00d4ff;
   letter-spacing: 0.5px;
+  flex-wrap: wrap;
+}
+
+.signals-token-ticker {
+  color: #a78bfa;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-left: 4px;
 }
 
 .signals-icon {

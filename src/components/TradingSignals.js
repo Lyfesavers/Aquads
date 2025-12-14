@@ -451,6 +451,9 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
         <div className="signals-title">
           <span className="signals-icon">🎯</span>
           <span>AQUADS SIGNAL ALGO</span>
+          {signalData?.pairInfo?.symbol && (
+            <span className="signals-token-ticker">({signalData.pairInfo.symbol})</span>
+          )}
         </div>
         <button className="signals-close" onClick={onClose}>×</button>
       </div>
