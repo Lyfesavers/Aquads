@@ -1065,6 +1065,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     setSelectedChain(token.chain);
     setActiveTokenName(token.name || '');
     setActiveTokenSymbol(token.name || ''); // For trending tokens, name is usually the ticker
+    setChartProvider('dexscreener'); // Ensure DEX Screener is selected for signals
   };
 
   // LI.FI Widget configuration following official documentation
@@ -1747,6 +1748,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                           <span className="btn-icon">{currentSignal ? currentSignal.signal.icon : '🎯'}</span>
                           <span>{currentSignal ? currentSignal.signal.label : 'Signals'}</span>
                         </button>
+                        {/* Always render TradingSignals (even when panel closed) so it can fetch data */}
                         <TradingSignals
                           tokenAddress={tokenSearch}
                           chain={selectedChain}

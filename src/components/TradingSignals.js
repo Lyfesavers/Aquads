@@ -10,6 +10,64 @@ export const SIGNAL_TYPES = {
   STRONG_SELL: { label: 'STRONG SELL', color: '#ef4444', icon: '🔻', confidence: '80-100%' }
 };
 
+// Map internal chain format to DEX Screener API format
+const mapChainToDexScreener = (chain) => {
+    const chainMap = {
+      'ether': 'ethereum',
+      'eth': 'ethereum',
+      'ethereum': 'ethereum',
+      'bnb': 'bsc',
+      'bsc': 'bsc',
+      'polygon': 'polygon',
+      'matic': 'polygon',
+      'solana': 'solana',
+      'sol': 'solana',
+      'avalanche': 'avalanche',
+      'avax': 'avalanche',
+      'arbitrum': 'arbitrum',
+      'arb': 'arbitrum',
+      'optimism': 'optimism',
+      'op': 'optimism',
+      'base': 'base',
+      'fantom': 'fantom',
+      'ftm': 'fantom',
+      'cronos': 'cronos',
+      'celo': 'celo',
+      'harmony': 'harmony',
+      'near': 'near',
+      'sui': 'sui',
+      'aptos': 'aptos',
+      'ton': 'ton',
+      'stellar': 'stellar',
+      'algorand': 'algorand',
+      'hedera': 'hedera',
+      'icp': 'icp',
+      'elrond': 'elrond',
+      'multiversx': 'elrond',
+      'terra': 'terra',
+      'xrp': 'xrp',
+      'litecoin': 'litecoin',
+      'bitcoin': 'bitcoin',
+      'tron': 'tron',
+      'tezos': 'tezos',
+      'zilliqa': 'zilliqa',
+      'oasis': 'oasis',
+      'stacks': 'stacks',
+      'kadena': 'kadena',
+      'injective': 'injective',
+      'kava': 'kava',
+      'moonriver': 'moonriver',
+      'moonbeam': 'moonbeam',
+      'flow': 'flow',
+      'cardano': 'cardano',
+      'polkadot': 'polkadot',
+      'cosmos': 'cosmos',
+      'kaspa': 'kaspa'
+    };
+    
+    return chainMap[chain?.toLowerCase()] || 'ethereum';
+};
+
 const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, buttonRef, onSignalUpdate }) => {
   const [signalData, setSignalData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -191,18 +249,27 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
 
   // Fetch data from DEX Screener API
   const fetchSignalData = useCallback(async () => {
-    if (!tokenAddress || !chain) {
+    if (!tokenAddress) {
       setError('No token selected');
+      if (onSignalUpdate) {
+        onSignalUpdate(null);
+      }
       return;
     }
+    
+    // If no chain provided, default to ethereum (most common)
+    const chainToUse = chain || 'ether';
 
     setLoading(true);
     setError(null);
 
     try {
+      // Map chain to DEX Screener format
+      const dexScreenerChain = mapChainToDexScreener(chainToUse);
+      
       // Try pairs endpoint first (more reliable for specific pair)
       let response = await fetch(
-        `https://api.dexscreener.com/latest/dex/pairs/${chain}/${tokenAddress}`
+        `https://api.dexscreener.com/latest/dex/pairs/${dexScreenerChain}/${tokenAddress}`
       );
       
       let data = await response.json();
@@ -244,7 +311,7 @@ const TradingSignals = ({ tokenAddress, chain, tokenSymbol, isVisible, onClose, 
     } finally {
       setLoading(false);
     }
-  }, [tokenAddress, chain, calculateSignals]);
+  }, [tokenAddress, chain, calculateSignals, onSignalUpdate]);
 
   // Fetch data when token changes (always, not just when visible)
   useEffect(() => {
