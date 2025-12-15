@@ -344,6 +344,14 @@ app.use((req, res, next) => {
     'http://localhost:3000'
   ];
   
+  // Allow Netlify or other frontend origins via env to support Google sign-in callbacks
+  if (process.env.NETLIFY_ORIGIN) {
+    allowedOrigins.push(process.env.NETLIFY_ORIGIN);
+  }
+  if (process.env.FRONTEND_ORIGIN) {
+    allowedOrigins.push(process.env.FRONTEND_ORIGIN);
+  }
+  
   // Allow chrome extension origins
   if (!origin || allowedOrigins.includes(origin) || origin.startsWith('chrome-extension://')) {
     res.header('Access-Control-Allow-Origin', origin || '*');

@@ -370,6 +370,46 @@ export const loginUser = async (credentials) => {
   }
 };
 
+// Login with Google ID token (existing accounts only)
+export const loginWithGoogle = async (idToken) => {
+  try {
+    const response = await fetch(`${API_URL}/users/login/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ idToken })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Google login failed');
+    }
+
+    const userData = await response.json();
+
+    // Store user data
+    try {
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+    } catch (storageError) {
+      logger.error('Error storing user data in localStorage:', storageError);
+    }
+
+    // Update socket auth
+    socket.auth = { token: userData.token };
+
+    // Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return userData;
+  } catch (error) {
+    logger.error('Google login error:', error);
+    throw error;
+  }
+};
+
 // Update the verifyToken function to return user data and handle token parameter
 export const verifyToken = async (token = null) => {
   try {

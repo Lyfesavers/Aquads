@@ -9,6 +9,7 @@ import {
   updateAdPosition as apiUpdateAdPosition,
   deleteAd as apiDeleteAd, 
   loginUser, 
+  loginWithGoogle,
   register as apiRegister,
   createBumpRequest,
   approveBumpRequest,
@@ -876,6 +877,23 @@ function App() {
       } else {
         showNotification(error.message || 'Login failed', 'error');
       }
+    }
+  };
+
+  const handleGoogleLogin = async (idToken) => {
+    try {
+      const user = await loginWithGoogle(idToken);
+      setCurrentUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      setShowLoginModal(false);
+      showNotification('Successfully signed in with Google!', 'success');
+
+      setTimeout(() => {
+        checkForUnbumpedAd(user);
+      }, 1000);
+    } catch (error) {
+      logger.error('Google login error:', error);
+      showNotification(error.message || 'Google login failed', 'error');
     }
   };
 
@@ -3026,6 +3044,7 @@ function App() {
                 {showLoginModal && (
                   <LoginModal
                     onLogin={handleLogin}
+                    onGoogleLogin={handleGoogleLogin}
                     onClose={() => setShowLoginModal(false)}
                     onCreateAccount={() => {
                       setShowLoginModal(false);

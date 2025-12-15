@@ -26,6 +26,17 @@ const userSchema = new Schema({
     type: Boolean,
     default: false
   },
+  // Google sign-in linkage
+  googleSub: {
+    type: String,
+    unique: true,
+    sparse: true,
+    default: null
+  },
+  googlePicture: {
+    type: String,
+    default: null
+  },
   emailVerificationCode: {
     type: String,
     default: null

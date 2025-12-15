@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
-const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
+const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
   const [formData, setFormData] = useState({
     identifier: '',
     password: ''
@@ -11,6 +11,54 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
   const [error, setError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const googleButtonRef = useRef(null);
+  const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
+  const handleGoogleCredential = (response) => {
+    if (!response?.credential) return;
+    if (onGoogleLogin) {
+      onGoogleLogin(response.credential);
+    }
+  };
+
+  useEffect(() => {
+    if (!clientId || !googleButtonRef.current) return;
+
+    const renderButton = () => {
+      if (window.google && googleButtonRef.current && !googleButtonRef.current.dataset.rendered) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredential
+        });
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: 280
+        });
+        googleButtonRef.current.dataset.rendered = 'true';
+      }
+    };
+
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', renderButton);
+      if (window.google) {
+        renderButton();
+      }
+      return () => existingScript.removeEventListener('load', renderButton);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = renderButton;
+    document.body.appendChild(script);
+
+    return () => {
+      script.removeEventListener('load', renderButton);
+    };
+  }, [clientId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -104,29 +152,51 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
             {error && (
               <p className="text-red-500 text-sm">{error}</p>
             )}
-            <div className="flex justify-between items-center pt-4">
-              <div className="space-x-4">
+            <div className="flex flex-col space-y-4 pt-4">
+              <div className="flex justify-between items-center">
+                <div className="space-x-4">
+                  <button
+                    type="button"
+                    onClick={onCreateAccount}
+                    className="text-blue-400 hover:text-blue-300 text-sm"
+                  >
+                    Create Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenForgotPassword}
+                    className="text-blue-400 hover:text-blue-300 text-sm"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <button
-                  type="button"
-                  onClick={onCreateAccount}
-                  className="text-blue-400 hover:text-blue-300 text-sm"
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
                 >
-                  Create Account
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenForgotPassword}
-                  className="text-blue-400 hover:text-blue-300 text-sm"
-                >
-                  Forgot Password?
+                  Login
                 </button>
               </div>
-              <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
-              >
-                Login
-              </button>
+
+              <div className="relative">
+                <div className="flex items-center">
+                  <div className="flex-1 h-px bg-gray-700" />
+                  <span className="px-3 text-gray-400 text-sm">or</span>
+                  <div className="flex-1 h-px bg-gray-700" />
+                </div>
+                <div className="mt-4 flex justify-center">
+                  {clientId ? (
+                    <div ref={googleButtonRef} className="flex justify-center" />
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      Google Sign-In unavailable (client ID not set)
+                    </p>
+                  )}
+                </div>
+                <p className="mt-2 text-center text-gray-500 text-xs">
+                  Use Google only if you already have an account.
+                </p>
+              </div>
             </div>
           </form>
           <div className="mt-6 pt-4 border-t border-gray-700 text-center">

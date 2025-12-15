@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
 const { emitAffiliateEarningUpdate } = require('../socket');
+const { OAuth2Client } = require('google-auth-library');
 const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
 const auditLogger = require('../utils/auditLogger');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
@@ -26,6 +27,9 @@ const registrationLimiter = rateLimit({
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
 const tempTokenStore = new Map();
+
+// Google Identity client (ID token verification)
+const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
 // Register new user
 router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), validateRegistration, async (req, res) => {
@@ -360,6 +364,112 @@ router.post('/login', validateLogin, async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Google login (existing accounts only, ID token flow)
+router.post('/login/google', async (req, res) => {
+  try {
+    if (!googleClient || !process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ error: 'Google login not configured' });
+    }
+
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ error: 'idToken is required' });
+    }
+
+    // Verify ID token with Google
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ error: 'Google token missing email' });
+    }
+
+    if (!payload.email_verified) {
+      return res.status(403).json({ error: 'Email not verified with Google' });
+    }
+
+    const email = payload.email.toLowerCase();
+    const sanitizedEmail = sanitizeForRegex(email);
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${sanitizedEmail}$`, 'i') }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Please create an account first' });
+    }
+
+    // Optional: prevent mismatched linkage
+    if (user.suspended) {
+      return res.status(403).json({
+        error: 'Account suspended',
+        message: 'Your account has been suspended. Please contact support for more information.',
+        suspendedReason: user.suspendedReason,
+        suspendedAt: user.suspendedAt
+      });
+    }
+
+    // Link googleSub on first successful Google login
+    if (!user.googleSub) {
+      user.googleSub = payload.sub;
+    }
+
+    // Update last activity
+    user.lastActivity = new Date();
+
+    // Token expiration matches existing logic
+    const isExtension = req.headers.origin && req.headers.origin.startsWith('chrome-extension://');
+    const tokenExpiration = isExtension ? '1h' : '15m';
+
+    // Generate access token
+    const token = jwt.sign(
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
+      process.env.JWT_SECRET,
+      { expiresIn: tokenExpiration }
+    );
+
+    // Generate refresh token (7 days)
+    const refreshToken = jwt.sign(
+      { userId: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await user.save();
+
+    // Log successful login via audit logger for traceability
+    auditLogger.logSuccessfulLogin(
+      user._id,
+      user.username,
+      req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      user.isAdmin,
+      req.headers['user-agent']
+    );
+
+    return res.json({
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      image: user.image,
+      isAdmin: user.isAdmin,
+      emailVerified: user.emailVerified,
+      userType: user.userType,
+      referredBy: user.referredBy,
+      cv: user.cv,
+      token,
+      refreshToken
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    return res.status(500).json({ error: 'Google login failed' });
   }
 });
 
