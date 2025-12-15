@@ -172,6 +172,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     
     // Send Telegram notification (admin raids go to all groups)
     telegramService.sendRaidNotification({
+      raidId: raid._id.toString(),
       tweetUrl: raid.tweetUrl,
       points: raid.points,
       title: raid.title,
@@ -249,6 +250,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     // Send Telegram notification (use user's linked group if available)
     const sourceChatId = user.telegramGroupId || null;
     telegramService.sendRaidNotification({
+      raidId: raid._id.toString(),
       tweetUrl: raid.tweetUrl,
       points: raid.points,
       title: raid.title,
@@ -975,6 +977,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     // Send Telegram notification (use user's linked group if available)
     const sourceChatId = user.telegramGroupId || null;
     telegramService.sendRaidNotification({
+      raidId: raid._id.toString(),
       tweetUrl: raid.tweetUrl,
       points: raid.points,
       title: raid.title,

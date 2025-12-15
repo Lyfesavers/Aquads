@@ -231,9 +231,15 @@ const telegramService = {
       const videoPath = path.join(__dirname, '../../public/timeraid.mp4');
       const videoExists = fs.existsSync(videoPath);
       
-      // Add "Hire an Expert" button
+      // Add "Complete Raid" and "Hire an Expert" buttons
       const keyboard = {
         inline_keyboard: [
+          [
+            {
+              text: '✅ Complete Raid',
+              callback_data: JSON.stringify({ action: 'complete', raidId: raidData.raidId })
+            }
+          ],
           [
             {
               text: '👨‍💼 Hire an Expert',
@@ -299,7 +305,7 @@ const telegramService = {
             }
           } else {
             // Send text message
-            const result = await telegramService.sendTextMessage(botToken, chatId, message);
+            const result = await telegramService.sendTextMessage(botToken, chatId, message, raidData.raidId);
             if (result.success) {
               successCount++;
               // Store message ID for cleanup
@@ -332,18 +338,27 @@ const telegramService = {
   },
 
   // Fallback method for text-only messages
-  sendTextMessage: async (botToken, chatId, message) => {
+  sendTextMessage: async (botToken, chatId, message, raidId = null) => {
     try {
-      // Add "Hire an Expert" button
+      // Add buttons - "Complete Raid" if raidId provided, and "Hire an Expert"
+      const buttons = [];
+      if (raidId) {
+        buttons.push([
+          {
+            text: '✅ Complete Raid',
+            callback_data: JSON.stringify({ action: 'complete', raidId: raidId })
+          }
+        ]);
+      }
+      buttons.push([
+        {
+          text: '👨‍💼 Hire an Expert',
+          url: 'https://aquads.xyz/marketplace'
+        }
+      ]);
+      
       const keyboard = {
-        inline_keyboard: [
-          [
-            {
-              text: '👨‍💼 Hire an Expert',
-              url: 'https://aquads.xyz/marketplace'
-            }
-          ]
-        ]
+        inline_keyboard: buttons
       };
 
       const response = await axios.post(
@@ -1929,7 +1944,18 @@ ${platformEmoji} ${platformName} Raid
           const callbackData = JSON.parse(callbackQuery.data);
           
           if (callbackData.action === 'complete') {
-            await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+            // Check if this is from a group chat
+            const isGroupChat = callbackQuery.message.chat.type === 'group' || 
+                                callbackQuery.message.chat.type === 'supergroup' ||
+                                chatId < 0;
+            
+            if (isGroupChat) {
+              // Handle completion from group chat
+              await telegramService.startRaidCompletionFromGroup(chatId, userId, callbackData.raidId);
+            } else {
+              // Handle completion from private chat (existing behavior)
+              await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+            }
           }
         } catch (parseError) {
           // Not JSON, might be a simple callback - ignore
@@ -2712,6 +2738,91 @@ Tap to update:`;
   // END ONBOARDING WIZARD FUNCTIONS
   // ==========================================
 
+  // Start raid completion flow from group chat
+  startRaidCompletionFromGroup: async (groupChatId, telegramUserId, raidId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        // User doesn't have account - send message to group chat
+        await telegramService.sendBotMessage(groupChatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // User has account - proceed with completion and send messages to private chat
+      const privateChatId = telegramUserId; // User's private chat ID is their user ID
+      
+      // Try to find the raid in both Twitter and Facebook raids
+      let raid = await TwitterRaid.findById(raidId);
+      let platform = 'Twitter';
+      let usernameField = 'twitterUsername';
+      let postUrlField = 'tweetUrl';
+      let storedUsername = user.twitterUsername;
+      
+      if (!raid) {
+        raid = await FacebookRaid.findById(raidId);
+        if (raid) {
+          platform = 'Facebook';
+          usernameField = 'facebookUsername';
+          postUrlField = 'postUrl';
+          storedUsername = user.facebookUsername;
+        }
+      }
+      
+      if (!raid || !raid.active) {
+        await telegramService.sendBotMessage(privateChatId, 
+          "❌ Raid not found or no longer active.");
+        return;
+      }
+
+      // Check if already completed
+      const userCompleted = raid.completions.some(
+        completion => completion.userId && completion.userId.toString() === user._id.toString()
+      );
+
+      if (userCompleted) {
+        await telegramService.sendBotMessage(privateChatId, 
+          "❌ You have already completed this raid!");
+        return;
+      }
+
+      // Check if user has username set for the platform
+      if (storedUsername) {
+        // Use stored username automatically - send completion message to private chat
+        await telegramService.completeRaidWithStoredUsername(privateChatId, telegramUserId, raidId, storedUsername, platform, true);
+      } else {
+        // Set conversation state to ask for username in private chat
+        telegramService.setConversationState(telegramUserId, {
+          action: 'waiting_username',
+          raidId: raidId,
+          platform: platform,
+          postUrl: raid[postUrlField],
+          raidTitle: raid.title,
+          raidPoints: raid.points,
+          fromGroupChat: true,
+          groupChatId: groupChatId
+        });
+
+        // Ask for username in private chat
+        const interactionInstructions = platform === 'Facebook' 
+          ? '✅ LIKED the Facebook post\n✅ SHARED the Facebook post\n✅ COMMENTED on the Facebook post'
+          : '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet';
+        const usernamePrompt = platform === 'Facebook' ? 'Facebook username' : 'Twitter username';
+        const usernameCommand = platform === 'Facebook' ? '/facebook' : '/twitter';
+        
+        await telegramService.sendBotMessage(privateChatId, 
+          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n${interactionInstructions}\n\n📝 Now enter your ${usernamePrompt} (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your ${usernamePrompt} with ${usernameCommand} your_username to avoid entering it every time!`);
+      }
+
+    } catch (error) {
+      console.error('Start completion from group error:', error);
+      await telegramService.sendBotMessage(groupChatId, 
+        "❌ Error starting completion. Please try again later.");
+    }
+  },
+
   // Start raid completion flow
   startRaidCompletion: async (chatId, telegramUserId, raidId) => {
     try {
@@ -2792,7 +2903,7 @@ Tap to update:`;
   },
 
   // Complete raid with stored username
-  completeRaidWithStoredUsername: async (chatId, telegramUserId, raidId, username, platform = 'Twitter') => {
+  completeRaidWithStoredUsername: async (chatId, telegramUserId, raidId, username, platform = 'Twitter', fromGroupChat = false) => {
     try {
       // Get user and raid
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
@@ -3505,6 +3616,7 @@ Tap to update:`;
 
         // Send Telegram notification about the new raid
         await telegramService.sendRaidNotification({
+          raidId: raid._id.toString(),
           tweetUrl: raid.tweetUrl,
           points: raid.points,
           title: raid.title,
@@ -3587,6 +3699,7 @@ Tap to update:`;
 
       // Send Telegram notification about the new raid
       await telegramService.sendRaidNotification({
+        raidId: raid._id.toString(),
         tweetUrl: raid.tweetUrl,
         points: raid.points,
         title: raid.title,
