@@ -154,9 +154,6 @@ const telegramService = {
         return false;
       }
 
-      // Delete old raid messages first
-      await telegramService.deleteOldRaidMessages();
-
       // Determine which groups to notify based on source and opt-in status
       const groupsToNotify = new Set();
       const sourceChatId = raidData.sourceChatId ? raidData.sourceChatId.toString() : null;
@@ -196,6 +193,11 @@ const telegramService = {
       if (defaultChatId) {
         groupsToNotify.add(defaultChatId);
       }
+
+      // Delete old raid messages only from groups that will receive the new raid
+      // Only delete messages created by the current creator
+      const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
+      await telegramService.deleteOldRaidMessages(Array.from(groupsToNotify), creatorGroupId);
 
       // Determine platform and construct appropriate message
       const isFacebook = raidData.platform === 'Facebook';
@@ -298,8 +300,9 @@ const telegramService = {
             if (response.data.ok) {
               successCount++;
               const messageId = response.data.result.message_id;
-              // Store message ID for cleanup
-              await telegramService.storeRaidMessageId(chatId, messageId);
+              // Store message ID for cleanup (with creator group ID)
+              const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
+              await telegramService.storeRaidMessageId(chatId, messageId, creatorGroupId);
               // Pin the message
               await telegramService.pinMessage(chatId, messageId);
             }
@@ -308,8 +311,9 @@ const telegramService = {
             const result = await telegramService.sendTextMessage(botToken, chatId, message, raidData.raidId);
             if (result.success) {
               successCount++;
-              // Store message ID for cleanup
-              await telegramService.storeRaidMessageId(chatId, result.messageId);
+              // Store message ID for cleanup (with creator group ID)
+              const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
+              await telegramService.storeRaidMessageId(chatId, result.messageId, creatorGroupId);
               // Pin the message
               await telegramService.pinMessage(chatId, result.messageId);
             }
@@ -1414,20 +1418,25 @@ https://aquads.xyz`;
     }
   },
 
-  // Store raid message ID for cleanup
-  storeRaidMessageId: async (chatId, messageId) => {
+  // Store raid message ID for cleanup (with creator group ID to track who created it)
+  storeRaidMessageId: async (chatId, messageId, creatorGroupId) => {
     try {
       const chatIdStr = chatId.toString();
+      const creatorGroupIdStr = creatorGroupId ? creatorGroupId.toString() : 'unknown';
+      
+      // Use composite key: chatId_creatorGroupId to track which creator's messages are in which chat
+      // This allows us to only delete messages created by the current creator
+      const compositeKey = `${chatIdStr}_${creatorGroupIdStr}`;
       
       // Get existing message IDs from database
       const settings = await BotSettings.findOne({ key: 'raidMessageIds' });
       const existingData = settings?.value || {};
       
       // Add new message ID
-      if (!existingData[chatIdStr]) {
-        existingData[chatIdStr] = [];
+      if (!existingData[compositeKey]) {
+        existingData[compositeKey] = [];
       }
-      existingData[chatIdStr].push(messageId);
+      existingData[compositeKey].push(messageId);
       
       // Save back to database
       await BotSettings.findOneAndUpdate(
@@ -1467,8 +1476,8 @@ https://aquads.xyz`;
     }
   },
 
-  // Delete old raid messages
-  deleteOldRaidMessages: async () => {
+  // Delete old raid messages (only from specified groups, only messages created by the specified creator)
+  deleteOldRaidMessages: async (groupsToDeleteFrom, creatorGroupId) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) return;
 
@@ -1477,38 +1486,62 @@ https://aquads.xyz`;
       const settings = await BotSettings.findOne({ key: 'raidMessageIds' });
       const raidMessageIds = settings?.value || {};
       
-      const chatCount = Object.keys(raidMessageIds).length;
-      const totalMessages = Object.values(raidMessageIds).flat().length;
-      
-      console.log(`🗑️ Deleting old raid messages from ${chatCount} chats (${totalMessages} total messages)`);
-      
-      if (chatCount === 0) {
+      if (Object.keys(raidMessageIds).length === 0) {
         console.log(`ℹ️ No stored raid messages found to delete`);
         return;
       }
 
-      for (const [chatId, messageIds] of Object.entries(raidMessageIds)) {
+      if (!groupsToDeleteFrom || groupsToDeleteFrom.length === 0) {
+        console.log(`ℹ️ No groups specified for deletion`);
+        return;
+      }
+
+      if (!creatorGroupId) {
+        console.log(`ℹ️ No creator group ID specified for deletion`);
+        return;
+      }
+
+      // Convert group IDs to strings for comparison
+      const groupsToDeleteFromStr = groupsToDeleteFrom.map(g => g.toString());
+      const creatorGroupIdStr = creatorGroupId.toString();
+      
+      let deletedCount = 0;
+      const remainingMessageIds = { ...raidMessageIds };
+
+      // Only delete messages created by the current creator from groups that will receive the new raid
+      for (const chatIdStr of groupsToDeleteFromStr) {
+        // Look for composite keys matching this chat and creator: chatId_creatorGroupId
+        const compositeKey = `${chatIdStr}_${creatorGroupIdStr}`;
+        const messageIds = raidMessageIds[compositeKey];
+        
+        if (!messageIds || messageIds.length === 0) continue;
+
         for (const messageId of messageIds) {
           try {
             await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
-              chat_id: chatId,
+              chat_id: chatIdStr,
               message_id: messageId
             });
-            console.log(`✅ Deleted old raid message ${messageId} from chat ${chatId}`);
+            console.log(`✅ Deleted old raid message ${messageId} from chat ${chatIdStr} (created by ${creatorGroupIdStr})`);
+            deletedCount++;
           } catch (error) {
             // Message might already be deleted or bot doesn't have permission
-            console.log(`❌ Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
+            console.log(`❌ Could not delete message ${messageId} from chat ${chatIdStr}: ${error.message}`);
           }
         }
+
+        // Remove this creator's messages from the stored list
+        delete remainingMessageIds[compositeKey];
       }
       
-      // Clear the stored message IDs from database
+      // Update the stored message IDs in database (keep messages from other creators)
       await BotSettings.findOneAndUpdate(
         { key: 'raidMessageIds' },
-        { value: {}, updatedAt: new Date() },
+        { value: remainingMessageIds, updatedAt: new Date() },
         { upsert: true }
       );
-      console.log(`🧹 Cleared all stored raid message IDs from database`);
+      
+      console.log(`🧹 Deleted ${deletedCount} old raid messages created by ${creatorGroupIdStr} from ${groupsToDeleteFromStr.length} group(s)`);
     } catch (error) {
       console.error('Error deleting old raid messages:', error.message);
     }
@@ -4882,4 +4915,5 @@ Let's make today amazing! 🚀`;
 
 };
 
+module.exports = telegramService; 
 module.exports = telegramService; 
