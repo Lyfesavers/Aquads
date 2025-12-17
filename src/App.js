@@ -69,6 +69,7 @@ import DotsAndBoxes from './components/DotsAndBoxes';
 import HorseRacing from './components/HorseRacing';
 
 import ServicePage from './components/ServicePage';
+import ExtensionAuth from './components/ExtensionAuth';
 
 window.Buffer = Buffer;
 
@@ -2328,6 +2329,7 @@ function App() {
           adjustBubblesForMobile={adjustBubblesForMobile}
         />
         <Routes>
+          <Route path="/extension-auth" element={<ExtensionAuth />} />
           <Route path="/marketplace" element={
             <Marketplace 
               currentUser={currentUser}

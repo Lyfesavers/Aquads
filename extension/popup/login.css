@@ -188,6 +188,73 @@
   text-align: center;
 }
 
+/* Google Login */
+.google-login-container {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 24px;
+}
+
+.divider-with-text {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  gap: 12px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.divider-text {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.google-login-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: #ffffff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.15);
+}
+
+.google-login-button:hover {
+  background: #f8f9fa;
+  box-shadow: 0 2px 4px 0 rgba(60, 64, 67, 0.2);
+}
+
+.google-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.google-login-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+}
+
 /* Version */
 .login-version {
   margin-top: 16px;

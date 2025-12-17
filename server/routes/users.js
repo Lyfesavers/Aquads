@@ -1069,6 +1069,19 @@ router.get('/verify/:username', async (req, res) => {
   }
 });
 
+// Get Google Client ID (public endpoint for extensions/frontend)
+router.get('/google-client-id', async (req, res) => {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(503).json({ error: 'Google Sign-In not configured' });
+    }
+    res.json({ clientId });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching Google Client ID' });
+  }
+});
+
 // Get user online status
 router.get('/status/:userId', async (req, res) => {
   try {

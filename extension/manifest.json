@@ -37,7 +37,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://aquads.onrender.com wss://aquads.onrender.com https://api.dexscreener.com"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://aquads.onrender.com wss://aquads.onrender.com https://api.dexscreener.com https://www.aquads.xyz https://aquads.xyz"
   },
   "homepage_url": "https://aquads.xyz",
   "author": "Aquads Team"
