@@ -90,12 +90,34 @@ const SimpleSwapWidget = () => {
       let currencyArray = [];
       
       // Handle SimpleSwap API response format
+      // Backend processes the response and returns a clean array
       // Response format can be:
-      // 1. { result: [array of currency objects], traceId: "..." } - Array format
-      // 2. { result: { "eth": {...}, "btc": {...} }, traceId: "..." } - Object format
-      // 3. Direct array: [currency objects]
+      // 1. Direct array: [currency objects] - Backend already processed it
+      // 2. { result: [array of currency objects], traceId: "..." } - Array format
+      // 3. { result: { "eth": {...}, "btc": {...} }, traceId: "..." } - Object format
       
-      if (data.result) {
+      if (Array.isArray(data)) {
+        // Backend already processed the response and returned an array
+        currencyArray = data.map(item => {
+          if (typeof item === 'string') {
+            return { code: item, name: item, isFiat: false };
+          }
+          return {
+            code: (item.ticker || item.code || item.symbol || '').toUpperCase(),
+            name: item.name || item.ticker || item.code || '',
+            isFiat: item.isFiat || false,
+            ticker: (item.ticker || item.code || item.symbol || '').toLowerCase(),
+            network: item.network || '',
+            image: item.image || '',
+            hasExtraId: item.hasExtraId || false,
+            precision: item.precision || 8,
+            isAvailableFloat: item.isAvailableFloat !== undefined ? item.isAvailableFloat : true,
+            isAvailableFixed: item.isAvailableFixed !== undefined ? item.isAvailableFixed : true,
+            warningsFrom: item.warningsFrom || [],
+            warningsTo: item.warningsTo || [],
+          };
+        });
+      } else if (data.result) {
         if (Array.isArray(data.result)) {
           // Result is already an array (like /v3/currencies endpoint)
           currencyArray = data.result.map(item => {
@@ -111,8 +133,10 @@ const SimpleSwapWidget = () => {
               image: item.image || '',
               hasExtraId: item.hasExtraId || false,
               precision: item.precision || 8,
-              isAvailableFloat: item.isAvailableFloat || false,
-              isAvailableFixed: item.isAvailableFixed || false,
+              isAvailableFloat: item.isAvailableFloat !== undefined ? item.isAvailableFloat : true,
+              isAvailableFixed: item.isAvailableFixed !== undefined ? item.isAvailableFixed : true,
+              warningsFrom: item.warningsFrom || [],
+              warningsTo: item.warningsTo || [],
             };
           });
         } else if (typeof data.result === 'object' && !Array.isArray(data.result)) {
@@ -128,12 +152,14 @@ const SimpleSwapWidget = () => {
               image: item.image || '',
               hasExtraId: item.hasExtraId || false,
               precision: item.precision || 8,
-              isAvailableFloat: item.isAvailableFloat || false,
-              isAvailableFixed: item.isAvailableFixed || false,
+              isAvailableFloat: item.isAvailableFloat !== undefined ? item.isAvailableFloat : true,
+              isAvailableFixed: item.isAvailableFixed !== undefined ? item.isAvailableFixed : true,
+              warningsFrom: item.warningsFrom || [],
+              warningsTo: item.warningsTo || [],
             };
           });
         }
-      } else if (Array.isArray(data)) {
+      } else if (typeof data === 'object' && !Array.isArray(data)) {
         // If it's already an array
         currencyArray = data.map(item => {
           if (typeof item === 'string') {
@@ -171,19 +197,19 @@ const SimpleSwapWidget = () => {
         });
       }
 
-      // Filter out invalid entries and disabled currencies
+      // Filter out invalid entries
       currencyArray = currencyArray.filter(curr => {
         if (!curr.code || curr.code.trim() === '') return false;
-        // Filter out currencies that are not available for exchange
-        // Keep currencies that are available for either fixed or float rates
-        return curr.isAvailableFloat || curr.isAvailableFixed;
+        // Don't filter by isAvailableFloat/isAvailableFixed - these might not be set correctly
+        // The API might return currencies that are available but don't have these flags set
+        return true;
       });
       
-      logger.log(`Loaded ${currencyArray.length} valid currencies from API`);
+      logger.log(`Loaded ${currencyArray.length} currencies from API`);
       
       if (currencyArray.length === 0) {
         // Use fallback currencies if API fails
-        logger.warn('API returned no valid currencies, using fallback list');
+        logger.warn('API returned no currencies, using fallback list');
         setCurrencies([...FALLBACK_CRYPTO_CURRENCIES, ...FALLBACK_FIAT_CURRENCIES]);
         setCryptoCurrencies(FALLBACK_CRYPTO_CURRENCIES);
         setFiatCurrencies(FALLBACK_FIAT_CURRENCIES);
@@ -195,6 +221,9 @@ const SimpleSwapWidget = () => {
         const fiat = currencyArray.filter(curr => curr.isFiat);
         
         logger.log(`Separated currencies: ${crypto.length} crypto, ${fiat.length} fiat`);
+        
+        // Clear any previous errors since we successfully loaded currencies
+        setError(null);
         setCryptoCurrencies(crypto.length > 0 ? crypto : FALLBACK_CRYPTO_CURRENCIES);
         setFiatCurrencies(fiat.length > 0 ? fiat : FALLBACK_FIAT_CURRENCIES);
         logger.log(`Loaded ${crypto.length} crypto and ${fiat.length} fiat currencies`);
