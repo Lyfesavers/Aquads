@@ -1,57 +1,58 @@
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { FaTimes, FaExchangeAlt } from 'react-icons/fa';
+import React, { useEffect, useRef } from 'react';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  // SimpleSwap Affiliate ID - required for widget tracking
-  const affiliateId = process.env.REACT_APP_SIMPLESWAP_AFFILIATE_ID || 'dd5cfd7e-3dd4-4d7b-b017-f12c4291d28a';
-  
-  // SimpleSwap API Key - enables fiat-to-crypto features
-  // Add this to Netlify: REACT_APP_SIMPLESWAP_API_KEY
-  const apiKey = process.env.REACT_APP_SIMPLESWAP_API_KEY || '';
-  
-  // Build SimpleSwap widget URL
-  // Note: The widget iframe may only support crypto-to-crypto
-  // For fiat-to-crypto, SimpleSwap may require using their API directly
-  // Check your SimpleSwap dashboard for a "fiat-enabled widget" option
-  let simpleswapWidgetUrl = `https://simpleswap.io/widget/${affiliateId}`;
-  
-  // Try adding API key as parameter (may not work with widget iframe)
-  // If this doesn't enable fiat, you may need to use SimpleSwap API directly
-  if (apiKey) {
-    // Try different parameter formats
-    simpleswapWidgetUrl += `?api_key=${encodeURIComponent(apiKey)}`;
-  }
+  const popupRef = useRef(null);
 
-  // Prevent body scroll when modal is open
+  // Open SimpleSwap page in popup window when modal opens
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+    if (!isOpen) {
+      return;
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
 
-  // Close on ESC key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+    // Calculate popup window dimensions (Chrome extension style)
+    const width = 700;
+    const height = 850;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    // Open popup window with SimpleSwap page
+    const popup = window.open(
+      '/simpleswap',
+      'SimpleSwapOnRamp',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+
+    if (!popup) {
+      alert('Please allow popups to open the On/Off Ramp window');
+      onClose();
+      return;
+    }
+
+    popupRef.current = popup;
+
+    // Monitor popup window and close modal when popup is closed
+    const checkPopup = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkPopup);
         onClose();
       }
+    }, 500);
+
+    // Cleanup
+    return () => {
+      clearInterval(checkPopup);
+      // Don't close popup on cleanup - let user close it manually
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // This modal now just shows a loading state briefly
+  // The actual widget opens in a popup window
   if (!isOpen) {
     return null;
   }
 
-  const modalContent = (
+  return (
     <div 
       className="buy-crypto-modal-overlay" 
       onClick={onClose}
@@ -73,47 +74,21 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          zIndex: 1000000
+          zIndex: 1000000,
+          textAlign: 'center',
+          padding: '3rem'
         }}
       >
-        {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title">
-            <FaExchangeAlt className="modal-icon" />
-            <div>
-              <h2>On/Off Ramp</h2>
-              <p>Buy and sell crypto with fiat currency</p>
-            </div>
-          </div>
-          <button className="modal-close" onClick={onClose}>
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* SimpleSwap Widget */}
-        <div className="modal-content">
-          <div className="simpleswap-widget-container">
-            <iframe
-              id="simpleswap-frame"
-              name="SimpleSwap Widget"
-              src={simpleswapWidgetUrl}
-              width="100%"
-              height="600"
-              frameBorder="0"
-              title="SimpleSwap Exchange Widget"
-              className="simpleswap-iframe"
-              allow="clipboard-read; clipboard-write"
-            />
-          </div>
-        </div>
+        <div className="loading-spinner-large"></div>
+        <h3 style={{ color: '#ffffff', marginTop: '1.5rem' }}>Opening On/Off Ramp...</h3>
+        <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: '0.5rem' }}>
+          A secure window will open for your exchange
+        </p>
+        <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginTop: '1rem' }}>
+          If the window didn't open, please allow popups and try again
+        </p>
       </div>
     </div>
-  );
-
-  // Use React Portal to render at document body level
-  return ReactDOM.createPortal(
-    modalContent,
-    document.body
   );
 };
 

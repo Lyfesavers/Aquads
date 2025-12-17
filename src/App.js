@@ -46,6 +46,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
+import SimpleSwapPage from './components/SimpleSwapPage';
 import VerifyUser from './components/VerifyUser';
 import MemberVerification from './components/MemberVerification';
 import BannerDisplay from './components/BannerDisplay';
@@ -3330,6 +3331,7 @@ function App() {
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
+            <Route path="/simpleswap" element={<SimpleSwapPage />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
         </Routes>
