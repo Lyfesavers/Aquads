@@ -1,27 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { FaTimes, FaCreditCard } from 'react-icons/fa';
+import { FaTimes, FaCreditCard, FaExchangeAlt } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
+  const [activeTab, setActiveTab] = useState('moonpay'); // 'moonpay' or 'ramp'
   const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
-  const hasOpenedPopup = useRef(false);
+  const rampUrl = 'https://app.rampnetwork.com/exchange?defaultFlow=ONRAMP&enabledFlows=ONRAMP%2COFFRAMP%2CSWAP&hostApiKey=wn25y7nx6cyb4oqutc5obnnywwwt4gz36yw5fypw';
+  const hasOpenedPopup = useRef({ moonpay: false, ramp: false });
 
-  // Open MoonPay popup once when modal opens
+  // Open provider popup when tab is selected
   useEffect(() => {
     if (!isOpen) {
-      // Reset ref when modal closes
-      hasOpenedPopup.current = false;
       return;
     }
 
-    // Skip if already opened during this session
-    if (hasOpenedPopup.current) {
+    const currentProvider = activeTab;
+    const providerUrl = currentProvider === 'moonpay' ? moonpayUrl : rampUrl;
+    const providerName = currentProvider === 'moonpay' ? 'MoonPay' : 'Ramp';
+
+    // Skip if already opened for this provider
+    if (hasOpenedPopup.current[currentProvider]) {
       return;
     }
 
     // Mark as opened immediately to prevent multiple popups
-    hasOpenedPopup.current = true;
+    hasOpenedPopup.current[currentProvider] = true;
 
     // Small delay to show modal first
     const popupTimer = setTimeout(() => {
@@ -31,36 +35,28 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
       const top = (window.screen.height - height) / 2;
       
       const popup = window.open(
-        moonpayUrl,
-        'MoonPayBuyCrypto',
+        providerUrl,
+        `${providerName}BuyCrypto`,
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
       );
 
       if (!popup) {
-        alert('Please allow popups to buy crypto with MoonPay');
-        hasOpenedPopup.current = false; // Reset if failed to open
+        alert(`Please allow popups to buy crypto with ${providerName}`);
+        hasOpenedPopup.current[currentProvider] = false; // Reset if failed to open
       }
     }, 300);
 
     return () => {
       clearTimeout(popupTimer);
     };
-  }, [isOpen, moonpayUrl]);
+  }, [isOpen, activeTab, moonpayUrl, rampUrl]);
 
-  // Auto-close modal after 2 seconds (separate effect)
+  // Reset popup refs when modal closes
   useEffect(() => {
     if (!isOpen) {
-      return;
+      hasOpenedPopup.current = { moonpay: false, ramp: false };
     }
-
-    const closeTimer = setTimeout(() => {
-      onClose();
-    }, 2000);
-
-    return () => {
-      clearTimeout(closeTimer);
-    };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -119,8 +115,8 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
           <div className="modal-title">
             <FaCreditCard className="modal-icon" />
             <div>
-              <h2>Buy Crypto</h2>
-              <p>Purchase cryptocurrency with fiat currency</p>
+              <h2>On/Off Ramp</h2>
+              <p>Buy and sell cryptocurrency with fiat currency</p>
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>
@@ -128,20 +124,53 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* MoonPay Loading */}
+        {/* Tabs */}
+        <div className="modal-tabs">
+          <button
+            className={`modal-tab ${activeTab === 'moonpay' ? 'active' : ''}`}
+            onClick={() => setActiveTab('moonpay')}
+          >
+            <FaCreditCard /> MoonPay
+          </button>
+          <button
+            className={`modal-tab ${activeTab === 'ramp' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ramp')}
+          >
+            <FaExchangeAlt /> Ramp
+          </button>
+        </div>
+
+        {/* Content */}
         <div className="modal-content">
-          <div className="moonpay-loading">
-            <div className="loading-spinner-large"></div>
-            <h3>Opening MoonPay...</h3>
-            <p>A secure window will open to complete your purchase</p>
-            <div className="loading-features">
-              <div className="feature-item">✓ Credit & Debit Cards</div>
-              <div className="feature-item">✓ Bank Transfers</div>
-              <div className="feature-item">✓ Apple Pay & Google Pay</div>
-              <div className="feature-item">✓ Instant Delivery</div>
+          {activeTab === 'moonpay' && (
+            <div className="provider-loading">
+              <div className="loading-spinner-large"></div>
+              <h3>Opening MoonPay...</h3>
+              <p>A secure window will open to complete your purchase</p>
+              <div className="loading-features">
+                <div className="feature-item">✓ Credit & Debit Cards</div>
+                <div className="feature-item">✓ Bank Transfers</div>
+                <div className="feature-item">✓ Apple Pay & Google Pay</div>
+                <div className="feature-item">✓ Instant Delivery</div>
+              </div>
+              <p className="popup-note">If the window didn't open, please allow popups and try again</p>
             </div>
-            <p className="popup-note">If the window didn't open, please allow popups and try again</p>
-          </div>
+          )}
+          
+          {activeTab === 'ramp' && (
+            <div className="provider-loading">
+              <div className="loading-spinner-large"></div>
+              <h3>Opening Ramp Network...</h3>
+              <p>A secure window will open to buy, sell, or swap crypto</p>
+              <div className="loading-features">
+                <div className="feature-item">✓ Buy Crypto (On-Ramp)</div>
+                <div className="feature-item">✓ Sell Crypto (Off-Ramp)</div>
+                <div className="feature-item">✓ Swap Crypto</div>
+                <div className="feature-item">✓ Multiple Payment Methods</div>
+              </div>
+              <p className="popup-note">If the window didn't open, please allow popups and try again</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
