@@ -5,7 +5,15 @@ import logger from '../utils/logger';
 import './SimpleSwapWidget.css';
 
 const SimpleSwapWidget = () => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState('crypto'); // 'crypto' or 'fiat'
+  
+  // Currency state
   const [currencies, setCurrencies] = useState([]);
+  const [cryptoCurrencies, setCryptoCurrencies] = useState([]);
+  const [fiatCurrencies, setFiatCurrencies] = useState([]);
+  
+  // Exchange state
   const [fromCurrency, setFromCurrency] = useState('');
   const [toCurrency, setToCurrency] = useState('');
   const [amount, setAmount] = useState('');
@@ -33,10 +41,19 @@ const SimpleSwapWidget = () => {
     try {
       setLoading(true);
       setError(null);
+      logger.log('Loading currencies from backend proxy...');
+      
       const data = await simpleswapService.getCurrencies();
+      logger.log('Received currency data:', data);
       
       if (!data) {
-        setError('No data received from API');
+        setError('No data received from API. Please check backend configuration.');
+        return;
+      }
+
+      // Check if response has error
+      if (data.error) {
+        setError(data.error);
         return;
       }
 
@@ -47,7 +64,7 @@ const SimpleSwapWidget = () => {
         // If it's already an array
         currencyArray = data.map(item => {
           if (typeof item === 'string') {
-            return { code: item, name: item };
+            return { code: item, name: item, isFiat: false };
           }
           return {
             code: item.ticker || item.code || item.symbol || item.currency || '',
@@ -60,8 +77,9 @@ const SimpleSwapWidget = () => {
         currencyArray = Object.keys(data).map(key => {
           const item = data[key];
           if (typeof item === 'string') {
-            return { code: key, name: item };
+            return { code: key, name: item, isFiat: false };
           }
+          // Handle currency object with properties
           return {
             code: item.ticker || item.code || item.symbol || key,
             name: item.name || item.ticker || item.code || key,
@@ -74,18 +92,25 @@ const SimpleSwapWidget = () => {
       currencyArray = currencyArray.filter(curr => curr.code && curr.code.trim() !== '');
       
       if (currencyArray.length === 0) {
-        setError('No valid currencies found in API response. Please check your API key configuration.');
+        setError('No valid currencies found. API response format may be unexpected. Check console for details.');
         logger.error('Currency data format:', data);
+        logger.error('Processed currency array:', currencyArray);
       } else {
         setCurrencies(currencyArray);
+        // Separate crypto and fiat currencies
+        const crypto = currencyArray.filter(curr => !curr.isFiat);
+        const fiat = currencyArray.filter(curr => curr.isFiat);
+        setCryptoCurrencies(crypto);
+        setFiatCurrencies(fiat);
+        logger.log(`Loaded ${crypto.length} crypto and ${fiat.length} fiat currencies`);
       }
     } catch (err) {
       logger.error('Failed to load currencies:', err);
-      const errorMessage = err.message || 'Failed to load currencies';
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to load currencies';
       if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-        setError('API endpoint not found. The SimpleSwap API endpoint may have changed. Please check your SimpleSwap dashboard for the correct API endpoint format.');
+        setError('API endpoint not found. Please ensure SIMPLESWAP_API_KEY is set in your Render backend environment variables.');
       } else if (errorMessage.includes('CORS')) {
-        setError('CORS error: The API may require server-side calls. Please contact support or check SimpleSwap API documentation.');
+        setError('CORS error: The API may require server-side calls.');
       } else {
         setError(`Failed to load currencies: ${errorMessage}`);
       }
@@ -189,11 +214,15 @@ const SimpleSwapWidget = () => {
     }
   };
 
-  // Filter currencies for dropdown
-  const filteredCurrencies = useCallback((search) => {
-    if (!search) return currencies;
+  // Filter currencies for dropdown based on active tab
+  const filteredCurrencies = useCallback((search, isFrom = true) => {
+    const currencyList = activeTab === 'fiat' 
+      ? (isFrom ? fiatCurrencies : cryptoCurrencies) // Fiat to crypto: from=fiat, to=crypto
+      : cryptoCurrencies; // Crypto to crypto: both crypto
+    
+    if (!search) return currencyList;
     const searchLower = search.toLowerCase();
-    return currencies.filter((curr) => {
+    return currencyList.filter((curr) => {
       const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
       const name = curr?.name || code;
       return (
@@ -201,7 +230,7 @@ const SimpleSwapWidget = () => {
         name.toLowerCase().includes(searchLower)
       );
     });
-  }, [currencies]);
+  }, [currencies, activeTab, cryptoCurrencies, fiatCurrencies]);
 
   // Swap currencies
   const swapCurrencies = () => {
@@ -247,6 +276,34 @@ const SimpleSwapWidget = () => {
 
   return (
     <div className="simpleswap-widget">
+      {/* Tab Navigation */}
+      <div className="widget-tabs">
+        <button
+          className={`tab-button ${activeTab === 'crypto' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('crypto');
+            setFromCurrency('');
+            setToCurrency('');
+            setAmount('');
+            setRateInfo(null);
+          }}
+        >
+          <FaExchangeAlt /> Crypto Exchange
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'fiat' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('fiat');
+            setFromCurrency('');
+            setToCurrency('');
+            setAmount('');
+            setRateInfo(null);
+          }}
+        >
+          💳 Buy/Sell Crypto
+        </button>
+      </div>
+
       <div className="widget-content">
         {/* From Currency */}
         <div className="currency-section">
@@ -264,7 +321,7 @@ const SimpleSwapWidget = () => {
               />
               {showFromDropdown && (
                 <div className="currency-dropdown">
-                  {filteredCurrencies(searchFrom).slice(0, 10).map((curr, index) => {
+                  {filteredCurrencies(searchFrom, true).slice(0, 10).map((curr, index) => {
                     const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                     const name = curr?.name || code;
                     const key = code || `currency-${index}`;
@@ -333,7 +390,7 @@ const SimpleSwapWidget = () => {
             />
             {showToDropdown && (
               <div className="currency-dropdown">
-                {filteredCurrencies(searchTo).slice(0, 10).map((curr, index) => {
+                {filteredCurrencies(searchTo, false).slice(0, 10).map((curr, index) => {
                   const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                   const name = curr?.name || code;
                   const key = code || `currency-${index}`;

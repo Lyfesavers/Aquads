@@ -58,6 +58,13 @@ const makeSimpleswapRequest = async (method, endpoint, params = {}, data = null)
 // Get all currencies
 router.get('/currencies', simpleswapLimiter, async (req, res) => {
   try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      return res.status(500).json({
+        error: 'SimpleSwap API key not configured. Please set SIMPLESWAP_API_KEY in backend environment variables.',
+      });
+    }
+
     // Try multiple endpoint formats
     const endpoints = [
       '/v3/get_all_currencies',
@@ -67,17 +74,30 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
       '/v1/currencies',
     ];
 
+    let lastError = null;
     for (const endpoint of endpoints) {
       try {
+        console.log(`[SimpleSwap] Trying endpoint: ${endpoint}`);
         const data = await makeSimpleswapRequest('GET', endpoint);
         if (data) {
+          console.log(`[SimpleSwap] Successfully loaded currencies from ${endpoint}`);
           return res.json(data);
         }
       } catch (err) {
-        if (err.response?.status !== 404) {
+        lastError = err;
+        const status = err.response?.status;
+        const errorData = err.response?.data;
+        
+        console.log(`[SimpleSwap] Endpoint ${endpoint} failed:`, {
+          status,
+          message: errorData?.message || err.message,
+        });
+        
+        if (status !== 404) {
           // If it's not a 404, return that error
-          return res.status(err.response?.status || 500).json({
-            error: err.response?.data?.message || err.message || 'SimpleSwap API error',
+          return res.status(status || 500).json({
+            error: errorData?.message || err.message || 'SimpleSwap API error',
+            endpoint,
           });
         }
         // If 404, try next endpoint
@@ -86,11 +106,13 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
     }
 
     // If all endpoints return 404
+    console.error('[SimpleSwap] All endpoints returned 404');
     res.status(404).json({
-      error: 'SimpleSwap API endpoint not found. Please check the API documentation for the correct endpoint format.',
+      error: 'SimpleSwap API endpoint not found. All endpoints returned 404. Please check the API documentation or contact SimpleSwap support.',
+      lastError: lastError?.response?.data || lastError?.message,
     });
   } catch (error) {
-    console.error('Get currencies error:', error);
+    console.error('[SimpleSwap] Get currencies error:', error);
     res.status(500).json({
       error: error.message || 'Failed to fetch currencies',
     });
