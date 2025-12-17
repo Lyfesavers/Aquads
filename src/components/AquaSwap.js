@@ -1249,9 +1249,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <button 
                 onClick={() => setShowBuyCryptoModal(true)}
                 className="fiat-purchase-button"
-                title="Buy and sell crypto with fiat currency"
+                title="Buy crypto with fiat currency"
               >
-                $ On/Off Ramp
+                💳 Fiat to Crypto
               </button>
             </div>
           </div>
@@ -1299,9 +1299,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             <button 
               onClick={() => setShowBuyCryptoModal(true)}
               className="fiat-purchase-button"
-              title="Buy and sell crypto with fiat currency"
+              title="Buy crypto with fiat currency"
             >
-              $ On/Off Ramp
+              💳 Fiat to Crypto
             </button>
           </div>
         </div>
