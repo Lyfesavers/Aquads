@@ -11,7 +11,9 @@ const simpleswapLimiter = rateLimit({
 });
 
 // SimpleSwap API base URL
+// Note: SimpleSwap might use different base URLs or endpoint structures
 const SIMPLESWAP_API_BASE = 'https://api.simpleswap.io';
+const SIMPLESWAP_PARTNERS_BASE = 'https://partners.simpleswap.io';
 
 // Get API key from environment
 const getApiKey = () => {
@@ -25,34 +27,61 @@ const makeSimpleswapRequest = async (method, endpoint, params = {}, data = null)
     throw new Error('SimpleSwap API key not configured');
   }
 
-  const config = {
-    method,
-    url: `${SIMPLESWAP_API_BASE}${endpoint}`,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
+  // Try different authentication methods
+  const authMethods = [
+    // Method 1: API key in header only
+    {
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      params: { ...params },
     },
-    params: {
-      ...params,
-      api_key: apiKey,
+    // Method 2: API key as query parameter
+    {
+      headers: { 'Content-Type': 'application/json' },
+      params: { ...params, api_key: apiKey },
     },
-  };
+    // Method 3: API key in Authorization header
+    {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      params: { ...params },
+    },
+    // Method 4: API key in both header and query
+    {
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      params: { ...params, api_key: apiKey },
+    },
+  ];
 
-  if (data) {
-    config.data = data;
+  for (const authMethod of authMethods) {
+    try {
+      const config = {
+        method,
+        url: `${SIMPLESWAP_API_BASE}${endpoint}`,
+        headers: authMethod.headers,
+        params: authMethod.params,
+      };
+
+      if (data) {
+        config.data = data;
+      }
+
+      const response = await axios(config);
+      if (response.data) {
+        return response.data;
+      }
+    } catch (error) {
+      // If not 404, this auth method might be wrong but endpoint exists
+      if (error.response?.status !== 404) {
+        console.log(`[SimpleSwap] Endpoint exists but auth failed for ${endpoint}:`, error.response?.status);
+        // Continue to try other auth methods
+        continue;
+      }
+      // If 404, try next auth method
+      continue;
+    }
   }
 
-  try {
-    const response = await axios(config);
-    return response.data;
-  } catch (error) {
-    console.error('SimpleSwap API Error:', {
-      endpoint,
-      status: error.response?.status,
-      message: error.response?.data || error.message,
-    });
-    throw error;
-  }
+  // If all auth methods fail, throw the last error
+  throw new Error('All authentication methods failed');
 };
 
 // Get all currencies
@@ -65,23 +94,79 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
       });
     }
 
-    // Try multiple endpoint formats
+    // Try endpoints in order of likelihood (v3 first for fiat support)
     const endpoints = [
       '/v3/get_all_currencies',
       '/v1/get_currencies',
       '/get_currencies',
       '/v3/currencies',
       '/v1/currencies',
+      '/currencies',
     ];
 
     let lastError = null;
     for (const endpoint of endpoints) {
       try {
-        console.log(`[SimpleSwap] Trying endpoint: ${endpoint}`);
+        console.log(`[SimpleSwap] Trying endpoint: ${endpoint} with API key: ${apiKey.substring(0, 8)}...`);
+        
+        // Use the helper function which tries different auth methods
         const data = await makeSimpleswapRequest('GET', endpoint);
+        
         if (data) {
           console.log(`[SimpleSwap] Successfully loaded currencies from ${endpoint}`);
-          return res.json(data);
+          console.log(`[SimpleSwap] Response structure:`, {
+            hasResult: !!data.result,
+            resultType: typeof data.result,
+            isArray: Array.isArray(data.result),
+            resultKeys: data.result ? Object.keys(data.result).slice(0, 5) : [],
+            traceId: data.traceId,
+          });
+          
+          // Handle SimpleSwap API response format: { result: { "eth": {...}, "btc": {...} }, traceId: "..." }
+          // The result is an object with currency tickers as keys
+          let processedData = data;
+          
+          if (data.result && typeof data.result === 'object' && !Array.isArray(data.result)) {
+            // Convert result object to array format for frontend
+            const resultKeys = Object.keys(data.result);
+            console.log(`[SimpleSwap] Converting ${resultKeys.length} currencies from result object`);
+            
+            processedData = resultKeys.map(ticker => {
+              const currency = data.result[ticker];
+              return {
+                ticker: (currency.ticker || ticker).toLowerCase(),
+                code: (currency.ticker || ticker).toUpperCase(),
+                name: currency.name || currency.ticker || ticker,
+                isFiat: currency.isFiat || false,
+                network: currency.network || '',
+                image: currency.image || '',
+                hasExtraId: currency.hasExtraId || false,
+                extraId: currency.extraId || '',
+                precision: currency.precision || 8,
+                isAvailableFloat: currency.isAvailableFloat || false,
+                isAvailableFixed: currency.isAvailableFixed || false,
+                warningsFrom: currency.warningsFrom || [],
+                warningsTo: currency.warningsTo || [],
+                validationAddress: currency.validationAddress || '',
+                validationExtra: currency.validationExtra || '',
+                addressExplorer: currency.addressExplorer || '',
+                txExplorer: currency.txExplorer || '',
+                confirmationsFrom: currency.confirmationsFrom || '',
+              };
+            });
+            
+            console.log(`[SimpleSwap] Processed ${processedData.length} currencies (${processedData.filter(c => c.isFiat).length} fiat, ${processedData.filter(c => !c.isFiat).length} crypto)`);
+          } else if (Array.isArray(data.result)) {
+            // If result is already an array
+            processedData = data.result;
+            console.log(`[SimpleSwap] Result is already an array with ${processedData.length} items`);
+          } else if (Array.isArray(data)) {
+            // If data is directly an array
+            processedData = data;
+            console.log(`[SimpleSwap] Data is directly an array with ${processedData.length} items`);
+          }
+          
+          return res.json(processedData);
         }
       } catch (err) {
         lastError = err;
@@ -90,25 +175,23 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
         
         console.log(`[SimpleSwap] Endpoint ${endpoint} failed:`, {
           status,
-          message: errorData?.message || err.message,
+          message: errorData?.message || errorData?.error || err.message,
         });
         
-        if (status !== 404) {
-          // If it's not a 404, return that error
-          return res.status(status || 500).json({
-            error: errorData?.message || err.message || 'SimpleSwap API error',
-            endpoint,
-          });
+        // If it's not a 404, this might be the right endpoint but wrong auth
+        // Continue to try other endpoints
+        if (status === 404) {
+          continue;
         }
-        // If 404, try next endpoint
+        // For non-404 errors, still try other endpoints in case it's an auth issue
         continue;
       }
     }
 
-    // If all endpoints return 404
-    console.error('[SimpleSwap] All endpoints returned 404');
-    res.status(404).json({
-      error: 'SimpleSwap API endpoint not found. All endpoints returned 404. Please check the API documentation or contact SimpleSwap support.',
+    // If all endpoints fail
+    console.error('[SimpleSwap] All endpoints failed');
+    res.status(500).json({
+      error: 'Failed to fetch currencies from SimpleSwap API. Please verify your API key is correct and has fiat permissions enabled.',
       lastError: lastError?.response?.data || lastError?.message,
     });
   } catch (error) {
@@ -284,6 +367,57 @@ router.get('/exchange/:id', simpleswapLimiter, async (req, res) => {
   } catch (error) {
     console.error('Get exchange status error:', error);
     res.status(500).json({ error: error.message || 'Failed to get exchange status' });
+  }
+});
+
+// Test endpoint to verify API key and connectivity
+router.get('/test', simpleswapLimiter, async (req, res) => {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      return res.status(500).json({
+        error: 'SimpleSwap API key not configured',
+        configured: false,
+      });
+    }
+
+    // Try a simple endpoint to test connectivity
+    const testEndpoints = [
+      '/v3/get_all_currencies',
+      '/v1/get_currencies',
+    ];
+
+    const results = [];
+    for (const endpoint of testEndpoints) {
+      try {
+        const data = await makeSimpleswapRequest('GET', endpoint);
+        results.push({
+          endpoint,
+          status: 'success',
+          hasData: !!data,
+          hasResult: !!data?.result,
+          resultType: typeof data?.result,
+          resultKeys: data?.result && typeof data.result === 'object' ? Object.keys(data.result).length : 0,
+        });
+      } catch (err) {
+        results.push({
+          endpoint,
+          status: 'error',
+          statusCode: err.response?.status,
+          message: err.response?.data?.message || err.response?.data?.error || err.message,
+        });
+      }
+    }
+
+    return res.json({
+      apiKeyConfigured: true,
+      apiKeyPrefix: apiKey.substring(0, 8) + '...',
+      testResults: results,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 });
 

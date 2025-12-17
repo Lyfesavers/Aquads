@@ -10,7 +10,8 @@
 }
 
 /* Tab Navigation */
-.widget-tabs {
+.widget-tabs,
+.tab-navigation {
   display: flex;
   background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(0, 212, 255, 0.2);

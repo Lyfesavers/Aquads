@@ -31,6 +31,36 @@ const SimpleSwapWidget = () => {
   const [showFromDropdown, setShowFromDropdown] = useState(false);
   const [showToDropdown, setShowToDropdown] = useState(false);
 
+  // Popular currencies fallback list
+  const FALLBACK_CRYPTO_CURRENCIES = [
+    { code: 'BTC', name: 'Bitcoin', isFiat: false },
+    { code: 'ETH', name: 'Ethereum', isFiat: false },
+    { code: 'USDT', name: 'Tether', isFiat: false },
+    { code: 'BNB', name: 'BNB', isFiat: false },
+    { code: 'SOL', name: 'Solana', isFiat: false },
+    { code: 'USDC', name: 'USD Coin', isFiat: false },
+    { code: 'XRP', name: 'Ripple', isFiat: false },
+    { code: 'ADA', name: 'Cardano', isFiat: false },
+    { code: 'DOGE', name: 'Dogecoin', isFiat: false },
+    { code: 'TRX', name: 'TRON', isFiat: false },
+    { code: 'MATIC', name: 'Polygon', isFiat: false },
+    { code: 'DOT', name: 'Polkadot', isFiat: false },
+    { code: 'LTC', name: 'Litecoin', isFiat: false },
+    { code: 'AVAX', name: 'Avalanche', isFiat: false },
+    { code: 'LINK', name: 'Chainlink', isFiat: false },
+  ];
+
+  const FALLBACK_FIAT_CURRENCIES = [
+    { code: 'USD', name: 'US Dollar', isFiat: true },
+    { code: 'EUR', name: 'Euro', isFiat: true },
+    { code: 'GBP', name: 'British Pound', isFiat: true },
+    { code: 'JPY', name: 'Japanese Yen', isFiat: true },
+    { code: 'CAD', name: 'Canadian Dollar', isFiat: true },
+    { code: 'AUD', name: 'Australian Dollar', isFiat: true },
+    { code: 'CHF', name: 'Swiss Franc', isFiat: true },
+    { code: 'CNY', name: 'Chinese Yuan', isFiat: true },
+  ];
+
   // Load currencies on mount
   useEffect(() => {
     loadCurrencies();
@@ -59,31 +89,59 @@ const SimpleSwapWidget = () => {
 
       let currencyArray = [];
       
-      // Handle different response formats
-      if (Array.isArray(data)) {
+      // Handle SimpleSwap API response format
+      // Response format: { result: { "eth": { name: "Ethereum", ticker: "eth", ... }, ... }, traceId: "..." }
+      if (data.result && typeof data.result === 'object') {
+        // Convert result object to array
+        currencyArray = Object.keys(data.result).map(key => {
+          const item = data.result[key];
+          return {
+            code: (item.ticker || key).toUpperCase(),
+            name: item.name || item.ticker || key,
+            isFiat: item.isFiat || false,
+            ticker: item.ticker || key,
+            network: item.network || '',
+            image: item.image || '',
+            hasExtraId: item.hasExtraId || false,
+            precision: item.precision || 8,
+            isAvailableFloat: item.isAvailableFloat || false,
+            isAvailableFixed: item.isAvailableFixed || false,
+          };
+        });
+      } else if (Array.isArray(data)) {
         // If it's already an array
         currencyArray = data.map(item => {
           if (typeof item === 'string') {
             return { code: item, name: item, isFiat: false };
           }
           return {
-            code: item.ticker || item.code || item.symbol || item.currency || '',
+            code: (item.ticker || item.code || item.symbol || item.currency || '').toUpperCase(),
             name: item.name || item.ticker || item.code || '',
             isFiat: item.isFiat || false,
+            ticker: item.ticker || item.code || item.symbol || '',
+            network: item.network || '',
+            image: item.image || '',
+            hasExtraId: item.hasExtraId || false,
+            precision: item.precision || 8,
           };
         });
       } else if (typeof data === 'object') {
-        // If it's an object, convert to array
+        // If it's an object with currency codes as keys
         currencyArray = Object.keys(data).map(key => {
           const item = data[key];
           if (typeof item === 'string') {
-            return { code: key, name: item, isFiat: false };
+            return { code: key.toUpperCase(), name: item, isFiat: false };
           }
-          // Handle currency object with properties
+          // Handle currency object with properties (SimpleSwap format)
           return {
-            code: item.ticker || item.code || item.symbol || key,
+            code: (item.ticker || item.code || item.symbol || key).toUpperCase(),
             name: item.name || item.ticker || item.code || key,
             isFiat: item.isFiat || false,
+            ticker: item.ticker || key,
+            network: item.network || '',
+            image: item.image || '',
+            hasExtraId: item.hasExtraId || false,
+            precision: item.precision || 8,
           };
         });
       }
@@ -92,27 +150,36 @@ const SimpleSwapWidget = () => {
       currencyArray = currencyArray.filter(curr => curr.code && curr.code.trim() !== '');
       
       if (currencyArray.length === 0) {
-        setError('No valid currencies found. API response format may be unexpected. Check console for details.');
-        logger.error('Currency data format:', data);
-        logger.error('Processed currency array:', currencyArray);
+        // Use fallback currencies if API fails
+        logger.warn('API returned no currencies, using fallback list');
+        setCurrencies([...FALLBACK_CRYPTO_CURRENCIES, ...FALLBACK_FIAT_CURRENCIES]);
+        setCryptoCurrencies(FALLBACK_CRYPTO_CURRENCIES);
+        setFiatCurrencies(FALLBACK_FIAT_CURRENCIES);
+        setError('Using fallback currency list. SimpleSwap API endpoints may need configuration. Check backend logs.');
       } else {
         setCurrencies(currencyArray);
         // Separate crypto and fiat currencies
         const crypto = currencyArray.filter(curr => !curr.isFiat);
         const fiat = currencyArray.filter(curr => curr.isFiat);
-        setCryptoCurrencies(crypto);
-        setFiatCurrencies(fiat);
+        setCryptoCurrencies(crypto.length > 0 ? crypto : FALLBACK_CRYPTO_CURRENCIES);
+        setFiatCurrencies(fiat.length > 0 ? fiat : FALLBACK_FIAT_CURRENCIES);
         logger.log(`Loaded ${crypto.length} crypto and ${fiat.length} fiat currencies`);
       }
     } catch (err) {
-      logger.error('Failed to load currencies:', err);
+      logger.error('Failed to load currencies from API:', err);
+      // Use fallback currencies so widget still works
+      logger.warn('Using fallback currency list due to API error');
+      setCurrencies([...FALLBACK_CRYPTO_CURRENCIES, ...FALLBACK_FIAT_CURRENCIES]);
+      setCryptoCurrencies(FALLBACK_CRYPTO_CURRENCIES);
+      setFiatCurrencies(FALLBACK_FIAT_CURRENCIES);
+      
       const errorMessage = err.response?.data?.error || err.message || 'Failed to load currencies';
       if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-        setError('API endpoint not found. Please ensure SIMPLESWAP_API_KEY is set in your Render backend environment variables.');
+        setError('SimpleSwap API endpoints not found. Using fallback currencies. Please check SimpleSwap API documentation for correct endpoint format or contact SimpleSwap support.');
       } else if (errorMessage.includes('CORS')) {
-        setError('CORS error: The API may require server-side calls.');
+        setError('CORS error. Using fallback currencies.');
       } else {
-        setError(`Failed to load currencies: ${errorMessage}`);
+        setError(`API error: ${errorMessage}. Using fallback currencies.`);
       }
     } finally {
       setLoading(false);
@@ -216,9 +283,25 @@ const SimpleSwapWidget = () => {
 
   // Filter currencies for dropdown based on active tab
   const filteredCurrencies = useCallback((search, isFrom = true) => {
-    const currencyList = activeTab === 'fiat' 
-      ? (isFrom ? fiatCurrencies : cryptoCurrencies) // Fiat to crypto: from=fiat, to=crypto
-      : cryptoCurrencies; // Crypto to crypto: both crypto
+    let currencyList = [];
+    
+    if (activeTab === 'fiat') {
+      // Fiat tab: Buy crypto with fiat (from=fiat, to=crypto) OR Sell crypto for fiat (from=crypto, to=fiat)
+      // For simplicity, we'll allow both directions - user can swap if needed
+      currencyList = isFrom ? fiatCurrencies : cryptoCurrencies;
+    } else {
+      // Crypto tab: Crypto to crypto exchange
+      currencyList = cryptoCurrencies;
+    }
+    
+    // If no currencies loaded yet, use fallback
+    if (currencyList.length === 0) {
+      if (activeTab === 'fiat') {
+        currencyList = isFrom ? FALLBACK_FIAT_CURRENCIES : FALLBACK_CRYPTO_CURRENCIES;
+      } else {
+        currencyList = FALLBACK_CRYPTO_CURRENCIES;
+      }
+    }
     
     if (!search) return currencyList;
     const searchLower = search.toLowerCase();
@@ -230,7 +313,7 @@ const SimpleSwapWidget = () => {
         name.toLowerCase().includes(searchLower)
       );
     });
-  }, [currencies, activeTab, cryptoCurrencies, fiatCurrencies]);
+  }, [activeTab, cryptoCurrencies, fiatCurrencies]);
 
   // Swap currencies
   const swapCurrencies = () => {
