@@ -32,6 +32,7 @@ const SimpleSwapWidget = () => {
   const loadCurrencies = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await simpleswapService.getCurrencies();
       if (data && typeof data === 'object') {
         // Convert object to array if needed
@@ -40,10 +41,20 @@ const SimpleSwapWidget = () => {
           name: data[key] || key,
         }));
         setCurrencies(currencyArray);
+        if (currencyArray.length === 0) {
+          setError('No currencies available. Please check your API key configuration.');
+        }
       }
     } catch (err) {
       logger.error('Failed to load currencies:', err);
-      setError('Failed to load currencies. Please try again.');
+      const errorMessage = err.message || 'Failed to load currencies';
+      if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+        setError('API endpoint not found. Please check your SimpleSwap API key and ensure it has the correct permissions. You may need to configure the API endpoints in your SimpleSwap dashboard.');
+      } else if (errorMessage.includes('CORS')) {
+        setError('CORS error: The API may require server-side calls. Please contact support or check SimpleSwap API documentation.');
+      } else {
+        setError(`Failed to load currencies: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }

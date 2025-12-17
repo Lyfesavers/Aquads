@@ -1,8 +1,8 @@
 import axios from 'axios';
 import logger from '../utils/logger';
 
-// SimpleSwap API base URL
-const SIMPLESWAP_API_URL = 'https://api.simpleswap.io/v1';
+// SimpleSwap API base URL - try v3 first, fallback to v1
+const SIMPLESWAP_API_URL = 'https://api.simpleswap.io/v3';
 
 // Get API key from environment
 const getApiKey = () => {
@@ -39,11 +39,46 @@ const simpleswapService = {
    */
   async getCurrencies() {
     try {
-      const response = await simpleswapApi.get('/get_currencies');
+      const apiKey = getApiKey();
+      const endpoints = [
+        '/get_all_currencies',  // v3 format
+        '/get_currencies',       // v1 format
+        '/currencies',           // alternative format
+      ];
+      
+      // Try each endpoint format
+      for (const endpoint of endpoints) {
+        try {
+          const response = await simpleswapApi.get(endpoint);
+          if (response.data) {
+            return response.data;
+          }
+        } catch (err) {
+          // Try next endpoint
+          continue;
+        }
+      }
+      
+      // If all fail, try direct API call without version in path
+      const directApi = axios.create({
+        baseURL: 'https://api.simpleswap.io',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (apiKey) {
+        directApi.interceptors.request.use((config) => {
+          config.params = { ...config.params, api_key: apiKey };
+          config.headers['X-API-Key'] = apiKey;
+          return config;
+        });
+      }
+      
+      const response = await directApi.get('/get_currencies');
       return response.data;
     } catch (error) {
       logger.error('SimpleSwap getCurrencies error:', error);
-      throw error;
+      // Return a helpful error message
+      throw new Error(`Failed to load currencies: ${error.response?.status || error.message}. Please check your API key and endpoint configuration.`);
     }
   },
 
