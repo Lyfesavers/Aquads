@@ -1,35 +1,17 @@
 import axios from 'axios';
 import logger from '../utils/logger';
 
-// SimpleSwap API base URL - try v3 first, fallback to v1
-const SIMPLESWAP_API_URL = 'https://api.simpleswap.io/v3';
+// Use backend proxy to avoid CORS issues and keep API key secure
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://aquads.onrender.com/api'
+  : 'http://localhost:5000/api';
 
-// Get API key from environment
-const getApiKey = () => {
-  return process.env.REACT_APP_SIMPLESWAP_API_KEY || '';
-};
-
-// Create axios instance with API key
+// Create axios instance for backend proxy
 const simpleswapApi = axios.create({
-  baseURL: SIMPLESWAP_API_URL,
+  baseURL: `${API_URL}/simpleswap`,
   headers: {
     'Content-Type': 'application/json',
   },
-});
-
-// Add API key to all requests
-simpleswapApi.interceptors.request.use((config) => {
-  const apiKey = getApiKey();
-  if (apiKey) {
-    // SimpleSwap API typically uses api_key as query parameter
-    config.params = {
-      ...config.params,
-      api_key: apiKey,
-    };
-    // Also try as header (some APIs accept both)
-    config.headers['X-API-Key'] = apiKey;
-  }
-  return config;
 });
 
 const simpleswapService = {
@@ -39,49 +21,8 @@ const simpleswapService = {
    */
   async getCurrencies() {
     try {
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        throw new Error('API key is not configured. Please add REACT_APP_SIMPLESWAP_API_KEY to your environment variables.');
-      }
-
-      // Try different API endpoint formats
-      const endpoints = [
-        { base: 'https://api.simpleswap.io/v3', path: '/get_all_currencies' },
-        { base: 'https://api.simpleswap.io/v1', path: '/get_currencies' },
-        { base: 'https://api.simpleswap.io', path: '/get_currencies' },
-        { base: 'https://api.simpleswap.io/v3', path: '/currencies' },
-        { base: 'https://api.simpleswap.io/v1', path: '/currencies' },
-      ];
-      
-      // Try each endpoint format
-      for (const { base, path } of endpoints) {
-        try {
-          const api = axios.create({
-            baseURL: base,
-            headers: { 'Content-Type': 'application/json' },
-          });
-          
-          api.interceptors.request.use((config) => {
-            config.params = { ...config.params, api_key: apiKey };
-            config.headers['X-API-Key'] = apiKey;
-            return config;
-          });
-
-          const response = await api.get(path);
-          if (response.data && (Array.isArray(response.data) || typeof response.data === 'object')) {
-            logger.log(`Successfully loaded currencies from ${base}${path}`);
-            return response.data;
-          }
-        } catch (err) {
-          // Log but continue to next endpoint
-          if (err.response?.status !== 404) {
-            logger.log(`Endpoint ${base}${path} returned: ${err.response?.status || err.message}`);
-          }
-          continue;
-        }
-      }
-      
-      throw new Error('All API endpoints returned 404. Please check your SimpleSwap dashboard for the correct API endpoint format.');
+      const response = await simpleswapApi.get('/currencies');
+      return response.data;
     } catch (error) {
       logger.error('SimpleSwap getCurrencies error:', error);
       throw error;
@@ -98,12 +39,12 @@ const simpleswapService = {
    */
   async getExchangeRate(from, to, amount, fixed = false) {
     try {
-      const response = await simpleswapApi.get('/get_estimated', {
+      const response = await simpleswapApi.get('/rate', {
         params: {
-          currency_from: from,
-          currency_to: to,
-          amount: amount,
-          fixed: fixed,
+          from,
+          to,
+          amount,
+          fixed,
         },
       });
       return response.data;
@@ -120,12 +61,10 @@ const simpleswapService = {
    */
   async getPairs(fixed = false) {
     try {
-      const response = await simpleswapApi.get('/get_pairs', {
-        params: {
-          fixed: fixed,
-        },
-      });
-      return response.data;
+      // Note: This endpoint might not be available through proxy
+      // Using currencies endpoint as alternative
+      const currencies = await this.getCurrencies();
+      return currencies;
     } catch (error) {
       logger.error('SimpleSwap getPairs error:', error);
       throw error;
@@ -145,7 +84,7 @@ const simpleswapService = {
    */
   async createExchange(exchangeData) {
     try {
-      const response = await simpleswapApi.post('/create_exchange', exchangeData);
+      const response = await simpleswapApi.post('/exchange', exchangeData);
       return response.data;
     } catch (error) {
       logger.error('SimpleSwap createExchange error:', error);
@@ -160,7 +99,7 @@ const simpleswapService = {
    */
   async getExchangeStatus(exchangeId) {
     try {
-      const response = await simpleswapApi.get(`/get_exchange/${exchangeId}`);
+      const response = await simpleswapApi.get(`/exchange/${exchangeId}`);
       return response.data;
     } catch (error) {
       logger.error('SimpleSwap getExchangeStatus error:', error);
@@ -176,10 +115,10 @@ const simpleswapService = {
    */
   async getMinAmount(from, to) {
     try {
-      const response = await simpleswapApi.get('/get_min', {
+      const response = await simpleswapApi.get('/min-amount', {
         params: {
-          currency_from: from,
-          currency_to: to,
+          from,
+          to,
         },
       });
       return response.data;
