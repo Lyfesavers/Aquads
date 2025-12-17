@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaExchangeAlt, FaLock, FaUnlock, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import simpleswapService from '../services/simpleswapService';
 import logger from '../utils/logger';
@@ -30,6 +30,10 @@ const SimpleSwapWidget = () => {
   const [searchTo, setSearchTo] = useState('');
   const [showFromDropdown, setShowFromDropdown] = useState(false);
   const [showToDropdown, setShowToDropdown] = useState(false);
+  const fromDropdownRef = React.useRef(null);
+  const toDropdownRef = React.useRef(null);
+  const fromInputRef = React.useRef(null);
+  const toInputRef = React.useRef(null);
 
   // Popular currencies fallback list
   const FALLBACK_CRYPTO_CURRENCIES = [
@@ -65,6 +69,27 @@ const SimpleSwapWidget = () => {
   useEffect(() => {
     loadCurrencies();
   }, []);
+
+  // Handle clicks outside dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showFromDropdown && fromDropdownRef.current && !fromDropdownRef.current.contains(event.target) && 
+          fromInputRef.current && !fromInputRef.current.contains(event.target)) {
+        setShowFromDropdown(false);
+      }
+      if (showToDropdown && toDropdownRef.current && !toDropdownRef.current.contains(event.target) &&
+          toInputRef.current && !toInputRef.current.contains(event.target)) {
+        setShowToDropdown(false);
+      }
+    };
+
+    if (showFromDropdown || showToDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showFromDropdown, showToDropdown]);
 
   // Load currencies
   const loadCurrencies = async () => {
@@ -471,7 +496,13 @@ const SimpleSwapWidget = () => {
               {fromCurrency && (() => {
                 const selectedCurrency = currencies.find(c => c.code === fromCurrency);
                 return (
-                  <div className="currency-select-display" onClick={() => setShowFromDropdown(true)}>
+                  <div 
+                    className="currency-select-display" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFromDropdown(!showFromDropdown);
+                    }}
+                  >
                     {selectedCurrency?.image && (
                       <img 
                         src={selectedCurrency.image} 
@@ -488,25 +519,27 @@ const SimpleSwapWidget = () => {
                       </div>
                     )}
                     <span className="currency-select-code">{fromCurrency}</span>
-                    <span className="currency-select-arrow">▼</span>
+                    <span className={`currency-select-arrow ${showFromDropdown ? 'open' : ''}`}>▼</span>
                   </div>
                 );
               })()}
               {!fromCurrency && (
                 <input
+                  ref={fromInputRef}
                   type="text"
                   className="currency-search"
                   placeholder="Search currency..."
                   value={searchFrom}
                   onChange={(e) => setSearchFrom(e.target.value)}
                   onFocus={() => setShowFromDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
+                  onClick={() => setShowFromDropdown(true)}
                 />
               )}
               {showFromDropdown && (
-                <div className="currency-dropdown">
+                <div className="currency-dropdown" ref={fromDropdownRef}>
                   <div className="currency-dropdown-search">
                     <input
+                      ref={fromInputRef}
                       type="text"
                       className="currency-dropdown-search-input"
                       placeholder="Search currencies..."
@@ -514,10 +547,11 @@ const SimpleSwapWidget = () => {
                       onChange={(e) => setSearchFrom(e.target.value)}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
                     />
                   </div>
                   <div className="currency-dropdown-list">
-                    {filteredCurrencies(searchFrom, true).slice(0, 20).map((curr, index) => {
+                    {filteredCurrencies(searchFrom, true).map((curr, index) => {
                     const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                     const name = curr?.name || code;
                     const image = curr?.image || '';
@@ -529,13 +563,17 @@ const SimpleSwapWidget = () => {
                       <div
                         key={key}
                         className={`currency-option ${selectedFrom ? 'selected' : ''}`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (code) {
                             setFromCurrency(code);
                             setSearchFrom('');
                             setShowFromDropdown(false);
                             setRateInfo(null);
                           }
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevent input blur
                         }}
                       >
                         {image && (
@@ -639,7 +677,13 @@ const SimpleSwapWidget = () => {
             {toCurrency && (() => {
               const selectedCurrency = currencies.find(c => c.code === toCurrency);
               return (
-                <div className="currency-select-display" onClick={() => setShowToDropdown(true)}>
+                <div 
+                  className="currency-select-display" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowToDropdown(!showToDropdown);
+                  }}
+                >
                   {selectedCurrency?.image && (
                     <img 
                       src={selectedCurrency.image} 
@@ -656,25 +700,27 @@ const SimpleSwapWidget = () => {
                     </div>
                   )}
                   <span className="currency-select-code">{toCurrency}</span>
-                  <span className="currency-select-arrow">▼</span>
+                  <span className={`currency-select-arrow ${showToDropdown ? 'open' : ''}`}>▼</span>
                 </div>
               );
             })()}
             {!toCurrency && (
               <input
+                ref={toInputRef}
                 type="text"
                 className="currency-search"
                 placeholder="Search currency..."
                 value={searchTo}
                 onChange={(e) => setSearchTo(e.target.value)}
                 onFocus={() => setShowToDropdown(true)}
-                onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
+                onClick={() => setShowToDropdown(true)}
               />
             )}
             {showToDropdown && (
-              <div className="currency-dropdown">
+              <div className="currency-dropdown" ref={toDropdownRef}>
                 <div className="currency-dropdown-search">
                   <input
+                    ref={toInputRef}
                     type="text"
                     className="currency-dropdown-search-input"
                     placeholder="Search currencies..."
@@ -682,10 +728,11 @@ const SimpleSwapWidget = () => {
                     onChange={(e) => setSearchTo(e.target.value)}
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.stopPropagation()}
                   />
                 </div>
                 <div className="currency-dropdown-list">
-                  {filteredCurrencies(searchTo, false).slice(0, 20).map((curr, index) => {
+                  {filteredCurrencies(searchTo, false).map((curr, index) => {
                   const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                   const name = curr?.name || code;
                   const image = curr?.image || '';
@@ -697,13 +744,17 @@ const SimpleSwapWidget = () => {
                     <div
                       key={key}
                       className={`currency-option ${selectedTo ? 'selected' : ''}`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (code) {
                           setToCurrency(code);
                           setSearchTo('');
                           setShowToDropdown(false);
                           setRateInfo(null);
                         }
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input blur
                       }}
                     >
                       {image && (

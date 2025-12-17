@@ -145,8 +145,9 @@
 }
 
 .currency-dropdown-list {
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @keyframes dropdownSlide {
@@ -318,7 +319,11 @@
   transition: transform 0.2s ease;
 }
 
-.currency-select-display:hover .currency-select-arrow {
+.currency-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.currency-select-display:hover .currency-select-arrow:not(.open) {
   transform: translateY(2px);
 }
 
