@@ -1,9 +1,4 @@
 // AquaSwap Extension - Authentication Service
-// Global debug function - no-op to keep console clean
-if (typeof window.dbg === 'undefined') {
-  window.dbg = () => {}; // No-op function
-}
-
 const API_URL = 'https://aquads.onrender.com/api';
 
 // Cache for Google Client ID (fetched from backend)
@@ -52,7 +47,6 @@ class AuthService {
 
       return { success: true, user: userData };
     } catch (error) {
-      dbg('Login error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -71,7 +65,6 @@ class AuthService {
       ]);
       return { success: true };
     } catch (error) {
-      dbg('Logout error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -84,7 +77,6 @@ class AuthService {
       const result = await chrome.storage.local.get(['authToken', 'isLoggedIn']);
       return !!(result.authToken && result.isLoggedIn);
     } catch (error) {
-      dbg('Auth check error:', error);
       return false;
     }
   }
@@ -100,7 +92,6 @@ class AuthService {
       }
       return null;
     } catch (error) {
-      dbg('Get user error:', error);
       return null;
     }
   }
@@ -156,7 +147,6 @@ class AuthService {
 
       return { success: true, user: userData };
     } catch (error) {
-      dbg('Google login error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -173,7 +163,6 @@ class AuthService {
     try {
       const response = await fetch(`${API_URL}/users/google-client-id`);
       if (!response.ok) {
-        dbg('⚠️ Failed to fetch Google Client ID from backend');
         return null;
       }
 
@@ -185,7 +174,6 @@ class AuthService {
 
       return null;
     } catch (error) {
-      dbg('Error fetching Google Client ID:', error);
       return null;
     }
   }

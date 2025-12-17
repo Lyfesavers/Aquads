@@ -27,8 +27,6 @@ const ExtensionAuth = () => {
     const params = new URLSearchParams(window.location.search);
     const source = params.get('source');
 
-    console.log('ExtensionAuth loaded, source:', source, 'window.opener:', !!window.opener);
-
     if (source !== 'extension') {
       setError('Invalid access - this page is for extension authentication only');
       setStatus('error');
@@ -95,7 +93,6 @@ const ExtensionAuth = () => {
         }
       });
     } catch (err) {
-      console.error('Error initializing Google Sign-In:', err);
       setError('Failed to initialize Google Sign-In');
       setStatus('error');
     }
@@ -146,7 +143,6 @@ const ExtensionAuth = () => {
         setStatus('error');
       }
     } catch (error) {
-      console.error('Google sign-in error:', error);
       const errorMessage = error.message || 'Sign-in failed';
       setError(errorMessage);
 
