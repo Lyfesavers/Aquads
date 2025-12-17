@@ -4,13 +4,20 @@ import { FaTimes, FaExchangeAlt } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  // SimpleSwap Affiliate ID from affiliate dashboard
-  // Add this to Netlify: REACT_APP_SIMPLESWAP_AFFILIATE_ID
-  // Format: https://simpleswap.io/widget/{affiliate-id}
+  // SimpleSwap API Key - enables fiat-to-crypto features
+  // Add this to Netlify: REACT_APP_SIMPLESWAP_API_KEY
+  // The API key should be used directly in the widget URL path to enable all features
+  const apiKey = process.env.REACT_APP_SIMPLESWAP_API_KEY || '';
+  
+  // Fallback to affiliate ID if API key is not set (for crypto-to-crypto only)
   const affiliateId = process.env.REACT_APP_SIMPLESWAP_AFFILIATE_ID || 'dd5cfd7e-3dd4-4d7b-b017-f12c4291d28a';
   
-  // SimpleSwap widget URL with affiliate ID
-  const simpleswapWidgetUrl = `https://simpleswap.io/widget/${affiliateId}`;
+  // Build SimpleSwap widget URL
+  // If API key is available, use it directly in the path (enables fiat-to-crypto)
+  // Otherwise, fall back to affiliate ID (crypto-to-crypto only)
+  const simpleswapWidgetUrl = apiKey 
+    ? `https://simpleswap.io/widget/${apiKey}`
+    : `https://simpleswap.io/widget/${affiliateId}`;
 
   // Prevent body scroll when modal is open
   useEffect(() => {
