@@ -126,17 +126,14 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
           // The result is an object with currency tickers as keys
           let processedData = data;
           
-          if (data.result && typeof data.result === 'object' && !Array.isArray(data.result)) {
-            // Convert result object to array format for frontend
-            const resultKeys = Object.keys(data.result);
-            console.log(`[SimpleSwap] Converting ${resultKeys.length} currencies from result object`);
-            
-            processedData = resultKeys.map(ticker => {
-              const currency = data.result[ticker];
-              return {
-                ticker: (currency.ticker || ticker).toLowerCase(),
-                code: (currency.ticker || ticker).toUpperCase(),
-                name: currency.name || currency.ticker || ticker,
+          if (data.result) {
+            if (Array.isArray(data.result)) {
+              // Result is an array (like /v3/currencies endpoint)
+              console.log(`[SimpleSwap] Result is an array with ${data.result.length} items`);
+              processedData = data.result.map(currency => ({
+                ticker: (currency.ticker || currency.code || '').toLowerCase(),
+                code: (currency.ticker || currency.code || '').toUpperCase(),
+                name: currency.name || currency.ticker || currency.code || '',
                 isFiat: currency.isFiat || false,
                 network: currency.network || '',
                 image: currency.image || '',
@@ -152,14 +149,44 @@ router.get('/currencies', simpleswapLimiter, async (req, res) => {
                 addressExplorer: currency.addressExplorer || '',
                 txExplorer: currency.txExplorer || '',
                 confirmationsFrom: currency.confirmationsFrom || '',
-              };
-            });
-            
-            console.log(`[SimpleSwap] Processed ${processedData.length} currencies (${processedData.filter(c => c.isFiat).length} fiat, ${processedData.filter(c => !c.isFiat).length} crypto)`);
-          } else if (Array.isArray(data.result)) {
-            // If result is already an array
-            processedData = data.result;
-            console.log(`[SimpleSwap] Result is already an array with ${processedData.length} items`);
+              }));
+              
+              const fiatCount = processedData.filter(c => c.isFiat).length;
+              const cryptoCount = processedData.filter(c => !c.isFiat).length;
+              console.log(`[SimpleSwap] Processed ${processedData.length} currencies (${fiatCount} fiat, ${cryptoCount} crypto)`);
+            } else if (typeof data.result === 'object' && !Array.isArray(data.result)) {
+              // Result is an object with currency tickers as keys
+              const resultKeys = Object.keys(data.result);
+              console.log(`[SimpleSwap] Converting ${resultKeys.length} currencies from result object`);
+              
+              processedData = resultKeys.map(ticker => {
+                const currency = data.result[ticker];
+                return {
+                  ticker: (currency.ticker || ticker).toLowerCase(),
+                  code: (currency.ticker || ticker).toUpperCase(),
+                  name: currency.name || currency.ticker || ticker,
+                  isFiat: currency.isFiat || false,
+                  network: currency.network || '',
+                  image: currency.image || '',
+                  hasExtraId: currency.hasExtraId || false,
+                  extraId: currency.extraId || '',
+                  precision: currency.precision || 8,
+                  isAvailableFloat: currency.isAvailableFloat || false,
+                  isAvailableFixed: currency.isAvailableFixed || false,
+                  warningsFrom: currency.warningsFrom || [],
+                  warningsTo: currency.warningsTo || [],
+                  validationAddress: currency.validationAddress || '',
+                  validationExtra: currency.validationExtra || '',
+                  addressExplorer: currency.addressExplorer || '',
+                  txExplorer: currency.txExplorer || '',
+                  confirmationsFrom: currency.confirmationsFrom || '',
+                };
+              });
+              
+              const fiatCount = processedData.filter(c => c.isFiat).length;
+              const cryptoCount = processedData.filter(c => !c.isFiat).length;
+              console.log(`[SimpleSwap] Processed ${processedData.length} currencies (${fiatCount} fiat, ${cryptoCount} crypto)`);
+            }
           } else if (Array.isArray(data)) {
             // If data is directly an array
             processedData = data;

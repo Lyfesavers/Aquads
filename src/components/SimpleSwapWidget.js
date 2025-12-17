@@ -90,24 +90,49 @@ const SimpleSwapWidget = () => {
       let currencyArray = [];
       
       // Handle SimpleSwap API response format
-      // Response format: { result: { "eth": { name: "Ethereum", ticker: "eth", ... }, ... }, traceId: "..." }
-      if (data.result && typeof data.result === 'object') {
-        // Convert result object to array
-        currencyArray = Object.keys(data.result).map(key => {
-          const item = data.result[key];
-          return {
-            code: (item.ticker || key).toUpperCase(),
-            name: item.name || item.ticker || key,
-            isFiat: item.isFiat || false,
-            ticker: item.ticker || key,
-            network: item.network || '',
-            image: item.image || '',
-            hasExtraId: item.hasExtraId || false,
-            precision: item.precision || 8,
-            isAvailableFloat: item.isAvailableFloat || false,
-            isAvailableFixed: item.isAvailableFixed || false,
-          };
-        });
+      // Response format can be:
+      // 1. { result: [array of currency objects], traceId: "..." } - Array format
+      // 2. { result: { "eth": {...}, "btc": {...} }, traceId: "..." } - Object format
+      // 3. Direct array: [currency objects]
+      
+      if (data.result) {
+        if (Array.isArray(data.result)) {
+          // Result is already an array (like /v3/currencies endpoint)
+          currencyArray = data.result.map(item => {
+            if (typeof item === 'string') {
+              return { code: item, name: item, isFiat: false };
+            }
+            return {
+              code: (item.ticker || item.code || item.symbol || '').toUpperCase(),
+              name: item.name || item.ticker || item.code || '',
+              isFiat: item.isFiat || false,
+              ticker: (item.ticker || item.code || item.symbol || '').toLowerCase(),
+              network: item.network || '',
+              image: item.image || '',
+              hasExtraId: item.hasExtraId || false,
+              precision: item.precision || 8,
+              isAvailableFloat: item.isAvailableFloat || false,
+              isAvailableFixed: item.isAvailableFixed || false,
+            };
+          });
+        } else if (typeof data.result === 'object' && !Array.isArray(data.result)) {
+          // Result is an object with currency tickers as keys
+          currencyArray = Object.keys(data.result).map(key => {
+            const item = data.result[key];
+            return {
+              code: (item.ticker || key).toUpperCase(),
+              name: item.name || item.ticker || key,
+              isFiat: item.isFiat || false,
+              ticker: (item.ticker || key).toLowerCase(),
+              network: item.network || '',
+              image: item.image || '',
+              hasExtraId: item.hasExtraId || false,
+              precision: item.precision || 8,
+              isAvailableFloat: item.isAvailableFloat || false,
+              isAvailableFixed: item.isAvailableFixed || false,
+            };
+          });
+        }
       } else if (Array.isArray(data)) {
         // If it's already an array
         currencyArray = data.map(item => {
@@ -146,21 +171,30 @@ const SimpleSwapWidget = () => {
         });
       }
 
-      // Filter out invalid entries
-      currencyArray = currencyArray.filter(curr => curr.code && curr.code.trim() !== '');
+      // Filter out invalid entries and disabled currencies
+      currencyArray = currencyArray.filter(curr => {
+        if (!curr.code || curr.code.trim() === '') return false;
+        // Filter out currencies that are not available for exchange
+        // Keep currencies that are available for either fixed or float rates
+        return curr.isAvailableFloat || curr.isAvailableFixed;
+      });
+      
+      logger.log(`Loaded ${currencyArray.length} valid currencies from API`);
       
       if (currencyArray.length === 0) {
         // Use fallback currencies if API fails
-        logger.warn('API returned no currencies, using fallback list');
+        logger.warn('API returned no valid currencies, using fallback list');
         setCurrencies([...FALLBACK_CRYPTO_CURRENCIES, ...FALLBACK_FIAT_CURRENCIES]);
         setCryptoCurrencies(FALLBACK_CRYPTO_CURRENCIES);
         setFiatCurrencies(FALLBACK_FIAT_CURRENCIES);
-        setError('Using fallback currency list. SimpleSwap API endpoints may need configuration. Check backend logs.');
+        setError('Using fallback currency list. SimpleSwap API may need configuration.');
       } else {
         setCurrencies(currencyArray);
         // Separate crypto and fiat currencies
         const crypto = currencyArray.filter(curr => !curr.isFiat);
         const fiat = currencyArray.filter(curr => curr.isFiat);
+        
+        logger.log(`Separated currencies: ${crypto.length} crypto, ${fiat.length} fiat`);
         setCryptoCurrencies(crypto.length > 0 ? crypto : FALLBACK_CRYPTO_CURRENCIES);
         setFiatCurrencies(fiat.length > 0 ? fiat : FALLBACK_FIAT_CURRENCIES);
         logger.log(`Loaded ${crypto.length} crypto and ${fiat.length} fiat currencies`);
@@ -217,6 +251,18 @@ const SimpleSwapWidget = () => {
       setRateInfo(null);
     }
   }, [fromCurrency, toCurrency, amount, fixedRate]);
+
+  // Auto-refresh exchange rate every 30 seconds when rate info exists
+  useEffect(() => {
+    if (fromCurrency && toCurrency && amount && parseFloat(amount) > 0 && rateInfo) {
+      const interval = setInterval(() => {
+        loadExchangeRate();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromCurrency, toCurrency, amount, fixedRate, rateInfo]);
 
   // Load exchange rate
   const loadExchangeRate = async () => {
@@ -393,39 +439,105 @@ const SimpleSwapWidget = () => {
           <label className="section-label">You Send</label>
           <div className="currency-input-group">
             <div className="currency-select-wrapper">
-              <input
-                type="text"
-                className="currency-search"
-                placeholder="Search currency..."
-                value={searchFrom}
-                onChange={(e) => setSearchFrom(e.target.value)}
-                onFocus={() => setShowFromDropdown(true)}
-                onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
-              />
+              {fromCurrency && (() => {
+                const selectedCurrency = currencies.find(c => c.code === fromCurrency);
+                return (
+                  <div className="currency-select-display" onClick={() => setShowFromDropdown(true)}>
+                    {selectedCurrency?.image && (
+                      <img 
+                        src={selectedCurrency.image} 
+                        alt={selectedCurrency.name}
+                        className="currency-select-logo"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    {!selectedCurrency?.image && (
+                      <div className="currency-select-logo-placeholder">
+                        {fromCurrency.substring(0, 2)}
+                      </div>
+                    )}
+                    <span className="currency-select-code">{fromCurrency}</span>
+                    <span className="currency-select-arrow">▼</span>
+                  </div>
+                );
+              })()}
+              {!fromCurrency && (
+                <input
+                  type="text"
+                  className="currency-search"
+                  placeholder="Search currency..."
+                  value={searchFrom}
+                  onChange={(e) => setSearchFrom(e.target.value)}
+                  onFocus={() => setShowFromDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
+                />
+              )}
               {showFromDropdown && (
                 <div className="currency-dropdown">
-                  {filteredCurrencies(searchFrom, true).slice(0, 10).map((curr, index) => {
+                  <div className="currency-dropdown-search">
+                    <input
+                      type="text"
+                      className="currency-dropdown-search-input"
+                      placeholder="Search currencies..."
+                      value={searchFrom}
+                      onChange={(e) => setSearchFrom(e.target.value)}
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="currency-dropdown-list">
+                    {filteredCurrencies(searchFrom, true).slice(0, 20).map((curr, index) => {
                     const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                     const name = curr?.name || code;
+                    const image = curr?.image || '';
+                    const network = curr?.network || '';
                     const key = code || `currency-${index}`;
+                    const selectedFrom = fromCurrency === code;
                     
                     return (
                       <div
                         key={key}
-                        className="currency-option"
+                        className={`currency-option ${selectedFrom ? 'selected' : ''}`}
                         onClick={() => {
                           if (code) {
                             setFromCurrency(code);
                             setSearchFrom('');
                             setShowFromDropdown(false);
+                            setRateInfo(null);
                           }
                         }}
                       >
-                        <span className="currency-code">{code}</span>
-                        <span className="currency-name">{name}</span>
+                        {image && (
+                          <img 
+                            src={image} 
+                            alt={name}
+                            className="currency-logo"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        {!image && (
+                          <div className="currency-logo-placeholder">
+                            {code.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="currency-info">
+                          <span className="currency-code">{code}</span>
+                          <span className="currency-name">{name}</span>
+                        </div>
+                        {network && (
+                          <span className="currency-network">{network}</span>
+                        )}
+                        {selectedFrom && (
+                          <span className="currency-check">✓</span>
+                        )}
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               )}
             </div>
@@ -439,16 +551,49 @@ const SimpleSwapWidget = () => {
               step="any"
             />
           </div>
-          {fromCurrency && (
-            <div className="selected-currency">
-              Selected: <strong>{fromCurrency}</strong>
-            </div>
-          )}
+          {fromCurrency && (() => {
+            const selectedCurrency = currencies.find(c => c.code === fromCurrency);
+            return (
+              <div className="selected-currency-display">
+                {selectedCurrency?.image && (
+                  <img 
+                    src={selectedCurrency.image} 
+                    alt={selectedCurrency.name}
+                    className="selected-currency-logo"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
+                <div className="selected-currency-info">
+                  <span className="selected-currency-code">{fromCurrency}</span>
+                  {selectedCurrency?.name && (
+                    <span className="selected-currency-name">{selectedCurrency.name}</span>
+                  )}
+                  {selectedCurrency?.network && (
+                    <span className="selected-currency-network">{selectedCurrency.network}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           {minAmount && (
             <div className="min-amount">
-              Minimum: {minAmount} {fromCurrency}
+              <span className="min-amount-label">Minimum:</span>
+              <span className="min-amount-value">{minAmount} {fromCurrency}</span>
             </div>
           )}
+          {fromCurrency && (() => {
+            const selectedCurrency = currencies.find(c => c.code === fromCurrency);
+            if (selectedCurrency?.warningsFrom && selectedCurrency.warningsFrom.length > 0) {
+              return (
+                <div className="currency-warning">
+                  <FaExclamationTriangle /> {selectedCurrency.warningsFrom[0]}
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* Swap Button */}
@@ -462,65 +607,180 @@ const SimpleSwapWidget = () => {
         <div className="currency-section">
           <label className="section-label">You Get</label>
           <div className="currency-select-wrapper">
-            <input
-              type="text"
-              className="currency-search"
-              placeholder="Search currency..."
-              value={searchTo}
-              onChange={(e) => setSearchTo(e.target.value)}
-              onFocus={() => setShowToDropdown(true)}
-              onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
-            />
+            {toCurrency && (() => {
+              const selectedCurrency = currencies.find(c => c.code === toCurrency);
+              return (
+                <div className="currency-select-display" onClick={() => setShowToDropdown(true)}>
+                  {selectedCurrency?.image && (
+                    <img 
+                      src={selectedCurrency.image} 
+                      alt={selectedCurrency.name}
+                      className="currency-select-logo"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  {!selectedCurrency?.image && (
+                    <div className="currency-select-logo-placeholder">
+                      {toCurrency.substring(0, 2)}
+                    </div>
+                  )}
+                  <span className="currency-select-code">{toCurrency}</span>
+                  <span className="currency-select-arrow">▼</span>
+                </div>
+              );
+            })()}
+            {!toCurrency && (
+              <input
+                type="text"
+                className="currency-search"
+                placeholder="Search currency..."
+                value={searchTo}
+                onChange={(e) => setSearchTo(e.target.value)}
+                onFocus={() => setShowToDropdown(true)}
+                onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
+              />
+            )}
             {showToDropdown && (
               <div className="currency-dropdown">
-                {filteredCurrencies(searchTo, false).slice(0, 10).map((curr, index) => {
+                <div className="currency-dropdown-search">
+                  <input
+                    type="text"
+                    className="currency-dropdown-search-input"
+                    placeholder="Search currencies..."
+                    value={searchTo}
+                    onChange={(e) => setSearchTo(e.target.value)}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div className="currency-dropdown-list">
+                  {filteredCurrencies(searchTo, false).slice(0, 20).map((curr, index) => {
                   const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
                   const name = curr?.name || code;
+                  const image = curr?.image || '';
+                  const network = curr?.network || '';
                   const key = code || `currency-${index}`;
+                  const selectedTo = toCurrency === code;
                   
                   return (
                     <div
                       key={key}
-                      className="currency-option"
+                      className={`currency-option ${selectedTo ? 'selected' : ''}`}
                       onClick={() => {
                         if (code) {
                           setToCurrency(code);
                           setSearchTo('');
                           setShowToDropdown(false);
+                          setRateInfo(null);
                         }
                       }}
                     >
-                      <span className="currency-code">{code}</span>
-                      <span className="currency-name">{name}</span>
+                      {image && (
+                        <img 
+                          src={image} 
+                          alt={name}
+                          className="currency-logo"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      {!image && (
+                        <div className="currency-logo-placeholder">
+                          {code.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="currency-info">
+                        <span className="currency-code">{code}</span>
+                        <span className="currency-name">{name}</span>
+                      </div>
+                      {network && (
+                        <span className="currency-network">{network}</span>
+                      )}
+                      {selectedTo && (
+                        <span className="currency-check">✓</span>
+                      )}
                     </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
-          {toCurrency && (
-            <div className="selected-currency">
-              Selected: <strong>{toCurrency}</strong>
-            </div>
-          )}
+          {toCurrency && (() => {
+            const selectedCurrency = currencies.find(c => c.code === toCurrency);
+            return (
+              <div className="selected-currency-display">
+                {selectedCurrency?.image && (
+                  <img 
+                    src={selectedCurrency.image} 
+                    alt={selectedCurrency.name}
+                    className="selected-currency-logo"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
+                <div className="selected-currency-info">
+                  <span className="selected-currency-code">{toCurrency}</span>
+                  {selectedCurrency?.name && (
+                    <span className="selected-currency-name">{selectedCurrency.name}</span>
+                  )}
+                  {selectedCurrency?.network && (
+                    <span className="selected-currency-network">{selectedCurrency.network}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          {toCurrency && (() => {
+            const selectedCurrency = currencies.find(c => c.code === toCurrency);
+            if (selectedCurrency?.warningsTo && selectedCurrency.warningsTo.length > 0) {
+              return (
+                <div className="currency-warning">
+                  <FaExclamationTriangle /> {selectedCurrency.warningsTo[0]}
+                </div>
+              );
+            }
+            return null;
+          })()}
           {rateInfo && (
             <div className="rate-info">
               {loadingRate ? (
-                <FaSpinner className="spinner" />
+                <div className="rate-loading">
+                  <FaSpinner className="spinner" />
+                  <span>Calculating rate...</span>
+                </div>
               ) : (
                 <>
-                  <div className="rate-amount">
-                    {rateInfo.amount_to || rateInfo.estimated_amount || 'Calculating...'} {toCurrency}
+                  <div className="rate-main">
+                    <div className="rate-amount">
+                      {rateInfo.amount_to || rateInfo.estimated_amount || 'Calculating...'} {toCurrency}
+                    </div>
+                    {rateInfo.rate && (
+                      <div className="rate-per-unit">
+                        1 {fromCurrency} = {parseFloat(rateInfo.rate).toFixed(8)} {toCurrency}
+                      </div>
+                    )}
                   </div>
-                  <div className="rate-type">
-                    {fixedRate ? (
-                      <>
-                        <FaLock /> Fixed Rate
-                      </>
-                    ) : (
-                      <>
-                        <FaUnlock /> Floating Rate
-                      </>
+                  <div className="rate-details">
+                    <div className="rate-type">
+                      {fixedRate ? (
+                        <>
+                          <FaLock /> Fixed Rate
+                        </>
+                      ) : (
+                        <>
+                          <FaUnlock /> Floating Rate
+                        </>
+                      )}
+                    </div>
+                    {rateInfo.estimated_time && (
+                      <div className="rate-time">
+                        Est. time: {rateInfo.estimated_time}
+                      </div>
                     )}
                   </div>
                 </>
