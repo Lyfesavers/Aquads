@@ -4,20 +4,25 @@ import { FaTimes, FaExchangeAlt } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  // SimpleSwap API Key - enables fiat-to-crypto features
-  // Add this to Netlify: REACT_APP_SIMPLESWAP_API_KEY
-  // The API key should be used directly in the widget URL path to enable all features
-  const apiKey = process.env.REACT_APP_SIMPLESWAP_API_KEY || '';
-  
-  // Fallback to affiliate ID if API key is not set (for crypto-to-crypto only)
+  // SimpleSwap Affiliate ID - required for widget tracking
   const affiliateId = process.env.REACT_APP_SIMPLESWAP_AFFILIATE_ID || 'dd5cfd7e-3dd4-4d7b-b017-f12c4291d28a';
   
+  // SimpleSwap API Key - enables fiat-to-crypto features
+  // Add this to Netlify: REACT_APP_SIMPLESWAP_API_KEY
+  const apiKey = process.env.REACT_APP_SIMPLESWAP_API_KEY || '';
+  
   // Build SimpleSwap widget URL
-  // If API key is available, use it directly in the path (enables fiat-to-crypto)
-  // Otherwise, fall back to affiliate ID (crypto-to-crypto only)
-  const simpleswapWidgetUrl = apiKey 
-    ? `https://simpleswap.io/widget/${apiKey}`
-    : `https://simpleswap.io/widget/${affiliateId}`;
+  // Note: The widget iframe may only support crypto-to-crypto
+  // For fiat-to-crypto, SimpleSwap may require using their API directly
+  // Check your SimpleSwap dashboard for a "fiat-enabled widget" option
+  let simpleswapWidgetUrl = `https://simpleswap.io/widget/${affiliateId}`;
+  
+  // Try adding API key as parameter (may not work with widget iframe)
+  // If this doesn't enable fiat, you may need to use SimpleSwap API directly
+  if (apiKey) {
+    // Try different parameter formats
+    simpleswapWidgetUrl += `?api_key=${encodeURIComponent(apiKey)}`;
+  }
 
   // Prevent body scroll when modal is open
   useEffect(() => {
