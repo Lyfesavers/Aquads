@@ -34,22 +34,56 @@ const SimpleSwapWidget = () => {
       setLoading(true);
       setError(null);
       const data = await simpleswapService.getCurrencies();
-      if (data && typeof data === 'object') {
-        // Convert object to array if needed
-        const currencyArray = Array.isArray(data) ? data : Object.keys(data).map(key => ({
-          code: key,
-          name: data[key] || key,
-        }));
+      
+      if (!data) {
+        setError('No data received from API');
+        return;
+      }
+
+      let currencyArray = [];
+      
+      // Handle different response formats
+      if (Array.isArray(data)) {
+        // If it's already an array
+        currencyArray = data.map(item => {
+          if (typeof item === 'string') {
+            return { code: item, name: item };
+          }
+          return {
+            code: item.ticker || item.code || item.symbol || item.currency || '',
+            name: item.name || item.ticker || item.code || '',
+            isFiat: item.isFiat || false,
+          };
+        });
+      } else if (typeof data === 'object') {
+        // If it's an object, convert to array
+        currencyArray = Object.keys(data).map(key => {
+          const item = data[key];
+          if (typeof item === 'string') {
+            return { code: key, name: item };
+          }
+          return {
+            code: item.ticker || item.code || item.symbol || key,
+            name: item.name || item.ticker || item.code || key,
+            isFiat: item.isFiat || false,
+          };
+        });
+      }
+
+      // Filter out invalid entries
+      currencyArray = currencyArray.filter(curr => curr.code && curr.code.trim() !== '');
+      
+      if (currencyArray.length === 0) {
+        setError('No valid currencies found in API response. Please check your API key configuration.');
+        logger.error('Currency data format:', data);
+      } else {
         setCurrencies(currencyArray);
-        if (currencyArray.length === 0) {
-          setError('No currencies available. Please check your API key configuration.');
-        }
       }
     } catch (err) {
       logger.error('Failed to load currencies:', err);
       const errorMessage = err.message || 'Failed to load currencies';
       if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
-        setError('API endpoint not found. Please check your SimpleSwap API key and ensure it has the correct permissions. You may need to configure the API endpoints in your SimpleSwap dashboard.');
+        setError('API endpoint not found. The SimpleSwap API endpoint may have changed. Please check your SimpleSwap dashboard for the correct API endpoint format.');
       } else if (errorMessage.includes('CORS')) {
         setError('CORS error: The API may require server-side calls. Please contact support or check SimpleSwap API documentation.');
       } else {
@@ -159,11 +193,14 @@ const SimpleSwapWidget = () => {
   const filteredCurrencies = useCallback((search) => {
     if (!search) return currencies;
     const searchLower = search.toLowerCase();
-    return currencies.filter(
-      (curr) =>
-        curr.code?.toLowerCase().includes(searchLower) ||
-        curr.name?.toLowerCase().includes(searchLower)
-    );
+    return currencies.filter((curr) => {
+      const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
+      const name = curr?.name || code;
+      return (
+        code.toLowerCase().includes(searchLower) ||
+        name.toLowerCase().includes(searchLower)
+      );
+    });
   }, [currencies]);
 
   // Swap currencies
@@ -227,20 +264,28 @@ const SimpleSwapWidget = () => {
               />
               {showFromDropdown && (
                 <div className="currency-dropdown">
-                  {filteredCurrencies(searchFrom).slice(0, 10).map((curr) => (
-                    <div
-                      key={curr.code}
-                      className="currency-option"
-                      onClick={() => {
-                        setFromCurrency(curr.code);
-                        setSearchFrom('');
-                        setShowFromDropdown(false);
-                      }}
-                    >
-                      <span className="currency-code">{curr.code}</span>
-                      <span className="currency-name">{curr.name}</span>
-                    </div>
-                  ))}
+                  {filteredCurrencies(searchFrom).slice(0, 10).map((curr, index) => {
+                    const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
+                    const name = curr?.name || code;
+                    const key = code || `currency-${index}`;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className="currency-option"
+                        onClick={() => {
+                          if (code) {
+                            setFromCurrency(code);
+                            setSearchFrom('');
+                            setShowFromDropdown(false);
+                          }
+                        }}
+                      >
+                        <span className="currency-code">{code}</span>
+                        <span className="currency-name">{name}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -288,20 +333,28 @@ const SimpleSwapWidget = () => {
             />
             {showToDropdown && (
               <div className="currency-dropdown">
-                {filteredCurrencies(searchTo).slice(0, 10).map((curr) => (
-                  <div
-                    key={curr.code}
-                    className="currency-option"
-                    onClick={() => {
-                      setToCurrency(curr.code);
-                      setSearchTo('');
-                      setShowToDropdown(false);
-                    }}
-                  >
-                    <span className="currency-code">{curr.code}</span>
-                    <span className="currency-name">{curr.name}</span>
-                  </div>
-                ))}
+                {filteredCurrencies(searchTo).slice(0, 10).map((curr, index) => {
+                  const code = curr?.code || curr?.ticker || curr?.symbol || String(curr) || '';
+                  const name = curr?.name || code;
+                  const key = code || `currency-${index}`;
+                  
+                  return (
+                    <div
+                      key={key}
+                      className="currency-option"
+                      onClick={() => {
+                        if (code) {
+                          setToCurrency(code);
+                          setSearchTo('');
+                          setShowToDropdown(false);
+                        }
+                      }}
+                    >
+                      <span className="currency-code">{code}</span>
+                      <span className="currency-name">{name}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
