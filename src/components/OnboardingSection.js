@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaClock, FaUsers, FaRocket, FaCheckCircle, FaSparkles } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaUsers, FaRocket, FaCheckCircle, FaStar } from 'react-icons/fa';
 
 const OnboardingSection = ({ calendlyUrl }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -133,7 +133,7 @@ const OnboardingSection = ({ calendlyUrl }) => {
                   <div className="relative z-10 flex items-center gap-3">
                     <FaCalendarAlt className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span>Book Your 15-Minute Session</span>
-                    <FaSparkles className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-180 transition-transform duration-500" />
+                    <FaStar className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-180 transition-transform duration-500" />
                   </div>
 
                   {/* Animated gradient overlay */}
