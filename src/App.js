@@ -37,6 +37,7 @@ import GameHub from './components/GameHub';
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
+import OnboardingSection from './components/OnboardingSection';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import BlogPage from './components/BlogPage';
@@ -3300,6 +3301,11 @@ function App() {
                     Ads loaded: {ads.length}
                   </div>
                 )}
+              </div>
+
+              {/* Onboarding Section */}
+              <div className="relative z-10">
+                <OnboardingSection calendlyUrl="https://calendly.com/aquads-info/30min" />
               </div>
 
               {/* Footer */}
