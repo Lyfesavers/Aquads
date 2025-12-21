@@ -252,6 +252,18 @@ cron.schedule('0 8 * * *', async () => {
   timezone: "America/New_York" // EST/EDT timezone
 });
 
+// Cron job for sending daily admin reminder to non-admin groups at 10 AM EST
+cron.schedule('0 10 * * *', async () => {
+  try {
+    console.log('[Admin Reminder] Checking groups and sending admin reminders...');
+    await telegramService.sendDailyAdminReminder();
+  } catch (error) {
+    console.error('[Admin Reminder] Error in daily admin reminder task:', error);
+  }
+}, {
+  timezone: "America/New_York" // EST/EDT timezone
+});
+
 // Cron job for syncing Remotive jobs every 8 hours
 // Runs at 12:00 AM, 8:00 AM, and 4:00 PM daily
 cron.schedule('0 */8 * * *', async () => {

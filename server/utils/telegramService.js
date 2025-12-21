@@ -4910,10 +4910,157 @@ Let's make today amazing! 🚀`;
       }
       console.error('Error awarding daily reaction points:', error);
     }
-  }
+  },
 
+  // Check if bot is an admin in a group
+  checkBotAdminStatus: async (chatId) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) {
+      return { isAdmin: false, error: 'Bot token not configured' };
+    }
+
+    try {
+      // First get the bot's user ID
+      const botInfoResponse = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
+      if (!botInfoResponse.data.ok) {
+        return { isAdmin: false, error: 'Failed to get bot info' };
+      }
+      
+      const botUserId = botInfoResponse.data.result.id;
+
+      // Check if bot is an admin in the group
+      const response = await axios.get(
+        `https://api.telegram.org/bot${botToken}/getChatMember`,
+        {
+          params: {
+            chat_id: chatId,
+            user_id: botUserId
+          }
+        }
+      );
+
+      if (response.data.ok) {
+        const status = response.data.result.status;
+        // status can be: 'creator', 'administrator', 'member', 'restricted', 'left', 'kicked'
+        const isAdmin = status === 'creator' || status === 'administrator';
+        return { isAdmin, status };
+      } else {
+        return { isAdmin: false, error: response.data.description };
+      }
+    } catch (error) {
+      // Handle errors gracefully
+      if (error.response?.data?.description) {
+        return { isAdmin: false, error: error.response.data.description };
+      }
+      return { isAdmin: false, error: error.message };
+    }
+  },
+
+  // Send daily admin reminder to groups where bot is not admin
+  sendDailyAdminReminder: async () => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      
+      if (!botToken) {
+        console.error('[Admin Reminder] TELEGRAM_BOT_TOKEN not configured');
+        return false;
+      }
+
+      // Get all active groups
+      const groupsToCheck = new Set(telegramService.activeGroups);
+      const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+      if (defaultChatId) {
+        groupsToCheck.add(defaultChatId);
+      }
+
+      if (groupsToCheck.size === 0) {
+        console.log('[Admin Reminder] No active groups to check');
+        return false;
+      }
+
+      // Get last notification date from database
+      const settings = await BotSettings.findOne({ key: 'adminReminderLastSent' });
+      const lastSentData = settings?.value || {};
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+      // Message to send to non-admin groups
+      const message = `👋 Hey! Just a friendly reminder 📝
+
+To unlock all bot features (vote notifications, pinning messages, etc.), please add @aquadsbumpbot as an admin in your group settings.
+
+Thanks! 🙏✨`;
+
+      let successCount = 0;
+      let nonAdminCount = 0;
+      let skippedCount = 0;
+
+      for (const chatId of groupsToCheck) {
+        try {
+          const chatIdStr = chatId.toString();
+          
+          // Check if we already sent today to this group
+          if (lastSentData[chatIdStr] === today) {
+            skippedCount++;
+            continue;
+          }
+
+          // Check if bot is admin
+          const adminStatus = await telegramService.checkBotAdminStatus(chatIdStr);
+          
+          if (!adminStatus.isAdmin) {
+            nonAdminCount++;
+            
+            // Send reminder message
+            const result = await telegramService.sendBotMessage(chatIdStr, message);
+            
+            if (result.success) {
+              successCount++;
+              // Update last sent date for this group
+              lastSentData[chatIdStr] = today;
+              console.log(`✅ Admin reminder sent to group ${chatIdStr}`);
+            } else {
+              console.log(`⚠️ Failed to send admin reminder to group ${chatIdStr}`);
+            }
+          } else {
+            // Bot is admin, remove from tracking if it was there
+            if (lastSentData[chatIdStr]) {
+              delete lastSentData[chatIdStr];
+            }
+          }
+
+          // Add a small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+        } catch (error) {
+          console.error(`[Admin Reminder] Error processing group ${chatId}:`, error.message);
+          
+          // Remove group if bot was kicked/removed
+          if (telegramService.shouldRemoveGroupFromActive(error)) {
+            const chatIdStr = String(chatId);
+            telegramService.activeGroups.delete(chatIdStr);
+            console.log(`🗑️ Removed group ${chatIdStr} from active groups (bot was kicked/removed)`);
+            await telegramService.saveActiveGroups();
+          }
+        }
+      }
+
+      // Save last sent dates to database
+      await BotSettings.findOneAndUpdate(
+        { key: 'adminReminderLastSent' },
+        { value: lastSentData, updatedAt: new Date() },
+        { upsert: true }
+      );
+
+      console.log(`📨 [Admin Reminder] Sent to ${successCount}/${nonAdminCount} non-admin groups (${skippedCount} skipped - already sent today)`);
+      return successCount > 0;
+
+    } catch (error) {
+      console.error('[Admin Reminder] Error in daily admin reminder task:', error);
+      return false;
+    }
+  }
 
 };
 
-module.exports = telegramService; 
 module.exports = telegramService; 
