@@ -30,8 +30,7 @@ const userSchema = new Schema({
   googleSub: {
     type: String,
     unique: true,
-    sparse: true,
-    default: null
+    sparse: true
   },
   googlePicture: {
     type: String,

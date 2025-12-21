@@ -219,6 +219,16 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
     });
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle MongoDB duplicate key error for googleSub
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.googleSub) {
+      console.error('googleSub duplicate key error - this should be fixed by migration');
+      return res.status(500).json({ 
+        error: 'Registration failed due to database configuration issue. Please try again or contact support.',
+        details: process.env.NODE_ENV === 'development' ? 'googleSub index issue - run migration fix-googlesub-index.js' : undefined
+      });
+    }
+    
     return res.status(500).json({ 
       error: 'Error registering user',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
