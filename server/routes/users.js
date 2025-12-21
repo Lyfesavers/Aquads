@@ -117,9 +117,12 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
       }
     };
 
-    // If referral code provided, find referring user by username
+    // If referral code provided, find referring user by username (case-insensitive)
     if (referralCode) {
-      const referringUser = await User.findOne({ username: referralCode });
+      const sanitizedReferralCode = sanitizeForRegex(referralCode);
+      const referringUser = await User.findOne({ 
+        username: { $regex: new RegExp(`^${sanitizedReferralCode}$`, 'i') }
+      });
       if (referringUser) {
         userData.referredBy = referringUser._id;
       }
@@ -138,14 +141,19 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
           // Add new user to referrer's affiliates list
           await referringUser.addAffiliate(user._id);
           
-          // Emit real-time update for affiliate count change
-          emitAffiliateEarningUpdate({
-            affiliateId: referringUser._id,
-            type: 'newAffiliate',
-            affiliateCount: referringUser.affiliateCount,
-            newAffiliateId: user._id,
-            newAffiliateUsername: user.username
-          });
+          // Emit real-time update for affiliate count change (wrapped in try-catch to prevent crashes)
+          try {
+            emitAffiliateEarningUpdate({
+              affiliateId: referringUser._id,
+              type: 'newAffiliate',
+              affiliateCount: referringUser.affiliateCount,
+              newAffiliateId: user._id,
+              newAffiliateUsername: user.username
+            });
+          } catch (emitError) {
+            console.error('Error emitting affiliate update:', emitError);
+            // Don't fail registration if emit fails
+          }
           
           // Points will be awarded after email verification
 
