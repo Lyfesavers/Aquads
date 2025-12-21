@@ -252,8 +252,8 @@ cron.schedule('0 8 * * *', async () => {
   timezone: "America/New_York" // EST/EDT timezone
 });
 
-// Cron job for sending daily admin reminder to non-admin groups at 8:30 AM EST
-cron.schedule('30 8 * * *', async () => {
+// Cron job for sending daily admin reminder to non-admin groups at 7:00 PM EST
+cron.schedule('0 19 * * *', async () => {
   try {
     console.log('[Admin Reminder] Checking groups and sending admin reminders...');
     await telegramService.sendDailyAdminReminder();
