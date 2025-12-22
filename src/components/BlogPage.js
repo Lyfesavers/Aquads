@@ -190,15 +190,8 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
   };
 
   const handleShare = () => {
-    // Use /share/blog/:id for proper social media meta tags (blog image, title, etc.)
-    // This ensures crawlers always get the correct metadata
-    if (!blog || !blog._id) {
-      alert('Blog information not available');
-      return;
-    }
-    
-    const shareUrl = `${window.location.origin}/share/blog/${blog._id}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
+    const currentUrl = window.location.href;
+    navigator.clipboard.writeText(currentUrl).then(() => {
       alert('Blog link copied to clipboard!');
     }).catch(err => {
       console.error('Failed to copy:', err);
