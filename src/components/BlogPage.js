@@ -81,7 +81,7 @@ const MarkdownRenderer = ({ content }) => {
 };
 
 const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
-  const { slug } = useParams();
+  const { slug, id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [blog, setBlog] = useState(null);
@@ -112,8 +112,8 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     };
   }, [showUserDropdown]);
 
-  // Extract blog ID from slug or URL params
-  const blogId = extractBlogIdFromSlug(slug) || new URLSearchParams(location.search).get('blogId');
+  // Extract blog ID from slug, /share/blog/:id, or URL params
+  const blogId = id || extractBlogIdFromSlug(slug) || new URLSearchParams(location.search).get('blogId');
 
   useEffect(() => {
     if (!blogId) {
@@ -125,6 +125,18 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     fetchBlog();
     fetchRelatedBlogs();
   }, [blogId]);
+
+  // Update browser URL to show /share/blog/:id when viewing via /learn/:slug
+  // This ensures copied URLs have proper metadata
+  useEffect(() => {
+    if (blog && blog._id && location.pathname.startsWith('/learn/')) {
+      // If we're on /learn/:slug but have the blog loaded, update URL to /share/blog/:id
+      const shareUrl = `/share/blog/${blog._id}`;
+      if (location.pathname !== shareUrl) {
+        navigate(shareUrl, { replace: true });
+      }
+    }
+  }, [blog, location.pathname, navigate]);
 
   // Load Coinscribble ad widget script
   useEffect(() => {
@@ -815,7 +827,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               {relatedBlogs.map((relatedBlog) => (
                 <Link
                   key={relatedBlog._id}
-                  to={`/learn/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
+                  to={`/share/blog/${relatedBlog._id}`}
                   className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
                 >
                   <div className="aspect-video">

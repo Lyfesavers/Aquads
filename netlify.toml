@@ -25,22 +25,13 @@
   status = 200
   force = true
 
-# Serve prerendered version for bots only - Blogs (old /how-to URLs)
+# Serve prerendered version for bots only - Blogs
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
-
-# Serve prerendered version for ALL requests - Direct blog URLs (/learn/slug-id)
-# This ensures metadata works when someone copies/pastes the URL from browser
-# Always prerenders (like share URLs) so all crawlers see metadata
-[[redirects]]
-  from = "/learn/*-:id"
-  to = "/.netlify/functions/prerender-blog"
-  status = 200
-  force = true
 
 # Serve prerendered version for bots only - AquaSwap tokens
 [[redirects]]

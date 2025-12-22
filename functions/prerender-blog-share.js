@@ -169,15 +169,25 @@ function getBlogHtml(blog, description, seoUrl, redirectUrl) {
   
   <link rel="canonical" href="${escapedSeoUrl}">
   
-  <script>window.location.href='${escapedRedirectUrl}';</script>
+  <script>
+    // For regular users: Redirect to the React app route
+    // The redirect goes to /learn/slug-id which React Router handles
+    // But we'll update the URL back to /share/blog/:id after load
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = '${escapedRedirectUrl}';
+    }
+  </script>
 </head>
 <body>
   <h1>${escapedTitle}</h1>
   <p>${escapedDescription}</p>
   <p><a href="${escapedRedirectUrl}">Read the full article</a></p>
   <script>
+    // Backup redirect
     setTimeout(function() {
-      window.location.href = '${escapedRedirectUrl}';
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = '${escapedRedirectUrl}';
+      }
     }, 100);
   </script>
 </body>
