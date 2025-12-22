@@ -1,8 +1,11 @@
-# Handle sitemap with trailing slash
-/sitemap.xml/ /.netlify/functions/sitemap 200
+# Serve robots.txt directly (prevent SPA fallback)
+/robots.txt /robots.txt 200!
+
+# Handle sitemap with trailing slash - force to prevent SPA fallback
+/sitemap.xml/ /.netlify/functions/sitemap 200!
 
 # Serve sitemap via Netlify function (must be first)
-/sitemap.xml /.netlify/functions/sitemap 200
+/sitemap.xml /.netlify/functions/sitemap 200!
 
 # SEO-friendly URL redirect for blogs (for regular users)
 /how-to/*-:id /how-to?blogId=:id 301

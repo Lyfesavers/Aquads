@@ -11,6 +11,13 @@
 [functions]
   directory = "functions"
 
+# Serve robots.txt directly (prevent SPA fallback)
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+  force = true
+
 # Handle sitemap with trailing slash
 [[redirects]]
   from = "/sitemap.xml/"
