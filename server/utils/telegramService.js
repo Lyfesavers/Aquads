@@ -1340,12 +1340,8 @@ https://aquads.xyz`;
         return { success: false };
       }
     } catch (error) {
-      const errorDetails = error.response?.data?.description || error.message;
-      console.error('Bot message error:', errorDetails);
-      if (error.response?.status === 400) {
-        console.error('Telegram API 400 error details:', JSON.stringify(error.response.data));
-      }
-      return { success: false, error: errorDetails };
+      console.error('Bot message error:', error.message);
+      return { success: false };
     }
   },
 
@@ -4983,8 +4979,6 @@ Let's make today amazing! 🚀`;
         return false;
       }
 
-      console.log(`[Admin Reminder] Starting check for ${groupsToCheck.size} active groups`);
-
       // Get last notification date from database
       const settings = await BotSettings.findOne({ key: 'adminReminderLastSent' });
       const lastSentData = settings?.value || {};
@@ -5000,43 +4994,22 @@ Thanks! 🙏✨`;
       let successCount = 0;
       let nonAdminCount = 0;
       let skippedCount = 0;
-      let adminCount = 0;
-      let errorCount = 0;
 
       for (const chatId of groupsToCheck) {
         try {
           const chatIdStr = chatId.toString();
-          console.log(`[Admin Reminder] Checking group ${chatIdStr}...`);
           
           // Check if we already sent today to this group
           if (lastSentData[chatIdStr] === today) {
             skippedCount++;
-            console.log(`⏭️ Group ${chatIdStr} skipped - already sent today`);
             continue;
           }
 
           // Check if bot is admin
           const adminStatus = await telegramService.checkBotAdminStatus(chatIdStr);
           
-          if (adminStatus.error) {
-            console.log(`⚠️ Error checking admin status for group ${chatIdStr}: ${adminStatus.error}`);
-            // If there's an error checking admin status, treat as non-admin and try to send
-            // This handles cases where bot might not have permission to check but is still a member
+          if (!adminStatus.isAdmin) {
             nonAdminCount++;
-            errorCount++;
-            
-            const result = await telegramService.sendBotMessage(chatIdStr, message);
-            if (result.success) {
-              successCount++;
-              lastSentData[chatIdStr] = today;
-              console.log(`✅ Admin reminder sent to group ${chatIdStr} (admin check had error but message sent)`);
-            } else {
-              const errorMsg = result.error ? `: ${result.error}` : '';
-              console.log(`⚠️ Failed to send admin reminder to group ${chatIdStr}${errorMsg}`);
-            }
-          } else if (!adminStatus.isAdmin) {
-            nonAdminCount++;
-            console.log(`📋 Group ${chatIdStr} is NOT admin (status: ${adminStatus.status})`);
             
             // Send reminder message
             const result = await telegramService.sendBotMessage(chatIdStr, message);
@@ -5047,24 +5020,9 @@ Thanks! 🙏✨`;
               lastSentData[chatIdStr] = today;
               console.log(`✅ Admin reminder sent to group ${chatIdStr}`);
             } else {
-              const errorMsg = result.error ? `: ${result.error}` : '';
-              console.log(`⚠️ Failed to send admin reminder to group ${chatIdStr}${errorMsg}`);
-              
-              // If bot was removed or chat not found, remove from active groups
-              if (result.error && (
-                result.error.toLowerCase().includes('chat not found') ||
-                result.error.toLowerCase().includes('bot is not a member') ||
-                result.error.toLowerCase().includes('bot was kicked') ||
-                result.error.toLowerCase().includes('bot was removed')
-              )) {
-                telegramService.activeGroups.delete(chatIdStr);
-                await telegramService.saveActiveGroups();
-                console.log(`🗑️ Removed group ${chatIdStr} from active groups (bot removed or chat not found)`);
-              }
+              console.log(`⚠️ Failed to send admin reminder to group ${chatIdStr}`);
             }
           } else {
-            adminCount++;
-            console.log(`✅ Group ${chatIdStr} IS admin (status: ${adminStatus.status})`);
             // Bot is admin, remove from tracking if it was there
             if (lastSentData[chatIdStr]) {
               delete lastSentData[chatIdStr];
@@ -5075,9 +5033,7 @@ Thanks! 🙏✨`;
           await new Promise(resolve => setTimeout(resolve, 200));
 
         } catch (error) {
-          errorCount++;
-          console.error(`[Admin Reminder] Exception processing group ${chatId}:`, error.message);
-          console.error(`[Admin Reminder] Full error for group ${chatId}:`, error);
+          console.error(`[Admin Reminder] Error processing group ${chatId}:`, error.message);
           
           // Remove group if bot was kicked/removed
           if (telegramService.shouldRemoveGroupFromActive(error)) {
@@ -5096,14 +5052,7 @@ Thanks! 🙏✨`;
         { upsert: true }
       );
 
-      console.log(`📨 [Admin Reminder] Summary:`);
-      console.log(`   Total groups checked: ${groupsToCheck.size}`);
-      console.log(`   Admin groups: ${adminCount}`);
-      console.log(`   Non-admin groups found: ${nonAdminCount}`);
-      console.log(`   Successfully sent: ${successCount}`);
-      console.log(`   Failed to send: ${nonAdminCount - successCount}`);
-      console.log(`   Skipped (already sent today): ${skippedCount}`);
-      console.log(`   Errors encountered: ${errorCount}`);
+      console.log(`📨 [Admin Reminder] Sent to ${successCount}/${nonAdminCount} non-admin groups (${skippedCount} skipped - already sent today)`);
       return successCount > 0;
 
     } catch (error) {
