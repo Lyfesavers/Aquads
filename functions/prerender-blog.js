@@ -19,9 +19,28 @@ exports.handler = async (event, context) => {
   
   const blogId = match[2];
   
+  // Check User-Agent to determine if this is a crawler
+  // This is a fallback in case the redirect conditions don't catch it
+  const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || '';
+  const isCrawler = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|ia_archiver/i.test(userAgent);
+  
+  // If it's definitely a regular user (not a crawler), let the SPA handle it
+  // But we'll still prerender to be safe for SEO (some crawlers might not match the redirect conditions)
+  // The metadata will be there for crawlers, and users will get the React app via the default SPA redirect
+  
   try {
-    // Fetch the blog data from your API
-    const response = await fetch(`https://www.aquads.xyz/api/blogs/${blogId}`);
+    // Fetch the blog data from API (backend is on Render, not Netlify)
+    const apiUrl = `https://aquads.onrender.com/api/blogs/${blogId}`;
+    console.log('Fetching blog from:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('API response status:', response.status);
     
     if (!response.ok) {
       throw new Error(`API returned ${response.status}`);
@@ -29,18 +48,34 @@ exports.handler = async (event, context) => {
     
     const blog = await response.json();
     
+    if (!blog || !blog._id) {
+      console.log('Blog not found or invalid data');
+      return {
+        statusCode: 200,
+        body: getDefaultHtml(),
+        headers: { 'Content-Type': 'text/html' },
+      };
+    }
+    
+    console.log('Blog found successfully:', blog.title);
+    
     // Create clean description from blog content
     const description = blog.content
       ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
       : 'Read our latest blog post on Aquads!';
     
-    // Create SEO-friendly URL
-    const slug = createSlug(blog.title);
-    const seoUrl = `https://www.aquads.xyz/learn/${slug}-${blogId}`;
+    // Create SEO-friendly URL (use the original path to preserve the exact slug)
+    const originalPath = path;
+    const seoUrl = `https://www.aquads.xyz${originalPath}`;
+    // Redirect URL should be the same as the original path (no redirect needed for direct URLs)
+    const redirectUrl = originalPath;
+    
+    console.log('SEO URL:', seoUrl);
+    console.log('Redirect URL:', redirectUrl);
     
     return {
       statusCode: 200,
-      body: getBlogHtml(blog, description, seoUrl),
+      body: getBlogHtml(blog, description, seoUrl, redirectUrl),
       headers: {
         'Content-Type': 'text/html',
       },
@@ -77,8 +112,26 @@ function createSlug(title) {
   return slug;
 }
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Function to generate HTML with blog metadata
-function getBlogHtml(blog, description, seoUrl) {
+function getBlogHtml(blog, description, seoUrl, redirectUrl) {
+  const escapedTitle = escapeHtml(blog.title);
+  const escapedDescription = escapeHtml(description);
+  const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
+  const escapedImageUrl = escapeHtml(imageUrl);
+  const escapedSeoUrl = escapeHtml(seoUrl);
+  const escapedRedirectUrl = escapeHtml(redirectUrl);
+  
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -87,37 +140,46 @@ function getBlogHtml(blog, description, seoUrl) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000" />
     <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
-    <meta name="description" content="${description}" />
+    <meta name="description" content="${escapedDescription}" />
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-    <meta name="twitter:title" content="${blog.title} - Aquads Blog">
-    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:site" content="@_Aquads">
+    <meta name="twitter:image" content="${escapedImageUrl}">
+    <meta name="twitter:title" content="${escapedTitle} - Aquads Blog">
+    <meta name="twitter:description" content="${escapedDescription}">
     
     <!-- Open Graph meta tags -->
-    <meta property="og:title" content="${blog.title} - Aquads Blog">
-    <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-    <meta property="og:url" content="${seoUrl}">
     <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Aquads Blog">
+    <meta property="og:url" content="${escapedSeoUrl}">
+    <meta property="og:title" content="${escapedTitle} - Aquads Blog">
+    <meta property="og:description" content="${escapedDescription}">
+    <meta property="og:image" content="${escapedImageUrl}">
+    ${blog.createdAt ? `<meta property="article:published_time" content="${blog.createdAt}">` : ''}
+    ${blog.updatedAt || blog.createdAt ? `<meta property="article:modified_time" content="${blog.updatedAt || blog.createdAt}">` : ''}
+    ${blog.authorUsername ? `<meta property="article:author" content="${escapeHtml(blog.authorUsername)}">` : ''}
     
-    <link rel="canonical" href="${seoUrl}" />
-    <title>${blog.title} - Aquads Blog</title>
+    <link rel="canonical" href="${escapedSeoUrl}" />
+    <title>${escapedTitle} - Aquads Blog</title>
     <script>
-      // Redirect to the app URL
-      window.location.href = '/learn?blogId=${blog._id}';
+      // For regular users, let React Router handle the route
+      // Crawlers will see the metadata above and won't execute this
+      // This ensures crawlers get metadata while users get the React app
+      if (typeof window !== 'undefined' && window.location) {
+        // Only redirect if we're in a browser (not a crawler)
+        // But actually, we want to serve the React app, so we'll let Netlify handle it
+        // The metadata is already in the HTML for crawlers
+      }
     </script>
   </head>
   <body>
-    <h1>${blog.title}</h1>
-    <div>${blog.content || ''}</div>
-    <script>
-      // Backup redirect
-      setTimeout(function() {
-        window.location.href = '/learn?blogId=${blog._id}';
-      }, 100);
-    </script>
+    <h1>${escapedTitle}</h1>
+    <p>${escapedDescription}</p>
+    <p><a href="${escapedRedirectUrl}">Read the full article</a></p>
+    <noscript>
+      <p>Please enable JavaScript to view the full article.</p>
+    </noscript>
   </body>
 </html>`;
 }
