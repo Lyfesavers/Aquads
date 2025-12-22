@@ -4,13 +4,16 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
   console.log('=== PRERENDER-BLOG-SHARE CALLED ===');
+  console.log('Full path:', event.path);
+  console.log('Query params:', event.queryStringParameters);
   
   // Extract blog ID from path: /share/blog/:id
-  const path = event.path;
+  // Handle both with and without query parameters
+  const path = event.path.split('?')[0]; // Remove query params for matching
   const match = path.match(/\/share\/blog\/([a-zA-Z0-9]+)$/);
   
   if (!match) {
-    console.log('No blog ID found in path');
+    console.log('No blog ID found in path. Path was:', path);
     return {
       statusCode: 200,
       body: getDefaultHtml(),
@@ -19,20 +22,46 @@ exports.handler = async (event, context) => {
   }
   
   const blogId = match[1];
-  console.log('Blog ID:', blogId);
+  console.log('Blog ID extracted:', blogId);
   
   try {
-    // Fetch the blog data from API
-    const response = await fetch(`https://www.aquads.xyz/api/blogs/${blogId}`);
+    // Fetch the blog data from API (backend is on Render, not Netlify)
+    const apiUrl = `https://aquads.onrender.com/api/blogs/${blogId}`;
+    console.log('Fetching blog from:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      redirect: 'follow', // Follow redirects
+    });
+    
+    console.log('API response status:', response.status);
+    console.log('API response headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    
+    // Check content type to ensure we're getting JSON
+    const contentType = response.headers.get('content-type');
+    console.log('Content-Type:', contentType);
+    
+    if (!contentType || !contentType.includes('application/json')) {
+      // If not JSON, read as text to see what we got
+      const text = await response.text();
+      console.error('Non-JSON response received. First 500 chars:', text.substring(0, 500));
+      throw new Error(`API returned non-JSON response: ${contentType}`);
+    }
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API returned ${response.status} for blog ${blogId}. Response:`, errorText.substring(0, 200));
       throw new Error(`API returned ${response.status}`);
     }
     
     const blog = await response.json();
+    console.log('Blog data received:', blog ? 'Yes' : 'No', blog ? `Title: ${blog.title}` : '');
     
-    if (!blog) {
-      console.log('Blog not found');
+    if (!blog || !blog._id) {
+      console.log('Blog not found or invalid data');
       return {
         statusCode: 200,
         body: getDefaultHtml(),
@@ -40,7 +69,7 @@ exports.handler = async (event, context) => {
       };
     }
     
-    console.log('Blog found:', blog.title);
+    console.log('Blog found successfully:', blog.title);
     
     // Create clean description from blog content
     const description = blog.content
@@ -96,12 +125,13 @@ function escapeHtml(text) {
 }
 
 // Function to generate HTML with blog metadata
-function getBlogHtml(blog, description, seoUrl, blogId) {
+function getBlogHtml(blog, description, seoUrl, redirectUrl) {
   const escapedTitle = escapeHtml(blog.title);
   const escapedDescription = escapeHtml(description);
   const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
   const escapedImageUrl = escapeHtml(imageUrl);
   const escapedSeoUrl = escapeHtml(seoUrl);
+  const escapedRedirectUrl = escapeHtml(redirectUrl);
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -133,15 +163,15 @@ function getBlogHtml(blog, description, seoUrl, blogId) {
   
   <link rel="canonical" href="${escapedSeoUrl}">
   
-  <script>window.location.href='${escapedSeoUrl}';</script>
+  <script>window.location.href='${escapedRedirectUrl}';</script>
 </head>
 <body>
   <h1>${escapedTitle}</h1>
   <p>${escapedDescription}</p>
-  <p><a href="${escapedSeoUrl}">Read the full article</a></p>
+  <p><a href="${escapedRedirectUrl}">Read the full article</a></p>
   <script>
     setTimeout(function() {
-      window.location.href = '${escapedSeoUrl}';
+      window.location.href = '${escapedRedirectUrl}';
     }, 100);
   </script>
 </body>
