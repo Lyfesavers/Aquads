@@ -25,13 +25,21 @@
   status = 200
   force = true
 
-# Serve prerendered version for bots only - Blogs
+# Serve prerendered version for bots only - Blogs (old /how-to path)
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
+
+# Serve prerendered version for bots only - Blogs (current /learn path)
+[[redirects]]
+  from = "/learn/*-:id"
+  to = "/.netlify/functions/prerender-blog"
+  status = 200
+  force = false
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*,SEOmator*,*crawler*,*spider*"}
 
 # Serve prerendered version for bots only - AquaSwap tokens
 [[redirects]]
