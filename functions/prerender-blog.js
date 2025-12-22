@@ -3,9 +3,8 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
   // Extract the blog ID from the path
-  // Handle both /learn/slug-id and /how-to/slug-id patterns
   const path = event.path;
-  const match = path.match(/\/(learn|how-to)\/(.+)-([a-zA-Z0-9]+)$/);
+  const match = path.match(/\/learn\/(.+)-([a-zA-Z0-9]+)$/);
   
   if (!match) {
     // If no match found, just serve a standard page
@@ -18,11 +17,8 @@ exports.handler = async (event, context) => {
     };
   }
   
-  const blogId = match[3];
+  const blogId = match[2];
   
-  // Fetch blog data and return metadata HTML
-  // Crawlers will see the metadata (they don't execute JS)
-  // Regular users will be redirected via JavaScript to the React app
   try {
     // Fetch the blog data from your API
     const response = await fetch(`https://www.aquads.xyz/api/blogs/${blogId}`);
@@ -113,9 +109,9 @@ function getBlogHtml(blog, description, seoUrl) {
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@_Aquads">
+    <meta name="twitter:image" content="${escapedImageUrl}">
     <meta name="twitter:title" content="${escapedTitle} - Aquads Blog">
     <meta name="twitter:description" content="${escapedDescription}">
-    <meta name="twitter:image" content="${escapedImageUrl}">
     
     <!-- Open Graph meta tags -->
     <meta property="og:type" content="article">
@@ -124,9 +120,6 @@ function getBlogHtml(blog, description, seoUrl) {
     <meta property="og:title" content="${escapedTitle} - Aquads Blog">
     <meta property="og:description" content="${escapedDescription}">
     <meta property="og:image" content="${escapedImageUrl}">
-    ${blog.createdAt ? `<meta property="article:published_time" content="${blog.createdAt}">` : ''}
-    ${blog.updatedAt || blog.createdAt ? `<meta property="article:modified_time" content="${blog.updatedAt || blog.createdAt}">` : ''}
-    ${blog.authorUsername ? `<meta property="article:author" content="${escapeHtml(blog.authorUsername)}">` : ''}
     
     <link rel="canonical" href="${escapedSeoUrl}" />
     <title>${escapedTitle} - Aquads Blog</title>
@@ -136,9 +129,8 @@ function getBlogHtml(blog, description, seoUrl) {
     </script>
   </head>
   <body>
-    <h1>${escapedTitle}</h1>
-    <p>${escapedDescription}</p>
-    <p><a href="/learn?blogId=${blog._id}">Read the full article</a></p>
+    <h1>${blog.title}</h1>
+    <div>${blog.content || ''}</div>
     <script>
       // Backup redirect
       setTimeout(function() {

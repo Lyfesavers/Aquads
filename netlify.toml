@@ -25,20 +25,13 @@
   status = 200
   force = true
 
-# Serve prerendered version for bots only - Blogs (old /how-to path)
+# Serve prerendered version for bots only - Blogs
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
-
-# Serve prerendered version for blogs - checks User-Agent in function for better detection
-[[redirects]]
-  from = "/learn/*-:id"
-  to = "/.netlify/functions/prerender-blog"
-  status = 200
-  force = true
 
 # Serve prerendered version for bots only - AquaSwap tokens
 [[redirects]]
@@ -53,6 +46,14 @@
 [[redirects]]
   from = "/share/aquaswap"
   to = "/.netlify/functions/prerender-aquaswap"
+  status = 200
+  force = true
+
+# GUARANTEED blog URL - ALWAYS prerenders (no User-Agent check)
+# Blogs shared as /learn/slug-id will always get proper metadata
+[[redirects]]
+  from = "/learn/*-:id"
+  to = "/.netlify/functions/prerender-blog"
   status = 200
   force = true
 

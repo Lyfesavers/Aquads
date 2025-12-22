@@ -15,5 +15,8 @@
 # AquaSwap token share URL - ALWAYS prerender
 /share/aquaswap /.netlify/functions/prerender-aquaswap 200!
 
+# Blog URL - ALWAYS prerender (for proper metadata)
+/learn/*-:id /.netlify/functions/prerender-blog 200!
+
 # Default SPA redirect (keep this last)
 /* /index.html 200
