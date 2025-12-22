@@ -18,5 +18,8 @@
 # Blog share URL - ALWAYS prerender
 /share/blog/:id /.netlify/functions/prerender-blog-share 200!
 
+# Direct blog URLs - ALWAYS prerender (like share URLs) so metadata works for all crawlers
+/learn/*-:id /.netlify/functions/prerender-blog 200!
+
 # Default SPA redirect (keep this last)
 /* /index.html 200
