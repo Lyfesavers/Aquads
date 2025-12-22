@@ -79,10 +79,16 @@ exports.handler = async (event, context) => {
     // Create SEO-friendly URL for canonical and og:url
     const slug = createSlug(blog.title);
     const seoUrl = `https://www.aquads.xyz/learn/${slug}-${blogId}`;
+    // Relative URL for redirect (works better with React Router)
+    const redirectUrl = `/learn/${slug}-${blogId}`;
+    
+    console.log('Generated slug:', slug);
+    console.log('SEO URL:', seoUrl);
+    console.log('Redirect URL:', redirectUrl);
     
     return {
       statusCode: 200,
-      body: getBlogHtml(blog, description, seoUrl, blogId),
+      body: getBlogHtml(blog, description, seoUrl, redirectUrl),
       headers: { 'Content-Type': 'text/html' },
     };
   } catch (error) {
