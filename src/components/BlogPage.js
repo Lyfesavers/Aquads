@@ -815,7 +815,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               {relatedBlogs.map((relatedBlog) => (
                 <Link
                   key={relatedBlog._id}
-                  to={`/learn/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
+                  to={`/share/blog/${relatedBlog._id}`}
                   className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
                 >
                   <div className="aspect-video">
