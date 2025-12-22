@@ -380,7 +380,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
             {/* Read More Link */}
             <Link
-              to={`/learn/${createSlug(blog.title)}-${blog._id}`}
+                              to={`/learn/${createSlug(blog.title)}-${blog._id}`}
               className="mt-2 text-blue-400 hover:text-blue-300 transition-colors inline-block"
             >
               Read More

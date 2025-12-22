@@ -18,8 +18,5 @@
 # Blog share URL - ALWAYS prerender
 /share/blog/:id /.netlify/functions/prerender-blog-share 200!
 
-# Direct blog URLs - prerender for crawlers only (users get React app via default SPA redirect)
-# Note: This is handled by netlify.toml with User-Agent conditions
-
 # Default SPA redirect (keep this last)
 /* /index.html 200
