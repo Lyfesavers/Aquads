@@ -33,13 +33,12 @@
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
 
-# Serve prerendered version for bots only - Blogs (current /learn path)
+# Serve prerendered version for blogs - checks User-Agent in function for better detection
 [[redirects]]
   from = "/learn/*-:id"
   to = "/.netlify/functions/prerender-blog"
   status = 200
-  force = false
-  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*,SEOmator*,*crawler*,*spider*"}
+  force = true
 
 # Serve prerendered version for bots only - AquaSwap tokens
 [[redirects]]

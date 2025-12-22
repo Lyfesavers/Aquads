@@ -20,6 +20,9 @@ exports.handler = async (event, context) => {
   
   const blogId = match[3];
   
+  // Fetch blog data and return metadata HTML
+  // Crawlers will see the metadata (they don't execute JS)
+  // Regular users will be redirected via JavaScript to the React app
   try {
     // Fetch the blog data from your API
     const response = await fetch(`https://www.aquads.xyz/api/blogs/${blogId}`);
