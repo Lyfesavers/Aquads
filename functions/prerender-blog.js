@@ -77,25 +77,8 @@ function createSlug(title) {
   return slug;
 }
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 // Function to generate HTML with blog metadata
 function getBlogHtml(blog, description, seoUrl) {
-  const escapedTitle = escapeHtml(blog.title);
-  const escapedDescription = escapeHtml(description);
-  const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
-  const escapedImageUrl = escapeHtml(imageUrl);
-  const escapedSeoUrl = escapeHtml(seoUrl);
-  
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -104,25 +87,23 @@ function getBlogHtml(blog, description, seoUrl) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000" />
     <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
-    <meta name="description" content="${escapedDescription}" />
+    <meta name="description" content="${description}" />
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@_Aquads">
-    <meta name="twitter:image" content="${escapedImageUrl}">
-    <meta name="twitter:title" content="${escapedTitle} - Aquads Blog">
-    <meta name="twitter:description" content="${escapedDescription}">
+    <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+    <meta name="twitter:title" content="${blog.title} - Aquads Blog">
+    <meta name="twitter:description" content="${description}">
     
     <!-- Open Graph meta tags -->
+    <meta property="og:title" content="${blog.title} - Aquads Blog">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+    <meta property="og:url" content="${seoUrl}">
     <meta property="og:type" content="article">
-    <meta property="og:site_name" content="Aquads Blog">
-    <meta property="og:url" content="${escapedSeoUrl}">
-    <meta property="og:title" content="${escapedTitle} - Aquads Blog">
-    <meta property="og:description" content="${escapedDescription}">
-    <meta property="og:image" content="${escapedImageUrl}">
     
-    <link rel="canonical" href="${escapedSeoUrl}" />
-    <title>${escapedTitle} - Aquads Blog</title>
+    <link rel="canonical" href="${seoUrl}" />
+    <title>${blog.title} - Aquads Blog</title>
     <script>
       // Redirect to the app URL
       window.location.href = '/learn?blogId=${blog._id}';

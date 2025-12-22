@@ -49,11 +49,11 @@
   status = 200
   force = true
 
-# GUARANTEED blog URL - ALWAYS prerenders (no User-Agent check)
-# Blogs shared as /learn/slug-id will always get proper metadata
+# GUARANTEED blog share URL - ALWAYS prerenders (no User-Agent check)
+# Use this URL for sharing: /share/blog/:id
 [[redirects]]
-  from = "/learn/*-:id"
-  to = "/.netlify/functions/prerender-blog"
+  from = "/share/blog/:id"
+  to = "/.netlify/functions/prerender-blog-share"
   status = 200
   force = true
 
