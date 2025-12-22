@@ -53,9 +53,24 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
-  const [isTableExpanded, setIsTableExpanded] = useState(false);
+  const [displayCount, setDisplayCount] = useState(20);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [fallbackInterval, setFallbackInterval] = useState(null);
+
+  // Get tokens to display (paginated)
+  const displayedTokens = filteredTokens.slice(0, displayCount);
+  const hasMoreTokens = displayCount < filteredTokens.length;
+
+  // Load more handler
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+      setDisplayCount(prev => prev + 20);
+      setIsLoadingMore(false);
+    }, 300);
+  };
 
 
 
@@ -63,6 +78,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleSort = (key) => {
     const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
     setSortConfig({ key, direction });
+    setDisplayCount(20); // Reset pagination when sorting
     
     const sorted = [...filteredTokens].sort((a, b) => {
       if (direction === 'asc') {
@@ -117,6 +133,7 @@ const TokenList = ({ currentUser, showNotification }) => {
     try {
       setIsLoading(true);
     setSearchTerm(searchTerm);
+    setDisplayCount(20); // Reset pagination when searching
     
       if (!searchTerm.trim()) {
         setFilteredTokens(tokens);
@@ -395,21 +412,20 @@ const TokenList = ({ currentUser, showNotification }) => {
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
         {viewMode === 'tokens' ? (
           <>
-            {/* Token list dropdown toggle */}
-            <div className="p-6 border-b border-gray-700/30">
-              <button
-                onClick={() => setIsTableExpanded(!isTableExpanded)}
-                className="flex items-center justify-between w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
-              >
-                <span className="font-medium">Token List ({filteredTokens.length} tokens)</span>
-                <span className={`transform transition-transform ${isTableExpanded ? 'rotate-180' : ''}`}>
-                  ▼
+            {/* Token list header */}
+            <div className="p-4 md:p-6 border-b border-gray-700/30">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg md:text-xl font-semibold text-white">
+                  Token List
+                </h2>
+                <span className="text-sm text-gray-400">
+                  Showing {displayedTokens.length} of {filteredTokens.length} tokens
                 </span>
-              </button>
+              </div>
             </div>
 
-            {/* Collapsible Token list table */}
-            {isTableExpanded && filteredTokens.length > 0 ? (
+            {/* Token list table */}
+            {filteredTokens.length > 0 ? (
               <>
                 {/* Desktop/Tablet Table View (hidden on mobile) */}
                 <div className="w-full hidden md:block">
@@ -454,7 +470,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/30">
-                      {filteredTokens.map((token, index) => (
+                      {displayedTokens.map((token, index) => (
                         <React.Fragment key={token.id}>
                           <tr 
                             className="hover:bg-gray-800/40 cursor-pointer"
@@ -527,7 +543,7 @@ const TokenList = ({ currentUser, showNotification }) => {
 
                 {/* Mobile Card View (visible only on mobile) */}
                 <div className="w-full md:hidden space-y-3 p-4">
-                  {filteredTokens.map((token, index) => (
+                  {displayedTokens.map((token, index) => (
                     <React.Fragment key={token.id}>
                       <div 
                         className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30 hover:bg-gray-800/60 cursor-pointer transition-colors"
@@ -616,8 +632,34 @@ const TokenList = ({ currentUser, showNotification }) => {
                     </React.Fragment>
                   ))}
                 </div>
+
+                {/* Load More Button */}
+                {hasMoreTokens && (
+                  <div className="p-4 md:p-6 border-t border-gray-700/30">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/25"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Load More Tokens</span>
+                          <span className="text-sm opacity-75">({filteredTokens.length - displayCount} remaining)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </>
-            ) : isTableExpanded && filteredTokens.length === 0 ? (
+            ) : filteredTokens.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 {isLoading ? 'Loading tokens...' : 'No tokens found'}
               </div>
