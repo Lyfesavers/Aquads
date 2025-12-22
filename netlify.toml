@@ -49,6 +49,14 @@
   status = 200
   force = true
 
+# GUARANTEED blog share URL - ALWAYS prerenders (no User-Agent check)
+# Use this URL for sharing: /share/blog/:id
+[[redirects]]
+  from = "/share/blog/:id"
+  to = "/.netlify/functions/prerender-blog-share"
+  status = 200
+  force = true
+
 # Handle service pages
 [[redirects]]
   from = "/service/*"

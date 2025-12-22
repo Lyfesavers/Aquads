@@ -113,9 +113,9 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    // Create SEO-friendly URL with slug and ID for sharing on social media
-    const slug = createSlug(blog.title);
-    const shareUrl = `${window.location.origin}/learn/${slug}-${blog._id}`;
+    // Use /share/blog/:id for proper social media meta tags (blog image, title, etc.)
+    // This ensures crawlers always get the correct metadata
+    const shareUrl = `${window.location.origin}/share/blog/${blog._id}`;
     
     // Add referral code if user is logged in (as a separate parameter)
     // The redirect rule will preserve this parameter
