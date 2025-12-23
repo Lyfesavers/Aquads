@@ -8,7 +8,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate } = require('../socket');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate, emitRaidUpdate } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
@@ -180,6 +180,10 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       isAdmin: true
     });
     
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'twitter');
+    
     res.status(201).json(raid);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Twitter raid' });
@@ -272,6 +276,10 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       }
     }
     
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'twitter');
+    
     res.status(201).json({ 
       message: responseMessage,
       raid,
@@ -312,6 +320,9 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
     // Instead of deleting, mark as inactive
     raid.active = false;
     await raid.save();
+    
+    // Emit socket event for real-time update (convert ObjectId to string)
+    emitRaidUpdate('cancelled', { _id: raid._id.toString() }, 'twitter');
     
     res.json({ message: 'Twitter raid cancelled successfully' });
   } catch (error) {
@@ -1010,6 +1021,10 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
         responseMessage += `\n\n💡 Tip: Use /raidin in your Telegram group to share raids with other groups, or /raidout to keep raids private.`;
       }
     }
+    
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'twitter');
     
     res.status(201).json({
       message: responseMessage, 

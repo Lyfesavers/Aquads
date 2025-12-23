@@ -732,6 +732,17 @@ function emitBumpRequestUpdate(type, bumpRequest) {
   io.emit('bumpRequestUpdated', { type, bumpRequest });
 }
 
+// Utility function to emit raid updates (create/cancel for Twitter and Facebook)
+function emitRaidUpdate(type, raid, platform) {
+  if (!io) {
+    return;
+  }
+  
+  // type: 'created' or 'cancelled'
+  // platform: 'twitter' or 'facebook'
+  io.emit('raidListUpdated', { type, raid, platform });
+}
+
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -928,5 +939,6 @@ module.exports = {
   emitMembershipActionError,
   emitNewBookingMessage,
   emitBookingMessageRead,
-  emitBookingMessagesRead
+  emitBookingMessagesRead,
+  emitRaidUpdate
 }; 

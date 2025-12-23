@@ -246,6 +246,42 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     };
   }, [socket, currentUser]);
 
+  // Socket listener for real-time raid list updates (create/cancel)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRaidListUpdated = (data) => {
+      // Only handle Twitter raids
+      if (data.platform !== 'twitter') return;
+      
+      if (data.type === 'created' && data.raid) {
+        // Add new raid to the list (at the beginning since it's newest)
+        const newRaidId = data.raid._id.toString();
+        setRaids(prevRaids => {
+          // Check if raid already exists (avoid duplicates, use string comparison)
+          if (prevRaids.some(r => r._id.toString() === newRaidId)) {
+            return prevRaids;
+          }
+          return [data.raid, ...prevRaids];
+        });
+      } else if (data.type === 'cancelled' && data.raid?._id) {
+        // Remove cancelled raid from the list (use string comparison)
+        const cancelledId = data.raid._id.toString();
+        setRaids(prevRaids => prevRaids.filter(r => r._id.toString() !== cancelledId));
+        // If the cancelled raid was selected, deselect it
+        if (selectedRaid && selectedRaid._id.toString() === cancelledId) {
+          setSelectedRaid(null);
+        }
+      }
+    };
+
+    socket.on('raidListUpdated', handleRaidListUpdated);
+
+    return () => {
+      socket.off('raidListUpdated', handleRaidListUpdated);
+    };
+  }, [socket, selectedRaid]);
+
   useEffect(() => {
     // When tweet URL changes, try to embed it
     if (tweetUrl) {
@@ -843,8 +879,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         setSelectedRaid(null);
       }
       
-      // Refresh raids list
-      fetchRaids();
+      // Socket will handle the real-time update, no need to fetchRaids()
       
       showNotification(isOwnerCancel ? 'Your raid has been cancelled!' : 'Twitter raid deleted successfully!', 'success');
     } catch (err) {

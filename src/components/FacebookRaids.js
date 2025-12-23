@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './SocialMediaRaids.css'; // Reuse the same CSS
+import { socket } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -183,6 +184,43 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     }
   }, [currentUser]);
 
+  // Socket listener for real-time raid list updates (create/cancel)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRaidListUpdated = (data) => {
+      // Only handle Facebook raids
+      if (data.platform !== 'facebook') return;
+      
+      if (data.type === 'created' && data.raid) {
+        // Add new raid to the list (at the beginning since it's newest)
+        const newRaidId = data.raid._id.toString();
+        setRaids(prevRaids => {
+          // Check if raid already exists (avoid duplicates, use string comparison)
+          if (prevRaids.some(r => r._id.toString() === newRaidId)) {
+            return prevRaids;
+          }
+          return [data.raid, ...prevRaids];
+        });
+      } else if (data.type === 'cancelled' && data.raid?._id) {
+        // Remove cancelled raid from the list (use string comparison)
+        const cancelledId = data.raid._id.toString();
+        setRaids(prevRaids => prevRaids.filter(r => r._id.toString() !== cancelledId));
+        // If the cancelled raid was selected, close modal
+        if (selectedRaid && selectedRaid._id.toString() === cancelledId) {
+          setSelectedRaid(null);
+          setShowIframe(false);
+        }
+      }
+    };
+
+    socket.on('raidListUpdated', handleRaidListUpdated);
+
+    return () => {
+      socket.off('raidListUpdated', handleRaidListUpdated);
+    };
+  }, [socket, selectedRaid]);
+
   // Fetch Facebook raids
   const fetchRaids = async () => {
     try {
@@ -239,8 +277,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setShowIframe(false);
       }
       
-      // Refresh raids list
-      fetchRaids();
+      // Socket will handle the real-time update, no need to fetchRaids()
       
       showNotification(isOwnerCancel ? 'Your raid has been cancelled!' : 'Facebook raid deleted successfully!', 'success');
     } catch (err) {

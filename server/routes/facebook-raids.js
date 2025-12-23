@@ -11,6 +11,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
+const { emitRaidUpdate } = require('../socket');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -116,6 +117,10 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       isAdmin: true
     });
     
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await FacebookRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'facebook');
+    
     res.status(201).json(raid);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Facebook raid' });
@@ -207,6 +212,10 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       }
     }
     
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await FacebookRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'facebook');
+    
     res.status(201).json({ 
       message: responseMessage,
       raid,
@@ -290,6 +299,10 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
         responseMessage += `\n\n💡 Tip: Use /raidin in your Telegram group to share raids with other groups, or /raidout to keep raids private.`;
       }
     }
+    
+    // Emit socket event for real-time update (populate createdBy for frontend)
+    const populatedRaid = await FacebookRaid.findById(raid._id).populate('createdBy', 'username');
+    emitRaidUpdate('created', populatedRaid, 'facebook');
     
     res.status(201).json({ 
       message: responseMessage,
@@ -573,7 +586,11 @@ router.delete('/:raidId', auth, requireEmailVerification, async (req, res) => {
       // Continue with raid cancellation even if Telegram deletion fails
     }
 
+    const raidId = raid._id;
     await FacebookRaid.findByIdAndDelete(req.params.raidId);
+
+    // Emit socket event for real-time update (convert ObjectId to string)
+    emitRaidUpdate('cancelled', { _id: raidId.toString() }, 'facebook');
 
     res.json({ message: 'Facebook raid cancelled successfully!' });
   } catch (error) {
