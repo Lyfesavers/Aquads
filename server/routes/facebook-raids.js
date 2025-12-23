@@ -11,6 +11,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
+const { emitRaidUpdate } = require('../socket');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -549,24 +550,33 @@ router.post('/:raidId/reject', auth, requireEmailVerification, async (req, res) 
   }
 });
 
-// Delete a Facebook raid (admin only)
+// Delete/Cancel a Facebook raid (admin or raid owner)
 router.delete('/:raidId', auth, requireEmailVerification, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can delete Facebook raids' });
-    }
-
     const raid = await FacebookRaid.findById(req.params.raidId);
     if (!raid) {
       return res.status(404).json({ error: 'Facebook raid not found' });
     }
 
+    // Check if user is admin or the raid owner
+    const isAdmin = req.user.isAdmin;
+    const isOwner = raid.createdBy.toString() === req.user.id.toString();
+    
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'Only admins or the raid creator can cancel this raid' });
+    }
+
+    const raidId = raid._id.toString();
+    
     await FacebookRaid.findByIdAndDelete(req.params.raidId);
 
-    res.json({ message: 'Facebook raid deleted successfully!' });
+    // Emit socket event for real-time update
+    emitRaidUpdate('cancelled', { _id: raidId }, 'facebook');
+
+    res.json({ message: 'Facebook raid cancelled successfully!' });
   } catch (error) {
-    console.error('Facebook raid deletion error:', error);
-    res.status(500).json({ error: 'Failed to delete Facebook raid' });
+    console.error('Facebook raid cancellation error:', error);
+    res.status(500).json({ error: 'Failed to cancel Facebook raid' });
   }
 });
 

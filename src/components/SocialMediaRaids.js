@@ -246,6 +246,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     };
   }, [socket, currentUser]);
 
+  // Socket listener for real-time raid cancellation updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRaidUpdated = (data) => {
+      // Only handle Twitter raids here
+      if (data.platform !== 'twitter') return;
+      
+      if (data.type === 'cancelled' && data.raid?._id) {
+        // Remove the cancelled raid from the list instantly
+        setRaids(prevRaids => prevRaids.filter(raid => raid._id !== data.raid._id));
+        
+        // If the cancelled raid was selected, deselect it
+        if (selectedRaid && selectedRaid._id === data.raid._id) {
+          setSelectedRaid(null);
+        }
+      }
+    };
+
+    socket.on('raidUpdated', handleRaidUpdated);
+
+    return () => {
+      socket.off('raidUpdated', handleRaidUpdated);
+    };
+  }, [socket, selectedRaid]);
+
   useEffect(() => {
     // When tweet URL changes, try to embed it
     if (tweetUrl) {
@@ -811,13 +837,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
   
-  const handleDeleteRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can delete Twitter raids', 'error');
+  const handleDeleteRaid = async (raidId, raid) => {
+    if (!currentUser) {
+      showNotification('You must be logged in to cancel a raid', 'error');
       return;
     }
     
-    if (!window.confirm('Are you sure you want to delete this Twitter raid?')) {
+    // Check if user is admin or raid owner
+    const currentUserId = currentUser.userId || currentUser.id || currentUser._id;
+    const isOwner = raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
+                    raid?.createdBy?.toString() === currentUserId?.toString();
+    const isAdmin = currentUser.isAdmin;
+    
+    if (!isAdmin && !isOwner) {
+      showNotification('Only admins or the raid creator can cancel this raid', 'error');
+      return;
+    }
+    
+    const confirmMessage = isOwner && !isAdmin 
+      ? 'Are you sure you want to cancel your Twitter raid? This action cannot be undone.'
+      : 'Are you sure you want to delete this Twitter raid?';
+    
+    if (!window.confirm(confirmMessage)) {
       return;
     }
     
@@ -831,7 +872,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete Twitter raid');
+        throw new Error(data.error || 'Failed to cancel Twitter raid');
       }
       
       // If the deleted raid was selected, deselect it
@@ -842,9 +883,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
       
-      showNotification('Twitter raid deleted successfully!', 'success');
+      showNotification('Twitter raid cancelled successfully!', 'success');
     } catch (err) {
-      showNotification(err.message || 'Failed to delete Twitter raid', 'error');
+      showNotification(err.message || 'Failed to cancel Twitter raid', 'error');
     }
   };
   
@@ -1397,28 +1438,37 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 onClick={() => handleRaidClick(raid)}
               >
 
-                {/* Admin Delete Button */}
-                {currentUser?.isAdmin && (
-                  <div 
-                    className="absolute top-2 right-2 z-20 w-8 h-8" 
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ pointerEvents: 'auto' }}
-                  >
-                    <button
-                      className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteRaid(raid._id);
-                      }}
-                      title="Delete Raid"
-                      style={{ transform: 'translateZ(0)' }}
+                {/* Admin Delete / Owner Cancel Button */}
+                {(() => {
+                  const currentUserId = currentUser?.userId || currentUser?.id || currentUser?._id;
+                  const isOwner = currentUserId && (
+                    raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
+                    raid?.createdBy?.toString() === currentUserId?.toString()
+                  );
+                  const canCancel = currentUser?.isAdmin || isOwner;
+                  
+                  return canCancel && (
+                    <div 
+                      className="absolute top-2 right-2 z-20 w-8 h-8" 
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ pointerEvents: 'auto' }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                      <button
+                        className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteRaid(raid._id, raid);
+                        }}
+                        title={isOwner && !currentUser?.isAdmin ? "Cancel Your Raid" : "Delete Raid"}
+                        style={{ transform: 'translateZ(0)' }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  );
+                })()}
                   
                 <div className="flex items-start justify-between mb-3">
                   <div>

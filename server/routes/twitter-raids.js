@@ -8,7 +8,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate } = require('../socket');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate, emitRaidUpdate } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
@@ -284,26 +284,35 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
 });
 
 
-// Delete a Twitter raid (admin only)
+// Delete/Cancel a Twitter raid (admin or raid owner)
 router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can delete Twitter raids' });
-    }
-
     const raid = await TwitterRaid.findById(req.params.id);
     
     if (!raid) {
       return res.status(404).json({ error: 'Twitter raid not found' });
     }
 
+    // Check if user is admin or the raid owner
+    const isAdmin = req.user.isAdmin;
+    const isOwner = raid.createdBy.toString() === req.user.id.toString();
+    
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'Only admins or the raid creator can cancel this raid' });
+    }
+
+    const raidId = raid._id.toString();
+    
     // Instead of deleting, mark as inactive
     raid.active = false;
     await raid.save();
     
-    res.json({ message: 'Twitter raid deleted successfully' });
+    // Emit socket event for real-time update
+    emitRaidUpdate('cancelled', { _id: raidId }, 'twitter');
+    
+    res.json({ message: 'Twitter raid cancelled successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete Twitter raid' });
+    res.status(500).json({ error: 'Failed to cancel Twitter raid' });
   }
 });
 
