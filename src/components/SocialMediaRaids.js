@@ -246,32 +246,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     };
   }, [socket, currentUser]);
 
-  // Socket listener for real-time raid cancellation updates
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleRaidUpdated = (data) => {
-      // Only handle Twitter raids here
-      if (data.platform !== 'twitter') return;
-      
-      if (data.type === 'cancelled' && data.raid?._id) {
-        // Remove the cancelled raid from the list instantly
-        setRaids(prevRaids => prevRaids.filter(raid => raid._id !== data.raid._id));
-        
-        // If the cancelled raid was selected, deselect it
-        if (selectedRaid && selectedRaid._id === data.raid._id) {
-          setSelectedRaid(null);
-        }
-      }
-    };
-
-    socket.on('raidUpdated', handleRaidUpdated);
-
-    return () => {
-      socket.off('raidUpdated', handleRaidUpdated);
-    };
-  }, [socket, selectedRaid]);
-
   useEffect(() => {
     // When tweet URL changes, try to embed it
     if (tweetUrl) {
@@ -837,25 +811,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
   
-  const handleDeleteRaid = async (raidId, raid) => {
+  const handleDeleteRaid = async (raidId, isOwnerCancel = false) => {
     if (!currentUser) {
-      showNotification('You must be logged in to cancel a raid', 'error');
+      showNotification('You must be logged in', 'error');
       return;
     }
     
-    // Check if user is admin or raid owner
-    const currentUserId = currentUser.userId || currentUser.id || currentUser._id;
-    const isOwner = raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
-                    raid?.createdBy?.toString() === currentUserId?.toString();
-    const isAdmin = currentUser.isAdmin;
-    
-    if (!isAdmin && !isOwner) {
-      showNotification('Only admins or the raid creator can cancel this raid', 'error');
-      return;
-    }
-    
-    const confirmMessage = isOwner && !isAdmin 
-      ? 'Are you sure you want to cancel your Twitter raid? This action cannot be undone.'
+    const confirmMessage = isOwnerCancel 
+      ? 'Are you sure you want to cancel your raid? This cannot be undone.'
       : 'Are you sure you want to delete this Twitter raid?';
     
     if (!window.confirm(confirmMessage)) {
@@ -883,7 +846,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
       
-      showNotification('Twitter raid cancelled successfully!', 'success');
+      showNotification(isOwnerCancel ? 'Your raid has been cancelled!' : 'Twitter raid deleted successfully!', 'success');
     } catch (err) {
       showNotification(err.message || 'Failed to cancel Twitter raid', 'error');
     }
@@ -1441,25 +1404,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 {/* Admin Delete / Owner Cancel Button */}
                 {(() => {
                   const currentUserId = currentUser?.userId || currentUser?.id || currentUser?._id;
-                  const isOwner = currentUserId && (
-                    raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
-                    raid?.createdBy?.toString() === currentUserId?.toString()
-                  );
-                  const canCancel = currentUser?.isAdmin || isOwner;
+                  const raidCreatorId = raid?.createdBy?._id || raid?.createdBy;
+                  const isOwner = currentUserId && raidCreatorId && 
+                    currentUserId.toString() === raidCreatorId.toString();
+                  const isAdmin = currentUser?.isAdmin;
                   
-                  return canCancel && (
+                  if (!isAdmin && !isOwner) return null;
+                  
+                  return (
                     <div 
                       className="absolute top-2 right-2 z-20 w-8 h-8" 
                       onClick={(e) => e.stopPropagation()}
                       style={{ pointerEvents: 'auto' }}
                     >
                       <button
-                        className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
+                        className={`absolute inset-0 ${isOwner && !isAdmin ? 'bg-orange-500/20 hover:bg-orange-500/40 text-orange-400' : 'bg-red-500/20 hover:bg-red-500/40 text-red-400'} rounded-full flex items-center justify-center transition-colors duration-200`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteRaid(raid._id, raid);
+                          handleDeleteRaid(raid._id, isOwner && !isAdmin);
                         }}
-                        title={isOwner && !currentUser?.isAdmin ? "Cancel Your Raid" : "Delete Raid"}
+                        title={isOwner && !isAdmin ? "Cancel Your Raid" : "Delete Raid"}
                         style={{ transform: 'translateZ(0)' }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">

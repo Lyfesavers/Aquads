@@ -8,7 +8,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate, emitRaidUpdate } = require('../socket');
+const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidCompletion, emitAffiliateEarningUpdate } = require('../socket');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
@@ -301,14 +301,9 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(403).json({ error: 'Only admins or the raid creator can cancel this raid' });
     }
 
-    const raidId = raid._id.toString();
-    
     // Instead of deleting, mark as inactive
     raid.active = false;
     await raid.save();
-    
-    // Emit socket event for real-time update
-    emitRaidUpdate('cancelled', { _id: raidId }, 'twitter');
     
     res.json({ message: 'Twitter raid cancelled successfully' });
   } catch (error) {

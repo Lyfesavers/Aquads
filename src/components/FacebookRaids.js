@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './SocialMediaRaids.css'; // Reuse the same CSS
-import { socket } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -184,33 +183,6 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     }
   }, [currentUser]);
 
-  // Socket listener for real-time raid cancellation updates
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleRaidUpdated = (data) => {
-      // Only handle Facebook raids here
-      if (data.platform !== 'facebook') return;
-      
-      if (data.type === 'cancelled' && data.raid?._id) {
-        // Remove the cancelled raid from the list instantly
-        setRaids(prevRaids => prevRaids.filter(raid => raid._id !== data.raid._id));
-        
-        // If the cancelled raid was selected, deselect it
-        if (selectedRaid && selectedRaid._id === data.raid._id) {
-          setSelectedRaid(null);
-          setShowIframe(false);
-        }
-      }
-    };
-
-    socket.on('raidUpdated', handleRaidUpdated);
-
-    return () => {
-      socket.off('raidUpdated', handleRaidUpdated);
-    };
-  }, [socket, selectedRaid]);
-
   // Fetch Facebook raids
   const fetchRaids = async () => {
     try {
@@ -234,25 +206,14 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   };
 
   // Cancel/Delete a Facebook raid (for admin or raid owner)
-  const handleCancelRaid = async (raidId, raid) => {
+  const handleCancelRaid = async (raidId, isOwnerCancel = false) => {
     if (!currentUser) {
-      showNotification('You must be logged in to cancel a raid', 'error');
+      showNotification('You must be logged in', 'error');
       return;
     }
     
-    // Check if user is admin or raid owner
-    const currentUserId = currentUser.userId || currentUser.id || currentUser._id;
-    const isOwner = raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
-                    raid?.createdBy?.toString() === currentUserId?.toString();
-    const isAdmin = currentUser.isAdmin;
-    
-    if (!isAdmin && !isOwner) {
-      showNotification('Only admins or the raid creator can cancel this raid', 'error');
-      return;
-    }
-    
-    const confirmMessage = isOwner && !isAdmin 
-      ? 'Are you sure you want to cancel your Facebook raid? This action cannot be undone.'
+    const confirmMessage = isOwnerCancel 
+      ? 'Are you sure you want to cancel your raid? This cannot be undone.'
       : 'Are you sure you want to delete this Facebook raid?';
     
     if (!window.confirm(confirmMessage)) {
@@ -272,7 +233,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         throw new Error(data.error || 'Failed to cancel Facebook raid');
       }
       
-      // If the cancelled raid was selected, deselect it
+      // If the cancelled raid was selected, close the modal
       if (selectedRaid && selectedRaid._id === raidId) {
         setSelectedRaid(null);
         setShowIframe(false);
@@ -281,7 +242,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
       
-      showNotification('Facebook raid cancelled successfully!', 'success');
+      showNotification(isOwnerCancel ? 'Your raid has been cancelled!' : 'Facebook raid deleted successfully!', 'success');
     } catch (err) {
       showNotification(err.message || 'Failed to cancel Facebook raid', 'error');
     }
@@ -785,23 +746,23 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              {raids.map((raid) => {
                // Check if current user can cancel this raid
                const currentUserId = currentUser?.userId || currentUser?.id || currentUser?._id;
-               const isOwner = currentUserId && (
-                 raid?.createdBy?._id?.toString() === currentUserId?.toString() || 
-                 raid?.createdBy?.toString() === currentUserId?.toString()
-               );
-               const canCancel = currentUser?.isAdmin || isOwner;
+               const raidCreatorId = raid?.createdBy?._id || raid?.createdBy;
+               const isOwner = currentUserId && raidCreatorId && 
+                 currentUserId.toString() === raidCreatorId.toString();
+               const isAdmin = currentUser?.isAdmin;
+               const canCancel = isAdmin || isOwner;
                
                return (
                <div key={raid._id} className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/30 hover:border-gray-600/50 transition-colors relative">
                  {/* Admin Delete / Owner Cancel Button */}
                  {canCancel && (
                    <button
-                     className="absolute top-3 right-3 w-8 h-8 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200 z-10"
+                     className={`absolute top-3 right-3 w-8 h-8 ${isOwner && !isAdmin ? 'bg-orange-500/20 hover:bg-orange-500/40 text-orange-400' : 'bg-red-500/20 hover:bg-red-500/40 text-red-400'} rounded-full flex items-center justify-center transition-colors duration-200 z-10`}
                      onClick={(e) => {
                        e.stopPropagation();
-                       handleCancelRaid(raid._id, raid);
+                       handleCancelRaid(raid._id, isOwner && !isAdmin);
                      }}
-                     title={isOwner && !currentUser?.isAdmin ? "Cancel Your Raid" : "Delete Raid"}
+                     title={isOwner && !isAdmin ? "Cancel Your Raid" : "Delete Raid"}
                    >
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

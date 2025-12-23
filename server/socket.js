@@ -732,16 +732,6 @@ function emitBumpRequestUpdate(type, bumpRequest) {
   io.emit('bumpRequestUpdated', { type, bumpRequest });
 }
 
-// Utility function to emit raid updates (Twitter and Facebook)
-function emitRaidUpdate(type, raidData, platform = 'twitter') {
-  if (!io) {
-    return;
-  }
-  
-  // Emit to all connected clients
-  io.emit('raidUpdated', { type, raid: raidData, platform });
-}
-
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -938,6 +928,5 @@ module.exports = {
   emitMembershipActionError,
   emitNewBookingMessage,
   emitBookingMessageRead,
-  emitBookingMessagesRead,
-  emitRaidUpdate
+  emitBookingMessagesRead
 }; 

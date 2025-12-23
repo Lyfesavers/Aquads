@@ -11,7 +11,6 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
-const { emitRaidUpdate } = require('../socket');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -566,12 +565,7 @@ router.delete('/:raidId', auth, requireEmailVerification, async (req, res) => {
       return res.status(403).json({ error: 'Only admins or the raid creator can cancel this raid' });
     }
 
-    const raidId = raid._id.toString();
-    
     await FacebookRaid.findByIdAndDelete(req.params.raidId);
-
-    // Emit socket event for real-time update
-    emitRaidUpdate('cancelled', { _id: raidId }, 'facebook');
 
     res.json({ message: 'Facebook raid cancelled successfully!' });
   } catch (error) {
