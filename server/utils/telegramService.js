@@ -303,6 +303,10 @@ const telegramService = {
               // Store message ID for cleanup (with creator group ID)
               const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
               await telegramService.storeRaidMessageId(chatId, messageId, creatorGroupId);
+              // Also store by raid ID for cancellation deletion
+              if (raidData.raidId) {
+                await telegramService.storeRaidMessageByRaidId(raidData.raidId, chatId, messageId);
+              }
               // Pin the message
               await telegramService.pinMessage(chatId, messageId);
             }
@@ -314,6 +318,10 @@ const telegramService = {
               // Store message ID for cleanup (with creator group ID)
               const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
               await telegramService.storeRaidMessageId(chatId, result.messageId, creatorGroupId);
+              // Also store by raid ID for cancellation deletion
+              if (raidData.raidId) {
+                await telegramService.storeRaidMessageByRaidId(raidData.raidId, chatId, result.messageId);
+              }
               // Pin the message
               await telegramService.pinMessage(chatId, result.messageId);
             }
@@ -1446,6 +1454,82 @@ https://aquads.xyz`;
       );
     } catch (error) {
       console.error('Error storing raid message ID:', error);
+    }
+  },
+
+  // Store raid message ID by raid ID (for deletion when raid is cancelled)
+  storeRaidMessageByRaidId: async (raidId, chatId, messageId) => {
+    try {
+      const raidIdStr = raidId.toString();
+      const chatIdStr = chatId.toString();
+      
+      // Get existing data from database
+      const settings = await BotSettings.findOne({ key: 'raidMessagesByRaidId' });
+      const existingData = settings?.value || {};
+      
+      // Store message info under raid ID
+      if (!existingData[raidIdStr]) {
+        existingData[raidIdStr] = [];
+      }
+      existingData[raidIdStr].push({ chatId: chatIdStr, messageId: messageId });
+      
+      // Save back to database
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidMessagesByRaidId' },
+        { value: existingData, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing raid message by raid ID:', error);
+    }
+  },
+
+  // Delete all Telegram messages for a specific raid (when raid is cancelled)
+  deleteRaidMessagesByRaidId: async (raidId) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return;
+
+    try {
+      const raidIdStr = raidId.toString();
+      
+      // Get stored messages for this raid
+      const settings = await BotSettings.findOne({ key: 'raidMessagesByRaidId' });
+      const existingData = settings?.value || {};
+      
+      const messagesToDelete = existingData[raidIdStr];
+      if (!messagesToDelete || messagesToDelete.length === 0) {
+        console.log(`ℹ️ No Telegram messages found for raid ${raidIdStr}`);
+        return;
+      }
+
+      console.log(`🗑️ Deleting ${messagesToDelete.length} Telegram messages for cancelled raid ${raidIdStr}`);
+      
+      let deletedCount = 0;
+      for (const msg of messagesToDelete) {
+        try {
+          await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
+            chat_id: msg.chatId,
+            message_id: msg.messageId
+          });
+          console.log(`✅ Deleted raid message ${msg.messageId} from chat ${msg.chatId}`);
+          deletedCount++;
+        } catch (error) {
+          // Message might already be deleted or bot doesn't have permission
+          console.log(`⚠️ Could not delete message ${msg.messageId} from chat ${msg.chatId}: ${error.message}`);
+        }
+      }
+      
+      // Remove this raid's messages from storage
+      delete existingData[raidIdStr];
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidMessagesByRaidId' },
+        { value: existingData, updatedAt: new Date() },
+        { upsert: true }
+      );
+      
+      console.log(`🧹 Deleted ${deletedCount}/${messagesToDelete.length} Telegram messages for raid ${raidIdStr}`);
+    } catch (error) {
+      console.error('Error deleting raid messages by raid ID:', error.message);
     }
   },
 

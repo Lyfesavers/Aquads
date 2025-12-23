@@ -565,6 +565,14 @@ router.delete('/:raidId', auth, requireEmailVerification, async (req, res) => {
       return res.status(403).json({ error: 'Only admins or the raid creator can cancel this raid' });
     }
 
+    // Delete Telegram messages for this raid
+    try {
+      await telegramService.deleteRaidMessagesByRaidId(raid._id.toString());
+    } catch (telegramError) {
+      console.error('Error deleting Telegram messages:', telegramError.message);
+      // Continue with raid cancellation even if Telegram deletion fails
+    }
+
     await FacebookRaid.findByIdAndDelete(req.params.raidId);
 
     res.json({ message: 'Facebook raid cancelled successfully!' });
