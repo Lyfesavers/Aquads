@@ -525,6 +525,8 @@ const telegramService = {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
       await telegramService.handleCreateRaidCommand(chatId, userId, text, chatType);
+    } else if (text.startsWith('/cancelraid')) {
+      await telegramService.handleCancelRaidCommand(chatId, userId, text);
     } else if (text.startsWith('/setbranding')) {
       await telegramService.handleSetBrandingCommand(chatId, userId);
     } else if (text.startsWith('/removebranding')) {
@@ -837,6 +839,9 @@ Earn points by completing Twitter & Facebook raids!
 • /createraid TWEET_URL
   Create your own raid (free raids used first if available, otherwise 2000 points)
 
+• /cancelraid URL
+  Cancel a raid you created (use the same URL you used to create it)
+
 💡 How it works:
 1. Like, Retweet & Comment on posts
 2. Use /raids to see available raids
@@ -956,7 +961,7 @@ https://aquads.xyz`;
 /link /twitter /facebook
 
 💰 Raids:
-/raids /createraid
+/raids /createraid /cancelraid
 
 📊 Bubbles:
 /bubbles /mybubble
@@ -2805,6 +2810,11 @@ Tap to update:`;
             "📝 To create a raid, use:\n\n/createraid TWEET_URL\n\nExample:\n/createraid https://twitter.com/user/status/123456");
           break;
 
+        case 'action_cancelraid':
+          await telegramService.sendBotMessage(chatId, 
+            "🗑️ To cancel a raid you created, use:\n\n/cancelraid URL\n\nExample:\n/cancelraid https://twitter.com/user/status/123456\n/cancelraid https://facebook.com/page/posts/123456\n\n💡 Use the same URL you used when creating the raid.");
+          break;
+
         case 'action_branding':
           await telegramService.handleSetBrandingCommand(chatId, userId);
           break;
@@ -3861,6 +3871,103 @@ Tap to update:`;
       console.error('CreateRaid command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error creating raid. Please try again later.");
+    }
+  },
+
+  // Handle /cancelraid command - cancel a raid by URL
+  handleCancelRaidCommand: async (chatId, telegramUserId, text) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Extract URL from command
+      const urlMatch = text.match(/\/cancelraid\s+(.+)/i);
+      if (!urlMatch || !urlMatch[1]) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please provide the raid URL.\n\n📝 Usage: /cancelraid <tweet_or_facebook_url>\n\n💡 Example:\n/cancelraid https://twitter.com/username/status/123456789\n/cancelraid https://facebook.com/page/posts/123456");
+        return;
+      }
+
+      const raidUrl = urlMatch[1].trim();
+      
+      // Determine if it's Twitter or Facebook
+      const isTwitter = raidUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
+      const isFacebook = raidUrl.match(/facebook\.com|fb\.com/i);
+
+      if (!isTwitter && !isFacebook) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid URL. Please provide a valid Twitter or Facebook post URL.\n\n💡 Example:\n/cancelraid https://twitter.com/username/status/123456789\n/cancelraid https://facebook.com/page/posts/123456");
+        return;
+      }
+
+      let raid;
+      let platform;
+
+      if (isTwitter) {
+        // Find Twitter raid by URL
+        const TwitterRaid = require('../models/TwitterRaid');
+        raid = await TwitterRaid.findOne({ 
+          tweetUrl: { $regex: raidUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' },
+          active: true 
+        });
+        platform = 'twitter';
+      } else {
+        // Find Facebook raid by URL
+        const FacebookRaid = require('../models/FacebookRaid');
+        raid = await FacebookRaid.findOne({ 
+          postUrl: { $regex: raidUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' },
+          active: true 
+        });
+        platform = 'facebook';
+      }
+
+      if (!raid) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Raid not found or already cancelled.\n\n💡 Make sure you're using the exact URL you used to create the raid.");
+        return;
+      }
+
+      // Check if user is the owner of this raid
+      if (raid.createdBy.toString() !== user._id.toString()) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ You can only cancel raids that you created.\n\n💡 This raid was created by another user.");
+        return;
+      }
+
+      // Delete Telegram messages for this raid
+      try {
+        await telegramService.deleteRaidMessagesByRaidId(raid._id.toString());
+      } catch (telegramError) {
+        console.error('Error deleting Telegram messages:', telegramError.message);
+        // Continue with raid cancellation even if Telegram deletion fails
+      }
+
+      // Cancel the raid
+      if (platform === 'twitter') {
+        raid.active = false;
+        await raid.save();
+      } else {
+        const FacebookRaid = require('../models/FacebookRaid');
+        await FacebookRaid.findByIdAndDelete(raid._id);
+      }
+
+      // Emit socket event for real-time update
+      const { emitRaidUpdate } = require('../socket');
+      emitRaidUpdate('cancelled', { _id: raid._id.toString() }, platform);
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Raid Cancelled Successfully!\n\n🔗 URL: ${raidUrl}\n📱 Platform: ${platform === 'twitter' ? 'Twitter' : 'Facebook'}\n\n🗑️ The raid has been removed and Telegram notifications have been deleted.`);
+
+    } catch (error) {
+      console.error('CancelRaid command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error cancelling raid. Please try again later.");
     }
   },
 
