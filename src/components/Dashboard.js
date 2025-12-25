@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -125,6 +125,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   
   // Loading state for main dashboard tab - Start false for immediate display (Optimistic UI)
   const [isLoadingMainTab, setIsLoadingMainTab] = useState(false);
+
+  // Click tracking analytics states
+  const [clickStats, setClickStats] = useState(null);
+  const [clickTrends, setClickTrends] = useState(null);
+  const [recentClicks, setRecentClicks] = useState([]);
+  const [loadingClickStats, setLoadingClickStats] = useState(false);
 
   // Open QR code customizer modal
   const generateReferralQRCode = () => {
@@ -1603,6 +1609,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       showNotification('Error fetching top affiliates', 'error');
     }
     setLoadingAffiliateData(false);
+  };
+
+  // Fetch click tracking analytics (admin only)
+  const fetchClickAnalytics = async () => {
+    if (!currentUser?.isAdmin) return;
+    
+    setLoadingClickStats(true);
+    try {
+      const [statsData, trendsData, recentData] = await Promise.all([
+        getClickStats(),
+        getClickTrends(30),
+        getRecentClicks(20)
+      ]);
+      
+      setClickStats(statsData);
+      setClickTrends(trendsData.trends);
+      setRecentClicks(recentData.clicks);
+    } catch (error) {
+      console.error('Failed to fetch click analytics:', error);
+      showNotification('Failed to fetch click analytics', 'error');
+    }
+    setLoadingClickStats(false);
   };
 
   const fetchSuspiciousUsers = async () => {
@@ -3249,6 +3277,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   >
                     👥 Affiliate Management
                   </button>
+                  <button
+                    onClick={() => {
+                      setActiveAdminSection('clickAnalytics');
+                      if (!clickStats) fetchClickAnalytics();
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'clickAnalytics' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    📊 Click Analytics
+                  </button>
                 </nav>
               </div>
 
@@ -4686,6 +4727,251 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Click Analytics Section */}
+                {activeAdminSection === 'clickAnalytics' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-semibold text-white">📊 Click Analytics</h3>
+                      <button
+                        onClick={fetchClickAnalytics}
+                        disabled={loadingClickStats}
+                        className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                      >
+                        {loadingClickStats ? (
+                          <>
+                            <FaSpinner className="animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          '🔄 Refresh Stats'
+                        )}
+                      </button>
+                    </div>
+
+                    {loadingClickStats && !clickStats ? (
+                      <div className="flex items-center justify-center py-12">
+                        <FaSpinner className="animate-spin text-4xl text-blue-500" />
+                      </div>
+                    ) : clickStats ? (
+                      <div className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {/* Total Clicks */}
+                          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-5 shadow-lg">
+                            <h4 className="text-blue-200 text-sm font-medium mb-1">Total Clicks (All Time)</h4>
+                            <p className="text-3xl font-bold text-white">{clickStats.totals?.totalClicks || 0}</p>
+                          </div>
+                          
+                          {/* Paid Ads Button Total */}
+                          <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-5 shadow-lg">
+                            <h4 className="text-purple-200 text-sm font-medium mb-1">Paid Ads Clicks (Total)</h4>
+                            <p className="text-3xl font-bold text-white">{clickStats.totals?.paidAdsClicks || 0}</p>
+                          </div>
+                          
+                          {/* Free Marketing Banner Total */}
+                          <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-xl p-5 shadow-lg">
+                            <h4 className="text-green-200 text-sm font-medium mb-1">Free Marketing Clicks (Total)</h4>
+                            <p className="text-3xl font-bold text-white">{clickStats.totals?.freeMarketingClicks || 0}</p>
+                          </div>
+                          
+                          {/* Today's Total */}
+                          <div className="bg-gradient-to-br from-orange-600 to-orange-800 rounded-xl p-5 shadow-lg">
+                            <h4 className="text-orange-200 text-sm font-medium mb-1">Today's Clicks</h4>
+                            <p className="text-3xl font-bold text-white">
+                              {(clickStats.today?.paidAds || 0) + (clickStats.today?.freeMarketing || 0)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Time Period Breakdown */}
+                        <div className="bg-gray-800 rounded-xl p-6">
+                          <h4 className="text-xl font-semibold text-white mb-4">📅 Time Period Breakdown</h4>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                              <thead>
+                                <tr className="border-b border-gray-700">
+                                  <th className="pb-3 text-gray-400 font-medium">Period</th>
+                                  <th className="pb-3 text-gray-400 font-medium text-center">Paid Ads Button</th>
+                                  <th className="pb-3 text-gray-400 font-medium text-center">Free Marketing Banner</th>
+                                  <th className="pb-3 text-gray-400 font-medium text-center">Total</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-700">
+                                <tr>
+                                  <td className="py-3 text-white font-medium">Today</td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.today?.paidAds || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.today?.freeMarketing || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center text-white font-semibold">
+                                    {(clickStats.today?.paidAds || 0) + (clickStats.today?.freeMarketing || 0)}
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td className="py-3 text-white font-medium">This Week</td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.thisWeek?.paidAds || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.thisWeek?.freeMarketing || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center text-white font-semibold">
+                                    {(clickStats.thisWeek?.paidAds || 0) + (clickStats.thisWeek?.freeMarketing || 0)}
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td className="py-3 text-white font-medium">Last 30 Days</td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.thisMonth?.paidAds || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm font-semibold">
+                                      {clickStats.thisMonth?.freeMarketing || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center text-white font-semibold">
+                                    {(clickStats.thisMonth?.paidAds || 0) + (clickStats.thisMonth?.freeMarketing || 0)}
+                                  </td>
+                                </tr>
+                                <tr className="bg-gray-700/30">
+                                  <td className="py-3 text-white font-bold">All Time</td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-purple-600/30 text-purple-200 px-3 py-1 rounded-full text-sm font-bold">
+                                      {clickStats.totals?.paidAdsClicks || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <span className="bg-green-600/30 text-green-200 px-3 py-1 rounded-full text-sm font-bold">
+                                      {clickStats.totals?.freeMarketingClicks || 0}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 text-center text-white font-bold text-lg">
+                                    {clickStats.totals?.totalClicks || 0}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Device Breakdown */}
+                        {clickStats.stats && clickStats.stats.length > 0 && (
+                          <div className="bg-gray-800 rounded-xl p-6">
+                            <h4 className="text-xl font-semibold text-white mb-4">📱 Device Breakdown</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {clickStats.stats.map((stat) => (
+                                <div key={stat.elementType} className="bg-gray-700/50 rounded-lg p-4">
+                                  <h5 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                                    {stat.elementType === 'paid_ads_button' ? (
+                                      <>🎯 Paid Ads Button</>
+                                    ) : (
+                                      <>🆓 Free Marketing Banner</>
+                                    )}
+                                  </h5>
+                                  <div className="grid grid-cols-3 gap-3 text-center">
+                                    <div className="bg-gray-800 rounded-lg p-3">
+                                      <p className="text-2xl font-bold text-blue-400">{stat.desktopClicks || 0}</p>
+                                      <p className="text-xs text-gray-400">Desktop</p>
+                                    </div>
+                                    <div className="bg-gray-800 rounded-lg p-3">
+                                      <p className="text-2xl font-bold text-green-400">{stat.mobileClicks || 0}</p>
+                                      <p className="text-xs text-gray-400">Mobile</p>
+                                    </div>
+                                    <div className="bg-gray-800 rounded-lg p-3">
+                                      <p className="text-2xl font-bold text-purple-400">{stat.tabletClicks || 0}</p>
+                                      <p className="text-xs text-gray-400">Tablet</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 flex justify-between text-sm text-gray-400">
+                                    <span>Unique Users: <span className="text-white font-medium">{stat.uniqueUsers || 0}</span></span>
+                                    <span>Unique IPs: <span className="text-white font-medium">{stat.uniqueIPs || 0}</span></span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recent Clicks */}
+                        {recentClicks && recentClicks.length > 0 && (
+                          <div className="bg-gray-800 rounded-xl p-6">
+                            <h4 className="text-xl font-semibold text-white mb-4">🕐 Recent Clicks</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-sm">
+                                <thead>
+                                  <tr className="border-b border-gray-700">
+                                    <th className="pb-3 text-gray-400 font-medium">Time</th>
+                                    <th className="pb-3 text-gray-400 font-medium">Element</th>
+                                    <th className="pb-3 text-gray-400 font-medium">User</th>
+                                    <th className="pb-3 text-gray-400 font-medium">Device</th>
+                                    <th className="pb-3 text-gray-400 font-medium">Page</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                  {recentClicks.map((click, index) => (
+                                    <tr key={click._id || index} className="hover:bg-gray-700/30">
+                                      <td className="py-2 text-gray-300">
+                                        {new Date(click.createdAt).toLocaleString()}
+                                      </td>
+                                      <td className="py-2">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                          click.elementType === 'paid_ads_button' 
+                                            ? 'bg-purple-500/20 text-purple-300' 
+                                            : 'bg-green-500/20 text-green-300'
+                                        }`}>
+                                          {click.elementType === 'paid_ads_button' ? 'Paid Ads' : 'Free Marketing'}
+                                        </span>
+                                      </td>
+                                      <td className="py-2 text-white">
+                                        {click.username || <span className="text-gray-500 italic">Anonymous</span>}
+                                      </td>
+                                      <td className="py-2">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                          click.deviceType === 'desktop' ? 'bg-blue-500/20 text-blue-300' :
+                                          click.deviceType === 'mobile' ? 'bg-green-500/20 text-green-300' :
+                                          click.deviceType === 'tablet' ? 'bg-purple-500/20 text-purple-300' :
+                                          'bg-gray-500/20 text-gray-300'
+                                        }`}>
+                                          {click.deviceType || 'unknown'}
+                                        </span>
+                                      </td>
+                                      <td className="py-2 text-gray-400 truncate max-w-[150px]" title={click.pagePath}>
+                                        {click.pagePath || '/'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <p className="text-gray-400 mb-4">No click data available yet</p>
+                        <button
+                          onClick={fetchClickAnalytics}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                        >
+                          Load Analytics
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

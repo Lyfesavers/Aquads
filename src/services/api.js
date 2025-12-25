@@ -1736,4 +1736,96 @@ export const deleteCV = async () => {
     logger.error('Delete CV failed:', error);
     throw error;
   }
+};
+
+// ============ Click Tracking API ============
+
+// Track a click on paid ads button or free marketing banner
+export const trackClick = async (elementType, pagePath = '/') => {
+  try {
+    const response = await fetch(`${API_URL}/click-tracking/track`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify({
+        elementType,
+        pagePath,
+        referrer: document.referrer || null
+      })
+    });
+    
+    if (!response.ok) {
+      logger.error('Failed to track click');
+    }
+    // Don't throw on error - tracking should be silent
+    return response.ok;
+  } catch (error) {
+    // Silent fail - click tracking should not disrupt user experience
+    logger.error('Click tracking error:', error);
+    return false;
+  }
+};
+
+// Get click statistics (admin only)
+export const getClickStats = async (startDate, endDate) => {
+  try {
+    const params = new URLSearchParams();
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    
+    const response = await fetch(`${API_URL}/click-tracking/stats?${params.toString()}`, {
+      headers: getAuthHeader()
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch click statistics');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    logger.error('Get click stats error:', error);
+    throw error;
+  }
+};
+
+// Get click trends (admin only)
+export const getClickTrends = async (days = 30) => {
+  try {
+    const response = await fetch(`${API_URL}/click-tracking/trends?days=${days}`, {
+      headers: getAuthHeader()
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch click trends');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    logger.error('Get click trends error:', error);
+    throw error;
+  }
+};
+
+// Get recent clicks (admin only)
+export const getRecentClicks = async (limit = 50, elementType = null) => {
+  try {
+    const params = new URLSearchParams();
+    params.set('limit', limit.toString());
+    if (elementType) params.set('elementType', elementType);
+    
+    const response = await fetch(`${API_URL}/click-tracking/recent?${params.toString()}`, {
+      headers: getAuthHeader()
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch recent clicks');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    logger.error('Get recent clicks error:', error);
+    throw error;
+  }
 }; 

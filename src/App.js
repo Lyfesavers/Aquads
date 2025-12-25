@@ -18,7 +18,8 @@ import {
   verifyToken,
   pingServer,
   API_URL,
-  reconnectSocket
+  reconnectSocket,
+  trackClick
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -907,6 +908,9 @@ function App() {
 
     // Open MintFunnel platform in full-screen popup
   const openMintFunnelPlatform = () => {
+    // Track the click on Paid Ads button
+    trackClick('paid_ads_button', window.location.pathname);
+    
     const popup = window.open(
       'https://mintfunnel.co/crypto-ad-network/?ref=Aquads',
       'mintfunnel-platform',
@@ -3017,6 +3021,7 @@ function App() {
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => trackClick('free_marketing_banner', window.location.pathname)}
                           style={{
                             position: 'absolute',
                             top: 0,
