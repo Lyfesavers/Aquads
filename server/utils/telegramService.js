@@ -481,6 +481,12 @@ const telegramService = {
         await telegramService.handleUsernameInput(chatId, userId, text, conversationState);
         return;
       }
+
+      // Check for boost vote TX signature state
+      if (conversationState.action === 'boost_waiting_tx') {
+        const handled = await telegramService.handleBoostTxInput(chatId, userId, text);
+        if (handled) return;
+      }
     }
 
     // Handle group-only commands first (raidin/raidout)
@@ -2062,7 +2068,27 @@ ${platformEmoji} ${platformName} Raid
         const voteType = voteData[1]; // 'bullish' or 'bearish'
         const projectId = voteData[2];
         await telegramService.processVote(chatId, userId, projectId, voteType);
-      } else {
+      }
+      // Check if it's a boost package selection callback
+      else if (callbackQuery.data.startsWith('boost_pkg_')) {
+        const packageId = callbackQuery.data.replace('boost_pkg_', '');
+        await telegramService.handleBoostPackageSelection(chatId, userId, packageId, messageId);
+      }
+      // Check if it's a boost bubble selection callback
+      else if (callbackQuery.data.startsWith('boost_bubble_')) {
+        const parts = callbackQuery.data.replace('boost_bubble_', '').split('_');
+        const packageId = parts[0];
+        const bubbleId = parts.slice(1).join('_'); // Handle bubble IDs with underscores
+        await telegramService.showBoostPaymentStep(chatId, userId, packageId, bubbleId, messageId);
+      }
+      // Check if it's a boost cancel callback
+      else if (callbackQuery.data === 'boost_cancel') {
+        telegramService.clearConversationState(userId);
+        await telegramService.editMessageWithKeyboard(chatId, messageId, 
+          "❌ Vote boost purchase cancelled.\n\nUse /boostvote to start again.", 
+          { inline_keyboard: [] });
+      }
+      else {
         // Parse callback data for other actions (like raids)
         try {
           const callbackData = JSON.parse(callbackQuery.data);
@@ -4755,7 +4781,7 @@ Tap to update:`;
     }
   },
 
-  // Handle /boostvote command - Show vote boost packages
+  // Handle /boostvote command - Show vote boost packages with buttons
   handleBoostVoteCommand: async (chatId, telegramUserId) => {
     try {
       // Check if user is linked
@@ -4771,7 +4797,7 @@ Tap to update:`;
       const userBubbles = await Ad.find({ 
         owner: user.username,
         status: { $in: ['active', 'approved'] }
-      }).select('id title logo bullishVotes bearishVotes');
+      }).select('id title logo bullishVotes bearishVotes _id');
 
       if (userBubbles.length === 0) {
         await telegramService.sendBotMessage(chatId, 
@@ -4779,66 +4805,225 @@ Tap to update:`;
         return;
       }
 
-      // Vote boost packages with pricing
-      const packages = [
-        { id: 'starter', name: '🌟 Starter', votes: 100, price: 20, originalPrice: 20, discount: 0 },
-        { id: 'growth', name: '🚀 Growth', votes: 500, price: 80, originalPrice: 100, discount: 20 },
-        { id: 'pro', name: '💎 Pro', votes: 1000, price: 140, originalPrice: 200, discount: 30 },
-        { id: 'enterprise', name: '👑 Enterprise', votes: 5000, price: 599, originalPrice: 1000, discount: 40 }
-      ];
-
       // Build message
       let message = `🗳️ <b>BOOST YOUR BUBBLE VOTES</b>\n\n`;
-      message += `Skyrocket your bubble's ranking with guaranteed bullish votes!\n`;
-      message += `📈 Votes are added automatically - 1 vote every 30 seconds\n\n`;
-      message += `<b>📦 PACKAGES:</b>\n`;
-      message += `━━━━━━━━━━━━━━━━━━\n`;
-      
-      packages.forEach(pkg => {
-        message += `\n${pkg.name}\n`;
-        message += `• ${pkg.votes.toLocaleString()} Bullish Votes\n`;
-        if (pkg.discount > 0) {
-          message += `• <s>$${pkg.originalPrice}</s> → <b>$${pkg.price} USDC</b> (${pkg.discount}% OFF!)\n`;
-        } else {
-          message += `• <b>$${pkg.price} USDC</b>\n`;
-        }
-        const duration = Math.ceil((pkg.votes * 30) / 60); // in minutes (30 sec per vote)
-        if (duration >= 60) {
-          const hours = Math.floor(duration / 60);
-          const mins = duration % 60;
-          message += `• ⏱️ Duration: ~${hours}h ${mins > 0 ? mins + 'm' : ''}\n`;
-        } else {
-          message += `• ⏱️ Duration: ~${duration} mins\n`;
-        }
-      });
+      message += `Skyrocket your ranking with guaranteed bullish votes!\n`;
+      message += `📈 1 vote added every 30 seconds + TG notifications\n\n`;
+      message += `<b>Select a package below:</b>`;
 
-      message += `\n━━━━━━━━━━━━━━━━━━\n`;
-      message += `\n<b>💳 PAYMENT WALLETS (USDC):</b>\n\n`;
-      message += `<b>Solana:</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
-      message += `<b>Ethereum:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>Base:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>Sui:</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
-      message += `━━━━━━━━━━━━━━━━━━\n`;
-      message += `\n<b>📋 HOW TO PURCHASE:</b>\n`;
-      message += `1️⃣ Send USDC to wallet above\n`;
-      message += `2️⃣ Go to aquads.xyz/dashboard\n`;
-      message += `3️⃣ Submit your Vote Boost request\n`;
-      message += `4️⃣ Include TX signature for verification\n`;
-      message += `5️⃣ Admin approves → Votes start flowing!\n\n`;
-      message += `<b>🔥 Your Bubbles:</b>\n`;
-      
-      userBubbles.forEach((bubble, index) => {
-        message += `${index + 1}. ${bubble.title} (👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0})\n`;
-      });
+      // Create package selection buttons
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: "🌟 100 Votes - $20", callback_data: "boost_pkg_starter" }
+          ],
+          [
+            { text: "🚀 500 Votes - $80 (20% OFF)", callback_data: "boost_pkg_growth" }
+          ],
+          [
+            { text: "💎 1,000 Votes - $140 (30% OFF)", callback_data: "boost_pkg_pro" }
+          ],
+          [
+            { text: "👑 5,000 Votes - $599 (40% OFF)", callback_data: "boost_pkg_enterprise" }
+          ]
+        ]
+      };
 
-      message += `\n🌐 <b>Purchase at:</b> https://aquads.xyz`;
-
-      await telegramService.sendBotMessage(chatId, message);
+      await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
 
     } catch (error) {
       console.error('BoostVote command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error loading vote boost packages. Please try again later.");
+    }
+  },
+
+  // Handle boost package selection callback
+  handleBoostPackageSelection: async (chatId, telegramUserId, packageId, messageId) => {
+    try {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ Please link your account first: /link your_username");
+        return;
+      }
+
+      // Package details
+      const packages = {
+        starter: { name: 'Starter', votes: 100, price: 20 },
+        growth: { name: 'Growth', votes: 500, price: 80 },
+        pro: { name: 'Pro', votes: 1000, price: 140 },
+        enterprise: { name: 'Enterprise', votes: 5000, price: 599 }
+      };
+
+      const selectedPkg = packages[packageId];
+      if (!selectedPkg) {
+        await telegramService.sendBotMessage(chatId, "❌ Invalid package selected.");
+        return;
+      }
+
+      // Find user's bubbles
+      const userBubbles = await Ad.find({ 
+        owner: user.username,
+        status: { $in: ['active', 'approved'] }
+      }).select('id title _id');
+
+      if (userBubbles.length === 0) {
+        await telegramService.sendBotMessage(chatId, "❌ You don't have any bubbles to boost.");
+        return;
+      }
+
+      // If user has multiple bubbles, ask which one to boost
+      if (userBubbles.length > 1) {
+        let message = `📦 <b>${selectedPkg.name} Package Selected</b>\n`;
+        message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
+        message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
+        message += `<b>Which bubble do you want to boost?</b>`;
+
+        const bubbleButtons = userBubbles.map(bubble => ([
+          { text: bubble.title, callback_data: `boost_bubble_${packageId}_${bubble.id}` }
+        ]));
+
+        const keyboard = { inline_keyboard: bubbleButtons };
+        await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+      } else {
+        // Only one bubble, proceed directly
+        await telegramService.showBoostPaymentStep(chatId, telegramUserId, packageId, userBubbles[0].id, messageId);
+      }
+
+    } catch (error) {
+      console.error('Boost package selection error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error processing selection. Please try again.");
+    }
+  },
+
+  // Show payment step for boost
+  showBoostPaymentStep: async (chatId, telegramUserId, packageId, bubbleId, messageId) => {
+    try {
+      const packages = {
+        starter: { name: 'Starter', votes: 100, price: 20 },
+        growth: { name: 'Growth', votes: 500, price: 80 },
+        pro: { name: 'Pro', votes: 1000, price: 140 },
+        enterprise: { name: 'Enterprise', votes: 5000, price: 599 }
+      };
+
+      const selectedPkg = packages[packageId];
+      const bubble = await Ad.findOne({ id: bubbleId });
+
+      if (!bubble) {
+        await telegramService.sendBotMessage(chatId, "❌ Bubble not found.");
+        return;
+      }
+
+      let message = `✅ <b>Boosting: ${bubble.title}</b>\n\n`;
+      message += `📦 <b>${selectedPkg.name} Package</b>\n`;
+      message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
+      message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
+      message += `━━━━━━━━━━━━━━━━━━\n`;
+      message += `<b>💳 Send $${selectedPkg.price} USDC to:</b>\n\n`;
+      message += `<b>Solana:</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
+      message += `<b>Ethereum:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>Base:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>Sui:</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
+      message += `━━━━━━━━━━━━━━━━━━\n\n`;
+      message += `📝 <b>After payment, send your TX signature here</b>`;
+
+      // Set conversation state to wait for TX signature
+      telegramService.setConversationState(telegramUserId, {
+        action: 'boost_waiting_tx',
+        packageId: packageId,
+        bubbleId: bubbleId,
+        price: selectedPkg.price,
+        votes: selectedPkg.votes,
+        packageName: selectedPkg.name
+      });
+
+      const keyboard = {
+        inline_keyboard: [
+          [{ text: "❌ Cancel", callback_data: "boost_cancel" }]
+        ]
+      };
+
+      if (messageId) {
+        await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
+      } else {
+        await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
+      }
+
+    } catch (error) {
+      console.error('Show boost payment step error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error showing payment details. Please try again.");
+    }
+  },
+
+  // Handle TX signature input for boost
+  handleBoostTxInput: async (chatId, telegramUserId, txSignature) => {
+    try {
+      const state = telegramService.getConversationState(telegramUserId);
+      
+      if (!state || state.action !== 'boost_waiting_tx') {
+        return false; // Not in boost TX state
+      }
+
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ User not found.");
+        telegramService.clearConversationState(telegramUserId);
+        return true;
+      }
+
+      // Validate TX signature (basic check)
+      const trimmedTx = txSignature.trim();
+      if (trimmedTx.length < 20) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid TX signature. Please send a valid transaction signature.\n\n💡 Type /cancel to abort.");
+        return true;
+      }
+
+      // Create the vote boost request
+      const VoteBoost = require('../models/VoteBoost');
+      
+      const voteBoost = new VoteBoost({
+        adId: state.bubbleId,
+        owner: user.username,
+        txSignature: trimmedTx,
+        packageName: state.packageName,
+        votesToAdd: state.votes,
+        price: state.price,
+        status: 'pending',
+        paymentChain: 'Unknown', // User didn't specify
+        chainSymbol: 'USDC'
+      });
+
+      await voteBoost.save();
+
+      // Clear conversation state
+      telegramService.clearConversationState(telegramUserId);
+
+      // Get bubble name for confirmation
+      const bubble = await Ad.findOne({ id: state.bubbleId });
+
+      let message = `✅ <b>Vote Boost Request Submitted!</b>\n\n`;
+      message += `📦 Package: ${state.packageName}\n`;
+      message += `🗳️ Votes: ${state.votes.toLocaleString()}\n`;
+      message += `💰 Amount: $${state.price} USDC\n`;
+      message += `🔗 Bubble: ${bubble?.title || state.bubbleId}\n\n`;
+      message += `⏳ <b>Awaiting admin approval...</b>\n\n`;
+      message += `Once approved, votes will be added automatically (1 vote every 30 seconds) with Telegram notifications!`;
+
+      await telegramService.sendBotMessage(chatId, message);
+
+      // Emit socket event for admin notification
+      const { emitVoteBoostUpdate } = require('../socket');
+      emitVoteBoostUpdate('create', voteBoost, bubble);
+
+      return true;
+
+    } catch (error) {
+      console.error('Boost TX input error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error submitting boost request. Please try again or contact support.");
+      telegramService.clearConversationState(telegramUserId);
+      return true;
     }
   },
 
