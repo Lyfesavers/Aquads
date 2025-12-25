@@ -3496,6 +3496,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   </div>
                                 </div>
 
+                                {/* Telegram Group Link Box */}
+                                {boost.telegramGroupLink && (
+                                  <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[280px] border border-purple-600">
+                                    <p className="text-purple-400 font-semibold text-sm mb-2">📢 Telegram Group</p>
+                                    <a 
+                                      href={boost.telegramGroupLink.startsWith('http') ? boost.telegramGroupLink : `https://${boost.telegramGroupLink}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300 text-sm break-all underline"
+                                    >
+                                      {boost.telegramGroupLink}
+                                    </a>
+                                  </div>
+                                )}
+
                                 {/* Transaction Details Box */}
                                 <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[280px] border border-gray-600">
                                   <p className="text-blue-400 font-semibold text-sm mb-2">💳 Payment Verification</p>

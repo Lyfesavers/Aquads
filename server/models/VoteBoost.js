@@ -44,6 +44,11 @@ const voteBoostSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Telegram group link (required for boost)
+  telegramGroupLink: {
+    type: String,
+    required: true
+  },
   // Payment details
   paymentChain: {
     type: String,
