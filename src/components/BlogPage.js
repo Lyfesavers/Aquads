@@ -716,143 +716,166 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl pt-20">
-        {/* Navigation */}
-        <nav className="mb-8">
-          <Link
-            to="/learn"
-            className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-2"
-          >
-            <FaArrowLeft />
-            Back to Blog List
-          </Link>
-        </nav>
+      {/* Desktop: 2-column layout with sidebar, Mobile: single column */}
+      <div className="container mx-auto px-4 py-8 pt-20 max-w-7xl">
+        <div className="lg:flex lg:gap-8">
+          {/* Main Content Column */}
+          <div className="lg:flex-1 lg:max-w-4xl">
+            {/* Navigation */}
+            <nav className="mb-8">
+              <Link
+                to="/learn"
+                className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-2"
+              >
+                <FaArrowLeft />
+                Back to Blog List
+              </Link>
+            </nav>
 
-        {/* Blog Header */}
-        <header className="mb-8">
-          {/* Banner Image */}
-          {blog.bannerImage && (
-            <div className="aspect-video mb-6 rounded-lg overflow-hidden">
-              <img
-                src={blog.bannerImage}
-                alt={blog.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+            {/* Blog Header */}
+            <header className="mb-8">
+              {/* Banner Image */}
+              {blog.bannerImage && (
+                <div className="aspect-video mb-6 rounded-lg overflow-hidden">
+                  <img
+                    src={blog.bannerImage}
+                    alt={blog.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
 
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-            {blog.title}
-          </h1>
+              {/* Title */}
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                {blog.title}
+              </h1>
 
-          {/* Meta info */}
-          <div className="flex flex-wrap items-center gap-6 text-gray-400 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                <img
-                  src={blog.authorImage || `https://ui-avatars.com/api/?name=${blog.authorUsername}&background=random`}
-                  alt={blog.authorUsername}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <div className="font-medium text-yellow-400">{blog.authorUsername}</div>
-                <div className="text-sm">Author</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <FaClock />
-              <span>{formatDate(blog.createdAt)}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <FaUser />
-              <span>{getReadingTime(blog.content)}</span>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-4 mb-8">
-            <button
-              onClick={handleShare}
-              className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
-            >
-              <FaShare />
-              Share
-            </button>
-            
-            {currentUser && (currentUser.userId === blog.author || currentUser.isAdmin) && (
-              <>
-                <button
-                  onClick={handleEdit}
-                  className="bg-gray-600 hover:bg-gray-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
-                >
-                  <FaEdit />
-                  Edit
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
-                >
-                  <FaTrash />
-                  Delete
-                </button>
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* Blog Content */}
-        <article className="mb-12">
-          <div className="blog-content-wrapper">
-            <MarkdownRenderer content={blog.content} />
-          </div>
-        </article>
-
-        {/* Native Ad Widget */}
-        <div 
-          className="mb-12 flex justify-center"
-          dangerouslySetInnerHTML={{
-            __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
-          }}
-        />
-
-        {/* Related Blogs */}
-        {relatedBlogs.length > 0 && (
-          <section className="border-t border-gray-700 pt-8">
-            <h2 className="text-2xl font-bold mb-6">Related Posts</h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {relatedBlogs.map((relatedBlog) => (
-                <Link
-                  key={relatedBlog._id}
-                  to={`/share/blog/${relatedBlog._id}`}
-                  className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
-                >
-                  <div className="aspect-video">
+              {/* Meta info */}
+              <div className="flex flex-wrap items-center gap-6 text-gray-400 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
                     <img
-                      src={relatedBlog.bannerImage}
-                      alt={relatedBlog.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      src={blog.authorImage || `https://ui-avatars.com/api/?name=${blog.authorUsername}&background=random`}
+                      alt={blog.authorUsername}
+                      className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
-                      {relatedBlog.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <span>{relatedBlog.authorUsername}</span>
-                      <span>•</span>
-                      <span>{formatDate(relatedBlog.createdAt)}</span>
-                    </div>
+                  <div>
+                    <div className="font-medium text-yellow-400">{blog.authorUsername}</div>
+                    <div className="text-sm">Author</div>
                   </div>
-                </Link>
-              ))}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <FaClock />
+                  <span>{formatDate(blog.createdAt)}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <FaUser />
+                  <span>{getReadingTime(blog.content)}</span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-4 mb-8">
+                <button
+                  onClick={handleShare}
+                  className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                >
+                  <FaShare />
+                  Share
+                </button>
+                
+                {currentUser && (currentUser.userId === blog.author || currentUser.isAdmin) && (
+                  <>
+                    <button
+                      onClick={handleEdit}
+                      className="bg-gray-600 hover:bg-gray-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                    >
+                      <FaEdit />
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700 text-yellow-400 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                    >
+                      <FaTrash />
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </header>
+
+            {/* Blog Content */}
+            <article className="mb-12">
+              <div className="blog-content-wrapper">
+                <MarkdownRenderer content={blog.content} />
+              </div>
+            </article>
+
+            {/* Mobile Ad Widget - Shows below content on mobile only */}
+            <div 
+              className="mb-12 flex justify-center lg:hidden"
+              dangerouslySetInnerHTML={{
+                __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
+              }}
+            />
+
+            {/* Related Blogs */}
+            {relatedBlogs.length > 0 && (
+              <section className="border-t border-gray-700 pt-8">
+                <h2 className="text-2xl font-bold mb-6">Related Posts</h2>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {relatedBlogs.map((relatedBlog) => (
+                    <Link
+                      key={relatedBlog._id}
+                      to={`/share/blog/${relatedBlog._id}`}
+                      className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
+                    >
+                      <div className="aspect-video">
+                        <img
+                          src={relatedBlog.bannerImage}
+                          alt={relatedBlog.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
+                          {relatedBlog.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <span>{relatedBlog.authorUsername}</span>
+                          <span>•</span>
+                          <span>{formatDate(relatedBlog.createdAt)}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Sidebar with Vertical Ads - Desktop only */}
+          <aside className="hidden lg:block lg:w-72 xl:w-80 lg:flex-shrink-0">
+            <div className="sticky top-24">
+              <div className="space-y-6">
+                {/* Sidebar Ad Widget - Vertical */}
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-3 text-center">Sponsored</div>
+                  <div 
+                    dangerouslySetInnerHTML={{
+                      __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-                     </section>
-         )}
-       </div>
+          </aside>
+        </div>
+      </div>
 
        {/* Edit Blog Modal */}
        {showEditModal && (
