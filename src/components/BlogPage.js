@@ -819,7 +819,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <div 
               className="mb-12 flex justify-center lg:hidden"
               dangerouslySetInnerHTML={{
-                __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
+                __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad><script async src="https://cdn.coinscribble.sapient.tools/js/widget2.js"></script>'
               }}
             />
 
@@ -867,7 +867,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-3 text-center">Sponsored</div>
                   <div 
                     dangerouslySetInnerHTML={{
-                      __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
+                      __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad><script async src="https://cdn.coinscribble.sapient.tools/js/widget2.js"></script>'
                     }}
                   />
                 </div>
