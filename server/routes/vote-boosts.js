@@ -10,38 +10,38 @@ const VOTE_BOOST_PACKAGES = [
   { 
     id: 'starter',
     name: 'Starter', 
-    votes: 50, 
-    price: 10, 
-    originalPrice: 10,
+    votes: 100, 
+    price: 20, 
+    originalPrice: 20,
     discountPercent: 0,
-    description: '50 bullish votes'
+    description: '100 bullish votes + group members'
   },
   { 
     id: 'basic',
     name: 'Basic', 
-    votes: 100, 
-    price: 15, 
-    originalPrice: 20, // Would be $20 at base rate ($0.20/vote)
-    discountPercent: 25,
-    description: '100 bullish votes - 25% OFF'
+    votes: 250, 
+    price: 40, 
+    originalPrice: 50, // Would be $50 at base rate ($0.20/vote)
+    discountPercent: 20,
+    description: '250 bullish votes + group members - 20% OFF'
   },
   { 
     id: 'growth',
     name: 'Growth', 
-    votes: 300, 
-    price: 25, 
-    originalPrice: 60, // Would be $60 at base rate
-    discountPercent: 58,
-    description: '300 bullish votes - 58% OFF'
+    votes: 500, 
+    price: 80, 
+    originalPrice: 100, // Would be $100 at base rate
+    discountPercent: 20,
+    description: '500 bullish votes + group members - 20% OFF'
   },
   { 
     id: 'pro',
     name: 'Pro', 
-    votes: 500, 
-    price: 50, 
-    originalPrice: 100, // Would be $100 at base rate
-    discountPercent: 50,
-    description: '500 bullish votes - 50% OFF'
+    votes: 1000, 
+    price: 150, 
+    originalPrice: 200, // Would be $200 at base rate
+    discountPercent: 25,
+    description: '1,000 bullish votes + group members - 25% OFF'
   }
 ];
 

@@ -4806,25 +4806,27 @@ Tap to update:`;
       }
 
       // Build message
-      let message = `🗳️ <b>BOOST YOUR BUBBLE VOTES</b>\n\n`;
-      message += `Skyrocket your ranking with guaranteed bullish votes!\n`;
-      message += `📈 1 vote added every 30 seconds + TG notifications\n\n`;
+      let message = `🗳️ <b>BOOST YOUR BUBBLE</b>\n\n`;
+      message += `Skyrocket your ranking with guaranteed bullish votes!\n\n`;
+      message += `✅ Bullish votes added to your bubble\n`;
+      message += `✅ New group members for your TG\n`;
+      message += `✅ TG notifications with each vote\n\n`;
       message += `<b>Select a package below:</b>`;
 
       // Create package selection buttons
       const keyboard = {
         inline_keyboard: [
           [
-            { text: "🌟 50 Votes - $10", callback_data: "boost_pkg_starter" }
+            { text: "🌟 100 Votes + Members - $20", callback_data: "boost_pkg_starter" }
           ],
           [
-            { text: "📦 100 Votes - $15 (25% OFF)", callback_data: "boost_pkg_basic" }
+            { text: "📦 250 Votes + Members - $40 (20% OFF)", callback_data: "boost_pkg_basic" }
           ],
           [
-            { text: "🚀 300 Votes - $25 (58% OFF)", callback_data: "boost_pkg_growth" }
+            { text: "🚀 500 Votes + Members - $80 (20% OFF)", callback_data: "boost_pkg_growth" }
           ],
           [
-            { text: "💎 500 Votes - $50 (50% OFF)", callback_data: "boost_pkg_pro" }
+            { text: "💎 1000 Votes + Members - $150 (25% OFF)", callback_data: "boost_pkg_pro" }
           ]
         ]
       };
@@ -4849,10 +4851,10 @@ Tap to update:`;
 
       // Package details
       const packages = {
-        starter: { name: 'Starter', votes: 50, price: 10 },
-        basic: { name: 'Basic', votes: 100, price: 15 },
-        growth: { name: 'Growth', votes: 300, price: 25 },
-        pro: { name: 'Pro', votes: 500, price: 50 }
+        starter: { name: 'Starter', votes: 100, price: 20 },
+        basic: { name: 'Basic', votes: 250, price: 40 },
+        growth: { name: 'Growth', votes: 500, price: 80 },
+        pro: { name: 'Pro', votes: 1000, price: 150 }
       };
 
       const selectedPkg = packages[packageId];
@@ -4875,7 +4877,7 @@ Tap to update:`;
       // If user has multiple bubbles, ask which one to boost
       if (userBubbles.length > 1) {
         let message = `📦 <b>${selectedPkg.name} Package Selected</b>\n`;
-        message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
+        message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes + Group Members\n`;
         message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
         message += `<b>Which bubble do you want to boost?</b>`;
 
@@ -4900,10 +4902,10 @@ Tap to update:`;
   showBoostPaymentStep: async (chatId, telegramUserId, packageId, bubbleId, messageId) => {
     try {
       const packages = {
-        starter: { name: 'Starter', votes: 50, price: 10 },
-        basic: { name: 'Basic', votes: 100, price: 15 },
-        growth: { name: 'Growth', votes: 300, price: 25 },
-        pro: { name: 'Pro', votes: 500, price: 50 }
+        starter: { name: 'Starter', votes: 100, price: 20 },
+        basic: { name: 'Basic', votes: 250, price: 40 },
+        growth: { name: 'Growth', votes: 500, price: 80 },
+        pro: { name: 'Pro', votes: 1000, price: 150 }
       };
 
       const selectedPkg = packages[packageId];
@@ -4917,6 +4919,7 @@ Tap to update:`;
       let message = `✅ <b>Boosting: ${bubble.title}</b>\n\n`;
       message += `📦 <b>${selectedPkg.name} Package</b>\n`;
       message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
+      message += `• Group Members for your TG\n`;
       message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
       message += `━━━━━━━━━━━━━━━━━━\n`;
       message += `<b>💳 Send $${selectedPkg.price} USDC to:</b>\n\n`;
