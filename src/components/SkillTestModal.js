@@ -100,7 +100,8 @@ const SkillTestModal = ({ test, onClose, onComplete, currentUser }) => {
         },
         body: JSON.stringify({
           answers: Object.values(answers),
-          timeTaken: totalTimeTaken
+          timeTaken: totalTimeTaken,
+          servedQuestionIndices: testData.servedQuestionIndices // Include the question indices that were served
         })
       });
 

@@ -43,10 +43,13 @@ const userSkillTestSchema = new Schema({
     }
   },
   answers: [{
-    questionIndex: Number,
+    questionIndex: Number, // Index in the original question pool
     selectedAnswer: Number,
     isCorrect: Boolean,
     timeSpent: Number // in seconds
+  }],
+  servedQuestionIndices: [{
+    type: Number // Stores which questions from the pool were served to this user
   }],
   attempts: {
     type: Number,

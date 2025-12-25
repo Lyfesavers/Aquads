@@ -18,13 +18,45 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a specific skill test by ID
+// Helper function to shuffle array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Get a specific skill test by ID (randomly selects questions from pool)
 router.get('/:testId', async (req, res) => {
   try {
     const test = await SkillTest.findById(req.params.testId);
     if (!test) {
       return res.status(404).json({ error: 'Test not found' });
     }
+    
+    // Randomly select questions from the pool
+    const questionsPerTest = test.questionsPerTest || 8;
+    const totalQuestions = test.questions.length;
+    
+    // Create array of indices and shuffle
+    const allIndices = Array.from({ length: totalQuestions }, (_, i) => i);
+    const shuffledIndices = shuffleArray(allIndices);
+    
+    // Select the required number of questions
+    const selectedIndices = shuffledIndices.slice(0, Math.min(questionsPerTest, totalQuestions));
+    
+    // Sort indices to maintain some order consistency
+    selectedIndices.sort((a, b) => a - b);
+    
+    // Map selected questions (without correct answers)
+    const selectedQuestions = selectedIndices.map((originalIndex, displayIndex) => ({
+      displayIndex, // The index shown to user (0, 1, 2...)
+      originalIndex, // The actual index in the question pool
+      question: test.questions[originalIndex].question,
+      options: test.questions[originalIndex].options
+    }));
     
     // Don't send correct answers to client
     const testForClient = {
@@ -36,10 +68,10 @@ router.get('/:testId', async (req, res) => {
       timeLimit: test.timeLimit,
       passingScore: test.passingScore,
       badge: test.badge,
-      questions: test.questions.map(q => ({
-        question: q.question,
-        options: q.options
-      }))
+      questionsPerTest,
+      totalQuestionsInPool: totalQuestions,
+      questions: selectedQuestions,
+      servedQuestionIndices: selectedIndices // Send this so client can include in submission
     };
     
     res.json(testForClient);
@@ -51,7 +83,7 @@ router.get('/:testId', async (req, res) => {
 // Submit test answers and get results
 router.post('/:testId/submit', auth, async (req, res) => {
   try {
-    const { answers, timeTaken } = req.body;
+    const { answers, timeTaken, servedQuestionIndices } = req.body;
     const testId = req.params.testId;
     const userId = req.user.userId;
 
@@ -67,35 +99,55 @@ router.post('/:testId/submit', auth, async (req, res) => {
       return res.status(400).json({ error: 'Test already completed' });
     }
 
-    // Grade the test
+    // Validate served question indices
+    if (!servedQuestionIndices || !Array.isArray(servedQuestionIndices)) {
+      return res.status(400).json({ error: 'Invalid test submission - missing question indices' });
+    }
+
+    // Grade the test using the served question indices
     let correctAnswers = 0;
-    const gradedAnswers = answers.map((answer, index) => {
-      const question = test.questions[index];
+    const questionsServed = servedQuestionIndices.length;
+    
+    const gradedAnswers = answers.map((answer, displayIndex) => {
+      // Get the original question index from servedQuestionIndices
+      const originalIndex = servedQuestionIndices[displayIndex];
+      const question = test.questions[originalIndex];
+      
+      if (!question) {
+        return {
+          questionIndex: originalIndex,
+          selectedAnswer: answer.selectedAnswer,
+          isCorrect: false,
+          timeSpent: answer.timeSpent || 0
+        };
+      }
+      
       const isCorrect = answer.selectedAnswer === question.correctAnswer;
       if (isCorrect) correctAnswers++;
       
       return {
-        questionIndex: index,
+        questionIndex: originalIndex, // Store the original pool index
         selectedAnswer: answer.selectedAnswer,
         isCorrect,
         timeSpent: answer.timeSpent || 0
       };
     });
 
-    const score = Math.round((correctAnswers / test.questions.length) * 100);
+    const score = Math.round((correctAnswers / questionsServed) * 100);
     const passed = score >= test.passingScore;
 
-    // Create completion record
+    // Create completion record with served question indices
     const completion = new UserSkillTest({
       userId,
       testId,
       score,
-      totalQuestions: test.questions.length,
+      totalQuestions: questionsServed,
       correctAnswers,
       timeTaken,
       passed,
       badgeEarned: passed ? test.badge : null,
       answers: gradedAnswers,
+      servedQuestionIndices, // Store which questions were served
       bestScore: score
     });
 
@@ -120,12 +172,13 @@ router.post('/:testId/submit', auth, async (req, res) => {
     // Prepare response with results
     const results = {
       score,
-      totalQuestions: test.questions.length,
+      totalQuestions: questionsServed,
       correctAnswers,
       passed,
       timeTaken,
       badgeEarned: passed ? test.badge : null,
-      answers: gradedAnswers.map(answer => ({
+      answers: gradedAnswers.map((answer, displayIndex) => ({
+        displayIndex,
         questionIndex: answer.questionIndex,
         isCorrect: answer.isCorrect,
         correctAnswer: test.questions[answer.questionIndex].correctAnswer,

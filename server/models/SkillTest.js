@@ -29,6 +29,10 @@ const skillTestSchema = new Schema({
     type: Number,
     default: 80 // percentage
   },
+  questionsPerTest: {
+    type: Number,
+    default: 8 // Number of questions to randomly select from pool
+  },
   questions: [{
     question: {
       type: String,

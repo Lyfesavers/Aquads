@@ -100,6 +100,171 @@ const skillTests = [
         ],
         correctAnswer: 1,
         explanation: "Competence requires deliberate adaptation of tone, register and conventions to local norms."
+      },
+      {
+        question: "Which sentence correctly uses the past perfect tense to establish temporal sequence?",
+        options: [
+          "The team completed the project before the deadline arrived yesterday",
+          "The team has completed the project before the deadline had arrived",
+          "The team had completed the project before the deadline arrived",
+          "The team was completing the project before the deadline has arrived"
+        ],
+        correctAnswer: 2,
+        explanation: "Past perfect ('had completed') correctly shows an action completed before another past event."
+      },
+      {
+        question: "What distinguishes formal register from informal register in professional writing?",
+        options: [
+          "Formal register always uses passive voice and avoids first-person pronouns entirely",
+          "Formal register uses technical vocabulary exclusively regardless of audience knowledge",
+          "Formal register employs complete sentences, avoids contractions, and maintains objective tone",
+          "Formal register requires longer documents and more detailed explanations always"
+        ],
+        correctAnswer: 2,
+        explanation: "Formal register is characterized by complete structures, objective language, and avoidance of colloquialisms."
+      },
+      {
+        question: "Which approach is most effective when simplifying technical content for non-expert audiences?",
+        options: [
+          "Remove all technical terms and replace with everyday language throughout",
+          "Maintain technical accuracy while using analogies and defining specialized terms",
+          "Shorten the document significantly by omitting complex explanations entirely",
+          "Use bullet points exclusively to make content more scannable for readers"
+        ],
+        correctAnswer: 1,
+        explanation: "Effective simplification maintains accuracy while using accessible language and helpful analogies."
+      },
+      {
+        question: "What is the primary function of a topic sentence in expository writing?",
+        options: [
+          "To summarize the entire document in a single comprehensive statement",
+          "To introduce the main idea of a paragraph and guide reader expectations",
+          "To provide background information before presenting the main argument",
+          "To connect two paragraphs by referencing both topics simultaneously"
+        ],
+        correctAnswer: 1,
+        explanation: "Topic sentences establish the paragraph's central idea and help readers follow the argument structure."
+      },
+      {
+        question: "Which punctuation usage correctly indicates a parenthetical element in professional writing?",
+        options: [
+          "The report—which was submitted late—contained several errors that needed correction",
+          "The report, which was submitted late contained several errors, that needed correction",
+          "The report (which was submitted late,) contained several errors that needed correction",
+          "The report; which was submitted late; contained several errors that needed correction"
+        ],
+        correctAnswer: 0,
+        explanation: "Em dashes correctly set off parenthetical information that interrupts the main clause."
+      },
+      {
+        question: "How should writers handle ambiguous pronoun references in professional documents?",
+        options: [
+          "Use pronouns freely since context will clarify meaning for most readers",
+          "Replace ambiguous pronouns with specific nouns to ensure clarity",
+          "Add footnotes explaining which antecedent each pronoun references",
+          "Restructure sentences to eliminate pronouns entirely from the document"
+        ],
+        correctAnswer: 1,
+        explanation: "Replacing ambiguous pronouns with specific referents prevents misinterpretation in professional writing."
+      },
+      {
+        question: "What distinguishes active voice from passive voice in terms of sentence impact?",
+        options: [
+          "Active voice always sounds more formal and is required in academic writing",
+          "Passive voice emphasizes the action while active voice emphasizes the actor",
+          "Active voice typically creates more direct, accountable statements with clear agency",
+          "Passive voice is incorrect grammatically and should always be avoided"
+        ],
+        correctAnswer: 2,
+        explanation: "Active voice creates direct statements with clear agency, while passive has strategic uses for emphasis."
+      },
+      {
+        question: "Which transitional strategy most effectively connects contrasting ideas between paragraphs?",
+        options: [
+          "Begin the new paragraph without transition to create dramatic contrast effect",
+          "Use transitional phrases like 'however,' 'conversely,' or 'on the other hand'",
+          "Repeat key words from the previous paragraph to create thematic continuity",
+          "Insert a blank line between paragraphs to signal the shift in argument"
+        ],
+        correctAnswer: 1,
+        explanation: "Transitional phrases explicitly signal contrast and guide readers through argument shifts."
+      },
+      {
+        question: "What is the most effective strategy for concluding a persuasive business proposal?",
+        options: [
+          "Introduce new supporting evidence to strengthen the final impression",
+          "Restate all main points in detail to ensure complete understanding",
+          "Summarize key benefits and include a clear call to action",
+          "End abruptly after the final argument to create lasting impact"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective conclusions reinforce key benefits and direct readers toward desired action."
+      },
+      {
+        question: "How should conditional clauses be structured in formal policy documents?",
+        options: [
+          "Use 'if...then' constructions consistently for all conditional statements",
+          "Avoid conditional statements entirely as they create ambiguity",
+          "Place conditions after consequences to emphasize the outcome first",
+          "Match the verb tense in both clauses to the type of condition expressed"
+        ],
+        correctAnswer: 3,
+        explanation: "Conditional structures require appropriate tense agreement based on whether conditions are real, hypothetical, or counterfactual."
+      },
+      {
+        question: "Which approach best handles the integration of quoted material in professional reports?",
+        options: [
+          "Use quotes extensively to demonstrate thorough research and source credibility",
+          "Integrate quotes smoothly with signal phrases and explain their relevance to your argument",
+          "Avoid direct quotes entirely and paraphrase all source material instead",
+          "Place all quotes in block format to visually distinguish them from original content"
+        ],
+        correctAnswer: 1,
+        explanation: "Effective quote integration includes context, attribution, and explanation of relevance to the argument."
+      },
+      {
+        question: "What principle governs parallel structure in professional writing?",
+        options: [
+          "Similar ideas should be expressed in different grammatical forms for variety",
+          "Lists and series should use consistent grammatical forms for clarity and flow",
+          "Parallel structure only applies to bullet points and numbered lists",
+          "Sentence beginnings should vary to maintain reader interest throughout"
+        ],
+        correctAnswer: 1,
+        explanation: "Parallel structure requires consistent grammatical forms when expressing similar or coordinated ideas."
+      },
+      {
+        question: "How should professional writers approach gender-inclusive language?",
+        options: [
+          "Default to masculine pronouns as they are traditionally considered universal",
+          "Alternate between masculine and feminine pronouns throughout the document",
+          "Use gender-neutral alternatives such as 'they' or restructure sentences to avoid gendered terms",
+          "Address the gender question in a footnote at the beginning of the document"
+        ],
+        correctAnswer: 2,
+        explanation: "Modern professional writing uses gender-neutral language through singular 'they' or sentence restructuring."
+      },
+      {
+        question: "What is the appropriate use of the colon in professional correspondence?",
+        options: [
+          "Use colons only after salutations in formal letters and nowhere else",
+          "Colons introduce lists, explanations, or elaborations following an independent clause",
+          "Colons and semicolons are interchangeable in professional writing contexts",
+          "Use colons to separate clauses of equal importance in compound sentences"
+        ],
+        correctAnswer: 1,
+        explanation: "Colons introduce what follows when preceded by a complete independent clause."
+      },
+      {
+        question: "Which revision strategy most improves document clarity during the editing process?",
+        options: [
+          "Focus exclusively on correcting spelling and grammatical errors first",
+          "Read the document aloud to identify awkward phrasing and unclear passages",
+          "Shorten all sentences to under fifteen words for maximum readability",
+          "Replace all complex vocabulary with simpler synonyms throughout"
+        ],
+        correctAnswer: 1,
+        explanation: "Reading aloud reveals rhythm problems, unclear passages, and awkward constructions that silent reading misses."
       }
     ]
   },
@@ -205,6 +370,171 @@ const skillTests = [
         ],
         correctAnswer: 1,
         explanation: "Meaningful adaptation goes beyond translation and aligns process and tone to cultural norms."
+      },
+      {
+        question: "What is the primary purpose of implementing a customer feedback loop in service operations?",
+        options: [
+          "Generate positive testimonials for marketing and promotional materials",
+          "Identify performance issues with individual service representatives systematically",
+          "Continuously improve service quality by capturing and acting on customer insights",
+          "Fulfill regulatory requirements for customer satisfaction documentation"
+        ],
+        correctAnswer: 2,
+        explanation: "Feedback loops enable continuous improvement by systematically capturing and implementing customer insights."
+      },
+      {
+        question: "How should a service manager handle a team member who consistently exceeds customer expectations?",
+        options: [
+          "Increase their workload since they clearly have capacity for more assignments",
+          "Recognize their achievements and develop them as mentors for team improvement",
+          "Transfer them to handle only the most difficult customer escalations",
+          "Use their metrics as mandatory standards for all team members immediately"
+        ],
+        correctAnswer: 1,
+        explanation: "Top performers should be recognized and leveraged as mentors to elevate overall team performance."
+      },
+      {
+        question: "What is the most effective approach to handling customer complaints about company policies?",
+        options: [
+          "Defend the policy vigorously to prevent customers from expecting exceptions",
+          "Immediately escalate all policy complaints to management for resolution",
+          "Acknowledge frustration, explain rationale, and explore alternatives within guidelines",
+          "Promise to change the policy to satisfy the individual customer request"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective handling combines empathy, clear explanation, and solution-oriented problem-solving within boundaries."
+      },
+      {
+        question: "Which strategy best reduces customer effort in service interactions?",
+        options: [
+          "Provide extensive self-service options for all customer issues",
+          "Anticipate customer needs and proactively resolve issues before contact",
+          "Standardize all service scripts to ensure consistent experience delivery",
+          "Reduce average handling time to minimize customer wait periods"
+        ],
+        correctAnswer: 1,
+        explanation: "Proactive service that anticipates and resolves issues reduces the effort customers must expend."
+      },
+      {
+        question: "What role does service level agreement (SLA) management play in customer satisfaction?",
+        options: [
+          "SLAs primarily protect the company from unreasonable customer expectations",
+          "SLAs establish clear expectations and accountability for service delivery performance",
+          "SLAs should be kept confidential to maintain flexibility in service delivery",
+          "SLAs are only relevant for enterprise customers with negotiated contracts"
+        ],
+        correctAnswer: 1,
+        explanation: "SLAs create mutual accountability by establishing clear service expectations and performance standards."
+      },
+      {
+        question: "How should service teams balance efficiency metrics with quality metrics?",
+        options: [
+          "Prioritize efficiency metrics as they directly impact operational costs",
+          "Focus solely on quality metrics since customer satisfaction drives revenue",
+          "Align metrics to ensure efficiency gains don't compromise service quality",
+          "Alternate focus between efficiency and quality based on seasonal demand"
+        ],
+        correctAnswer: 2,
+        explanation: "Balanced metrics ensure operational efficiency without sacrificing the quality that drives customer loyalty."
+      },
+      {
+        question: "What is the optimal approach when a customer requests compensation beyond standard guidelines?",
+        options: [
+          "Refuse firmly to maintain consistency in compensation policies",
+          "Approve immediately to preserve the customer relationship at all costs",
+          "Assess the situation, customer value, and impact before making a judgment call",
+          "Transfer to a supervisor to avoid personal accountability for the decision"
+        ],
+        correctAnswer: 2,
+        explanation: "Thoughtful assessment considers customer context and business impact for appropriate resolution decisions."
+      },
+      {
+        question: "Which indicator best signals potential customer churn before it occurs?",
+        options: [
+          "Declining purchase frequency and engagement with communications over time",
+          "Single instances of negative feedback or complaint submissions",
+          "Requests for information about service cancellation procedures",
+          "Reduced participation in loyalty or rewards program activities"
+        ],
+        correctAnswer: 0,
+        explanation: "Gradual behavioral changes like declining engagement are early warning signs of potential churn."
+      },
+      {
+        question: "How should omnichannel service strategy improve the customer experience?",
+        options: [
+          "Ensure customers can switch channels seamlessly while maintaining context",
+          "Direct all customers to the most cost-effective service channel available",
+          "Maintain separate service standards for each channel independently",
+          "Discourage channel switching to simplify operational complexity"
+        ],
+        correctAnswer: 0,
+        explanation: "Effective omnichannel strategy provides seamless transitions with persistent context across channels."
+      },
+      {
+        question: "What is the most important consideration when implementing service automation?",
+        options: [
+          "Maximize the percentage of interactions handled without human intervention",
+          "Ensure automation enhances rather than frustrates the customer experience",
+          "Reduce staffing costs as the primary driver of automation decisions",
+          "Implement automation for all interaction types regardless of complexity"
+        ],
+        correctAnswer: 1,
+        explanation: "Automation should improve customer experience, not create friction by forcing inappropriate self-service."
+      },
+      {
+        question: "How should service teams handle situations where the company made a significant error?",
+        options: [
+          "Minimize discussion of the error to avoid legal liability exposure",
+          "Offer standard compensation without acknowledging specific failures",
+          "Take full ownership, apologize sincerely, and provide meaningful remediation",
+          "Blame external factors to preserve company reputation with the customer"
+        ],
+        correctAnswer: 2,
+        explanation: "Owning mistakes, apologizing genuinely, and providing meaningful remediation builds trust and loyalty."
+      },
+      {
+        question: "What is the primary benefit of service personalization in customer interactions?",
+        options: [
+          "Enables targeted upselling and cross-selling opportunities during service contacts",
+          "Reduces handling time by pre-populating customer information automatically",
+          "Creates relevance and demonstrates that the company values the individual customer",
+          "Allows service representatives to skip verification procedures"
+        ],
+        correctAnswer: 2,
+        explanation: "Personalization shows customers they are valued as individuals, not just transaction numbers."
+      },
+      {
+        question: "Which factor most influences customer perception of service quality?",
+        options: [
+          "The technical accuracy of information provided during interactions",
+          "The speed at which their issue is acknowledged and resolved",
+          "How they feel they were treated throughout the service experience",
+          "The number of contact channels available for customer support"
+        ],
+        correctAnswer: 2,
+        explanation: "Emotional experience and feeling valued often matter more than technical efficiency in service perception."
+      },
+      {
+        question: "What is the purpose of service recovery paradox in customer experience management?",
+        options: [
+          "It explains why some customers are impossible to satisfy regardless of effort",
+          "It suggests that excellent recovery can create stronger loyalty than error-free service",
+          "It describes the diminishing returns of investing in service recovery programs",
+          "It justifies reducing investment in preventing service failures initially"
+        ],
+        correctAnswer: 1,
+        explanation: "The paradox shows that exceptional recovery from failures can actually strengthen customer relationships."
+      },
+      {
+        question: "How should customer service data be used to improve business operations?",
+        options: [
+          "Share raw complaint data with all departments for maximum transparency",
+          "Focus exclusively on individual performance metrics and accountability",
+          "Analyze patterns to identify systemic issues and inform product or process improvements",
+          "Use data primarily for benchmarking against competitor service levels"
+        ],
+        correctAnswer: 2,
+        explanation: "Service data reveals systemic issues that can drive improvements across products, processes, and policies."
       }
     ]
   },
@@ -310,6 +640,171 @@ const skillTests = [
         ],
         correctAnswer: 1,
         explanation: "Meaningful evaluation measures comprehension, behavior change, and objective achievement."
+      },
+      {
+        question: "What is the primary purpose of audience segmentation in communication strategy?",
+        options: [
+          "Reduce communication costs by limiting the number of message variations needed",
+          "Tailor messages to resonate with specific audience needs, values, and preferences",
+          "Prioritize high-value audiences and deprioritize others systematically",
+          "Simplify communication planning by grouping similar stakeholders together"
+        ],
+        correctAnswer: 1,
+        explanation: "Segmentation enables targeted messaging that resonates with specific audience characteristics and needs."
+      },
+      {
+        question: "How should communicators balance transparency with confidentiality in organizational messaging?",
+        options: [
+          "Default to full transparency since stakeholders always prefer complete information",
+          "Maintain strict confidentiality to protect organizational interests in all situations",
+          "Share information appropriate to stakeholder needs while protecting legitimate confidentiality",
+          "Let legal counsel determine all disclosure decisions to minimize organizational risk"
+        ],
+        correctAnswer: 2,
+        explanation: "Strategic communication balances stakeholder information needs with legitimate confidentiality requirements."
+      },
+      {
+        question: "What role does narrative structure play in effective organizational communication?",
+        options: [
+          "Narratives are only appropriate for marketing and should be avoided in internal communication",
+          "Storytelling helps audiences connect emotionally and remember key messages more effectively",
+          "Formal organizations should prioritize data and facts over narrative approaches",
+          "Narratives work only for positive messages and should not be used for difficult communications"
+        ],
+        correctAnswer: 1,
+        explanation: "Narrative structure creates emotional engagement and improves message retention across communication contexts."
+      },
+      {
+        question: "Which approach is most effective for communicating complex technical information to executives?",
+        options: [
+          "Present all technical details to demonstrate thoroughness and expertise",
+          "Focus on business implications and strategic relevance with technical details available upon request",
+          "Delegate technical presentations to subject matter experts without executive involvement",
+          "Avoid technical topics with executives since they prefer strategic conversations"
+        ],
+        correctAnswer: 1,
+        explanation: "Executive communication should lead with business relevance while making details accessible as needed."
+      },
+      {
+        question: "How should internal communication support organizational culture during periods of change?",
+        options: [
+          "Minimize communication to prevent anxiety and speculation among employees",
+          "Focus exclusively on the positive aspects of change to maintain morale",
+          "Reinforce organizational values while acknowledging challenges and providing clear direction",
+          "Delegate all change communication to direct managers without centralized messaging"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective change communication maintains cultural continuity while honestly addressing challenges."
+      },
+      {
+        question: "What is the strategic value of earned media in organizational communication?",
+        options: [
+          "Earned media is free and should replace paid media whenever possible",
+          "Third-party coverage provides credibility that owned and paid media cannot achieve",
+          "Earned media is uncontrollable and should be deprioritized in favor of owned content",
+          "Earned media only matters for consumer brands, not for B2B organizations"
+        ],
+        correctAnswer: 1,
+        explanation: "Earned media provides third-party credibility and validation that enhances organizational reputation."
+      },
+      {
+        question: "How should communicators prepare for potential negative scenarios in media relations?",
+        options: [
+          "Avoid preparing negative scenarios to prevent creating self-fulfilling prophecies",
+          "Develop holding statements and response protocols before issues arise",
+          "React to negative coverage only when it receives significant public attention",
+          "Delegate all negative scenario planning to external PR agencies"
+        ],
+        correctAnswer: 1,
+        explanation: "Proactive preparation ensures rapid, coordinated response when negative situations arise."
+      },
+      {
+        question: "What distinguishes effective executive communication from general business communication?",
+        options: [
+          "Executive communication should always be formal and avoid personal touches",
+          "Executive messages should be longer and more detailed to demonstrate expertise",
+          "Leaders must communicate vision, inspire action, and model organizational values",
+          "Executives should communicate less frequently to preserve message impact"
+        ],
+        correctAnswer: 2,
+        explanation: "Executive communication uniquely involves vision-setting, inspiration, and values modeling beyond information sharing."
+      },
+      {
+        question: "How should communication strategies address misinformation about the organization?",
+        options: [
+          "Ignore misinformation to avoid drawing additional attention to false claims",
+          "Respond to all misinformation immediately and aggressively to correct the record",
+          "Assess impact, develop fact-based responses, and choose strategic correction approaches",
+          "Only address misinformation through legal channels to establish formal documentation"
+        ],
+        correctAnswer: 2,
+        explanation: "Strategic response to misinformation requires assessment of impact and appropriate correction channels."
+      },
+      {
+        question: "What is the role of visual communication in strategic messaging?",
+        options: [
+          "Visuals should supplement text but never replace written communication",
+          "Visual elements enhance comprehension, engagement, and memorability of messages",
+          "Professional communication should minimize visuals to maintain formal tone",
+          "Visuals are primarily useful for social media and not for internal communication"
+        ],
+        correctAnswer: 1,
+        explanation: "Visual communication enhances message impact, comprehension, and retention across all channels."
+      },
+      {
+        question: "How should communication timing be determined for significant announcements?",
+        options: [
+          "Announce as quickly as possible to prevent leaks and speculation",
+          "Time announcements to align with stakeholder availability, news cycles, and organizational readiness",
+          "Always announce on Fridays to minimize media coverage of sensitive topics",
+          "Coordinate timing exclusively based on executive availability and preference"
+        ],
+        correctAnswer: 1,
+        explanation: "Strategic timing considers multiple factors including stakeholder accessibility and external environment."
+      },
+      {
+        question: "What is the most effective approach to managing internal rumors during organizational uncertainty?",
+        options: [
+          "Ignore rumors since addressing them legitimizes unofficial information",
+          "Provide regular, honest updates that address known concerns directly",
+          "Identify and discipline rumor sources to stop informal communication",
+          "Increase surveillance of internal communications to monitor discussions"
+        ],
+        correctAnswer: 1,
+        explanation: "Proactive, honest communication reduces rumor impact by providing reliable information through official channels."
+      },
+      {
+        question: "How should global organizations adapt communication for diverse geographic markets?",
+        options: [
+          "Maintain consistent messaging globally to ensure brand coherence",
+          "Delegate all localization decisions to regional teams without corporate oversight",
+          "Balance core message consistency with cultural and contextual adaptation",
+          "Translate headquarters communications verbatim for all markets"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective global communication maintains strategic consistency while adapting to local cultural contexts."
+      },
+      {
+        question: "What is the primary function of communication measurement in strategy development?",
+        options: [
+          "Demonstrate communication team value to justify budget allocations",
+          "Inform continuous improvement by revealing what works and what needs adjustment",
+          "Create accountability for individual communicator performance",
+          "Compare organizational communication to competitor benchmarks"
+        ],
+        correctAnswer: 1,
+        explanation: "Measurement enables data-driven strategy refinement and continuous improvement of communication effectiveness."
+      },
+      {
+        question: "How should communication professionals balance speed and accuracy in fast-moving situations?",
+        options: [
+          "Speed always takes priority since stakeholders expect immediate information",
+          "Accuracy always takes priority regardless of stakeholder urgency",
+          "Communicate what is known confidently while committing to updates as information develops",
+          "Delay all communication until complete and verified information is available"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective crisis communication acknowledges uncertainty while providing accurate updates as situations develop."
       }
     ]
   },
@@ -415,6 +910,182 @@ const skillTests = [
         ],
         correctAnswer: 1,
         explanation: "Effective balancing requires trade-off analysis aligned to strategic priorities and stakeholder needs."
+      },
+      {
+        question: "What is the primary purpose of a work breakdown structure (WBS) in project planning?",
+        options: [
+          "Assign individual team members to specific project tasks systematically",
+          "Decompose project deliverables into manageable components for planning and tracking",
+          "Create the project schedule with specific start and end dates",
+          "Estimate project costs by breaking down the budget into categories"
+        ],
+        correctAnswer: 1,
+        explanation: "WBS breaks project scope into manageable deliverables that enable effective planning, estimation, and tracking."
+      },
+      {
+        question: "How should a project manager handle a critical path delay?",
+        options: [
+          "Add resources to all delayed activities to accelerate overall progress",
+          "Analyze impact, evaluate recovery options, and communicate revised expectations to stakeholders",
+          "Extend the project deadline immediately to reflect the new reality",
+          "Identify team members responsible for the delay and document performance issues"
+        ],
+        correctAnswer: 1,
+        explanation: "Critical path delays require impact analysis, recovery planning, and transparent stakeholder communication."
+      },
+      {
+        question: "What distinguishes a project milestone from a regular project task?",
+        options: [
+          "Milestones require executive approval before proceeding to subsequent phases",
+          "Milestones have no duration and mark significant achievement or decision points",
+          "Milestones are always at the end of project phases and nowhere else",
+          "Milestones consume budget while regular tasks do not"
+        ],
+        correctAnswer: 1,
+        explanation: "Milestones are zero-duration markers of significant achievements or decision points in the project timeline."
+      },
+      {
+        question: "What is the purpose of a responsibility assignment matrix (RACI) in project management?",
+        options: [
+          "Document individual performance expectations and accountability metrics",
+          "Clarify roles by defining who is responsible, accountable, consulted, and informed for each deliverable",
+          "Assign workload percentages to ensure equitable distribution across team members",
+          "Create a hierarchy of authority for decision-making throughout the project"
+        ],
+        correctAnswer: 1,
+        explanation: "RACI matrices clarify roles and responsibilities to prevent confusion and gaps in accountability."
+      },
+      {
+        question: "How should earned value management (EVM) inform project decision-making?",
+        options: [
+          "EVM should only be reported to sponsors and not used for day-to-day decisions",
+          "EVM provides objective performance data that enables proactive issue identification and response",
+          "EVM is primarily a compliance tool for contract reporting requirements",
+          "EVM metrics should replace all other project performance indicators"
+        ],
+        correctAnswer: 1,
+        explanation: "EVM provides objective performance indicators that enable early detection and proactive management of variances."
+      },
+      {
+        question: "What is the optimal approach to managing project dependencies?",
+        options: [
+          "Eliminate all dependencies to maximize team autonomy and flexibility",
+          "Document dependencies and actively manage them to prevent schedule impacts",
+          "Only track dependencies between phases, not within phases",
+          "Assign a dedicated dependency manager to handle all inter-team coordination"
+        ],
+        correctAnswer: 1,
+        explanation: "Dependency management requires documentation, monitoring, and proactive coordination to prevent delays."
+      },
+      {
+        question: "How should project managers approach resource leveling decisions?",
+        options: [
+          "Always level resources even if it extends the project timeline significantly",
+          "Balance resource utilization against schedule constraints based on project priorities",
+          "Avoid resource leveling since it always delays project completion",
+          "Level resources only when team members complain about overallocation"
+        ],
+        correctAnswer: 1,
+        explanation: "Resource leveling requires balancing utilization optimization against schedule and priority constraints."
+      },
+      {
+        question: "What is the purpose of a project management office (PMO) in organizational project delivery?",
+        options: [
+          "Directly manage all projects to ensure consistent delivery approaches",
+          "Provide governance, standards, and support services that improve project success rates",
+          "Audit project managers and report performance issues to executive leadership",
+          "Take over troubled projects and deliver them using centralized resources"
+        ],
+        correctAnswer: 1,
+        explanation: "PMOs provide governance, methodology support, and shared services that enhance organizational project capability."
+      },
+      {
+        question: "How should quality management be integrated throughout the project lifecycle?",
+        options: [
+          "Focus quality efforts on final testing and inspection before delivery",
+          "Build quality into all project processes from planning through closure",
+          "Delegate quality management entirely to a dedicated quality assurance team",
+          "Address quality only when defects are discovered during acceptance testing"
+        ],
+        correctAnswer: 1,
+        explanation: "Quality management must be integrated throughout the lifecycle, not relegated to final inspection."
+      },
+      {
+        question: "What is the best approach to managing project assumptions?",
+        options: [
+          "Document assumptions during planning and never revisit them during execution",
+          "Avoid documenting assumptions to maintain flexibility in project decisions",
+          "Document, communicate, and regularly validate assumptions throughout the project",
+          "Only track assumptions that directly affect budget or schedule"
+        ],
+        correctAnswer: 2,
+        explanation: "Assumptions require ongoing validation since invalid assumptions can materialize as project risks."
+      },
+      {
+        question: "How should project managers handle requests for additional resources?",
+        options: [
+          "Approve all resource requests to maintain team morale and support",
+          "Deny additional resources to demonstrate budget discipline",
+          "Evaluate requests against project needs, budget, and expected value contribution",
+          "Forward all resource requests to functional managers without project input"
+        ],
+        correctAnswer: 2,
+        explanation: "Resource requests require evaluation of justification, budget impact, and expected contribution to project success."
+      },
+      {
+        question: "What is the role of project governance in ensuring delivery success?",
+        options: [
+          "Governance creates bureaucracy that slows down agile project delivery",
+          "Governance provides oversight, decision-making authority, and escalation pathways",
+          "Governance is only necessary for large, complex programs and not for smaller projects",
+          "Governance should be limited to financial controls and budget approvals"
+        ],
+        correctAnswer: 1,
+        explanation: "Governance provides the oversight structure and decision rights that enable effective project execution."
+      },
+      {
+        question: "How should project managers approach vendor management in outsourced delivery?",
+        options: [
+          "Treat vendors as extensions of the internal team with full transparency and collaboration",
+          "Manage vendors at arm's length through formal contract terms exclusively",
+          "Establish clear expectations and maintain collaborative relationships within contractual boundaries",
+          "Delegate all vendor interaction to procurement or legal teams"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective vendor management balances contractual clarity with collaborative relationships for mutual success."
+      },
+      {
+        question: "What distinguishes program management from project management?",
+        options: [
+          "Programs have larger budgets and longer timelines than projects",
+          "Programs coordinate multiple related projects to achieve strategic benefits not available individually",
+          "Programs are managed by senior staff while projects are managed by junior staff",
+          "Programs focus on operations while projects focus on change delivery"
+        ],
+        correctAnswer: 1,
+        explanation: "Programs coordinate related projects to deliver strategic benefits that exceed individual project outcomes."
+      },
+      {
+        question: "How should project communication plans be developed and maintained?",
+        options: [
+          "Use a standard communication template for all projects regardless of context",
+          "Tailor communication approaches to stakeholder needs and update plans as the project evolves",
+          "Minimize planned communication to reduce project overhead and bureaucracy",
+          "Delegate all communication planning to the project sponsor"
+        ],
+        correctAnswer: 1,
+        explanation: "Communication plans must be tailored to stakeholder needs and adapted as project circumstances change."
+      },
+      {
+        question: "What is the optimal frequency for project status reporting?",
+        options: [
+          "Weekly status reports regardless of project phase or complexity",
+          "Report frequency should match stakeholder needs and project risk profile",
+          "Daily reports during execution and weekly during planning phases",
+          "Monthly reports to minimize reporting overhead for project teams"
+        ],
+        correctAnswer: 1,
+        explanation: "Reporting frequency should align with stakeholder needs, decision cycles, and project risk characteristics."
       }
     ]
   },
@@ -520,6 +1191,171 @@ const skillTests = [
         ],
         correctAnswer: 3,
         explanation: "Selection requires balancing requirements, team skills, and ecosystem sustainability over time."
+      },
+      {
+        question: "What is the primary purpose of defining bounded contexts in domain-driven design?",
+        options: [
+          "Create clear team ownership boundaries that align with organizational structure",
+          "Establish semantic clarity by defining where specific domain models and language apply",
+          "Limit the size of codebases to improve maintainability and deployment speed",
+          "Separate frontend and backend concerns to enable independent development"
+        ],
+        correctAnswer: 1,
+        explanation: "Bounded contexts define semantic boundaries where specific domain models and ubiquitous language apply."
+      },
+      {
+        question: "How should architects approach the decision between synchronous and asynchronous communication?",
+        options: [
+          "Default to synchronous communication for simplicity and debugging ease",
+          "Use asynchronous communication for all inter-service communication by default",
+          "Choose based on coupling requirements, failure tolerance, and latency expectations",
+          "Follow industry best practices without considering specific system requirements"
+        ],
+        correctAnswer: 2,
+        explanation: "Communication pattern choice depends on coupling, resilience, and performance requirements of each interaction."
+      },
+      {
+        question: "What principle guides effective data architecture in distributed systems?",
+        options: [
+          "Centralize all data in a single source of truth to ensure consistency",
+          "Each service should own its data and expose it only through well-defined interfaces",
+          "Share databases between services to reduce duplication and synchronization overhead",
+          "Store all data in memory to maximize performance across the system"
+        ],
+        correctAnswer: 1,
+        explanation: "Data ownership by services enables independent evolution and reduces coupling in distributed architectures."
+      },
+      {
+        question: "What is the role of architectural decision records (ADRs) in system development?",
+        options: [
+          "Document all technical decisions to create a compliance audit trail",
+          "Capture significant decisions, their context, and rationale to inform future development",
+          "Record meeting minutes from architectural review sessions systematically",
+          "Create specifications that developers must follow without deviation"
+        ],
+        correctAnswer: 1,
+        explanation: "ADRs preserve decision context and rationale, helping future teams understand and evolve the system."
+      },
+      {
+        question: "How should architects balance consistency and availability in distributed systems?",
+        options: [
+          "Always prioritize consistency since data correctness is paramount",
+          "Always prioritize availability since users expect responsive systems",
+          "Make informed trade-offs based on business requirements for different operations",
+          "Implement both strong consistency and high availability through advanced technology"
+        ],
+        correctAnswer: 2,
+        explanation: "The CAP theorem requires conscious trade-offs based on specific business and operational requirements."
+      },
+      {
+        question: "What characterizes an effective approach to system observability?",
+        options: [
+          "Comprehensive logging of all system events for post-incident analysis",
+          "Real-time dashboards showing all possible metrics across the system",
+          "Integration of logs, metrics, and traces that enable understanding system behavior",
+          "Automated alerting on all metric thresholds to catch issues early"
+        ],
+        correctAnswer: 2,
+        explanation: "Observability combines logs, metrics, and traces to enable understanding of system behavior and issues."
+      },
+      {
+        question: "What is the primary benefit of implementing event sourcing in system architecture?",
+        options: [
+          "Improved performance through append-only data storage patterns",
+          "Complete audit trail and ability to reconstruct system state at any point in time",
+          "Simplified development through elimination of traditional database operations",
+          "Reduced storage requirements through efficient event compression"
+        ],
+        correctAnswer: 1,
+        explanation: "Event sourcing provides complete history and the ability to derive any past state from the event log."
+      },
+      {
+        question: "How should architects approach backward compatibility in API evolution?",
+        options: [
+          "Version all APIs explicitly and support multiple versions indefinitely",
+          "Require all clients to upgrade immediately when APIs change",
+          "Design changes to be additive and non-breaking, with deprecation strategies for removals",
+          "Use feature flags to toggle between old and new implementations"
+        ],
+        correctAnswer: 2,
+        explanation: "Backward-compatible evolution with clear deprecation paths maintains stability while enabling progress."
+      },
+      {
+        question: "What is the role of chaos engineering in building resilient systems?",
+        options: [
+          "Test disaster recovery procedures by simulating complete system failures",
+          "Proactively introduce failures to discover system weaknesses before they cause incidents",
+          "Stress test systems to determine maximum throughput capacity",
+          "Validate security controls by attempting to breach system defenses"
+        ],
+        correctAnswer: 1,
+        explanation: "Chaos engineering proactively exposes system weaknesses through controlled failure injection experiments."
+      },
+      {
+        question: "What distinguishes a sidecar pattern from an ambassador pattern in microservices?",
+        options: [
+          "Sidecars handle cross-cutting concerns while ambassadors proxy external communications",
+          "Sidecars run in separate containers while ambassadors run in the same process",
+          "Sidecars are for logging while ambassadors are for authentication",
+          "Sidecars are Kubernetes-specific while ambassadors work across all platforms"
+        ],
+        correctAnswer: 0,
+        explanation: "Sidecars extend service functionality while ambassadors proxy and simplify external service communication."
+      },
+      {
+        question: "How should architects approach database selection for different use cases?",
+        options: [
+          "Standardize on a single database technology to simplify operations",
+          "Select databases based on data model, query patterns, and consistency requirements",
+          "Choose the database with the largest community and best documentation",
+          "Default to relational databases unless NoSQL is explicitly required"
+        ],
+        correctAnswer: 1,
+        explanation: "Database selection should match specific data models, access patterns, and consistency needs."
+      },
+      {
+        question: "What is the primary purpose of implementing circuit breakers in distributed systems?",
+        options: [
+          "Prevent electrical damage to server hardware during power surges",
+          "Prevent cascade failures by failing fast when downstream services are unavailable",
+          "Limit the number of concurrent connections to protect database resources",
+          "Encrypt sensitive data in transit between services"
+        ],
+        correctAnswer: 1,
+        explanation: "Circuit breakers prevent cascade failures by stopping requests to failing services and allowing recovery."
+      },
+      {
+        question: "How should architects approach security in system design?",
+        options: [
+          "Add security controls after functional requirements are implemented",
+          "Delegate security entirely to specialized security teams and tools",
+          "Integrate security considerations throughout design with defense in depth",
+          "Focus on perimeter security since internal networks are trusted"
+        ],
+        correctAnswer: 2,
+        explanation: "Security must be integrated throughout design with layered defenses, not added as an afterthought."
+      },
+      {
+        question: "What characterizes effective horizontal scaling strategies?",
+        options: [
+          "Adding more powerful hardware to existing servers as load increases",
+          "Designing stateless components that can be replicated to handle increased load",
+          "Implementing caching at all layers to reduce the need for scaling",
+          "Using load balancers to distribute traffic across a fixed number of instances"
+        ],
+        correctAnswer: 1,
+        explanation: "Horizontal scaling requires stateless, replicable components that can grow with demand."
+      },
+      {
+        question: "What is the role of infrastructure as code (IaC) in modern system architecture?",
+        options: [
+          "Document infrastructure configuration for compliance and audit purposes",
+          "Enable version-controlled, repeatable, and automated infrastructure provisioning",
+          "Replace manual server administration with automated scripts",
+          "Reduce cloud computing costs through optimized resource allocation"
+        ],
+        correctAnswer: 1,
+        explanation: "IaC enables versioned, repeatable infrastructure that can be provisioned and modified through automation."
       }
     ]
   },
@@ -625,6 +1461,171 @@ const skillTests = [
         ],
         correctAnswer: 2,
         explanation: "NFTs create verifiable ownership and scarcity for digital assets, enabling new forms of digital commerce."
+      },
+      {
+        question: "What is the primary function of a cryptocurrency wallet?",
+        options: [
+          "Store cryptocurrency tokens physically in a secure digital container",
+          "Manage private keys that provide access to blockchain assets and enable transactions",
+          "Convert fiat currency to cryptocurrency through integrated exchange services",
+          "Mine new cryptocurrency tokens using computational resources"
+        ],
+        correctAnswer: 1,
+        explanation: "Wallets manage private keys that control access to assets recorded on the blockchain, not the assets themselves."
+      },
+      {
+        question: "What distinguishes a hot wallet from a cold wallet in cryptocurrency storage?",
+        options: [
+          "Hot wallets support more cryptocurrencies while cold wallets are limited",
+          "Hot wallets are internet-connected while cold wallets are offline for enhanced security",
+          "Hot wallets are for large holdings while cold wallets are for small amounts",
+          "Hot wallets are software-based while cold wallets require dedicated hardware"
+        ],
+        correctAnswer: 1,
+        explanation: "Hot wallets are connected to the internet for convenience, while cold wallets are offline for security."
+      },
+      {
+        question: "What is the purpose of a blockchain oracle in smart contract applications?",
+        options: [
+          "Predict future cryptocurrency prices for trading strategies",
+          "Provide external real-world data to smart contracts that cannot access off-chain information",
+          "Validate transactions before they are added to the blockchain",
+          "Manage governance decisions for decentralized autonomous organizations"
+        ],
+        correctAnswer: 1,
+        explanation: "Oracles bridge the gap between blockchain and external data sources smart contracts cannot access directly."
+      },
+      {
+        question: "What is a DAO (Decentralized Autonomous Organization)?",
+        options: [
+          "A traditional company that accepts cryptocurrency payments",
+          "An organization governed by smart contracts and token-holder voting without central leadership",
+          "A regulatory body that oversees cryptocurrency exchanges",
+          "A development team that creates blockchain protocols"
+        ],
+        correctAnswer: 1,
+        explanation: "DAOs are blockchain-based organizations where governance is encoded in smart contracts and controlled by members."
+      },
+      {
+        question: "What is the primary risk of impermanent loss in DeFi liquidity provision?",
+        options: [
+          "Losing access to wallet private keys through hardware failure",
+          "Smart contract vulnerabilities that allow fund theft",
+          "Value loss compared to holding when asset prices diverge significantly",
+          "Network congestion that prevents timely transaction execution"
+        ],
+        correctAnswer: 2,
+        explanation: "Impermanent loss occurs when liquidity providers would have been better off simply holding their assets."
+      },
+      {
+        question: "What mechanism does Proof of Stake (PoS) use to secure the network?",
+        options: [
+          "Computational puzzles that require significant energy expenditure",
+          "Validators stake tokens as collateral that can be slashed for malicious behavior",
+          "Trusted nodes appointed by the network foundation",
+          "Reputation scores based on historical transaction validation accuracy"
+        ],
+        correctAnswer: 1,
+        explanation: "PoS secures networks through economic incentives where validators risk their staked tokens."
+      },
+      {
+        question: "What is the purpose of token burning in cryptocurrency economics?",
+        options: [
+          "Destroy tokens to reduce supply and potentially increase remaining token value",
+          "Convert tokens from one blockchain to another through destruction and recreation",
+          "Remove tokens from circulation temporarily for governance voting",
+          "Eliminate tokens that were created through fraudulent transactions"
+        ],
+        correctAnswer: 0,
+        explanation: "Token burning permanently removes tokens from supply, potentially creating deflationary pressure."
+      },
+      {
+        question: "What is a liquidity pool in decentralized exchanges?",
+        options: [
+          "A reserve fund maintained by the exchange for emergency withdrawals",
+          "Smart contracts holding paired tokens that enable automated trading without order books",
+          "A collection of investors who coordinate large trades to minimize market impact",
+          "A marketing fund used to attract new users to the platform"
+        ],
+        correctAnswer: 1,
+        explanation: "Liquidity pools are smart contracts with token pairs that enable automated market making."
+      },
+      {
+        question: "What is the primary purpose of a blockchain bridge?",
+        options: [
+          "Connect cryptocurrency exchanges to traditional banking systems",
+          "Enable asset and data transfer between different blockchain networks",
+          "Provide customer support services for blockchain users",
+          "Create backup copies of blockchain data for disaster recovery"
+        ],
+        correctAnswer: 1,
+        explanation: "Bridges enable interoperability by facilitating asset and data transfer across different blockchains."
+      },
+      {
+        question: "What distinguishes a custodial wallet from a non-custodial wallet?",
+        options: [
+          "Custodial wallets support more token types than non-custodial wallets",
+          "Custodial wallets are controlled by third parties while non-custodial wallets give users full control",
+          "Custodial wallets are more secure because professionals manage them",
+          "Non-custodial wallets require internet connection while custodial wallets work offline"
+        ],
+        correctAnswer: 1,
+        explanation: "Custodial services hold private keys on behalf of users, while non-custodial wallets give users full control."
+      },
+      {
+        question: "What is the purpose of governance tokens in DeFi protocols?",
+        options: [
+          "Pay transaction fees on the protocol's blockchain network",
+          "Give holders voting rights on protocol decisions and development direction",
+          "Provide staking rewards for securing the underlying blockchain",
+          "Represent ownership shares in the company that created the protocol"
+        ],
+        correctAnswer: 1,
+        explanation: "Governance tokens enable decentralized decision-making by giving holders voting power on protocol changes."
+      },
+      {
+        question: "What is a flash loan in DeFi?",
+        options: [
+          "A small loan that can be obtained quickly with minimal documentation",
+          "An uncollateralized loan that must be borrowed and repaid within a single transaction",
+          "A loan with extremely high interest rates for emergency situations",
+          "A peer-to-peer loan facilitated through social media platforms"
+        ],
+        correctAnswer: 1,
+        explanation: "Flash loans are uncollateralized loans that must be repaid within the same transaction block."
+      },
+      {
+        question: "What is the primary security concern with smart contract interactions?",
+        options: [
+          "Smart contracts can be modified after deployment to steal user funds",
+          "Code vulnerabilities or exploits can result in permanent, irreversible loss of funds",
+          "Smart contracts require users to share their private keys",
+          "Network congestion can prevent smart contract execution entirely"
+        ],
+        correctAnswer: 1,
+        explanation: "Smart contract bugs or exploits can lead to irreversible fund loss since blockchain transactions cannot be reversed."
+      },
+      {
+        question: "What is a sybil attack in the context of blockchain networks?",
+        options: [
+          "An attack that targets individual user wallets through phishing",
+          "Creating multiple fake identities to gain disproportionate influence over a network",
+          "Exploiting smart contract vulnerabilities to drain liquidity pools",
+          "Manipulating oracle data to trigger incorrect smart contract execution"
+        ],
+        correctAnswer: 1,
+        explanation: "Sybil attacks involve creating multiple identities to manipulate systems that assume one entity per identity."
+      },
+      {
+        question: "What is the purpose of a merkle tree in blockchain architecture?",
+        options: [
+          "Organize blockchain nodes in a hierarchical network structure",
+          "Enable efficient verification that specific data is included in a block",
+          "Determine which node gets to create the next block",
+          "Store user identity information in a privacy-preserving format"
+        ],
+        correctAnswer: 1,
+        explanation: "Merkle trees enable efficient and secure verification of data inclusion without downloading entire blocks."
       }
     ]
   },
@@ -730,6 +1731,171 @@ const skillTests = [
         ],
         correctAnswer: 1,
         explanation: "Engagement and retention indicate whether members find value and want to stay active in the community."
+      },
+      {
+        question: "What is the most effective way to onboard new community members?",
+        options: [
+          "Provide comprehensive documentation and let new members explore independently",
+          "Create a structured welcome process that introduces community norms and connection opportunities",
+          "Assign each new member a dedicated mentor for their first six months",
+          "Require new members to complete a quiz before gaining full access"
+        ],
+        correctAnswer: 1,
+        explanation: "Structured onboarding helps new members understand expectations and quickly find their place in the community."
+      },
+      {
+        question: "How should community managers handle member feedback that conflicts with community direction?",
+        options: [
+          "Implement all member suggestions to demonstrate responsiveness",
+          "Ignore feedback that doesn't align with predetermined plans",
+          "Acknowledge feedback, explain decisions transparently, and identify areas for potential adaptation",
+          "Create a voting system for all community decisions regardless of complexity"
+        ],
+        correctAnswer: 2,
+        explanation: "Transparent acknowledgment and explanation builds trust even when not all feedback can be implemented."
+      },
+      {
+        question: "What role do community champions or ambassadors play in community growth?",
+        options: [
+          "Replace paid community management staff to reduce operational costs",
+          "Extend community presence through authentic advocacy and peer support",
+          "Enforce community rules more aggressively than official moderators",
+          "Create content exclusively since staff cannot produce enough material"
+        ],
+        correctAnswer: 1,
+        explanation: "Champions amplify community presence and provide authentic peer support that staff alone cannot achieve."
+      },
+      {
+        question: "How should communities approach content moderation at scale?",
+        options: [
+          "Rely entirely on automated systems to handle all moderation decisions",
+          "Hire more moderators proportionally as the community grows",
+          "Combine automated tools with human judgment for nuanced decisions",
+          "Reduce moderation standards to allow for faster community growth"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective scaling combines automation for obvious cases with human judgment for nuanced situations."
+      },
+      {
+        question: "What is the primary purpose of creating community events and activities?",
+        options: [
+          "Generate content to post on social media and attract new members",
+          "Foster connections between members and reinforce shared identity",
+          "Provide opportunities for sponsors and partners to promote products",
+          "Create competition that motivates higher engagement levels"
+        ],
+        correctAnswer: 1,
+        explanation: "Events create shared experiences that strengthen connections and community identity beyond casual interaction."
+      },
+      {
+        question: "How should community managers respond to toxic behavior from influential members?",
+        options: [
+          "Tolerate some toxicity from high-value contributors to retain their participation",
+          "Apply community guidelines consistently regardless of member status or influence",
+          "Address issues privately without any public acknowledgment to avoid escalation",
+          "Create separate rules for different member tiers based on contribution level"
+        ],
+        correctAnswer: 1,
+        explanation: "Consistent enforcement regardless of status maintains community trust and prevents cultural erosion."
+      },
+      {
+        question: "What strategy best encourages lurkers to become active community participants?",
+        options: [
+          "Call out lurkers publicly to pressure them into participating",
+          "Create low-barrier participation opportunities and celebrate small contributions",
+          "Implement minimum participation requirements for continued membership",
+          "Remove inactive members periodically to improve engagement metrics"
+        ],
+        correctAnswer: 1,
+        explanation: "Low-barrier opportunities and positive reinforcement gradually encourage lurkers to participate more actively."
+      },
+      {
+        question: "How should communities balance openness with maintaining quality discussions?",
+        options: [
+          "Implement strict vetting processes that screen all potential members",
+          "Allow anyone to join but create tiered access to different community spaces",
+          "Focus recruitment only on known networks to ensure cultural fit",
+          "Maintain completely open access and rely on moderation alone"
+        ],
+        correctAnswer: 1,
+        explanation: "Tiered access allows welcoming openness while protecting core community spaces for quality interactions."
+      },
+      {
+        question: "What is the most important consideration when dealing with community drama?",
+        options: [
+          "Take sides quickly to resolve conflicts and move forward",
+          "Address issues promptly with fairness while protecting community culture",
+          "Ignore drama since it will resolve itself naturally over time",
+          "Delete all related content to prevent further discussion"
+        ],
+        correctAnswer: 1,
+        explanation: "Prompt, fair intervention protects community culture while showing members that issues are taken seriously."
+      },
+      {
+        question: "How should community managers approach platform diversification?",
+        options: [
+          "Consolidate all community activity on a single platform for simplicity",
+          "Maintain presence on all possible platforms to maximize reach",
+          "Select platforms strategically based on audience behavior and community goals",
+          "Move to new platforms only when forced by platform changes"
+        ],
+        correctAnswer: 2,
+        explanation: "Strategic platform selection aligns community presence with where target audience naturally engages."
+      },
+      {
+        question: "What approach best handles the transition when community leadership changes?",
+        options: [
+          "New leaders should immediately implement their vision to establish authority",
+          "Maintain exact continuity with no changes to preserve community stability",
+          "Communicate changes transparently while respecting established community culture",
+          "Consult with community members on every decision the new leader makes"
+        ],
+        correctAnswer: 2,
+        explanation: "Transparent communication about changes while respecting culture maintains trust during transitions."
+      },
+      {
+        question: "How should communities measure return on investment (ROI)?",
+        options: [
+          "Focus exclusively on revenue generated directly from community activities",
+          "Track multiple value metrics including brand loyalty, support deflection, and insights",
+          "Compare community costs to traditional marketing spend",
+          "Measure only member acquisition costs against lifetime value"
+        ],
+        correctAnswer: 1,
+        explanation: "Community ROI includes diverse value streams beyond direct revenue, including loyalty and insights."
+      },
+      {
+        question: "What is the most effective approach to handling community criticism of the parent organization?",
+        options: [
+          "Delete critical posts to maintain positive community sentiment",
+          "Defend the organization vigorously against all criticism",
+          "Listen actively, acknowledge concerns, and communicate what can and cannot change",
+          "Redirect all criticism to official support channels outside the community"
+        ],
+        correctAnswer: 2,
+        explanation: "Active listening and honest communication about limitations builds trust even when criticism cannot be fully addressed."
+      },
+      {
+        question: "How should community managers approach member recognition programs?",
+        options: [
+          "Recognize only the most active contributors to incentivize high engagement",
+          "Create tiered recognition that celebrates diverse contributions and participation styles",
+          "Avoid recognition programs since they can create unhealthy competition",
+          "Implement only public recognition to maximize motivational impact"
+        ],
+        correctAnswer: 1,
+        explanation: "Diverse recognition acknowledges that valuable contributions come in many forms beyond posting frequency."
+      },
+      {
+        question: "What is the most important factor when launching a new community initiative?",
+        options: [
+          "Announce with maximum fanfare to generate immediate interest",
+          "Start quietly with core members to refine before broader launch",
+          "Launch simultaneously across all platforms for maximum reach",
+          "Wait until the initiative is fully polished before any announcement"
+        ],
+        correctAnswer: 1,
+        explanation: "Starting with core members allows refinement based on feedback before committing to broader launch."
       }
     ]
   }
