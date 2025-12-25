@@ -121,6 +121,40 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending vote boost requests
+    socket.on('requestPendingVoteBoosts', async (userData) => {
+      if (userData && userData.isAdmin) {
+        try {
+          const VoteBoost = require('./models/VoteBoost');
+          const Ad = require('./models/Ad');
+          
+          // Get all pending vote boosts
+          const pendingBoosts = await VoteBoost.find({ status: 'pending' }).sort({ createdAt: -1 });
+          
+          // Get associated ads for each boost
+          const boostsWithAds = await Promise.all(
+            pendingBoosts.map(async (boost) => {
+              const ad = await Ad.findOne({ id: boost.adId });
+              return {
+                ...boost.toObject(),
+                ad: ad ? { id: ad.id, title: ad.title, logo: ad.logo, owner: ad.owner } : null
+              };
+            })
+          );
+          
+          // Send all pending vote boosts to this admin
+          socket.emit('pendingVoteBoostsLoaded', {
+            voteBoosts: boostsWithAds,
+            total: boostsWithAds.length
+          });
+          
+        } catch (error) {
+          console.error('Error fetching pending vote boosts for admin:', error);
+          socket.emit('pendingVoteBoostsError', { error: 'Failed to fetch pending vote boosts' });
+        }
+      }
+    });
+
     // Handle user requesting their bookings data
     socket.on('requestUserBookings', async (userData) => {
       if (userData && userData.userId) {
@@ -911,6 +945,32 @@ function emitBookingMessagesRead(data) {
   }
 }
 
+// Vote boost socket emission functions
+function emitVoteBoostUpdate(type, voteBoost, ad = null) {
+  if (!io) return;
+  
+  // type: 'create', 'approve', 'reject', 'progress', 'completed'
+  io.emit('voteBoostUpdated', { type, voteBoost, ad });
+}
+
+function emitVoteBoostApproved(boostData) {
+  if (io) {
+    io.emit('voteBoostApproved', boostData);
+  }
+}
+
+function emitVoteBoostRejected(boostData) {
+  if (io) {
+    io.emit('voteBoostRejected', boostData);
+  }
+}
+
+function emitNewVoteBoostPending(boostData) {
+  if (io) {
+    io.emit('newVoteBoostPending', boostData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -940,5 +1000,9 @@ module.exports = {
   emitNewBookingMessage,
   emitBookingMessageRead,
   emitBookingMessagesRead,
-  emitRaidUpdate
+  emitRaidUpdate,
+  emitVoteBoostUpdate,
+  emitVoteBoostApproved,
+  emitVoteBoostRejected,
+  emitNewVoteBoostPending
 }; 

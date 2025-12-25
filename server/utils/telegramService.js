@@ -531,6 +531,8 @@ const telegramService = {
       await telegramService.handleSetBrandingCommand(chatId, userId);
     } else if (text.startsWith('/removebranding')) {
       await telegramService.handleRemoveBrandingCommand(chatId, userId);
+    } else if (text.startsWith('/boostvote')) {
+      await telegramService.handleBoostVoteCommand(chatId, userId);
     } else if (text.startsWith('/cancel')) {
       // Cancel any ongoing conversation
       if (conversationState) {
@@ -4750,6 +4752,93 @@ Tap to update:`;
       console.error('RemoveBranding command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error removing branding. Please try again later.");
+    }
+  },
+
+  // Handle /boostvote command - Show vote boost packages
+  handleBoostVoteCommand: async (chatId, telegramUserId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Find user's active/approved bubbles
+      const userBubbles = await Ad.find({ 
+        owner: user.username,
+        status: { $in: ['active', 'approved'] }
+      }).select('id title logo bullishVotes bearishVotes');
+
+      if (userBubbles.length === 0) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ You don't have any bubbles to boost.\n\n🚀 List your project at: https://aquads.xyz");
+        return;
+      }
+
+      // Vote boost packages with pricing
+      const packages = [
+        { id: 'starter', name: '🌟 Starter', votes: 100, price: 20, originalPrice: 20, discount: 0 },
+        { id: 'growth', name: '🚀 Growth', votes: 500, price: 80, originalPrice: 100, discount: 20 },
+        { id: 'pro', name: '💎 Pro', votes: 1000, price: 140, originalPrice: 200, discount: 30 },
+        { id: 'enterprise', name: '👑 Enterprise', votes: 5000, price: 599, originalPrice: 1000, discount: 40 }
+      ];
+
+      // Build message
+      let message = `🗳️ <b>BOOST YOUR BUBBLE VOTES</b>\n\n`;
+      message += `Skyrocket your bubble's ranking with guaranteed bullish votes!\n`;
+      message += `📈 Votes are added automatically - 1 vote every 30 seconds\n\n`;
+      message += `<b>📦 PACKAGES:</b>\n`;
+      message += `━━━━━━━━━━━━━━━━━━\n`;
+      
+      packages.forEach(pkg => {
+        message += `\n${pkg.name}\n`;
+        message += `• ${pkg.votes.toLocaleString()} Bullish Votes\n`;
+        if (pkg.discount > 0) {
+          message += `• <s>$${pkg.originalPrice}</s> → <b>$${pkg.price} USDC</b> (${pkg.discount}% OFF!)\n`;
+        } else {
+          message += `• <b>$${pkg.price} USDC</b>\n`;
+        }
+        const duration = Math.ceil((pkg.votes * 30) / 60); // in minutes (30 sec per vote)
+        if (duration >= 60) {
+          const hours = Math.floor(duration / 60);
+          const mins = duration % 60;
+          message += `• ⏱️ Duration: ~${hours}h ${mins > 0 ? mins + 'm' : ''}\n`;
+        } else {
+          message += `• ⏱️ Duration: ~${duration} mins\n`;
+        }
+      });
+
+      message += `\n━━━━━━━━━━━━━━━━━━\n`;
+      message += `\n<b>💳 PAYMENT WALLETS (USDC):</b>\n\n`;
+      message += `<b>Solana:</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
+      message += `<b>Ethereum:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>Base:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>Sui:</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
+      message += `━━━━━━━━━━━━━━━━━━\n`;
+      message += `\n<b>📋 HOW TO PURCHASE:</b>\n`;
+      message += `1️⃣ Send USDC to wallet above\n`;
+      message += `2️⃣ Go to aquads.xyz/dashboard\n`;
+      message += `3️⃣ Submit your Vote Boost request\n`;
+      message += `4️⃣ Include TX signature for verification\n`;
+      message += `5️⃣ Admin approves → Votes start flowing!\n\n`;
+      message += `<b>🔥 Your Bubbles:</b>\n`;
+      
+      userBubbles.forEach((bubble, index) => {
+        message += `${index + 1}. ${bubble.title} (👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0})\n`;
+      });
+
+      message += `\n🌐 <b>Purchase at:</b> https://aquads.xyz`;
+
+      await telegramService.sendBotMessage(chatId, message);
+
+    } catch (error) {
+      console.error('BoostVote command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error loading vote boost packages. Please try again later.");
     }
   },
 

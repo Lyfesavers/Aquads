@@ -591,6 +591,123 @@ export const fetchBumpRequests = async (status = 'pending') => {
   return response.json();
 };
 
+// Vote Boost API Functions
+
+// Fetch vote boost packages
+export const fetchVoteBoostPackages = async () => {
+  const response = await fetch(`${API_URL}/vote-boosts/packages`);
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch vote boost packages');
+  }
+  
+  return response.json();
+};
+
+// Create vote boost request
+export const createVoteBoostRequest = async (boostData) => {
+  logger.log("Creating vote boost request with data:", boostData);
+  
+  if (!boostData.txSignature) {
+    logger.error("Missing transaction signature in vote boost request");
+    throw new Error("Transaction signature is required");
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/vote-boosts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify(boostData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      logger.error("Vote boost request API error:", errorData);
+      throw new Error(errorData.error || 'Failed to create vote boost request');
+    }
+    
+    const data = await response.json();
+    logger.log("Vote boost request created successfully:", data);
+    return data;
+  } catch (error) {
+    logger.error("Error in createVoteBoostRequest:", error);
+    throw error;
+  }
+};
+
+// Approve vote boost request (admin only)
+export const approveVoteBoostRequest = async (boostId) => {
+  const response = await fetch(`${API_URL}/vote-boosts/${boostId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to approve vote boost request');
+  }
+  
+  return response.json();
+};
+
+// Reject vote boost request (admin only)
+export const rejectVoteBoostRequest = async (boostId, reason) => {
+  const response = await fetch(`${API_URL}/vote-boosts/${boostId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ reason })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to reject vote boost request');
+  }
+  
+  return response.json();
+};
+
+// Fetch pending vote boost requests (admin only)
+export const fetchPendingVoteBoosts = async () => {
+  const response = await fetch(`${API_URL}/vote-boosts/pending`, {
+    headers: {
+      ...getAuthHeader()
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch pending vote boosts');
+  }
+  
+  return response.json();
+};
+
+// Fetch user's vote boosts
+export const fetchMyVoteBoosts = async () => {
+  const response = await fetch(`${API_URL}/vote-boosts/my-boosts`, {
+    headers: {
+      ...getAuthHeader()
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch your vote boosts');
+  }
+  
+  return response.json();
+};
+
 // Enhanced connection monitoring
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;

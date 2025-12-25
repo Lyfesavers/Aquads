@@ -83,6 +83,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeAdminSection, setActiveAdminSection] = useState('bumps');
   const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
   const [pendingTokenPurchases, setPendingTokenPurchases] = useState([]);
+  // Vote boost approval states
+  const [pendingVoteBoosts, setPendingVoteBoosts] = useState([]);
+  const [showRejectVoteBoostModal, setShowRejectVoteBoostModal] = useState(false);
+  const [selectedVoteBoost, setSelectedVoteBoost] = useState(null);
+  const [voteBoostRejectionReason, setVoteBoostRejectionReason] = useState('');
   // Service approval states
   const [pendingServices, setPendingServices] = useState([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -469,6 +474,49 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
   }, [socket, currentUser]);
 
+  // Socket listeners for vote boost updates
+  useEffect(() => {
+    if (!socket || !currentUser?.isAdmin) return;
+
+    const handleVoteBoostUpdate = (data) => {
+      const { type, voteBoost, ad } = data;
+      
+      if (type === 'create') {
+        // Add new vote boost request to the list
+        setPendingVoteBoosts(prevBoosts => {
+          const exists = prevBoosts.some(boost => boost._id === voteBoost._id);
+          if (!exists) {
+            return [{ ...voteBoost, ad }, ...prevBoosts];
+          }
+          return prevBoosts;
+        });
+      } else if (type === 'approve' || type === 'reject') {
+        // Remove processed vote boost from the list
+        setPendingVoteBoosts(prevBoosts => 
+          prevBoosts.filter(boost => boost._id !== voteBoost._id)
+        );
+      }
+    };
+
+    const handlePendingVoteBoostsLoaded = (data) => {
+      setPendingVoteBoosts(data.voteBoosts);
+    };
+
+    const handlePendingVoteBoostsError = (error) => {
+      console.error('Error loading vote boosts via socket:', error);
+    };
+
+    socket.on('voteBoostUpdated', handleVoteBoostUpdate);
+    socket.on('pendingVoteBoostsLoaded', handlePendingVoteBoostsLoaded);
+    socket.on('pendingVoteBoostsError', handlePendingVoteBoostsError);
+
+    return () => {
+      socket.off('voteBoostUpdated', handleVoteBoostUpdate);
+      socket.off('pendingVoteBoostsLoaded', handlePendingVoteBoostsLoaded);
+      socket.off('pendingVoteBoostsError', handlePendingVoteBoostsError);
+    };
+  }, [socket, currentUser]);
+
   // Add Socket.io listeners for admin-only features
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
@@ -668,6 +716,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       // Request token purchases via socket instead of API call
       if (socket) {
         socket.emit('requestPendingTokenPurchases', {
+          userId: currentUser.userId,
+          isAdmin: currentUser.isAdmin
+        });
+        // Request pending vote boosts via socket
+        socket.emit('requestPendingVoteBoosts', {
           userId: currentUser.userId,
           isAdmin: currentUser.isAdmin
         });
@@ -3043,6 +3096,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                   </button>
                   <button
+                    onClick={() => setActiveAdminSection('voteboosts')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'voteboosts' 
+                        ? 'bg-blue-600 text-white' 
+                        : pendingVoteBoosts.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🗳️ Vote Boosts
+                    {pendingVoteBoosts.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingVoteBoosts.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
                     onClick={() => setActiveAdminSection('banners')}
                     className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'banners' 
@@ -3334,6 +3404,199 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </button>
                             <button
                               onClick={confirmReject}
+                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                            >
+                              Confirm Reject
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeAdminSection === 'voteboosts' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">🗳️ Pending Vote Boost Approvals</h3>
+                    {pendingVoteBoosts.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending vote boost approvals.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingVoteBoosts.map(boost => {
+                          const isPayPal = boost.txSignature === 'paypal';
+                          
+                          return (
+                          <div key={boost._id} className="bg-gray-700 rounded-lg p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                              {/* Left side - Bubble Info */}
+                              <div className="flex items-start space-x-4">
+                                {boost.ad?.logo && (
+                                  <img src={boost.ad.logo} alt={boost.ad?.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-white font-semibold text-base sm:text-lg mb-1">{boost.ad?.title || 'Unknown Bubble'}</h4>
+                                  <p className="text-gray-400 text-sm mb-1">
+                                    <span className="font-medium">Owner:</span> {boost.owner}
+                                  </p>
+                                  <p className="text-gray-400 text-xs sm:text-sm">
+                                    <span className="font-medium">Requested:</span> {new Date(boost.createdAt).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Right side - Package & Payment Details */}
+                              <div className="flex flex-col items-start sm:items-end gap-3">
+                                {/* Package Details */}
+                                <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[280px]">
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-gray-400">Package:</span>
+                                      <span className="text-purple-400 font-semibold">{boost.packageName}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-gray-400">Votes to Add:</span>
+                                      <span className="text-white font-semibold">{boost.votesToAdd.toLocaleString()} 👍</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                      <span className="text-gray-400">Payment Method:</span>
+                                      <span className={`font-semibold ${isPayPal ? 'text-yellow-400' : 'text-blue-400'}`}>
+                                        {isPayPal ? '💳 PayPal/Card' : '🔗 Crypto'}
+                                      </span>
+                                    </div>
+                                    {boost.discountPercent > 0 && (
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400">Discount:</span>
+                                        <span className="text-green-400 font-semibold">{boost.discountPercent}% OFF</span>
+                                      </div>
+                                    )}
+                                    <div className="border-t border-gray-700 pt-2 mt-2">
+                                      {boost.discountPercent > 0 && (
+                                        <div className="flex justify-between gap-4 mb-1">
+                                          <span className="text-gray-400">Original Price:</span>
+                                          <span className="text-gray-400 line-through">${boost.originalPrice}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between gap-4">
+                                        <span className="text-gray-400 font-medium">Total Price:</span>
+                                        <span className="text-green-400 font-bold text-base">
+                                          ${boost.price} {isPayPal ? 'USD' : 'USDC'}
+                                        </span>
+                                      </div>
+                                      {boost.discountPercent > 0 && (
+                                        <p className="text-xs text-green-400 mt-1 text-right">
+                                          Saved ${boost.originalPrice - boost.price}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="border-t border-gray-700 pt-2 mt-2">
+                                      <p className="text-xs text-gray-500">
+                                        ⏱️ Rate: 1 vote / 30 seconds (~{Math.ceil((boost.votesToAdd * 30) / 3600)}h to complete)
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Transaction Link & Actions */}
+                                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                  {!isPayPal ? (
+                                    <a 
+                                      href={`https://solscan.io/tx/${boost.txSignature}`} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer" 
+                                      className="text-blue-400 hover:text-blue-300 text-sm text-center sm:text-right hover:underline"
+                                    >
+                                      🔍 View Transaction
+                                    </a>
+                                  ) : (
+                                    <p className="text-yellow-400 text-sm text-center sm:text-right">
+                                      💳 PayPal Payment - Verify manually
+                                    </p>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`${API_URL}/vote-boosts/${boost._id}/approve`, {
+                                            method: 'POST',
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                              'Authorization': `Bearer ${currentUser.token}`
+                                            }
+                                          });
+                                          if (response.ok) {
+                                            setPendingVoteBoosts(prev => prev.filter(b => b._id !== boost._id));
+                                          }
+                                        } catch (error) {
+                                          console.error('Error approving vote boost:', error);
+                                        }
+                                      }}
+                                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold transition-colors"
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                    <button 
+                                      onClick={() => {
+                                        setSelectedVoteBoost(boost);
+                                        setShowRejectVoteBoostModal(true);
+                                      }}
+                                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition-colors"
+                                    >
+                                      ✗ Reject
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Vote Boost Reject Modal */}
+                    {showRejectVoteBoostModal && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                          <h3 className="text-xl font-semibold text-white mb-4">Reject Vote Boost Request</h3>
+                          <textarea
+                            value={voteBoostRejectionReason}
+                            onChange={(e) => setVoteBoostRejectionReason(e.target.value)}
+                            placeholder="Enter reason for rejection (optional)"
+                            className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            rows="3"
+                          />
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => {
+                                setShowRejectVoteBoostModal(false);
+                                setVoteBoostRejectionReason('');
+                                setSelectedVoteBoost(null);
+                              }}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`${API_URL}/vote-boosts/${selectedVoteBoost._id}/reject`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${currentUser.token}`
+                                    },
+                                    body: JSON.stringify({ reason: voteBoostRejectionReason })
+                                  });
+                                  if (response.ok) {
+                                    setPendingVoteBoosts(prev => prev.filter(b => b._id !== selectedVoteBoost._id));
+                                    setShowRejectVoteBoostModal(false);
+                                    setVoteBoostRejectionReason('');
+                                    setSelectedVoteBoost(null);
+                                  }
+                                } catch (error) {
+                                  console.error('Error rejecting vote boost:', error);
+                                }
+                              }}
                               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
                             >
                               Confirm Reject

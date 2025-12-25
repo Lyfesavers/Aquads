@@ -16,7 +16,9 @@ const compression = require('compression');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
+const VoteBoost = require('./models/VoteBoost');
 const bumpRoutes = require('./routes/bumps');
+const voteBoostRoutes = require('./routes/vote-boosts');
 const bannerAdsRoutes = require('./routes/bannerAds');
 const affiliateRoutes = require('./routes/affiliates');
 const rateLimit = require('express-rate-limit');
@@ -221,6 +223,69 @@ setInterval(async () => {
     console.error('[Membership Renewal] Error in renewal task:', error);
   }
 }, 60 * 60 * 1000); // Run every hour
+
+// Vote Boost Background Service - Add votes every 30 seconds for active boosts
+setInterval(async () => {
+  try {
+    // Find all active boosts that haven't completed yet
+    const activeBoosts = await VoteBoost.find({
+      status: 'active',
+      $expr: { $lt: ['$votesAdded', '$votesToAdd'] }
+    });
+
+    if (activeBoosts.length === 0) return;
+
+    const now = new Date();
+
+    for (const boost of activeBoosts) {
+      try {
+        // Check if enough time has passed since last vote (intervalSeconds, default 30)
+        const intervalMs = (boost.intervalSeconds || 30) * 1000;
+        const timeSinceLastVote = boost.lastVoteAt ? (now - new Date(boost.lastVoteAt)) : intervalMs;
+
+        if (timeSinceLastVote >= intervalMs) {
+          // Add 1 bullish vote to the ad
+          const ad = await Ad.findOneAndUpdate(
+            { id: boost.adId },
+            { $inc: { bullishVotes: 1 } },
+            { new: true }
+          );
+
+          if (ad) {
+            // Update boost record
+            boost.votesAdded += 1;
+            boost.lastVoteAt = now;
+
+            // Check if boost is completed
+            if (boost.votesAdded >= boost.votesToAdd) {
+              boost.status = 'completed';
+              boost.completedAt = now;
+              console.log(`[Vote Boost] Completed boost for ${ad.title} - ${boost.votesToAdd} votes added`);
+            }
+
+            await boost.save();
+
+            // Emit socket update for real-time vote count
+            socketModule.getIO().emit('adVoteUpdated', {
+              adId: ad.id,
+              bullishVotes: ad.bullishVotes,
+              bearishVotes: ad.bearishVotes
+            });
+
+            // Send Telegram vote notification (same as regular votes)
+            telegramService.sendVoteNotificationToGroup(ad).catch(err => {
+              console.error('[Vote Boost] Error sending telegram notification:', err.message);
+            });
+          }
+        }
+      } catch (boostError) {
+        console.error(`[Vote Boost] Error processing boost ${boost._id}:`, boostError.message);
+      }
+    }
+  } catch (error) {
+    console.error('[Vote Boost] Error in vote boost service:', error.message);
+  }
+}, 30000); // Run every 30 seconds
 
 // Periodic task for sending daily bubble summary to trending channel
 setInterval(async () => {
@@ -489,6 +554,7 @@ process.on('SIGINT', async () => {
 
 // Routes
 app.use('/api/bumps', bumpRoutes);
+app.use('/api/vote-boosts', voteBoostRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/ads', require('./routes/ads'));
 app.use('/api/service-reviews', require('./routes/serviceReviews'));
