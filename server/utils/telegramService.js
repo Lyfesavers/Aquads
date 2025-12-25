@@ -4815,16 +4815,16 @@ Tap to update:`;
       const keyboard = {
         inline_keyboard: [
           [
-            { text: "🌟 100 Votes - $20", callback_data: "boost_pkg_starter" }
+            { text: "🌟 50 Votes - $10", callback_data: "boost_pkg_starter" }
           ],
           [
-            { text: "🚀 500 Votes - $80 (20% OFF)", callback_data: "boost_pkg_growth" }
+            { text: "📦 100 Votes - $15 (25% OFF)", callback_data: "boost_pkg_basic" }
           ],
           [
-            { text: "💎 1,000 Votes - $140 (30% OFF)", callback_data: "boost_pkg_pro" }
+            { text: "🚀 300 Votes - $25 (58% OFF)", callback_data: "boost_pkg_growth" }
           ],
           [
-            { text: "👑 5,000 Votes - $599 (40% OFF)", callback_data: "boost_pkg_enterprise" }
+            { text: "💎 500 Votes - $50 (50% OFF)", callback_data: "boost_pkg_pro" }
           ]
         ]
       };
@@ -4849,10 +4849,10 @@ Tap to update:`;
 
       // Package details
       const packages = {
-        starter: { name: 'Starter', votes: 100, price: 20 },
-        growth: { name: 'Growth', votes: 500, price: 80 },
-        pro: { name: 'Pro', votes: 1000, price: 140 },
-        enterprise: { name: 'Enterprise', votes: 5000, price: 599 }
+        starter: { name: 'Starter', votes: 50, price: 10 },
+        basic: { name: 'Basic', votes: 100, price: 15 },
+        growth: { name: 'Growth', votes: 300, price: 25 },
+        pro: { name: 'Pro', votes: 500, price: 50 }
       };
 
       const selectedPkg = packages[packageId];
@@ -4900,10 +4900,10 @@ Tap to update:`;
   showBoostPaymentStep: async (chatId, telegramUserId, packageId, bubbleId, messageId) => {
     try {
       const packages = {
-        starter: { name: 'Starter', votes: 100, price: 20 },
-        growth: { name: 'Growth', votes: 500, price: 80 },
-        pro: { name: 'Pro', votes: 1000, price: 140 },
-        enterprise: { name: 'Enterprise', votes: 5000, price: 599 }
+        starter: { name: 'Starter', votes: 50, price: 10 },
+        basic: { name: 'Basic', votes: 100, price: 15 },
+        growth: { name: 'Growth', votes: 300, price: 25 },
+        pro: { name: 'Pro', votes: 500, price: 50 }
       };
 
       const selectedPkg = packages[packageId];
