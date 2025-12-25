@@ -3496,22 +3496,66 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   </div>
                                 </div>
 
-                                {/* Transaction Link & Actions */}
+                                {/* Transaction Details Box */}
+                                <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[280px] border border-gray-600">
+                                  <p className="text-blue-400 font-semibold text-sm mb-2">💳 Payment Verification</p>
+                                  <div className="space-y-2 text-sm">
+                                    <div>
+                                      <span className="text-gray-400 text-xs">Chain:</span>
+                                      <p className="text-white font-mono text-xs">{boost.paymentChain || 'Not specified'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-400 text-xs">TX Signature:</span>
+                                      <p className="text-blue-300 font-mono text-xs break-all bg-gray-900 p-2 rounded mt-1 select-all">
+                                        {boost.txSignature}
+                                      </p>
+                                    </div>
+                                    {!isPayPal && (
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        <a 
+                                          href={`https://solscan.io/tx/${boost.txSignature}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="text-purple-400 hover:text-purple-300 text-xs hover:underline"
+                                        >
+                                          🔍 Solscan
+                                        </a>
+                                        <a 
+                                          href={`https://etherscan.io/tx/${boost.txSignature}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="text-blue-400 hover:text-blue-300 text-xs hover:underline"
+                                        >
+                                          🔍 Etherscan
+                                        </a>
+                                        <a 
+                                          href={`https://basescan.org/tx/${boost.txSignature}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="text-blue-400 hover:text-blue-300 text-xs hover:underline"
+                                        >
+                                          🔍 Basescan
+                                        </a>
+                                        <a 
+                                          href={`https://suiscan.xyz/mainnet/tx/${boost.txSignature}`} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="text-cyan-400 hover:text-cyan-300 text-xs hover:underline"
+                                        >
+                                          🔍 Suiscan
+                                        </a>
+                                      </div>
+                                    )}
+                                    {isPayPal && (
+                                      <p className="text-yellow-400 text-xs mt-2">
+                                        ⚠️ PayPal Payment - Verify manually in PayPal dashboard
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Actions */}
                                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                  {!isPayPal ? (
-                                    <a 
-                                      href={`https://solscan.io/tx/${boost.txSignature}`} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer" 
-                                      className="text-blue-400 hover:text-blue-300 text-sm text-center sm:text-right hover:underline"
-                                    >
-                                      🔍 View Transaction
-                                    </a>
-                                  ) : (
-                                    <p className="text-yellow-400 text-sm text-center sm:text-right">
-                                      💳 PayPal Payment - Verify manually
-                                    </p>
-                                  )}
                                   <div className="flex gap-2">
                                     <button 
                                       onClick={async () => {
