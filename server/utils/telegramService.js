@@ -881,6 +881,9 @@ Vote on projects and view trending bubbles!
 • /mybubble
   View YOUR projects with voting buttons
 
+• /boostvote
+  🚀 Boost your bubble with votes + members!
+
 💡 How voting works:
 • Click 👍 Bullish or 👎 Bearish on any project
 • Earn 20 points for your first vote on each project
@@ -972,7 +975,7 @@ https://aquads.xyz`;
 /raids /createraid /cancelraid
 
 📊 Bubbles:
-/bubbles /mybubble
+/bubbles /mybubble /boostvote
 
 🎨 Branding:
 /setbranding /removebranding
@@ -4922,13 +4925,15 @@ Tap to update:`;
       message += `• Group Members for your TG\n`;
       message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
       message += `━━━━━━━━━━━━━━━━━━\n`;
-      message += `<b>💳 Send $${selectedPkg.price} USDC to:</b>\n\n`;
-      message += `<b>Solana:</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
-      message += `<b>Ethereum:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>Base:</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>Sui:</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
+      message += `<b>💳 Send $${selectedPkg.price} USDC</b>\n\n`;
+      message += `⚠️ <b>Choose ONE chain below to send USDC:</b>\n`;
+      message += `<i>(All options accept USDC only - pick your preferred network)</i>\n\n`;
+      message += `<b>📍 Solana Network (USDC):</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
+      message += `<b>📍 Ethereum Network (USDC):</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>📍 Base Network (USDC):</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
+      message += `<b>📍 Sui Network (USDC):</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
       message += `━━━━━━━━━━━━━━━━━━\n\n`;
-      message += `📝 <b>After payment, send your TX signature here</b>`;
+      message += `📝 <b>After payment, paste your TX signature/hash here</b>`;
 
       // Set conversation state to wait for TX signature
       telegramService.setConversationState(telegramUserId, {
