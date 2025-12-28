@@ -48,10 +48,15 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   const [copied, setCopied] = useState(false);
 
   // Reown AppKit hooks
-  const { open } = useAppKit();
+  const appKit = useAppKit();
   const { address, isConnected } = useAppKitAccount();
   const { chainId } = useAppKitNetwork();
   const { data: walletClient } = useWalletClient();
+
+  // Debug: Log AppKit state on mount
+  useEffect(() => {
+    console.log('AppKit state:', { appKit, isConnected, address, chainId });
+  }, [appKit, isConnected, address, chainId]);
 
   // Fetch resume preparation data
   const fetchResumeData = useCallback(async () => {
@@ -82,8 +87,19 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   }, [fetchResumeData]);
 
   // Open wallet modal
-  const connectWallet = () => {
-    open();
+  const connectWallet = async () => {
+    console.log('Connect wallet clicked, appKit:', appKit);
+    try {
+      if (appKit?.open) {
+        await appKit.open();
+      } else {
+        console.error('AppKit open function not available');
+        showNotification('Wallet connection not available. Please refresh the page.', 'error');
+      }
+    } catch (error) {
+      console.error('Error opening wallet modal:', error);
+      showNotification('Failed to open wallet selector', 'error');
+    }
   };
 
   // Mint on-chain resume
@@ -101,7 +117,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     // Check network
     if (chainId !== BASE_CHAIN_ID) {
       showNotification('Please switch to Base network', 'warning');
-      open({ view: 'Networks' });
+      appKit.open({ view: 'Networks' });
       return;
     }
 
@@ -434,7 +450,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                   ⚠️ Please switch to Base network to mint your resume.
                 </p>
                 <button 
-                  onClick={() => open({ view: 'Networks' })}
+                  onClick={() => appKit.open({ view: 'Networks' })}
                   className="mt-2 text-sm text-yellow-400 hover:text-yellow-300 underline"
                 >
                   Switch Network

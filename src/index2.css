@@ -1950,3 +1950,32 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 .status-tooltip {
   animation: tooltip-fade-in 0.2s ease-out;
 }
+
+/* Ensure Reown/AppKit modals appear on top of EVERYTHING including other modals */
+/* Using max z-index value (2147483647) to compete with Modal.js */
+w3m-modal,
+wcm-modal,
+appkit-modal,
+[data-w3m-modal],
+[data-wcm-modal],
+.w3m-overlay,
+.wcm-overlay,
+.w3m-modal,
+w3m-connect-wallet-view,
+wui-flex,
+wui-card {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+}
+
+/* AppKit modal container and all its parts */
+w3m-modal::part(modal),
+w3m-modal::part(overlay) {
+  z-index: 2147483647 !important;
+}
+
+/* Reown modal backdrop */
+.wui-overlay,
+.wui-modal {
+  z-index: 2147483647 !important;
+}
