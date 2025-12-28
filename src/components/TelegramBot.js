@@ -714,11 +714,11 @@ const TelegramBot = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Get Started in
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> 4 Easy Steps</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> 5 Easy Steps</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
             {[
               {
                 step: '01',
@@ -740,14 +740,20 @@ const TelegramBot = () => {
               },
               {
                 step: '04',
+                title: 'Boost Votes + Members',
+                description: 'Use /boostvote to pump your bubble ranking.',
+                icon: FaUsers
+              },
+              {
+                step: '05',
                 title: 'Trend Everywhere',
                 description: 'List & bump to trend on Aquads homepage, BEX, bubble rankings + custom branding.',
                 icon: FaCrown
               }
             ].map((item, index) => (
               <div key={index} className="relative">
-                {index < 3 && (
-                  <div className="hidden lg:block absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-12 h-0.5 bg-gradient-to-r from-cyan-500/50 to-transparent z-10"></div>
+                {index < 4 && (
+                  <div className="hidden lg:block absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-8 h-0.5 bg-gradient-to-r from-cyan-500/50 to-transparent z-10"></div>
                 )}
                 <div className="group bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800 hover:border-cyan-500/30 transition-all duration-500 text-center h-full">
                   <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 mb-5 group-hover:scale-110 transition-transform duration-300">
