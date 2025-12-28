@@ -562,17 +562,17 @@ userSchema.methods.checkFreeRaidEligibility = function() {
 
   // Check if it's a new day
   if (!this.lastFreeRaidDate || this.lastFreeRaidDate < today) {
-    return { eligible: true, raidsRemaining: 2, raidsUsedToday: 0 };
+    return { eligible: true, raidsRemaining: 5, raidsUsedToday: 0 };
   }
 
   // Same day, check usage
-  if (this.freeRaidsUsedToday >= 2) {
+  if (this.freeRaidsUsedToday >= 5) {
     return { eligible: false, reason: 'Daily limit reached', raidsRemaining: 0, raidsUsedToday: this.freeRaidsUsedToday };
   }
 
   return { 
     eligible: true, 
-    raidsRemaining: 2 - this.freeRaidsUsedToday, 
+    raidsRemaining: 5 - this.freeRaidsUsedToday, 
     raidsUsedToday: this.freeRaidsUsedToday 
   };
 };
@@ -597,7 +597,7 @@ userSchema.methods.useFreeRaid = async function() {
   await this.save();
 
   return { 
-    raidsRemaining: 2 - this.freeRaidsUsedToday, 
+    raidsRemaining: 5 - this.freeRaidsUsedToday, 
     raidsUsedToday: this.freeRaidsUsedToday 
   };
 };

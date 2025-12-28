@@ -1317,7 +1317,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </p>
                     <p className="text-sm">
                       {freeRaidEligibility.eligible 
-                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/2 used)`
+                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/5 used)`
                         : freeRaidEligibility.reason
                       }
                     </p>

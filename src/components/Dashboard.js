@@ -2652,7 +2652,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <div>
                         <h4 className="text-lg font-medium text-white">Free Raid Posts</h4>
                         <p className="text-3xl font-bold text-purple-400">
-                          {freeRaidEligibility.raidsRemaining}/2
+                          {freeRaidEligibility.raidsRemaining}/5
                         </p>
                         <p className="text-sm text-purple-300">
                           Daily free raids remaining
