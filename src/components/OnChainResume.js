@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy } from 'react-icons/fa';
+import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy, FaTimes } from 'react-icons/fa';
 import { ethers } from 'ethers';
 import { API_URL } from '../services/api';
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021';
 const SCHEMA_UID = process.env.REACT_APP_EAS_SCHEMA_UID;
 const BASE_CHAIN_ID = 8453;
@@ -35,14 +36,44 @@ const SCHEMA_TYPES = [
   'bytes32'  // aquadsId
 ];
 
+// Wallet options
+const WALLET_OPTIONS = [
+  {
+    id: 'metamask',
+    name: 'MetaMask',
+    icon: '🦊',
+    description: 'Connect using MetaMask browser extension'
+  },
+  {
+    id: 'walletconnect',
+    name: 'WalletConnect',
+    icon: '🔗',
+    description: 'Scan QR code with any mobile wallet'
+  },
+  {
+    id: 'coinbase',
+    name: 'Coinbase Wallet',
+    icon: '💰',
+    description: 'Connect using Coinbase Wallet'
+  },
+  {
+    id: 'injected',
+    name: 'Browser Wallet',
+    icon: '🌐',
+    description: 'Use any injected browser wallet'
+  }
+];
+
 const OnChainResume = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [minting, setMinting] = useState(false);
   const [resumeData, setResumeData] = useState(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
+  const [walletProvider, setWalletProvider] = useState(null);
+  const [walletType, setWalletType] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Fetch resume preparation data
   const fetchResumeData = useCallback(async () => {
@@ -81,6 +112,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
           if (accounts.length > 0) {
             setWalletConnected(true);
             setWalletAddress(accounts[0]);
+            setWalletType('injected');
           }
         } catch (err) {
           console.error('Error checking wallet:', err);
@@ -90,49 +122,150 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     checkWallet();
   }, []);
 
-  // Connect wallet
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      showNotification('Please install MetaMask or another Web3 wallet', 'error');
-      return;
-    }
-
+  // Switch to Base network
+  const switchToBase = async (provider) => {
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setWalletConnected(true);
-      setWalletAddress(accounts[0]);
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x2105' }] // 8453 in hex
+      });
+    } catch (switchError) {
+      // If Base not added, add it
+      if (switchError.code === 4902) {
+        await provider.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x2105',
+            chainName: 'Base',
+            nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://mainnet.base.org'],
+            blockExplorerUrls: ['https://basescan.org']
+          }]
+        });
+      }
+    }
+  };
 
-      // Check if on Base network
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (parseInt(chainId, 16) !== BASE_CHAIN_ID) {
-        // Try to switch to Base
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x2105' }] // 8453 in hex
-          });
-        } catch (switchError) {
-          // If Base not added, add it
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x2105',
-                chainName: 'Base',
-                nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-                rpcUrls: ['https://mainnet.base.org'],
-                blockExplorerUrls: ['https://basescan.org']
-              }]
-            });
+  // Connect with specific wallet
+  const connectWithWallet = async (walletId) => {
+    setShowWalletModal(false);
+    
+    try {
+      let provider;
+      let accounts;
+
+      switch (walletId) {
+        case 'metamask':
+          // Check if MetaMask is installed
+          if (!window.ethereum?.isMetaMask) {
+            showNotification('MetaMask not detected. Please install MetaMask extension.', 'error');
+            window.open('https://metamask.io/download/', '_blank');
+            return;
           }
-        }
+          provider = window.ethereum;
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          break;
+
+        case 'coinbase':
+          // Check if Coinbase Wallet is installed
+          if (window.ethereum?.isCoinbaseWallet) {
+            provider = window.ethereum;
+          } else if (window.coinbaseWalletExtension) {
+            provider = window.coinbaseWalletExtension;
+          } else {
+            showNotification('Coinbase Wallet not detected. Please install the extension.', 'error');
+            window.open('https://www.coinbase.com/wallet', '_blank');
+            return;
+          }
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          break;
+
+        case 'walletconnect':
+          try {
+            const wcProvider = await EthereumProvider.init({
+              projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+              chains: [BASE_CHAIN_ID],
+              showQrModal: true,
+              methods: ['eth_sendTransaction', 'personal_sign', 'eth_signTypedData'],
+              events: ['chainChanged', 'accountsChanged'],
+              metadata: {
+                name: 'Aquads On-Chain Resume',
+                description: 'Mint your verified freelancer credentials on Base',
+                url: 'https://aquads.xyz',
+                icons: ['https://aquads.xyz/logo192.png']
+              }
+            });
+            
+            await wcProvider.connect();
+            accounts = wcProvider.accounts;
+            provider = wcProvider;
+            
+            // Store WalletConnect provider for later use
+            setWalletProvider(wcProvider);
+          } catch (wcError) {
+            console.error('WalletConnect error:', wcError);
+            showNotification('WalletConnect connection failed or was cancelled', 'error');
+            return;
+          }
+          break;
+
+        case 'injected':
+        default:
+          if (!window.ethereum) {
+            showNotification('No wallet detected. Please install a Web3 wallet.', 'error');
+            return;
+          }
+          provider = window.ethereum;
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          break;
       }
 
-      showNotification('Wallet connected successfully!', 'success');
+      if (!accounts || accounts.length === 0) {
+        showNotification('No accounts found. Please unlock your wallet.', 'error');
+        return;
+      }
+
+      // Store provider reference for non-WalletConnect
+      if (walletId !== 'walletconnect') {
+        setWalletProvider(provider);
+      }
+
+      setWalletConnected(true);
+      setWalletAddress(accounts[0]);
+      setWalletType(walletId);
+
+      // Check if on Base network and switch if needed
+      const chainId = await provider.request({ method: 'eth_chainId' });
+      if (parseInt(chainId, 16) !== BASE_CHAIN_ID) {
+        await switchToBase(provider);
+      }
+
+      showNotification(`${WALLET_OPTIONS.find(w => w.id === walletId)?.name || 'Wallet'} connected successfully!`, 'success');
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      showNotification('Failed to connect wallet', 'error');
+      if (error.code === 4001) {
+        showNotification('Connection rejected by user', 'error');
+      } else {
+        showNotification('Failed to connect wallet: ' + (error.message || 'Unknown error'), 'error');
+      }
     }
+  };
+
+  // Disconnect wallet
+  const disconnectWallet = async () => {
+    if (walletType === 'walletconnect' && walletProvider?.disconnect) {
+      await walletProvider.disconnect();
+    }
+    setWalletConnected(false);
+    setWalletAddress(null);
+    setWalletProvider(null);
+    setWalletType(null);
+    showNotification('Wallet disconnected', 'info');
+  };
+
+  // Open wallet selection modal
+  const connectWallet = () => {
+    setShowWalletModal(true);
   };
 
   // Mint on-chain resume
@@ -150,8 +283,14 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     setMinting(true);
 
     try {
-      // Initialize provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Initialize provider using the stored wallet provider
+      const web3Provider = walletProvider || window.ethereum;
+      if (!web3Provider) {
+        showNotification('No wallet provider found. Please reconnect your wallet.', 'error');
+        return;
+      }
+      
+      const provider = new ethers.BrowserProvider(web3Provider);
       const signer = await provider.getSigner();
       
       // Create EAS contract instance
@@ -429,6 +568,43 @@ const OnChainResume = ({ currentUser, showNotification }) => {
         </div>
       )}
 
+      {/* Wallet Selection Modal */}
+      {showWalletModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl max-w-md w-full border border-gray-700 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h3 className="text-lg font-semibold">Select Wallet</h3>
+              <button
+                onClick={() => setShowWalletModal(false)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {WALLET_OPTIONS.map((wallet) => (
+                <button
+                  key={wallet.id}
+                  onClick={() => connectWithWallet(wallet.id)}
+                  className="w-full p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-blue-500/50 rounded-xl transition-all flex items-center gap-4 text-left"
+                >
+                  <span className="text-3xl">{wallet.icon}</span>
+                  <div>
+                    <div className="font-semibold">{wallet.name}</div>
+                    <div className="text-xs text-gray-400">{wallet.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-700">
+              <p className="text-xs text-gray-500 text-center">
+                Your wallet will be used to sign and pay for the attestation transaction on Base.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Wallet Connection & Mint */}
       <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
         {!walletConnected ? (
@@ -442,21 +618,34 @@ const OnChainResume = ({ currentUser, showNotification }) => {
               onClick={connectWallet}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold transition-all flex items-center gap-2 mx-auto"
             >
-              <FaWallet /> Connect Wallet
+              <FaWallet /> Select Wallet
             </button>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-400">
-                  Connected: {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                </span>
+                <div>
+                  <span className="text-sm text-gray-300">
+                    {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    via {WALLET_OPTIONS.find(w => w.id === walletType)?.name || 'Wallet'}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
-                Base Network
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                  Base
+                </span>
+                <button
+                  onClick={disconnectWallet}
+                  className="text-xs px-2 py-1 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded transition-colors"
+                >
+                  Disconnect
+                </button>
+              </div>
             </div>
 
             <button
@@ -487,6 +676,14 @@ const OnChainResume = ({ currentUser, showNotification }) => {
             <p className="text-xs text-gray-500 text-center mt-3">
               Estimated cost: ~$0.01 on Base • Takes ~10 seconds
             </p>
+            
+            {/* Option to change wallet */}
+            <button
+              onClick={connectWallet}
+              className="w-full mt-3 text-xs text-gray-400 hover:text-blue-400 transition-colors"
+            >
+              Use a different wallet
+            </button>
           </div>
         )}
       </div>
