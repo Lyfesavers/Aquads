@@ -10,10 +10,10 @@ const TelegramBot = () => {
     {
       icon: FaTwitter,
       title: 'Twitter Raids',
-      description: 'Create and participate in Twitter raids. Like, retweet, comment & bookmark tweets to earn 20 points per completion. Raids auto-expire after 48 hours.',
+      description: 'Boost your meme coin visibility! Create raids for your tweets — get 5 FREE raid posts daily, then use 2000 points for more. Community earns 20 points per completion.',
       command: '/raids • /createraid URL',
       color: 'from-sky-500 to-blue-600',
-      details: ['Earn 20 points per raid', 'Free raids available daily', 'Admin approval for quality']
+      details: ['5 FREE raids per day', '2000 pts after free raids', 'Auto-expires in 48hrs']
     },
     {
       icon: FaFacebook,
@@ -25,11 +25,11 @@ const TelegramBot = () => {
     },
     {
       icon: FaChartLine,
-      title: 'Bubble Tracking',
-      description: 'View the top 10 trending bubbles ranked by bullish votes. Track your own projects and see real-time rankings and vote counts.',
+      title: 'Bubble Ranking & Trending',
+      description: 'View top 10 bubbles ranked by bullish votes. Bumped projects trend across Aquads homepage, BEX trending section, and bubble leaderboards.',
       command: '/bubbles • /mybubble',
       color: 'from-emerald-500 to-green-600',
-      details: ['Top 10 leaderboard', 'Your project stats', 'Real-time rankings']
+      details: ['Aquads platform trending', 'BEX trending section', 'Bubble leaderboard']
     },
     {
       icon: FaThumbsUp,
@@ -51,10 +51,10 @@ const TelegramBot = () => {
     {
       icon: FaCoins,
       title: 'Points System',
-      description: 'Earn points by completing raids, voting on projects, and engaging with the community. Use points to create your own raids (2000 pts) or redeem rewards.',
+      description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your 5 free daily posts (2000 pts each).',
       command: 'Check in /help menu',
       color: 'from-amber-500 to-orange-600',
-      details: ['20 pts per raid', '20 pts per first vote', 'Redeem for rewards']
+      details: ['20 pts per raid completion', '20 pts per first vote', 'Spend 2000 pts for extra raids']
     },
     {
       icon: FaNetworkWired,
@@ -66,11 +66,11 @@ const TelegramBot = () => {
     },
     {
       icon: FaRocket,
-      title: 'Vote Boost Packages',
-      description: 'Skyrocket your bubble ranking with guaranteed bullish votes. Packages include votes AND new Telegram group members for your project.',
+      title: 'Vote & Member Boost',
+      description: 'Skyrocket your meme coin\'s ranking! Get guaranteed bullish votes PLUS real Telegram group members delivered to your community.',
       command: '/boostvote',
       color: 'from-rose-500 to-red-600',
-      details: ['100-1000 votes available', 'TG members included', 'Up to 25% discounts'],
+      details: ['Votes + TG Members combo', '100-1000 packages', 'Up to 25% discounts'],
       premium: true
     }
   ];
@@ -83,37 +83,35 @@ const TelegramBot = () => {
       color: 'from-gray-600 to-gray-700',
       features: [
         { name: 'Account Linking', included: true },
-        { name: 'View Available Raids', included: true },
         { name: 'Complete Raids & Earn Points', included: true },
-        { name: 'Vote on Projects', included: true },
-        { name: 'View Top Bubbles', included: true },
-        { name: 'Set Twitter/Facebook Username', included: true },
-        { name: 'Create Raids (Limited Free Daily)', included: true },
-        { name: 'Custom Branding', included: false },
-        { name: 'Vote Notifications with Your Image', included: false },
-        { name: '/mybubble Showcase', included: false },
-        { name: 'Unlimited Raid Creation', included: false },
-        { name: 'Priority Support', included: false }
+        { name: 'Vote on Projects (Earn 20 pts)', included: true },
+        { name: 'View Top 10 Bubble Rankings', included: true },
+        { name: '5 FREE Raid Posts Daily', included: true },
+        { name: 'Create Extra Raids (2000 pts each)', included: true },
+        { name: 'Trending Across Aquads Platform', included: false },
+        { name: 'BEX Trending Section', included: false },
+        { name: 'Bubble Ranking Visibility', included: false },
+        { name: 'Custom Branding on Notifications', included: false },
+        { name: 'Vote + Member Boost Packages', included: false }
       ]
     },
     premium: {
       title: 'Full Access',
-      subtitle: 'List & Bump Your Project',
+      subtitle: 'List & Bump Your Meme Coin',
       icon: FaUnlock,
       color: 'from-cyan-500 to-blue-600',
       features: [
         { name: 'Account Linking', included: true },
-        { name: 'View Available Raids', included: true },
         { name: 'Complete Raids & Earn Points', included: true },
-        { name: 'Vote on Projects', included: true },
-        { name: 'View Top Bubbles', included: true },
-        { name: 'Set Twitter/Facebook Username', included: true },
-        { name: 'Create Raids (Free Raids First)', included: true },
-        { name: 'Custom Branding', included: true, highlight: true },
-        { name: 'Vote Notifications with Your Image', included: true, highlight: true },
-        { name: '/mybubble Showcase', included: true, highlight: true },
-        { name: 'Unlimited Raid Creation', included: true, highlight: true },
-        { name: 'Priority Support', included: true, highlight: true }
+        { name: 'Vote on Projects (Earn 20 pts)', included: true },
+        { name: 'View Top 10 Bubble Rankings', included: true },
+        { name: '5 FREE Raid Posts Daily', included: true },
+        { name: 'Create Extra Raids (2000 pts each)', included: true },
+        { name: 'Trending Across Aquads Platform', included: true, highlight: true },
+        { name: 'BEX Trending Section', included: true, highlight: true },
+        { name: 'Bubble Ranking Visibility', included: true, highlight: true },
+        { name: 'Custom Branding on Notifications', included: true, highlight: true },
+        { name: 'Vote + Member Boost Packages', included: true, highlight: true }
       ]
     }
   };
@@ -127,7 +125,7 @@ const TelegramBot = () => {
     { cmd: '/help', desc: 'View interactive menu with all features', category: 'General' },
     { cmd: '/cancel', desc: 'Cancel any ongoing operation', category: 'General' },
     { cmd: '/raids', desc: 'View all available Twitter & Facebook raids', category: 'Raids' },
-    { cmd: '/createraid URL', desc: 'Create a new Twitter raid (free raids first, then 2000 pts)', category: 'Raids' },
+    { cmd: '/createraid URL', desc: 'Create a Twitter raid (5 FREE daily, then 2000 pts each)', category: 'Raids' },
     { cmd: '/cancelraid URL', desc: 'Cancel a raid you created', category: 'Raids' },
     { cmd: '/bubbles', desc: 'View top 10 bubbles by bullish votes', category: 'Bubbles' },
     { cmd: '/mybubble', desc: 'View YOUR projects with voting buttons', category: 'Bubbles' },
@@ -138,62 +136,62 @@ const TelegramBot = () => {
     { cmd: '/raidout', desc: 'Opt-out your group from community raids', category: 'Groups' }
   ];
 
-  // Vote boost packages (real data)
+  // Vote + Member boost packages (real data)
   const boostPackages = [
-    { name: 'Starter', votes: 100, price: 20, discount: null },
-    { name: 'Basic', votes: 250, price: 40, discount: '20% OFF' },
-    { name: 'Growth', votes: 500, price: 80, discount: '20% OFF' },
-    { name: 'Pro', votes: 1000, price: 150, discount: '25% OFF' }
+    { name: 'Starter', votes: 100, price: 20, discount: null, desc: 'Votes + Members' },
+    { name: 'Basic', votes: 250, price: 40, discount: '20% OFF', desc: 'Votes + Members' },
+    { name: 'Growth', votes: 500, price: 80, discount: '20% OFF', desc: 'Votes + Members' },
+    { name: 'Pro', votes: 1000, price: 150, discount: '25% OFF', desc: 'Votes + Members' }
   ];
 
   const benefits = [
     {
       icon: FaBolt,
-      title: 'Instant Engagement',
-      description: 'Launch raids and get immediate community participation. Raids are sent to all opted-in groups for maximum exposure.',
-      highlight: 'Real-time reach'
+      title: '5 Free Raids Daily',
+      description: 'Launch 5 FREE raid posts every day to pump your meme coin. After that, use 2000 points for unlimited additional raids.',
+      highlight: 'FREE daily raids'
     },
     {
       icon: FaUsers,
-      title: 'Community Growth',
-      description: 'Grow your Telegram group with the vote boost packages. Get real members along with bullish votes.',
-      highlight: 'Members + Votes'
+      title: 'Votes + Real Members',
+      description: 'Our boost packages deliver both bullish votes AND real Telegram members to your group. Grow your holder community.',
+      highlight: 'Double the value'
     },
     {
       icon: FaTrophy,
-      title: 'Leaderboard Rankings',
-      description: 'Climb the bubble rankings with bullish votes. Top projects get featured in the /bubbles command across all groups.',
-      highlight: 'Visibility boost'
+      title: 'Trending Everywhere',
+      description: 'Get featured in bubble rankings, BEX trending section, and across the entire Aquads platform. Maximum visibility for your meme coin.',
+      highlight: 'Multi-platform trending'
     },
     {
       icon: FaShieldAlt,
-      title: 'Verified Completions',
-      description: 'All raid completions go through admin verification ensuring genuine engagement, not bots.',
+      title: 'Real Engagement',
+      description: 'All raid completions are admin-verified. No bots, no fake engagement — only real crypto degens.',
       highlight: 'Quality assurance'
     },
     {
       icon: FaImage,
-      title: 'Brand Visibility',
-      description: 'Your custom branding appears in vote notifications sent to the trending channel and all groups when users vote.',
-      highlight: 'Your image everywhere'
+      title: 'Your Branding Everywhere',
+      description: 'Custom branding appears in vote notifications across the trending channel. Your meme coin logo seen by thousands.',
+      highlight: 'Brand exposure'
     },
     {
       icon: FaGlobe,
-      title: 'Cross-Platform',
-      description: 'Execute coordinated campaigns across Twitter and Facebook. Track everything through one bot.',
+      title: 'Twitter & Facebook',
+      description: 'Coordinate shill campaigns across both platforms. Like, RT, comment raids that actually move the needle.',
       highlight: 'Multi-platform'
     },
     {
       icon: FaComments,
-      title: 'Group Integration',
-      description: 'Add the bot to your Telegram group for direct raid notifications and community engagement.',
-      highlight: 'Direct to group'
+      title: 'Direct to Your Group',
+      description: 'Add the bot to your TG group. Raid notifications land directly where your community lives.',
+      highlight: 'Instant delivery'
     },
     {
       icon: FaHandshake,
-      title: 'Network Effects',
-      description: 'Opt-in to community raids and share exposure with other projects. Rising tide lifts all boats.',
-      highlight: 'Collaborative growth'
+      title: 'Cross-Community Raids',
+      description: 'Opt-in to share raids with other meme coin communities. Expand reach beyond your own holders.',
+      highlight: 'Network effect'
     }
   ];
 
@@ -245,15 +243,15 @@ const TelegramBot = () => {
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Supercharge Your
+                Pump Your Meme Coin
                 <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500">
-                  Community Engagement
+                  With Real Engagement
                 </span>
               </h1>
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                The ultimate Telegram bot for crypto projects. Create Twitter & Facebook raids, 
-                track your bubble rankings, earn points, and unlock <span className="text-cyan-400">custom branding</span> when you list & bump your project.
+                The ultimate Telegram bot for meme coin projects. Get <span className="text-green-400 font-semibold">5 FREE raid posts daily</span>, 
+                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and trend across <span className="text-purple-400 font-semibold">Aquads, BEX & bubble rankings</span>.
               </p>
 
               {/* CTA Buttons */}
@@ -286,15 +284,15 @@ const TelegramBot = () => {
               <div className="flex flex-wrap gap-6 mt-8 justify-center lg:justify-start">
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>Free to start</span>
+                  <span>5 FREE raids/day</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>Earn 20 pts/raid</span>
+                  <span>Votes + Members</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>Custom branding</span>
+                  <span>Trending on Aquads & BEX</span>
                 </div>
               </div>
             </div>
@@ -363,11 +361,11 @@ const TelegramBot = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Free to Start,
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Powerful When Upgraded</span>
+              5 Free Raids Daily,
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Trend Everywhere When Listed</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Start earning points immediately. Unlock custom branding and advanced features when you list & bump your project.
+              Every meme coin project gets 5 FREE raid posts per day. List & bump to trend across <span className="text-cyan-400">Aquads homepage</span>, <span className="text-purple-400">BEX trending</span>, and <span className="text-green-400">bubble rankings</span>.
             </p>
           </div>
 
@@ -626,29 +624,29 @@ const TelegramBot = () => {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              🚀 Vote Boost
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Packages</span>
+              🚀 Vote + Member
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Boost Packages</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Skyrocket your bubble ranking with guaranteed bullish votes AND Telegram group members.
+              Pump your meme coin's ranking with guaranteed bullish votes <span className="text-cyan-400 font-semibold">AND</span> real Telegram group members delivered to your community.
             </p>
           </div>
 
           {/* Package Benefits */}
           <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl p-6 border border-cyan-500/20 mb-8">
-            <h3 className="text-lg font-bold text-white mb-4 text-center">Every Package Includes:</h3>
+            <h3 className="text-lg font-bold text-white mb-4 text-center">🎁 Every Package Includes BOTH:</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 justify-center">
                 <FaThumbsUp className="text-green-500" />
-                <span className="text-gray-300">Guaranteed Bullish Votes</span>
+                <span className="text-gray-300 font-medium">Guaranteed Bullish Votes</span>
               </div>
               <div className="flex items-center gap-3 justify-center">
                 <FaUserPlus className="text-blue-500" />
-                <span className="text-gray-300">New TG Group Members</span>
+                <span className="text-gray-300 font-medium">Real TG Group Members</span>
               </div>
               <div className="flex items-center gap-3 justify-center">
                 <FaBell className="text-purple-500" />
-                <span className="text-gray-300">Vote Notifications in Channel</span>
+                <span className="text-gray-300 font-medium">Vote Notifications</span>
               </div>
             </div>
           </div>
@@ -673,15 +671,20 @@ const TelegramBot = () => {
                   <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-1">
                     {pkg.votes.toLocaleString()}
                   </div>
-                  <p className="text-gray-400 text-sm mb-4">Votes + Members</p>
+                  <p className="text-cyan-400 text-sm font-semibold mb-4">Votes + Members</p>
                   
-                  <div className="text-2xl font-bold text-white mb-4">
+                  <div className="text-2xl font-bold text-white mb-2">
                     ${pkg.price}
                     <span className="text-sm text-gray-500 font-normal ml-1">USDC</span>
                   </div>
                   
-                  <div className="text-xs text-gray-500 mb-4">
-                    ${(pkg.price / pkg.votes).toFixed(2)} per vote
+                  <div className="text-xs text-gray-500 mb-2">
+                    ${(pkg.price / pkg.votes).toFixed(2)} per vote/member
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded">👍 Votes</span>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">👥 Members</span>
                   </div>
                 </div>
               </div>
@@ -729,14 +732,14 @@ const TelegramBot = () => {
               },
               {
                 step: '03',
-                title: 'Earn Points',
-                description: 'Complete raids (/raids) and vote on projects. Earn 20 points each!',
+                title: 'Create Raids',
+                description: 'Use /createraid with your tweet URL. 5 FREE daily, then 2000 points each!',
                 icon: FaCoins
               },
               {
                 step: '04',
-                title: 'Unlock Premium',
-                description: 'List & bump your project to unlock custom branding and full features.',
+                title: 'Trend Everywhere',
+                description: 'List & bump to trend on Aquads homepage, BEX, bubble rankings + custom branding.',
                 icon: FaCrown
               }
             ].map((item, index) => (
@@ -773,11 +776,11 @@ const TelegramBot = () => {
               </div>
               
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Ready to Grow Your Community?
+                Ready to Pump Your Meme Coin?
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start free today. Complete raids, earn points, and when you're ready — list & bump your project to unlock the full power of custom branding.
+                Start with 5 FREE raid posts daily. Boost with votes + members, and list & bump to trend across Aquads, BEX, and bubble rankings with your custom branding.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
