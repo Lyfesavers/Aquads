@@ -1,15 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy, FaQrcode } from 'react-icons/fa';
-import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
-import { BrowserProvider } from 'ethers';
+import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy } from 'react-icons/fa';
+import { ethers } from 'ethers';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021';
 const SCHEMA_UID = process.env.REACT_APP_EAS_SCHEMA_UID;
 const BASE_CHAIN_ID = 8453;
 
-// Schema encoder for Aquads Resume
-const SCHEMA_STRING = 'uint8 trustScore,uint8 ratingScore,uint8 completionScore,uint8 profileScore,uint8 verificationScore,uint8 badgeScore,uint8 avgRating,uint16 totalReviews,uint16 completedJobs,uint8 completionRate,string skillBadges,uint8 badgeCount,bool hasVerifiedCV,bool isFreelancer,bool isPremium,uint64 memberSince,uint64 lastUpdated,string username,bytes32 aquadsId';
+// EAS Contract ABI (minimal for attestation)
+const EAS_ABI = [
+  'function attest((bytes32 schema, (address recipient, uint64 expirationTime, bool revocable, bytes32 refUID, bytes data, uint256 value) data)) external payable returns (bytes32)',
+  'function getAttestation(bytes32 uid) external view returns ((bytes32 uid, bytes32 schema, uint64 time, uint64 expirationTime, uint64 revocationTime, bytes32 refUID, address recipient, address attester, bool revocable, bytes data))'
+];
+
+// Schema types for encoding
+const SCHEMA_TYPES = [
+  'uint8',   // trustScore
+  'uint8',   // ratingScore
+  'uint8',   // completionScore
+  'uint8',   // profileScore
+  'uint8',   // verificationScore
+  'uint8',   // badgeScore
+  'uint8',   // avgRating
+  'uint16',  // totalReviews
+  'uint16',  // completedJobs
+  'uint8',   // completionRate
+  'string',  // skillBadges
+  'uint8',   // badgeCount
+  'bool',    // hasVerifiedCV
+  'bool',    // isFreelancer
+  'bool',    // isPremium
+  'uint64',  // memberSince
+  'uint64',  // lastUpdated
+  'string',  // username
+  'bytes32'  // aquadsId
+];
 
 const OnChainResume = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
@@ -126,57 +151,67 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     setMinting(true);
 
     try {
-      // Initialize provider and EAS
-      const provider = new BrowserProvider(window.ethereum);
+      // Initialize provider
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       
-      const eas = new EAS(EAS_CONTRACT_ADDRESS);
-      eas.connect(signer);
+      // Create EAS contract instance
+      const easContract = new ethers.Contract(EAS_CONTRACT_ADDRESS, EAS_ABI, signer);
 
-      // Encode the attestation data
-      const schemaEncoder = new SchemaEncoder(SCHEMA_STRING);
-      const encodedData = schemaEncoder.encodeData([
-        { name: 'trustScore', value: resumeData.attestationData.trustScore, type: 'uint8' },
-        { name: 'ratingScore', value: resumeData.attestationData.ratingScore, type: 'uint8' },
-        { name: 'completionScore', value: resumeData.attestationData.completionScore, type: 'uint8' },
-        { name: 'profileScore', value: resumeData.attestationData.profileScore, type: 'uint8' },
-        { name: 'verificationScore', value: resumeData.attestationData.verificationScore, type: 'uint8' },
-        { name: 'badgeScore', value: resumeData.attestationData.badgeScore, type: 'uint8' },
-        { name: 'avgRating', value: resumeData.attestationData.avgRating, type: 'uint8' },
-        { name: 'totalReviews', value: resumeData.attestationData.totalReviews, type: 'uint16' },
-        { name: 'completedJobs', value: resumeData.attestationData.completedJobs, type: 'uint16' },
-        { name: 'completionRate', value: resumeData.attestationData.completionRate, type: 'uint8' },
-        { name: 'skillBadges', value: resumeData.attestationData.skillBadges, type: 'string' },
-        { name: 'badgeCount', value: resumeData.attestationData.badgeCount, type: 'uint8' },
-        { name: 'hasVerifiedCV', value: resumeData.attestationData.hasVerifiedCV, type: 'bool' },
-        { name: 'isFreelancer', value: resumeData.attestationData.isFreelancer, type: 'bool' },
-        { name: 'isPremium', value: resumeData.attestationData.isPremium, type: 'bool' },
-        { name: 'memberSince', value: BigInt(resumeData.attestationData.memberSince), type: 'uint64' },
-        { name: 'lastUpdated', value: BigInt(resumeData.attestationData.lastUpdated), type: 'uint64' },
-        { name: 'username', value: resumeData.attestationData.username, type: 'string' },
-        { name: 'aquadsId', value: resumeData.attestationData.aquadsId, type: 'bytes32' }
+      // Encode the attestation data using ethers ABI encoder
+      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+      const encodedData = abiCoder.encode(SCHEMA_TYPES, [
+        resumeData.attestationData.trustScore,
+        resumeData.attestationData.ratingScore,
+        resumeData.attestationData.completionScore,
+        resumeData.attestationData.profileScore,
+        resumeData.attestationData.verificationScore,
+        resumeData.attestationData.badgeScore,
+        resumeData.attestationData.avgRating,
+        resumeData.attestationData.totalReviews,
+        resumeData.attestationData.completedJobs,
+        resumeData.attestationData.completionRate,
+        resumeData.attestationData.skillBadges,
+        resumeData.attestationData.badgeCount,
+        resumeData.attestationData.hasVerifiedCV,
+        resumeData.attestationData.isFreelancer,
+        resumeData.attestationData.isPremium,
+        BigInt(resumeData.attestationData.memberSince),
+        BigInt(resumeData.attestationData.lastUpdated),
+        resumeData.attestationData.username,
+        resumeData.attestationData.aquadsId
       ]);
 
       showNotification('Please confirm the transaction in your wallet...', 'info');
 
-      // Create the attestation
-      const tx = await eas.attest({
+      // Create the attestation request struct
+      const attestationRequest = {
         schema: SCHEMA_UID,
         data: {
           recipient: walletAddress,
           expirationTime: 0n, // No expiration
           revocable: true,
-          data: encodedData
+          refUID: ethers.ZeroHash, // No reference
+          data: encodedData,
+          value: 0n // No value
         }
-      });
+      };
+
+      // Send the attestation transaction
+      const tx = await easContract.attest(attestationRequest);
 
       showNotification('Transaction submitted! Waiting for confirmation...', 'info');
 
       // Wait for the transaction
-      const attestationUID = await tx.wait();
+      const receipt = await tx.wait();
 
-      // Get transaction hash
-      const receipt = await provider.getTransactionReceipt(tx.tx.hash);
+      // Get the attestation UID from the event logs
+      // The Attested event has the UID as the first topic after the event signature
+      const attestedEvent = receipt.logs.find(log => 
+        log.topics[0] === ethers.id('Attested(address,address,bytes32,bytes32)')
+      );
+      
+      const attestationUID = attestedEvent ? attestedEvent.topics[2] : receipt.logs[0]?.topics[1];
 
       // Save to backend
       const saveResponse = await fetch(`${API_URL}/on-chain-resume/save`, {
@@ -204,7 +239,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
     } catch (error) {
       console.error('Error minting resume:', error);
-      if (error.code === 4001) {
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
         showNotification('Transaction cancelled by user', 'error');
       } else {
         showNotification(`Minting failed: ${error.message || 'Unknown error'}`, 'error');
