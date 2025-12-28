@@ -581,6 +581,7 @@ app.use('/api/discount-codes', require('./routes/discountCodes'));
 app.use('/api/skill-tests', require('./routes/skillTests'));
 app.use('/api/workshop', require('./routes/workshop'));
 app.use('/api/click-tracking', require('./routes/clickTracking'));
+app.use('/api/on-chain-resume', require('./routes/onChainResume'));
 
 
 // Special route for blog sharing metadata (outside the API namespace)

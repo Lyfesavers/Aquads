@@ -503,6 +503,43 @@ const userSchema = new Schema({
       default: false
     },
     verificationNotes: String
+  },
+  
+  // On-Chain Resume (EAS Attestations on Base)
+  onChainResume: {
+    // Wallet address linked to on-chain resume
+    walletAddress: {
+      type: String,
+      default: null
+    },
+    // Chain where resume is minted (Base = 8453)
+    chainId: {
+      type: Number,
+      default: 8453
+    },
+    // Current trust score attestation
+    trustScoreAttestation: {
+      uid: String,           // EAS attestation UID
+      score: Number,         // Trust score at time of mint
+      badgeCount: Number,    // Number of badges at time of mint
+      mintedAt: Date,
+      lastUpdated: Date,
+      txHash: String         // Transaction hash
+    },
+    // History of previous attestations
+    attestationHistory: [{
+      uid: String,
+      score: Number,
+      badgeCount: Number,
+      mintedAt: Date,
+      txHash: String
+    }],
+    // Public resume slug for sharing
+    publicResumeSlug: {
+      type: String,
+      unique: true,
+      sparse: true
+    }
   }
 });
 

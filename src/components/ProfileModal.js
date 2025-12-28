@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { updateUserProfile } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
+import OnChainResume from './OnChainResume';
 
 // Country options for dropdown
 const COUNTRIES = [
@@ -585,6 +586,19 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
                 CV Builder
               </button>
             )}
+            {currentUser?.userType === 'freelancer' && (
+              <button
+                onClick={() => handleTabChange('onchain')}
+                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                  activeTab === 'onchain'
+                    ? 'border-green-500 text-green-400'
+                    : 'border-transparent text-gray-400 hover:text-white'
+                }`}
+              >
+                <FaLink className="inline mr-2" />
+                On-Chain Resume
+              </button>
+            )}
           </div>
         </div>
 
@@ -608,8 +622,16 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
             </>
           )}
 
+          {/* On-Chain Resume Tab - Outside of form */}
+          {activeTab === 'onchain' && currentUser?.userType === 'freelancer' && (
+            <OnChainResume 
+              currentUser={currentUser} 
+              showNotification={showNotification}
+            />
+          )}
+
           {/* Profile and Security tabs - Inside form */}
-          {activeTab !== 'cv' && (
+          {activeTab !== 'cv' && activeTab !== 'onchain' && (
             <form onSubmit={handleSubmit} className="h-full">
               {/* Mobile: Show all non-CV tabs as single form, Desktop: Show selected tab */}
               <div className="lg:hidden space-y-6">
@@ -628,6 +650,22 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
                       className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
                     >
                       Open CV Builder
+                    </button>
+                  </div>
+                )}
+                {currentUser?.userType === 'freelancer' && (
+                  <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <FaLink className="text-green-400" />
+                      On-Chain Resume
+                    </h3>
+                    <p className="text-gray-400 mb-4">Mint your verified credentials on the blockchain - portable and tamper-proof.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange('onchain')}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                    >
+                      Open On-Chain Resume
                     </button>
                   </div>
                 )}
