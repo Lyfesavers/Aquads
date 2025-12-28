@@ -42,10 +42,10 @@ const TelegramBot = () => {
     {
       icon: FaPalette,
       title: 'Custom Branding',
-      description: 'Upload your own branding image for vote notifications and /mybubble showcases. Your image appears in all bot communications about your project.',
+      description: 'Upload your own branding image for vote notifications sent to our 5K+ trending channel. Your logo seen by thousands of active traders.',
       command: '/setbranding • /removebranding',
       color: 'from-pink-500 to-rose-600',
-      details: ['Max 500KB (JPG/PNG)', '1920×1080 recommended', 'Exclusive for bumped projects'],
+      details: ['5K+ trending channel reach', 'Max 500KB (JPG/PNG)', 'Exclusive for bumped projects'],
       premium: true
     },
     {
@@ -91,6 +91,7 @@ const TelegramBot = () => {
         { name: 'Trending Across Aquads Platform', included: false },
         { name: 'BEX Trending Section', included: false },
         { name: 'Bubble Ranking Visibility', included: false },
+        { name: '5K+ Trending Channel Exposure', included: false },
         { name: 'Custom Branding on Notifications', included: false },
         { name: 'Vote + Member Boost Packages', included: false }
       ]
@@ -110,6 +111,7 @@ const TelegramBot = () => {
         { name: 'Trending Across Aquads Platform', included: true, highlight: true },
         { name: 'BEX Trending Section', included: true, highlight: true },
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
+        { name: '5K+ Trending Channel Exposure', included: true, highlight: true },
         { name: 'Custom Branding on Notifications', included: true, highlight: true },
         { name: 'Vote + Member Boost Packages', included: true, highlight: true }
       ]
@@ -160,8 +162,8 @@ const TelegramBot = () => {
     {
       icon: FaTrophy,
       title: 'Trending Everywhere',
-      description: 'Get featured in bubble rankings, BEX trending section, and across the entire Aquads platform. Maximum visibility for your meme coin.',
-      highlight: 'Multi-platform trending'
+      description: 'Get featured in bubble rankings, BEX trending, Aquads platform, AND our 5,000+ member trending channel. Maximum visibility.',
+      highlight: 'Multi-platform + 5K channel'
     },
     {
       icon: FaShieldAlt,
@@ -171,9 +173,9 @@ const TelegramBot = () => {
     },
     {
       icon: FaImage,
-      title: 'Your Branding Everywhere',
-      description: 'Custom branding appears in vote notifications across the trending channel. Your meme coin logo seen by thousands.',
-      highlight: 'Brand exposure'
+      title: '5K+ Trending Channel',
+      description: 'Your custom branding and vote notifications appear in our trending channel with 5,000+ active crypto degens watching.',
+      highlight: '5,000+ eyes on your coin'
     },
     {
       icon: FaGlobe,
@@ -251,7 +253,7 @@ const TelegramBot = () => {
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 The ultimate Telegram bot for meme coin projects. Get <span className="text-green-400 font-semibold">5 FREE raid posts daily</span>, 
-                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and trend across <span className="text-purple-400 font-semibold">Aquads, BEX & bubble rankings</span>.
+                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
               </p>
 
               {/* CTA Buttons */}
@@ -292,7 +294,7 @@ const TelegramBot = () => {
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>Trending on Aquads & BEX</span>
+                  <span>5K+ Trending Channel</span>
                 </div>
               </div>
             </div>
