@@ -154,6 +154,13 @@ const Footer = () => {
                   <FaGift className="mr-2" />
                   <span>Partner Rewards</span>
                 </Link>
+                <Link
+                  to="/telegram-bot"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaTelegram className="mr-2" />
+                  <span>Telegram Bot</span>
+                </Link>
               </div>
             </div>
 

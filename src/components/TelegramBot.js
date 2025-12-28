@@ -239,7 +239,7 @@ const TelegramBot = () => {
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-6">
                 <FaTelegram className="text-cyan-400" />
-                <span className="text-cyan-400 text-sm font-medium">Aquads Bump Bot — Free to Start</span>
+                <span className="text-cyan-400 text-sm font-medium">Aquads Bot — Free to Start</span>
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
@@ -310,7 +310,7 @@ const TelegramBot = () => {
                       <FaTelegram className="text-2xl text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white">Aquads Bump Bot</h3>
+                      <h3 className="text-lg font-bold text-white">Aquads Bot</h3>
                       <p className="text-cyan-400 text-sm">@aquadsbumpbot</p>
                     </div>
                   </div>
