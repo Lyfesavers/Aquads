@@ -6,18 +6,15 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import LiFiProviders from './providers/LiFiProviders';
-import Web3Provider from './components/Web3Provider';
 
 // Detect if user is on mobile
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 ReactDOM.render(
   <React.StrictMode>
-    <Web3Provider>
-      <LiFiProviders>
-        <App />
-      </LiFiProviders>
-    </Web3Provider>
+    <LiFiProviders>
+      <App />
+    </LiFiProviders>
   </React.StrictMode>,
   document.getElementById('root')
 );

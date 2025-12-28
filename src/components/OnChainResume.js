@@ -2,12 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy } from 'react-icons/fa';
 import { ethers } from 'ethers';
 import { API_URL } from '../services/api';
-import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
-import { useWalletClient } from 'wagmi';
-
-// Import config to ensure AppKit is initialized
-import '../config/web3Config';
-
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021';
 const SCHEMA_UID = process.env.REACT_APP_EAS_SCHEMA_UID;
 const BASE_CHAIN_ID = 8453;
@@ -45,13 +39,10 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [minting, setMinting] = useState(false);
   const [resumeData, setResumeData] = useState(null);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
   const [copied, setCopied] = useState(false);
-
-  // Reown AppKit hooks
-  const appKit = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
-  const { chainId } = useAppKitNetwork();
-  const { data: walletClient } = useWalletClient();
+  const [showQR, setShowQR] = useState(false);
 
   // Fetch resume preparation data
   const fetchResumeData = useCallback(async () => {
@@ -81,23 +72,72 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     fetchResumeData();
   }, [fetchResumeData]);
 
-  // Open wallet modal
-  const connectWallet = async () => {
-    try {
-      if (appKit?.open) {
-        await appKit.open();
-      } else {
-        showNotification('Wallet connection not available. Please refresh the page.', 'error');
+  // Check if wallet is already connected
+  useEffect(() => {
+    const checkWallet = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setWalletConnected(true);
+            setWalletAddress(accounts[0]);
+          }
+        } catch (err) {
+          console.error('Error checking wallet:', err);
+        }
       }
+    };
+    checkWallet();
+  }, []);
+
+  // Connect wallet
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      showNotification('Please install MetaMask or another Web3 wallet', 'error');
+      return;
+    }
+
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setWalletConnected(true);
+      setWalletAddress(accounts[0]);
+
+      // Check if on Base network
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (parseInt(chainId, 16) !== BASE_CHAIN_ID) {
+        // Try to switch to Base
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }] // 8453 in hex
+          });
+        } catch (switchError) {
+          // If Base not added, add it
+          if (switchError.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0x2105',
+                chainName: 'Base',
+                nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://mainnet.base.org'],
+                blockExplorerUrls: ['https://basescan.org']
+              }]
+            });
+          }
+        }
+      }
+
+      showNotification('Wallet connected successfully!', 'success');
     } catch (error) {
-      console.error('Error opening wallet modal:', error);
-      showNotification('Failed to open wallet selector', 'error');
+      console.error('Error connecting wallet:', error);
+      showNotification('Failed to connect wallet', 'error');
     }
   };
 
   // Mint on-chain resume
   const mintResume = async () => {
-    if (!isConnected || !resumeData) {
+    if (!walletConnected || !resumeData) {
       showNotification('Please connect your wallet first', 'error');
       return;
     }
@@ -107,23 +147,11 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       return;
     }
 
-    // Check network
-    if (chainId !== BASE_CHAIN_ID) {
-      showNotification('Please switch to Base network', 'warning');
-      appKit.open({ view: 'Networks' });
-      return;
-    }
-
-    if (!walletClient) {
-      showNotification('Wallet not ready. Please try again.', 'error');
-      return;
-    }
-
     setMinting(true);
 
     try {
-      // Create ethers provider from wallet client
-      const provider = new ethers.BrowserProvider(walletClient);
+      // Initialize provider
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       
       // Create EAS contract instance
@@ -159,7 +187,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       const attestationRequest = {
         schema: SCHEMA_UID,
         data: {
-          recipient: address,
+          recipient: walletAddress,
           expirationTime: 0n, // No expiration
           revocable: true,
           refUID: ethers.ZeroHash, // No reference
@@ -177,6 +205,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       const receipt = await tx.wait();
 
       // Get the attestation UID from the event logs
+      // The Attested event has the UID as the first topic after the event signature
       const attestedEvent = receipt.logs.find(log => 
         log.topics[0] === ethers.id('Attested(address,address,bytes32,bytes32)')
       );
@@ -193,7 +222,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
         body: JSON.stringify({
           uid: attestationUID,
           txHash: receipt.hash,
-          walletAddress: address,
+          walletAddress: walletAddress,
           score: resumeData.attestationData.trustScore,
           badgeCount: resumeData.attestationData.badgeCount
         })
@@ -245,7 +274,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   }
 
   const hasExistingResume = resumeData.existing?.uid;
-  const isWrongNetwork = isConnected && chainId !== BASE_CHAIN_ID;
 
   return (
     <div className="space-y-6">
@@ -403,7 +431,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
       {/* Wallet Connection & Mint */}
       <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-        {!isConnected ? (
+        {!walletConnected ? (
           <div className="text-center">
             <FaWallet className="text-4xl text-gray-600 mx-auto mb-4" />
             <h4 className="font-semibold mb-2">Connect Your Wallet</h4>
@@ -421,41 +449,21 @@ const OnChainResume = ({ currentUser, showNotification }) => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full animate-pulse ${isWrongNetwork ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-400">
-                  Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                  Connected: {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
                 </span>
-                <button 
-                  onClick={connectWallet}
-                  className="text-xs text-blue-400 hover:text-blue-300 underline"
-                >
-                  Change
-                </button>
               </div>
-              <span className={`text-xs px-2 py-1 rounded ${isWrongNetwork ? 'bg-yellow-500/20 text-yellow-300' : 'bg-blue-500/20 text-blue-300'}`}>
-                {isWrongNetwork ? 'Wrong Network' : 'Base Network'}
+              <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                Base Network
               </span>
             </div>
 
-            {isWrongNetwork && (
-              <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                <p className="text-sm text-yellow-300">
-                  ⚠️ Please switch to Base network to mint your resume.
-                </p>
-                <button 
-                  onClick={() => appKit.open({ view: 'Networks' })}
-                  className="mt-2 text-sm text-yellow-400 hover:text-yellow-300 underline"
-                >
-                  Switch Network
-                </button>
-              </div>
-            )}
-
             <button
               onClick={mintResume}
-              disabled={minting || isWrongNetwork}
+              disabled={minting}
               className={`w-full py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                minting || isWrongNetwork
+                minting
                   ? 'bg-gray-700 cursor-not-allowed'
                   : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
               }`}
@@ -498,3 +506,4 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 };
 
 export default OnChainResume;
+
