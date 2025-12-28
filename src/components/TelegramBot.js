@@ -50,11 +50,11 @@ const TelegramBot = () => {
     },
     {
       icon: FaCoins,
-      title: 'Earn Real Cash',
-      description: 'Earn points and cash them out! We pay $100 CAD for every 10,000 points. Complete raids, vote on projects, and get paid for your engagement.',
+      title: 'Points System',
+      description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your 5 free daily posts (2000 pts each).',
       command: 'Check in /help menu',
       color: 'from-amber-500 to-orange-600',
-      details: ['$100 per 10K points', '20 pts per raid/vote', 'Real cash payouts']
+      details: ['20 pts per raid completion', '20 pts per first vote', 'Spend 2000 pts for extra raids']
     },
     {
       icon: FaNetworkWired,
@@ -148,12 +148,6 @@ const TelegramBot = () => {
 
   const benefits = [
     {
-      icon: FaCoins,
-      title: '$100 Per 10K Points',
-      description: 'We pay REAL CASH. Participants earn 20 points per raid, 20 per vote — and can redeem 10,000 points for $100 CAD. Your community gets paid.',
-      highlight: 'Real cash payouts'
-    },
-    {
       icon: FaBolt,
       title: '5 Free Raids Daily',
       description: 'Launch 5 FREE raid posts every day to pump your meme coin. After that, use 2000 points for unlimited additional raids.',
@@ -174,13 +168,13 @@ const TelegramBot = () => {
     {
       icon: FaShieldAlt,
       title: 'Real Engagement',
-      description: 'All raid completions are admin-verified. No bots, no fake engagement — only real crypto degens getting paid.',
+      description: 'All raid completions are admin-verified. No bots, no fake engagement — only real crypto degens.',
       highlight: 'Quality assurance'
     },
     {
       icon: FaImage,
       title: '5K+ Trending Channel',
-      description: 'Your custom branding and vote notifications appear in our trending channel with 5,000+ active crypto traders.',
+      description: 'Your custom branding and vote notifications appear in our trending channel with 5,000+ active crypto degens watching.',
       highlight: '5,000+ eyes on your coin'
     },
     {
@@ -190,10 +184,22 @@ const TelegramBot = () => {
       highlight: 'Multi-platform'
     },
     {
+      icon: FaComments,
+      title: 'Direct to Your Group',
+      description: 'Add the bot to your TG group. Raid notifications land directly where your community lives.',
+      highlight: 'Instant delivery'
+    },
+    {
       icon: FaHandshake,
       title: 'Cross-Community Raids',
       description: 'Opt-in to share raids with other meme coin communities. Expand reach beyond your own holders.',
       highlight: 'Network effect'
+    },
+    {
+      icon: FaCoins,
+      title: '$100 Per 10K Points',
+      description: 'We pay your community REAL CASH. Participants earn 20 points per raid/vote and can redeem 10,000 points for $100 CAD.',
+      highlight: 'Real cash payouts'
     }
   ];
 
@@ -253,7 +259,7 @@ const TelegramBot = () => {
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 The ultimate Telegram bot for meme coin projects. Get <span className="text-green-400 font-semibold">5 FREE raid posts daily</span>, 
-                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and we pay participants <span className="text-yellow-400 font-semibold">$100 per 10K points</span> earned.
+                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
               </p>
 
               {/* CTA Buttons */}
@@ -290,7 +296,7 @@ const TelegramBot = () => {
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>$100/10K points payout</span>
+                  <span>Votes + Members</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
@@ -350,52 +356,6 @@ const TelegramBot = () => {
                   </div>
                   <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
                     <FaCrown className="text-white text-sm" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Points Payout Callout */}
-      <div className="relative py-12 border-t border-gray-800/50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-orange-500/10 rounded-3xl p-8 border border-yellow-500/30 relative overflow-hidden">
-            {/* Background glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/20 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
-              <div className="flex-shrink-0 text-center lg:text-left">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-600 mb-4 shadow-lg shadow-yellow-500/25">
-                  <FaCoins className="text-4xl text-white" />
-                </div>
-              </div>
-              
-              <div className="flex-1 text-center lg:text-left">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  We Pay Your Community <span className="text-yellow-400">$100 Per 10K Points</span>
-                </h3>
-                <p className="text-gray-300 text-lg mb-4">
-                  Real cash incentive for real engagement. Participants earn <span className="text-yellow-400 font-semibold">20 points per raid</span> and <span className="text-yellow-400 font-semibold">20 points per vote</span>. 
-                  When they hit 10,000 points, we pay them <span className="text-green-400 font-bold">$100 CAD</span>. Your shillers get rewarded.
-                </p>
-                <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                  <div className="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg">
-                    <span className="text-yellow-400 font-bold">20 pts</span>
-                    <span className="text-gray-400">per raid</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg">
-                    <span className="text-yellow-400 font-bold">20 pts</span>
-                    <span className="text-gray-400">per vote</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg">
-                    <span className="text-yellow-400 font-bold">1000 pts</span>
-                    <span className="text-gray-400">referral bonus</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/30 px-4 py-2 rounded-lg">
-                    <span className="text-green-400 font-bold">$100 CAD</span>
-                    <span className="text-gray-400">per 10K pts</span>
                   </div>
                 </div>
               </div>
@@ -683,7 +643,7 @@ const TelegramBot = () => {
           {/* Package Benefits */}
           <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl p-6 border border-cyan-500/20 mb-8">
             <h3 className="text-lg font-bold text-white mb-4 text-center">🎁 Every Package Includes BOTH:</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 justify-center">
                 <FaThumbsUp className="text-green-500" />
                 <span className="text-gray-300 font-medium">Guaranteed Bullish Votes</span>
@@ -695,10 +655,6 @@ const TelegramBot = () => {
               <div className="flex items-center gap-3 justify-center">
                 <FaBell className="text-purple-500" />
                 <span className="text-gray-300 font-medium">Vote Notifications</span>
-              </div>
-              <div className="flex items-center gap-3 justify-center">
-                <FaCoins className="text-yellow-500" />
-                <span className="text-gray-300 font-medium">5K+ Channel Exposure</span>
               </div>
             </div>
           </div>
@@ -838,7 +794,7 @@ const TelegramBot = () => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with 5 FREE raid posts daily. Your community earns points they can cash out ($100/10K). Trend everywhere with custom branding.
+                Start with 5 FREE raid posts daily. Boost with votes + members, and list & bump to trend across Aquads, BEX, and bubble rankings with your custom branding.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
