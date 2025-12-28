@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy } from 'react-icons/fa';
 import { ethers } from 'ethers';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../services/api';
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021';
 const SCHEMA_UID = process.env.REACT_APP_EAS_SCHEMA_UID;
 const BASE_CHAIN_ID = 8453;
