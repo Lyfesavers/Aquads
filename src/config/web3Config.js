@@ -5,8 +5,6 @@ import { base } from '@reown/appkit/networks';
 // Get project ID from environment
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID;
 
-console.log('Web3Config: Project ID available:', !!projectId, projectId?.substring(0, 8) + '...');
-
 // Configure metadata for wallet connections - use current origin to avoid mismatch
 const metadata = {
   name: 'Aquads',
@@ -39,12 +37,11 @@ try {
     themeVariables: {
       '--w3m-accent': '#3b82f6',
       '--w3m-border-radius-master': '8px',
-      '--w3m-z-index': '999999'
+      '--w3m-z-index': '2147483647'
     }
   });
-  console.log('Web3Config: AppKit created successfully');
 } catch (error) {
-  console.error('Web3Config: Failed to create AppKit:', error);
+  console.error('Failed to create AppKit:', error);
 }
 
 // Export the wagmi config for use in providers

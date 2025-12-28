@@ -53,11 +53,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   const { chainId } = useAppKitNetwork();
   const { data: walletClient } = useWalletClient();
 
-  // Debug: Log AppKit state on mount
-  useEffect(() => {
-    console.log('AppKit state:', { appKit, isConnected, address, chainId });
-  }, [appKit, isConnected, address, chainId]);
-
   // Fetch resume preparation data
   const fetchResumeData = useCallback(async () => {
     try {
@@ -88,12 +83,10 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
   // Open wallet modal
   const connectWallet = async () => {
-    console.log('Connect wallet clicked, appKit:', appKit);
     try {
       if (appKit?.open) {
         await appKit.open();
       } else {
-        console.error('AppKit open function not available');
         showNotification('Wallet connection not available. Please refresh the page.', 'error');
       }
     } catch (error) {
