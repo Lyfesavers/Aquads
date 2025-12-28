@@ -72,6 +72,7 @@ import HorseRacing from './components/HorseRacing';
 
 import ServicePage from './components/ServicePage';
 import ExtensionAuth from './components/ExtensionAuth';
+import TelegramBot from './components/TelegramBot';
 
 window.Buffer = Buffer;
 
@@ -2983,10 +2984,8 @@ function App() {
                           }}
                           draggable="false"
                         />
-                        <a 
-                          href="https://t.me/aquadsbumpbot" 
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Link 
+                          to="/telegram-bot"
                           style={{
                             position: 'absolute',
                             top: 0,
@@ -3344,6 +3343,7 @@ function App() {
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
+            <Route path="/telegram-bot" element={<TelegramBot />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
