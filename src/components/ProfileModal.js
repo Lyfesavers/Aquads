@@ -4,6 +4,7 @@ import { updateUserProfile } from '../services/api';
 import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
 import OnChainResume from './OnChainResume';
+import Web3Provider from './Web3Provider';
 
 // Country options for dropdown
 const COUNTRIES = [
@@ -624,10 +625,12 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
 
           {/* On-Chain Resume Tab - Outside of form */}
           {activeTab === 'onchain' && currentUser?.userType === 'freelancer' && (
-            <OnChainResume 
-              currentUser={currentUser} 
-              showNotification={showNotification}
-            />
+            <Web3Provider>
+              <OnChainResume 
+                currentUser={currentUser} 
+                showNotification={showNotification}
+              />
+            </Web3Provider>
           )}
 
           {/* Profile and Security tabs - Inside form */}
