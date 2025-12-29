@@ -73,6 +73,7 @@ import HorseRacing from './components/HorseRacing';
 import ServicePage from './components/ServicePage';
 import ExtensionAuth from './components/ExtensionAuth';
 import TelegramBot from './components/TelegramBot';
+import PublicResume from './components/PublicResume';
 
 window.Buffer = Buffer;
 
@@ -3327,6 +3328,7 @@ function App() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/verify-user" element={<VerifyUser />} />
             <Route path="/verify-member/:memberId" element={<MemberVerification />} />
+            <Route path="/resume/:username" element={<PublicResume />} />
             <Route path="/aquafi" element={
               <AquaFi 
                 currentUser={currentUser} 

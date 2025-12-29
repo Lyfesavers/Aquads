@@ -490,7 +490,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
   // Copy resume link
   const copyResumeLink = () => {
-    const link = `${window.location.origin}/resume/${resumeData?.existing?.walletAddress || currentUser?.username}`;
+    const link = `${window.location.origin}/resume/${currentUser?.username}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

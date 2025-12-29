@@ -324,12 +324,20 @@ const saveAttestationRecord = async (userId, attestationData) => {
 };
 
 /**
- * Get public resume data by slug
+ * Get public resume data by slug or username
  */
-const getPublicResume = async (slug) => {
-  const user = await User.findOne({
-    'onChainResume.publicResumeSlug': slug
+const getPublicResume = async (slugOrUsername) => {
+  // Try to find by slug first, then by username
+  let user = await User.findOne({
+    'onChainResume.publicResumeSlug': slugOrUsername
   });
+
+  // If not found by slug, try username (case-insensitive)
+  if (!user) {
+    user = await User.findOne({
+      username: { $regex: new RegExp(`^${slugOrUsername}$`, 'i') }
+    });
+  }
 
   if (!user || !user.onChainResume?.trustScoreAttestation?.uid) {
     return null;
@@ -338,10 +346,44 @@ const getPublicResume = async (slug) => {
   // Get current live data
   const liveData = await calculateTrustScore(user._id);
 
+  // Get user's services for display
+  const services = await Service.find({ 
+    seller: user._id, 
+    active: true 
+  }).select('title category price rating reviews').limit(6);
+
   return {
     username: user.username,
     image: user.image,
+    bio: user.bio || null,
     memberSince: user.createdAt,
+    userType: user.userType,
+    
+    // Skill badges
+    skillBadges: (user.skillBadges || []).map(badge => ({
+      name: badge.badgeName,
+      score: badge.score,
+      earnedAt: badge.earnedAt
+    })),
+    
+    // CV highlights (if available)
+    cv: user.cv ? {
+      fullName: user.cv.fullName,
+      title: user.cv.title,
+      summary: user.cv.summary,
+      skills: user.cv.skills || [],
+      experienceCount: (user.cv.experience || []).length,
+      educationCount: (user.cv.education || []).length
+    } : null,
+    
+    // Featured services
+    services: services.map(s => ({
+      title: s.title,
+      category: s.category,
+      price: s.price,
+      rating: s.rating,
+      reviews: s.reviews
+    })),
     
     // Live data (current)
     current: {
@@ -356,11 +398,12 @@ const getPublicResume = async (slug) => {
       mintedAt: user.onChainResume.trustScoreAttestation.mintedAt,
       uid: user.onChainResume.trustScoreAttestation.uid,
       txHash: user.onChainResume.trustScoreAttestation.txHash,
-      walletAddress: user.onChainResume.walletAddress
+      walletAddress: user.onChainResume.walletAddress,
+      chainId: user.onChainResume.chainId || 8453
     },
     
-    // History
-    history: user.onChainResume.attestationHistory || [],
+    // History count
+    historyCount: (user.onChainResume.attestationHistory || []).length,
     
     // Links
     explorerUrl: `https://base.easscan.org/attestation/view/${user.onChainResume.trustScoreAttestation.uid}`,
