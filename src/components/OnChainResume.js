@@ -138,25 +138,9 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     fetchResumeData();
   }, [fetchResumeData]);
 
-  // Check if wallet is already connected
-  useEffect(() => {
-    const checkWallet = async () => {
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            setWalletConnected(true);
-            setWalletAddress(accounts[0]);
-            setWalletProvider(window.ethereum);
-            setWalletType(availableWallets.detectedName || 'Browser Wallet');
-          }
-        } catch (err) {
-          console.error('Error checking wallet:', err);
-        }
-      }
-    };
-    checkWallet();
-  }, [availableWallets.detectedName]);
+  // NOTE: We intentionally do NOT auto-connect wallets on page load
+  // User must explicitly click "Connect Wallet" to authorize
+  // This is safer and more transparent
 
   // Switch to Base network
   const switchToBase = async (provider) => {
