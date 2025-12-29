@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaArrowLeft, FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCheckCircle, FaArrowRight, FaBullhorn, FaHandshake, FaTrophy, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaBriefcase, FaMoneyBillWave, FaClock, FaStar, FaGlobeAmericas, FaLock, FaHeadset, FaTools, FaNetworkWired, FaCertificate, FaGift, FaClipboardCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCheckCircle, FaArrowRight, FaBullhorn, FaHandshake, FaTrophy, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaBriefcase, FaMoneyBillWave, FaClock, FaStar, FaGlobeAmericas, FaLock, FaHeadset, FaTools, FaNetworkWired, FaCertificate, FaGift, FaClipboardCheck, FaLink, FaWallet, FaExternalLinkAlt, FaFingerprint, FaShareAlt, FaMedal } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const FreelancerBenefits = ({ currentUser }) => {
@@ -226,6 +226,279 @@ const FreelancerBenefits = ({ currentUser }) => {
             <p className="text-gray-300">
               Our booking system encourages a safe process for both parties. While we don't currently offer escrow, invoicing is only allowed once work is approved and ready for delivery, ensuring quality and satisfaction.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* On-Chain Resume - Featured Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/40 via-purple-900/40 to-indigo-900/40 border border-blue-500/30">
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
+          </div>
+          
+          <div className="relative z-10 p-8 md:p-12 lg:p-16">
+            {/* Section Header */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 rounded-full mb-6">
+                <FaLink className="text-blue-400" />
+                <span className="text-blue-300 text-sm font-medium">NEW: Blockchain-Powered Credentials</span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                On-Chain Resume
+              </h2>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                Mint your verified freelancer credentials on the blockchain. Your trust score, skill badges, and work history — permanently verifiable, tamper-proof, and truly yours.
+              </p>
+            </div>
+
+            {/* Main Feature Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              {/* Left: Trust Score Visualization */}
+              <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+                  <FaChartLine className="text-blue-400" />
+                  Trust Score System
+                </h3>
+                
+                {/* Score Circle Preview */}
+                <div className="flex items-center justify-center mb-8">
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full border-8 border-gray-700 flex items-center justify-center"
+                      style={{
+                        background: `conic-gradient(#22c55e 288deg, #374151 288deg)`
+                      }}>
+                      <div className="w-24 h-24 rounded-full bg-gray-900 flex flex-col items-center justify-center">
+                        <span className="text-3xl font-bold text-green-400">80</span>
+                        <span className="text-xs text-gray-400">/100</span>
+                      </div>
+                    </div>
+                    <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-2">
+                      <FaCheckCircle className="text-white text-sm" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score Breakdown */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <FaStar className="text-yellow-400" /> Rating
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div className="bg-yellow-400 h-2 rounded-full" style={{ width: '90%' }}></div>
+                      </div>
+                      <span className="text-white text-sm w-12 text-right">45/50</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <FaCheckCircle className="text-green-400" /> Completion
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div className="bg-green-400 h-2 rounded-full" style={{ width: '80%' }}></div>
+                      </div>
+                      <span className="text-white text-sm w-12 text-right">24/30</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <FaBriefcase className="text-blue-400" /> Profile
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div className="bg-blue-400 h-2 rounded-full" style={{ width: '100%' }}></div>
+                      </div>
+                      <span className="text-white text-sm w-12 text-right">10/10</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <FaShieldAlt className="text-purple-400" /> Verification
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div className="bg-purple-400 h-2 rounded-full" style={{ width: '50%' }}></div>
+                      </div>
+                      <span className="text-white text-sm w-12 text-right">2.5/5</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <FaMedal className="text-orange-400" /> Badges
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-700 rounded-full h-2">
+                        <div className="bg-orange-400 h-2 rounded-full" style={{ width: '100%' }}></div>
+                      </div>
+                      <span className="text-white text-sm w-12 text-right">5/5</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Key Features */}
+              <div className="space-y-4">
+                {/* Feature 1 */}
+                <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl p-5 border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-3 rounded-lg shrink-0">
+                      <FaFingerprint className="text-white text-xl" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-1">Tamper-Proof Credentials</h4>
+                      <p className="text-gray-400 text-sm">Your trust score and work history are stored on Base blockchain using EAS (Ethereum Attestation Service). No one can fake or modify your credentials.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 2 */}
+                <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl p-5 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-lg shrink-0">
+                      <FaShareAlt className="text-white text-xl" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-1">Portable & Shareable</h4>
+                      <p className="text-gray-400 text-sm">Get a unique public resume URL you can share anywhere. Works across platforms — your credentials follow you, not the platform.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 3 */}
+                <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl p-5 border border-gray-700/50 hover:border-green-500/50 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-3 rounded-lg shrink-0">
+                      <FaWallet className="text-white text-xl" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-1">Self-Sovereign Ownership</h4>
+                      <p className="text-gray-400 text-sm">You mint it, you own it. Your on-chain resume is tied to your wallet, not controlled by any company. True Web3 identity.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 4 */}
+                <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl p-5 border border-gray-700/50 hover:border-yellow-500/50 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-lg shrink-0">
+                      <FaExternalLinkAlt className="text-white text-xl" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-1">Publicly Verifiable</h4>
+                      <p className="text-gray-400 text-sm">Anyone can verify your credentials on the blockchain explorer. Direct links to EAS and Basescan prove your authenticity.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* What Gets Minted */}
+            <div className="bg-gray-900/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 mb-12">
+              <h3 className="text-xl font-semibold text-white mb-6 text-center">What Gets Minted On-Chain</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">📊</div>
+                  <div className="text-sm text-white font-medium">Trust Score</div>
+                  <div className="text-xs text-gray-400">0-100 points</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">⭐</div>
+                  <div className="text-sm text-white font-medium">Avg Rating</div>
+                  <div className="text-xs text-gray-400">Client reviews</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">✅</div>
+                  <div className="text-sm text-white font-medium">Jobs Done</div>
+                  <div className="text-xs text-gray-400">Completed count</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">📈</div>
+                  <div className="text-sm text-white font-medium">Success Rate</div>
+                  <div className="text-xs text-gray-400">Completion %</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">🎖️</div>
+                  <div className="text-sm text-white font-medium">Skill Badges</div>
+                  <div className="text-xs text-gray-400">Verified skills</div>
+                </div>
+                <div className="text-center p-4 bg-gray-800/50 rounded-xl">
+                  <div className="text-2xl mb-2">📅</div>
+                  <div className="text-sm text-white font-medium">Member Since</div>
+                  <div className="text-xs text-gray-400">Account age</div>
+                </div>
+              </div>
+            </div>
+
+            {/* How It Works */}
+            <div className="mb-12">
+              <h3 className="text-xl font-semibold text-white mb-6 text-center">How It Works</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-blue-400 font-bold text-xl">1</span>
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Connect Wallet</h4>
+                  <p className="text-gray-400 text-sm">Use WalletConnect or any browser wallet (MetaMask, Coinbase, etc.)</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-purple-400 font-bold text-xl">2</span>
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Preview Score</h4>
+                  <p className="text-gray-400 text-sm">See your complete trust score breakdown before minting</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-green-400 font-bold text-xl">3</span>
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Mint on Base</h4>
+                  <p className="text-gray-400 text-sm">One transaction (~$0.01) creates your permanent attestation</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-yellow-400 font-bold text-xl">4</span>
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Share & Verify</h4>
+                  <p className="text-gray-400 text-sm">Get your public resume link and share with potential clients</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tech Stack & CTA */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                <span className="px-3 py-1.5 bg-blue-500/20 text-blue-300 text-sm rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                  Base Network
+                </span>
+                <span className="px-3 py-1.5 bg-purple-500/20 text-purple-300 text-sm rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
+                  EAS Protocol
+                </span>
+                <span className="px-3 py-1.5 bg-green-500/20 text-green-300 text-sm rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  ~$0.01 per mint
+                </span>
+                <span className="px-3 py-1.5 bg-yellow-500/20 text-yellow-300 text-sm rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                  ~10 seconds
+                </span>
+              </div>
+              <Link
+                to="/marketplace?tab=on-chain-resume"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap"
+              >
+                <FaLink className="mr-2" />
+                Mint Your On-Chain Resume
+                <FaArrowRight className="ml-2" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
