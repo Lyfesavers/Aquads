@@ -39,28 +39,16 @@ const SCHEMA_TYPES = [
 // Wallet options for selection
 const WALLET_OPTIONS = [
   {
-    id: 'metamask',
-    name: 'MetaMask',
-    icon: '🦊',
-    description: 'Connect using MetaMask'
-  },
-  {
-    id: 'coinbase',
-    name: 'Coinbase Wallet',
-    icon: '💰',
-    description: 'Connect using Coinbase Wallet'
-  },
-  {
     id: 'walletconnect',
     name: 'WalletConnect',
     icon: '🔗',
-    description: 'Scan QR code with mobile wallet'
+    description: 'MetaMask, Coinbase, Rainbow & 300+ wallets'
   },
   {
     id: 'injected',
     name: 'Browser Wallet',
     icon: '🌐',
-    description: 'Use detected browser wallet'
+    description: 'Use detected browser extension'
   }
 ];
 
@@ -212,33 +200,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       let accounts = [];
 
       switch (walletId) {
-        case 'metamask':
-          if (!window.ethereum?.isMetaMask) {
-            // MetaMask not installed, open install page
-            window.open('https://metamask.io/download/', '_blank');
-            showNotification('Please install MetaMask and refresh the page', 'info');
-            setConnecting(false);
-            return;
-          }
-          provider = window.ethereum;
-          accounts = await provider.request({ method: 'eth_requestAccounts' });
-          break;
-
-        case 'coinbase':
-          if (window.ethereum?.isCoinbaseWallet) {
-            provider = window.ethereum;
-          } else if (window.coinbaseWalletExtension) {
-            provider = window.coinbaseWalletExtension;
-          } else {
-            // Coinbase not installed, open install page
-            window.open('https://www.coinbase.com/wallet/downloads', '_blank');
-            showNotification('Please install Coinbase Wallet and refresh the page', 'info');
-            setConnecting(false);
-            return;
-          }
-          accounts = await provider.request({ method: 'eth_requestAccounts' });
-          break;
-
         case 'walletconnect':
           try {
             // Dynamically import WalletConnect to avoid affecting other features
@@ -373,8 +334,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       setWalletConnected(true);
       setWalletAddress(accounts[0]);
       setWalletType(
-        walletId === 'metamask' ? 'MetaMask' :
-        walletId === 'coinbase' ? 'Coinbase Wallet' :
         walletId === 'walletconnect' ? 'WalletConnect' :
         availableWallets.detectedName || 'Browser Wallet'
       );
@@ -577,8 +536,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                 // Determine if wallet is available
                 const isAvailable = 
                   wallet.id === 'walletconnect' ? true :
-                  wallet.id === 'metamask' ? availableWallets.metamask :
-                  wallet.id === 'coinbase' ? availableWallets.coinbase :
                   wallet.id === 'injected' ? availableWallets.injected :
                   false;
 
@@ -586,11 +543,11 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                   <button
                     key={wallet.id}
                     onClick={() => connectWithWallet(wallet.id)}
-                    disabled={connecting}
+                    disabled={connecting || (wallet.id === 'injected' && !isAvailable)}
                     className={`w-full p-4 rounded-lg border transition-all flex items-center gap-4 ${
                       isAvailable
                         ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-700/50'
-                        : 'border-gray-700 opacity-50'
+                        : 'border-gray-700 opacity-50 cursor-not-allowed'
                     } ${connecting ? 'cursor-wait' : ''}`}
                   >
                     <span className="text-2xl">{wallet.icon}</span>
@@ -599,13 +556,12 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                       <div className="text-xs text-gray-400">
                         {wallet.id === 'injected' && availableWallets.detectedName
                           ? `Detected: ${availableWallets.detectedName}`
+                          : wallet.id === 'injected' && !isAvailable
+                          ? 'No browser wallet detected'
                           : wallet.description}
                       </div>
                     </div>
-                    {wallet.id === 'metamask' && availableWallets.metamask && (
-                      <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded">Detected</span>
-                    )}
-                    {wallet.id === 'coinbase' && availableWallets.coinbase && (
+                    {wallet.id === 'injected' && availableWallets.injected && (
                       <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded">Detected</span>
                     )}
                   </button>
