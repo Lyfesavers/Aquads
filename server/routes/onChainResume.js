@@ -45,8 +45,11 @@ router.post('/save', auth, async (req, res) => {
     const userId = req.user.userId;
     const { uid, txHash, walletAddress, score, badgeCount } = req.body;
 
+    console.log('Save attestation request:', { userId, uid, txHash, walletAddress, score, badgeCount });
+
     // Validate required fields
     if (!uid || !txHash || !walletAddress) {
+      console.error('Missing required fields:', { uid: !!uid, txHash: !!txHash, walletAddress: !!walletAddress });
       return res.status(400).json({ 
         error: 'Missing required fields: uid, txHash, walletAddress' 
       });
@@ -56,10 +59,11 @@ router.post('/save', auth, async (req, res) => {
       uid,
       txHash,
       walletAddress,
-      score,
-      badgeCount
+      score: score || 0,
+      badgeCount: badgeCount || 0
     });
 
+    console.log('Save attestation result:', result);
     res.json(result);
   } catch (error) {
     console.error('Error saving attestation record:', error);

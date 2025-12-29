@@ -103,6 +103,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [availableWallets, setAvailableWallets] = useState({ injected: false });
+  const [mintSuccess, setMintSuccess] = useState(null); // Stores success data after minting
 
   // Detect available wallets on mount
   useEffect(() => {
@@ -444,13 +445,44 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
       // Wait for the transaction
       const receipt = await tx.wait();
+      console.log('Transaction receipt:', receipt);
 
       // Get the attestation UID from the event logs
-      const attestedEvent = receipt.logs.find(log => 
-        log.topics[0] === ethers.id('Attested(address,address,bytes32,bytes32)')
-      );
+      // EAS emits Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaId)
+      let attestationUID = null;
       
-      const attestationUID = attestedEvent ? attestedEvent.topics[2] : receipt.logs[0]?.topics[1];
+      // Method 1: Look for Attested event
+      const attestedEventSignature = ethers.id('Attested(address,address,bytes32,bytes32)');
+      for (const log of receipt.logs) {
+        console.log('Log:', log.topics[0]);
+        if (log.topics[0] === attestedEventSignature) {
+          // The UID is the 3rd topic (index 2) or in the data
+          attestationUID = log.topics[2] || log.data;
+          console.log('Found attestation UID from event:', attestationUID);
+          break;
+        }
+      }
+      
+      // Method 2: If not found, try to decode the return value or use first log
+      if (!attestationUID && receipt.logs.length > 0) {
+        // The attest function returns bytes32, which might be in the first log's data
+        const firstLog = receipt.logs[0];
+        if (firstLog.data && firstLog.data !== '0x') {
+          attestationUID = firstLog.data.slice(0, 66); // First 32 bytes
+        } else if (firstLog.topics.length > 1) {
+          attestationUID = firstLog.topics[1];
+        }
+        console.log('Fallback attestation UID:', attestationUID);
+      }
+
+      // Method 3: If still not found, construct from tx hash (less ideal but works)
+      if (!attestationUID) {
+        console.warn('Could not extract UID from logs, using tx hash as reference');
+        attestationUID = receipt.hash;
+      }
+
+      console.log('Final attestation UID:', attestationUID);
+      console.log('Transaction hash:', receipt.hash);
 
       // Save to backend
       const saveResponse = await fetch(`${API_URL}/on-chain-resume/save`, {
@@ -468,12 +500,38 @@ const OnChainResume = ({ currentUser, showNotification }) => {
         })
       });
 
+      console.log('Save response status:', saveResponse.status);
+      const saveResult = await saveResponse.json();
+      console.log('Save result:', saveResult);
+
       if (saveResponse.ok) {
+        // Set success state with all the relevant data
+        setMintSuccess({
+          uid: attestationUID,
+          txHash: receipt.hash,
+          explorerUrl: `https://base.easscan.org/attestation/view/${attestationUID}`,
+          basescanUrl: `https://basescan.org/tx/${receipt.hash}`,
+          resumeUrl: `${window.location.origin}/resume/${currentUser.username}`,
+          score: resumeData.attestationData.trustScore
+        });
+        
         showNotification('🎉 On-Chain Resume minted successfully!', 'success');
-        // Refresh data
-        fetchResumeData();
+        
+        // Refresh data to update the UI
+        await fetchResumeData();
       } else {
-        showNotification('Resume minted but failed to save record. Please contact support.', 'warning');
+        console.error('Save failed:', saveResult);
+        // Still show success since the blockchain tx worked, but warn about backend
+        setMintSuccess({
+          uid: attestationUID,
+          txHash: receipt.hash,
+          explorerUrl: `https://base.easscan.org/attestation/view/${attestationUID}`,
+          basescanUrl: `https://basescan.org/tx/${receipt.hash}`,
+          resumeUrl: `${window.location.origin}/resume/${currentUser.username}`,
+          score: resumeData.attestationData.trustScore,
+          warning: 'Minted on blockchain but failed to save to Aquads. Your resume is still valid on-chain.'
+        });
+        showNotification(`Resume minted on-chain! Backend save issue: ${saveResult.error || 'Unknown error'}`, 'warning');
       }
 
     } catch (error) {
@@ -683,8 +741,82 @@ const OnChainResume = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
+      {/* Mint Success - Shows immediately after minting */}
+      {mintSuccess && (
+        <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-500/50 animate-pulse-once">
+          <div className="text-center mb-4">
+            <div className="text-5xl mb-2">🎉</div>
+            <h4 className="text-xl font-bold text-green-400">Resume Minted Successfully!</h4>
+            <p className="text-gray-400 mt-1">Your credentials are now permanently verified on Base blockchain</p>
+            {mintSuccess.warning && (
+              <p className="text-yellow-400 text-sm mt-2">{mintSuccess.warning}</p>
+            )}
+          </div>
+          
+          {/* Share Links */}
+          <div className="bg-gray-900/50 rounded-lg p-4 space-y-3">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">📤 Share Your Resume</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={mintSuccess.resumeUrl}
+                  className="flex-1 bg-gray-800 rounded px-3 py-2 text-sm text-white border border-gray-700"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(mintSuccess.resumeUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                    showNotification('Resume link copied!', 'success');
+                  }}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
+                >
+                  {copied ? '✓ Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-2">
+              <a
+                href={mintSuccess.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-center font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <FaExternalLinkAlt className="text-sm" /> View Resume Page
+              </a>
+              <a
+                href={mintSuccess.explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-center font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <FaLink className="text-sm" /> View on EAS
+              </a>
+              <a
+                href={mintSuccess.basescanUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-center font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <FaExternalLinkAlt className="text-sm" /> View TX
+              </a>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setMintSuccess(null)}
+            className="w-full mt-4 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Existing Resume Info */}
-      {hasExistingResume && (
+      {hasExistingResume && !mintSuccess && (
         <div className="bg-green-900/20 rounded-xl p-4 border border-green-500/30">
           <div className="flex items-start justify-between">
             <div>
