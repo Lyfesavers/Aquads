@@ -429,8 +429,6 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
       // Wait for the transaction
       const receipt = await tx.wait();
-      console.log('Transaction receipt:', receipt);
-      console.log('All logs:', receipt.logs);
 
       // Get the attestation UID from the event logs
       // EAS Attested event: Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaId)
@@ -442,31 +440,23 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       let attestationUID = null;
       
       const attestedEventSignature = ethers.id('Attested(address,address,bytes32,bytes32)');
-      console.log('Looking for event signature:', attestedEventSignature);
       
       for (const log of receipt.logs) {
-        console.log('Log topics[0]:', log.topics[0]);
-        console.log('Log data:', log.data);
-        
         if (log.topics[0] === attestedEventSignature) {
           // The UID is in the data field (non-indexed parameter)
           // It's a bytes32, so it's the first 32 bytes of data
           if (log.data && log.data !== '0x' && log.data.length >= 66) {
             attestationUID = log.data.slice(0, 66); // 0x + 64 hex chars = 32 bytes
-            console.log('Found attestation UID from event data:', attestationUID);
           }
           break;
         }
       }
       
       // Fallback: Try parsing from contract return value
-      // The attest() function returns bytes32 uid
       if (!attestationUID) {
-        // Look for any log with valid 32-byte data
         for (const log of receipt.logs) {
           if (log.data && log.data.length === 66 && log.data !== '0x' + '0'.repeat(64)) {
             attestationUID = log.data;
-            console.log('Found UID from log data fallback:', attestationUID);
             break;
           }
         }
@@ -474,12 +464,8 @@ const OnChainResume = ({ currentUser, showNotification }) => {
 
       // Final fallback: use tx hash (not ideal but traceable)
       if (!attestationUID) {
-        console.warn('Could not extract UID from logs, using tx hash as reference');
         attestationUID = receipt.hash;
       }
-
-      console.log('Final attestation UID:', attestationUID);
-      console.log('Transaction hash:', receipt.hash);
 
       // Save to backend
       const saveResponse = await fetch(`${API_URL}/on-chain-resume/save`, {
@@ -497,9 +483,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
         })
       });
 
-      console.log('Save response status:', saveResponse.status);
       const saveResult = await saveResponse.json();
-      console.log('Save result:', saveResult);
 
       if (saveResponse.ok) {
         // Set success state with all the relevant data
