@@ -1950,3 +1950,41 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 .status-tooltip {
   animation: tooltip-fade-in 0.2s ease-out;
 }
+
+/* WalletConnect Modal - Force on top of all modals */
+/* This ONLY affects WalletConnect QR modals, not other wallet features */
+wcm-modal,
+w3m-modal,
+wui-flex,
+wui-card,
+.wcm-overlay,
+.w3m-overlay,
+[class*="wcm-"],
+[class*="w3m-"],
+[class*="wui-"],
+div[data-testid="wcm-modal"],
+div[data-testid="w3m-modal"],
+div[class*="walletconnect"],
+div[id*="walletconnect"] {
+  z-index: 2147483647 !important; /* Max z-index */
+}
+
+/* WalletConnect overlay backdrop */
+wcm-modal .wcm-overlay,
+w3m-modal .w3m-overlay,
+div[class*="walletconnect"] > div:first-child {
+  z-index: 2147483646 !important;
+}
+
+/* WalletConnect container */
+wcm-modal .wcm-container,
+w3m-modal .w3m-container {
+  z-index: 2147483647 !important;
+}
+
+/* Web3Modal standalone portal */
+#w3m-modal,
+#wcm-modal,
+[id^="headlessui-portal"] {
+  z-index: 2147483647 !important;
+}

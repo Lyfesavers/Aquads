@@ -261,7 +261,59 @@ const OnChainResume = ({ currentUser, showNotification }) => {
               }
             });
             
+            // Force WalletConnect modal to appear on top
+            const forceModalOnTop = () => {
+              // Target all possible WalletConnect modal elements
+              const wcModals = document.querySelectorAll('wcm-modal, w3m-modal, [class*="walletconnect"], [id*="walletconnect"]');
+              wcModals.forEach(modal => {
+                modal.style.cssText = 'z-index: 2147483647 !important; position: fixed !important;';
+                // Also check for shadow root
+                if (modal.shadowRoot) {
+                  const overlay = modal.shadowRoot.querySelector('.wcm-overlay, .w3m-overlay, [class*="overlay"]');
+                  const container = modal.shadowRoot.querySelector('.wcm-container, .w3m-container, [class*="container"]');
+                  if (overlay) overlay.style.cssText = 'z-index: 2147483646 !important;';
+                  if (container) container.style.cssText = 'z-index: 2147483647 !important;';
+                }
+              });
+              
+              // Also force any modal-like divs at body level
+              const bodyModals = document.body.querySelectorAll(':scope > div[style*="position: fixed"], :scope > div[class*="modal"]');
+              bodyModals.forEach(modal => {
+                if (modal.innerHTML.includes('walletconnect') || modal.innerHTML.includes('WalletConnect') || modal.querySelector('canvas')) {
+                  modal.style.cssText = 'z-index: 2147483647 !important;';
+                }
+              });
+            };
+            
+            // Use MutationObserver to catch modal when it's added to DOM
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                  if (node.nodeType === 1) { // Element node
+                    const tagName = node.tagName?.toLowerCase() || '';
+                    if (tagName.includes('wcm') || tagName.includes('w3m') || 
+                        node.className?.includes?.('walletconnect') || 
+                        node.id?.includes?.('walletconnect')) {
+                      forceModalOnTop();
+                    }
+                  }
+                });
+              });
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Also run on timeouts as backup
+            setTimeout(forceModalOnTop, 100);
+            setTimeout(forceModalOnTop, 300);
+            setTimeout(forceModalOnTop, 500);
+            setTimeout(forceModalOnTop, 1000);
+            
+            // Cleanup observer after connection attempt
+            const cleanupObserver = () => observer.disconnect();
+            
             await wcProvider.connect();
+            cleanupObserver(); // Cleanup MutationObserver after successful connection
             accounts = wcProvider.accounts;
             provider = wcProvider;
             
@@ -274,6 +326,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
               showNotification('Wallet disconnected', 'info');
             });
           } catch (wcError) {
+            cleanupObserver(); // Cleanup on error too
             console.error('WalletConnect error:', wcError);
             if (wcError.message?.includes('User rejected') || wcError.message?.includes('cancelled')) {
               showNotification('Connection cancelled', 'info');
