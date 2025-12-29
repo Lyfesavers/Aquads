@@ -446,36 +446,49 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       // Wait for the transaction
       const receipt = await tx.wait();
       console.log('Transaction receipt:', receipt);
+      console.log('All logs:', receipt.logs);
 
       // Get the attestation UID from the event logs
-      // EAS emits Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaId)
+      // EAS Attested event: Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaId)
+      // - topics[0] = event signature
+      // - topics[1] = recipient (indexed, padded)
+      // - topics[2] = attester (indexed, padded)  
+      // - topics[3] = schemaId (indexed)
+      // - data = uid (NOT indexed - this is what we need!)
       let attestationUID = null;
       
-      // Method 1: Look for Attested event
       const attestedEventSignature = ethers.id('Attested(address,address,bytes32,bytes32)');
+      console.log('Looking for event signature:', attestedEventSignature);
+      
       for (const log of receipt.logs) {
-        console.log('Log:', log.topics[0]);
+        console.log('Log topics[0]:', log.topics[0]);
+        console.log('Log data:', log.data);
+        
         if (log.topics[0] === attestedEventSignature) {
-          // The UID is the 3rd topic (index 2) or in the data
-          attestationUID = log.topics[2] || log.data;
-          console.log('Found attestation UID from event:', attestationUID);
+          // The UID is in the data field (non-indexed parameter)
+          // It's a bytes32, so it's the first 32 bytes of data
+          if (log.data && log.data !== '0x' && log.data.length >= 66) {
+            attestationUID = log.data.slice(0, 66); // 0x + 64 hex chars = 32 bytes
+            console.log('Found attestation UID from event data:', attestationUID);
+          }
           break;
         }
       }
       
-      // Method 2: If not found, try to decode the return value or use first log
-      if (!attestationUID && receipt.logs.length > 0) {
-        // The attest function returns bytes32, which might be in the first log's data
-        const firstLog = receipt.logs[0];
-        if (firstLog.data && firstLog.data !== '0x') {
-          attestationUID = firstLog.data.slice(0, 66); // First 32 bytes
-        } else if (firstLog.topics.length > 1) {
-          attestationUID = firstLog.topics[1];
+      // Fallback: Try parsing from contract return value
+      // The attest() function returns bytes32 uid
+      if (!attestationUID) {
+        // Look for any log with valid 32-byte data
+        for (const log of receipt.logs) {
+          if (log.data && log.data.length === 66 && log.data !== '0x' + '0'.repeat(64)) {
+            attestationUID = log.data;
+            console.log('Found UID from log data fallback:', attestationUID);
+            break;
+          }
         }
-        console.log('Fallback attestation UID:', attestationUID);
       }
 
-      // Method 3: If still not found, construct from tx hash (less ideal but works)
+      // Final fallback: use tx hash (not ideal but traceable)
       if (!attestationUID) {
         console.warn('Could not extract UID from logs, using tx hash as reference');
         attestationUID = receipt.hash;
