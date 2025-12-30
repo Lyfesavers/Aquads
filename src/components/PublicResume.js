@@ -98,7 +98,7 @@ const PublicResume = () => {
           <p className="text-gray-400 mb-6">{error}</p>
           <Link 
             to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FaArrowLeft /> Back to Aquads
           </Link>
@@ -115,7 +115,7 @@ const PublicResume = () => {
       {/* Header */}
       <header className="border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+          <Link to="/" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
             <FaArrowLeft />
             <span className="hidden sm:inline">Back to Aquads</span>
           </Link>
@@ -192,7 +192,7 @@ const PublicResume = () => {
           {/* Current Score */}
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <FaChartLine className="text-blue-400" /> Live Trust Score
               </h2>
               <span className="text-xs text-gray-500">Real-time from Aquads</span>
@@ -257,7 +257,7 @@ const PublicResume = () => {
           {/* Verified On-Chain */}
           <div className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 rounded-2xl p-6 border border-green-500/30">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <FaShieldAlt className="text-green-400" /> On-Chain Verification
               </h2>
               <a
@@ -327,7 +327,7 @@ const PublicResume = () => {
         {/* Skill Badges */}
         {resumeData.skillBadges && resumeData.skillBadges.length > 0 && (
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 mb-8">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
               <FaMedal className="text-yellow-400" /> Verified Skill Badges
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -348,7 +348,7 @@ const PublicResume = () => {
         {/* CV Summary */}
         {resumeData.cv && (
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 mb-8">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
               <FaBriefcase className="text-blue-400" /> Professional Summary
             </h2>
             
@@ -359,7 +359,7 @@ const PublicResume = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               {resumeData.cv.skills && resumeData.cv.skills.length > 0 && (
                 <div>
-                  <h3 className="text-sm text-gray-400 mb-2">Skills</h3>
+                  <h3 className="text-sm text-gray-300 mb-2">Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {resumeData.cv.skills.slice(0, 8).map((skill, idx) => (
                       <span key={idx} className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full">
@@ -396,7 +396,7 @@ const PublicResume = () => {
         {/* Services */}
         {resumeData.services && resumeData.services.length > 0 && (
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 mb-8">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
               <FaBriefcase className="text-purple-400" /> Active Services
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -421,12 +421,12 @@ const PublicResume = () => {
 
         {/* Footer Actions */}
         <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl p-6 border border-blue-500/20 text-center">
-          <h3 className="text-xl font-bold mb-2">Want to work with {resumeData.username}?</h3>
+          <h3 className="text-xl font-bold text-white mb-2">Want to work with {resumeData.username}?</h3>
           <p className="text-gray-400 mb-4">Their credentials are verified on the blockchain and can't be faked.</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               to={`/?search=${resumeData.username}`}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold transition-all"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold text-white transition-all"
             >
               View on Aquads Marketplace
             </Link>
@@ -434,7 +434,7 @@ const PublicResume = () => {
               href={resumeData.explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg font-semibold transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg font-semibold text-white transition-all flex items-center gap-2"
             >
               <FaExternalLinkAlt /> Verify on Blockchain
             </a>
