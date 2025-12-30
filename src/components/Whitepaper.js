@@ -337,41 +337,17 @@ const Whitepaper = () => {
               Our On-Chain Resume system leverages the <strong>Ethereum Attestation Service (EAS)</strong> on <strong>Base</strong> (Coinbase's Layer 2) to create permanent, verifiable attestations of freelancer credentials. This is not an NFT or token—it's a signed attestation that can be independently verified by anyone, anywhere.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3">Technical Implementation</h3>
+            <h3 className="text-xl font-semibold mb-3">Technology Overview</h3>
             <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-2 text-cyan-400">Technology Stack</h4>
+              <p className="text-gray-300 mb-3">
+                Our On-Chain Resume system is built on cutting-edge blockchain infrastructure, utilizing Ethereum Layer 2 technology for fast, low-cost transactions. The system leverages industry-standard attestation protocols to create cryptographically signed, verifiable credentials.
+              </p>
               <ul className="list-disc pl-6 text-gray-400">
-                <li><strong>Blockchain:</strong> Base (Ethereum L2) - Low fees (~$0.01), fast transactions, Coinbase ecosystem</li>
-                <li><strong>Protocol:</strong> Ethereum Attestation Service (EAS) - Industry standard for on-chain attestations</li>
-                <li><strong>Contract Address:</strong> 0x4200000000000000000000000000000000000021 (Base Mainnet)</li>
-                <li><strong>Storage:</strong> Attestation data stored on-chain, linked to Aquads backend for live updates</li>
+                <li><strong>Layer 2 Blockchain:</strong> Near-zero transaction costs (~$0.01) with instant finality</li>
+                <li><strong>Attestation Protocol:</strong> Industry-standard cryptographic verification system</li>
+                <li><strong>Proprietary Schema:</strong> Custom-designed data structure capturing comprehensive freelancer metrics</li>
+                <li><strong>Hybrid Architecture:</strong> On-chain immutability combined with real-time platform data</li>
               </ul>
-            </div>
-
-            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-2 text-cyan-400">Attestation Schema</h4>
-              <p className="text-gray-300 mb-2">Each on-chain resume contains the following verified data points:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
-                <div className="bg-gray-900/50 p-2 rounded">trustScore (uint8) - Overall score 0-100</div>
-                <div className="bg-gray-900/50 p-2 rounded">ratingScore (uint8) - Rating component</div>
-                <div className="bg-gray-900/50 p-2 rounded">completionScore (uint8) - Completion rate</div>
-                <div className="bg-gray-900/50 p-2 rounded">profileScore (uint8) - CV completeness</div>
-                <div className="bg-gray-900/50 p-2 rounded">verificationScore (uint8) - KYC status</div>
-                <div className="bg-gray-900/50 p-2 rounded">badgeScore (uint8) - Skill badges</div>
-                <div className="bg-gray-900/50 p-2 rounded">avgRating (uint8) - Average rating x10</div>
-                <div className="bg-gray-900/50 p-2 rounded">totalReviews (uint16) - Review count</div>
-                <div className="bg-gray-900/50 p-2 rounded">completedJobs (uint16) - Jobs completed</div>
-                <div className="bg-gray-900/50 p-2 rounded">completionRate (uint8) - Success percentage</div>
-                <div className="bg-gray-900/50 p-2 rounded">skillBadges (string) - Badge names</div>
-                <div className="bg-gray-900/50 p-2 rounded">badgeCount (uint8) - Number of badges</div>
-                <div className="bg-gray-900/50 p-2 rounded">hasVerifiedCV (bool) - CV status</div>
-                <div className="bg-gray-900/50 p-2 rounded">isFreelancer (bool) - Account type</div>
-                <div className="bg-gray-900/50 p-2 rounded">isPremium (bool) - KYC verified</div>
-                <div className="bg-gray-900/50 p-2 rounded">memberSince (uint32) - Join timestamp</div>
-                <div className="bg-gray-900/50 p-2 rounded">lastUpdated (uint32) - Update timestamp</div>
-                <div className="bg-gray-900/50 p-2 rounded">username (string) - Aquads username</div>
-                <div className="bg-gray-900/50 p-2 rounded">aquadsId (bytes32) - Unique identifier</div>
-              </div>
             </div>
 
             <h3 className="text-xl font-semibold mb-3">How It Works</h3>
