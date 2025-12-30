@@ -32,21 +32,21 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted, is
             },
             {
               name: 'Completion Rate',
-              weight: 30,
+              weight: 20,
               icon: FaCheck,
               color: 'text-green-400',
               bgColor: 'bg-green-400/20',
               ranges: [
-                { min: 95, max: 100, score: 30, label: 'Outstanding (95%+)' },
-                { min: 85, max: 94, score: 24, label: 'Great (85-94%)' },
-                { min: 75, max: 84, score: 18, label: 'Good (75-84%)' },
-                { min: 65, max: 74, score: 9, label: 'Needs Improvement (65-74%)' },
-                { min: 0, max: 64, score: 3, label: 'Poor (Below 65%)' }
+                { min: 95, max: 100, score: 20, label: 'Outstanding (95%+)' },
+                { min: 85, max: 94, score: 16, label: 'Great (85-94%)' },
+                { min: 75, max: 84, score: 12, label: 'Good (75-84%)' },
+                { min: 65, max: 74, score: 6, label: 'Needs Improvement (65-74%)' },
+                { min: 0, max: 64, score: 2, label: 'Poor (Below 65%)' }
               ]
             },
             {
               name: 'Profile Completeness',
-              weight: 10,
+              weight: 5,
               icon: FaUsers,
               color: 'text-blue-400',
               bgColor: 'bg-blue-400/20',
@@ -54,11 +54,11 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted, is
             },
             {
               name: 'Account Verification',
-              weight: 5,
+              weight: 20,
               icon: FaShieldAlt,
               color: 'text-purple-400',
               bgColor: 'bg-purple-400/20',
-              description: 'Premium status, freelancer badge'
+              description: 'KYC verified & vetted premium freelancers'
             },
             {
               name: 'Skill Badges',

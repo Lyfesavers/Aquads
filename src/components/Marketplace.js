@@ -523,24 +523,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       totalScore += 5;
     }
 
-    // Factor 2: Completion Rate (30% weight)
+    // Factor 2: Completion Rate (20% weight)
     if (completionRate !== null) {
       if (completionRate >= 95) {
-        totalScore += 30;
+        totalScore += 20;
       } else if (completionRate >= 85) {
-        totalScore += 24;
+        totalScore += 16;
       } else if (completionRate >= 75) {
-        totalScore += 18;
+        totalScore += 12;
       } else if (completionRate >= 65) {
-        totalScore += 9;
+        totalScore += 6;
       } else {
-        totalScore += 3;
+        totalScore += 2;
       }
     } else {
-      totalScore += 6; // No booking history penalty
+      totalScore += 4; // No booking history penalty
     }
 
-    // Factor 3: CV/Profile Completeness (10% weight)
+    // Factor 3: CV/Profile Completeness (5% weight)
     const hasCV = seller?.cv && (
       seller.cv.fullName || 
       seller.cv.summary || 
@@ -548,12 +548,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       (seller.cv.education && seller.cv.education.length > 0) ||
       (seller.cv.skills && seller.cv.skills.length > 0)
     );
-    if (hasCV) totalScore += 10;
+    if (hasCV) totalScore += 5;
 
-    // Factor 4: Account Verification (5% weight)
+    // Factor 4: Account Verification (20% weight - KYC & Vetting)
     let verificationScore = 0;
-    if (seller?.userType === 'freelancer') verificationScore += 2.5;
-    if (service?.isPremium) verificationScore += 2.5;
+    if (seller?.userType === 'freelancer') verificationScore += 10;
+    if (service?.isPremium) verificationScore += 10;
     totalScore += verificationScore;
 
     // Factor 5: Skill Badges (5% weight)

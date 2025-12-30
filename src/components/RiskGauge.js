@@ -43,21 +43,21 @@ const RiskGauge = ({
       factors.push({ factor: `Low rating (${rating.toFixed(1)}/5)`, impact: 'negative', points: ratingWeight * 0.1, maxPoints: ratingWeight });
     }
 
-    // Factor 2: Completion Rate (30% weight - INCREASED from 25%)
-    const completionWeight = 30;
+    // Factor 2: Completion Rate (20% weight)
+    const completionWeight = 20;
     maxPossibleScore += completionWeight;
     
     if (completionRate !== null) {
-      if (completionRate >= 95) { // STRICTER: was 90
+      if (completionRate >= 95) {
         totalScore += completionWeight;
         factors.push({ factor: `Excellent completion rate (${completionRate}%)`, impact: 'positive', points: completionWeight, maxPoints: completionWeight });
-      } else if (completionRate >= 85) { // STRICTER: was 80
+      } else if (completionRate >= 85) {
         totalScore += completionWeight * 0.8;
         factors.push({ factor: `Good completion rate (${completionRate}%)`, impact: 'positive', points: completionWeight * 0.8, maxPoints: completionWeight });
-      } else if (completionRate >= 75) { // STRICTER: was 70
+      } else if (completionRate >= 75) {
         totalScore += completionWeight * 0.6;
         factors.push({ factor: `Fair completion rate (${completionRate}%)`, impact: 'neutral', points: completionWeight * 0.6, maxPoints: completionWeight });
-      } else if (completionRate >= 65) { // STRICTER: was 60
+      } else if (completionRate >= 65) {
         totalScore += completionWeight * 0.3;
         factors.push({ factor: `Low completion rate (${completionRate}%)`, impact: 'negative', points: completionWeight * 0.3, maxPoints: completionWeight });
       } else {
@@ -66,12 +66,12 @@ const RiskGauge = ({
       }
     } else {
       // No booking history - penalized more heavily
-      totalScore += completionWeight * 0.2; // REDUCED from 0.5
+      totalScore += completionWeight * 0.2;
       factors.push({ factor: 'No booking history', impact: 'negative', points: completionWeight * 0.2, maxPoints: completionWeight });
     }
 
-    // Factor 3: CV/Profile Completeness (10% weight - REDUCED from 15%)
-    const cvWeight = 10;
+    // Factor 3: CV/Profile Completeness (5% weight)
+    const cvWeight = 5;
     maxPossibleScore += cvWeight;
     
     const hasCV = seller?.cv && (
@@ -89,8 +89,8 @@ const RiskGauge = ({
       factors.push({ factor: 'No CV/incomplete profile', impact: 'negative', points: 0, maxPoints: cvWeight });
     }
 
-    // Factor 4: Account Verification (5% weight - REDUCED from 10%)
-    const verificationWeight = 5;
+    // Factor 4: Account Verification (20% weight - KYC & Vetting)
+    const verificationWeight = 20;
     maxPossibleScore += verificationWeight;
     let verificationScore = 0;
     
@@ -104,7 +104,7 @@ const RiskGauge = ({
     
     totalScore += verificationScore;
     if (verificationScore === verificationWeight) {
-      factors.push({ factor: 'Fully verified account', impact: 'positive', points: verificationScore, maxPoints: verificationWeight });
+      factors.push({ factor: 'Fully verified (KYC + Vetted)', impact: 'positive', points: verificationScore, maxPoints: verificationWeight });
     } else if (verificationScore > 0) {
       factors.push({ factor: 'Partially verified account', impact: 'neutral', points: verificationScore, maxPoints: verificationWeight });
     } else {

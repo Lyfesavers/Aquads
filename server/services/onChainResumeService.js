@@ -76,22 +76,22 @@ const calculateTrustScore = async (userId) => {
     ratingScore = 5;
   }
 
-  // Factor 2: Completion Rate (30% weight, 0-30 points)
+  // Factor 2: Completion Rate (20% weight, 0-20 points)
   if (totalBookings === 0) {
-    completionScore = 6; // No booking history - neutral
+    completionScore = 4; // No booking history - neutral
   } else if (completionRate >= 95) {
-    completionScore = 30;
+    completionScore = 20;
   } else if (completionRate >= 85) {
-    completionScore = 24;
+    completionScore = 16;
   } else if (completionRate >= 75) {
-    completionScore = 18;
+    completionScore = 12;
   } else if (completionRate >= 65) {
-    completionScore = 9;
+    completionScore = 6;
   } else {
-    completionScore = 3;
+    completionScore = 2;
   }
 
-  // Factor 3: CV/Profile Completeness (10% weight, 0-10 points)
+  // Factor 3: CV/Profile Completeness (5% weight, 0-5 points)
   const hasCV = user.cv && (
     user.cv.fullName || 
     user.cv.summary || 
@@ -99,13 +99,13 @@ const calculateTrustScore = async (userId) => {
     (user.cv.education && user.cv.education.length > 0) ||
     (user.cv.skills && user.cv.skills.length > 0)
   );
-  profileScore = hasCV ? 10 : 0;
+  profileScore = hasCV ? 5 : 0;
 
-  // Factor 4: Account Verification (5% weight, 0-5 points)
-  if (user.userType === 'freelancer') verificationScore += 2.5;
+  // Factor 4: Account Verification (20% weight, 0-20 points - KYC & Vetting)
+  if (user.userType === 'freelancer') verificationScore += 10;
   // Check if user has any premium services
   const hasPremiumService = services.some(s => s.isPremium);
-  if (hasPremiumService) verificationScore += 2.5;
+  if (hasPremiumService) verificationScore += 10;
   verificationScore = Math.round(verificationScore);
 
   // Factor 5: Skill Badges (5% weight, 0-5 points)
@@ -225,17 +225,17 @@ const prepareAttestationData = async (userId) => {
         },
         completion: {
           score: scoreData.breakdown.completionScore,
-          max: 30,
+          max: 20,
           rate: `${scoreData.stats.completionRate}%`
         },
         profile: {
           score: scoreData.breakdown.profileScore,
-          max: 10,
+          max: 5,
           status: scoreData.profile.hasVerifiedCV ? 'Complete' : 'Incomplete'
         },
         verification: {
           score: scoreData.breakdown.verificationScore,
-          max: 5,
+          max: 20,
           type: scoreData.profile.isFreelancer ? 'Freelancer' : 'Project'
         },
         badges: {
