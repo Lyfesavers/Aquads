@@ -62,6 +62,8 @@ const Whitepaper = () => {
               <li>A robust Booking System complete with watermarking for sent images, enhancing security and professionalism</li>
               <li>An upgraded Internal Messaging System with payment functionality (coming soon)</li>
               <li>A new Twitter Raid Feature that rewards users with points for engaging with Twitter posts</li>
+              <li><strong>Industry-First Trust Score & Risk Gauge System</strong> - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills</li>
+              <li><strong>World's First On-Chain Freelancer Resume</strong> - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation</li>
             </ul>
             
 
@@ -168,8 +170,8 @@ const Whitepaper = () => {
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">Freelancer Marketplace:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Verified service provider profiles, categorized services, integrated reviews, integrated booking system.</li>
-                <li><strong>Benefits:</strong> Streamline the process of finding specialized talent in the Web3 space.</li>
+                <li><strong>Features:</strong> Verified service provider profiles, categorized services, integrated reviews, integrated booking system, Trust Score & Risk Gauge vetting system, On-Chain Resume with EAS attestations.</li>
+                <li><strong>Benefits:</strong> Streamline the process of finding specialized talent in the Web3 space with unprecedented transparency and verifiable credentials.</li>
               </ul>
             </div>
 
@@ -214,6 +216,247 @@ const Whitepaper = () => {
             </div>
           </section>
 
+          {/* NEW SECTION: Trust Score & Risk Gauge */}
+          <section className="mb-8">
+            <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-bold text-green-400 mb-2">🛡️ Industry Innovation: Comprehensive Freelancer Vetting System</h3>
+              <p className="text-gray-200">
+                Aquads has developed a sophisticated <strong>Trust Score Algorithm</strong> and <strong>Risk Gauge</strong> system that provides clients with transparent, data-driven insights into freelancer reliability. This multi-factor scoring system goes beyond simple ratings to create a holistic view of freelancer trustworthiness.
+              </p>
+            </div>
+
+            <h2 className="text-2xl font-bold mb-4">4.2. Trust Score & Risk Gauge System</h2>
+            <p className="mb-4">
+              Our proprietary Trust Score algorithm aggregates multiple performance indicators to generate a comprehensive reliability score (0-100) for every freelancer on the platform. This score is displayed via our intuitive Risk Gauge component, helping clients make informed hiring decisions.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3">Trust Score Components (100 Points Total)</h3>
+            
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-yellow-400">⭐ Service Rating (50 Points - 50% Weight)</h4>
+              <p className="text-gray-300 mb-2">The most heavily weighted factor, reflecting client satisfaction from completed jobs.</p>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li>4.8-5.0★ rating = 50 points (Exceptional)</li>
+                <li>4.5-4.7★ rating = 40 points (Excellent)</li>
+                <li>4.0-4.4★ rating = 30 points (Good)</li>
+                <li>3.5-3.9★ rating = 15 points (Fair)</li>
+                <li>Below 3.5★ = 5 points (Needs Improvement)</li>
+                <li>No reviews = 0 points (Unproven)</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-green-400">✅ Job Completion Rate (20 Points - 20% Weight)</h4>
+              <p className="text-gray-300 mb-2">Measures reliability by tracking the percentage of accepted jobs completed successfully.</p>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li>95%+ completion = 20 points</li>
+                <li>85-94% completion = 16 points</li>
+                <li>75-84% completion = 12 points</li>
+                <li>65-74% completion = 6 points</li>
+                <li>Below 65% = 2 points</li>
+                <li>No history = 4 points (neutral)</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-purple-400">👤 Identity Verification & KYC (20 Points - 20% Weight)</h4>
+              <p className="text-gray-300 mb-2">Confirms freelancer identity and professional status through our vetting process.</p>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li>Registered Freelancer Account = 10 points</li>
+                <li>Premium Service (requires KYC verification) = additional 10 points</li>
+                <li>Premium listing requires identity verification, ensuring real professionals</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-blue-400">📋 Profile Completeness (5 Points - 5% Weight)</h4>
+              <p className="text-gray-300 mb-2">Rewards freelancers who maintain comprehensive professional profiles.</p>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li>Complete CV with name, summary, experience, education, and skills = 5 points</li>
+                <li>Incomplete profile = 0 points</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-orange-400">🏆 Skill Badges (5 Points - 5% Weight)</h4>
+              <p className="text-gray-300 mb-2">Recognizes verified skills through our assessment system.</p>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li>3+ skill badges = 5 points</li>
+                <li>1-2 skill badges = 2.5 points</li>
+                <li>No badges = 0 points</li>
+              </ul>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Risk Gauge Visualization</h3>
+            <p className="mb-4">The Trust Score is displayed through an intuitive gauge that categorizes freelancers:</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-green-900/30 border border-green-500/30 rounded-lg p-3 text-center">
+                <div className="text-2xl mb-1">🟢</div>
+                <div className="text-green-400 font-bold">85-100</div>
+                <div className="text-sm text-gray-400">Safe to Book</div>
+              </div>
+              <div className="bg-yellow-900/30 border border-yellow-500/30 rounded-lg p-3 text-center">
+                <div className="text-2xl mb-1">🟡</div>
+                <div className="text-yellow-400 font-bold">70-84</div>
+                <div className="text-sm text-gray-400">Almost Proven</div>
+              </div>
+              <div className="bg-orange-900/30 border border-orange-500/30 rounded-lg p-3 text-center">
+                <div className="text-2xl mb-1">🟠</div>
+                <div className="text-orange-400 font-bold">50-69</div>
+                <div className="text-sm text-gray-400">Unproven</div>
+              </div>
+              <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-3 text-center">
+                <div className="text-2xl mb-1">🔴</div>
+                <div className="text-red-400 font-bold">0-49</div>
+                <div className="text-sm text-gray-400">Risky</div>
+              </div>
+            </div>
+          </section>
+
+          {/* NEW SECTION: On-Chain Resume */}
+          <section className="mb-8">
+            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-bold text-blue-400 mb-2">⛓️ World's First: On-Chain Freelancer Resume</h3>
+              <p className="text-gray-200">
+                Aquads proudly introduces the <strong>world's first on-chain freelancer resume system</strong>, allowing professionals to mint their verified credentials as permanent, tamper-proof attestations on the blockchain. This groundbreaking feature bridges traditional freelancing with Web3 technology, creating portable, verifiable proof of professional reputation.
+              </p>
+            </div>
+
+            <h2 className="text-2xl font-bold mb-4">4.3. On-Chain Resume System</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">The Problem with Traditional Reputation</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li><strong>Platform Lock-in:</strong> Freelancer reputation is trapped within individual platforms and cannot be transferred.</li>
+              <li><strong>No Verification:</strong> Clients have no way to verify if credentials are authentic or manipulated.</li>
+              <li><strong>Centralized Risk:</strong> Platform shutdowns or account issues can erase years of built reputation.</li>
+              <li><strong>Trust Gaps:</strong> When moving between platforms, freelancers start from zero despite years of proven work.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">The Aquads Solution: Blockchain-Verified Credentials</h3>
+            <p className="mb-4">
+              Our On-Chain Resume system leverages the <strong>Ethereum Attestation Service (EAS)</strong> on <strong>Base</strong> (Coinbase's Layer 2) to create permanent, verifiable attestations of freelancer credentials. This is not an NFT or token—it's a signed attestation that can be independently verified by anyone, anywhere.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3">Technical Implementation</h3>
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-2 text-cyan-400">Technology Stack</h4>
+              <ul className="list-disc pl-6 text-gray-400">
+                <li><strong>Blockchain:</strong> Base (Ethereum L2) - Low fees (~$0.01), fast transactions, Coinbase ecosystem</li>
+                <li><strong>Protocol:</strong> Ethereum Attestation Service (EAS) - Industry standard for on-chain attestations</li>
+                <li><strong>Contract Address:</strong> 0x4200000000000000000000000000000000000021 (Base Mainnet)</li>
+                <li><strong>Storage:</strong> Attestation data stored on-chain, linked to Aquads backend for live updates</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-2 text-cyan-400">Attestation Schema</h4>
+              <p className="text-gray-300 mb-2">Each on-chain resume contains the following verified data points:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
+                <div className="bg-gray-900/50 p-2 rounded">trustScore (uint8) - Overall score 0-100</div>
+                <div className="bg-gray-900/50 p-2 rounded">ratingScore (uint8) - Rating component</div>
+                <div className="bg-gray-900/50 p-2 rounded">completionScore (uint8) - Completion rate</div>
+                <div className="bg-gray-900/50 p-2 rounded">profileScore (uint8) - CV completeness</div>
+                <div className="bg-gray-900/50 p-2 rounded">verificationScore (uint8) - KYC status</div>
+                <div className="bg-gray-900/50 p-2 rounded">badgeScore (uint8) - Skill badges</div>
+                <div className="bg-gray-900/50 p-2 rounded">avgRating (uint8) - Average rating x10</div>
+                <div className="bg-gray-900/50 p-2 rounded">totalReviews (uint16) - Review count</div>
+                <div className="bg-gray-900/50 p-2 rounded">completedJobs (uint16) - Jobs completed</div>
+                <div className="bg-gray-900/50 p-2 rounded">completionRate (uint8) - Success percentage</div>
+                <div className="bg-gray-900/50 p-2 rounded">skillBadges (string) - Badge names</div>
+                <div className="bg-gray-900/50 p-2 rounded">badgeCount (uint8) - Number of badges</div>
+                <div className="bg-gray-900/50 p-2 rounded">hasVerifiedCV (bool) - CV status</div>
+                <div className="bg-gray-900/50 p-2 rounded">isFreelancer (bool) - Account type</div>
+                <div className="bg-gray-900/50 p-2 rounded">isPremium (bool) - KYC verified</div>
+                <div className="bg-gray-900/50 p-2 rounded">memberSince (uint32) - Join timestamp</div>
+                <div className="bg-gray-900/50 p-2 rounded">lastUpdated (uint32) - Update timestamp</div>
+                <div className="bg-gray-900/50 p-2 rounded">username (string) - Aquads username</div>
+                <div className="bg-gray-900/50 p-2 rounded">aquadsId (bytes32) - Unique identifier</div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">How It Works</h3>
+            <div className="space-y-4 mb-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">1</div>
+                <div>
+                  <h4 className="font-semibold text-white">Build Your Reputation</h4>
+                  <p className="text-gray-400">Complete jobs, earn ratings, pass skill assessments, and verify your identity on Aquads.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">2</div>
+                <div>
+                  <h4 className="font-semibold text-white">Connect Your Wallet</h4>
+                  <p className="text-gray-400">Link any EVM-compatible wallet (MetaMask, Coinbase Wallet, WalletConnect, etc.).</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">3</div>
+                <div>
+                  <h4 className="font-semibold text-white">Mint Your Resume</h4>
+                  <p className="text-gray-400">One-click minting creates an EAS attestation with your current Trust Score and credentials. Cost: ~$0.01 in ETH gas.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">4</div>
+                <div>
+                  <h4 className="font-semibold text-white">Share & Verify</h4>
+                  <p className="text-gray-400">Get a public resume URL, EAS Explorer link, and Basescan transaction proof. Anyone can verify your credentials independently.</p>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Public Resume Page</h3>
+            <p className="mb-4">
+              Each minted resume generates a public, shareable page at <code className="bg-gray-800 px-2 py-1 rounded">aquads.xyz/resume/[username]</code> featuring:
+            </p>
+            <ul className="list-disc pl-6 mb-4">
+              <li><strong>Live Trust Score:</strong> Real-time data from Aquads platform</li>
+              <li><strong>On-Chain Verified Score:</strong> Immutable record from blockchain</li>
+              <li><strong>Score Breakdown:</strong> Expandable details explaining each metric</li>
+              <li><strong>Skill Badges:</strong> Verified competencies with assessment scores</li>
+              <li><strong>Work Experience:</strong> Professional history from CV</li>
+              <li><strong>Education:</strong> Academic credentials</li>
+              <li><strong>Active Services:</strong> Current offerings on Aquads</li>
+              <li><strong>Verification Links:</strong> Direct links to EAS Explorer and Basescan</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">Benefits</h3>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-green-400 mb-2">For Freelancers</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm">
+                  <li>Portable reputation across platforms</li>
+                  <li>Tamper-proof credential verification</li>
+                  <li>Stand out with blockchain-verified trust</li>
+                  <li>Own your professional data forever</li>
+                  <li>No platform can revoke your credentials</li>
+                </ul>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-400 mb-2">For Employers</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm">
+                  <li>Independently verify credentials</li>
+                  <li>No reliance on centralized platforms</li>
+                  <li>Cryptographic proof of reputation</li>
+                  <li>Historical attestation tracking</li>
+                  <li>Reduced hiring risk with verified data</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Why This Matters</h3>
+            <p className="mb-4">
+              The On-Chain Resume represents a fundamental shift in how professional reputation works. By combining Aquads' comprehensive Trust Score system with blockchain immutability, we've created the first truly portable, verifiable freelancer credential system. This innovation:
+            </p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Eliminates the "cold start" problem when joining new platforms</li>
+              <li>Creates accountability through permanent, public records</li>
+              <li>Bridges Web2 freelancing with Web3 verification standards</li>
+              <li>Establishes a new paradigm for professional reputation</li>
+            </ul>
+          </section>
+
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">5. Revenue Model</h2>
             
@@ -243,6 +486,13 @@ const Whitepaper = () => {
               <li>Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.</li>
               <li>VIP ad banners, AMAs, and additional monetized features are planned for future phases and more.</li>
               <li>Paid twitter raid post</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">5.5. On-Chain Resume Services (Planned)</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Optional minting fee for On-Chain Resume attestations (in addition to minimal blockchain gas fees).</li>
+              <li>Premium resume features such as enhanced public profiles and priority verification badges.</li>
+              <li>Enterprise verification services for bulk credential validation.</li>
             </ul>
           </section>
 
@@ -286,6 +536,12 @@ const Whitepaper = () => {
             <h2 className="text-2xl font-bold mb-4">8. Conclusion</h2>
             <p className="mb-4">
               Aquads.xyz represents the future of Web3 work, gaming, and crypto projects by uniting advertising, freelance services, and cutting-edge blockchain features in one platform. With dynamic features such as our new Game Hub, comprehensive How-To page, robust booking system with watermarking, upgraded messaging, and an engaging Twitter Raid feature, Aquads.xyz is poised to lead the decentralized marketplace revolution.
+            </p>
+            <p className="mb-4">
+              Our groundbreaking innovations in freelancer vetting—the <strong>Trust Score & Risk Gauge system</strong>—combined with the <strong>world's first On-Chain Freelancer Resume</strong>, set a new standard for professional reputation in the gig economy. By leveraging blockchain technology through Ethereum Attestation Service on Base, we've created a paradigm where freelancer credentials are portable, verifiable, and truly owned by the professional.
+            </p>
+            <p className="mb-4">
+              These innovations solve longstanding problems in freelancing: platform lock-in, unverifiable credentials, and the "cold start" reputation problem. Aquads is not just building a marketplace—we're building the infrastructure for the future of decentralized work.
             </p>
             <p className="mb-4">
               Join us as we build a vibrant community where innovation meets opportunity. Let's transform the world of digital freelancing and crypto projects together!
