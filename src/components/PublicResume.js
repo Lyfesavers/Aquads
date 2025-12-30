@@ -282,11 +282,11 @@ const PublicResume = () => {
                   <div className="flex items-center gap-2">
                     <FaClipboardCheck className="text-green-400" />
                     <span className="text-gray-300 text-sm">Completion</span>
-                    <span className="text-green-400 font-semibold text-sm">{current.breakdown.completionScore}/30</span>
+                    <span className="text-green-400 font-semibold text-sm">{current.breakdown.completionScore}/20</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-20 bg-gray-700 rounded-full h-2">
-                      <div className="bg-green-400 h-2 rounded-full" style={{ width: `${(current.breakdown.completionScore / 30) * 100}%` }}></div>
+                      <div className="bg-green-400 h-2 rounded-full" style={{ width: `${(current.breakdown.completionScore / 20) * 100}%` }}></div>
                     </div>
                     <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.completion ? 'rotate-180' : ''}`} />
                   </div>
@@ -306,7 +306,7 @@ const PublicResume = () => {
                         <span className="text-white">{current.stats.completedJobs}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 Shows reliability. 95%+ completion rate = max 30 points. Cancelled jobs lower this score.
+                        💡 Shows reliability. 95%+ completion rate = max 20 points. Cancelled jobs lower this score.
                       </p>
                     </div>
                   </div>
@@ -322,11 +322,11 @@ const PublicResume = () => {
                   <div className="flex items-center gap-2">
                     <FaIdCard className="text-blue-400" />
                     <span className="text-gray-300 text-sm">Profile</span>
-                    <span className="text-blue-400 font-semibold text-sm">{current.breakdown.profileScore}/10</span>
+                    <span className="text-blue-400 font-semibold text-sm">{current.breakdown.profileScore}/5</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-20 bg-gray-700 rounded-full h-2">
-                      <div className="bg-blue-400 h-2 rounded-full" style={{ width: `${(current.breakdown.profileScore / 10) * 100}%` }}></div>
+                      <div className="bg-blue-400 h-2 rounded-full" style={{ width: `${(current.breakdown.profileScore / 5) * 100}%` }}></div>
                     </div>
                     <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.profile ? 'rotate-180' : ''}`} />
                   </div>
@@ -339,12 +339,12 @@ const PublicResume = () => {
                       </p>
                       <div className="flex justify-between text-gray-400">
                         <span>CV Status:</span>
-                        <span className={current.breakdown.profileScore >= 10 ? 'text-green-400' : 'text-yellow-400'}>
-                          {current.breakdown.profileScore >= 10 ? 'Complete' : 'Incomplete'}
+                        <span className={current.breakdown.profileScore >= 5 ? 'text-green-400' : 'text-yellow-400'}>
+                          {current.breakdown.profileScore >= 5 ? 'Complete' : 'Incomplete'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 A complete CV with name, summary, experience, education, and skills = 10 points.
+                        💡 A complete CV with name, summary, experience, education, and skills = 5 points.
                       </p>
                     </div>
                   </div>
@@ -360,11 +360,11 @@ const PublicResume = () => {
                   <div className="flex items-center gap-2">
                     <FaUserCheck className="text-purple-400" />
                     <span className="text-gray-300 text-sm">Verification</span>
-                    <span className="text-purple-400 font-semibold text-sm">{current.breakdown.verificationScore}/5</span>
+                    <span className="text-purple-400 font-semibold text-sm">{current.breakdown.verificationScore}/20</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-20 bg-gray-700 rounded-full h-2">
-                      <div className="bg-purple-400 h-2 rounded-full" style={{ width: `${(current.breakdown.verificationScore / 5) * 100}%` }}></div>
+                      <div className="bg-purple-400 h-2 rounded-full" style={{ width: `${(current.breakdown.verificationScore / 20) * 100}%` }}></div>
                     </div>
                     <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.verification ? 'rotate-180' : ''}`} />
                   </div>
@@ -377,18 +377,18 @@ const PublicResume = () => {
                       </p>
                       <div className="flex justify-between text-gray-400">
                         <span>Freelancer Account:</span>
-                        <span className={current.breakdown.verificationScore >= 3 ? 'text-green-400' : 'text-gray-500'}>
-                          {current.breakdown.verificationScore >= 3 ? '✓ Verified' : '✗ Not verified'}
+                        <span className={current.breakdown.verificationScore >= 10 ? 'text-green-400' : 'text-gray-500'}>
+                          {current.breakdown.verificationScore >= 10 ? '✓ Verified' : '✗ Not verified'}
                         </span>
                       </div>
                       <div className="flex justify-between text-gray-400">
                         <span>KYC (Premium Service):</span>
-                        <span className={current.breakdown.verificationScore >= 5 ? 'text-green-400' : 'text-gray-500'}>
-                          {current.breakdown.verificationScore >= 5 ? '✓ Verified' : '✗ Not verified'}
+                        <span className={current.breakdown.verificationScore >= 20 ? 'text-green-400' : 'text-gray-500'}>
+                          {current.breakdown.verificationScore >= 20 ? '✓ Verified' : '✗ Not verified'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 Freelancer account = 3pts. Premium service (requires KYC) = additional 2pts for full 5/5.
+                        💡 Freelancer account = 10pts. Premium service (requires KYC & vetting) = additional 10pts for full 20/20.
                       </p>
                     </div>
                   </div>
