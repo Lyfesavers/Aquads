@@ -6,13 +6,17 @@ import {
   FaCopy, 
   FaStar, 
   FaBriefcase,
-  FaGraduationCap,
   FaShieldAlt,
   FaClock,
   FaLink,
   FaArrowLeft,
   FaMedal,
-  FaChartLine
+  FaChartLine,
+  FaChevronDown,
+  FaUserCheck,
+  FaClipboardCheck,
+  FaIdCard,
+  FaAward
 } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 
@@ -22,6 +26,14 @@ const PublicResume = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [expandedMetrics, setExpandedMetrics] = useState({});
+
+  const toggleMetric = (metric) => {
+    setExpandedMetrics(prev => ({
+      ...prev,
+      [metric]: !prev[metric]
+    }));
+  };
 
   useEffect(() => {
     const fetchResume = async () => {
@@ -219,37 +231,213 @@ const PublicResume = () => {
               </div>
             </div>
 
-            {/* Score Breakdown */}
+            {/* Score Breakdown - Expandable */}
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Rating ({current.breakdown.ratingScore}/50)</span>
-                <div className="w-32 bg-gray-700 rounded-full h-2 my-auto">
-                  <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${(current.breakdown.ratingScore / 50) * 100}%` }}></div>
-                </div>
+              {/* Rating */}
+              <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleMetric('rating')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaStar className="text-yellow-400" />
+                    <span className="text-gray-300 text-sm">Rating</span>
+                    <span className="text-yellow-400 font-semibold text-sm">{current.breakdown.ratingScore}/50</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-700 rounded-full h-2">
+                      <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${(current.breakdown.ratingScore / 50) * 100}%` }}></div>
+                    </div>
+                    <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.rating ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                {expandedMetrics.rating && (
+                  <div className="px-3 pb-3 text-sm border-t border-gray-700/50">
+                    <div className="pt-3 space-y-2">
+                      <p className="text-gray-400">
+                        <span className="text-gray-300 font-medium">What it measures:</span> Average rating received from clients on completed jobs.
+                      </p>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Current Rating:</span>
+                        <span className="text-yellow-400 font-medium">{(current.stats.avgRating / 10).toFixed(1)}★</span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Total Reviews:</span>
+                        <span className="text-white">{current.stats.totalReviews}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 Higher ratings from more reviews = higher score. 4.8★+ with reviews = max 50 points.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Completion ({current.breakdown.completionScore}/30)</span>
-                <div className="w-32 bg-gray-700 rounded-full h-2 my-auto">
-                  <div className="bg-green-400 h-2 rounded-full" style={{ width: `${(current.breakdown.completionScore / 30) * 100}%` }}></div>
-                </div>
+
+              {/* Completion */}
+              <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleMetric('completion')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaClipboardCheck className="text-green-400" />
+                    <span className="text-gray-300 text-sm">Completion</span>
+                    <span className="text-green-400 font-semibold text-sm">{current.breakdown.completionScore}/30</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-700 rounded-full h-2">
+                      <div className="bg-green-400 h-2 rounded-full" style={{ width: `${(current.breakdown.completionScore / 30) * 100}%` }}></div>
+                    </div>
+                    <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.completion ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                {expandedMetrics.completion && (
+                  <div className="px-3 pb-3 text-sm border-t border-gray-700/50">
+                    <div className="pt-3 space-y-2">
+                      <p className="text-gray-400">
+                        <span className="text-gray-300 font-medium">What it measures:</span> Percentage of accepted jobs that were completed successfully.
+                      </p>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Completion Rate:</span>
+                        <span className="text-green-400 font-medium">{current.stats.completionRate}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Jobs Completed:</span>
+                        <span className="text-white">{current.stats.completedJobs}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 Shows reliability. 95%+ completion rate = max 30 points. Cancelled jobs lower this score.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Profile ({current.breakdown.profileScore}/10)</span>
-                <div className="w-32 bg-gray-700 rounded-full h-2 my-auto">
-                  <div className="bg-blue-400 h-2 rounded-full" style={{ width: `${(current.breakdown.profileScore / 10) * 100}%` }}></div>
-                </div>
+
+              {/* Profile */}
+              <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleMetric('profile')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaIdCard className="text-blue-400" />
+                    <span className="text-gray-300 text-sm">Profile</span>
+                    <span className="text-blue-400 font-semibold text-sm">{current.breakdown.profileScore}/10</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-700 rounded-full h-2">
+                      <div className="bg-blue-400 h-2 rounded-full" style={{ width: `${(current.breakdown.profileScore / 10) * 100}%` }}></div>
+                    </div>
+                    <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.profile ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                {expandedMetrics.profile && (
+                  <div className="px-3 pb-3 text-sm border-t border-gray-700/50">
+                    <div className="pt-3 space-y-2">
+                      <p className="text-gray-400">
+                        <span className="text-gray-300 font-medium">What it measures:</span> Completeness of professional CV/profile information.
+                      </p>
+                      <div className="flex justify-between text-gray-400">
+                        <span>CV Status:</span>
+                        <span className={current.breakdown.profileScore >= 10 ? 'text-green-400' : 'text-yellow-400'}>
+                          {current.breakdown.profileScore >= 10 ? 'Complete' : 'Incomplete'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 A complete CV with name, summary, experience, education, and skills = 10 points.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Verification ({current.breakdown.verificationScore}/5)</span>
-                <div className="w-32 bg-gray-700 rounded-full h-2 my-auto">
-                  <div className="bg-purple-400 h-2 rounded-full" style={{ width: `${(current.breakdown.verificationScore / 5) * 100}%` }}></div>
-                </div>
+
+              {/* Verification */}
+              <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleMetric('verification')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaUserCheck className="text-purple-400" />
+                    <span className="text-gray-300 text-sm">Verification</span>
+                    <span className="text-purple-400 font-semibold text-sm">{current.breakdown.verificationScore}/5</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-700 rounded-full h-2">
+                      <div className="bg-purple-400 h-2 rounded-full" style={{ width: `${(current.breakdown.verificationScore / 5) * 100}%` }}></div>
+                    </div>
+                    <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.verification ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                {expandedMetrics.verification && (
+                  <div className="px-3 pb-3 text-sm border-t border-gray-700/50">
+                    <div className="pt-3 space-y-2">
+                      <p className="text-gray-400">
+                        <span className="text-gray-300 font-medium">What it measures:</span> Account verification level and identity confirmation.
+                      </p>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Freelancer Account:</span>
+                        <span className={current.breakdown.verificationScore >= 3 ? 'text-green-400' : 'text-gray-500'}>
+                          {current.breakdown.verificationScore >= 3 ? '✓ Verified' : '✗ Not verified'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>KYC (Premium Service):</span>
+                        <span className={current.breakdown.verificationScore >= 5 ? 'text-green-400' : 'text-gray-500'}>
+                          {current.breakdown.verificationScore >= 5 ? '✓ Verified' : '✗ Not verified'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 Freelancer account = 3pts. Premium service (requires KYC) = additional 2pts for full 5/5.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Badges ({current.breakdown.badgeScore}/5)</span>
-                <div className="w-32 bg-gray-700 rounded-full h-2 my-auto">
-                  <div className="bg-orange-400 h-2 rounded-full" style={{ width: `${(current.breakdown.badgeScore / 5) * 100}%` }}></div>
-                </div>
+
+              {/* Badges */}
+              <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleMetric('badges')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaAward className="text-orange-400" />
+                    <span className="text-gray-300 text-sm">Badges</span>
+                    <span className="text-orange-400 font-semibold text-sm">{current.breakdown.badgeScore}/5</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 bg-gray-700 rounded-full h-2">
+                      <div className="bg-orange-400 h-2 rounded-full" style={{ width: `${(current.breakdown.badgeScore / 5) * 100}%` }}></div>
+                    </div>
+                    <FaChevronDown className={`text-gray-500 text-xs transition-transform ${expandedMetrics.badges ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                {expandedMetrics.badges && (
+                  <div className="px-3 pb-3 text-sm border-t border-gray-700/50">
+                    <div className="pt-3 space-y-2">
+                      <p className="text-gray-400">
+                        <span className="text-gray-300 font-medium">What it measures:</span> Skill badges earned through assessments on Aquads.
+                      </p>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Badges Earned:</span>
+                        <span className="text-orange-400 font-medium">{current.stats.badgeCount}</span>
+                      </div>
+                      {resumeData.skillBadges && resumeData.skillBadges.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {resumeData.skillBadges.slice(0, 4).map((badge, idx) => (
+                            <span key={idx} className="px-2 py-0.5 bg-orange-500/20 text-orange-300 text-xs rounded-full">
+                              {badge.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 Skill badges prove expertise. 1-2 badges = 2.5pts, 3+ badges = max 5 points.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
