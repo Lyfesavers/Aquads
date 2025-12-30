@@ -16,7 +16,8 @@ import {
   FaUserCheck,
   FaClipboardCheck,
   FaIdCard,
-  FaAward
+  FaAward,
+  FaSync
 } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 
@@ -27,6 +28,8 @@ const PublicResume = () => {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [expandedMetrics, setExpandedMetrics] = useState({});
+  const [justMinted, setJustMinted] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const toggleMetric = (metric) => {
     setExpandedMetrics(prev => ({
@@ -35,32 +38,77 @@ const PublicResume = () => {
     }));
   };
 
-  useEffect(() => {
-    const fetchResume = async () => {
-      try {
+  const fetchResume = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        const response = await fetch(`${API_URL}/on-chain-resume/public/${username}`);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError('Resume not found. This user may not have minted their on-chain resume yet.');
-          } else {
-            setError('Failed to load resume. Please try again.');
-          }
-          return;
-        }
-
-        const data = await response.json();
-        setResumeData(data);
-      } catch (err) {
-        console.error('Error fetching resume:', err);
-        setError('Failed to load resume. Please check your connection.');
-      } finally {
-        setLoading(false);
       }
-    };
+      const response = await fetch(`${API_URL}/on-chain-resume/public/${username}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError('Resume not found. This user may not have minted their on-chain resume yet.');
+        } else {
+          setError('Failed to load resume. Please try again.');
+        }
+        return;
+      }
 
+      const data = await response.json();
+      setResumeData(data);
+      
+      // Clear justMinted if data is now up to date
+      if (isRefresh) {
+        const lastMint = localStorage.getItem('lastResumeMint');
+        if (lastMint) {
+          const mintData = JSON.parse(lastMint);
+          if (mintData.username?.toLowerCase() === username?.toLowerCase() && 
+              data.verified?.trustScore === mintData.score) {
+            setJustMinted(false);
+            localStorage.removeItem('lastResumeMint');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching resume:', err);
+      setError('Failed to load resume. Please check your connection.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchResume();
+    
+    // Check if user just minted (within last 2 minutes)
+    const lastMint = localStorage.getItem('lastResumeMint');
+    if (lastMint) {
+      try {
+        const mintData = JSON.parse(lastMint);
+        const timeSinceMint = Date.now() - mintData.timestamp;
+        const twoMinutes = 2 * 60 * 1000;
+        
+        if (mintData.username?.toLowerCase() === username?.toLowerCase() && timeSinceMint < twoMinutes) {
+          setJustMinted(true);
+          
+          // Auto-clear after 2 minutes
+          const timeout = setTimeout(() => {
+            setJustMinted(false);
+            localStorage.removeItem('lastResumeMint');
+          }, twoMinutes - timeSinceMint);
+          
+          return () => clearTimeout(timeout);
+        } else if (timeSinceMint >= twoMinutes) {
+          // Clean up old mint data
+          localStorage.removeItem('lastResumeMint');
+        }
+      } catch (e) {
+        localStorage.removeItem('lastResumeMint');
+      }
+    }
   }, [username]);
 
   const copyLink = () => {
@@ -148,6 +196,27 @@ const PublicResume = () => {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
+        {/* Just Minted Banner */}
+        {justMinted && (
+          <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-500/30 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">🎉</div>
+              <div>
+                <p className="text-green-400 font-semibold">Resume Just Updated!</p>
+                <p className="text-gray-400 text-sm">If you see old data, click refresh to see the latest version.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => fetchResume(true)}
+              disabled={refreshing}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <FaSync className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+          </div>
+        )}
+
         {/* Profile Header */}
         <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl p-6 md:p-8 border border-blue-500/20 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">

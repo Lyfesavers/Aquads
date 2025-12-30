@@ -496,6 +496,13 @@ const OnChainResume = ({ currentUser, showNotification }) => {
           score: resumeData.attestationData.trustScore
         });
         
+        // Store mint timestamp in localStorage so public resume page can show "just updated" banner
+        localStorage.setItem('lastResumeMint', JSON.stringify({
+          username: currentUser.username,
+          timestamp: Date.now(),
+          score: resumeData.attestationData.trustScore
+        }));
+        
         showNotification('🎉 On-Chain Resume minted successfully!', 'success');
         
         // Refresh data to update the UI
@@ -732,6 +739,14 @@ const OnChainResume = ({ currentUser, showNotification }) => {
             {mintSuccess.warning && (
               <p className="text-yellow-400 text-sm mt-2">{mintSuccess.warning}</p>
             )}
+          </div>
+          
+          {/* Propagation Notice */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-300 text-center">
+              <FaSync className="inline mr-2" />
+              Your public resume page will update within a few seconds. If you see old data, just refresh the page.
+            </p>
           </div>
           
           {/* Share Links */}
