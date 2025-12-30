@@ -372,6 +372,22 @@ const getPublicResume = async (slugOrUsername) => {
       title: user.cv.title,
       summary: user.cv.summary,
       skills: user.cv.skills || [],
+      experience: (user.cv.experience || []).map(exp => ({
+        company: exp.company,
+        position: exp.position,
+        startDate: exp.startDate,
+        endDate: exp.endDate,
+        current: exp.current,
+        description: exp.description
+      })),
+      education: (user.cv.education || []).map(edu => ({
+        institution: edu.institution,
+        degree: edu.degree,
+        field: edu.field,
+        startDate: edu.startDate,
+        endDate: edu.endDate,
+        description: edu.description
+      })),
       experienceCount: (user.cv.experience || []).length,
       educationCount: (user.cv.education || []).length
     } : null,

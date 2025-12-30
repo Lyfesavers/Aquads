@@ -544,39 +544,76 @@ const PublicResume = () => {
               <p className="text-gray-300 mb-4">{resumeData.cv.summary}</p>
             )}
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              {resumeData.cv.skills && resumeData.cv.skills.length > 0 && (
-                <div>
-                  <h3 className="text-sm text-gray-300 mb-2">Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {resumeData.cv.skills.slice(0, 8).map((skill, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full">
-                        {skill}
-                      </span>
-                    ))}
-                    {resumeData.cv.skills.length > 8 && (
-                      <span className="px-3 py-1 bg-gray-700/50 text-gray-400 text-sm rounded-full">
-                        +{resumeData.cv.skills.length - 8} more
-                      </span>
+            {resumeData.cv.skills && resumeData.cv.skills.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm text-gray-300 mb-2">Skills</h3>
+                <div className="flex flex-wrap gap-2">
+                  {resumeData.cv.skills.map((skill, idx) => (
+                    <span key={idx} className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Work Experience */}
+        {resumeData.cv && resumeData.cv.experience && resumeData.cv.experience.length > 0 && (
+          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 mb-8">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+              <FaBriefcase className="text-purple-400" /> Work Experience
+            </h2>
+            <div className="space-y-4">
+              {resumeData.cv.experience.map((exp, idx) => (
+                <div key={idx} className="border-l-2 border-purple-500/50 pl-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-white">{exp.position}</h3>
+                    {exp.current && (
+                      <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">Current</span>
                     )}
                   </div>
+                  <p className="text-purple-400 text-sm">{exp.company}</p>
+                  <p className="text-gray-500 text-xs mb-2">
+                    {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    {' — '}
+                    {exp.current ? 'Present' : (exp.endDate && new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))}
+                  </p>
+                  {exp.description && (
+                    <p className="text-gray-400 text-sm">{exp.description}</p>
+                  )}
                 </div>
-              )}
+              ))}
+            </div>
+          </div>
+        )}
 
-              <div className="flex gap-6">
-                {resumeData.cv.experienceCount > 0 && (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-400">{resumeData.cv.experienceCount}</div>
-                    <div className="text-xs text-gray-400">Work Experience</div>
-                  </div>
-                )}
-                {resumeData.cv.educationCount > 0 && (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400">{resumeData.cv.educationCount}</div>
-                    <div className="text-xs text-gray-400">Education</div>
-                  </div>
-                )}
-              </div>
+        {/* Education */}
+        {resumeData.cv && resumeData.cv.education && resumeData.cv.education.length > 0 && (
+          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 mb-8">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+              <FaAward className="text-green-400" /> Education
+            </h2>
+            <div className="space-y-4">
+              {resumeData.cv.education.map((edu, idx) => (
+                <div key={idx} className="border-l-2 border-green-500/50 pl-4">
+                  <h3 className="font-semibold text-white">{edu.degree}{edu.field && ` in ${edu.field}`}</h3>
+                  <p className="text-green-400 text-sm">{edu.institution}</p>
+                  <p className="text-gray-500 text-xs mb-2">
+                    {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    {edu.endDate && (
+                      <>
+                        {' — '}
+                        {new Date(edu.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </>
+                    )}
+                  </p>
+                  {edu.description && (
+                    <p className="text-gray-400 text-sm">{edu.description}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
