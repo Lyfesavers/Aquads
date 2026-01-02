@@ -588,23 +588,23 @@ const PublicResume = () => {
         <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-2xl border border-purple-500/20 mb-8 overflow-hidden">
           <button
             onClick={() => setShowBadge(!showBadge)}
-            className="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors"
+            className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-white/5 transition-colors gap-3"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                <FaDownload className="text-white text-lg" />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                <FaDownload className="text-white text-sm sm:text-lg" />
               </div>
-              <div className="text-left">
-                <h3 className="text-lg font-semibold text-white">Download Credential Badge</h3>
-                <p className="text-gray-400 text-sm">Get a shareable badge to showcase this verified resume</p>
+              <div className="text-left min-w-0">
+                <h3 className="text-base sm:text-lg font-semibold text-white truncate">Download Credential Badge</h3>
+                <p className="text-gray-400 text-xs sm:text-sm hidden sm:block">Get a shareable badge to showcase this verified resume</p>
               </div>
             </div>
-            <FaChevronDown className={`text-gray-400 transition-transform ${showBadge ? 'rotate-180' : ''}`} />
+            <FaChevronDown className={`text-gray-400 transition-transform flex-shrink-0 ${showBadge ? 'rotate-180' : ''}`} />
           </button>
           
           {showBadge && (
-            <div className="px-6 pb-6 border-t border-purple-500/20">
-              <div className="pt-6">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-t border-purple-500/20">
+              <div className="pt-4 sm:pt-6">
                 <ResumeBadge 
                   username={resumeData.username}
                   score={verified.trustScore}

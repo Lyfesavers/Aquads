@@ -826,23 +826,24 @@ const OnChainResume = ({ currentUser, showNotification }) => {
       {/* Existing Resume Info */}
       {hasExistingResume && !mintSuccess && (
         <div className="bg-green-900/20 rounded-xl p-4 border border-green-500/30">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <h4 className="font-semibold text-green-400 flex items-center gap-2">
                 <FaCheckCircle /> On-Chain Resume Active
               </h4>
               <p className="text-sm text-gray-400 mt-1">
                 Last minted: {new Date(resumeData.existing.mintedAt).toLocaleDateString()}
-                {' '}• Verified score: {resumeData.existing.score}
+                {' '}• Score: {resumeData.existing.score}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => setShowBadgeSection(!showBadgeSection)}
-                className={`p-2 rounded-lg transition-colors ${showBadgeSection ? 'bg-blue-600 text-white' : 'bg-gray-700/50 hover:bg-gray-700'}`}
+                className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm ${showBadgeSection ? 'bg-blue-600 text-white' : 'bg-gray-700/50 hover:bg-gray-700'}`}
                 title="Download Badge"
               >
                 <FaMedal />
+                <span className="sm:hidden">Badge</span>
               </button>
               <button
                 onClick={copyResumeLink}

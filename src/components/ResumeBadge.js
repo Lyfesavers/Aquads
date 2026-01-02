@@ -79,8 +79,11 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
     large: { width: 300, height: 360, fontSize: 1.5 }
   };
   
-  const { width, height, fontSize } = sizes[size] || sizes.medium;
+  const { width, height } = sizes[size] || sizes.medium;
   const { grade, tier, colors } = gradeInfo;
+  
+  // Truncate username for display
+  const displayUsername = username?.length > 14 ? username.substring(0, 14) + '...' : username;
   
   return (
     <svg 
@@ -132,14 +135,14 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
         </pattern>
 
         {/* Clip path for hexagon shape */}
-        <clipPath id="hexClip">
-          <path d="M100 5 L185 50 L185 190 L100 235 L15 190 L15 50 Z" />
+        <clipPath id={`hexClip-${score}`}>
+          <path d="M100 8 L182 48 L182 192 L100 232 L18 192 L18 48 Z" />
         </clipPath>
       </defs>
 
-      {/* Background with hexagon shape */}
+      {/* Background with hexagon shape - wider at bottom */}
       <path 
-        d="M100 5 L185 50 L185 190 L100 235 L15 190 L15 50 Z" 
+        d="M100 8 L182 48 L182 192 L100 232 L18 192 L18 48 Z" 
         fill={`url(#bgGrad-${score})`}
         stroke={`url(#borderGrad-${score})`}
         strokeWidth="3"
@@ -147,39 +150,39 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
 
       {/* Chain pattern overlay */}
       <path 
-        d="M100 5 L185 50 L185 190 L100 235 L15 190 L15 50 Z" 
+        d="M100 8 L182 48 L182 192 L100 232 L18 192 L18 48 Z" 
         fill={`url(#chainPattern-${score})`}
-        clipPath="url(#hexClip)"
+        clipPath={`url(#hexClip-${score})`}
       />
 
       {/* Shine effect */}
       <path 
-        d="M100 5 L185 50 L185 120 L100 80 L15 120 L15 50 Z" 
+        d="M100 8 L182 48 L182 110 L100 75 L18 110 L18 48 Z" 
         fill={`url(#shineGrad-${score})`}
       />
 
       {/* Aquads Logo/Text at top */}
       <text 
         x="100" 
-        y="45" 
+        y="38" 
         textAnchor="middle" 
         fill="white" 
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="16" 
+        fontSize="14" 
         fontWeight="bold"
-        letterSpacing="2"
+        letterSpacing="3"
       >
         AQUADS
       </text>
       
       {/* Decorative line */}
-      <line x1="50" y1="55" x2="150" y2="55" stroke={colors.primary} strokeWidth="1" opacity="0.5"/>
+      <line x1="55" y1="48" x2="145" y2="48" stroke={colors.primary} strokeWidth="1" opacity="0.5"/>
 
       {/* Grade Circle */}
       <circle 
         cx="100" 
-        cy="110" 
-        r="45" 
+        cy="100" 
+        r="40" 
         fill="none" 
         stroke={`url(#gradeGrad-${score})`}
         strokeWidth="4"
@@ -189,8 +192,8 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Inner circle */}
       <circle 
         cx="100" 
-        cy="110" 
-        r="38" 
+        cy="100" 
+        r="34" 
         fill="#0f172a"
         stroke={colors.primary}
         strokeWidth="1"
@@ -200,11 +203,11 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Grade Letter */}
       <text 
         x="100" 
-        y="122" 
+        y="112" 
         textAnchor="middle" 
         fill={`url(#gradeGrad-${score})`}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="36" 
+        fontSize="32" 
         fontWeight="bold"
         filter={`url(#glow-${score})`}
       >
@@ -214,20 +217,20 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Tier Label */}
       <rect 
         x="55" 
-        y="158" 
+        y="145" 
         width="90" 
-        height="20" 
-        rx="10" 
+        height="18" 
+        rx="9" 
         fill={colors.primary}
         opacity="0.2"
       />
       <text 
         x="100" 
-        y="172" 
+        y="158" 
         textAnchor="middle" 
         fill={colors.accent}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="10" 
+        fontSize="9" 
         fontWeight="600"
         letterSpacing="1"
       >
@@ -237,42 +240,38 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Trust Score */}
       <text 
         x="100" 
-        y="195" 
+        y="178" 
         textAnchor="middle" 
         fill="white"
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="14" 
+        fontSize="13" 
         fontWeight="bold"
       >
         {score}
-        <tspan fill="#9CA3AF" fontSize="10">/100</tspan>
+        <tspan fill="#9CA3AF" fontSize="9">/100</tspan>
       </text>
 
-      {/* Verified Badge */}
-      <g transform="translate(65, 205)">
-        <rect width="70" height="16" rx="8" fill={colors.primary} opacity="0.3"/>
-        <circle cx="12" cy="8" r="5" fill={colors.primary}/>
-        <path d="M10 8 L11.5 9.5 L14 7" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <text x="22" y="11.5" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="8" fontWeight="600">VERIFIED</text>
+      {/* Verified Badge + Username row */}
+      <g transform="translate(100, 195)">
+        {/* Verified pill */}
+        <rect x="-32" y="0" width="64" height="14" rx="7" fill={colors.primary} opacity="0.3"/>
+        <circle cx="-22" cy="7" r="4" fill={colors.primary}/>
+        <path d="M-24 7 L-22.5 8.5 L-20 6" stroke="white" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <text x="2" y="10" textAnchor="middle" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="7" fontWeight="600">VERIFIED</text>
       </g>
 
-      {/* Username at bottom */}
+      {/* Username */}
       <text 
         x="100" 
-        y="230" 
+        y="222" 
         textAnchor="middle" 
         fill="#9CA3AF"
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="9"
+        fontSize="10"
+        fontWeight="500"
       >
-        @{username?.length > 18 ? username.substring(0, 18) + '...' : username}
+        @{displayUsername}
       </text>
-
-      {/* Base chain indicator */}
-      <g transform="translate(170, 220)" opacity="0.6">
-        <circle cx="0" cy="0" r="8" fill="#0052FF"/>
-        <text x="0" y="3" textAnchor="middle" fill="white" fontSize="6" fontWeight="bold">B</text>
-      </g>
     </svg>
   );
 };
@@ -345,13 +344,13 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
     }
   };
 
-  // Generate embed code
-  const embedCode = `<a href="${resumeUrl}" target="_blank" rel="noopener noreferrer" title="View ${username}'s Verified On-Chain Resume on Aquads">
-  <img src="${resumeUrl}/badge.png" alt="${username} - Aquads Verified ${gradeInfo.tier}" width="200" height="240" />
+  // Generate embed code (shortened for display)
+  const embedCode = `<a href="${resumeUrl}" target="_blank" rel="noopener noreferrer">
+  <img src="${resumeUrl}/badge.png" alt="${username} - Aquads ${gradeInfo.tier}" width="200" height="240" />
 </a>`;
 
   // Generate markdown
-  const markdownCode = `[![${username} - Aquads Verified ${gradeInfo.tier}](${resumeUrl}/badge.png)](${resumeUrl})`;
+  const markdownCode = `[![${username} - Aquads ${gradeInfo.tier}](${resumeUrl}/badge.png)](${resumeUrl})`;
 
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -365,19 +364,21 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
   };
 
   return (
-    <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-      <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        🎖️ Your Credential Badge
-        <span className={`text-xs px-2 py-0.5 rounded-full`} style={{ 
+    <div className="bg-gray-800/50 rounded-xl p-4 sm:p-6 border border-gray-700/50">
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-lg">🎖️</span>
+        <h4 className="text-base sm:text-lg font-semibold">Your Credential Badge</h4>
+        <span className="text-xs px-2 py-0.5 rounded-full" style={{ 
           backgroundColor: `${gradeInfo.colors.primary}20`, 
           color: gradeInfo.colors.accent 
         }}>
           Grade {gradeInfo.grade}
         </span>
-      </h4>
+      </div>
       
-      {/* Badge Preview */}
-      <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+      {/* Badge Preview - Centered on mobile, side-by-side on larger screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Badge Display */}
         <div className="flex flex-col items-center">
           <div 
@@ -399,7 +400,7 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
               <button
                 key={size}
                 onClick={() => setSelectedSize(size)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   selectedSize === size 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
@@ -414,7 +415,7 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
           <button
             onClick={downloadBadge}
             disabled={downloading}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold transition-all disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold transition-all disabled:opacity-50"
           >
             {downloading ? (
               <>
@@ -431,9 +432,9 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
 
         {/* Embed Codes */}
         {showEmbed && (
-          <div className="flex-1 w-full space-y-4">
-            <p className="text-sm text-gray-400">
-              Add this badge to your portfolio, LinkedIn, GitHub README, or anywhere else to showcase your verified credentials!
+          <div className="space-y-4">
+            <p className="text-sm text-gray-400 text-center lg:text-left">
+              Add this badge to your portfolio, LinkedIn, GitHub README, or anywhere else!
             </p>
             
             {/* HTML Embed */}
@@ -441,15 +442,18 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
               <label className="text-xs text-gray-500 flex items-center gap-2 mb-1">
                 <FaCode /> HTML Embed Code
               </label>
-              <div className="relative">
-                <pre className="bg-gray-900 rounded-lg p-3 text-xs text-gray-300 overflow-x-auto">
-                  {embedCode}
-                </pre>
+              <div className="relative group">
+                <div className="bg-gray-900 rounded-lg p-3 pr-12 overflow-hidden">
+                  <pre className="text-xs text-gray-300 whitespace-pre-wrap break-all">
+                    {embedCode}
+                  </pre>
+                </div>
                 <button
                   onClick={() => copyToClipboard(embedCode, 'embed')}
                   className="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                  title="Copy to clipboard"
                 >
-                  {copiedEmbed ? <FaCheck className="text-green-400" /> : <FaCopy />}
+                  {copiedEmbed ? <FaCheck className="text-green-400 text-sm" /> : <FaCopy className="text-sm" />}
                 </button>
               </div>
             </div>
@@ -459,15 +463,18 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
               <label className="text-xs text-gray-500 flex items-center gap-2 mb-1">
                 📝 Markdown (GitHub, etc.)
               </label>
-              <div className="relative">
-                <pre className="bg-gray-900 rounded-lg p-3 text-xs text-gray-300 overflow-x-auto">
-                  {markdownCode}
-                </pre>
+              <div className="relative group">
+                <div className="bg-gray-900 rounded-lg p-3 pr-12 overflow-hidden">
+                  <pre className="text-xs text-gray-300 whitespace-pre-wrap break-all">
+                    {markdownCode}
+                  </pre>
+                </div>
                 <button
                   onClick={() => copyToClipboard(markdownCode, 'markdown')}
                   className="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                  title="Copy to clipboard"
                 >
-                  {copiedMarkdown ? <FaCheck className="text-green-400" /> : <FaCopy />}
+                  {copiedMarkdown ? <FaCheck className="text-green-400 text-sm" /> : <FaCopy className="text-sm" />}
                 </button>
               </div>
             </div>
@@ -475,7 +482,7 @@ const ResumeBadge = ({ username, score, resumeUrl, showEmbed = true }) => {
             {/* Tips */}
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
               <p className="text-xs text-blue-300">
-                💡 <strong>Tip:</strong> The badge links to your public resume page where employers can verify your on-chain credentials instantly.
+                💡 <strong>Tip:</strong> The badge links to your public resume page where employers can verify your credentials.
               </p>
             </div>
           </div>
