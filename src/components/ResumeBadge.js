@@ -161,52 +161,52 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
         fill={`url(#shineGrad-${score})`}
       />
 
-      {/* Aquads Logo/Text at top */}
+      {/* Aquads Logo/Text at top - moved down for padding */}
       <text 
         x="100" 
-        y="32" 
+        y="42" 
         textAnchor="middle" 
         fill="white" 
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="13" 
+        fontSize="12" 
         fontWeight="bold"
-        letterSpacing="3"
+        letterSpacing="2"
       >
         AQUADS
       </text>
       
-      {/* Username below logo - wider area at top */}
+      {/* Username below logo */}
       <text 
         x="100" 
-        y="48" 
+        y="58" 
         textAnchor="middle" 
         fill={colors.accent}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="11"
+        fontSize="10"
         fontWeight="500"
       >
         @{displayUsername}
       </text>
       
       {/* Decorative line */}
-      <line x1="45" y1="58" x2="155" y2="58" stroke={colors.primary} strokeWidth="1" opacity="0.4"/>
+      <line x1="50" y1="68" x2="150" y2="68" stroke={colors.primary} strokeWidth="1" opacity="0.4"/>
 
-      {/* Grade Circle */}
+      {/* Grade Circle - centered in the shape */}
       <circle 
         cx="100" 
-        cy="115" 
-        r="42" 
+        cy="112" 
+        r="38" 
         fill="none" 
         stroke={`url(#gradeGrad-${score})`}
-        strokeWidth="4"
+        strokeWidth="3"
         filter={`url(#glow-${score})`}
       />
       
       {/* Inner circle */}
       <circle 
         cx="100" 
-        cy="115" 
-        r="36" 
+        cy="112" 
+        r="32" 
         fill="#0f172a"
         stroke={colors.primary}
         strokeWidth="1"
@@ -216,11 +216,11 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Grade Letter */}
       <text 
         x="100" 
-        y="128" 
+        y="124" 
         textAnchor="middle" 
         fill={`url(#gradeGrad-${score})`}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="34" 
+        fontSize="30" 
         fontWeight="bold"
         filter={`url(#glow-${score})`}
       >
@@ -230,20 +230,20 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Tier Label */}
       <rect 
         x="50" 
-        y="162" 
+        y="155" 
         width="100" 
-        height="20" 
-        rx="10" 
+        height="18" 
+        rx="9" 
         fill={colors.primary}
         opacity="0.2"
       />
       <text 
         x="100" 
-        y="176" 
+        y="168" 
         textAnchor="middle" 
         fill={colors.accent}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="10" 
+        fontSize="9" 
         fontWeight="600"
         letterSpacing="1"
       >
@@ -253,23 +253,23 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Trust Score */}
       <text 
         x="100" 
-        y="200" 
+        y="188" 
         textAnchor="middle" 
         fill="white"
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="16" 
+        fontSize="14" 
         fontWeight="bold"
       >
         {score}
-        <tspan fill="#9CA3AF" fontSize="11">/100</tspan>
+        <tspan fill="#9CA3AF" fontSize="10">/100</tspan>
       </text>
 
-      {/* Verified Badge at bottom */}
-      <g transform="translate(100, 212)">
-        <rect x="-35" y="0" width="70" height="16" rx="8" fill={colors.primary} opacity="0.3"/>
-        <circle cx="-24" cy="8" r="5" fill={colors.primary}/>
-        <path d="M-26 8 L-24.5 9.5 L-22 7" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <text x="5" y="11.5" textAnchor="middle" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="8" fontWeight="600">VERIFIED</text>
+      {/* Verified Badge - moved up to stay inside hexagon */}
+      <g transform="translate(100, 198)">
+        <rect x="-30" y="0" width="60" height="14" rx="7" fill={colors.primary} opacity="0.3"/>
+        <circle cx="-20" cy="7" r="4" fill={colors.primary}/>
+        <path d="M-22 7 L-20.5 8.5 L-18 6" stroke="white" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <text x="5" y="10" textAnchor="middle" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="7" fontWeight="600">VERIFIED</text>
       </g>
     </svg>
   );
