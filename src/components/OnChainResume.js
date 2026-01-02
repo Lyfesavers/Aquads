@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy, FaTimes } from 'react-icons/fa';
+import { FaLink, FaExternalLinkAlt, FaWallet, FaSync, FaCheckCircle, FaCopy, FaTimes, FaMedal } from 'react-icons/fa';
 import { ethers } from 'ethers';
 import { API_URL } from '../services/api';
+import ResumeBadge from './ResumeBadge';
 
 const EAS_CONTRACT_ADDRESS = '0x4200000000000000000000000000000000000021';
 const SCHEMA_UID = process.env.REACT_APP_EAS_SCHEMA_UID;
@@ -104,6 +105,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
   const [connecting, setConnecting] = useState(false);
   const [availableWallets, setAvailableWallets] = useState({ injected: false });
   const [mintSuccess, setMintSuccess] = useState(null); // Stores success data after minting
+  const [showBadgeSection, setShowBadgeSection] = useState(false); // Toggle badge section visibility
 
   // Detect available wallets on mount
   useEffect(() => {
@@ -802,6 +804,16 @@ const OnChainResume = ({ currentUser, showNotification }) => {
             </div>
           </div>
           
+          {/* Downloadable Badge Section */}
+          <div className="mt-4 pt-4 border-t border-green-500/30">
+            <ResumeBadge 
+              username={currentUser?.username}
+              score={mintSuccess.score}
+              resumeUrl={mintSuccess.resumeUrl}
+              showEmbed={true}
+            />
+          </div>
+          
           <button
             onClick={() => setMintSuccess(null)}
             className="w-full mt-4 text-sm text-gray-400 hover:text-white transition-colors"
@@ -825,6 +837,13 @@ const OnChainResume = ({ currentUser, showNotification }) => {
               </p>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => setShowBadgeSection(!showBadgeSection)}
+                className={`p-2 rounded-lg transition-colors ${showBadgeSection ? 'bg-blue-600 text-white' : 'bg-gray-700/50 hover:bg-gray-700'}`}
+                title="Download Badge"
+              >
+                <FaMedal />
+              </button>
               <button
                 onClick={copyResumeLink}
                 className="p-2 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors"
@@ -851,6 +870,18 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                 ⚡ Your score has changed by {Math.abs(resumeData.scoreDifference)} points since last mint.
                 Consider updating your on-chain resume!
               </p>
+            </div>
+          )}
+          
+          {/* Badge Download Section - Toggle */}
+          {showBadgeSection && (
+            <div className="mt-4 pt-4 border-t border-green-500/30">
+              <ResumeBadge 
+                username={currentUser?.username}
+                score={resumeData.existing.score}
+                resumeUrl={`${window.location.origin}/resume/${currentUser?.username}`}
+                showEmbed={true}
+              />
             </div>
           )}
         </div>

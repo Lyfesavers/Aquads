@@ -17,9 +17,11 @@ import {
   FaClipboardCheck,
   FaIdCard,
   FaAward,
-  FaSync
+  FaSync,
+  FaDownload
 } from 'react-icons/fa';
 import { API_URL } from '../services/api';
+import ResumeBadge from './ResumeBadge';
 
 const PublicResume = () => {
   const { username } = useParams();
@@ -30,6 +32,7 @@ const PublicResume = () => {
   const [expandedMetrics, setExpandedMetrics] = useState({});
   const [justMinted, setJustMinted] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
 
   const toggleMetric = (metric) => {
     setExpandedMetrics(prev => ({
@@ -579,6 +582,38 @@ const PublicResume = () => {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Credential Badge Download Section */}
+        <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-2xl border border-purple-500/20 mb-8 overflow-hidden">
+          <button
+            onClick={() => setShowBadge(!showBadge)}
+            className="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                <FaDownload className="text-white text-lg" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-lg font-semibold text-white">Download Credential Badge</h3>
+                <p className="text-gray-400 text-sm">Get a shareable badge to showcase this verified resume</p>
+              </div>
+            </div>
+            <FaChevronDown className={`text-gray-400 transition-transform ${showBadge ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showBadge && (
+            <div className="px-6 pb-6 border-t border-purple-500/20">
+              <div className="pt-6">
+                <ResumeBadge 
+                  username={resumeData.username}
+                  score={verified.trustScore}
+                  resumeUrl={window.location.href}
+                  showEmbed={true}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Skill Badges */}
