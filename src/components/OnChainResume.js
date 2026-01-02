@@ -897,6 +897,32 @@ const OnChainResume = ({ currentUser, showNotification }) => {
             <p className="text-sm text-gray-400 mb-4">
               Connect a Web3 wallet to mint your on-chain resume on Base.
             </p>
+            
+            {/* Gas Cost & Requirements Info */}
+            <div className="bg-gray-900/50 rounded-lg p-4 mb-5 text-left">
+              <h5 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+                <span className="text-yellow-400">💡</span> Before you start
+              </h5>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">•</span>
+                  <span><strong className="text-gray-300">You need ETH on Base network</strong> to pay for the transaction</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">•</span>
+                  <span><strong className="text-gray-300">Average cost:</strong> ~$0.01 - $0.02 USD (very low gas fees on Base)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">•</span>
+                  <span><strong className="text-gray-300">Need Base ETH?</strong> Use our <a href="/bex" className="text-blue-400 hover:text-blue-300 underline">Swap</a> to bridge or <a href="/bex" className="text-blue-400 hover:text-blue-300 underline">buy with card</a> via MoonPay</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">•</span>
+                  <span><strong className="text-gray-300">Transaction time:</strong> ~10-15 seconds to confirm</span>
+                </li>
+              </ul>
+            </div>
+            
             <button
               onClick={() => setShowWalletModal(true)}
               disabled={connecting}
