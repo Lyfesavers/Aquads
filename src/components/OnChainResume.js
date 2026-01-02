@@ -914,7 +914,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-400 mt-0.5">•</span>
-                  <span><strong className="text-gray-300">Need Base ETH?</strong> Use our <a href="/bex" className="text-blue-400 hover:text-blue-300 underline">Swap</a> to bridge or <a href="/bex" className="text-blue-400 hover:text-blue-300 underline">buy with card</a> via MoonPay</span>
+                  <span><strong className="text-gray-300">Need Base ETH?</strong> Use our <a href="/aquaswap" className="text-blue-400 hover:text-blue-300 underline">AquaSwap</a> to bridge or buy with card via MoonPay</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-400 mt-0.5">•</span>
