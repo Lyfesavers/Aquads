@@ -82,8 +82,8 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
   const { width, height } = sizes[size] || sizes.medium;
   const { grade, tier, colors } = gradeInfo;
   
-  // Truncate username for display
-  const displayUsername = username?.length > 14 ? username.substring(0, 14) + '...' : username;
+  // Truncate username for display - more space at top of hexagon
+  const displayUsername = username?.length > 18 ? username.substring(0, 18) + '...' : username;
   
   return (
     <svg 
@@ -164,25 +164,38 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Aquads Logo/Text at top */}
       <text 
         x="100" 
-        y="38" 
+        y="32" 
         textAnchor="middle" 
         fill="white" 
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="14" 
+        fontSize="13" 
         fontWeight="bold"
         letterSpacing="3"
       >
         AQUADS
       </text>
       
+      {/* Username below logo - wider area at top */}
+      <text 
+        x="100" 
+        y="48" 
+        textAnchor="middle" 
+        fill={colors.accent}
+        fontFamily="'Segoe UI', Arial, sans-serif" 
+        fontSize="11"
+        fontWeight="500"
+      >
+        @{displayUsername}
+      </text>
+      
       {/* Decorative line */}
-      <line x1="55" y1="48" x2="145" y2="48" stroke={colors.primary} strokeWidth="1" opacity="0.5"/>
+      <line x1="45" y1="58" x2="155" y2="58" stroke={colors.primary} strokeWidth="1" opacity="0.4"/>
 
       {/* Grade Circle */}
       <circle 
         cx="100" 
-        cy="100" 
-        r="40" 
+        cy="115" 
+        r="42" 
         fill="none" 
         stroke={`url(#gradeGrad-${score})`}
         strokeWidth="4"
@@ -192,8 +205,8 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Inner circle */}
       <circle 
         cx="100" 
-        cy="100" 
-        r="34" 
+        cy="115" 
+        r="36" 
         fill="#0f172a"
         stroke={colors.primary}
         strokeWidth="1"
@@ -203,11 +216,11 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Grade Letter */}
       <text 
         x="100" 
-        y="112" 
+        y="128" 
         textAnchor="middle" 
         fill={`url(#gradeGrad-${score})`}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="32" 
+        fontSize="34" 
         fontWeight="bold"
         filter={`url(#glow-${score})`}
       >
@@ -216,21 +229,21 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
 
       {/* Tier Label */}
       <rect 
-        x="55" 
-        y="145" 
-        width="90" 
-        height="18" 
-        rx="9" 
+        x="50" 
+        y="162" 
+        width="100" 
+        height="20" 
+        rx="10" 
         fill={colors.primary}
         opacity="0.2"
       />
       <text 
         x="100" 
-        y="158" 
+        y="176" 
         textAnchor="middle" 
         fill={colors.accent}
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="9" 
+        fontSize="10" 
         fontWeight="600"
         letterSpacing="1"
       >
@@ -240,38 +253,24 @@ const BadgeSVG = ({ username, score, size = 'medium', gradeInfo }) => {
       {/* Trust Score */}
       <text 
         x="100" 
-        y="178" 
+        y="200" 
         textAnchor="middle" 
         fill="white"
         fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="13" 
+        fontSize="16" 
         fontWeight="bold"
       >
         {score}
-        <tspan fill="#9CA3AF" fontSize="9">/100</tspan>
+        <tspan fill="#9CA3AF" fontSize="11">/100</tspan>
       </text>
 
-      {/* Verified Badge + Username row */}
-      <g transform="translate(100, 195)">
-        {/* Verified pill */}
-        <rect x="-32" y="0" width="64" height="14" rx="7" fill={colors.primary} opacity="0.3"/>
-        <circle cx="-22" cy="7" r="4" fill={colors.primary}/>
-        <path d="M-24 7 L-22.5 8.5 L-20 6" stroke="white" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        <text x="2" y="10" textAnchor="middle" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="7" fontWeight="600">VERIFIED</text>
+      {/* Verified Badge at bottom */}
+      <g transform="translate(100, 212)">
+        <rect x="-35" y="0" width="70" height="16" rx="8" fill={colors.primary} opacity="0.3"/>
+        <circle cx="-24" cy="8" r="5" fill={colors.primary}/>
+        <path d="M-26 8 L-24.5 9.5 L-22 7" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <text x="5" y="11.5" textAnchor="middle" fill="white" fontFamily="'Segoe UI', Arial, sans-serif" fontSize="8" fontWeight="600">VERIFIED</text>
       </g>
-
-      {/* Username */}
-      <text 
-        x="100" 
-        y="222" 
-        textAnchor="middle" 
-        fill="#9CA3AF"
-        fontFamily="'Segoe UI', Arial, sans-serif" 
-        fontSize="10"
-        fontWeight="500"
-      >
-        @{displayUsername}
-      </text>
     </svg>
   );
 };
