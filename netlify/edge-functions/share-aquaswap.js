@@ -156,10 +156,12 @@ export default async (request, context) => {
     const tokenAge = formatAge(pairCreatedAt);
 
     // Build HTML with enhanced Aquads-branded design
+    // JS redirect runs instantly for real users; bots don't execute JS so they read meta tags
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>window.location.replace("${escapeHtml(pageUrl)}");</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$${escapeHtml(symbol)} - ${escapeHtml(name)} │ Aquads DEX</title>
   <meta name="description" content="${escapeHtml(description)}">
