@@ -58,12 +58,10 @@
 
 # GUARANTEED blog share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/blog/:id
-# Proxied to Render server which works reliably with all bots (Netlify functions had 502 issues with bot user agents)
-[[redirects]]
-  from = "/share/blog/*"
-  to = "https://aquads.onrender.com/share-blog/:splat"
-  status = 200
-  force = true
+# Handled by Edge Function which reliably serves meta tags to all bots
+[[edge_functions]]
+  function = "share-blog"
+  path = "/share/blog/*"
 
 # Handle service pages
 [[redirects]]
