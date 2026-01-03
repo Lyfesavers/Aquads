@@ -130,6 +130,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }
   }, [chartProvider, tokenSearch]);
 
+  // Clear arbitrage data when token changes (prevents stale data from previous token)
+  useEffect(() => {
+    // Clear arbitrage and suggestions immediately when tokenSearch changes
+    setArbitrageByQuote([]);
+    setSuggestedPairs([]);
+    setTokenPairs([]);
+  }, [tokenSearch]);
+
   // Calculate arbitrage opportunities by quote token when pairs change
   useEffect(() => {
     // Popular quote tokens for pairing (ranked by volume/liquidity potential)
