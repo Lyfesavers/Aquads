@@ -99,6 +99,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [activeTokenName, setActiveTokenName] = useState(''); // Track which token's pairs we're showing
   const [activeTokenSymbol, setActiveTokenSymbol] = useState(''); // Track the token ticker symbol
 
+  // Arbitrage opportunities state
+  const [arbitrageByQuote, setArbitrageByQuote] = useState([]); // Best quote tokens for arbitrage
+
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
   const [loadingGasPrice, setLoadingGasPrice] = useState(false);
@@ -125,6 +128,154 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       setShowSignalsPanel(false);
     }
   }, [chartProvider, tokenSearch]);
+
+  // Calculate arbitrage opportunities by quote token when pairs change
+  useEffect(() => {
+    if (tokenPairs.length < 2) {
+      setArbitrageByQuote([]);
+      return;
+    }
+
+    // Group pairs by quote token (ETH, USDC, WBTC, etc.)
+    const pairsByQuote = {};
+    tokenPairs.forEach(pair => {
+      const quoteSymbol = pair.quoteToken?.symbol || 'Unknown';
+      if (!pairsByQuote[quoteSymbol]) {
+        pairsByQuote[quoteSymbol] = [];
+      }
+      pairsByQuote[quoteSymbol].push(pair);
+    });
+
+    // Calculate arbitrage opportunity for each quote token
+    const opportunities = [];
+    
+    Object.entries(pairsByQuote).forEach(([quoteSymbol, pairs]) => {
+      if (pairs.length < 2) return; // Need at least 2 DEXes to arbitrage
+      
+      // Find min and max prices across DEXes for this quote token
+      const validPairs = pairs.filter(p => parseFloat(p.priceUsd) > 0);
+      if (validPairs.length < 2) return;
+      
+      const prices = validPairs.map(p => ({
+        price: parseFloat(p.priceUsd),
+        dex: p.dexId,
+        chain: p.chainId,
+        liquidity: p.liquidityUsd || 0,
+        pair: p
+      }));
+      
+      const minPrice = prices.reduce((min, p) => p.price < min.price ? p : min, prices[0]);
+      const maxPrice = prices.reduce((max, p) => p.price > max.price ? p : max, prices[0]);
+      
+      // Calculate spread percentage
+      const spread = ((maxPrice.price - minPrice.price) / minPrice.price) * 100;
+      
+      // Estimate fees (0.3% per DEX swap × 2 = 0.6%)
+      const feePercentage = 0.6;
+      const netSpread = spread - feePercentage;
+      
+      // Calculate effective liquidity (min of buy/sell pools)
+      const effectiveLiquidity = Math.min(minPrice.liquidity, maxPrice.liquidity);
+      
+      // Only show if there's potential profit after fees
+      if (netSpread > 0.05 && effectiveLiquidity > 1000) {
+        opportunities.push({
+          quoteSymbol,
+          spread: spread.toFixed(2),
+          netSpread: netSpread.toFixed(2),
+          buyDex: minPrice.dex,
+          buyChain: minPrice.chain,
+          buyPrice: minPrice.price,
+          sellDex: maxPrice.dex,
+          sellChain: maxPrice.chain,
+          sellPrice: maxPrice.price,
+          effectiveLiquidity,
+          pairCount: validPairs.length,
+          isCrossChain: minPrice.chain !== maxPrice.chain
+        });
+      }
+    });
+    
+    // Sort by net spread (best opportunities first)
+    opportunities.sort((a, b) => parseFloat(b.netSpread) - parseFloat(a.netSpread));
+    
+    setArbitrageByQuote(opportunities);
+  }, [tokenPairs]);
+
+  // Fetch all pairs for a token when tokenSearch changes (works for trending, bubbles, and search)
+  useEffect(() => {
+    const fetchPairsForToken = async () => {
+      if (!tokenSearch || chartProvider !== 'dexscreener') {
+        return;
+      }
+      
+      // Check if it's a valid address format
+      const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenSearch) || 
+                             /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(tokenSearch) ||
+                             /^[A-Za-z0-9]{32,50}$/.test(tokenSearch);
+      
+      if (!isValidAddress) {
+        return;
+      }
+
+      try {
+        // Fetch all pairs for this token from DEXScreener
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenSearch}`);
+        
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (data.pairs && Array.isArray(data.pairs) && data.pairs.length > 0) {
+          // Process pairs similar to search results
+          const processedPairs = data.pairs
+            .filter(pair => pair.pairAddress && pair.baseToken && pair.quoteToken)
+            .map(pair => ({
+              id: `${pair.chainId}-${pair.pairAddress}`,
+              name: pair.baseToken.name,
+              symbol: pair.baseToken.symbol,
+              baseTokenAddress: pair.baseToken.address,
+              pairAddress: pair.pairAddress,
+              chainId: pair.chainId,
+              dexId: pair.dexId,
+              priceUsd: pair.priceUsd,
+              volume24h: pair.volume?.h24 || 0,
+              liquidityUsd: pair.liquidity?.usd || 0,
+              priceChange24h: pair.priceChange?.h24 || 0,
+              logo: pair.info?.imageUrl,
+              url: pair.url,
+              quoteToken: {
+                name: pair.quoteToken.name,
+                symbol: pair.quoteToken.symbol,
+                address: pair.quoteToken.address
+              },
+              tradingPair: `${pair.baseToken.symbol}/${pair.quoteToken.symbol}`
+            }));
+
+          // Only update if we got more pairs than currently stored
+          // This prevents overwriting richer search results
+          if (processedPairs.length > 0 && (tokenPairs.length === 0 || processedPairs[0]?.baseTokenAddress?.toLowerCase() !== tokenPairs[0]?.baseTokenAddress?.toLowerCase())) {
+            setTokenPairs(processedPairs);
+            
+            // Also set token name/symbol if not already set
+            if (!activeTokenName && processedPairs[0]) {
+              setActiveTokenName(processedPairs[0].name);
+              setActiveTokenSymbol(processedPairs[0].symbol);
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('Error fetching pairs for token:', error);
+      }
+    };
+
+    // Debounce the fetch to avoid too many API calls
+    const timeoutId = setTimeout(fetchPairsForToken, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [tokenSearch, chartProvider, tokenPairs.length, activeTokenName]);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
@@ -1764,6 +1915,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 </div>
               )}
             </div>
+
+            {/* Arbitrage Opportunities Banner - shows best quote tokens to pair with */}
+            {chartProvider === 'dexscreener' && arbitrageByQuote.length > 0 && (
+              <div className="chart-search-section arbitrage-section">
+                <div className="arbitrage-banner">
+                  <span className="arbitrage-label">💰 Best Arb Pairs:</span>
+                  <div className="arbitrage-container">
+                    <div className="arbitrage-scroll">
+                      {arbitrageByQuote.concat(arbitrageByQuote).map((opp, index) => (
+                        <div 
+                          key={`${opp.quoteSymbol}-${index}`}
+                          className={`arbitrage-item ${parseFloat(opp.netSpread) > 2 ? 'hot' : parseFloat(opp.netSpread) > 1 ? 'warm' : ''}`}
+                          title={`${activeTokenSymbol || 'Token'}/${opp.quoteSymbol} - Buy on ${opp.buyDex} ($${opp.buyPrice.toFixed(8)}) → Sell on ${opp.sellDex} ($${opp.sellPrice.toFixed(8)})\nGross Spread: ${opp.spread}% | Net (after fees): ${opp.netSpread}%\nLiquidity: $${opp.effectiveLiquidity.toLocaleString()}\n${opp.pairCount} DEXes available${opp.isCrossChain ? ' | ⚠️ Cross-chain' : ''}`}
+                        >
+                          <span className="arb-quote">{opp.quoteSymbol}</span>
+                          <span className="arb-spread-badge">+{opp.netSpread}%</span>
+                          <span className="arb-route-mini">
+                            {opp.buyDex} → {opp.sellDex}
+                          </span>
+                          {opp.isCrossChain && <span className="arb-cross-chain">🔗</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Trending tokens - show for DEXScreener */}
             {chartProvider === 'dexscreener' && popularTokens.length > 0 && (
