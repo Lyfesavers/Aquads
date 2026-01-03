@@ -18,19 +18,14 @@
   status = 200
   force = true
 
-# Handle sitemap with trailing slash
-[[redirects]]
-  from = "/sitemap.xml/"
-  to = "/.netlify/functions/sitemap"
-  status = 200
-  force = true
+# Sitemap via Edge Function (more reliable for Googlebot than regular functions)
+[[edge_functions]]
+  function = "sitemap"
+  path = "/sitemap.xml"
 
-# Serve sitemap via Netlify function to ensure XML content
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/.netlify/functions/sitemap"
-  status = 200
-  force = true
+[[edge_functions]]
+  function = "sitemap"
+  path = "/sitemap.xml/"
 
 # Serve prerendered version for bots only - Blogs
 [[redirects]]
