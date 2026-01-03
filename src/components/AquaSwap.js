@@ -269,18 +269,52 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       }
 
       try {
-        // Fetch all pairs for this token from DEXScreener
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenSearch}`);
+        let allPairs = [];
+        let tokenAddress = tokenSearch;
         
-        if (!response.ok) {
-          return;
+        // First, try the tokens endpoint (works if tokenSearch is a token contract address)
+        const tokensResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenSearch}`);
+        
+        if (tokensResponse.ok) {
+          const tokensData = await tokensResponse.json();
+          if (tokensData.pairs && Array.isArray(tokensData.pairs) && tokensData.pairs.length > 0) {
+            allPairs = tokensData.pairs;
+          }
         }
-
-        const data = await response.json();
         
-        if (data.pairs && Array.isArray(data.pairs) && data.pairs.length > 0) {
+        // If no pairs found, tokenSearch might be a PAIR address (from bubbles/trending)
+        // Try the pairs endpoint to get the token info, then fetch all pairs for that token
+        if (allPairs.length === 0 && selectedChain) {
+          const chainForApi = CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain;
+          const pairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chainForApi}/${tokenSearch}`);
+          
+          if (pairsResponse.ok) {
+            const pairsData = await pairsResponse.json();
+            const pairInfo = pairsData.pair || (pairsData.pairs && pairsData.pairs[0]);
+            
+            if (pairInfo && pairInfo.baseToken && pairInfo.baseToken.address) {
+              // Got the actual token address from the pair, now fetch ALL pairs for this token
+              tokenAddress = pairInfo.baseToken.address;
+              
+              const allPairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+              if (allPairsResponse.ok) {
+                const allPairsData = await allPairsResponse.json();
+                if (allPairsData.pairs && Array.isArray(allPairsData.pairs)) {
+                  allPairs = allPairsData.pairs;
+                }
+              }
+              
+              // If still no pairs, at least use the single pair we found
+              if (allPairs.length === 0 && pairInfo) {
+                allPairs = [pairInfo];
+              }
+            }
+          }
+        }
+        
+        if (allPairs.length > 0) {
           // Process pairs similar to search results
-          const processedPairs = data.pairs
+          const processedPairs = allPairs
             .filter(pair => pair.pairAddress && pair.baseToken && pair.quoteToken)
             .map(pair => ({
               id: `${pair.chainId}-${pair.pairAddress}`,
@@ -304,15 +338,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               tradingPair: `${pair.baseToken.symbol}/${pair.quoteToken.symbol}`
             }));
 
-          // Only update if we got more pairs than currently stored
-          // This prevents overwriting richer search results
-          if (processedPairs.length > 0 && (tokenPairs.length === 0 || processedPairs[0]?.baseTokenAddress?.toLowerCase() !== tokenPairs[0]?.baseTokenAddress?.toLowerCase())) {
-            setTokenPairs(processedPairs);
+          // Only update if we got pairs and they're for a different token than currently stored
+          if (processedPairs.length > 0) {
+            const newTokenAddr = processedPairs[0]?.baseTokenAddress?.toLowerCase();
+            const currentTokenAddr = tokenPairs[0]?.baseTokenAddress?.toLowerCase();
             
-            // Also set token name/symbol if not already set
-            if (!activeTokenName && processedPairs[0]) {
-              setActiveTokenName(processedPairs[0].name);
-              setActiveTokenSymbol(processedPairs[0].symbol);
+            if (tokenPairs.length === 0 || newTokenAddr !== currentTokenAddr) {
+              setTokenPairs(processedPairs);
+              
+              // Also set token name/symbol if not already set
+              if (processedPairs[0]) {
+                setActiveTokenName(processedPairs[0].name);
+                setActiveTokenSymbol(processedPairs[0].symbol);
+              }
             }
           }
         }
@@ -322,10 +360,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
 
     // Debounce the fetch to avoid too many API calls
-    const timeoutId = setTimeout(fetchPairsForToken, 300);
+    const timeoutId = setTimeout(fetchPairsForToken, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [tokenSearch, chartProvider, tokenPairs.length, activeTokenName]);
+  }, [tokenSearch, chartProvider, selectedChain, tokenPairs]);
 
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
