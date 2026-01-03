@@ -10,12 +10,6 @@
 # Function to prerender blog posts for social media crawlers
 [functions]
   directory = "functions"
-  node_bundler = "esbuild"
-  included_files = ["functions/**"]
-
-# Install function dependencies
-[functions.prerender-blog-share]
-  external_node_modules = ["node-fetch", "abort-controller"]
 
 # Serve robots.txt directly (prevent SPA fallback)
 [[redirects]]
@@ -64,9 +58,10 @@
 
 # GUARANTEED blog share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/blog/:id
+# Proxied to Render server which works reliably with all bots (Netlify functions had 502 issues with bot user agents)
 [[redirects]]
   from = "/share/blog/:id"
-  to = "/.netlify/functions/prerender-blog-share"
+  to = "https://aquads.onrender.com/share-blog/:id"
   status = 200
   force = true
 
