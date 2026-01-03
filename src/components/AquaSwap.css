@@ -1107,6 +1107,208 @@
   }
 }
 
+/* Suggested Pairs Banner */
+.suggested-section {
+  margin-top: 6px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.suggested-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.suggested-container {
+  position: relative;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 30px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.05), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+.suggested-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.suggested-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.suggested-container::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
+}
+
+.suggested-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.suggested-scroll {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 100%;
+  padding: 0 10px;
+  width: max-content;
+}
+
+.suggested-label {
+  font-size: 0.75rem;
+  color: #a78bfa;
+  white-space: nowrap;
+  font-weight: 600;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.1));
+  border-radius: 4px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.suggested-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  cursor: default;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  flex-shrink: 0;
+}
+
+.suggested-item:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: scale(1.02);
+}
+
+.suggested-item.high {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(139, 92, 246, 0.08));
+}
+
+.suggested-item.add_dex {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.08));
+}
+
+.suggested-item.add_dex .suggested-action {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.suggested-icon {
+  font-size: 0.7rem;
+  min-width: 16px;
+  text-align: center;
+}
+
+.suggested-quote {
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.25);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+}
+
+.suggested-item.add_dex .suggested-quote {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.suggested-action {
+  font-weight: 600;
+  font-size: 0.58rem;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  text-transform: uppercase;
+}
+
+.suggested-dexes {
+  font-size: 0.58rem;
+  color: #9ca3af;
+  opacity: 0.85;
+}
+
+/* Suggested pairs mobile responsive */
+@media (max-width: 768px) {
+  .suggested-container {
+    height: 28px;
+  }
+  
+  .suggested-label {
+    font-size: 0.68rem;
+    padding: 4px 8px;
+  }
+  
+  .suggested-item {
+    padding: 3px 8px;
+    gap: 3px;
+    font-size: 0.65rem;
+  }
+  
+  .suggested-icon {
+    font-size: 0.65rem;
+    min-width: 14px;
+  }
+  
+  .suggested-quote {
+    font-size: 0.62rem;
+    padding: 2px 4px;
+  }
+  
+  .suggested-action {
+    font-size: 0.55rem;
+    padding: 1px 4px;
+  }
+  
+  .suggested-dexes {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .suggested-container {
+    height: 26px;
+  }
+  
+  .suggested-label {
+    font-size: 0.6rem;
+    padding: 3px 6px;
+  }
+  
+  .suggested-item {
+    padding: 2px 6px;
+    gap: 3px;
+  }
+  
+  .suggested-icon {
+    font-size: 0.6rem;
+    min-width: 12px;
+  }
+  
+  .suggested-quote {
+    font-size: 0.58rem;
+    padding: 1px 3px;
+  }
+  
+  .suggested-action {
+    font-size: 0.5rem;
+  }
+}
+
 /* Token Pairs Quick Navigation */
 .token-pairs-section {
   margin-top: 8px;

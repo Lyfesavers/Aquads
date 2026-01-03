@@ -101,6 +101,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Arbitrage opportunities state
   const [arbitrageByQuote, setArbitrageByQuote] = useState([]); // Best quote tokens for arbitrage
+  const [suggestedPairs, setSuggestedPairs] = useState([]); // Suggested pairs to create for arb potential
 
   // Gas price state
   const [gasPrice, setGasPrice] = useState(null);
@@ -131,15 +132,51 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Calculate arbitrage opportunities by quote token when pairs change
   useEffect(() => {
-    if (tokenPairs.length < 2) {
+    // Popular quote tokens for pairing (ranked by volume/liquidity potential)
+    const popularQuoteTokens = [
+      { symbol: 'WETH', name: 'Wrapped Ether', chains: ['ethereum', 'arbitrum', 'optimism', 'base'], dexes: ['uniswap', 'sushiswap', 'pancakeswap'] },
+      { symbol: 'ETH', name: 'Ether', chains: ['ethereum', 'arbitrum', 'optimism', 'base'], dexes: ['uniswap', 'sushiswap'] },
+      { symbol: 'USDC', name: 'USD Coin', chains: ['ethereum', 'solana', 'bsc', 'polygon', 'arbitrum', 'base'], dexes: ['uniswap', 'raydium', 'pancakeswap'] },
+      { symbol: 'USDT', name: 'Tether', chains: ['ethereum', 'bsc', 'tron', 'polygon'], dexes: ['uniswap', 'pancakeswap', 'curve'] },
+      { symbol: 'WBNB', name: 'Wrapped BNB', chains: ['bsc'], dexes: ['pancakeswap', 'biswap', 'apeswap'] },
+      { symbol: 'SOL', name: 'Solana', chains: ['solana'], dexes: ['raydium', 'orca', 'jupiter'] },
+      { symbol: 'WSOL', name: 'Wrapped SOL', chains: ['solana'], dexes: ['raydium', 'orca', 'jupiter'] },
+      { symbol: 'WMATIC', name: 'Wrapped Matic', chains: ['polygon'], dexes: ['quickswap', 'sushiswap', 'uniswap'] },
+      { symbol: 'WBTC', name: 'Wrapped Bitcoin', chains: ['ethereum', 'polygon', 'arbitrum'], dexes: ['uniswap', 'sushiswap', 'curve'] },
+      { symbol: 'DAI', name: 'Dai Stablecoin', chains: ['ethereum', 'polygon', 'arbitrum'], dexes: ['uniswap', 'curve', 'sushiswap'] },
+    ];
+
+    // Popular DEXes for creating pairs
+    const popularDexes = [
+      { id: 'uniswap', name: 'Uniswap', chains: ['ethereum', 'arbitrum', 'optimism', 'base', 'polygon'] },
+      { id: 'pancakeswap', name: 'PancakeSwap', chains: ['bsc', 'ethereum', 'arbitrum'] },
+      { id: 'sushiswap', name: 'SushiSwap', chains: ['ethereum', 'arbitrum', 'polygon', 'avalanche'] },
+      { id: 'raydium', name: 'Raydium', chains: ['solana'] },
+      { id: 'orca', name: 'Orca', chains: ['solana'] },
+      { id: 'quickswap', name: 'QuickSwap', chains: ['polygon'] },
+      { id: 'traderjoe', name: 'Trader Joe', chains: ['avalanche', 'arbitrum'] },
+      { id: 'camelot', name: 'Camelot', chains: ['arbitrum'] },
+      { id: 'aerodrome', name: 'Aerodrome', chains: ['base'] },
+    ];
+
+    if (tokenPairs.length === 0) {
       setArbitrageByQuote([]);
+      setSuggestedPairs([]);
       return;
     }
 
     // Group pairs by quote token (ETH, USDC, WBTC, etc.)
     const pairsByQuote = {};
+    const existingQuoteTokens = new Set();
+    const existingDexes = new Set();
+    const existingChains = new Set();
+    
     tokenPairs.forEach(pair => {
       const quoteSymbol = pair.quoteToken?.symbol || 'Unknown';
+      existingQuoteTokens.add(quoteSymbol.toUpperCase());
+      existingDexes.add(pair.dexId?.toLowerCase());
+      existingChains.add(pair.chainId?.toLowerCase());
+      
       if (!pairsByQuote[quoteSymbol]) {
         pairsByQuote[quoteSymbol] = [];
       }
@@ -178,11 +215,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       const effectiveLiquidity = Math.min(minPrice.liquidity, maxPrice.liquidity);
       
       // Determine risk tier based on liquidity and spread
-      // 🔥 HOT: High liquidity (>$50K) + profitable spread
-      // 💎 GEM: Medium liquidity ($10K-$50K) + profitable spread  
-      // 🎲 DEGEN: Low liquidity ($1K-$10K) - high risk
-      // ⚠️ MICRO: Very low liquidity (<$1K) - extreme risk
-      // ❌ NO ARB: Spread doesn't cover fees
       let riskTier = 'noarb';
       let riskLabel = '❌';
       let riskText = 'No Arb';
@@ -210,14 +242,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           riskText = 'DUST';
         }
       } else if (spread > 0.1) {
-        // Has some spread but doesn't cover fees - still show it
         riskTier = 'noarb';
         riskLabel = '📊';
         riskText = 'LOW';
       }
       
-      // Include all opportunities with meaningful spread (even if doesn't cover fees)
-      // This helps users see the landscape for low cap tokens
       if (spread > 0.05) {
         opportunities.push({
           quoteSymbol,
@@ -240,16 +269,85 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       }
     });
     
-    // Sort: profitable first (by spread), then non-profitable
+    // Sort opportunities
     opportunities.sort((a, b) => {
-      // Profitable opportunities first
       if (a.isProfitable && !b.isProfitable) return -1;
       if (!a.isProfitable && b.isProfitable) return 1;
-      // Then by net spread
       return parseFloat(b.netSpread) - parseFloat(a.netSpread);
     });
     
     setArbitrageByQuote(opportunities);
+
+    // Generate suggested pairs if no/few arbitrage opportunities
+    const suggestions = [];
+    
+    // Find quote tokens that only have 1 DEX (could add another for arb)
+    Object.entries(pairsByQuote).forEach(([quoteSymbol, pairs]) => {
+      if (pairs.length === 1) {
+        const existingPair = pairs[0];
+        const existingDex = existingPair.dexId?.toLowerCase();
+        const existingChain = existingPair.chainId?.toLowerCase();
+        
+        // Suggest other DEXes on the same chain
+        const suggestedDexes = popularDexes
+          .filter(dex => 
+            dex.chains.includes(existingChain) && 
+            dex.id !== existingDex
+          )
+          .slice(0, 2);
+        
+        if (suggestedDexes.length > 0) {
+          suggestions.push({
+            type: 'add_dex',
+            quoteSymbol,
+            existingDex: existingPair.dexId,
+            existingChain: existingPair.chainId,
+            suggestedDexes: suggestedDexes.map(d => d.name),
+            reason: `Add ${quoteSymbol} pair on another DEX to enable arbitrage`,
+            priority: 'high',
+            icon: '🎯'
+          });
+        }
+      }
+    });
+    
+    // Suggest popular quote tokens not yet paired
+    const tokenChain = tokenPairs[0]?.chainId?.toLowerCase() || 'ethereum';
+    
+    popularQuoteTokens.forEach(quoteToken => {
+      const isExisting = existingQuoteTokens.has(quoteToken.symbol);
+      const isOnSameChain = quoteToken.chains.includes(tokenChain);
+      
+      if (!isExisting && isOnSameChain) {
+        const relevantDexes = popularDexes
+          .filter(dex => dex.chains.includes(tokenChain))
+          .slice(0, 2)
+          .map(d => d.name);
+        
+        suggestions.push({
+          type: 'new_quote',
+          quoteSymbol: quoteToken.symbol,
+          quoteName: quoteToken.name,
+          suggestedDexes: relevantDexes,
+          chain: tokenChain,
+          reason: `Popular trading pair with high volume potential`,
+          priority: quoteToken.symbol === 'WETH' || quoteToken.symbol === 'USDC' ? 'high' : 'medium',
+          icon: quoteToken.symbol === 'WETH' || quoteToken.symbol === 'ETH' ? '💎' : 
+                quoteToken.symbol === 'USDC' || quoteToken.symbol === 'USDT' ? '💵' : '🔷'
+        });
+      }
+    });
+    
+    // Sort suggestions: high priority first, then add_dex before new_quote
+    suggestions.sort((a, b) => {
+      if (a.priority === 'high' && b.priority !== 'high') return -1;
+      if (a.priority !== 'high' && b.priority === 'high') return 1;
+      if (a.type === 'add_dex' && b.type !== 'add_dex') return -1;
+      if (a.type !== 'add_dex' && b.type === 'add_dex') return 1;
+      return 0;
+    });
+    
+    setSuggestedPairs(suggestions.slice(0, 6)); // Limit to 6 suggestions
   }, [tokenPairs]);
 
   // Fetch all pairs for a token when tokenSearch changes (works for trending, bubbles, and search)
@@ -273,6 +371,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         let tokenAddress = tokenSearch;
         
         // First, try the tokens endpoint (works if tokenSearch is a token contract address)
+        // This works regardless of chain
         const tokensResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenSearch}`);
         
         if (tokensResponse.ok) {
@@ -283,32 +382,95 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         }
         
         // If no pairs found, tokenSearch might be a PAIR address (from bubbles/trending)
-        // Try the pairs endpoint to get the token info, then fetch all pairs for that token
-        if (allPairs.length === 0 && selectedChain) {
-          const chainForApi = CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain;
-          const pairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chainForApi}/${tokenSearch}`);
+        // Try the pairs endpoint with multiple chain formats
+        if (allPairs.length === 0) {
+          // Build list of chains to try
+          const chainsToTry = [];
           
-          if (pairsResponse.ok) {
-            const pairsData = await pairsResponse.json();
-            const pairInfo = pairsData.pair || (pairsData.pairs && pairsData.pairs[0]);
-            
-            if (pairInfo && pairInfo.baseToken && pairInfo.baseToken.address) {
-              // Got the actual token address from the pair, now fetch ALL pairs for this token
-              tokenAddress = pairInfo.baseToken.address;
+          if (selectedChain) {
+            // Add the mapped chain first
+            const mappedChain = CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain];
+            if (mappedChain) chainsToTry.push(mappedChain);
+            if (selectedChain !== mappedChain) chainsToTry.push(selectedChain);
+          }
+          
+          // Add common chains as fallback (most meme coins are on these)
+          const commonChains = ['ethereum', 'bsc', 'solana', 'base', 'arbitrum', 'polygon', 'avalanche', 'optimism'];
+          commonChains.forEach(chain => {
+            if (!chainsToTry.includes(chain)) chainsToTry.push(chain);
+          });
+          
+          // Try each chain until we find the pair
+          for (const chainForApi of chainsToTry) {
+            try {
+              const pairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chainForApi}/${tokenSearch}`);
               
-              const allPairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
-              if (allPairsResponse.ok) {
-                const allPairsData = await allPairsResponse.json();
-                if (allPairsData.pairs && Array.isArray(allPairsData.pairs)) {
-                  allPairs = allPairsData.pairs;
+              if (pairsResponse.ok) {
+                const pairsData = await pairsResponse.json();
+                const pairInfo = pairsData.pair || (pairsData.pairs && pairsData.pairs[0]);
+                
+                if (pairInfo && pairInfo.baseToken && pairInfo.baseToken.address) {
+                  // Got the actual token address from the pair, now fetch ALL pairs for this token
+                  tokenAddress = pairInfo.baseToken.address;
+                  
+                  const allPairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+                  if (allPairsResponse.ok) {
+                    const allPairsData = await allPairsResponse.json();
+                    if (allPairsData.pairs && Array.isArray(allPairsData.pairs) && allPairsData.pairs.length > 0) {
+                      allPairs = allPairsData.pairs;
+                      break; // Found pairs, stop trying other chains
+                    }
+                  }
+                  
+                  // If tokens endpoint didn't work, at least use the single pair we found
+                  if (allPairs.length === 0 && pairInfo) {
+                    allPairs = [pairInfo];
+                    break;
+                  }
                 }
               }
-              
-              // If still no pairs, at least use the single pair we found
-              if (allPairs.length === 0 && pairInfo) {
-                allPairs = [pairInfo];
+            } catch (chainError) {
+              // Continue to next chain
+              continue;
+            }
+          }
+        }
+        
+        // Also try the search endpoint as a last resort (searches by address)
+        if (allPairs.length === 0) {
+          try {
+            const searchResponse = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${tokenSearch}`);
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              if (searchData.pairs && Array.isArray(searchData.pairs) && searchData.pairs.length > 0) {
+                // Filter to pairs that match our address (either as pair or token)
+                const matchingPairs = searchData.pairs.filter(p => 
+                  p.pairAddress?.toLowerCase() === tokenSearch.toLowerCase() ||
+                  p.baseToken?.address?.toLowerCase() === tokenSearch.toLowerCase()
+                );
+                
+                if (matchingPairs.length > 0) {
+                  // If we found matching pairs, get the token address and fetch all pairs
+                  const firstMatch = matchingPairs[0];
+                  if (firstMatch.baseToken?.address) {
+                    const allPairsResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${firstMatch.baseToken.address}`);
+                    if (allPairsResponse.ok) {
+                      const allPairsData = await allPairsResponse.json();
+                      if (allPairsData.pairs && Array.isArray(allPairsData.pairs)) {
+                        allPairs = allPairsData.pairs;
+                      }
+                    }
+                  }
+                  
+                  // Fallback to search results if tokens endpoint failed
+                  if (allPairs.length === 0) {
+                    allPairs = matchingPairs;
+                  }
+                }
               }
             }
+          } catch (searchError) {
+            // Search failed, continue with whatever we have
           }
         }
         
@@ -346,7 +508,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             if (tokenPairs.length === 0 || newTokenAddr !== currentTokenAddr) {
               setTokenPairs(processedPairs);
               
-              // Also set token name/symbol if not already set
+              // Also set token name/symbol
               if (processedPairs[0]) {
                 setActiveTokenName(processedPairs[0].name);
                 setActiveTokenSymbol(processedPairs[0].symbol);
@@ -2029,6 +2191,42 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                             {opp.buyDex} → {opp.sellDex}
                           </span>
                           {opp.isCrossChain && <span className="arb-cross-chain">🔗</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Suggested Pairs Banner - shows when no/few arb opportunities exist */}
+            {chartProvider === 'dexscreener' && tokenPairs.length > 0 && suggestedPairs.length > 0 && (
+              <div className="chart-search-section suggested-section">
+                <div className="suggested-banner">
+                  <span className="suggested-label">
+                    {arbitrageByQuote.length === 0 ? '💡 Create Pairs:' : '💡 More Pairs:'}
+                  </span>
+                  <div className="suggested-container">
+                    <div className="suggested-scroll">
+                      {suggestedPairs.map((suggestion, index) => (
+                        <div 
+                          key={`suggestion-${index}`}
+                          className={`suggested-item ${suggestion.type} ${suggestion.priority}`}
+                          title={`${suggestion.reason}\n\n${suggestion.type === 'add_dex' 
+                            ? `Current: ${activeTokenSymbol || 'Token'}/${suggestion.quoteSymbol} on ${suggestion.existingDex}\nSuggested DEXes: ${suggestion.suggestedDexes.join(', ')}\n\nAdding this pair on another DEX enables arbitrage trading!`
+                            : `Create ${activeTokenSymbol || 'Token'}/${suggestion.quoteSymbol} pair\nSuggested DEXes: ${suggestion.suggestedDexes.join(', ')}\nChain: ${suggestion.chain}\n\n${suggestion.quoteName} is a high-volume quote token that attracts traders.`
+                          }`}
+                        >
+                          <span className="suggested-icon">{suggestion.icon}</span>
+                          <span className="suggested-quote">{suggestion.quoteSymbol}</span>
+                          {suggestion.type === 'add_dex' ? (
+                            <span className="suggested-action">+DEX</span>
+                          ) : (
+                            <span className="suggested-action">NEW</span>
+                          )}
+                          <span className="suggested-dexes">
+                            {suggestion.suggestedDexes[0]}
+                          </span>
                         </div>
                       ))}
                     </div>
