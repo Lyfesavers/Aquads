@@ -24,16 +24,6 @@ const gamesRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
 
-// OG image routes - wrapped in try-catch to debug loading issues
-let ogRoutes;
-try {
-  ogRoutes = require('./routes/og');
-  console.log('✅ OG routes loaded successfully');
-} catch (err) {
-  console.error('❌ Failed to load OG routes:', err.message);
-  ogRoutes = null;
-}
-
 
 // Middleware
 const app = express();
@@ -517,15 +507,6 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-
-// OG image generation routes (for social media previews)
-if (ogRoutes) {
-  app.use('/og', ogRoutes);
-  console.log('✅ OG routes mounted at /og');
-} else {
-  console.log('⚠️ OG routes not mounted - loading failed');
-}
-
 
 // Test route to verify API is working
 app.get('/api/test', (req, res) => {

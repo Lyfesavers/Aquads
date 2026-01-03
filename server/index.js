@@ -44,6 +44,16 @@ const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
 const { sanitizeForRegex } = require('./utils/security');
 
+// OG image routes - wrapped in try-catch to debug loading issues
+let ogRoutes;
+try {
+  ogRoutes = require('./routes/og');
+  console.log('✅ OG routes loaded successfully');
+} catch (err) {
+  console.error('❌ Failed to load OG routes:', err.message);
+  ogRoutes = null;
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = socketModule.init(server);
@@ -583,6 +593,13 @@ app.use('/api/workshop', require('./routes/workshop'));
 app.use('/api/click-tracking', require('./routes/clickTracking'));
 app.use('/api/on-chain-resume', require('./routes/onChainResume'));
 
+// OG image generation routes (for social media previews)
+if (ogRoutes) {
+  app.use('/og', ogRoutes);
+  console.log('✅ OG routes mounted at /og');
+} else {
+  console.log('⚠️ OG routes not mounted - loading failed');
+}
 
 // Special route for blog sharing metadata (outside the API namespace)
 app.get('/share-blog/:id', async (req, res) => {
