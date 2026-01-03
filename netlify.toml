@@ -50,11 +50,10 @@
 
 # GUARANTEED share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/aquaswap?token=xxx&blockchain=xxx
-[[redirects]]
-  from = "/share/aquaswap"
-  to = "/.netlify/functions/prerender-aquaswap"
-  status = 200
-  force = true
+# Handled by Edge Function which reliably serves meta tags to all bots
+[[edge_functions]]
+  function = "share-aquaswap"
+  path = "/share/aquaswap"
 
 # GUARANTEED blog share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/blog/:id
