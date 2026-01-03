@@ -229,7 +229,7 @@ router.get('/aquaswap', async (req, res) => {
   
   <!-- AQUADS branding top right -->
   <text x="1100" y="100" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
-  <text x="1100" y="125" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">DEX</text>
+  <text x="1100" y="125" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
   
   <!-- Logo glow effect -->
   <circle cx="140" cy="180" r="65" fill="url(#accentGrad)" opacity="0.3" filter="url(#glow)"/>
@@ -330,7 +330,7 @@ router.get('/aquaswap', async (req, res) => {
     const errorSvg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#0a0a12"/>
-  <text x="600" y="280" font-family="Arial, sans-serif" font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS DEX</text>
+  <text x="600" y="280" font-family="Arial, sans-serif" font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
   <text x="600" y="350" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
   <text x="600" y="400" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
 </svg>`;
