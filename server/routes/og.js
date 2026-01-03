@@ -210,7 +210,7 @@ router.get('/aquaswap', async (req, res) => {
 
     <!-- Clip path for logo -->
     <clipPath id="logoClip">
-      <circle cx="100" cy="200" r="60"/>
+      <circle cx="140" cy="180" r="60"/>
     </clipPath>
   </defs>
   
