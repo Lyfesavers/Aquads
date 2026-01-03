@@ -1,17 +1,46 @@
 // Netlify Edge Function to serve AquaSwap token metadata for social media crawlers
 // Edge functions run on Deno at the CDN edge and don't have the same bot-blocking issues
 
+// Map chain names to DEXScreener format
+const chainMapping = {
+  'ether': 'ethereum',
+  'eth': 'ethereum',
+  'sol': 'solana',
+  'bnb': 'bsc',
+  'avax': 'avalanche',
+  'arb': 'arbitrum',
+  'op': 'optimism',
+  'ftm': 'fantom',
+  'matic': 'polygon',
+  'base': 'base',
+  'blast': 'blast',
+  'sui': 'sui',
+  'ton': 'ton',
+  'tron': 'tron',
+  'aptos': 'aptos',
+  'cronos': 'cronos',
+  'pulsechain': 'pulsechain',
+  'mantle': 'mantle',
+  'linea': 'linea',
+  'scroll': 'scroll',
+  'zksync': 'zksync',
+};
+
 export default async (request, context) => {
   const url = new URL(request.url);
   const tokenAddress = url.searchParams.get('token');
-  const blockchain = url.searchParams.get('blockchain');
+  const rawBlockchain = url.searchParams.get('blockchain');
 
-  console.log('AquaSwap share request:', { tokenAddress, blockchain });
+  console.log('AquaSwap share request:', { tokenAddress, rawBlockchain });
 
-  if (!tokenAddress || !blockchain) {
+  if (!tokenAddress || !rawBlockchain) {
     console.log('Missing params, returning default');
     return getDefaultResponse();
   }
+
+  // Map blockchain name to DEXScreener format
+  const blockchain = chainMapping[rawBlockchain.toLowerCase()] || rawBlockchain.toLowerCase();
+  console.log('Mapped blockchain:', rawBlockchain, '->', blockchain);
 
   try {
     // Try pairs endpoint first
