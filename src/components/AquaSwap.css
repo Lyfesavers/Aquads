@@ -826,11 +826,31 @@
 .arbitrage-container {
   position: relative;
   flex: 1;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   height: 30px;
   border-radius: 4px;
   background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), rgba(34, 197, 94, 0.05), rgba(16, 185, 129, 0.08));
   border: 1px solid rgba(16, 185, 129, 0.25);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.3) transparent;
+}
+
+.arbitrage-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.arbitrage-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.arbitrage-container::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 2px;
+}
+
+.arbitrage-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
 }
 
 .arbitrage-scroll {
@@ -838,43 +858,8 @@
   gap: 10px;
   align-items: center;
   height: 100%;
-  animation: scrollArbitrage 20s linear infinite;
   padding: 0 10px;
-  will-change: transform;
-}
-
-.arbitrage-scroll:hover {
-  animation-play-state: paused;
-}
-
-@keyframes scrollArbitrage {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-50% - 5px));
-  }
-}
-
-.arbitrage-container::before,
-.arbitrage-container::after {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 25px;
-  content: '';
-  z-index: 1;
-  pointer-events: none;
-}
-
-.arbitrage-container::before {
-  left: 0;
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.08), transparent);
-}
-
-.arbitrage-container::after {
-  right: 0;
-  background: linear-gradient(to left, rgba(16, 185, 129, 0.08), transparent);
+  width: max-content;
 }
 
 .arbitrage-label {
@@ -892,7 +877,7 @@
 .arbitrage-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 4px 10px;
   background: rgba(0, 0, 0, 0.35);
   border-radius: 4px;
@@ -907,18 +892,42 @@
 .arbitrage-item:hover {
   background: rgba(16, 185, 129, 0.15);
   border-color: rgba(16, 185, 129, 0.5);
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
+/* Risk tier styles */
 .arbitrage-item.hot {
   background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
   border-color: rgba(34, 197, 94, 0.5);
   animation: pulse-arb 2s infinite;
 }
 
-.arbitrage-item.warm {
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.35);
+.arbitrage-item.gem {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.1));
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.arbitrage-item.degen {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 179, 8, 0.1));
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.arbitrage-item.micro {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08));
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.arbitrage-item.dust {
+  background: rgba(75, 75, 75, 0.3);
+  border-color: rgba(100, 100, 100, 0.4);
+  opacity: 0.7;
+}
+
+.arbitrage-item.noarb,
+.arbitrage-item.not-profitable {
+  background: rgba(50, 50, 50, 0.4);
+  border-color: rgba(100, 100, 100, 0.3);
+  opacity: 0.75;
 }
 
 @keyframes pulse-arb {
@@ -930,33 +939,88 @@
   }
 }
 
+/* Risk badge */
+.arb-risk-badge {
+  font-size: 0.7rem;
+  min-width: 18px;
+  text-align: center;
+}
+
+.arb-risk-badge.hot {
+  filter: drop-shadow(0 0 4px rgba(255, 100, 0, 0.6));
+}
+
+.arb-risk-badge.gem {
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+}
+
+.arb-risk-badge.degen {
+  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.5));
+}
+
 .arb-quote {
   font-weight: 700;
   color: #ffffff;
   background: rgba(16, 185, 129, 0.25);
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+}
+
+.arbitrage-item.degen .arb-quote {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.arbitrage-item.micro .arb-quote {
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .arb-spread-badge {
   font-weight: 700;
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.15);
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
 }
 
-.arbitrage-item.hot .arb-spread-badge {
+.arb-spread-badge.profitable {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.arb-spread-badge.unprofitable {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.arbitrage-item.hot .arb-spread-badge.profitable {
   color: #4ade80;
   background: rgba(74, 222, 128, 0.2);
   text-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
 }
 
+/* Liquidity badge */
+.arb-liq-badge {
+  font-size: 0.6rem;
+  color: #9ca3af;
+  background: rgba(100, 100, 100, 0.25);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.arbitrage-item.hot .arb-liq-badge {
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.arbitrage-item.micro .arb-liq-badge,
+.arbitrage-item.dust .arb-liq-badge {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+}
+
 .arb-route-mini {
   color: #9ca3af;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   opacity: 0.85;
 }
 
@@ -978,18 +1042,27 @@
   
   .arbitrage-item {
     padding: 3px 8px;
-    gap: 4px;
+    gap: 3px;
     font-size: 0.65rem;
+  }
+  
+  .arb-risk-badge {
+    font-size: 0.65rem;
+    min-width: 16px;
   }
   
   .arb-quote {
-    font-size: 0.65rem;
-    padding: 2px 5px;
+    font-size: 0.62rem;
+    padding: 2px 4px;
   }
   
   .arb-spread-badge {
-    font-size: 0.62rem;
-    padding: 2px 5px;
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+  
+  .arb-liq-badge {
+    display: none;
   }
   
   .arb-route-mini {
@@ -1003,7 +1076,7 @@
   }
   
   .arbitrage-label {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     padding: 3px 6px;
   }
   
@@ -1012,14 +1085,23 @@
     gap: 3px;
   }
   
-  .arb-quote {
+  .arb-risk-badge {
     font-size: 0.6rem;
+    min-width: 14px;
+  }
+  
+  .arb-quote {
+    font-size: 0.58rem;
+    padding: 1px 3px;
   }
   
   .arb-spread-badge {
-    font-size: 0.58rem;
+    font-size: 0.55rem;
+    padding: 1px 3px;
   }
   
+  .arb-liq-badge,
+  .arb-route-mini,
   .arb-cross-chain {
     display: none;
   }

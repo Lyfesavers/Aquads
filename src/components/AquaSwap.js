@@ -177,8 +177,48 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // Calculate effective liquidity (min of buy/sell pools)
       const effectiveLiquidity = Math.min(minPrice.liquidity, maxPrice.liquidity);
       
-      // Only show if there's potential profit after fees
-      if (netSpread > 0.05 && effectiveLiquidity > 1000) {
+      // Determine risk tier based on liquidity and spread
+      // 🔥 HOT: High liquidity (>$50K) + profitable spread
+      // 💎 GEM: Medium liquidity ($10K-$50K) + profitable spread  
+      // 🎲 DEGEN: Low liquidity ($1K-$10K) - high risk
+      // ⚠️ MICRO: Very low liquidity (<$1K) - extreme risk
+      // ❌ NO ARB: Spread doesn't cover fees
+      let riskTier = 'noarb';
+      let riskLabel = '❌';
+      let riskText = 'No Arb';
+      
+      if (netSpread > 0) {
+        if (effectiveLiquidity >= 50000) {
+          riskTier = 'hot';
+          riskLabel = '🔥';
+          riskText = 'HOT';
+        } else if (effectiveLiquidity >= 10000) {
+          riskTier = 'gem';
+          riskLabel = '💎';
+          riskText = 'GEM';
+        } else if (effectiveLiquidity >= 1000) {
+          riskTier = 'degen';
+          riskLabel = '🎲';
+          riskText = 'DEGEN';
+        } else if (effectiveLiquidity >= 100) {
+          riskTier = 'micro';
+          riskLabel = '⚠️';
+          riskText = 'MICRO';
+        } else {
+          riskTier = 'dust';
+          riskLabel = '💀';
+          riskText = 'DUST';
+        }
+      } else if (spread > 0.1) {
+        // Has some spread but doesn't cover fees - still show it
+        riskTier = 'noarb';
+        riskLabel = '📊';
+        riskText = 'LOW';
+      }
+      
+      // Include all opportunities with meaningful spread (even if doesn't cover fees)
+      // This helps users see the landscape for low cap tokens
+      if (spread > 0.05) {
         opportunities.push({
           quoteSymbol,
           spread: spread.toFixed(2),
@@ -191,13 +231,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           sellPrice: maxPrice.price,
           effectiveLiquidity,
           pairCount: validPairs.length,
-          isCrossChain: minPrice.chain !== maxPrice.chain
+          isCrossChain: minPrice.chain !== maxPrice.chain,
+          riskTier,
+          riskLabel,
+          riskText,
+          isProfitable: netSpread > 0
         });
       }
     });
     
-    // Sort by net spread (best opportunities first)
-    opportunities.sort((a, b) => parseFloat(b.netSpread) - parseFloat(a.netSpread));
+    // Sort: profitable first (by spread), then non-profitable
+    opportunities.sort((a, b) => {
+      // Profitable opportunities first
+      if (a.isProfitable && !b.isProfitable) return -1;
+      if (!a.isProfitable && b.isProfitable) return 1;
+      // Then by net spread
+      return parseFloat(b.netSpread) - parseFloat(a.netSpread);
+    });
     
     setArbitrageByQuote(opportunities);
   }, [tokenPairs]);
@@ -1920,17 +1970,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             {chartProvider === 'dexscreener' && arbitrageByQuote.length > 0 && (
               <div className="chart-search-section arbitrage-section">
                 <div className="arbitrage-banner">
-                  <span className="arbitrage-label">💰 Best Arb Pairs:</span>
+                  <span className="arbitrage-label">💰 Arb Pairs:</span>
                   <div className="arbitrage-container">
                     <div className="arbitrage-scroll">
-                      {arbitrageByQuote.concat(arbitrageByQuote).map((opp, index) => (
+                      {arbitrageByQuote.map((opp, index) => (
                         <div 
                           key={`${opp.quoteSymbol}-${index}`}
-                          className={`arbitrage-item ${parseFloat(opp.netSpread) > 2 ? 'hot' : parseFloat(opp.netSpread) > 1 ? 'warm' : ''}`}
-                          title={`${activeTokenSymbol || 'Token'}/${opp.quoteSymbol} - Buy on ${opp.buyDex} ($${opp.buyPrice.toFixed(8)}) → Sell on ${opp.sellDex} ($${opp.sellPrice.toFixed(8)})\nGross Spread: ${opp.spread}% | Net (after fees): ${opp.netSpread}%\nLiquidity: $${opp.effectiveLiquidity.toLocaleString()}\n${opp.pairCount} DEXes available${opp.isCrossChain ? ' | ⚠️ Cross-chain' : ''}`}
+                          className={`arbitrage-item ${opp.riskTier} ${!opp.isProfitable ? 'not-profitable' : ''}`}
+                          title={`${activeTokenSymbol || 'Token'}/${opp.quoteSymbol} - ${opp.riskText}\n\nBuy on ${opp.buyDex} ($${opp.buyPrice.toFixed(8)})\nSell on ${opp.sellDex} ($${opp.sellPrice.toFixed(8)})\n\nGross Spread: ${opp.spread}%\nNet (after 0.6% fees): ${opp.netSpread}%\nLiquidity: $${opp.effectiveLiquidity.toLocaleString()}\n${opp.pairCount} DEXes available${opp.isCrossChain ? '\n⚠️ Cross-chain (needs bridge)' : ''}${!opp.isProfitable ? '\n\n❌ Spread does not cover fees' : ''}`}
                         >
+                          <span className={`arb-risk-badge ${opp.riskTier}`}>{opp.riskLabel}</span>
                           <span className="arb-quote">{opp.quoteSymbol}</span>
-                          <span className="arb-spread-badge">+{opp.netSpread}%</span>
+                          <span className={`arb-spread-badge ${opp.isProfitable ? 'profitable' : 'unprofitable'}`}>
+                            {opp.isProfitable ? '+' : ''}{opp.netSpread}%
+                          </span>
+                          <span className="arb-liq-badge" title={`Liquidity: $${opp.effectiveLiquidity.toLocaleString()}`}>
+                            ${opp.effectiveLiquidity >= 1000 ? (opp.effectiveLiquidity / 1000).toFixed(0) + 'K' : opp.effectiveLiquidity.toFixed(0)}
+                          </span>
                           <span className="arb-route-mini">
                             {opp.buyDex} → {opp.sellDex}
                           </span>
