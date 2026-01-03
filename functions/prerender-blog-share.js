@@ -1,9 +1,13 @@
 // Netlify function to prerender blog posts for social media crawlers via /share/blog/:id
 // This matches the token share pattern: /share/aquaswap
 const fetch = require('node-fetch');
+const AbortController = require('abort-controller');
 
 exports.handler = async (event, context) => {
+  // Log user agent to help debug bot issues
+  const userAgent = event.headers['user-agent'] || 'Unknown';
   console.log('=== PRERENDER-BLOG-SHARE CALLED ===');
+  console.log('User-Agent:', userAgent);
   console.log('Full path:', event.path);
   console.log('Query params:', event.queryStringParameters);
   
@@ -17,7 +21,10 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       body: getDefaultHtml(),
-      headers: { 'Content-Type': 'text/html' },
+      headers: { 
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+      },
     };
   }
   
@@ -29,16 +36,28 @@ exports.handler = async (event, context) => {
     const apiUrl = `https://aquads.onrender.com/api/blogs/${blogId}`;
     console.log('Fetching blog from:', apiUrl);
     
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      redirect: 'follow', // Follow redirects
-    });
+    // Add timeout to prevent hanging - 8 seconds max to stay under Netlify's 10s limit
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 8000);
+    
+    let response;
+    try {
+      response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Aquads-Prerender/1.0', // Use a consistent UA for API calls
+        },
+        redirect: 'follow',
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     
     console.log('API response status:', response.status);
-    console.log('API response headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
     
     // Check content type to ensure we're getting JSON
     const contentType = response.headers.get('content-type');
@@ -65,7 +84,10 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 200,
         body: getDefaultHtml(),
-        headers: { 'Content-Type': 'text/html' },
+        headers: { 
+          'Content-Type': 'text/html',
+          'Cache-Control': 'public, max-age=300',
+        },
       };
     }
     
@@ -89,14 +111,21 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       body: getBlogHtml(blog, description, seoUrl, redirectUrl),
-      headers: { 'Content-Type': 'text/html' },
+      headers: { 
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=3600', // Cache successful responses for 1 hour
+      },
     };
   } catch (error) {
-    console.error('Error fetching blog:', error);
+    console.error('Error fetching blog:', error.message || error);
+    // Return default HTML with appropriate caching
     return {
       statusCode: 200,
       body: getDefaultHtml(),
-      headers: { 'Content-Type': 'text/html' },
+      headers: { 
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=60', // Cache errors for 1 minute only
+      },
     };
   }
 };

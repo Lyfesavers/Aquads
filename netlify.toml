@@ -10,6 +10,12 @@
 # Function to prerender blog posts for social media crawlers
 [functions]
   directory = "functions"
+  node_bundler = "esbuild"
+  included_files = ["functions/**"]
+
+# Install function dependencies
+[functions.prerender-blog-share]
+  external_node_modules = ["node-fetch", "abort-controller"]
 
 # Serve robots.txt directly (prevent SPA fallback)
 [[redirects]]
