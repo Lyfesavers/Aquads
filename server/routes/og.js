@@ -3,6 +3,11 @@ const router = express.Router();
 const sharp = require('sharp');
 const axios = require('axios');
 
+// Simple test endpoint to verify route is loaded
+router.get('/test', (req, res) => {
+  res.json({ status: 'ok', message: 'OG routes working', timestamp: new Date().toISOString() });
+});
+
 // Chain name mapping (same as edge function)
 const chainMapping = {
   'ether': 'ethereum',
