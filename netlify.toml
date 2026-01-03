@@ -60,8 +60,8 @@
 # Use this URL for sharing: /share/blog/:id
 # Proxied to Render server which works reliably with all bots (Netlify functions had 502 issues with bot user agents)
 [[redirects]]
-  from = "/share/blog/:id"
-  to = "https://aquads.onrender.com/share-blog/:id"
+  from = "/share/blog/*"
+  to = "https://aquads.onrender.com/share-blog/:splat"
   status = 200
   force = true
 
