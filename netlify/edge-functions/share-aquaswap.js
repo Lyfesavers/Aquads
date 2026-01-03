@@ -112,6 +112,9 @@ export default async (request, context) => {
 
     console.log('Token found:', symbol, 'Image:', tokenImage);
 
+    // Generate dynamic OG image URL (Render backend generates the image)
+    const ogImageUrl = `https://aquads.onrender.com/og/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
+
     // Format numbers
     const formatNum = (n) => {
       if (n >= 1e9) return `$${(n/1e9).toFixed(2)}B`;
@@ -172,7 +175,7 @@ export default async (request, context) => {
   <meta name="twitter:creator" content="@AquadsXYZ">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${escapeHtml(tokenImage)}">
+  <meta name="twitter:image" content="${ogImageUrl}">
   
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
@@ -180,9 +183,9 @@ export default async (request, context) => {
   <meta property="og:url" content="${escapeHtml(pageUrl)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${escapeHtml(tokenImage)}">
-  <meta property="og:image:width" content="800">
-  <meta property="og:image:height" content="800">
+  <meta property="og:image" content="${ogImageUrl}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   
   <!-- Redirect to actual AquaSwap page -->
   <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">

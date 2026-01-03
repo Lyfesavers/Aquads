@@ -23,6 +23,7 @@ const notificationsRoutes = require('./routes/notifications');
 const gamesRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
+const ogRoutes = require('./routes/og');
 
 
 // Middleware
@@ -507,6 +508,9 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+
+// OG image generation routes (for social media previews)
+app.use('/og', ogRoutes);
 
 
 // Test route to verify API is working
