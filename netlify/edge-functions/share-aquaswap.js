@@ -161,7 +161,7 @@ export default async (request, context) => {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script>window.location.replace("${escapeHtml(pageUrl)}");</script>
+  <script>window.location.replace("${pageUrl}");</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$${escapeHtml(symbol)} - ${escapeHtml(name)} │ Aquads DEX</title>
   <meta name="description" content="${escapeHtml(description)}">
