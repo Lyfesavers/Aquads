@@ -370,29 +370,29 @@ const OnChainResumeBanner = () => {
       to="/?tab=onchain"
       className="block rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full sm:no-underline"
       style={{
-        background: 'linear-gradient(135deg, #0D9488, #14B8A6, #0F766E)',
-        borderColor: '#5EEAD4',
+        background: 'linear-gradient(135deg, #5EEAD4, #2DD4BF, #99F6E4)',
+        borderColor: '#0D9488',
         borderWidth: '2px',
         boxShadow: '0 10px 25px rgba(13, 148, 136, 0.3)',
         cursor: 'pointer'
       }}
     >
       {/* Animated background effects */}
-      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(94, 234, 212, 0.3), transparent)'}}></div>
+      <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(13, 148, 136, 0.3), transparent)'}}></div>
       
       {/* Floating blockchain/credential icons */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⛓️</div>
-        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>📜</div>
-        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>✅</div>
-        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🏆</div>
-        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>🔗</div>
-        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#5EEAD4', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>💎</div>
+        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⛓️</div>
+        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>📜</div>
+        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>✅</div>
+        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🏆</div>
+        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>🔗</div>
+        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>💎</div>
       </div>
       
       {/* Animated border glow */}
-      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(94, 234, 212, 0.5), rgba(13, 148, 136, 0.5), rgba(94, 234, 212, 0.5))'}}></div>
-      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(13, 148, 136, 0.9)'}}></div>
+      <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(13, 148, 136, 0.5), rgba(94, 234, 212, 0.5), rgba(13, 148, 136, 0.5))'}}></div>
+      <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(94, 234, 212, 0.9)'}}></div>
       
       <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -401,45 +401,45 @@ const OnChainResumeBanner = () => {
             <div 
               className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #5EEAD4, #2DD4BF)',
-                filter: 'drop-shadow(0 0 10px rgba(94, 234, 212, 0.8))',
-                boxShadow: '0 0 15px rgba(94, 234, 212, 0.5)'
+                background: 'linear-gradient(135deg, #0D9488, #0F766E)',
+                filter: 'drop-shadow(0 0 10px rgba(13, 148, 136, 0.8))',
+                boxShadow: '0 0 15px rgba(13, 148, 136, 0.5)'
               }}
             >
-              <span className="text-teal-900 text-sm sm:text-lg font-bold">⛓️</span>
+              <span className="text-white text-sm sm:text-lg font-bold">⛓️</span>
             </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-xs sm:text-base mb-0.5 sm:mb-1 flex flex-wrap items-center gap-1 sm:gap-2" style={{color: '#5EEAD4'}}>
+            <h3 className="font-bold text-xs sm:text-base mb-0.5 sm:mb-1 flex flex-wrap items-center gap-1 sm:gap-2" style={{color: '#134E4A'}}>
               <span className="hidden sm:inline">🔗 Create Your On-Chain Resume - Verifiable Trust on Base!</span>
               <span className="sm:hidden">🔗 On-Chain Resume</span>
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse whitespace-nowrap" style={{background: 'linear-gradient(to right, #5EEAD4, #2DD4BF)', color: '#134E4A'}}>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse whitespace-nowrap" style={{background: 'linear-gradient(to right, #0D9488, #0F766E)', color: '#ffffff'}}>
                 NEW
               </span>
             </h3>
-            <p className="text-xs sm:text-sm mb-0.5 sm:mb-1" style={{color: '#CCFBF1'}}>
+            <p className="text-xs sm:text-sm mb-0.5 sm:mb-1" style={{color: '#115E59'}}>
               <span className="flex items-center gap-1 flex-wrap">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse flex-shrink-0" style={{background: '#5EEAD4'}}></span>
-                <span className="font-semibold" style={{color: '#99F6E4'}}>✨ Mint Your Trust Score</span>
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse flex-shrink-0" style={{background: '#0D9488'}}></span>
+                <span className="font-semibold" style={{color: '#0F766E'}}>✨ Mint Your Trust Score</span>
                 <span className="hidden sm:inline">- Portable, verifiable credentials on the blockchain</span>
-                <span className="hidden sm:inline" style={{color: '#5EEAD4'}}>•</span>
-                <span className="hidden sm:inline font-semibold" style={{color: '#99F6E4'}}>Powered by EAS</span>
+                <span className="hidden sm:inline" style={{color: '#0D9488'}}>•</span>
+                <span className="hidden sm:inline font-semibold" style={{color: '#0F766E'}}>Powered by EAS</span>
               </span>
             </p>
             
             {/* Feature highlights */}
             <div className="flex flex-wrap gap-1">
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-semibold" style={{background: 'rgba(94, 234, 212, 0.3)', color: '#99F6E4', border: '2px solid rgba(94, 234, 212, 0.6)', boxShadow: '0 0 8px rgba(94, 234, 212, 0.4)'}}>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-semibold" style={{background: 'rgba(13, 148, 136, 0.2)', color: '#134E4A', border: '2px solid rgba(13, 148, 136, 0.6)', boxShadow: '0 0 8px rgba(13, 148, 136, 0.3)'}}>
                 ⛓️ On-Chain Verified
               </span>
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(94, 234, 212, 0.2)', color: '#99F6E4', border: '1px solid rgba(94, 234, 212, 0.4)'}}>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(13, 148, 136, 0.15)', color: '#134E4A', border: '1px solid rgba(13, 148, 136, 0.4)'}}>
                 🏆 Trust Score
               </span>
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(94, 234, 212, 0.2)', color: '#99F6E4', border: '1px solid rgba(94, 234, 212, 0.4)'}}>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(13, 148, 136, 0.15)', color: '#134E4A', border: '1px solid rgba(13, 148, 136, 0.4)'}}>
                 📜 Portable CV
               </span>
-              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(94, 234, 212, 0.2)', color: '#99F6E4', border: '1px solid rgba(94, 234, 212, 0.4)'}}>
+              <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full" style={{background: 'rgba(13, 148, 136, 0.15)', color: '#134E4A', border: '1px solid rgba(13, 148, 136, 0.4)'}}>
                 🔵 Base Network
               </span>
             </div>
@@ -452,31 +452,31 @@ const OnChainResumeBanner = () => {
             to="/?tab=onchain"
             className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
-              background: 'linear-gradient(to right, #5EEAD4, #2DD4BF)',
-              color: '#134E4A',
-              boxShadow: '0 10px 25px rgba(94, 234, 212, 0.4)'
+              background: 'linear-gradient(to right, #0D9488, #0F766E)',
+              color: '#ffffff',
+              boxShadow: '0 10px 25px rgba(13, 148, 136, 0.4)'
             }}
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(to right, #99F6E4, #5EEAD4)';
-              e.currentTarget.style.boxShadow = '0 10px 25px rgba(94, 234, 212, 0.6)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #14B8A6, #0D9488)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(13, 148, 136, 0.6)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(to right, #5EEAD4, #2DD4BF)';
-              e.currentTarget.style.boxShadow = '0 10px 25px rgba(94, 234, 212, 0.4)';
+              e.currentTarget.style.background = 'linear-gradient(to right, #0D9488, #0F766E)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(13, 148, 136, 0.4)';
             }}
           >
             <span>Create Resume</span>
             <span className="group-hover:translate-x-1 transition-transform duration-300">⛓️</span>
             
             {/* Button glow effect */}
-            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #5EEAD4, #2DD4BF)'}}></div>
+            <div className="absolute inset-0 rounded-lg blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300 -z-10" style={{background: 'linear-gradient(to right, #0D9488, #0F766E)'}}></div>
           </Link>
         </div>
       </div>
       
       {/* Animated wave effect at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #5EEAD4, #2DD4BF, #5EEAD4)'}}>
+      <div className="absolute bottom-0 left-0 right-0 h-1 opacity-80" style={{background: 'linear-gradient(to right, #0D9488, #14B8A6, #0D9488)'}}>
         <div className="h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
       </div>
     </Link>
