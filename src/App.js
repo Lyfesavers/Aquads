@@ -286,6 +286,28 @@ const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMo
   return null;
 };
 
+// Handle URL parameters for opening profile modal with specific tab
+const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalInitialTab }) => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    
+    // If tab=onchain is in URL and user is logged in as freelancer, open profile modal
+    if (tab === 'onchain' && currentUser && currentUser.userType === 'freelancer') {
+      setProfileModalInitialTab('onchain');
+      setShowProfileModal(true);
+      
+      // Clean up URL by removing the tab parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location.search, currentUser, setShowProfileModal, setProfileModalInitialTab]);
+  
+  return null;
+};
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -348,6 +370,7 @@ function App() {
   const [unbumpedAd, setUnbumpedAd] = useState(null);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileModalInitialTab, setProfileModalInitialTab] = useState('profile');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -2335,6 +2358,11 @@ function App() {
           arrangeDesktopGrid={arrangeDesktopGrid}
           adjustBubblesForMobile={adjustBubblesForMobile}
         />
+        <ProfileTabHandler 
+          currentUser={currentUser}
+          setShowProfileModal={setShowProfileModal}
+          setProfileModalInitialTab={setProfileModalInitialTab}
+        />
         <Routes>
           <Route path="/extension-auth" element={<ExtensionAuth />} />
           <Route path="/marketplace" element={
@@ -3064,8 +3092,12 @@ function App() {
                 {showProfileModal && currentUser && (
                   <ProfileModal
                     currentUser={currentUser}
-                    onClose={() => setShowProfileModal(false)}
+                    onClose={() => {
+                      setShowProfileModal(false);
+                      setProfileModalInitialTab('profile'); // Reset to default tab on close
+                    }}
                     onProfileUpdate={handleProfileUpdate}
+                    initialTab={profileModalInitialTab}
                   />
                 )}
 

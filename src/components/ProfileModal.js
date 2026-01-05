@@ -255,8 +255,8 @@ const COUNTRIES = [
   { code: 'ZW', name: 'Zimbabwe' }
 ];
 
-const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
-  const [activeTab, setActiveTab] = useState('profile');
+const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'profile' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [formData, setFormData] = useState({
     username: currentUser?.username || '',
     fullName: currentUser?.cv?.fullName || '',
