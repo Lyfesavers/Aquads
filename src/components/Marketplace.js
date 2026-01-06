@@ -28,6 +28,7 @@ import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
 import { getDisplayName } from '../utils/nameUtils';
+import MatchedJobsSection from './MatchedJobsSection';
 
 // Helper function for country flags - using images instead of emojis
 const CountryFlag = ({ countryCode }) => {
@@ -141,6 +142,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileModalInitialTab, setProfileModalInitialTab] = useState('profile');
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
@@ -1364,6 +1366,34 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             </div>
           )}
 
+          {/* Matched Jobs Section - Show for logged-in freelancers below How It Works */}
+          {!showJobs && currentUser?.userType === 'freelancer' && (
+            <MatchedJobsSection 
+              currentUser={currentUser} 
+              onOpenCV={() => {
+                setProfileModalInitialTab('cv');
+                setShowProfileModal(true);
+              }}
+              onViewJobs={() => {
+                setShowJobs(true);
+              }}
+              onViewJob={(jobId) => {
+                setShowJobs(true);
+                // Scroll to the job after a short delay to allow render
+                setTimeout(() => {
+                  const jobElement = document.querySelector(`[data-job-id="${jobId}"]`);
+                  if (jobElement) {
+                    jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    jobElement.classList.add('ring-2', 'ring-blue-500');
+                    setTimeout(() => {
+                      jobElement.classList.remove('ring-2', 'ring-blue-500');
+                    }, 3000);
+                  }
+                }, 300);
+              }}
+            />
+          )}
+
           {/* Featured Services */}
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -1802,8 +1832,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       {showProfileModal && currentUser && (
         <ProfileModal
           currentUser={currentUser}
-          onClose={() => setShowProfileModal(false)}
+          onClose={() => {
+            setShowProfileModal(false);
+            setProfileModalInitialTab('profile'); // Reset to default tab
+          }}
           onProfileUpdate={handleProfileUpdate}
+          initialTab={profileModalInitialTab}
         />
       )}
 

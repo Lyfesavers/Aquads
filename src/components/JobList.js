@@ -49,6 +49,7 @@ Best regards,
       {jobs.map((job) => (
         <div
           key={job._id}
+          data-job-id={job._id}
           className={`${
             job.status === 'expired' 
               ? 'bg-gray-800/30 border-red-900/30' 

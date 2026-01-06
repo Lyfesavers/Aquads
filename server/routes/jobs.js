@@ -4,11 +4,53 @@ const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
+const { findMatchingJobs, canMatchJobs } = require('../utils/jobMatcher');
 
 // Debug route
 router.get('/test', (req, res) => {
 
   res.json({ message: 'Jobs API is working' });
+});
+
+// Get matched jobs for a freelancer based on their CV skills
+router.get('/matched', auth, async (req, res) => {
+  try {
+    // Get the current user with CV data
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user can match jobs (has CV data)
+    const matchStatus = canMatchJobs(user);
+    if (!matchStatus.canMatch) {
+      return res.json({ 
+        matched: [],
+        canMatch: false,
+        reason: matchStatus.reason
+      });
+    }
+    
+    // Get all active jobs
+    const jobs = await Job.find({ status: 'active' })
+      .sort({ createdAt: -1 })
+      .limit(500); // Process up to 500 jobs for matching
+    
+    // Find matching jobs (default 3)
+    const limit = parseInt(req.query.limit) || 3;
+    const matchedJobs = findMatchingJobs(user, jobs, limit);
+    
+    res.json({
+      matched: matchedJobs,
+      canMatch: true,
+      keywordCount: matchStatus.keywordCount
+    });
+    
+  } catch (error) {
+    console.error('Error getting matched jobs:', error);
+    res.status(500).json({ error: 'Failed to get matched jobs' });
+  }
 });
 
 // Get all jobs

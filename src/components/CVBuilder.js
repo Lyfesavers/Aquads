@@ -662,6 +662,20 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           Skills
         </h4>
         
+        {/* Job Matching Notice */}
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <div className="flex items-start gap-2">
+            <span className="text-blue-400 text-lg">💼</span>
+            <div>
+              <p className="text-blue-300 text-sm font-medium">Job Matching Powered by Your Skills</p>
+              <p className="text-gray-400 text-xs mt-1">
+                The skills you add here are used to match you with relevant jobs from our job board. 
+                Add all your skills, technologies, and areas of expertise for better job matches!
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="flex gap-2 mb-4">
           <input
             type="text"
