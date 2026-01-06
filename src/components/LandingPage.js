@@ -209,8 +209,38 @@ const AnimatedCounter = ({ value, suffix = '', prefix = '' }) => {
   );
 };
 
-// Main orb component for hero
-const HeroOrb = ({ side, onClick, label, sublabel, icon }) => (
+// Custom SVG icons for hero sections
+const ProjectsIcon = () => (
+  <svg viewBox="0 0 64 64" fill="none" className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24">
+    {/* Chart bars */}
+    <rect x="8" y="32" width="10" height="24" rx="2" fill="currentColor" opacity="0.9"/>
+    <rect x="22" y="20" width="10" height="36" rx="2" fill="currentColor" opacity="0.7"/>
+    <rect x="36" y="28" width="10" height="28" rx="2" fill="currentColor" opacity="0.8"/>
+    <rect x="50" y="12" width="10" height="44" rx="2" fill="currentColor" opacity="1"/>
+    {/* Trend line */}
+    <path d="M8 28 L22 16 L36 22 L55 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.6"/>
+    <circle cx="55" cy="8" r="4" fill="currentColor"/>
+  </svg>
+);
+
+const FreelancersIcon = () => (
+  <svg viewBox="0 0 64 64" fill="none" className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24">
+    {/* Center person */}
+    <circle cx="32" cy="18" r="10" fill="currentColor" opacity="0.9"/>
+    <path d="M16 52 C16 40 24 32 32 32 C40 32 48 40 48 52" fill="currentColor" opacity="0.9"/>
+    {/* Left person */}
+    <circle cx="12" cy="26" r="7" fill="currentColor" opacity="0.5"/>
+    <path d="M2 48 C2 40 6 34 12 34 C18 34 22 40 22 48" fill="currentColor" opacity="0.5"/>
+    {/* Right person */}
+    <circle cx="52" cy="26" r="7" fill="currentColor" opacity="0.5"/>
+    <path d="M42 48 C42 40 46 34 52 34 C58 34 62 40 62 48" fill="currentColor" opacity="0.5"/>
+    {/* Connection lines */}
+    <path d="M20 30 L26 26 M44 30 L38 26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+  </svg>
+);
+
+// Main orb component for hero - Triangle design
+const HeroOrb = ({ side, onClick, label, sublabel }) => (
   <motion.div
     className={`
       relative flex-1 h-full flex items-center justify-center cursor-pointer
@@ -219,18 +249,12 @@ const HeroOrb = ({ side, onClick, label, sublabel, icon }) => (
     whileHover={{ scale: 1.02 }}
     onClick={onClick}
   >
-    {/* Large central orb */}
+    {/* Large central triangle container */}
     <motion.div
-      className={`
-        absolute w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full
-        ${side === 'left' 
-          ? 'bg-gradient-to-br from-cyan-400/20 via-teal-500/10 to-transparent' 
-          : 'bg-gradient-to-bl from-purple-400/20 via-fuchsia-500/10 to-transparent'
-        }
-      `}
+      className="absolute w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 flex items-center justify-center"
       animate={{
         scale: [1, 1.05, 0.98, 1],
-        rotate: side === 'left' ? [0, 10, -5, 0] : [0, -10, 5, 0],
+        rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
       }}
       transition={{
         duration: 8,
@@ -238,34 +262,70 @@ const HeroOrb = ({ side, onClick, label, sublabel, icon }) => (
         ease: "easeInOut"
       }}
     >
-      {/* Inner glow */}
-      <div className={`
-        absolute inset-8 rounded-full blur-xl
-        ${side === 'left' ? 'bg-cyan-500/30' : 'bg-purple-500/30'}
-      `} />
-      
-      {/* Core */}
-      <motion.div
-        className={`
-          absolute inset-16 rounded-full
-          ${side === 'left' 
-            ? 'bg-gradient-to-br from-cyan-400 via-teal-500 to-cyan-600' 
-            : 'bg-gradient-to-bl from-purple-400 via-fuchsia-500 to-purple-600'
-          }
-          shadow-2xl
-        `}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        style={{
-          boxShadow: side === 'left' 
-            ? '0 0 60px rgba(34, 211, 238, 0.5), inset 0 0 60px rgba(34, 211, 238, 0.3)'
-            : '0 0 60px rgba(192, 132, 252, 0.5), inset 0 0 60px rgba(192, 132, 252, 0.3)'
-        }}
+      {/* Outer glow triangle */}
+      <svg 
+        viewBox="0 0 200 200" 
+        className="absolute w-full h-full"
+        style={{ filter: `drop-shadow(0 0 40px ${side === 'left' ? 'rgba(34, 211, 238, 0.4)' : 'rgba(192, 132, 252, 0.4)'})` }}
       >
-        {/* Icon in center */}
-        <div className="absolute inset-0 flex items-center justify-center text-6xl md:text-7xl lg:text-8xl text-white/90">
-          {icon}
-        </div>
+        <defs>
+          <linearGradient id={`gradient-outer-${side}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={side === 'left' ? '#22d3ee' : '#c084fc'} stopOpacity="0.2"/>
+            <stop offset="100%" stopColor={side === 'left' ? '#14b8a6' : '#a855f7'} stopOpacity="0.05"/>
+          </linearGradient>
+        </defs>
+        <polygon 
+          points="100,15 185,170 15,170" 
+          fill={`url(#gradient-outer-${side})`}
+          stroke={side === 'left' ? 'rgba(34, 211, 238, 0.3)' : 'rgba(192, 132, 252, 0.3)'}
+          strokeWidth="1"
+        />
+      </svg>
+      
+      {/* Inner glow */}
+      <div 
+        className="absolute w-3/4 h-3/4 blur-2xl"
+        style={{
+          background: side === 'left' 
+            ? 'radial-gradient(circle, rgba(34, 211, 238, 0.3) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(192, 132, 252, 0.3) 0%, transparent 70%)'
+        }}
+      />
+      
+      {/* Core triangle */}
+      <motion.div
+        className="absolute w-1/2 h-1/2 flex items-center justify-center"
+        animate={{ rotate: side === 'left' ? [0, 360] : [360, 0] }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+      >
+        <svg 
+          viewBox="0 0 200 200" 
+          className="w-full h-full"
+          style={{ 
+            filter: `drop-shadow(0 0 30px ${side === 'left' ? 'rgba(34, 211, 238, 0.6)' : 'rgba(192, 132, 252, 0.6)'})` 
+          }}
+        >
+          <defs>
+            <linearGradient id={`gradient-inner-${side}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={side === 'left' ? '#22d3ee' : '#c084fc'}/>
+              <stop offset="50%" stopColor={side === 'left' ? '#14b8a6' : '#a855f7'}/>
+              <stop offset="100%" stopColor={side === 'left' ? '#06b6d4' : '#9333ea'}/>
+            </linearGradient>
+          </defs>
+          <polygon 
+            points="100,20 180,165 20,165" 
+            fill={`url(#gradient-inner-${side})`}
+          />
+        </svg>
+      </motion.div>
+      
+      {/* Icon in center - counter-rotate to stay upright */}
+      <motion.div 
+        className={`absolute flex items-center justify-center ${side === 'left' ? 'text-cyan-100' : 'text-purple-100'}`}
+        animate={{ rotate: side === 'left' ? [0, -360] : [-360, 0] }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+      >
+        {side === 'left' ? <ProjectsIcon /> : <FreelancersIcon />}
       </motion.div>
     </motion.div>
 
@@ -566,25 +626,8 @@ const LandingPage = () => {
         className="relative h-screen flex"
         style={{ opacity: heroOpacity }}
       >
-        {/* Center divider with logo */}
+        {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.8, duration: 0.8, type: "spring" }}
-        >
-          <div className="relative">
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-xl opacity-50"
-              animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-900 border-2 border-white/20 flex items-center justify-center backdrop-blur-xl">
-              <span className="text-3xl md:text-4xl">🌊</span>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Left side - Projects */}
         <Link to="/home" className="flex-1 h-full">
@@ -592,7 +635,6 @@ const LandingPage = () => {
             side="left"
             label="PROJECTS"
             sublabel="Discover & Promote Crypto Projects"
-            icon="📊"
           />
         </Link>
 
@@ -602,7 +644,6 @@ const LandingPage = () => {
             side="right"
             label="FREELANCERS"
             sublabel="Web3's Premier Talent Marketplace"
-            icon="👥"
           />
         </Link>
 
