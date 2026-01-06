@@ -1,8 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo } from 'react-icons/fa';
 
-const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired }) => {
+const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired, highlightedJobId, onHighlightComplete }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
+
+  // Auto-expand and scroll to highlighted job when it changes
+  useEffect(() => {
+    if (highlightedJobId) {
+      setExpandedJobId(highlightedJobId);
+      // Scroll to the job after a short delay to allow render
+      setTimeout(() => {
+        const jobElement = document.querySelector(`[data-job-id="${highlightedJobId}"]`);
+        if (jobElement) {
+          jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          jobElement.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2', 'ring-offset-gray-900');
+          setTimeout(() => {
+            jobElement.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2', 'ring-offset-gray-900');
+            // Clear the highlighted job ID after animation
+            if (onHighlightComplete) {
+              onHighlightComplete();
+            }
+          }, 3000);
+        }
+      }, 100);
+    }
+  }, [highlightedJobId, onHighlightComplete]);
 
   const toggleExpand = (jobId) => {
     setExpandedJobId(expandedJobId === jobId ? null : jobId);

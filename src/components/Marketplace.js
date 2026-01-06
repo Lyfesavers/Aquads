@@ -143,6 +143,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [error, setError] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileModalInitialTab, setProfileModalInitialTab] = useState('profile');
+  const [highlightedJobId, setHighlightedJobId] = useState(null);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
@@ -1375,21 +1376,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 setShowProfileModal(true);
               }}
               onViewJobs={() => {
+                setHighlightedJobId(null); // Clear any previous highlight
                 setShowJobs(true);
               }}
               onViewJob={(jobId) => {
+                setHighlightedJobId(jobId);
                 setShowJobs(true);
-                // Scroll to the job after a short delay to allow render
-                setTimeout(() => {
-                  const jobElement = document.querySelector(`[data-job-id="${jobId}"]`);
-                  if (jobElement) {
-                    jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    jobElement.classList.add('ring-2', 'ring-blue-500');
-                    setTimeout(() => {
-                      jobElement.classList.remove('ring-2', 'ring-blue-500');
-                    }, 3000);
-                  }
-                }, 300);
               }}
             />
           )}
@@ -1451,6 +1443,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                         onDeleteJob={handleDeleteJob}
                         onRefreshJob={handleRefreshJob}
                         onLoginRequired={handleLoginClick}
+                        highlightedJobId={highlightedJobId}
+                        onHighlightComplete={() => setHighlightedJobId(null)}
                       />
                       {jobsPagination?.hasMore && (
                         <div className="mt-6 text-center">
