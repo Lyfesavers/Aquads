@@ -51,7 +51,20 @@ const SkillTestResults = ({ results, test, onClose }) => {
                 <FaCheckCircle className="text-green-400" />
                 <span>{results.correctAnswers} / {results.totalQuestions} correct</span>
               </div>
+              {results.attempts > 1 && (
+                <div className="flex items-center space-x-2">
+                  <span>Attempt #{results.attempts}</span>
+                </div>
+              )}
             </div>
+            
+            {/* Show best score on retakes */}
+            {results.isRetake && results.bestScore !== undefined && (
+              <div className="mt-3 text-sm">
+                <span className="text-gray-400">Best Score: </span>
+                <span className={getScoreColor(results.bestScore)}>{results.bestScore}%</span>
+              </div>
+            )}
           </div>
 
           {/* Pass/Fail Status */}

@@ -93,12 +93,6 @@ router.post('/:testId/submit', auth, async (req, res) => {
       return res.status(404).json({ error: 'Test not found' });
     }
 
-    // Check if user already completed this test
-    const existingCompletion = await UserSkillTest.findOne({ userId, testId });
-    if (existingCompletion) {
-      return res.status(400).json({ error: 'Test already completed' });
-    }
-
     // Validate served question indices
     if (!servedQuestionIndices || !Array.isArray(servedQuestionIndices)) {
       return res.status(400).json({ error: 'Invalid test submission - missing question indices' });
@@ -136,25 +130,63 @@ router.post('/:testId/submit', auth, async (req, res) => {
     const score = Math.round((correctAnswers / questionsServed) * 100);
     const passed = score >= test.passingScore;
 
-    // Create completion record with served question indices
-    const completion = new UserSkillTest({
-      userId,
-      testId,
-      score,
-      totalQuestions: questionsServed,
-      correctAnswers,
-      timeTaken,
-      passed,
-      badgeEarned: passed ? test.badge : null,
-      answers: gradedAnswers,
-      servedQuestionIndices, // Store which questions were served
-      bestScore: score
-    });
+    // Check if user already completed this test (for retake handling)
+    const existingCompletion = await UserSkillTest.findOne({ userId, testId });
+    
+    let completion;
+    let isRetake = false;
+    let newBadgeEarned = false;
+    
+    if (existingCompletion) {
+      // This is a retake - update existing record
+      isRetake = true;
+      const newBestScore = Math.max(existingCompletion.bestScore || existingCompletion.score, score);
+      
+      // Check if this is the first time passing (for badge award)
+      const wasAlreadyPassed = existingCompletion.passed;
+      newBadgeEarned = passed && !wasAlreadyPassed;
+      
+      existingCompletion.score = score;
+      existingCompletion.totalQuestions = questionsServed;
+      existingCompletion.correctAnswers = correctAnswers;
+      existingCompletion.timeTaken = timeTaken;
+      existingCompletion.passed = existingCompletion.passed || passed; // Once passed, stays passed
+      existingCompletion.answers = gradedAnswers;
+      existingCompletion.servedQuestionIndices = servedQuestionIndices;
+      existingCompletion.attempts = (existingCompletion.attempts || 1) + 1;
+      existingCompletion.bestScore = newBestScore;
+      existingCompletion.completedAt = new Date();
+      
+      // Only update badge if this is first time passing
+      if (newBadgeEarned) {
+        existingCompletion.badgeEarned = test.badge;
+      }
+      
+      await existingCompletion.save();
+      completion = existingCompletion;
+    } else {
+      // First attempt - create new completion record
+      completion = new UserSkillTest({
+        userId,
+        testId,
+        score,
+        totalQuestions: questionsServed,
+        correctAnswers,
+        timeTaken,
+        passed,
+        badgeEarned: passed ? test.badge : null,
+        answers: gradedAnswers,
+        servedQuestionIndices,
+        attempts: 1,
+        bestScore: score
+      });
 
-    await completion.save();
+      await completion.save();
+      newBadgeEarned = passed;
+    }
 
-    // If passed, add badge to user profile
-    if (passed) {
+    // If passed for the first time, add badge to user profile
+    if (newBadgeEarned) {
       await User.findByIdAndUpdate(userId, {
         $push: {
           skillBadges: {
@@ -176,7 +208,10 @@ router.post('/:testId/submit', auth, async (req, res) => {
       correctAnswers,
       passed,
       timeTaken,
-      badgeEarned: passed ? test.badge : null,
+      badgeEarned: newBadgeEarned ? test.badge : null,
+      isRetake,
+      attempts: completion.attempts,
+      bestScore: completion.bestScore,
       answers: gradedAnswers.map((answer, displayIndex) => ({
         displayIndex,
         questionIndex: answer.questionIndex,
