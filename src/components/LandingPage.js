@@ -79,7 +79,7 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     className={`
       relative overflow-hidden rounded-2xl border border-white/10
       backdrop-blur-xl bg-gradient-to-br ${gradient}
-      ${size === 'large' ? 'col-span-1 md:col-span-2 md:row-span-2 p-4 sm:p-6 md:p-8' : size === 'wide' ? 'col-span-1 md:col-span-2 p-4 sm:p-6' : 'p-4 sm:p-6'}
+      ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-4 md:p-6'}
       group cursor-pointer
     `}
   >
@@ -90,9 +90,9 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     
     {/* Content */}
     <div className="relative z-10 h-full flex flex-col">
-      <div className="text-3xl sm:text-4xl mb-2 sm:mb-4">{icon}</div>
-      <h3 className={`${size === 'large' ? 'text-lg sm:text-xl md:text-2xl' : 'text-base sm:text-lg md:text-xl'} font-bold text-white mb-1 sm:mb-2 font-display`}>{title}</h3>
-      <p className={`text-gray-400 ${size === 'large' ? 'text-sm md:text-base' : 'text-xs sm:text-sm'} leading-relaxed`}>{description}</p>
+      <div className="text-2xl md:text-4xl mb-2 md:mb-4">{icon}</div>
+      <h3 className={`${size === 'large' ? 'text-base md:text-2xl' : 'text-sm md:text-xl'} font-bold text-white mb-1 md:mb-2 font-display`}>{title}</h3>
+      <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed`}>{description}</p>
       
       {/* Visual infographic for On-Chain Resume - hidden on small screens */}
       {hasVisual && (
@@ -243,7 +243,7 @@ const FreelancersIcon = () => (
 const HeroOrb = ({ side, onClick, label, sublabel }) => (
   <motion.div
     className={`
-      relative flex-1 min-h-[50vh] md:h-full flex items-center justify-center cursor-pointer
+      relative flex-1 h-full flex items-center justify-center cursor-pointer
       ${side === 'left' ? 'bg-gradient-to-br from-cyan-950/50 via-slate-950 to-slate-950' : 'bg-gradient-to-bl from-purple-950/50 via-slate-950 to-slate-950'}
     `}
     whileHover={{ scale: 1.02 }}
@@ -251,7 +251,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
   >
     {/* Large central triangle container */}
     <motion.div
-      className="absolute w-40 h-40 sm:w-56 sm:h-56 md:w-80 md:h-80 lg:w-96 lg:h-96 flex items-center justify-center"
+      className="absolute w-44 h-44 xs:w-52 xs:h-52 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 flex items-center justify-center"
       animate={{
         scale: [1, 1.05, 0.98, 1],
         rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
@@ -330,9 +330,9 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     </motion.div>
 
     {/* Labels */}
-    <div className="absolute bottom-20 sm:bottom-24 md:bottom-28 left-0 right-0 text-center px-4">
+    <div className="absolute bottom-16 md:bottom-24 left-0 right-0 text-center px-2">
       <motion.h2 
-        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-1 sm:mb-2 tracking-tight"
+        className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-1 md:mb-2 tracking-tight"
         style={{ fontFamily: "'Clash Display', 'Space Grotesk', sans-serif" }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -341,7 +341,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
         {label}
       </motion.h2>
       <motion.p
-        className="text-gray-400 text-xs sm:text-sm md:text-base hidden sm:block"
+        className="text-gray-400 text-[10px] xs:text-xs sm:text-sm md:text-base"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
@@ -353,8 +353,8 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     {/* Click indicator */}
     <motion.div
       className={`
-        absolute bottom-4 sm:bottom-8 md:bottom-12 left-1/2 -translate-x-1/2
-        px-4 sm:px-6 py-2 sm:py-3 rounded-full border backdrop-blur-sm
+        absolute bottom-4 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
+        px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-3 rounded-full border backdrop-blur-sm
         ${side === 'left' 
           ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20' 
           : 'border-purple-500/50 text-purple-400 hover:bg-purple-500/20'
@@ -364,7 +364,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <span className="font-semibold text-xs sm:text-sm md:text-base">Enter →</span>
+      <span className="font-semibold text-[10px] xs:text-xs sm:text-sm md:text-base">Enter →</span>
     </motion.div>
 
     {/* Floating particles */}
@@ -621,17 +621,16 @@ const LandingPage = () => {
         </div>
       </motion.nav>
 
-      {/* Hero Section - Split Screen (stacks on mobile) */}
+      {/* Hero Section - Split Screen */}
       <motion.section 
-        className="relative min-h-screen flex flex-col md:flex-row"
+        className="relative h-screen flex"
         style={{ opacity: heroOpacity }}
       >
-        {/* Center divider line - horizontal on mobile, vertical on desktop */}
-        <div className="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
-        <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent z-20" />
+        {/* Center divider line */}
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
 
-        {/* Top/Left side - Projects */}
-        <Link to="/home" className="flex-1 min-h-[50vh] md:h-full">
+        {/* Left side - Projects */}
+        <Link to="/home" className="flex-1 h-full">
           <HeroOrb 
             side="left"
             label="PROJECTS"
@@ -639,8 +638,8 @@ const LandingPage = () => {
           />
         </Link>
 
-        {/* Bottom/Right side - Freelancers */}
-        <Link to="/marketplace" className="flex-1 min-h-[50vh] md:h-full">
+        {/* Right side - Freelancers */}
+        <Link to="/marketplace" className="flex-1 h-full">
           <HeroOrb 
             side="right"
             label="FREELANCERS"
@@ -648,13 +647,13 @@ const LandingPage = () => {
           />
         </Link>
 
-        {/* Scroll indicator - hidden on mobile since it's already full height */}
+        {/* Scroll indicator */}
         <motion.div
-          className="hidden md:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex-col items-center gap-2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <span className="text-gray-500 text-xs tracking-widest uppercase">Scroll to Explore</span>
+          <span className="text-gray-500 text-xs tracking-widest uppercase hidden sm:block">Scroll to Explore</span>
           <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
@@ -662,7 +661,7 @@ const LandingPage = () => {
       </motion.section>
 
       {/* Tagline Section */}
-      <section className="relative min-h-[50vh] md:min-h-[70vh] flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+      <section className="relative min-h-[70vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -670,12 +669,12 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 sm:mb-6 leading-tight font-display">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 md:mb-6 leading-tight font-display">
               The <span className="text-gradient-cyan">Web3</span> Hub for
               <br />
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
-            <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 sm:mb-8 leading-relaxed px-2">
+            <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains. 
               100% free to get started.
             </p>
@@ -683,7 +682,7 @@ const LandingPage = () => {
 
           {/* Stats */}
           <motion.div
-            className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 md:gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -692,13 +691,13 @@ const LandingPage = () => {
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
-                className="relative p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm"
+                className="relative p-3 md:p-6 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm"
                 whileHover={{ scale: 1.05, borderColor: 'rgba(34, 211, 238, 0.5)' }}
               >
-                <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gradient-gold mb-1 sm:mb-2">
+                <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gradient-gold mb-1 md:mb-2">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
                 </div>
-                <div className="text-gray-500 text-xs sm:text-sm">{stat.label}</div>
+                <div className="text-gray-500 text-[10px] sm:text-xs md:text-sm">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -706,28 +705,28 @@ const LandingPage = () => {
       </section>
 
       {/* Features Bento Grid */}
-      <section className="relative px-4 sm:px-6 py-8 sm:py-12">
+      <section className="relative px-4 md:px-6 py-8 md:py-12">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-6 sm:mb-10"
+            className="text-center mb-6 md:mb-10"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-2 sm:mb-3 font-display">
+            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-2 md:mb-3 font-display">
               Everything You Need
             </h2>
-            <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
+            <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
               A complete ecosystem for Web3 projects and professionals
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-fr">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-fr">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
                 {...feature}
-                delay={index * 0.05}
+                delay={index * 0.1}
               />
             ))}
           </div>
@@ -735,7 +734,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative min-h-[30vh] sm:min-h-[40vh] flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+      <section className="relative min-h-[40vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
         <motion.div
           className="text-center"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -743,14 +742,14 @@ const LandingPage = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-4 sm:mb-6 font-display">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-4 md:mb-6 font-display">
             Ready to <span className="text-gradient-cyan">Dive In</span>?
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
             <Link to="/home">
               <motion.button
-                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm sm:text-lg glow-cyan"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-lg glow-cyan"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(34, 211, 238, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -760,7 +759,7 @@ const LandingPage = () => {
             
             <Link to="/marketplace">
               <motion.button
-                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold text-sm sm:text-lg glow-purple"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold text-sm md:text-lg glow-purple"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(192, 132, 252, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -770,34 +769,34 @@ const LandingPage = () => {
           </div>
 
           <motion.p
-            className="mt-4 sm:mt-8 text-gray-500 text-xs sm:text-sm px-4"
+            className="mt-6 md:mt-8 text-gray-500 text-[10px] sm:text-xs md:text-sm"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
           >
-            No wallet required • Free to list • Free profiles
+            No wallet required to browse • Free to list projects • Free to create freelancer profiles
           </motion.p>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-white/10 px-4 sm:px-6 py-8 sm:py-12">
+      <footer className="relative border-t border-white/10 px-4 md:px-6 py-8 md:py-12">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+            <div className="flex items-center gap-2 md:gap-3">
               <img 
                 src="/Aquadsnewlogo.png" 
                 alt="AQUADS" 
-                className="h-6 sm:h-8 w-auto"
+                className="h-6 md:h-8 w-auto"
               />
-              <span className="text-gray-400 text-xs sm:text-sm">© 2025 Aquads. All rights reserved.</span>
+              <span className="text-gray-400 text-[10px] sm:text-xs md:text-sm">© 2025 Aquads. All rights reserved.</span>
             </div>
             
-            <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center">
-              <Link to="/terms" className="text-gray-500 hover:text-white text-xs sm:text-sm transition-colors">Terms</Link>
-              <Link to="/privacy" className="text-gray-500 hover:text-white text-xs sm:text-sm transition-colors">Privacy</Link>
-              <Link to="/whitepaper" className="text-gray-500 hover:text-white text-xs sm:text-sm transition-colors hidden sm:inline">Whitepaper</Link>
+            <div className="flex items-center gap-3 md:gap-6">
+              <Link to="/terms" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Terms</Link>
+              <Link to="/privacy" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Privacy</Link>
+              <Link to="/whitepaper" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Whitepaper</Link>
               <a 
                 href="https://twitter.com/AquadsHQ" 
                 target="_blank" 
