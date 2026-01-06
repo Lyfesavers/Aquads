@@ -1379,9 +1379,36 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 setHighlightedJobId(null); // Clear any previous highlight
                 setShowJobs(true);
               }}
-              onViewJob={(jobId) => {
-                setHighlightedJobId(jobId);
-                setShowJobs(true);
+              onViewJob={async (jobId) => {
+                // Check if job is in currently loaded jobs
+                const jobExists = jobs.some(j => j._id === jobId);
+                
+                if (jobExists) {
+                  // Job is already loaded, just highlight it
+                  setHighlightedJobId(jobId);
+                  setShowJobs(true);
+                } else {
+                  // Job is not loaded (might be on a later page), fetch more jobs
+                  try {
+                    setIsLoading(prev => ({ ...prev, jobs: true }));
+                    // Fetch a larger batch to find the job (up to 200 jobs)
+                    const response = await fetchJobs(false, 1, 200);
+                    const allJobs = response.jobs || response;
+                    setJobs(allJobs);
+                    setJobsPagination(response.pagination || null);
+                    setJobsPage(1);
+                    
+                    // Now highlight the job
+                    setHighlightedJobId(jobId);
+                    setShowJobs(true);
+                  } catch (error) {
+                    console.error('Error loading jobs for highlight:', error);
+                    // Still switch to jobs view even if loading fails
+                    setShowJobs(true);
+                  } finally {
+                    setIsLoading(prev => ({ ...prev, jobs: false }));
+                  }
+                }
               }}
             />
           )}
