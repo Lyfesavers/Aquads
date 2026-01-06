@@ -155,8 +155,8 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
         <div className="flex items-center gap-3">
           <FaBriefcase className="text-blue-400 text-xl" />
           <h2 className="text-xl font-bold text-white">Jobs Matched to Your Skills</h2>
-          <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full">
-            Based on your CV
+          <span className="px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-300 text-xs rounded-full border border-blue-500/30">
+            ✨ Powered by Aquads AI
           </span>
         </div>
         <button

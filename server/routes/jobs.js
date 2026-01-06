@@ -32,8 +32,15 @@ router.get('/matched', auth, async (req, res) => {
       });
     }
     
-    // Get all active jobs
-    const jobs = await Job.find({ status: 'active' })
+    // Calculate date 1 week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    // Get active jobs from the last week only
+    const jobs = await Job.find({ 
+      status: 'active',
+      createdAt: { $gte: oneWeekAgo }
+    })
       .sort({ createdAt: -1 })
       .limit(500); // Process up to 500 jobs for matching
     
