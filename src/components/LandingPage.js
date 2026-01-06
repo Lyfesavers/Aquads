@@ -69,7 +69,7 @@ const GridLine = ({ vertical, position }) => (
 );
 
 // Feature card for bento grid
-const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal' }) => (
+const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal', hasVisual = false }) => (
   <motion.div
     initial={{ opacity: 0, y: 30 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -89,10 +89,71 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     </div>
     
     {/* Content */}
-    <div className="relative z-10">
+    <div className="relative z-10 h-full flex flex-col">
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-xl font-bold text-white mb-2 font-display">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+      <h3 className={`${size === 'large' ? 'text-2xl' : 'text-xl'} font-bold text-white mb-2 font-display`}>{title}</h3>
+      <p className={`text-gray-400 ${size === 'large' ? 'text-base' : 'text-sm'} leading-relaxed`}>{description}</p>
+      
+      {/* Visual infographic for On-Chain Resume */}
+      {hasVisual && (
+        <div className="mt-6 flex-1 flex items-center justify-center">
+          <div className="relative w-full max-w-xs">
+            {/* Blockchain visual representation */}
+            <div className="flex flex-col gap-3">
+              {/* Chain blocks */}
+              {[
+                { label: 'Skills Verified', icon: '✓', color: 'from-emerald-500 to-teal-500' },
+                { label: 'Work History', icon: '📋', color: 'from-blue-500 to-cyan-500' },
+                { label: 'Reputation', icon: '⭐', color: 'from-amber-500 to-yellow-500' }
+              ].map((block, i) => (
+                <motion.div
+                  key={block.label}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.15 }}
+                  className="relative"
+                >
+                  <div className={`
+                    flex items-center gap-3 p-3 rounded-lg 
+                    bg-gradient-to-r ${block.color} bg-opacity-20
+                    border border-white/10 backdrop-blur-sm
+                  `}>
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-xl">
+                      {block.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-medium text-sm">{block.label}</div>
+                      <div className="text-gray-400 text-xs">On-Chain Attestation</div>
+                    </div>
+                    <div className="text-emerald-400">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  {/* Chain connector */}
+                  {i < 2 && (
+                    <div className="absolute left-5 -bottom-3 w-0.5 h-3 bg-gradient-to-b from-emerald-500/50 to-transparent" />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* Base chain badge */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400"
+            >
+              <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-white">B</span>
+              </div>
+              <span>Powered by Base & EAS</span>
+            </motion.div>
+          </div>
+        </div>
+      )}
     </div>
     
     {/* Corner accent */}
@@ -284,11 +345,12 @@ const LandingPage = () => {
 
   const features = [
     {
-      icon: '🔮',
-      title: 'Dynamic Token Bubbles',
-      description: 'Interactive visualization of crypto projects. Watch tokens grow based on community engagement.',
-      gradient: 'from-cyan-900/40 to-slate-900/80',
-      size: 'large'
+      icon: '🔗',
+      title: 'On-Chain Resume',
+      description: 'World\'s first blockchain-verified freelancer credentials. Your skills, reputation, and work history permanently stored on Base via Ethereum Attestation Service. Portable, tamper-proof, and truly yours.',
+      gradient: 'from-emerald-900/40 to-slate-900/80',
+      size: 'large',
+      hasVisual: true
     },
     {
       icon: '⚡',
@@ -297,10 +359,10 @@ const LandingPage = () => {
       gradient: 'from-purple-900/40 to-slate-900/80'
     },
     {
-      icon: '🔗',
-      title: 'On-Chain Resume',
-      description: 'Blockchain-verified credentials using Ethereum Attestation Service.',
-      gradient: 'from-emerald-900/40 to-slate-900/80'
+      icon: '🔮',
+      title: 'Dynamic Token Bubbles',
+      description: 'Interactive visualization of crypto projects based on community engagement.',
+      gradient: 'from-cyan-900/40 to-slate-900/80'
     },
     {
       icon: '🎮',
@@ -495,14 +557,6 @@ const LandingPage = () => {
             >
               Swap
             </Link>
-            <motion.button
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-sm font-medium"
-              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(34, 211, 238, 0.5)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-            >
-              Explore Platform
-            </motion.button>
           </div>
         </div>
       </motion.nav>
@@ -566,7 +620,7 @@ const LandingPage = () => {
       </motion.section>
 
       {/* Tagline Section */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
+      <section className="relative min-h-[70vh] flex items-center justify-center px-6 py-12">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -579,7 +633,7 @@ const LandingPage = () => {
               <br />
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains. 
               100% free to get started.
             </p>
@@ -610,15 +664,15 @@ const LandingPage = () => {
       </section>
 
       {/* Features Bento Grid */}
-      <section className="relative min-h-screen px-6 py-20">
+      <section className="relative px-6 py-12">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-display">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-3 font-display">
               Everything You Need
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -639,7 +693,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center px-6 py-20">
+      <section className="relative min-h-[40vh] flex items-center justify-center px-6 py-12">
         <motion.div
           className="text-center"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -647,7 +701,7 @@ const LandingPage = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl md:text-6xl font-black text-white mb-8 font-display">
+          <h2 className="text-4xl md:text-6xl font-black text-white mb-6 font-display">
             Ready to <span className="text-gradient-cyan">Dive In</span>?
           </h2>
           
