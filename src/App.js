@@ -74,6 +74,7 @@ import ServicePage from './components/ServicePage';
 import ExtensionAuth from './components/ExtensionAuth';
 import TelegramBot from './components/TelegramBot';
 import PublicResume from './components/PublicResume';
+import LandingPage from './components/LandingPage';
 
 window.Buffer = Buffer;
 
@@ -2407,7 +2408,8 @@ function App() {
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
-          <Route path="/" element={
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/home" element={
             <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
               {/* Background stays fixed */}
               <div className="fixed inset-0">
