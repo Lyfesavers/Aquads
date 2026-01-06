@@ -309,6 +309,32 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
   return null;
 };
 
+// Component to handle bubble layout when navigating to home page from landing page
+const HomeLayoutHandler = ({ arrangeDesktopGrid }) => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // When navigating to /home, reset flags and trigger layout
+    if (location.pathname === '/home') {
+      // Reset the layout flags so grid layout will run
+      window.initialLayoutApplied = false;
+      window.initialGridLayoutApplied = false;
+      window.isArrangingDesktopGrid = false;
+      
+      // Wait for DOM to be ready and bubbles to render, then arrange
+      const timer = setTimeout(() => {
+        if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
+          arrangeDesktopGrid();
+        }
+      }, 400);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, arrangeDesktopGrid]);
+  
+  return null;
+};
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -2364,6 +2390,7 @@ function App() {
           setShowProfileModal={setShowProfileModal}
           setProfileModalInitialTab={setProfileModalInitialTab}
         />
+        <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} />
         <Routes>
           <Route path="/extension-auth" element={<ExtensionAuth />} />
           <Route path="/marketplace" element={
