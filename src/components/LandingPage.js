@@ -330,10 +330,10 @@ const LandingPage = () => {
   ];
 
   const stats = [
-    { value: 5000, suffix: '+', label: 'Projects Listed' },
-    { value: 2500, suffix: '+', label: 'Verified Freelancers' },
-    { value: 150, prefix: '$', suffix: 'M+', label: 'Trading Volume' },
-    { value: 50, suffix: 'K+', label: 'Active Users' }
+    { value: 50, suffix: '+', label: 'Blockchains Supported' },
+    { value: 170, suffix: '+', label: 'Wallets Integrated' },
+    { value: 1000, suffix: '+', label: 'User Accounts' },
+    { value: 30, suffix: '+', label: 'Service Categories' }
   ];
 
   return (
@@ -575,13 +575,13 @@ const LandingPage = () => {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight font-display">
-              The <span className="text-gradient-cyan">Future</span> of Web3
+              The <span className="text-gradient-cyan">Web3</span> Hub for
               <br />
-              <span className="text-gradient-purple">Collaboration</span>
+              <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
             <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-              Where crypto projects find visibility and top-tier talent discovers opportunities. 
-              All in one decentralized ecosystem.
+              List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains. 
+              100% free to get started.
             </p>
           </motion.div>
 
@@ -680,7 +680,7 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
           >
-            No wallet required to browse • Create a free account to get started
+            No wallet required to browse • Free to list projects • Free to create freelancer profiles
           </motion.p>
         </motion.div>
       </section>
