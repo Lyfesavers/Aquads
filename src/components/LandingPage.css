@@ -358,6 +358,33 @@
   .aurora-bg {
     animation-duration: 30s;
   }
+  
+  /* Smaller blurs on mobile for performance */
+  .blur-3xl {
+    filter: blur(32px) !important;
+  }
+  
+  .blur-2xl {
+    filter: blur(24px) !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  /* Further reduce effects on small phones */
+  .blur-3xl {
+    filter: blur(16px) !important;
+  }
+  
+  .blur-2xl {
+    filter: blur(12px) !important;
+  }
+  
+  /* Simplify shadows */
+  .glow-cyan,
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2) !important;
+  }
 }
 
 /* Reduced motion preference */
