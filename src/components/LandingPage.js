@@ -795,10 +795,10 @@ const LandingPage = () => {
             
             <div className="flex items-center gap-3 md:gap-6">
               <Link to="/terms" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Terms</Link>
-              <Link to="/privacy" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Privacy</Link>
+              <Link to="/privacy-policy" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Privacy</Link>
               <Link to="/whitepaper" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Whitepaper</Link>
               <a 
-                href="https://twitter.com/AquadsHQ" 
+                href="https://x.com/_Aquads_" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-500 hover:text-cyan-400 transition-colors"
@@ -808,7 +808,7 @@ const LandingPage = () => {
                 </svg>
               </a>
               <a 
-                href="https://t.me/aquaborintern" 
+                href="https://t.me/+6rJbDLqdMxA3ZTUx" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-500 hover:text-cyan-400 transition-colors"
