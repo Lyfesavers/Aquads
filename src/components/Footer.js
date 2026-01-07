@@ -127,7 +127,7 @@ const Footer = () => {
                   <span>AquaFi</span>
                 </Link>
                 <Link
-                  to="/swap"
+                  to="/aquaswap"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
                   <FaCoins className="mr-2" />

@@ -612,10 +612,10 @@ const LandingPage = () => {
               Games
             </Link>
             <Link 
-              to="/swap"
+              to="/aquaswap"
               className="hidden md:block text-gray-400 hover:text-white transition-colors text-sm"
             >
-              Swap
+              AquaSwap
             </Link>
           </div>
         </div>
