@@ -675,8 +675,7 @@ const LandingPage = () => {
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains. 
-              100% free to get started.
+              List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
             </p>
           </motion.div>
 
@@ -775,7 +774,7 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
           >
-            No wallet required to browse • Free to list projects • Free to create freelancer profiles
+            No wallet required to browse • Free freelancer profiles
           </motion.p>
         </motion.div>
       </section>
