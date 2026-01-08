@@ -261,7 +261,7 @@ function calculateDistance(x1, y1, x2, y2) {
 const AuthContext = React.createContext();
 
 // Create a custom NavigationListener component to track navigation events
-const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMobile }) => {
+const NavigationListener = ({ onNavigate }) => {
   const location = useLocation();
   const prevLocationRef = useRef(location);
   
@@ -269,20 +269,9 @@ const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMo
     if (location.pathname !== prevLocationRef.current.pathname) {
       onNavigate();
       prevLocationRef.current = location;
-      
-      // Immediately arrange bubbles when returning to the main page
-      if (location.pathname === '/home') {
-        // Small timeout to ensure DOM is ready
-        setTimeout(() => {
-          if (window.innerWidth > 480) {
-            arrangeDesktopGrid();
-          } else {
-            adjustBubblesForMobile();
-          }
-        }, 50);
-      }
+      // Layout is handled by HomeLayoutHandler for /home navigation
     }
-  }, [location, onNavigate, arrangeDesktopGrid, adjustBubblesForMobile]);
+  }, [location, onNavigate]);
   
   return null;
 };
@@ -312,42 +301,52 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
 // Component to handle bubble layout when navigating to home page from landing page
 const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   const location = useLocation();
+  const hasNavigatedFromLanding = useRef(false);
   
   useEffect(() => {
-    // When navigating to /home, reset flags and trigger layout
+    // Only trigger layout when navigating TO /home (not on initial load)
+    // The initial load is handled by the initial load useEffects
     if (location.pathname === '/home') {
-      // Reset the layout flags so grid layout will run
-      window.initialLayoutApplied = false;
-      window.initialGridLayoutApplied = false;
-      window.isArrangingDesktopGrid = false;
-      window.skipNextLayoutUpdate = false;
-      
-      // Set flag to use smooth transitions for this layout
-      window.useSmoothLayoutTransition = true;
-      
-      // Wait for DOM to be ready and bubbles to render, then arrange
-      const timer = setTimeout(() => {
-        // Set smooth floating transition on all bubbles BEFORE arranging
-        const bubbles = document.querySelectorAll('.bubble-container');
-        bubbles.forEach(bubble => {
-          bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        });
-        
-        if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
-          // Desktop layout
-          arrangeDesktopGrid();
-        } else if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
-          // Mobile layout
-          adjustBubblesForMobile();
+      // Skip if this is initial page load (not navigation from landing)
+      // We detect this by checking if layout was already applied
+      if (window.initialLayoutApplied || window.initialGridLayoutApplied) {
+        // This is a navigation from another page, trigger smooth layout
+        if (!hasNavigatedFromLanding.current) {
+          hasNavigatedFromLanding.current = true;
+          
+          // Only reset the arrangement flag to allow re-layout
+          window.isArrangingDesktopGrid = false;
+          
+          // Set flag to use smooth transitions for this layout
+          window.useSmoothLayoutTransition = true;
+          
+          // Wait for DOM to be ready and bubbles to render, then arrange
+          const timer = setTimeout(() => {
+            // Set smooth floating transition on all bubbles BEFORE arranging
+            const bubbles = document.querySelectorAll('.bubble-container');
+            bubbles.forEach(bubble => {
+              bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            });
+            
+            if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
+              arrangeDesktopGrid();
+            } else if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
+              adjustBubblesForMobile();
+            }
+            
+            // Reset flag after animation completes
+            setTimeout(() => {
+              window.useSmoothLayoutTransition = false;
+              hasNavigatedFromLanding.current = false;
+            }, 1000);
+          }, 300);
+          
+          return () => clearTimeout(timer);
         }
-        
-        // Reset flag after animation completes
-        setTimeout(() => {
-          window.useSmoothLayoutTransition = false;
-        }, 1000);
-      }, 300);
-      
-      return () => clearTimeout(timer);
+      }
+    } else {
+      // Reset when leaving /home so we can detect navigation back
+      hasNavigatedFromLanding.current = false;
     }
   }, [location.pathname, arrangeDesktopGrid, adjustBubblesForMobile]);
   
@@ -2211,94 +2210,6 @@ function App() {
     };
   }, [ads]);
 
-  // Call immediately to fix desktop layout
-  // This ensures it runs before any React rendering completes
-  setTimeout(() => {
-    // Make sure this only runs on desktop
-    if (window.innerWidth > 480 && !window.initialGridLayoutApplied) {
-      // Set flag to prevent this from running multiple times
-      window.initialGridLayoutApplied = true;
-      
-      // Direct DOM manipulation to force proper grid layout
-      const bubbles = document.querySelectorAll('.bubble-container');
-      if (bubbles.length > 0) {
-        // Sort by bullish votes instead of just by ID
-        const bubblesArray = Array.from(bubbles);
-        
-        // Sort bubbles by bullish votes (highest to lowest)
-        const sortedBubbles = bubblesArray.sort((a, b) => {
-          // Get the corresponding ad for each bubble using the bubble ID
-          const adA = ads.find(ad => ad.id === a.id);
-          const adB = ads.find(ad => ad.id === b.id);
-          
-          // If we can't find the ad, put it at the end
-          if (!adA) return 1;
-          if (!adB) return -1;
-          
-          // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
-          if (adA.isBumped && !adB.isBumped) return -1;
-          if (!adA.isBumped && adB.isBumped) return 1;
-          
-          // Then sort by bullish votes (highest first)
-          return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
-        });
-        
-        // Get first bubble size to use as reference
-        const bubbleSize = parseInt(sortedBubbles[0].style.width) || 100;
-        
-        // Calculate columns based on screen width and height
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        
-        // Specific column counts for tested screen resolutions
-        let initialColumns;
-        
-        // Specific optimizations for known screen sizes based on user testing
-        if (screenWidth === 2560 && screenHeight === 1440) {
-          initialColumns = 15; // Optimized for 70 bubbles on 2560x1440
-        } else if (screenWidth === 1366 && screenHeight === 768) {
-          initialColumns = 9; // Optimized for 32 bubbles on 1366x768
-        } else if (screenWidth >= 2400) {
-          initialColumns = 16; // Similar to 2560x1440
-        } else if (screenWidth >= 1800) {
-          initialColumns = 14;
-        } else if (screenWidth >= 1440) {
-          initialColumns = 14;
-        } else if (screenWidth >= 1200) {
-          initialColumns = 8;
-        } else if (screenWidth >= 1000) {
-          initialColumns = 6;
-        } else {
-          initialColumns = 5;
-        }
-        
-        // Calculate margins and spacing
-        const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 10;
-        const initialVerticalMargin = 30;
-        
-        // Calculate available width and cell size
-        const initialAvailableWidth = screenWidth - (initialHorizontalMargin * 2);
-        const cellWidth = initialAvailableWidth / initialColumns;
-        
-        // Arrange in grid
-        sortedBubbles.forEach((bubble, index) => {
-          const row = Math.floor(index / initialColumns);
-          const column = index % initialColumns;
-          
-          // Center in grid cell
-          const x = initialHorizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
-          const y = TOP_PADDING + initialVerticalMargin + (row * (bubbleSize + initialVerticalMargin));
-          
-          // Set position
-          bubble.style.transform = `translate(${x}px, ${y}px)`;
-        });
-        
-        // Skip updating the model from this initial layout to prevent loops
-        window.skipNextModelUpdate = true;
-      }
-    }
-  }, 100);
-
   // Arrange bubbles in a clean grid for desktop
   function arrangeDesktopGrid() {
     // Only run on desktop
@@ -2441,8 +2352,6 @@ function App() {
                 });
             }
           }}
-          arrangeDesktopGrid={arrangeDesktopGrid}
-          adjustBubblesForMobile={adjustBubblesForMobile}
         />
         <ProfileTabHandler 
           currentUser={currentUser}
