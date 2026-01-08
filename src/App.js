@@ -271,7 +271,7 @@ const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMo
       prevLocationRef.current = location;
       
       // Immediately arrange bubbles when returning to the main page
-      if (location.pathname === '/') {
+      if (location.pathname === '/home') {
         // Small timeout to ensure DOM is ready
         setTimeout(() => {
           if (window.innerWidth > 480) {
@@ -2477,12 +2477,14 @@ function App() {
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                       <div className="flex items-center">
-                        <img 
-                          src="/Aquadsnewlogo.png" 
-                          alt="AQUADS" 
-                          className="w-auto filter drop-shadow-lg"
-                          style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
-                        />
+                        <Link to="/" className="flex items-center">
+                          <img 
+                            src="/Aquadsnewlogo.png" 
+                            alt="AQUADS" 
+                            className="w-auto filter drop-shadow-lg"
+                            style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                          />
+                        </Link>
                       </div>
                       
                       {/* Mobile menu button */}

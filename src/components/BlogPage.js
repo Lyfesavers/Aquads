@@ -441,7 +441,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="flex items-center">
+              <Link to="/home" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.png" 
                   alt="AQUADS" 
@@ -517,16 +517,16 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                     
                                          {/* Dropdown Menu */}
                      {showUserDropdown && (
-                       <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
-                         <div className="py-2">
-                           <button
-                             onClick={() => {
-                               navigate('/');
-                               setShowUserDropdown(false);
-                             }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
-                           >
-                             🏠 Back to Main
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              navigate('/home');
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                          >
+                            🏠 Back to Main
                            </button>
                            <button
                              onClick={() => {
@@ -634,14 +634,14 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                              {currentUser ? (
                  <>
                    <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                   <button
-                     onClick={() => {
-                       navigate('/');
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                   >
-                     Back to Main
+                  <button
+                    onClick={() => {
+                      navigate('/home');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                  >
+                    Back to Main
                    </button>
                    <button
                      onClick={() => {

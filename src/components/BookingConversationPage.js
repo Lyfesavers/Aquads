@@ -67,7 +67,7 @@ const BookingConversationPage = () => {
     // If window.close() doesn't work (some browsers prevent it), navigate back
     setTimeout(() => {
       if (!window.closed) {
-        navigate('/');
+        navigate('/home');
       }
     }, 100);
   };

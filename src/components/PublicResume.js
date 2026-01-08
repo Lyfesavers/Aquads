@@ -160,7 +160,7 @@ const PublicResume = () => {
           <h1 className="text-2xl font-bold text-white mb-2">Resume Not Found</h1>
           <p className="text-gray-400 mb-6">{error}</p>
           <Link 
-            to="/"
+            to="/home"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FaArrowLeft /> Back to Aquads
@@ -178,7 +178,7 @@ const PublicResume = () => {
       {/* Header */}
       <header className="border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
+          <Link to="/home" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
             <FaArrowLeft />
             <span className="hidden sm:inline">Back to Aquads</span>
           </Link>
@@ -777,7 +777,7 @@ const PublicResume = () => {
             <span className="text-blue-400">Base</span>
           </p>
           <p className="mt-1">
-            Powered by <Link to="/" className="text-blue-400 hover:text-blue-300">Aquads</Link> - The Web3 Freelance Marketplace
+            Powered by <Link to="/home" className="text-blue-400 hover:text-blue-300">Aquads</Link> - The Web3 Freelance Marketplace
           </p>
         </div>
       </main>

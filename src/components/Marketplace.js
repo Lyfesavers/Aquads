@@ -978,7 +978,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="flex items-center">
+              <Link to="/home" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.png" 
                   alt="AQUADS" 
@@ -1008,7 +1008,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             <div className="hidden md:flex items-center space-x-3">
               {/* Main Navigation - Smaller buttons */}
               <Link
-                to="/"
+                to="/home"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Home
@@ -1143,7 +1143,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
           <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
             <div className="flex flex-col space-y-2">
               <Link
-                to="/"
+                to="/home"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
                 Home

@@ -259,7 +259,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="flex items-center">
+              <Link to="/home" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.png" 
                   alt="AQUADS" 
@@ -289,7 +289,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
             <div className="hidden md:flex items-center space-x-3">
               {/* Main Navigation - Smaller buttons */}
               <Link
-                to="/"
+                to="/home"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Home
@@ -411,7 +411,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           <div className="md:hidden bg-black/90 backdrop-blur-md border-t border-white/10">
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link 
-                to="/" 
+                to="/home" 
                 className="block px-3 py-2 text-gray-300 hover:text-white"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

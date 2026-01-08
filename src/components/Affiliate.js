@@ -15,7 +15,7 @@ const Affiliate = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent hover:from-blue-400 hover:to-indigo-500 transition-all duration-300">
+              <Link to="/home" className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent hover:from-blue-400 hover:to-indigo-500 transition-all duration-300">
                 Aquads
               </Link>
             </div>

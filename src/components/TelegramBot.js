@@ -231,7 +231,7 @@ const TelegramBot = () => {
       {/* Back Button */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 z-10">
         <Link
-          to="/"
+          to="/home"
           className="inline-flex items-center text-gray-400 hover:text-cyan-400 transition-all duration-300 group"
         >
           <FaArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
@@ -445,7 +445,7 @@ const TelegramBot = () => {
               </ul>
 
               <Link
-                to="/"
+                to="/home"
                 className="block w-full mt-6 py-3 text-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold transition-all"
               >
                 List & Bump Your Project
@@ -810,7 +810,7 @@ const TelegramBot = () => {
                 </a>
                 
                 <Link
-                  to="/"
+                  to="/home"
                   className="inline-flex items-center justify-center px-8 py-4 font-semibold text-gray-300 rounded-xl border border-gray-600 hover:border-gray-500 hover:text-white transition-all duration-300 bg-gray-800/50"
                 >
                   Back to Aquads

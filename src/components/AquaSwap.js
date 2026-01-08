@@ -1623,7 +1623,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               className="aquads-logo-clickable"
               width="72" 
               height="72"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
               title="Back to Main Page"
             />
           </div>
@@ -1673,7 +1673,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           className="aquads-logo-clickable"
           width="60" 
           height="60"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           title="Back to Main Page"
         />
 

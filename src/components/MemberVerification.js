@@ -87,7 +87,7 @@ const MemberVerification = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <Link 
-            to="/" 
+            to="/home" 
             className="inline-flex items-center text-white/70 hover:text-white transition-colors mb-4"
           >
             <FaArrowLeft className="mr-2" />

@@ -208,7 +208,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Link
-          to="/"
+          to="/home"
           className="inline-flex items-center text-gray-300 hover:text-white transition-colors duration-300"
         >
           <FaArrowLeft className="mr-2" />
