@@ -322,8 +322,17 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
       window.isArrangingDesktopGrid = false;
       window.skipNextLayoutUpdate = false;
       
+      // Set flag to use smooth transitions for this layout
+      window.useSmoothLayoutTransition = true;
+      
       // Wait for DOM to be ready and bubbles to render, then arrange
       const timer = setTimeout(() => {
+        // Set smooth floating transition on all bubbles BEFORE arranging
+        const bubbles = document.querySelectorAll('.bubble-container');
+        bubbles.forEach(bubble => {
+          bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        });
+        
         if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
           // Desktop layout
           arrangeDesktopGrid();
@@ -331,7 +340,12 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
           // Mobile layout
           adjustBubblesForMobile();
         }
-      }, 400);
+        
+        // Reset flag after animation completes
+        setTimeout(() => {
+          window.useSmoothLayoutTransition = false;
+        }, 1000);
+      }, 300);
       
       return () => clearTimeout(timer);
     }
@@ -2265,9 +2279,13 @@ function App() {
       return;
     }
     
-    // Add transition for immediate positioning (will be faster than the default)
+    // Use smooth transition when coming from landing page, otherwise fast
+    const transitionStyle = window.useSmoothLayoutTransition 
+      ? 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)' 
+      : 'transform 0.05s ease-out';
+    
     bubbles.forEach(bubble => {
-      bubble.style.transition = 'transform 0.05s ease-out';
+      bubble.style.transition = transitionStyle;
     });
     
     // Get all bubbles as an array
