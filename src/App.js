@@ -2006,14 +2006,9 @@ function App() {
     });
   }
 
-  // Add effect to apply mobile layout whenever ads update
-  useEffect(() => {
-    // Only run this effect on mobile
-    if (window.innerWidth <= 480 && ads.length > 0) {
-      // Short delay to ensure the DOM has updated with bubble elements
-      setTimeout(adjustBubblesForMobile, 300);
-    }
-  }, [ads]);
+  // Refs for debounced layout updates
+  const layoutDebounceTimerRef = useRef(null);
+  const prevAdsCountRef = useRef(0);
   
   // Add effect to apply mobile layout on initial load
   useEffect(() => {
@@ -2157,7 +2152,7 @@ function App() {
     }
   }, []);
   
-  // Add effect to apply mobile layout whenever ads update
+  // Add effect to apply layout when ads update (with debouncing to prevent glitching)
   useEffect(() => {
     // Skip this effect if we just updated the model from DOM positions
     if (window.skipNextLayoutUpdate) {
@@ -2165,14 +2160,55 @@ function App() {
       return;
     }
     
-    // Only run this effect on mobile
-    if (window.innerWidth <= 480 && Object.keys(ads).length > 0) {
-      // Short delay to ensure the DOM has updated with bubble elements
-      setTimeout(adjustBubblesForMobile, 300);
-    } else if (window.innerWidth > 480 && Object.keys(ads).length > 0) {
-      // Apply desktop grid layout when ads update on desktop
-      setTimeout(arrangeDesktopGrid, 300);
+    const currentCount = Array.isArray(ads) ? ads.length : Object.keys(ads).length;
+    const prevCount = prevAdsCountRef.current;
+    const countChanged = currentCount !== prevCount && prevCount > 0; // Don't trigger on initial load
+    
+    // Update the ref for next comparison
+    prevAdsCountRef.current = currentCount;
+    
+    // If no ads, skip
+    if (currentCount === 0) return;
+    
+    // Function to run the appropriate layout
+    const runLayout = () => {
+      if (window.innerWidth <= 480) {
+        adjustBubblesForMobile();
+      } else {
+        arrangeDesktopGrid();
+      }
+    };
+    
+    // If bubble count changed (add/delete), run layout immediately
+    if (countChanged) {
+      // Clear any pending debounced layout
+      if (layoutDebounceTimerRef.current) {
+        clearTimeout(layoutDebounceTimerRef.current);
+        layoutDebounceTimerRef.current = null;
+      }
+      // Small delay for DOM to update, then layout
+      setTimeout(runLayout, 100);
+      return;
     }
+    
+    // For data-only changes (votes, etc.), debounce the layout
+    // Clear any existing timer
+    if (layoutDebounceTimerRef.current) {
+      clearTimeout(layoutDebounceTimerRef.current);
+    }
+    
+    // Set new debounced timer (3 seconds)
+    layoutDebounceTimerRef.current = setTimeout(() => {
+      runLayout();
+      layoutDebounceTimerRef.current = null;
+    }, 3000);
+    
+    // Cleanup on unmount
+    return () => {
+      if (layoutDebounceTimerRef.current) {
+        clearTimeout(layoutDebounceTimerRef.current);
+      }
+    };
   }, [ads]);
 
   // Call immediately to fix desktop layout
