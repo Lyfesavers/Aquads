@@ -207,11 +207,7 @@ setInterval(async () => {
 router.get('/', async (req, res) => {
   try {
     // Only show active or approved ads (not pending or rejected)
-    // Also exclude add-on only purchases - they shouldn't appear as bubbles
-    const ads = await Ad.find({ 
-      status: { $in: ['active', 'approved'] },
-      isAddOnOnly: { $ne: true }  // Exclude add-on only purchases
-    });
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
     
     // Ensure all ad sizes are up-to-date before sending to clients
     // This prevents the "large then small" visual bug when loading the page
@@ -277,7 +273,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (req, res) => {
   try {
-    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount, discountCode, isAddOnOnly, existingProjectId, existingProjectTitle } = req.body;
+    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount, discountCode } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -292,8 +288,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     }
 
     // Verify affiliate status and calculate listing fee
-    // For add-on only purchases, the base listing fee is $0
-    const BASE_LISTING_FEE = isAddOnOnly ? 0 : 199;
+    const BASE_LISTING_FEE = 199;
     const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
     const userIsAffiliate = Boolean(currentUser.referredBy);
     const calculatedAffiliateDiscount = userIsAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
@@ -364,11 +359,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
       discountAmount: discountAmount,
       // All listings go through approval (including admins) for proper tracking
-      status: 'pending',
-      // Add-on only purchase fields
-      isAddOnOnly: isAddOnOnly || false,
-      existingProjectId: existingProjectId || null,
-      existingProjectTitle: existingProjectTitle || null
+      status: 'pending'
     });
 
     const savedAd = await ad.save();

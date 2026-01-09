@@ -168,20 +168,6 @@ const adSchema = new mongoose.Schema({
   customBrandingUploadedAt: {
     type: Date,
     default: null
-  },
-  // Add-on only purchase flag - these don't create bubbles
-  isAddOnOnly: {
-    type: Boolean,
-    default: false
-  },
-  // Reference to the original project this add-on is for
-  existingProjectId: {
-    type: String,
-    default: null
-  },
-  existingProjectTitle: {
-    type: String,
-    default: null
   }
 });
 
@@ -197,7 +183,6 @@ adSchema.index({ status: 1, isBumped: 1 }); // For status + bump queries
 adSchema.index({ pairAddress: 1 }); // For pair address lookups
 adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
 adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
-adSchema.index({ status: 1, isAddOnOnly: 1 }); // For filtering out add-on only purchases
 
 
 // Fix the double export
