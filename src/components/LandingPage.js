@@ -789,7 +789,7 @@ const LandingPage = () => {
                 alt="AQUADS" 
                 className="h-6 md:h-8 w-auto"
               />
-              <span className="text-gray-400 text-[10px] sm:text-xs md:text-sm">© 2025 Aquads. All rights reserved.</span>
+              <span className="text-gray-400 text-[10px] sm:text-xs md:text-sm">© {new Date().getFullYear()} Aquads. All rights reserved.</span>
             </div>
             
             <div className="flex items-center gap-3 md:gap-6">
