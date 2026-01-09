@@ -363,8 +363,8 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       listingFee: calculatedListingFee, // Base listing fee with affiliate discount applied
       appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
       discountAmount: discountAmount,
-      // Set status to 'pending' for non-admin users, 'active' for admins
-      status: req.user.isAdmin ? 'active' : 'pending',
+      // All listings go through approval (including admins) for proper tracking
+      status: 'pending',
       // Add-on only purchase fields
       isAddOnOnly: isAddOnOnly || false,
       existingProjectId: existingProjectId || null,
