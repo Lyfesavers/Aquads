@@ -5,115 +5,197 @@ import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import BumpStore from './BumpStore';
 
-// Aquads-branded marketing add-on packages
+// Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
+// All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
 const ADDON_PACKAGES = [
   {
     id: 'aqua_splash',
     name: 'AquaSplash',
+    partnerName: 'On-Demand Media',
     originalPrice: 99,
     price: 99,
     icon: FaNewspaper,
     color: 'from-green-500 to-emerald-500',
+    tier: 'starter',
+    idealFor: 'Projects seeking targeted distribution with flexibility in media selection',
+    turnaround: 'Same Day Available',
     features: [
-      'Newsroom Press Release',
-      'Leading Web3 Press Release Site',
-      'Approx. Monthly Visitors: 15000',
-      'Includes Social Media Posting',
-      'Domain Authority: 43'
-    ]
+      'Pick Your Own Media Outlets',
+      'Create Custom Campaigns',
+      'Mintfunnel Newsroom Inclusion',
+      'Same Day Distribution Available'
+    ],
+    highlights: [
+      { label: 'Flexibility', value: 'Choose Your Outlets' },
+      { label: 'Speed', value: 'Same Day' },
+      { label: 'Support', value: 'Standard' }
+    ],
+    platforms: []
   },
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
+    partnerName: 'Basic Package',
     originalPrice: 299,
     price: 284,
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
+    tier: 'basic',
+    idealFor: 'Startups and projects looking for foundational media coverage to establish presence',
+    turnaround: '24-48 Hours',
     features: [
       '4+ Media Pickups Guaranteed',
-      'Estimated Reach: 5k-15k',
-      '<24 Hour Distribution',
-    ]
+      'Mintfunnel Newsroom & Additional Platforms',
+      'Basic Support Services',
+      'Professional Distribution Network'
+    ],
+    highlights: [
+      { label: 'Media Pickups', value: '4+ Guaranteed' },
+      { label: 'Distribution', value: '24-48 Hours' },
+      { label: 'Support', value: 'Basic' }
+    ],
+    platforms: ['Mintfunnel Newsroom']
   },
   {
     id: 'aqua_wave',
     name: 'AquaWave',
+    partnerName: 'Starter Package',
     originalPrice: 1399,
     price: 1329,
     icon: FaRocket,
     color: 'from-green-500 to-teal-500',
+    tier: 'growth',
+    idealFor: 'Projects aiming for broader coverage with added support and SEO benefits',
+    turnaround: '24-72 Hours',
     features: [
       '9+ Media Pickups Guaranteed',
-      'Estimated Reach: 75k-250k',
-      '24-72 Hour Distribution'
-    ]
+      'Mintfunnel Newsroom & More',
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
+    ],
+    highlights: [
+      { label: 'Media Pickups', value: '9+ Guaranteed' },
+      { label: 'SEO', value: 'Included Free' },
+      { label: 'Support', value: 'Telegram Chat' }
+    ],
+    platforms: ['Mintfunnel Newsroom', 'Multiple Crypto Outlets'],
+    popular: false
   },
   {
     id: 'aqua_flow',
     name: 'AquaFlow',
+    partnerName: 'Growth Package',
     originalPrice: 2899,
     price: 2754,
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
+    tier: 'professional',
+    idealFor: 'Established projects seeking coverage on well-known crypto news platforms',
+    turnaround: '24-72 Hours',
     features: [
-      'CoinMarketCap (Community Section)',
-      'CryptoPolitan',
-      'CoinCodex',
-      'BraveNewCoin',
-      'Bitcolumnist',
-      '24-72 Hour Distribution',
-      'SEO Optimizations'
-    ]
+      'Coverage from Cryptopolitan',
+      'Coverage from BraveNewCoin',
+      'Coverage from CoinCodex',
+      'Coverage from Bitcolumnist',
+      'Mintfunnel Newsroom & More',
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
+    ],
+    highlights: [
+      { label: 'Platforms', value: 'Tier-1 Crypto Sites' },
+      { label: 'SEO', value: 'Included Free' },
+      { label: 'Support', value: 'Telegram Chat' }
+    ],
+    platforms: ['Cryptopolitan', 'BraveNewCoin', 'CoinCodex', 'Bitcolumnist'],
+    popular: true
   },
   {
     id: 'aqua_storm',
     name: 'AquaStorm',
+    partnerName: 'Launch Package',
     originalPrice: 6499,
     price: 6174,
     icon: FaFire,
     color: 'from-orange-500 to-red-500',
+    tier: 'enterprise',
+    idealFor: 'Projects preparing for major announcements or product launches requiring widespread media coverage',
+    turnaround: '24-72 Hours',
     features: [
-      'Everything from AquaWave, plus:',
+      'Everything from Starter Package, plus:',
       '75+ Media Pickups Guaranteed',
+      'Mintfunnel Newsroom Inclusion',
       'Site Audience of 75M+',
-      'Guaranteed coverage from Yahoo Finance and MarketWatch',
-      'Requirements: 500-word maximum'
-    ]
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
+    ],
+    highlights: [
+      { label: 'Media Pickups', value: '75+ Guaranteed' },
+      { label: 'Audience Reach', value: '75M+' },
+      { label: 'Support', value: 'Telegram Chat' }
+    ],
+    platforms: ['75+ Media Outlets', 'Mintfunnel Newsroom'],
+    audienceReach: '75M+'
   },
   {
     id: 'aqua_tidal',
     name: 'AquaTidal',
+    partnerName: 'Hypergrowth Package',
     originalPrice: 12999,
     price: 12349,
     icon: FaGem,
     color: 'from-indigo-500 to-purple-500',
+    tier: 'premium',
+    idealFor: 'Projects aiming for maximum exposure and credibility within the crypto community',
+    turnaround: '24-72 Hours',
     features: [
-      'Everything from AquaStorm plus:',
+      'Everything from Launch Package, plus:',
       '125+ Media Pickups Guaranteed',
-      'Site Audience of 300M+',
-      'Coverage from: Cointelegraph',
-      'CoinMarketCap (Community Section)',
-      'Requirements: 500-word maximum'
-    ]
+      'Video Chat Support',
+      'GUARANTEED Coverage: CoinTelegraph',
+      'GUARANTEED Coverage: CoinMarketCap',
+      'GUARANTEED Coverage: Cryptopolitan'
+    ],
+    highlights: [
+      { label: 'Media Pickups', value: '125+ Guaranteed' },
+      { label: 'Top Platforms', value: 'CoinTelegraph & CMC' },
+      { label: 'Support', value: 'Video Chat' }
+    ],
+    platforms: ['CoinTelegraph', 'CoinMarketCap', 'Cryptopolitan'],
+    guaranteedPlatforms: ['CoinTelegraph', 'CoinMarketCap', 'Cryptopolitan'],
+    audienceReach: '300M+'
   },
   {
     id: 'aqua_legend',
     name: 'AquaLegend',
+    partnerName: 'Epic Package',
     originalPrice: 21999,
     price: 20899,
     icon: FaCrown,
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-yellow-500 to-amber-500',
+    tier: 'legendary',
+    idealFor: 'High-profile projects seeking unparalleled media coverage across the most influential crypto news platforms',
+    turnaround: '24-72 Hours',
     features: [
-      'Coverage from top crypto publications:',
-      'Cointelegraph • CoinMarketCap',
-      'Bitcoin.com • AMB Crypto',
-      'Coinspeaker • Coincodex',
-      'Cryptopolitan • Bitcolumnist',
-      'CoinGape • CryptoNews',
-      'Yahoo Finance',
-      '6-72 Hour Distribution',
-      'Requirements: 500-word maximum'
-    ]
+      'GUARANTEED Coverage from ALL Top Publications:',
+      '• CoinTelegraph',
+      '• CoinMarketCap',
+      '• Bitcoin.com',
+      '• AMB Crypto',
+      '• CoinCodex',
+      '• Cryptopolitan',
+      '• CoinGape',
+      '• CryptoNews',
+      'Video Chat Support',
+      'Mintfunnel Newsroom Inclusion'
+    ],
+    highlights: [
+      { label: 'Coverage', value: 'ALL Top Platforms' },
+      { label: 'Publications', value: '8+ Tier-1 Sites' },
+      { label: 'Support', value: 'Video Chat' }
+    ],
+    platforms: ['CoinTelegraph', 'CoinMarketCap', 'Bitcoin.com', 'AMB Crypto', 'CoinCodex', 'Cryptopolitan', 'CoinGape', 'CryptoNews'],
+    guaranteedPlatforms: ['CoinTelegraph', 'CoinMarketCap', 'Bitcoin.com', 'AMB Crypto', 'CoinCodex', 'Cryptopolitan', 'CoinGape', 'CryptoNews'],
+    audienceReach: '500M+'
   }
 ];
 
@@ -619,44 +701,200 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
 
       {/* Marketing Add-on Packages Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 rounded-full mb-4">
+            <span className="text-cyan-400 text-sm font-medium">Powered by Mintfunnel (Coinbound)</span>
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Marketing Add-on Packages
+            PR & Marketing Add-on Packages
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Amplify your project's reach with our comprehensive marketing solutions.
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
+            Amplify your project's reach with guaranteed coverage on the world's leading crypto news platforms.
           </p>
-          <div className="mt-4 p-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg">
-            <p className="text-white font-semibold">🎉 5% Discount Promotion Banner</p>
+          <div className="mt-4 p-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl max-w-2xl mx-auto">
+            <p className="text-white font-semibold text-lg">🎉 Exclusive 5% Discount Through Aquads Partnership</p>
+            <p className="text-green-100 text-sm mt-1">All packages include same pricing as direct - but with Aquads support!</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Key Benefits Banner */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+            <FaShieldAlt className="text-green-400 text-2xl mx-auto mb-2" />
+            <p className="text-white font-semibold text-sm">Guaranteed Coverage</p>
+            <p className="text-gray-400 text-xs">No empty promises</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+            <FaGlobe className="text-blue-400 text-2xl mx-auto mb-2" />
+            <p className="text-white font-semibold text-sm">500M+ Reach</p>
+            <p className="text-gray-400 text-xs">Top-tier packages</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+            <FaRocket className="text-purple-400 text-2xl mx-auto mb-2" />
+            <p className="text-white font-semibold text-sm">Same Day Delivery</p>
+            <p className="text-gray-400 text-xs">Fast distribution</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+            <FaChartLine className="text-cyan-400 text-2xl mx-auto mb-2" />
+            <p className="text-white font-semibold text-sm">SEO Optimized</p>
+            <p className="text-gray-400 text-xs">Boost visibility</p>
+          </div>
+        </div>
+
+        {/* Package Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {ADDON_PACKAGES.map((pkg) => (
-            <div key={pkg.id} className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
-              <div className="text-center mb-6">
-                <div className={`bg-gradient-to-r ${pkg.color} p-4 rounded-lg mb-4 inline-block`}>
-                  <pkg.icon className="text-white text-2xl" />
+            <div 
+              key={pkg.id} 
+              className={`bg-gray-800/50 backdrop-blur-sm rounded-xl border transition-all duration-300 hover:transform hover:scale-[1.02] flex flex-col ${
+                pkg.popular 
+                  ? 'border-cyan-500 ring-2 ring-cyan-500/30' 
+                  : pkg.tier === 'legendary' 
+                    ? 'border-yellow-500/50 ring-2 ring-yellow-500/20' 
+                    : 'border-gray-700 hover:border-blue-500'
+              }`}
+            >
+              {/* Popular Badge */}
+              {pkg.popular && (
+                <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold py-1 px-3 rounded-t-xl text-center">
+                  MOST POPULAR
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{pkg.name}</h3>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-2xl font-bold text-blue-400">${pkg.price}</span>
-                  {pkg.originalPrice !== pkg.price && (
-                    <span className="text-gray-400 line-through">${pkg.originalPrice}</span>
-                  )}
+              )}
+              {pkg.tier === 'legendary' && (
+                <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-xs font-bold py-1 px-3 rounded-t-xl text-center">
+                  👑 ULTIMATE COVERAGE
                 </div>
-                <div className="text-gray-400 text-sm">USDC</div>
+              )}
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Header */}
+                <div className="text-center mb-4">
+                  <div className={`bg-gradient-to-r ${pkg.color} p-3 rounded-lg mb-3 inline-block`}>
+                    <pkg.icon className="text-white text-xl" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">{pkg.name}</h3>
+                  <p className="text-gray-500 text-xs">{pkg.partnerName}</p>
+                </div>
+
+                {/* Price */}
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-3xl font-bold text-white">${pkg.price.toLocaleString()}</span>
+                    {pkg.originalPrice !== pkg.price && (
+                      <span className="text-gray-500 line-through text-sm">${pkg.originalPrice.toLocaleString()}</span>
+                    )}
+                  </div>
+                  <p className="text-gray-400 text-xs">USDC • {pkg.turnaround}</p>
+                </div>
+
+                {/* Highlights */}
+                <div className="grid grid-cols-3 gap-1 mb-4 bg-gray-900/50 rounded-lg p-2">
+                  {pkg.highlights.map((highlight, idx) => (
+                    <div key={idx} className="text-center">
+                      <p className="text-[10px] text-gray-500 uppercase">{highlight.label}</p>
+                      <p className="text-xs text-cyan-400 font-semibold">{highlight.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Guaranteed Platforms */}
+                {pkg.guaranteedPlatforms && pkg.guaranteedPlatforms.length > 0 && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-lg border border-green-500/30">
+                    <p className="text-green-400 text-xs font-bold mb-2 flex items-center">
+                      <FaCheckCircle className="mr-1" /> GUARANTEED COVERAGE:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {pkg.guaranteedPlatforms.map((platform, idx) => (
+                        <span key={idx} className="bg-green-500/20 text-green-300 text-[10px] px-2 py-0.5 rounded-full">
+                          {platform}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Features */}
+                <ul className="space-y-2 text-gray-300 text-sm flex-1">
+                  {pkg.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      {feature.startsWith('•') || feature.startsWith('GUARANTEED') ? (
+                        <>
+                          <FaStar className="text-yellow-400 mr-2 mt-0.5 flex-shrink-0 text-xs" />
+                          <span className={feature.startsWith('GUARANTEED') ? 'text-green-400 font-semibold text-xs' : 'text-xs'}>{feature}</span>
+                        </>
+                      ) : feature.includes('Everything from') ? (
+                        <>
+                          <FaArrowRight className="text-blue-400 mr-2 mt-0.5 flex-shrink-0 text-xs" />
+                          <span className="text-blue-300 text-xs italic">{feature}</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaCheckCircle className="text-green-400 mr-2 mt-0.5 flex-shrink-0 text-xs" />
+                          <span className="text-xs">{feature}</span>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Ideal For */}
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <p className="text-gray-500 text-[10px] uppercase font-semibold mb-1">Ideal For:</p>
+                  <p className="text-gray-400 text-xs leading-relaxed">{pkg.idealFor}</p>
+                </div>
+
+                {/* CTA Button */}
+                <a
+                  href="https://mintfunnel.co/crypto-press-release-distribution/?ref=Aquads"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`mt-4 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                    pkg.tier === 'legendary'
+                      ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black'
+                      : pkg.popular
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-white'
+                  }`}
+                >
+                  Get Started
+                  <FaArrowRight className="ml-2 text-xs" />
+                </a>
               </div>
-              <ul className="space-y-2 text-gray-300 text-sm">
-                {pkg.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <FaCheckCircle className="text-green-400 mr-2 mt-1 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
+        </div>
+
+        {/* Bottom Info */}
+        <div className="mt-12 text-center">
+          <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 max-w-4xl mx-auto">
+            <h3 className="text-xl font-bold text-white mb-3">Why Choose Mintfunnel PR Distribution?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <FaLightbulb className="text-yellow-400 text-xl mx-auto mb-2" />
+                <p className="text-white font-semibold">5+ Years Experience</p>
+                <p className="text-gray-400 text-xs">The first and most popular PR wire built specifically for Web3 & crypto</p>
+              </div>
+              <div>
+                <FaNetworkWired className="text-blue-400 text-xl mx-auto mb-2" />
+                <p className="text-white font-semibold">Hundreds of Publishers</p>
+                <p className="text-gray-400 text-xs">Established relationships with top crypto news outlets worldwide</p>
+              </div>
+              <div>
+                <FaHandshake className="text-green-400 text-xl mx-auto mb-2" />
+                <p className="text-white font-semibold">Aquads Partnership</p>
+                <p className="text-gray-400 text-xs">Direct support from our team plus exclusive partner benefits</p>
+              </div>
+            </div>
+            <a
+              href="https://mintfunnel.co/crypto-press-release-distribution/?ref=Aquads"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center mt-6 text-cyan-400 hover:text-cyan-300 font-semibold"
+            >
+              View Full Package Details on Mintfunnel
+              <FaArrowRight className="ml-2" />
+            </a>
+          </div>
         </div>
       </div>
 
