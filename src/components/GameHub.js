@@ -60,7 +60,7 @@ const SORT_OPTIONS = [
   { label: 'Alphabetical', value: 'alphabetical' }
 ];
 
-const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
+const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -759,6 +759,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
             onCreateAd={() => {}}
             onClose={() => setShowProjectModal(false)}
             currentUser={currentUser}
+            userAds={ads}
           />
         )}
       

@@ -14,7 +14,7 @@ import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 
-const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
+const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
@@ -736,6 +736,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             onCreateAd={() => {}}
             onClose={() => setShowCreateModal(false)}
             currentUser={currentUser}
+            userAds={ads}
           />
         )}
 

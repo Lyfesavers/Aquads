@@ -80,7 +80,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
+const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const { slug, id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -912,6 +912,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             onCreateAd={() => {}}
             onClose={() => setShowCreateModal(false)}
             currentUser={currentUser}
+            userAds={ads}
           />
         )}
 
