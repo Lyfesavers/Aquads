@@ -315,8 +315,20 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
     try {
       setIsSubmitting(true);
-      await onCreateAd({
+      
+      // Build submission data - use existing project data if add-on only
+      const submissionData = isAddOnOnly && selectedExistingProject ? {
         ...formData,
+        // Use existing project's data for required fields
+        title: `[ADD-ON] ${selectedExistingProject.title}`,
+        logo: selectedExistingProject.logo,
+        url: selectedExistingProject.url,
+        pairAddress: selectedExistingProject.pairAddress || 'addon-only',
+        blockchain: selectedExistingProject.blockchain || 'ethereum',
+      } : formData;
+      
+      await onCreateAd({
+        ...submissionData,
         paymentChain: selectedChain.name,
         chainSymbol: selectedChain.symbol,
         chainAddress: selectedChain.address,
@@ -352,9 +364,20 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       // Open PayPal payment link
       window.open('https://www.paypal.com/ncp/payment/4XBSMGVA348FC', '_blank');
       
+      // Build submission data - use existing project data if add-on only
+      const submissionData = isAddOnOnly && selectedExistingProject ? {
+        ...formData,
+        // Use existing project's data for required fields
+        title: `[ADD-ON] ${selectedExistingProject.title}`,
+        logo: selectedExistingProject.logo,
+        url: selectedExistingProject.url,
+        pairAddress: selectedExistingProject.pairAddress || 'addon-only',
+        blockchain: selectedExistingProject.blockchain || 'ethereum',
+      } : formData;
+      
       // Submit ad for admin approval with PayPal method
       await onCreateAd({
-        ...formData,
+        ...submissionData,
         txSignature: 'paypal', // Identifier to show it was a PayPal payment
         paymentMethod: 'paypal',
         paymentChain: 'PayPal',
