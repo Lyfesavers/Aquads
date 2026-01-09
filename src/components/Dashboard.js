@@ -2383,9 +2383,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!currentUser?.isAdmin) return;
     try {
       setIsLoadingAddonOrders(true);
+      const token = currentUser?.token || localStorage.getItem('token');
       const response = await fetch(`${API_URL}/addon-orders/pending`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       if (response.ok) {
@@ -2401,10 +2402,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleApproveAddonOrder = async (orderId) => {
     try {
+      const token = currentUser?.token || localStorage.getItem('token');
       const response = await fetch(`${API_URL}/addon-orders/${orderId}/approve`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       if (response.ok) {
@@ -2427,11 +2429,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!selectedAddonOrder) return;
     
     try {
+      const token = currentUser?.token || localStorage.getItem('token');
       const response = await fetch(`${API_URL}/addon-orders/${selectedAddonOrder.id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ rejectionReason: addonOrderRejectionReason })
       });

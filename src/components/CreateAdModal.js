@@ -318,11 +318,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       
       // For add-on only purchases, use separate endpoint (doesn't create bubble)
       if (isAddOnOnly && selectedExistingProject) {
+        const token = currentUser?.token || localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication required. Please log in again.');
+        }
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             projectId: selectedExistingProject._id || selectedExistingProject.id,
@@ -386,11 +390,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       
       // For add-on only purchases, use separate endpoint (doesn't create bubble)
       if (isAddOnOnly && selectedExistingProject) {
+        const token = currentUser?.token || localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication required. Please log in again.');
+        }
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             projectId: selectedExistingProject._id || selectedExistingProject.id,
