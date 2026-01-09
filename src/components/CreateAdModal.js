@@ -316,32 +316,52 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     try {
       setIsSubmitting(true);
       
-      // Build submission data - use existing project data if add-on only
-      const submissionData = isAddOnOnly && selectedExistingProject ? {
-        ...formData,
-        // Use existing project's data for required fields
-        title: `[ADD-ON] ${selectedExistingProject.title}`,
-        logo: selectedExistingProject.logo,
-        url: selectedExistingProject.url,
-        pairAddress: selectedExistingProject.pairAddress || 'addon-only',
-        blockchain: selectedExistingProject.blockchain || 'ethereum',
-      } : formData;
+      // For add-on only purchases, use separate endpoint (doesn't create bubble)
+      if (isAddOnOnly && selectedExistingProject) {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            projectId: selectedExistingProject._id || selectedExistingProject.id,
+            projectTitle: selectedExistingProject.title,
+            projectLogo: selectedExistingProject.logo,
+            selectedAddons: formData.selectedAddons,
+            totalAmount: formData.totalAmount,
+            txSignature: formData.txSignature,
+            paymentMethod: 'crypto',
+            paymentChain: selectedChain.name,
+            chainSymbol: selectedChain.symbol,
+            chainAddress: selectedChain.address,
+            discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to submit addon order');
+        }
+        
+        alert('Marketing package order submitted successfully! It will be processed once payment is verified.');
+        onClose();
+        return;
+      }
       
+      // Regular project listing
       await onCreateAd({
-        ...submissionData,
+        ...formData,
         paymentChain: selectedChain.name,
         chainSymbol: selectedChain.symbol,
         chainAddress: selectedChain.address,
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
-        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null,
-        isAddOnOnly: isAddOnOnly,
-        existingProjectId: selectedExistingProject?._id || selectedExistingProject?.id || null,
-        existingProjectTitle: selectedExistingProject?.title || null
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
       });
     } catch (error) {
-      console.error('Error submitting ad:', error);
-      setError('Failed to submit listing. Please try again.');
+      console.error('Error submitting:', error);
+      setError(error.message || 'Failed to submit. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -364,37 +384,53 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       // Open PayPal payment link
       window.open('https://www.paypal.com/ncp/payment/4XBSMGVA348FC', '_blank');
       
-      // Build submission data - use existing project data if add-on only
-      const submissionData = isAddOnOnly && selectedExistingProject ? {
-        ...formData,
-        // Use existing project's data for required fields
-        title: `[ADD-ON] ${selectedExistingProject.title}`,
-        logo: selectedExistingProject.logo,
-        url: selectedExistingProject.url,
-        pairAddress: selectedExistingProject.pairAddress || 'addon-only',
-        blockchain: selectedExistingProject.blockchain || 'ethereum',
-      } : formData;
+      // For add-on only purchases, use separate endpoint (doesn't create bubble)
+      if (isAddOnOnly && selectedExistingProject) {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            projectId: selectedExistingProject._id || selectedExistingProject.id,
+            projectTitle: selectedExistingProject.title,
+            projectLogo: selectedExistingProject.logo,
+            selectedAddons: formData.selectedAddons,
+            totalAmount: formData.totalAmount,
+            txSignature: 'paypal',
+            paymentMethod: 'paypal',
+            paymentChain: 'PayPal',
+            chainSymbol: 'USD',
+            chainAddress: 'https://www.paypal.com/ncp/payment/4XBSMGVA348FC',
+            discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to submit addon order');
+        }
+        
+        alert('PayPal payment initiated! Please complete the payment in the opened window. Your marketing package order will be processed once payment is verified.');
+        onClose();
+        return;
+      }
       
-      // Submit ad for admin approval with PayPal method
+      // Regular project listing with PayPal
       await onCreateAd({
-        ...submissionData,
-        txSignature: 'paypal', // Identifier to show it was a PayPal payment
+        ...formData,
+        txSignature: 'paypal',
         paymentMethod: 'paypal',
         paymentChain: 'PayPal',
         chainSymbol: 'USD',
         chainAddress: 'https://www.paypal.com/ncp/payment/4XBSMGVA348FC',
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
-        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null,
-        isAddOnOnly: isAddOnOnly,
-        existingProjectId: selectedExistingProject?._id || selectedExistingProject?.id || null,
-        existingProjectTitle: selectedExistingProject?.title || null
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
       });
 
-      const message = isAddOnOnly 
-        ? 'PayPal payment initiated! Please complete the payment in the opened window. Your marketing package order will be processed once payment is verified.'
-        : 'PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.';
-      alert(message);
+      alert('PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
     } catch (error) {
       console.error('Error creating PayPal listing:', error);
       alert(error.message || 'Failed to create listing');

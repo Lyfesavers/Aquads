@@ -94,6 +94,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showRejectServiceModal, setShowRejectServiceModal] = useState(false);
   const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
   const [serviceRejectionReason, setServiceRejectionReason] = useState('');
+  // Add-on/PR Order approval states
+  const [pendingAddonOrders, setPendingAddonOrders] = useState([]);
+  const [isLoadingAddonOrders, setIsLoadingAddonOrders] = useState(false);
+  const [showRejectAddonOrderModal, setShowRejectAddonOrderModal] = useState(false);
+  const [selectedAddonOrder, setSelectedAddonOrder] = useState(null);
+  const [addonOrderRejectionReason, setAddonOrderRejectionReason] = useState('');
   // Referral QR code states
   const [showReferralQRModal, setShowReferralQRModal] = useState(false);
   const [referralLinkCopied, setReferralLinkCopied] = useState(false);
@@ -655,6 +661,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error loading initial token purchases via socket:', error);
     };
 
+    // Add-on order socket handlers
+    const handleAddonOrderApproved = (data) => {
+      // Remove the approved addon order from the pending list
+      setPendingAddonOrders(prev => 
+        prev.filter(order => order.id !== data.orderId)
+      );
+    };
+
+    const handleAddonOrderRejected = (data) => {
+      // Remove the rejected addon order from the pending list
+      setPendingAddonOrders(prev => 
+        prev.filter(order => order.id !== data.orderId)
+      );
+    };
+
+    const handleNewPendingAddonOrder = (data) => {
+      // Add the new pending addon order to the list immediately
+      setPendingAddonOrders(prev => [data.order, ...prev]);
+    };
+
     socket.on('twitterRaidCompletionApproved', handleTwitterRaidApproved);
     socket.on('twitterRaidCompletionRejected', handleTwitterRaidRejected);
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
@@ -683,6 +709,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('newTokenPurchasePending', handleNewTokenPurchasePending);
     socket.on('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
     socket.on('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
+
+    // Add-on order socket listeners
+    socket.on('addonOrderApproved', handleAddonOrderApproved);
+    socket.on('addonOrderRejected', handleAddonOrderRejected);
+    socket.on('newPendingAddonOrder', handleNewPendingAddonOrder);
 
     return () => {
       socket.off('twitterRaidCompletionApproved', handleTwitterRaidApproved);
@@ -713,6 +744,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newTokenPurchasePending', handleNewTokenPurchasePending);
       socket.off('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
       socket.off('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
+
+      // Add-on order socket cleanup
+      socket.off('addonOrderApproved', handleAddonOrderApproved);
+      socket.off('addonOrderRejected', handleAddonOrderRejected);
+      socket.off('newPendingAddonOrder', handleNewPendingAddonOrder);
     };
   }, [socket, currentUser]);
 
@@ -2342,6 +2378,87 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  // Add-on/PR Order management functions
+  const fetchPendingAddonOrders = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      setIsLoadingAddonOrders(true);
+      const response = await fetch(`${API_URL}/addon-orders/pending`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPendingAddonOrders(data);
+      }
+    } catch (error) {
+      showNotification('Failed to fetch pending add-on orders', 'error');
+    } finally {
+      setIsLoadingAddonOrders(false);
+    }
+  };
+
+  const handleApproveAddonOrder = async (orderId) => {
+    try {
+      const response = await fetch(`${API_URL}/addon-orders/${orderId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        showNotification('Add-on order approved successfully', 'success');
+        setPendingAddonOrders(prev => prev.filter(order => order.id !== orderId));
+      } else {
+        throw new Error('Failed to approve');
+      }
+    } catch (error) {
+      showNotification('Failed to approve add-on order', 'error');
+    }
+  };
+
+  const openAddonOrderRejectModal = (order) => {
+    setSelectedAddonOrder(order);
+    setShowRejectAddonOrderModal(true);
+  };
+
+  const handleRejectAddonOrder = async () => {
+    if (!selectedAddonOrder) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/addon-orders/${selectedAddonOrder.id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ rejectionReason: addonOrderRejectionReason })
+      });
+      
+      if (response.ok) {
+        showNotification('Add-on order rejected', 'success');
+        setPendingAddonOrders(prev => prev.filter(order => order.id !== selectedAddonOrder.id));
+        setShowRejectAddonOrderModal(false);
+        setSelectedAddonOrder(null);
+        setAddonOrderRejectionReason('');
+      } else {
+        throw new Error('Failed to reject');
+      }
+    } catch (error) {
+      showNotification('Failed to reject add-on order', 'error');
+    }
+  };
+
+  // Add-on package names for display
+  const ADDON_PACKAGE_NAMES = {
+    'aqua_splash': 'AquaSplash ($99)',
+    'aqua_ripple': 'AquaRipple ($284)',
+    'aqua_wave': 'AquaWave ($1,329)',
+    'aqua_flow': 'AquaFlow ($2,754)',
+    'aqua_storm': 'AquaStorm ($6,174)'
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -3259,6 +3376,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     {pendingServices.length > 0 && (
                       <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyan-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
                         {pendingServices.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveAdminSection('addonorders');
+                      if (pendingAddonOrders.length === 0) fetchPendingAddonOrders();
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'addonorders' 
+                        ? 'bg-blue-600 text-white' 
+                        : pendingAddonOrders.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-orange-900/30 border-l-4 border-orange-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    📰 PR/Add-on Orders
+                    {pendingAddonOrders.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingAddonOrders.length}
                       </span>
                     )}
                   </button>
@@ -4335,6 +4472,142 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
 
+                {activeAdminSection === 'addonorders' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-semibold text-white">PR/Add-on Order Approvals</h3>
+                      <button
+                        onClick={fetchPendingAddonOrders}
+                        disabled={isLoadingAddonOrders}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-medium disabled:opacity-50"
+                      >
+                        {isLoadingAddonOrders ? 'Refreshing...' : 'Refresh'}
+                      </button>
+                    </div>
+                    {isLoadingAddonOrders ? (
+                      <div className="text-center py-8">
+                        <div className="spinner"></div>
+                        <p className="mt-2 text-gray-400">Loading pending orders...</p>
+                      </div>
+                    ) : pendingAddonOrders.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400">
+                        No pending PR/add-on orders to approve
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingAddonOrders.map(order => (
+                          <div key={order.id} className="bg-gray-700 rounded-lg p-5 border border-orange-500/30">
+                            {/* Order Header */}
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-3">
+                                {order.projectLogo && (
+                                  <img 
+                                    src={order.projectLogo} 
+                                    alt={order.projectTitle} 
+                                    className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                  />
+                                )}
+                                <div>
+                                  <h4 className="font-bold text-white text-lg">{order.projectTitle}</h4>
+                                  <p className="text-sm text-gray-400">Order ID: <span className="text-gray-300 font-mono">{order.id}</span></p>
+                                </div>
+                              </div>
+                              <span className="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm font-medium">
+                                {order.status.toUpperCase()}
+                              </span>
+                            </div>
+
+                            {/* Order Details Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              {/* Left Column - Customer & Payment Info */}
+                              <div className="bg-gray-800 rounded-lg p-4">
+                                <h5 className="text-sm font-semibold text-gray-300 mb-3 border-b border-gray-600 pb-2">Customer & Payment</h5>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-400">Owner:</span>
+                                    <span className="text-white font-medium">{order.owner}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-400">Payment Method:</span>
+                                    <span className={`font-medium ${order.paymentMethod === 'paypal' ? 'text-blue-400' : 'text-green-400'}`}>
+                                      {order.paymentMethod === 'paypal' ? '💳 PayPal' : '🔗 Crypto'}
+                                    </span>
+                                  </div>
+                                  {order.paymentChain && order.paymentChain !== 'PayPal' && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-400">Chain:</span>
+                                      <span className="text-purple-400">{order.paymentChain} ({order.chainSymbol})</span>
+                                    </div>
+                                  )}
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-400">Total Amount:</span>
+                                    <span className="text-green-400 font-bold text-lg">${order.totalAmount?.toLocaleString()}</span>
+                                  </div>
+                                  {order.discountAmount > 0 && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-400">Discount:</span>
+                                      <span className="text-yellow-400">-${order.discountAmount} ({order.appliedDiscountCode})</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Right Column - Packages Selected */}
+                              <div className="bg-gray-800 rounded-lg p-4">
+                                <h5 className="text-sm font-semibold text-gray-300 mb-3 border-b border-gray-600 pb-2">Selected Packages</h5>
+                                <div className="space-y-2">
+                                  {order.selectedAddons?.map((addonId, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-orange-500/10 rounded px-3 py-2">
+                                      <span className="text-orange-400">📰</span>
+                                      <span className="text-white">{ADDON_PACKAGE_NAMES[addonId] || addonId}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Transaction Info */}
+                            {order.txSignature && order.txSignature !== 'paypal' && (
+                              <div className="bg-gray-800 rounded-lg p-3 mb-4">
+                                <p className="text-sm text-gray-400">Transaction Signature:</p>
+                                <p className="text-xs text-gray-300 font-mono break-all bg-gray-900 p-2 rounded mt-1">{order.txSignature}</p>
+                              </div>
+                            )}
+
+                            {/* Timestamps */}
+                            <div className="text-xs text-gray-500 mb-4">
+                              Submitted: {new Date(order.createdAt).toLocaleString()}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 justify-end">
+                              <button
+                                onClick={() => handleApproveAddonOrder(order.id)}
+                                className="px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium flex items-center gap-2 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Approve Order
+                              </button>
+                              <button
+                                onClick={() => openAddonOrderRejectModal(order)}
+                                className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium flex items-center gap-2 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Reject Order
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {activeAdminSection === 'affiliates' && (
                   <div>
                     <div className="flex justify-between items-center mb-6">
@@ -5215,6 +5488,48 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               </button>
               <button
                 onClick={handleRejectService}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add-on Order Rejection Confirmation Modal */}
+      {showRejectAddonOrderModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-xl font-bold mb-4 text-orange-400">Reject PR/Add-on Order</h3>
+            <p className="mb-4 text-gray-300">
+              You are about to reject the add-on order for project "{selectedAddonOrder?.projectTitle}" by {selectedAddonOrder?.owner}. 
+              Please provide a reason for rejection:
+            </p>
+            <div className="bg-gray-700 rounded-lg p-3 mb-4">
+              <p className="text-sm text-gray-400">Order Amount: <span className="text-green-400 font-bold">${selectedAddonOrder?.totalAmount}</span></p>
+              <p className="text-sm text-gray-400">Packages: {selectedAddonOrder?.selectedAddons?.map(id => ADDON_PACKAGE_NAMES[id] || id).join(', ')}</p>
+            </div>
+            <textarea
+              value={addonOrderRejectionReason}
+              onChange={(e) => setAddonOrderRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason (optional)"
+              className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"
+              rows={4}
+            ></textarea>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowRejectAddonOrderModal(false);
+                  setSelectedAddonOrder(null);
+                  setAddonOrderRejectionReason('');
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectAddonOrder}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
               >
                 Confirm Reject
