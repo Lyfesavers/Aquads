@@ -30,124 +30,165 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-// Aquads-branded marketing add-on packages
+// Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
+// All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
 const ADDON_PACKAGES = [
   {
     id: 'aqua_splash',
     name: 'AquaSplash',
-    originalPrice: 99, // Current price
-    price: 99, // No discount for this entry-level package
+    partnerName: 'On-Demand Media',
+    originalPrice: 99,
+    price: 99,
     icon: FaNewspaper,
     color: 'from-green-500 to-emerald-500',
+    turnaround: 'Same Day Available',
     features: [
-      'Newsroom Press Release',
-      'Leading Web3 Press Release Site',
-      'Approx. Monthly Visitors: 15000',
-      'Includes Social Media Posting',
-      'Domain Authority: 43'
+      'Pick Your Own Media Outlets',
+      'Create Custom Campaigns',
+      'Mintfunnel Newsroom Inclusion',
+      'Same Day Distribution Available'
     ]
   },
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
-    originalPrice: 299, // Current price
-    price: 284, // 5% discount: 299 * 0.95 = 284.05, rounded to 284
+    partnerName: 'Basic Package',
+    originalPrice: 299,
+    price: 284, // 5% discount
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
+    turnaround: '24-48 Hours',
     features: [
       '4+ Media Pickups Guaranteed',
-      'Estimated Reach: 5k-15k',
-      '<24 Hour Distribution',
+      'Mintfunnel Newsroom & Additional Platforms',
+      'Basic Support Services',
+      'Professional Distribution Network'
     ]
   },
   {
     id: 'aqua_wave',
     name: 'AquaWave',
-    originalPrice: 1399, // Current price
-    price: 1329, // 5% discount: 1399 * 0.95 = 1329.05, rounded to 1329
+    partnerName: 'Starter Package',
+    originalPrice: 1399,
+    price: 1329, // 5% discount
     icon: FaRocket,
     color: 'from-green-500 to-teal-500',
+    turnaround: '24-72 Hours',
     features: [
       '9+ Media Pickups Guaranteed',
-      'Estimated Reach: 75k-250k',
-      '24-72 Hour Distribution'    ]
+      'Mintfunnel Newsroom & More',
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
+    ]
   },
   {
     id: 'aqua_flow',
     name: 'AquaFlow',
-    originalPrice: 2899, // Current price
-    price: 2754, // 5% discount: 2899 * 0.95 = 2754.05, rounded to 2754
+    partnerName: 'Growth Package',
+    originalPrice: 2899,
+    price: 2754, // 5% discount
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
+    turnaround: '24-72 Hours',
+    popular: true,
     features: [
-      'CoinMarketCap (Community Section)',
-      'CryptoPolitan',
-      'CoinCodex',
-      'BraveNewCoin',
-      'Bitcolumnist',
-      '24-72 Hour Distribution',
-      'SEO Optimizations'
+      'Coverage from Cryptopolitan',
+      'Coverage from BraveNewCoin',
+      'Coverage from CoinCodex',
+      'Coverage from Bitcolumnist',
+      'Mintfunnel Newsroom & More',
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
     ]
   },
   {
     id: 'aqua_storm',
     name: 'AquaStorm',
-    originalPrice: 6499, // Current price
-    price: 6174, // 5% discount: 6499 * 0.95 = 6174.05, rounded to 6174
+    partnerName: 'Launch Package',
+    originalPrice: 6499,
+    price: 6174, // 5% discount
     icon: FaFire,
     color: 'from-orange-500 to-red-500',
+    turnaround: '24-72 Hours',
     features: [
-      'Everything from AquaWave, plus:',
+      'Everything from Starter Package, plus:',
       '75+ Media Pickups Guaranteed',
+      'Mintfunnel Newsroom Inclusion',
       'Site Audience of 75M+',
-      'Guaranteed coverage from Yahoo Finance and MarketWatch',
-      'Requirements: 500-word maximum'
+      'Telegram Chat Support',
+      'FREE SEO Optimizations'
     ]
   },
   {
     id: 'aqua_tidal',
     name: 'AquaTidal',
-    originalPrice: 12999, // Current price
-    price: 12349, // 5% discount: 12999 * 0.95 = 12349.05, rounded to 12349
+    partnerName: 'Hypergrowth Package',
+    originalPrice: 12999,
+    price: 12349, // 5% discount
     icon: FaGem,
     color: 'from-indigo-500 to-purple-500',
+    turnaround: '24-72 Hours',
     features: [
-      'Everything from AquaStorm plus:',
+      'Everything from Launch Package, plus:',
       '125+ Media Pickups Guaranteed',
-      'Site Audience of 300M+',
-      'Coverage from: Cointelegraph',
-      'CoinMarketCap (Community Section)',
-      'Requirements: 500-word maximum'
+      'Video Chat Support',
+      'GUARANTEED: CoinTelegraph',
+      'GUARANTEED: CoinMarketCap',
+      'GUARANTEED: Cryptopolitan'
     ]
   },
   {
     id: 'aqua_legend',
     name: 'AquaLegend',
-    originalPrice: 21999, // Current price
-    price: 20899, // 5% discount: 21999 * 0.95 = 20899.05, rounded to 20899
+    partnerName: 'Epic Package',
+    originalPrice: 21999,
+    price: 20899, // 5% discount
     icon: FaCrown,
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-yellow-500 to-amber-500',
+    turnaround: '24-72 Hours',
     features: [
-      'Coverage from top crypto publications:',
-      'Cointelegraph • CoinMarketCap',
-      'Bitcoin.com • AMB Crypto',
-      'Coinspeaker • Coincodex',
-      'Cryptopolitan • Bitcolumnist',
-      'CoinGape • CryptoNews',
-      'Yahoo Finance',
-      '6-72 Hour Distribution',
-      'Requirements: 500-word maximum'
+      'GUARANTEED Coverage from ALL Top Publications:',
+      '• CoinTelegraph',
+      '• CoinMarketCap',
+      '• Bitcoin.com',
+      '• AMB Crypto',
+      '• CoinCodex',
+      '• Cryptopolitan',
+      '• CoinGape',
+      '• CryptoNews',
+      'Video Chat Support',
+      'Mintfunnel Newsroom Inclusion'
     ]
   }
 ];
 
-const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
+const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = null, userAds = [] }) => {
   // Check if user is an affiliate (referred by another user)
   const isAffiliate = currentUser && currentUser.referredBy;
   const BASE_LISTING_FEE = 199;
   const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
   const affiliateDiscount = isAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
   const discountedBaseFee = BASE_LISTING_FEE - affiliateDiscount;
+
+  // Check if user has existing projects
+  const userProjects = userAds.filter(ad => ad.owner === currentUser?.username);
+  const hasExistingProjects = userProjects.length > 0;
+
+  // Track if this is an add-on only purchase (no new project listing)
+  const [isAddOnOnly, setIsAddOnOnly] = useState(false);
+  const [selectedExistingProject, setSelectedExistingProject] = useState(null);
+
+  // Calculate initial addon total if a package is pre-selected
+  const getInitialAddonTotal = () => {
+    if (preSelectedPackage) {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === preSelectedPackage);
+      return addon ? addon.price : 0;
+    }
+    return 0;
+  };
+
+  // Get base fee - $0 if add-on only, otherwise normal fee
+  const getBaseFee = () => isAddOnOnly ? 0 : discountedBaseFee;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -159,8 +200,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
     paymentChain: BLOCKCHAIN_OPTIONS[0].name,
     chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
     chainAddress: BLOCKCHAIN_OPTIONS[0].address,
-    selectedAddons: [], // Track selected add-on packages
-    totalAmount: discountedBaseFee, // Base listing fee with affiliate discount applied
+    selectedAddons: preSelectedPackage ? [preSelectedPackage] : [], // Pre-select package if provided
+    totalAmount: discountedBaseFee + getInitialAddonTotal(), // Base listing fee + pre-selected addon
     isAffiliate: isAffiliate,
     affiliateDiscount: affiliateDiscount
   });
@@ -251,10 +292,11 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
 
   const handleSkipAddons = () => {
     // Clear selected add-ons and move to payment
+    const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
     setFormData(prev => ({
       ...prev,
       selectedAddons: [],
-      totalAmount: discountedBaseFee // Reset to discounted base price
+      totalAmount: baseFee // Reset to base price (0 if add-on only)
     }));
     setStep(3);
   };
@@ -280,7 +322,10 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
         chainAddress: selectedChain.address,
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
-        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null,
+        isAddOnOnly: isAddOnOnly,
+        existingProjectId: selectedExistingProject?._id || selectedExistingProject?.id || null,
+        existingProjectTitle: selectedExistingProject?.title || null
       });
     } catch (error) {
       console.error('Error submitting ad:', error);
@@ -291,9 +336,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
   };
 
   const handlePayPalPurchase = async () => {
-    // Validate required data before proceeding
-    if (!formData.title || !formData.logo || !formData.url || !formData.pairAddress) {
+    // Validate required data before proceeding (only if not add-on only)
+    if (!isAddOnOnly && (!formData.title || !formData.logo || !formData.url || !formData.pairAddress)) {
       alert('Please complete all required fields in step 1');
+      return;
+    }
+
+    // For add-on only, make sure at least one package is selected
+    if (isAddOnOnly && formData.selectedAddons.length === 0) {
+      alert('Please select at least one marketing package');
       return;
     }
 
@@ -311,10 +362,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
         chainAddress: 'https://www.paypal.com/ncp/payment/4XBSMGVA348FC',
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
-        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null,
+        isAddOnOnly: isAddOnOnly,
+        existingProjectId: selectedExistingProject?._id || selectedExistingProject?.id || null,
+        existingProjectTitle: selectedExistingProject?.title || null
       });
 
-      alert('PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
+      const message = isAddOnOnly 
+        ? 'PayPal payment initiated! Please complete the payment in the opened window. Your marketing package order will be processed once payment is verified.'
+        : 'PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.';
+      alert(message);
     } catch (error) {
       console.error('Error creating PayPal listing:', error);
       alert(error.message || 'Failed to create listing');
@@ -341,12 +398,49 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
         return sum + (addon ? addon.price : 0);
       }, 0);
       
+      const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
+      
       return {
         ...prev,
         selectedAddons,
-        totalAmount: discountedBaseFee + addonTotal // Discounted base fee + add-ons
+        totalAmount: baseFee + addonTotal // Base fee (0 if add-on only) + add-ons
       };
     });
+  };
+
+  // Handle switching to add-on only mode
+  const handleSkipToAddons = (projectId = null) => {
+    setIsAddOnOnly(true);
+    if (projectId) {
+      const project = userProjects.find(p => p._id === projectId || p.id === projectId);
+      setSelectedExistingProject(project);
+    }
+    // Recalculate total without base listing fee
+    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
+      return sum + (addon ? addon.price : 0);
+    }, 0);
+    setFormData(prev => ({
+      ...prev,
+      totalAmount: addonTotal // Just add-ons, no base fee
+    }));
+    setStep(2); // Go directly to add-on packages
+  };
+
+  // Handle switching back to full listing mode
+  const handleBackToListing = () => {
+    setIsAddOnOnly(false);
+    setSelectedExistingProject(null);
+    // Recalculate total with base listing fee
+    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
+      return sum + (addon ? addon.price : 0);
+    }, 0);
+    setFormData(prev => ({
+      ...prev,
+      totalAmount: discountedBaseFee + addonTotal
+    }));
+    setStep(1);
   };
 
   const togglePackageExpansion = (packageId) => {
@@ -371,15 +465,23 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
   const handleDiscountRemoved = () => {
     setAppliedDiscount(null);
     // Recalculate total without discount
+    const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
     const addonCosts = formData.selectedAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
       return total + (addon ? addon.price : 0);
     }, 0);
-    const newTotal = discountedBaseFee + addonCosts;
+    const newTotal = baseFee + addonCosts;
     setFormData(prev => ({ ...prev, totalAmount: newTotal }));
   };
 
   const getStepTitle = () => {
+    if (isAddOnOnly) {
+      switch(step) {
+        case 2: return 'Marketing Packages';
+        case 3: return 'Marketing Package Payment';
+        default: return 'Marketing Packages';
+      }
+    }
     switch(step) {
       case 1: return 'List New Project';
       case 2: return 'Add-on Packages';
@@ -388,16 +490,73 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
     }
   };
 
+  const getStepCount = () => isAddOnOnly ? '2' : '3';
+
   return (
     <Modal onClose={onClose} fullScreen={true}>
       <div className="text-white max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center">
           {getStepTitle()}
-          <span className="text-lg text-gray-400 ml-3 block sm:inline">Step {step} of 3</span>
+          <span className="text-lg text-gray-400 ml-3 block sm:inline">
+            Step {isAddOnOnly ? (step === 2 ? '1' : '2') : step} of {getStepCount()}
+          </span>
+          {isAddOnOnly && selectedExistingProject && (
+            <span className="block text-sm text-purple-400 mt-2">
+              Adding packages for: {selectedExistingProject.title}
+            </span>
+          )}
         </h2>
         
         {step === 1 && (
           <form onSubmit={handleInfoSubmit} className="space-y-6 max-w-2xl mx-auto">
+            {/* Skip to Add-ons Option for Users with Existing Projects */}
+            {hasExistingProjects && (
+              <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/50 rounded-xl p-5 mb-6">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-purple-500 p-2 rounded-full flex-shrink-0">
+                    <FaRocket className="text-white text-sm" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-white mb-2">Already have a project listed?</h4>
+                    <p className="text-gray-300 text-sm mb-3">
+                      Skip the project listing and go directly to our PR & Marketing packages for your existing project.
+                    </p>
+                    
+                    {userProjects.length === 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSkipToAddons(userProjects[0]._id || userProjects[0].id)}
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all text-sm"
+                      >
+                        <FaGift className="mr-2" />
+                        Get Add-on Packages for "{userProjects[0].title}"
+                        <FaArrowRight className="ml-2" />
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-gray-400 text-xs">Select a project to add packages to:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {userProjects.slice(0, 5).map(project => (
+                            <button
+                              key={project._id || project.id}
+                              type="button"
+                              onClick={() => handleSkipToAddons(project._id || project.id)}
+                              className="inline-flex items-center px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all text-sm border border-gray-600 hover:border-purple-500"
+                            >
+                              {project.title}
+                            </button>
+                          ))}
+                        </div>
+                        {userProjects.length > 5 && (
+                          <p className="text-gray-500 text-xs">+ {userProjects.length - 5} more projects</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block mb-2 text-lg font-medium">Title</label>
               <input
@@ -669,23 +828,39 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between items-center">
-              <button
-                onClick={() => setStep(1)}
-                className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
-              >
-                <FaArrowLeft className="mr-2" /> Back
-              </button>
+              {isAddOnOnly ? (
+                <button
+                  onClick={handleBackToListing}
+                  className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
+                >
+                  <FaArrowLeft className="mr-2" /> List New Project Instead
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
+                >
+                  <FaArrowLeft className="mr-2" /> Back
+                </button>
+              )}
               
               <div className="flex space-x-4">
-                <button
-                  onClick={handleSkipAddons}
-                  className="px-6 py-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-lg"
-                >
-                  Skip Add-ons
-                </button>
+                {!isAddOnOnly && (
+                  <button
+                    onClick={handleSkipAddons}
+                    className="px-6 py-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-lg"
+                  >
+                    Skip Add-ons
+                  </button>
+                )}
                 <button
                   onClick={handleAddonStep}
-                  className="flex items-center px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-lg"
+                  disabled={isAddOnOnly && formData.selectedAddons.length === 0}
+                  className={`flex items-center px-6 py-3 rounded-lg text-lg ${
+                    isAddOnOnly && formData.selectedAddons.length === 0
+                      ? 'bg-gray-500 cursor-not-allowed'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
                 >
                   Continue <FaArrowRight className="ml-2" />
                 </button>
@@ -696,21 +871,78 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
 
         {step === 3 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[85vh]">
-            {/* Premium Package Benefits */}
+            {/* Package Benefits - Different display for add-on only vs full listing */}
             <div className="order-2 lg:order-1 h-full overflow-y-auto">
-              <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
-                <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
-                  <FaRocket className="mr-3 text-blue-400" />
-                  Premium Listing Package - {isAffiliate ? (
-                    <span>
-                      <span className="line-through text-gray-400 ml-2">${BASE_LISTING_FEE} USDC</span>
-                      <span className="text-green-400 ml-2">${discountedBaseFee.toFixed(2)} USDC</span>
-                      <span className="bg-green-500 text-white px-2 py-1 rounded text-sm ml-2">5% Affiliate Discount</span>
-                    </span>
-                  ) : (
-                    `$${BASE_LISTING_FEE} USDC`
+              {isAddOnOnly ? (
+                /* Add-on Only Summary */
+                <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 border border-purple-500/50 rounded-xl p-6 mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                    <FaGift className="mr-3 text-purple-400" />
+                    Marketing Package Order
+                  </h3>
+                  {selectedExistingProject && (
+                    <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+                      <p className="text-gray-400 text-sm">For Project:</p>
+                      <p className="text-white font-semibold text-lg">{selectedExistingProject.title}</p>
+                    </div>
                   )}
-                </h3>
+                  <p className="text-gray-300 mb-6">
+                    You're purchasing PR & marketing packages powered by our partner Mintfunnel. We'll handle the entire setup and delivery process for you.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-white">Selected Packages:</h4>
+                    {formData.selectedAddons.length > 0 ? (
+                      formData.selectedAddons.map(addonId => {
+                        const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+                        if (!addon) return null;
+                        const IconComponent = addon.icon;
+                        return (
+                          <div key={addonId} className="flex items-start space-x-3 p-3 bg-gray-800/50 rounded-lg">
+                            <div className={`bg-gradient-to-r ${addon.color} p-2 rounded-lg`}>
+                              <IconComponent className="text-white text-sm" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h5 className="font-semibold text-white">{addon.name}</h5>
+                                  <p className="text-gray-500 text-xs">{addon.partnerName}</p>
+                                </div>
+                                <span className="text-green-400 font-bold">${addon.price.toLocaleString()}</span>
+                              </div>
+                              <p className="text-gray-400 text-xs mt-1">{addon.turnaround}</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-gray-500 italic">No packages selected</p>
+                    )}
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
+                    <p className="text-green-300 text-sm font-medium">
+                      ✓ We handle all coordination with Mintfunnel<br/>
+                      ✓ Your PR content will be reviewed and optimized<br/>
+                      ✓ Full support throughout the process
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Full Listing Package Benefits */
+                <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                    <FaRocket className="mr-3 text-blue-400" />
+                    Premium Listing Package - {isAffiliate ? (
+                      <span>
+                        <span className="line-through text-gray-400 ml-2">${BASE_LISTING_FEE} USDC</span>
+                        <span className="text-green-400 ml-2">${discountedBaseFee.toFixed(2)} USDC</span>
+                        <span className="bg-green-500 text-white px-2 py-1 rounded text-sm ml-2">5% Affiliate Discount</span>
+                      </span>
+                    ) : (
+                      `$${BASE_LISTING_FEE} USDC`
+                    )}
+                  </h3>
                 <p className="text-gray-300 mb-6">
                   Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
                 </p>
@@ -808,6 +1040,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                   </p>
                 </div>
               </div>
+              )}
             </div>
 
             {/* Payment Form */}
@@ -821,26 +1054,36 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                       ${formData.totalAmount.toLocaleString()} USDC
                     </span>
                   </div>
-                  {formData.selectedAddons.length > 0 && (
+                  {(formData.selectedAddons.length > 0 || isAddOnOnly) && (
                     <div className="mt-2 pt-2 border-t border-gray-600">
                       <div className="text-sm text-gray-300">
-                        <div className="flex justify-between">
-                          <span>Base Listing:</span>
-                          <span>
-                            {isAffiliate ? (
+                        {!isAddOnOnly && (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Base Listing:</span>
                               <span>
-                                <span className="line-through text-gray-400">${BASE_LISTING_FEE}</span>
-                                <span className="text-green-400 ml-1">${discountedBaseFee.toFixed(2)} USDC</span>
+                                {isAffiliate ? (
+                                  <span>
+                                    <span className="line-through text-gray-400">${BASE_LISTING_FEE}</span>
+                                    <span className="text-green-400 ml-1">${discountedBaseFee.toFixed(2)} USDC</span>
+                                  </span>
+                                ) : (
+                                  `$${BASE_LISTING_FEE} USDC`
+                                )}
                               </span>
-                            ) : (
-                              `$${BASE_LISTING_FEE} USDC`
+                            </div>
+                            {isAffiliate && (
+                              <div className="flex justify-between text-green-400">
+                                <span>Affiliate Discount (5%):</span>
+                                <span>-${affiliateDiscount.toFixed(2)} USDC</span>
+                              </div>
                             )}
-                          </span>
-                        </div>
-                        {isAffiliate && (
-                          <div className="flex justify-between text-green-400">
-                            <span>Affiliate Discount (5%):</span>
-                            <span>-${affiliateDiscount.toFixed(2)} USDC</span>
+                          </>
+                        )}
+                        {isAddOnOnly && selectedExistingProject && (
+                          <div className="flex justify-between text-purple-300 mb-2">
+                            <span>For Project:</span>
+                            <span>{selectedExistingProject.title}</span>
                           </div>
                         )}
                         {formData.selectedAddons.map(addonId => {
@@ -986,7 +1229,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                       onClick={() => setStep(2)}
                       className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
                     >
-                      <FaArrowLeft className="mr-2" /> Back
+                      <FaArrowLeft className="mr-2" /> Back to Packages
                     </button>
                   </div>
                 </div>

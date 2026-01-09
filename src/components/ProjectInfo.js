@@ -204,9 +204,20 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showBumpStore, setShowBumpStore] = useState(false);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
+  const [preSelectedPackage, setPreSelectedPackage] = useState(null);
 
   // Check if user has any projects listed
   const userHasProjects = ads.some(ad => ad.owner === currentUser?.username);
+
+  // Handle package selection from marketing packages section
+  const handlePackageSelect = (packageId) => {
+    if (!currentUser) {
+      alert('Please log in to purchase marketing packages.');
+      return;
+    }
+    setPreSelectedPackage(packageId);
+    setShowCreateModal(true);
+  };
 
   // Open MintFunnel platform in full-screen popup
   const openMintFunnelPlatform = () => {
@@ -844,10 +855,8 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 </div>
 
                 {/* CTA Button */}
-                <a
-                  href="https://mintfunnel.co/crypto-press-release-distribution/?ref=Aquads"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handlePackageSelect(pkg.id)}
                   className={`mt-4 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 ${
                     pkg.tier === 'legendary'
                       ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black'
@@ -858,7 +867,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 >
                   Get Started
                   <FaArrowRight className="ml-2 text-xs" />
-                </a>
+                </button>
               </div>
             </div>
           ))}
@@ -867,12 +876,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         {/* Bottom Info */}
         <div className="mt-12 text-center">
           <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 max-w-4xl mx-auto">
-            <h3 className="text-xl font-bold text-white mb-3">Why Choose Mintfunnel PR Distribution?</h3>
+            <h3 className="text-xl font-bold text-white mb-3">Why Choose Our PR Distribution Service?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <FaLightbulb className="text-yellow-400 text-xl mx-auto mb-2" />
                 <p className="text-white font-semibold">5+ Years Experience</p>
-                <p className="text-gray-400 text-xs">The first and most popular PR wire built specifically for Web3 & crypto</p>
+                <p className="text-gray-400 text-xs">Powered by Mintfunnel - the first and most popular PR wire built for Web3 & crypto</p>
               </div>
               <div>
                 <FaNetworkWired className="text-blue-400 text-xl mx-auto mb-2" />
@@ -881,19 +890,18 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </div>
               <div>
                 <FaHandshake className="text-green-400 text-xl mx-auto mb-2" />
-                <p className="text-white font-semibold">Aquads Partnership</p>
-                <p className="text-gray-400 text-xs">Direct support from our team plus exclusive partner benefits</p>
+                <p className="text-white font-semibold">We Handle Everything</p>
+                <p className="text-gray-400 text-xs">Pay through Aquads - we manage your campaign setup and delivery with our partners</p>
               </div>
             </div>
-            <a
-              href="https://mintfunnel.co/crypto-press-release-distribution/?ref=Aquads"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center mt-6 text-cyan-400 hover:text-cyan-300 font-semibold"
+            <button
+              onClick={handleListProjectClick}
+              className="inline-flex items-center mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300"
             >
-              View Full Package Details on Mintfunnel
+              <FaRocket className="mr-2" />
+              List Your Project & Select Packages
               <FaArrowRight className="ml-2" />
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -1023,8 +1031,13 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
       {showCreateModal && (
         <CreateAdModal
           onCreateAd={handleCreateAd}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            setPreSelectedPackage(null);
+          }}
           currentUser={currentUser}
+          preSelectedPackage={preSelectedPackage}
+          userAds={ads}
         />
       )}
 
