@@ -39,12 +39,52 @@ const USDC_ADDRESSES = {
 const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)', 'function decimals() view returns (uint8)'];
 
-// Solana RPC fallback list (try in order)
-const SOLANA_RPC_ENDPOINTS = [
-  'https://api.mainnet-beta.solana.com',
-  'https://rpc.ankr.com/solana',
-  'https://solana.public-rpc.com'
-];
+// Custom Solana connection class using backend proxy
+class ProxiedConnection {
+  constructor(apiUrl) {
+    this.apiUrl = apiUrl;
+  }
+  
+  async getLatestBlockhash() {
+    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
+      method: 'getLatestBlockhash',
+      params: [{ commitment: 'confirmed' }]
+    });
+    if (res.data.error) throw new Error(res.data.error.message);
+    return res.data.result.value;
+  }
+  
+  async sendRawTransaction(serializedTx) {
+    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
+      method: 'sendTransaction',
+      params: [Buffer.from(serializedTx).toString('base64'), { encoding: 'base64' }]
+    });
+    if (res.data.error) throw new Error(res.data.error.message);
+    return res.data.result;
+  }
+  
+  async confirmTransaction(signature) {
+    // Poll for confirmation
+    for (let i = 0; i < 30; i++) {
+      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
+        method: 'confirmTransaction',
+        params: [signature, 'confirmed']
+      });
+      if (res.data.result?.value) return res.data.result;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    throw new Error('Transaction confirmation timeout');
+  }
+  
+  async getAccountInfo(pubkey) {
+    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
+      method: 'getAccountInfo',
+      params: [pubkey.toString(), { encoding: 'base64' }]
+    });
+    if (res.data.error) throw new Error(res.data.error.message);
+    return res.data.result;
+  }
+}
 
 const CHAINS = {
   solana: { name: 'Solana', symbol: 'SOL', icon: '◎', gradient: 'from-purple-500 to-violet-600', explorerUrl: 'https://solscan.io/tx/', walletField: 'solana', isEVM: false },
@@ -220,34 +260,30 @@ const AquaPayPage = ({ currentUser }) => {
         else throw new Error('Transaction failed');
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
-        const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
+        const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
         
-        // Try multiple RPCs with fallback
-        let connection, blockhash;
-        for (const rpc of SOLANA_RPC_ENDPOINTS) {
-          try {
-            connection = new Connection(rpc, 'confirmed');
-            const result = await connection.getLatestBlockhash();
-            blockhash = result.blockhash;
-            break; // Success, use this RPC
-          } catch (rpcErr) {
-            console.log(`RPC ${rpc} failed, trying next...`);
-            if (rpc === SOLANA_RPC_ENDPOINTS[SOLANA_RPC_ENDPOINTS.length - 1]) {
-              throw new Error('All Solana RPCs unavailable. Please try again later.');
-            }
-          }
-        }
+        // Use backend proxy to avoid CORS/rate limits
+        const connection = new ProxiedConnection(API_URL);
+        const { blockhash } = await connection.getLatestBlockhash();
         
         const fromPubkey = new PublicKey(walletAddress);
         const toPubkey = new PublicKey(recipientAddress);
         let transaction;
         if (selectedToken === 'usdc') {
-          const { getAssociatedTokenAddress, createTransferInstruction, createAssociatedTokenAccountInstruction, getAccount } = await import('@solana/spl-token');
+          const { getAssociatedTokenAddress, createTransferInstruction, createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
           const mint = new PublicKey(SOLANA_USDC_MINT);
           const fromATA = await getAssociatedTokenAddress(mint, fromPubkey);
           const toATA = await getAssociatedTokenAddress(mint, toPubkey);
           transaction = new Transaction();
-          try { await getAccount(connection, toATA); } catch { transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint)); }
+          // Check if recipient ATA exists via proxy
+          try {
+            const acctInfo = await connection.getAccountInfo(toATA);
+            if (!acctInfo?.value) {
+              transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint));
+            }
+          } catch { 
+            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint)); 
+          }
           transaction.add(createTransferInstruction(fromATA, toATA, fromPubkey, Math.floor(parseFloat(amount) * 1e6)));
         } else {
           transaction = new Transaction().add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL) }));
@@ -256,6 +292,7 @@ const AquaPayPage = ({ currentUser }) => {
         const signed = await solana.signTransaction(transaction);
         const sig = await connection.sendRawTransaction(signed.serialize());
         setTxHash(sig);
+        setTxStatus('pending');
         await connection.confirmTransaction(sig);
         setTxStatus('success'); await recordPayment(sig);
       }

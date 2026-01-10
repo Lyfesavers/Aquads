@@ -437,5 +437,70 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
+// Solana RPC Proxy (avoids CORS/rate-limit issues from browser)
+const SOLANA_RPCS = [
+  'https://api.mainnet-beta.solana.com',
+  'https://solana-mainnet.g.alchemy.com/v2/demo',
+  'https://rpc.ankr.com/solana'
+];
+
+router.post('/solana-rpc', async (req, res) => {
+  try {
+    const { method, params } = req.body;
+    
+    // Only allow specific safe methods
+    const allowedMethods = [
+      'getLatestBlockhash', 
+      'sendTransaction', 
+      'confirmTransaction',
+      'getBalance',
+      'getAccountInfo',
+      'getTokenAccountsByOwner'
+    ];
+    
+    if (!allowedMethods.includes(method)) {
+      return res.status(400).json({ error: 'Method not allowed' });
+    }
+
+    let lastError = null;
+    
+    // Try each RPC until one works
+    for (const rpcUrl of SOLANA_RPCS) {
+      try {
+        const axios = require('axios');
+        const response = await axios.post(rpcUrl, {
+          jsonrpc: '2.0',
+          id: 1,
+          method,
+          params: params || []
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 30000
+        });
+        
+        if (response.data.error) {
+          lastError = response.data.error;
+          continue; // Try next RPC
+        }
+        
+        return res.json(response.data);
+      } catch (rpcError) {
+        lastError = rpcError.message;
+        console.log(`Solana RPC ${rpcUrl} failed:`, rpcError.message);
+        continue; // Try next RPC
+      }
+    }
+    
+    // All RPCs failed
+    res.status(503).json({ 
+      error: 'All Solana RPCs unavailable', 
+      details: lastError 
+    });
+  } catch (error) {
+    console.error('Solana RPC proxy error:', error);
+    res.status(500).json({ error: 'RPC proxy failed' });
+  }
+});
+
 module.exports = router;
 
