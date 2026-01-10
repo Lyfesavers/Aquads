@@ -39,50 +39,55 @@ const USDC_ADDRESSES = {
 const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)', 'function decimals() view returns (uint8)'];
 
-// Custom Solana connection class using backend proxy
+// Custom Solana connection class using backend proxy to avoid CORS/rate limits
 class ProxiedConnection {
   constructor(apiUrl) {
     this.apiUrl = apiUrl;
   }
   
+  async _call(method, params) {
+    try {
+      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, { method, params }, { timeout: 30000 });
+      if (res.data.error) throw new Error(res.data.error.message || res.data.error);
+      return res.data.result;
+    } catch (err) {
+      if (err.response?.data?.error) throw new Error(err.response.data.error);
+      throw err;
+    }
+  }
+  
   async getLatestBlockhash() {
-    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
-      method: 'getLatestBlockhash',
-      params: [{ commitment: 'confirmed' }]
-    });
-    if (res.data.error) throw new Error(res.data.error.message);
-    return res.data.result.value;
+    const result = await this._call('getLatestBlockhash', [{ commitment: 'confirmed' }]);
+    return result.value;
   }
   
   async sendRawTransaction(serializedTx) {
-    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
-      method: 'sendTransaction',
-      params: [Buffer.from(serializedTx).toString('base64'), { encoding: 'base64' }]
-    });
-    if (res.data.error) throw new Error(res.data.error.message);
-    return res.data.result;
+    // Convert Uint8Array to base64
+    const base64Tx = typeof serializedTx === 'string' ? serializedTx : 
+      btoa(String.fromCharCode.apply(null, new Uint8Array(serializedTx)));
+    return await this._call('sendTransaction', [base64Tx, { encoding: 'base64', preflightCommitment: 'confirmed' }]);
   }
   
   async confirmTransaction(signature) {
-    // Poll for confirmation
-    for (let i = 0; i < 30; i++) {
-      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
-        method: 'confirmTransaction',
-        params: [signature, 'confirmed']
-      });
-      if (res.data.result?.value) return res.data.result;
+    // Poll for confirmation (up to 60 seconds)
+    for (let i = 0; i < 60; i++) {
+      try {
+        const result = await this._call('getSignatureStatuses', [[signature]]);
+        const status = result?.value?.[0];
+        if (status?.confirmationStatus === 'confirmed' || status?.confirmationStatus === 'finalized') {
+          return { value: status };
+        }
+        if (status?.err) throw new Error('Transaction failed: ' + JSON.stringify(status.err));
+      } catch (e) {
+        if (e.message.includes('Transaction failed')) throw e;
+      }
       await new Promise(r => setTimeout(r, 1000));
     }
-    throw new Error('Transaction confirmation timeout');
+    throw new Error('Transaction confirmation timeout - check explorer');
   }
   
   async getAccountInfo(pubkey) {
-    const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, {
-      method: 'getAccountInfo',
-      params: [pubkey.toString(), { encoding: 'base64' }]
-    });
-    if (res.data.error) throw new Error(res.data.error.message);
-    return res.data.result;
+    return await this._call('getAccountInfo', [pubkey.toString(), { encoding: 'base64' }]);
   }
 }
 

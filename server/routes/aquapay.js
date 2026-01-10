@@ -438,9 +438,12 @@ router.get('/history', auth, async (req, res) => {
 });
 
 // Solana RPC Proxy (avoids CORS/rate-limit issues from browser)
+// Using reliable public endpoints with fallbacks
 const SOLANA_RPCS = [
+  'https://solana-rpc.publicnode.com',
+  'https://solana-mainnet.rpc.extrnode.com', 
   'https://api.mainnet-beta.solana.com',
-  'https://solana-mainnet.g.alchemy.com/v2/demo',
+  'https://solana.blockdaemon.com/rpc/mainnet',
   'https://rpc.ankr.com/solana'
 ];
 
@@ -453,6 +456,7 @@ router.post('/solana-rpc', async (req, res) => {
       'getLatestBlockhash', 
       'sendTransaction', 
       'confirmTransaction',
+      'getSignatureStatuses',
       'getBalance',
       'getAccountInfo',
       'getTokenAccountsByOwner'
@@ -463,42 +467,51 @@ router.post('/solana-rpc', async (req, res) => {
     }
 
     let lastError = null;
+    const axios = require('axios');
     
     // Try each RPC until one works
-    for (const rpcUrl of SOLANA_RPCS) {
+    for (let i = 0; i < SOLANA_RPCS.length; i++) {
+      const rpcUrl = SOLANA_RPCS[i];
       try {
-        const axios = require('axios');
         const response = await axios.post(rpcUrl, {
           jsonrpc: '2.0',
-          id: 1,
+          id: Date.now(),
           method,
           params: params || []
         }, {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 30000
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          timeout: 15000 // 15 second timeout per RPC
         });
         
-        if (response.data.error) {
-          lastError = response.data.error;
+        // Check for RPC-level errors
+        if (response.data?.error) {
+          lastError = response.data.error.message || JSON.stringify(response.data.error);
+          console.log(`Solana RPC ${rpcUrl} returned error:`, lastError);
           continue; // Try next RPC
         }
         
+        // Success!
+        console.log(`Solana RPC ${rpcUrl} succeeded for ${method}`);
         return res.json(response.data);
       } catch (rpcError) {
-        lastError = rpcError.message;
-        console.log(`Solana RPC ${rpcUrl} failed:`, rpcError.message);
+        lastError = rpcError.response?.data?.error?.message || rpcError.message;
+        console.log(`Solana RPC ${rpcUrl} failed (${i + 1}/${SOLANA_RPCS.length}):`, lastError);
         continue; // Try next RPC
       }
     }
     
     // All RPCs failed
+    console.error('All Solana RPCs failed. Last error:', lastError);
     res.status(503).json({ 
-      error: 'All Solana RPCs unavailable', 
+      error: 'Solana network temporarily unavailable. Please try again.',
       details: lastError 
     });
   } catch (error) {
     console.error('Solana RPC proxy error:', error);
-    res.status(500).json({ error: 'RPC proxy failed' });
+    res.status(500).json({ error: 'RPC proxy failed', details: error.message });
   }
 });
 
