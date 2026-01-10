@@ -90,7 +90,7 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     
     {/* Content */}
     <div className="relative z-10 h-full flex flex-col">
-      <div className="text-2xl md:text-4xl mb-2 md:mb-4">{icon}</div>
+      <div className="text-2xl md:text-4xl mb-2 md:mb-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{icon}</div>
       <h3 className={`${size === 'large' ? 'text-base md:text-2xl' : 'text-sm md:text-xl'} font-bold text-white mb-1 md:mb-2 font-display`}>{title}</h3>
       <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed`}>{description}</p>
       
@@ -116,9 +116,9 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
                   <div className={`
                     flex items-center gap-3 p-3 rounded-lg 
                     bg-gradient-to-r ${block.color} bg-opacity-20
-                    border border-white/10 backdrop-blur-sm
+                    border border-white/20 backdrop-blur-sm
                   `}>
-                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-xl">
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-xl drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]">
                       {block.icon}
                     </div>
                     <div className="flex-1">
@@ -939,13 +939,13 @@ const LandingPage = () => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex items-center gap-2 text-gray-300 text-xs md:text-sm"
+                      className="flex items-center gap-2 text-white text-xs md:text-sm bg-white/5 rounded-lg px-2 py-1.5"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.3 + i * 0.1 }}
                     >
-                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
                       <span>{item.label}</span>
                     </motion.div>
                   ))}
@@ -958,22 +958,13 @@ const LandingPage = () => {
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Link to="/marketplace">
+                  <Link to="/home?openDashboard=aquapay">
                     <motion.button
                       className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm md:text-base shadow-lg shadow-blue-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
                       💸 Create Your Payment Link
-                    </motion.button>
-                  </Link>
-                  <Link to="/pay/demo">
-                    <motion.button
-                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/20 text-white font-medium text-sm md:text-base hover:bg-white/10 transition-colors"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      👁 See Demo
                     </motion.button>
                   </Link>
                 </motion.div>
@@ -992,10 +983,10 @@ const LandingPage = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/10 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         💸
                       </div>
                       <div>
@@ -1006,12 +997,17 @@ const LandingPage = () => {
                     
                     {/* Chain selector mockup */}
                     <div className="grid grid-cols-4 gap-2 mb-4">
-                      {['◎', 'Ξ', '🔵', '🟣'].map((icon, i) => (
+                      {[
+                        { icon: '◎', color: 'text-purple-400', bg: 'bg-purple-500/30 border border-purple-500/50', active: true },
+                        { icon: 'Ξ', color: 'text-blue-400', bg: 'bg-white/10' },
+                        { icon: '▣', color: 'text-blue-400', bg: 'bg-white/10' },
+                        { icon: '◆', color: 'text-purple-400', bg: 'bg-white/10' }
+                      ].map((item, i) => (
                         <div 
                           key={i} 
-                          className={`p-2 rounded-lg text-center text-lg ${i === 0 ? 'bg-blue-500/30 border border-blue-500/50' : 'bg-white/5'}`}
+                          className={`p-2 rounded-lg text-center text-lg font-bold ${item.active ? item.bg : item.bg} ${item.color}`}
                         >
-                          {icon}
+                          {item.icon}
                         </div>
                       ))}
                     </div>

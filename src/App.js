@@ -1911,13 +1911,23 @@ function App() {
     // Check for localStorage flags on mount
     checkLocalStorage();
     
+    // Check for URL query parameter to open dashboard
+    const urlParams = new URLSearchParams(window.location.search);
+    const openDashboardTab = urlParams.get('openDashboard');
+    if (openDashboardTab && currentUser) {
+      setDashboardActiveTab(openDashboardTab);
+      setShowDashboard(true);
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     // Return cleanup function
     return () => {
       window.removeEventListener('openDashboardWithBooking', handleOpenDashboardWithBooking);
       window.removeEventListener('openDashboard', handleOpenDashboard);
       delete window.showDashboard;
     };
-  }, []);
+  }, [currentUser]);
 
   // For mobile view only, adjust bubbles in viewport to prevent overlaps
   function adjustBubblesForMobile() {
