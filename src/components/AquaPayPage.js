@@ -5,6 +5,18 @@ import { ethers } from 'ethers';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
 
+// CoinGecko IDs for price fetching
+const COINGECKO_IDS = {
+  solana: 'solana',
+  ethereum: 'ethereum',
+  base: 'ethereum', // Base uses ETH
+  polygon: 'matic-network',
+  arbitrum: 'ethereum', // Arbitrum uses ETH
+  bnb: 'binancecoin',
+  bitcoin: 'bitcoin',
+  tron: 'tron'
+};
+
 // Wallet options for EVM chains
 const EVM_WALLET_OPTIONS = [
   { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', description: 'MetaMask, Trust, Rainbow & 300+', recommended: true },
@@ -27,6 +39,25 @@ const EVM_CHAINS = {
   bnb: { chainId: '0x38', chainName: 'BNB Smart Chain', nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 }, rpcUrls: ['https://bsc-dataseed.binance.org'], blockExplorerUrls: ['https://bscscan.com'] }
 };
 
+// USDC Contract Addresses per chain
+const USDC_ADDRESSES = {
+  ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  polygon: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  arbitrum: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  bnb: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d'
+};
+
+// Solana USDC mint address
+const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+// ERC20 ABI for transfer
+const ERC20_ABI = [
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)'
+];
+
 // Chain configurations
 const CHAINS = {
   solana: { name: 'Solana', symbol: 'SOL', icon: '◎', gradient: 'from-purple-500 via-violet-600 to-purple-800', explorerUrl: 'https://solscan.io/tx/', walletField: 'solana', isEVM: false },
@@ -47,6 +78,7 @@ const AquaPayPage = ({ currentUser }) => {
   const [error, setError] = useState(null);
   const [paymentPage, setPaymentPage] = useState(null);
   const [selectedChain, setSelectedChain] = useState(null);
+  const [selectedToken, setSelectedToken] = useState('native'); // 'native' or 'usdc'
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   
@@ -63,6 +95,7 @@ const AquaPayPage = ({ currentUser }) => {
   const [showSolanaWalletModal, setShowSolanaWalletModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [wcProvider, setWcProvider] = useState(null);
+  const [tokenPrice, setTokenPrice] = useState(null);
 
   useEffect(() => {
     const fetchPaymentPage = async () => {
@@ -95,7 +128,31 @@ const AquaPayPage = ({ currentUser }) => {
       setWalletConnected(false);
       setWalletAddress(null);
     }
+    // Reset token to native when switching chains
+    setSelectedToken('native');
+    setTokenPrice(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChain]);
+
+  // Fetch token price from CoinGecko
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (!selectedChain || !COINGECKO_IDS[selectedChain]) return;
+      try {
+        const coinId = COINGECKO_IDS[selectedChain];
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+        const data = await response.json();
+        if (data[coinId]?.usd) {
+          setTokenPrice(data[coinId].usd);
+        }
+      } catch (err) {
+        console.error('Error fetching price:', err);
+      }
+    };
+    fetchPrice();
+    // Refresh price every 30 seconds
+    const interval = setInterval(fetchPrice, 30000);
+    return () => clearInterval(interval);
   }, [selectedChain]);
 
   const getRecipientAddress = useCallback(() => {
@@ -180,12 +237,28 @@ const AquaPayPage = ({ currentUser }) => {
       const ethProvider = wcProvider || window.ethereum;
       const provider = new ethers.BrowserProvider(ethProvider);
       const signer = await provider.getSigner();
-      const tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+      
+      let tx;
+      if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+        // Send USDC (ERC-20 transfer)
+        const usdcContract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
+        const decimals = await usdcContract.decimals();
+        const amountInUnits = ethers.parseUnits(amount, decimals);
+        tx = await usdcContract.transfer(recipientAddress, amountInUnits);
+      } else {
+        // Send native token (ETH, MATIC, BNB)
+        tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+      }
+      
       setTxHash(tx.hash);
       const receipt = await tx.wait();
       if (receipt.status === 1) { setTxStatus('success'); await recordPayment(tx.hash); }
       else { setTxStatus('error'); setTxError('Transaction failed'); }
-    } catch (err) { setTxStatus('error'); setTxError(err.message || 'Transaction failed'); }
+    } catch (err) { 
+      console.error('Payment error:', err);
+      setTxStatus('error'); 
+      setTxError(err.reason || err.message || 'Transaction failed'); 
+    }
     finally { setSending(false); }
   };
 
@@ -193,7 +266,7 @@ const AquaPayPage = ({ currentUser }) => {
     if (!amount || parseFloat(amount) <= 0) { setTxError('Enter a valid amount'); return; }
     const recipientAddress = getRecipientAddress();
     if (!recipientAddress) { setTxError('Recipient not found'); return; }
-    const solana = window.solana || window.phantom?.solana;
+    const solana = window.phantom?.solana || window.solflare || window.solana;
     if (!solana) { setTxError('Solana wallet not found'); return; }
     setSending(true); setTxError(null); setTxStatus('pending');
     try {
@@ -201,7 +274,42 @@ const AquaPayPage = ({ currentUser }) => {
       const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
       const fromPubkey = new PublicKey(walletAddress);
       const toPubkey = new PublicKey(recipientAddress);
-      const transaction = new Transaction().add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL) }));
+      
+      let transaction;
+      
+      if (selectedToken === 'usdc') {
+        // Send USDC (SPL Token)
+        const { getAssociatedTokenAddress, createTransferInstruction, createAssociatedTokenAccountInstruction, getAccount } = await import('@solana/spl-token');
+        const usdcMint = new PublicKey(SOLANA_USDC_MINT);
+        
+        // Get token accounts
+        const fromTokenAccount = await getAssociatedTokenAddress(usdcMint, fromPubkey);
+        const toTokenAccount = await getAssociatedTokenAddress(usdcMint, toPubkey);
+        
+        transaction = new Transaction();
+        
+        // Check if recipient has a token account, create if not
+        try {
+          await getAccount(connection, toTokenAccount);
+        } catch (e) {
+          // Account doesn't exist, add instruction to create it
+          transaction.add(
+            createAssociatedTokenAccountInstruction(fromPubkey, toTokenAccount, toPubkey, usdcMint)
+          );
+        }
+        
+        // USDC has 6 decimals
+        const amountInUnits = Math.floor(parseFloat(amount) * 1_000_000);
+        transaction.add(
+          createTransferInstruction(fromTokenAccount, toTokenAccount, fromPubkey, amountInUnits)
+        );
+      } else {
+        // Send native SOL
+        transaction = new Transaction().add(
+          SystemProgram.transfer({ fromPubkey, toPubkey, lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL) })
+        );
+      }
+      
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = fromPubkey;
@@ -211,7 +319,11 @@ const AquaPayPage = ({ currentUser }) => {
       await connection.confirmTransaction(signature);
       setTxStatus('success');
       await recordPayment(signature);
-    } catch (err) { setTxStatus('error'); setTxError(err.message || 'Transaction failed'); }
+    } catch (err) { 
+      console.error('Solana payment error:', err);
+      setTxStatus('error'); 
+      setTxError(err.message || 'Transaction failed'); 
+    }
     finally { setSending(false); }
   };
 
@@ -223,9 +335,10 @@ const AquaPayPage = ({ currentUser }) => {
 
   const recordPayment = async (hash) => {
     try {
+      const tokenSymbol = selectedToken === 'usdc' ? 'USDC' : (CHAINS[selectedChain]?.symbol || 'UNKNOWN');
       await axios.post(`${API_URL}/api/aquapay/payment`, {
         recipientSlug: slug, txHash: hash, chain: selectedChain,
-        token: CHAINS[selectedChain]?.symbol || 'UNKNOWN', amount: parseFloat(amount) || 0,
+        token: tokenSymbol, amount: parseFloat(amount) || 0,
         senderAddress: walletAddress, senderUsername: currentUser?.username || null, message: message || null
       });
     } catch (e) { console.error('Error recording payment:', e); }
@@ -247,7 +360,7 @@ const AquaPayPage = ({ currentUser }) => {
 
   const resetPayment = () => {
     setTxHash(null); setTxStatus(null); setTxError(null); setAmount(''); setMessage('');
-    setWalletConnected(false); setWalletAddress(null);
+    setWalletConnected(false); setWalletAddress(null); setSelectedToken('native');
   };
 
   // Loading
@@ -293,7 +406,7 @@ const AquaPayPage = ({ currentUser }) => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Sent!</h1>
-          <p className="text-gray-300 mb-4">{amount} {chainConfig?.symbol} → {paymentPage?.displayName}</p>
+          <p className="text-gray-300 mb-4">{amount} {selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol} → {paymentPage?.displayName}</p>
           {txHash && (
             <a href={`${chainConfig?.explorerUrl}${txHash}`} target="_blank" rel="noopener noreferrer"
               className="inline-block px-4 py-2 bg-gray-700 hover:bg-gray-600 text-cyan-400 rounded-lg text-sm mb-4">
@@ -484,22 +597,64 @@ const AquaPayPage = ({ currentUser }) => {
                   <span className="text-gray-300 text-xs font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
                 </div>
 
+                {/* Token Selector */}
+                {(chainConfig?.isEVM || selectedChain === 'solana') && (
+                  <div className="mb-3">
+                    <label className="block text-gray-400 text-xs mb-1">Currency</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setSelectedToken('native')}
+                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          selectedToken === 'native' 
+                            ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300' 
+                            : 'bg-gray-800 border border-gray-700 text-gray-300 hover:border-gray-600'
+                        }`}
+                      >
+                        <span>{chainConfig?.icon}</span>
+                        <span>{chainConfig?.symbol}</span>
+                      </button>
+                      <button
+                        onClick={() => setSelectedToken('usdc')}
+                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          selectedToken === 'usdc' 
+                            ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300' 
+                            : 'bg-gray-800 border border-gray-700 text-gray-300 hover:border-gray-600'
+                        }`}
+                      >
+                        <span>💵</span>
+                        <span>USDC</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Amount */}
                 <div className="mb-3">
                   <label className="block text-gray-400 text-xs mb-1">Amount</label>
                   <div className="relative">
                     <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00" step="0.0001" min="0"
+                      placeholder="0.00" step={selectedToken === 'usdc' ? '0.01' : '0.0001'} min="0"
                       className="w-full px-3 py-3 pr-16 bg-gray-900/70 border border-gray-700 focus:border-cyan-500 rounded-lg text-white text-xl font-bold focus:outline-none" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">{chainConfig?.symbol}</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">
+                      {selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol}
+                    </span>
                   </div>
+                  {/* USD Conversion */}
+                  {selectedToken === 'native' && tokenPrice && amount && parseFloat(amount) > 0 && (
+                    <div className="mt-1.5 flex items-center justify-between text-xs">
+                      <span className="text-gray-500">≈ ${(parseFloat(amount) * tokenPrice).toFixed(2)} USD</span>
+                      <span className="text-gray-600">1 {chainConfig?.symbol} = ${tokenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick amounts */}
                 <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[0.01, 0.05, 0.1, 0.5].map(val => (
+                  {(selectedToken === 'usdc' ? [5, 10, 25, 50] : [0.01, 0.05, 0.1, 0.5]).map(val => (
                     <button key={val} onClick={() => setAmount(val.toString())}
-                      className="py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-xs font-medium border border-gray-700">{val}</button>
+                      className="py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-xs font-medium border border-gray-700">
+                      {selectedToken === 'usdc' ? `$${val}` : val}
+                    </button>
                   ))}
                 </div>
 
@@ -528,7 +683,7 @@ const AquaPayPage = ({ currentUser }) => {
                   {sending ? (
                     <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> {txStatus === 'pending' ? 'Confirming...' : 'Sending...'}</>
                   ) : (
-                    <>Send {amount || '0'} {chainConfig?.symbol}</>
+                    <>Send {amount || '0'} {selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol}</>
                   )}
                 </button>
               </div>
