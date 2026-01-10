@@ -43,6 +43,7 @@ const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
 const { sanitizeForRegex } = require('./utils/security');
+const aquapayRoutes = require('./routes/aquapay');
 
 // OG image routes - wrapped in try-catch to debug loading issues
 let ogRoutes;
@@ -593,6 +594,7 @@ app.use('/api/skill-tests', require('./routes/skillTests'));
 app.use('/api/workshop', require('./routes/workshop'));
 app.use('/api/click-tracking', require('./routes/clickTracking'));
 app.use('/api/on-chain-resume', require('./routes/onChainResume'));
+app.use('/api/aquapay', aquapayRoutes);
 
 // OG image generation routes (for social media previews)
 if (ogRoutes) {
