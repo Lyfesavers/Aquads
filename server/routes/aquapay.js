@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const requireEmailVerification = require('../middleware/emailVerification');
 
 // Supported chains configuration
 const SUPPORTED_CHAINS = {
@@ -145,7 +144,7 @@ router.get('/settings', auth, async (req, res) => {
 });
 
 // Update AquaPay settings (authenticated)
-router.put('/settings', auth, requireEmailVerification, async (req, res) => {
+router.put('/settings', auth, async (req, res) => {
   try {
     const {
       isEnabled,
@@ -222,15 +221,15 @@ router.put('/settings', auth, requireEmailVerification, async (req, res) => {
       }
 
       user.aquaPay.wallets = {
-        ...user.aquaPay.wallets,
+        ...(user.aquaPay.wallets || {}),
         ...wallets
       };
     }
 
     // Update other fields
     if (isEnabled !== undefined) user.aquaPay.isEnabled = isEnabled;
-    if (displayName !== undefined) user.aquaPay.displayName = displayName.substring(0, 50);
-    if (bio !== undefined) user.aquaPay.bio = bio.substring(0, 500);
+    if (displayName !== undefined) user.aquaPay.displayName = displayName ? String(displayName).substring(0, 50) : null;
+    if (bio !== undefined) user.aquaPay.bio = bio ? String(bio).substring(0, 500) : null;
     if (preferredChain !== undefined) user.aquaPay.preferredChain = preferredChain;
     if (acceptedTokens !== undefined) user.aquaPay.acceptedTokens = acceptedTokens;
     if (theme !== undefined) user.aquaPay.theme = theme;
@@ -255,8 +254,8 @@ router.put('/settings', auth, requireEmailVerification, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error updating AquaPay settings:', error);
-    res.status(500).json({ error: 'Failed to update AquaPay settings' });
+    console.error('Error updating AquaPay settings:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to update AquaPay settings', details: error.message });
   }
 });
 
