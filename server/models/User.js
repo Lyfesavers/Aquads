@@ -760,6 +760,6 @@ userSchema.index({ points: -1 }); // For points-based sorting
 userSchema.index({ tokens: -1 }); // For token-based sorting
 userSchema.index({ createdAt: -1 }); // For registration date sorting
 userSchema.index({ lastActivity: -1 }); // For activity-based sorting
-userSchema.index({ 'aquaPay.paymentSlug': 1 }); // For AquaPay payment page lookups
+// Note: aquaPay.paymentSlug index is created automatically via "unique: true" in schema
 
 module.exports = mongoose.model('User', userSchema); 
