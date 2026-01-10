@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const { requireEmailVerification } = require('../middleware/emailVerification');
+const requireEmailVerification = require('../middleware/emailVerification');
 
 // Supported chains configuration
 const SUPPORTED_CHAINS = {
