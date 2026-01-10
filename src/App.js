@@ -301,53 +301,44 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
 // Component to handle bubble layout when navigating to home page from landing page
 const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   const location = useLocation();
-  const hasNavigatedFromLanding = useRef(false);
+  const previousPath = useRef(null);
   
   useEffect(() => {
-    // Only trigger layout when navigating TO /home (not on initial load)
-    // The initial load is handled by the initial load useEffects
-    if (location.pathname === '/home') {
-      // Skip if this is initial page load (not navigation from landing)
-      // We detect this by checking if layout was already applied
-      if (window.initialLayoutApplied || window.initialGridLayoutApplied) {
-        // This is a navigation from another page, trigger smooth layout
-        if (!hasNavigatedFromLanding.current) {
-          hasNavigatedFromLanding.current = true;
-          
-          // Only reset the arrangement flag to allow re-layout
-          window.isArrangingDesktopGrid = false;
-          
-          // Set flag to use smooth transitions for this layout
-          window.useSmoothLayoutTransition = true;
-          
-          // Wait for DOM to be ready and bubbles to render, then arrange
-          const timer = setTimeout(() => {
-            // Set smooth floating transition on all bubbles BEFORE arranging
-            const bubbles = document.querySelectorAll('.bubble-container');
-            bubbles.forEach(bubble => {
-              bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            });
-            
-            if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
-              arrangeDesktopGrid();
-            } else if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
-              adjustBubblesForMobile();
-            }
-            
-            // Reset flag after animation completes
-            setTimeout(() => {
-              window.useSmoothLayoutTransition = false;
-              hasNavigatedFromLanding.current = false;
-            }, 1000);
-          }, 300);
-          
-          return () => clearTimeout(timer);
+    // Check if we're navigating TO /home from another page (like landing page)
+    const isNavigatingToHome = location.pathname === '/home' && previousPath.current !== null && previousPath.current !== '/home';
+    
+    if (isNavigatingToHome) {
+      // Reset the arrangement flag to allow re-layout
+      window.isArrangingDesktopGrid = false;
+      
+      // Set flag to use smooth transitions for this layout
+      window.useSmoothLayoutTransition = true;
+      
+      // Wait for DOM to be ready and bubbles to render, then arrange
+      const timer = setTimeout(() => {
+        // Set smooth floating transition on all bubbles BEFORE arranging
+        const bubbles = document.querySelectorAll('.bubble-container');
+        bubbles.forEach(bubble => {
+          bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        });
+        
+        if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
+          arrangeDesktopGrid();
+        } else if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
+          adjustBubblesForMobile();
         }
-      }
-    } else {
-      // Reset when leaving /home so we can detect navigation back
-      hasNavigatedFromLanding.current = false;
+        
+        // Reset flag after animation completes
+        setTimeout(() => {
+          window.useSmoothLayoutTransition = false;
+        }, 1000);
+      }, 500); // Slightly longer delay for mobile to ensure bubbles are rendered
+      
+      return () => clearTimeout(timer);
     }
+    
+    // Track the current path for next comparison
+    previousPath.current = location.pathname;
   }, [location.pathname, arrangeDesktopGrid, adjustBubblesForMobile]);
   
   return null;
