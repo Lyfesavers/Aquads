@@ -240,6 +240,37 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Price proxy endpoint for AquaPay (avoids CORS issues)
+router.get('/price/:coinId', async (req, res) => {
+  try {
+    const { coinId } = req.params;
+    const allowedCoins = ['bitcoin', 'ethereum', 'solana', 'matic-network', 'binancecoin', 'tron'];
+    
+    if (!allowedCoins.includes(coinId)) {
+      return res.status(400).json({ error: 'Invalid coin ID' });
+    }
 
+    // First try to get from our cached tokens
+    const token = await Token.findOne({ id: coinId }).lean();
+    if (token && token.currentPrice) {
+      return res.json({ price: token.currentPrice, source: 'cache' });
+    }
+
+    // Fallback to direct CoinGecko call
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`,
+      { timeout: 10000 }
+    );
+    
+    if (response.data[coinId]?.usd) {
+      res.json({ price: response.data[coinId].usd, source: 'coingecko' });
+    } else {
+      res.status(404).json({ error: 'Price not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching price:', error.message);
+    res.status(500).json({ error: 'Failed to fetch price' });
+  }
+});
 
 module.exports = router; 

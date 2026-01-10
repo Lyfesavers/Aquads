@@ -39,6 +39,13 @@ const USDC_ADDRESSES = {
 const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)', 'function decimals() view returns (uint8)'];
 
+// Solana RPC fallback list (try in order)
+const SOLANA_RPC_ENDPOINTS = [
+  'https://api.mainnet-beta.solana.com',
+  'https://rpc.ankr.com/solana',
+  'https://solana.public-rpc.com'
+];
+
 const CHAINS = {
   solana: { name: 'Solana', symbol: 'SOL', icon: '◎', gradient: 'from-purple-500 to-violet-600', explorerUrl: 'https://solscan.io/tx/', walletField: 'solana', isEVM: false },
   ethereum: { name: 'Ethereum', symbol: 'ETH', icon: 'Ξ', gradient: 'from-blue-500 to-indigo-600', explorerUrl: 'https://etherscan.io/tx/', walletField: 'ethereum', isEVM: true },
@@ -110,13 +117,27 @@ const AquaPayPage = ({ currentUser }) => {
       if (!selectedChain || !COINGECKO_IDS[selectedChain]) return;
       try {
         const coinId = COINGECKO_IDS[selectedChain];
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
-        const data = await res.json();
-        if (data[coinId]?.usd) setTokenPrice(data[coinId].usd);
-      } catch (e) { console.error('Price fetch error:', e); }
+        // Use CoinGecko proxy or alternative API to avoid CORS
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data[coinId]?.usd) setTokenPrice(data[coinId].usd);
+        }
+      } catch (e) {
+        // Fallback: Try fetching from our backend proxy
+        try {
+          const res = await axios.get(`${API_URL}/api/tokens/price/${COINGECKO_IDS[selectedChain]}`);
+          if (res.data?.price) setTokenPrice(res.data.price);
+        } catch {
+          // Price fetch failed, continue without price display
+          console.log('Price unavailable');
+        }
+      }
     };
     fetchPrice();
-    const interval = setInterval(fetchPrice, 30000);
+    const interval = setInterval(fetchPrice, 60000); // Less frequent to avoid rate limits
     return () => clearInterval(interval);
   }, [selectedChain]);
 
@@ -200,7 +221,23 @@ const AquaPayPage = ({ currentUser }) => {
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
         const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
-        const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+        
+        // Try multiple RPCs with fallback
+        let connection, blockhash;
+        for (const rpc of SOLANA_RPC_ENDPOINTS) {
+          try {
+            connection = new Connection(rpc, 'confirmed');
+            const result = await connection.getLatestBlockhash();
+            blockhash = result.blockhash;
+            break; // Success, use this RPC
+          } catch (rpcErr) {
+            console.log(`RPC ${rpc} failed, trying next...`);
+            if (rpc === SOLANA_RPC_ENDPOINTS[SOLANA_RPC_ENDPOINTS.length - 1]) {
+              throw new Error('All Solana RPCs unavailable. Please try again later.');
+            }
+          }
+        }
+        
         const fromPubkey = new PublicKey(walletAddress);
         const toPubkey = new PublicKey(recipientAddress);
         let transaction;
@@ -215,7 +252,6 @@ const AquaPayPage = ({ currentUser }) => {
         } else {
           transaction = new Transaction().add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL) }));
         }
-        const { blockhash } = await connection.getLatestBlockhash();
         transaction.recentBlockhash = blockhash; transaction.feePayer = fromPubkey;
         const signed = await solana.signTransaction(transaction);
         const sig = await connection.sendRawTransaction(signed.serialize());
@@ -254,9 +290,7 @@ const AquaPayPage = ({ currentUser }) => {
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <img src="/logo192.png" alt="" className="w-10 h-10 rounded-lg" />
-        </div>
+        <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
         <div className="w-8 h-8 mx-auto mb-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
         <p className="text-slate-400 text-sm">Loading payment...</p>
       </div>
@@ -318,7 +352,7 @@ const AquaPayPage = ({ currentUser }) => {
         </button>
         
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
-          <img src="/logo192.png" alt="" className="w-4 h-4 rounded opacity-60" />
+          <img src="/Aquadsnewlogo.png" alt="" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by AquaPay</span>
         </div>
       </div>
@@ -331,8 +365,8 @@ const AquaPayPage = ({ currentUser }) => {
       <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="https://aquads.xyz" className="flex items-center gap-2">
-            <img src="/logo192.png" alt="Aquads" className="w-8 h-8 rounded-lg" />
-            <span className="text-white font-bold">Aqua<span className="text-cyan-400">Pay</span></span>
+            <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
+            <span className="text-slate-400 text-sm font-medium">Pay</span>
           </a>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
@@ -356,7 +390,7 @@ const AquaPayPage = ({ currentUser }) => {
               <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-4">Paying to</p>
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <img src={paymentPage?.image || '/logo192.png'} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-slate-700" />
+                  <img src={paymentPage?.image || 'https://i.imgur.com/6VBx3io.png'} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-slate-700" />
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
                     <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -585,7 +619,7 @@ const AquaPayPage = ({ currentUser }) => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img src="/logo192.png" alt="" className="w-6 h-6 rounded opacity-50" />
+              <img src="/Aquadsnewlogo.png" alt="" className="h-5 w-auto opacity-50" />
               <div className="flex items-center gap-3 text-xs text-slate-600">
                 <a href="https://aquads.xyz" className="hover:text-cyan-400 transition-colors">Aquads.xyz</a>
                 <span>•</span>
