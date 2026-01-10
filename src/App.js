@@ -75,6 +75,7 @@ import ExtensionAuth from './components/ExtensionAuth';
 import TelegramBot from './components/TelegramBot';
 import PublicResume from './components/PublicResume';
 import LandingPage from './components/LandingPage';
+import AquaPayPage from './components/AquaPayPage';
 
 window.Buffer = Buffer;
 
@@ -3353,6 +3354,7 @@ function App() {
             <Route path="/verify-user" element={<VerifyUser />} />
             <Route path="/verify-member/:memberId" element={<MemberVerification />} />
             <Route path="/resume/:username" element={<PublicResume />} />
+            <Route path="/pay/:slug" element={<AquaPayPage currentUser={currentUser} />} />
             <Route path="/aquafi" element={
               <AquaFi 
                 currentUser={currentUser} 

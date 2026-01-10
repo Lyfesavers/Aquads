@@ -18,6 +18,7 @@ import logger from '../utils/logger';
 import QRCode from 'qrcode';
 import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
+import AquaPaySettings from './AquaPaySettings';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -105,6 +106,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [referralLinkCopied, setReferralLinkCopied] = useState(false);
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
+  const [showAquaPaySettings, setShowAquaPaySettings] = useState(false);
   const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
   const [bannerEditData, setBannerEditData] = useState({
     title: '',
@@ -2499,6 +2501,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               Bookings
             </button>
             <button
+              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'aquapay' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('aquapay')}
+            >
+              💸 AquaPay
+            </button>
+            <button
               className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
               onClick={() => {
                 setActiveTab('affiliateAnalytics');
@@ -2928,6 +2936,131 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   refreshBookings={fetchBookings}
                 />
               )}
+            </div>
+          )}
+
+          {/* AquaPay Tab */}
+          {activeTab === 'aquapay' && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-xl p-6 border border-blue-500/30">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                      💸
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">AquaPay</h2>
+                      <p className="text-gray-400">Create your payment link and receive crypto directly</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAquaPaySettings(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all hover:scale-105 shadow-lg"
+                  >
+                    ⚙️ Configure AquaPay
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-800 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      🔗
+                    </div>
+                    <h3 className="text-white font-semibold">Your Payment Link</h3>
+                  </div>
+                  <p className="text-blue-400 font-mono text-sm break-all">
+                    aquads.xyz/pay/{currentUser?.username?.toLowerCase() || 'username'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://aquads.xyz/pay/${currentUser?.username?.toLowerCase() || 'username'}`);
+                      showNotification('Payment link copied!', 'success');
+                    }}
+                    className="mt-3 text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    📋 Copy Link
+                  </button>
+                </div>
+
+                <div className="bg-gray-800 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                      ⛓️
+                    </div>
+                    <h3 className="text-white font-semibold">Supported Chains</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['ETH', 'Base', 'Polygon', 'Arbitrum', 'SOL', 'BTC'].map(chain => (
+                      <span key={chain} className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">
+                        {chain}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      🛡️
+                    </div>
+                    <h3 className="text-white font-semibold">Non-Custodial</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    Payments go directly to your wallet. We never hold your funds.
+                  </p>
+                </div>
+              </div>
+
+              {/* How it Works */}
+              <div className="bg-gray-800 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-4">How AquaPay Works</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                      1️⃣
+                    </div>
+                    <h4 className="text-white font-medium mb-1">Setup</h4>
+                    <p className="text-gray-400 text-sm">Add your wallet addresses for each chain</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                      2️⃣
+                    </div>
+                    <h4 className="text-white font-medium mb-1">Share</h4>
+                    <p className="text-gray-400 text-sm">Share your payment link anywhere</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                      3️⃣
+                    </div>
+                    <h4 className="text-white font-medium mb-1">Receive</h4>
+                    <p className="text-gray-400 text-sm">Payers connect wallet and send directly</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                      4️⃣
+                    </div>
+                    <h4 className="text-white font-medium mb-1">Done</h4>
+                    <p className="text-gray-400 text-sm">Funds arrive in your wallet instantly</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-6 border border-blue-500/30 text-center">
+                <h3 className="text-xl font-semibold text-white mb-2">Ready to receive payments?</h3>
+                <p className="text-gray-400 mb-4">Configure your wallet addresses and start accepting crypto payments</p>
+                <button
+                  onClick={() => setShowAquaPaySettings(true)}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all hover:scale-105"
+                >
+                  🚀 Get Started
+                </button>
+              </div>
             </div>
           )}
 
@@ -5550,6 +5683,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           showNotification={showNotification}
           onPurchaseComplete={handleTokenPurchaseComplete}
           currentUser={currentUser}
+        />
+      )}
+
+      {/* AquaPay Settings Modal */}
+      {showAquaPaySettings && (
+        <AquaPaySettings
+          currentUser={currentUser}
+          showNotification={showNotification}
+          onClose={() => setShowAquaPaySettings(false)}
         />
       )}
 

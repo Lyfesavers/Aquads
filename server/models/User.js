@@ -540,6 +540,110 @@ const userSchema = new Schema({
       unique: true,
       sparse: true
     }
+  },
+  
+  // AquaPay - Payment Link System
+  aquaPay: {
+    // Whether AquaPay is enabled for this user
+    isEnabled: {
+      type: Boolean,
+      default: false
+    },
+    // Custom payment page slug (defaults to username)
+    paymentSlug: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
+    // Display name on payment page
+    displayName: {
+      type: String,
+      default: null
+    },
+    // Bio/description for payment page
+    bio: {
+      type: String,
+      default: null,
+      maxlength: 500
+    },
+    // Payment wallets for different chains
+    wallets: {
+      // Solana wallet address
+      solana: {
+        type: String,
+        default: null
+      },
+      // EVM wallet address (works for ETH, Base, Polygon, Arbitrum, etc.)
+      ethereum: {
+        type: String,
+        default: null
+      },
+      // Bitcoin address
+      bitcoin: {
+        type: String,
+        default: null
+      },
+      // TRON address
+      tron: {
+        type: String,
+        default: null
+      }
+    },
+    // Preferred/default chain for payments
+    preferredChain: {
+      type: String,
+      enum: ['solana', 'ethereum', 'base', 'polygon', 'arbitrum', 'bitcoin', 'tron', 'bnb'],
+      default: 'ethereum'
+    },
+    // Accepted tokens (for filtering on payment page)
+    acceptedTokens: {
+      type: [String],
+      default: ['USDC', 'USDT', 'ETH', 'SOL', 'BTC']
+    },
+    // Payment page theme
+    theme: {
+      type: String,
+      enum: ['default', 'dark', 'light', 'gradient', 'neon'],
+      default: 'default'
+    },
+    // Payment statistics
+    stats: {
+      totalReceived: {
+        type: Number,
+        default: 0
+      },
+      totalTransactions: {
+        type: Number,
+        default: 0
+      },
+      lastPaymentAt: {
+        type: Date,
+        default: null
+      }
+    },
+    // Payment history (recent payments received)
+    paymentHistory: [{
+      txHash: String,
+      chain: String,
+      token: String,
+      amount: Number,
+      amountUSD: Number,
+      senderAddress: String,
+      senderUsername: String,
+      message: String,
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    createdAt: {
+      type: Date,
+      default: null
+    },
+    updatedAt: {
+      type: Date,
+      default: null
+    }
   }
 });
 
@@ -656,5 +760,6 @@ userSchema.index({ points: -1 }); // For points-based sorting
 userSchema.index({ tokens: -1 }); // For token-based sorting
 userSchema.index({ createdAt: -1 }); // For registration date sorting
 userSchema.index({ lastActivity: -1 }); // For activity-based sorting
+userSchema.index({ 'aquaPay.paymentSlug': 1 }); // For AquaPay payment page lookups
 
 module.exports = mongoose.model('User', userSchema); 
