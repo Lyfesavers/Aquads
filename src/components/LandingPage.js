@@ -384,6 +384,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
 const LandingPage = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showContent, setShowContent] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ container: containerRef });
   
@@ -402,6 +403,20 @@ const LandingPage = () => {
     const timer = setTimeout(() => setShowContent(true), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Close mobile menu on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [mobileMenuOpen]);
 
   const features = [
     {
@@ -574,7 +589,7 @@ const LandingPage = () => {
 
       {/* Navigation */}
       <motion.nav 
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-3 md:py-4"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.6 }}
@@ -587,38 +602,166 @@ const LandingPage = () => {
             <img 
               src="/Aquadsnewlogo.png" 
               alt="AQUADS" 
-              className="h-10 w-auto filter drop-shadow-lg"
+              className="h-8 md:h-10 w-auto filter drop-shadow-lg"
               style={{ filter: 'drop-shadow(0 0 20px rgba(34, 211, 238, 0.5))' }}
             />
           </motion.div>
 
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <Link 
               to="/whitepaper"
-              className="hidden md:block text-gray-400 hover:text-white transition-colors text-sm"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               Whitepaper
             </Link>
             <Link 
               to="/learn"
-              className="hidden md:block text-gray-400 hover:text-white transition-colors text-sm"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               Learn
             </Link>
             <Link 
               to="/games"
-              className="hidden md:block text-gray-400 hover:text-white transition-colors text-sm"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               Games
             </Link>
             <Link 
               to="/aquaswap"
-              className="hidden md:block text-gray-400 hover:text-white transition-colors text-sm"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               AquaSwap
             </Link>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <div className="relative w-5 h-4 flex flex-col justify-between">
+              <motion.span
+                className="w-full h-0.5 bg-cyan-400 rounded-full origin-center"
+                animate={mobileMenuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.span
+                className="w-full h-0.5 bg-cyan-400 rounded-full"
+                animate={mobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.span
+                className="w-full h-0.5 bg-cyan-400 rounded-full origin-center"
+                animate={mobileMenuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+          </button>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                className="md:hidden fixed inset-0 bg-black/50 -z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <motion.div
+                className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4"
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="p-2">
+                    <Link 
+                      to="/home"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🚀</span>
+                      <span className="font-medium">Projects</span>
+                    </Link>
+                    <Link 
+                      to="/marketplace"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-purple-500/10 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">👥</span>
+                      <span className="font-medium">Freelancers</span>
+                    </Link>
+                    <div className="h-px bg-white/10 my-2" />
+                    <Link 
+                      to="/whitepaper"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">📄</span>
+                      <span className="font-medium">Whitepaper</span>
+                    </Link>
+                    <Link 
+                      to="/learn"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">📚</span>
+                      <span className="font-medium">Learn</span>
+                    </Link>
+                    <Link 
+                      to="/games"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🎮</span>
+                      <span className="font-medium">Games</span>
+                    </Link>
+                    <Link 
+                      to="/aquaswap"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">💱</span>
+                      <span className="font-medium">AquaSwap</span>
+                    </Link>
+                    <div className="h-px bg-white/10 my-2" />
+                    <div className="flex items-center justify-center gap-6 py-3">
+                      <a 
+                        href="https://x.com/_Aquads_" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-cyan-400 transition-colors p-2"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </a>
+                      <a 
+                        href="https://t.me/+6rJbDLqdMxA3ZTUx" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-cyan-400 transition-colors p-2"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* Hero Section - Split Screen */}
@@ -780,29 +923,41 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-white/10 px-4 md:px-6 py-8 md:py-12">
+      <footer className="relative border-t border-white/10 px-4 md:px-6 py-6 md:py-12">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-5 md:gap-6">
+            {/* Logo & Copyright */}
             <div className="flex items-center gap-2 md:gap-3">
               <img 
                 src="/Aquadsnewlogo.png" 
                 alt="AQUADS" 
                 className="h-6 md:h-8 w-auto"
               />
-              <span className="text-gray-400 text-[10px] sm:text-xs md:text-sm">© {new Date().getFullYear()} Aquads. All rights reserved.</span>
+              <span className="text-gray-400 text-xs md:text-sm">© {new Date().getFullYear()} Aquads</span>
             </div>
             
-            <div className="flex items-center gap-3 md:gap-6">
-              <Link to="/terms" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Terms</Link>
-              <Link to="/privacy-policy" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Privacy</Link>
-              <Link to="/whitepaper" className="text-gray-500 hover:text-white text-[10px] sm:text-xs md:text-sm transition-colors">Whitepaper</Link>
+            {/* Footer Links - Better tap targets on mobile */}
+            <div className="flex flex-wrap items-center justify-center gap-1 md:gap-6">
+              <Link to="/terms" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
+                Terms
+              </Link>
+              <Link to="/privacy-policy" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
+                Privacy
+              </Link>
+              <Link to="/whitepaper" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
+                Whitepaper
+              </Link>
+            </div>
+            
+            {/* Social Links - Larger tap targets */}
+            <div className="flex items-center gap-2 md:gap-4">
               <a 
                 href="https://x.com/_Aquads_" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-500 hover:text-cyan-400 transition-colors"
+                className="text-gray-500 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-white/5"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
               </a>
@@ -810,9 +965,9 @@ const LandingPage = () => {
                 href="https://t.me/+6rJbDLqdMxA3ZTUx" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-500 hover:text-cyan-400 transition-colors"
+                className="text-gray-500 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-white/5"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                 </svg>
               </a>
