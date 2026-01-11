@@ -165,6 +165,14 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
     return `${days}d ago`;
   };
 
+  const formatWalletAge = (days) => {
+    if (!days || days === 0) return 'New';
+    if (days >= 365 * 2) return `${Math.floor(days / 365)} years`;
+    if (days >= 365) return `1 year, ${Math.floor((days % 365) / 30)} months`;
+    if (days >= 30) return `${Math.floor(days / 30)} months, ${days % 30} days`;
+    return `${days} days`;
+  };
+
   const getScoreColor = (score, inverse = false) => {
     const adjustedScore = inverse ? 100 - score : score;
     if (adjustedScore >= 70) return '#10b981';
@@ -415,7 +423,14 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
                   <div className="wa-metric-icon">💰</div>
                   <div className="wa-metric-content">
                     <div className="wa-metric-label">Total Value</div>
-                    <div className="wa-metric-value-text">${formatNumber(walletData.totalValue)}</div>
+                    <div className="wa-metric-value-text">
+                      {walletData.totalValue > 0 ? `$${formatNumber(walletData.totalValue)}` : 'N/A'}
+                    </div>
+                    {walletData.nativeBalance > 0 && (
+                      <div className="wa-metric-subtext">
+                        {walletData.nativeBalance.toFixed(4)} {walletData.nativeSymbol}
+                      </div>
+                    )}
                   </div>
                   {walletData.isWhale && <div className="wa-whale-badge">🐋 Whale</div>}
                 </div>
@@ -423,18 +438,31 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
                 <div className="wa-metric-card wa-metric-pnl">
                   <div className="wa-metric-icon">{walletData.metrics.totalPnL >= 0 ? '📈' : '📉'}</div>
                   <div className="wa-metric-content">
-                    <div className="wa-metric-label">Total PnL</div>
+                    <div className="wa-metric-label">Est. PnL</div>
                     <div className={`wa-metric-value-text ${walletData.metrics.totalPnL >= 0 ? 'positive' : 'negative'}`}>
-                      {walletData.metrics.totalPnL >= 0 ? '+' : ''}{formatNumber(walletData.metrics.totalPnL)}
+                      {walletData.metrics.totalPnL !== 0 
+                        ? `${walletData.metrics.totalPnL >= 0 ? '+' : ''}$${formatNumber(Math.abs(walletData.metrics.totalPnL))}`
+                        : 'N/A'
+                      }
                     </div>
+                    {walletData.metrics.pnlConfidence && (
+                      <div className="wa-metric-subtext">
+                        Confidence: {walletData.metrics.pnlConfidence}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="wa-metric-card wa-metric-trades">
                   <div className="wa-metric-icon">🔄</div>
                   <div className="wa-metric-content">
-                    <div className="wa-metric-label">Total Trades</div>
-                    <div className="wa-metric-value-text">{walletData.metrics.totalTrades}</div>
+                    <div className="wa-metric-label">Total Transactions</div>
+                    <div className="wa-metric-value-text">{walletData.metrics.totalTrades.toLocaleString()}</div>
+                    {walletData.metrics.txFrequency > 0 && (
+                      <div className="wa-metric-subtext">
+                        ~{walletData.metrics.txFrequency.toFixed(1)}/day
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -442,7 +470,12 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
                   <div className="wa-metric-icon">📅</div>
                   <div className="wa-metric-content">
                     <div className="wa-metric-label">Wallet Age</div>
-                    <div className="wa-metric-value-text">{walletData.walletAge} days</div>
+                    <div className="wa-metric-value-text">{formatWalletAge(walletData.walletAge)}</div>
+                    {walletData.firstSeen && (
+                      <div className="wa-metric-subtext">
+                        Since {new Date(walletData.firstSeen).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
