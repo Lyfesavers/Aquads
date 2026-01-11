@@ -500,19 +500,11 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
           {/* Stats Tab */}
           {activeTab === 'stats' && (
             <div className="space-y-4 sm:space-y-6">
-              <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                <div className="bg-gray-800 rounded-xl p-3 sm:p-6 text-center">
-                  <p className="text-xl sm:text-4xl font-bold text-green-400">
-                    ${settings.stats?.totalReceived?.toFixed(2) || '0.00'}
-                  </p>
-                  <p className="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-sm">Total Received</p>
-                </div>
-                <div className="bg-gray-800 rounded-xl p-3 sm:p-6 text-center">
-                  <p className="text-xl sm:text-4xl font-bold text-blue-400">
-                    {settings.stats?.totalTransactions || 0}
-                  </p>
-                  <p className="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-sm">Transactions</p>
-                </div>
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 text-center">
+                <p className="text-3xl sm:text-5xl font-bold text-blue-400">
+                  {settings.stats?.totalTransactions || 0}
+                </p>
+                <p className="text-gray-400 mt-2 text-sm sm:text-base">Total Payments Received</p>
               </div>
 
               {/* Payment History */}
