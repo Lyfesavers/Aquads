@@ -218,12 +218,11 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
         <div className="wa-header-left">
           <img 
             src="/Aquadsnewlogo.png" 
-            alt="Aquads" 
+            alt="AQUADS" 
             className="wa-logo"
-            width="72"
-            height="72"
             onClick={() => navigate('/home')}
             title="Back to Home"
+            style={{ filter: 'drop-shadow(0 0 20px rgba(34, 211, 238, 0.5))' }}
           />
         </div>
         <div className="wa-header-center">
