@@ -764,7 +764,8 @@ function init(server) {
                 totalReceived: 0,
                 totalTransactions: 0,
                 lastPaymentAt: null
-              }
+              },
+              paymentHistory: []
             }
           });
           return;
@@ -780,7 +781,8 @@ function init(server) {
             preferredChain: user.aquaPay.preferredChain || 'ethereum',
             acceptedTokens: user.aquaPay.acceptedTokens || ['USDC', 'USDT', 'ETH', 'SOL', 'BTC'],
             theme: user.aquaPay.theme || 'default',
-            stats: user.aquaPay.stats || { totalReceived: 0, totalTransactions: 0, lastPaymentAt: null }
+            stats: user.aquaPay.stats || { totalReceived: 0, totalTransactions: 0, lastPaymentAt: null },
+            paymentHistory: user.aquaPay.paymentHistory || []
           }
         });
       } catch (error) {
