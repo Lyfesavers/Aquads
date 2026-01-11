@@ -40,7 +40,8 @@ export default async (request, context) => {
     const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
     
     // Redirect URL for users (after bots read meta tags)
-    const redirectUrl = `https://www.aquads.xyz/learn?blogId=${blogId}`;
+    // Use the blog's slug for the proper URL, fallback to ID if no slug
+    const redirectUrl = `https://www.aquads.xyz/learn/${blog.slug || blogId}`;
     
     // Build HTML with proper metadata
     const html = `<!DOCTYPE html>
