@@ -582,24 +582,29 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
               {/* Holdings */}
               <div className="wa-holdings-card">
                 <h3 className="wa-card-title">
-                  <span>💼</span> Token Holdings
+                  <span>💼</span> Token Holdings ({walletData.holdings?.length || 0})
                 </h3>
                 <div className="wa-holdings-list">
-                  {walletData.holdings.map((token, idx) => (
-                    <div key={idx} className="wa-holding-item">
-                      <div className="wa-holding-info">
-                        <span className="wa-holding-symbol">{token.symbol}</span>
-                        <span className="wa-holding-name">{token.name}</span>
+                  {walletData.holdings && walletData.holdings.length > 0 ? (
+                    walletData.holdings.map((token, idx) => (
+                      <div key={idx} className={`wa-holding-item ${token.isNative ? 'native' : ''}`}>
+                        <div className="wa-holding-info">
+                          <span className="wa-holding-symbol">{token.symbol}</span>
+                          <span className="wa-holding-name">{token.name}</span>
+                        </div>
+                        <div className="wa-holding-balance">
+                          {typeof token.balance === 'number' 
+                            ? (token.balance < 0.0001 ? token.balance.toExponential(2) : formatNumber(token.balance))
+                            : token.balance}
+                        </div>
+                        <div className="wa-holding-value">
+                          {token.value > 0 ? `$${formatNumber(token.value)}` : '-'}
+                        </div>
                       </div>
-                      <div className="wa-holding-balance">
-                        {typeof token.balance === 'number' ? formatNumber(token.balance) : token.balance}
-                      </div>
-                      <div className="wa-holding-value">${formatNumber(token.value)}</div>
-                      <div className={`wa-holding-change ${token.change24h >= 0 ? 'positive' : 'negative'}`}>
-                        {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="wa-no-data">No token holdings found</div>
+                  )}
                 </div>
               </div>
 
@@ -609,30 +614,38 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
                   <span>📜</span> Recent Activity
                 </h3>
                 <div className="wa-transactions-list">
-                  {walletData.recentTransactions.map((tx, idx) => (
-                    <div key={idx} className={`wa-tx-item ${tx.type}`}>
-                      <div className="wa-tx-type">
-                        <span className={`wa-tx-badge ${tx.type}`}>
-                          {tx.type === 'buy' ? '🟢 BUY' : '🔴 SELL'}
-                        </span>
+                  {walletData.recentTransactions && walletData.recentTransactions.length > 0 ? (
+                    walletData.recentTransactions.map((tx, idx) => (
+                      <div key={idx} className={`wa-tx-item ${tx.type}`}>
+                        <div className="wa-tx-type">
+                          <span className={`wa-tx-badge ${tx.type === 'buy' ? 'buy' : tx.type === 'sell' ? 'sell' : tx.isError ? 'error' : 'neutral'}`}>
+                            {tx.type === 'buy' ? '🟢 BUY' : 
+                             tx.type === 'sell' ? '🔴 SELL' : 
+                             tx.type === 'send' ? '📤 SEND' :
+                             tx.type === 'receive' ? '📥 RECV' :
+                             tx.isError ? '❌ FAIL' : '🔄 TX'}
+                          </span>
+                        </div>
+                        <div className="wa-tx-details">
+                          <span className="wa-tx-token">{tx.token || walletData.nativeSymbol}</span>
+                          {tx.value > 0 && <span className="wa-tx-amount">${formatNumber(tx.value)}</span>}
+                        </div>
+                        <div className="wa-tx-meta">
+                          <span className="wa-tx-time">{formatTimeAgo(tx.timestamp)}</span>
+                          <a 
+                            href={`${SUPPORTED_CHAINS[walletData.chain].explorer}/${walletData.chain === 'solana' ? 'tx' : 'tx'}/${tx.hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="wa-tx-link"
+                          >
+                            🔗
+                          </a>
+                        </div>
                       </div>
-                      <div className="wa-tx-details">
-                        <span className="wa-tx-token">{tx.token}</span>
-                        <span className="wa-tx-amount">${formatNumber(tx.value)}</span>
-                      </div>
-                      <div className="wa-tx-meta">
-                        <span className="wa-tx-time">{formatTimeAgo(tx.timestamp)}</span>
-                        <a 
-                          href={`${SUPPORTED_CHAINS[walletData.chain].explorer}/tx/${tx.hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="wa-tx-link"
-                        >
-                          🔗
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="wa-no-data">No recent transactions found</div>
+                  )}
                 </div>
               </div>
             </div>

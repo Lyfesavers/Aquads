@@ -91,144 +91,148 @@ const getNativeBalance = async (address, chain) => {
   return parseInt(balanceHex, 16) / 1e18;
 };
 
-// Get EVM transaction list from explorer (includes both incoming and outgoing)
-const getEVMTransactionHistory = async (address, chain) => {
-  const config = CHAIN_CONFIG[chain];
-  if (!config?.explorerApi) return { transactions: [], firstTxTime: null, totalTxCount: 0 };
+// Get EVM transaction count via RPC (nonce = outgoing tx count)
+const getEVMTransactionCount = async (address, chain) => {
+  const rpc = PUBLIC_RPCS[chain];
+  if (!rpc) return 0;
   
   try {
-    // Get normal transactions
-    const [normalTx, internalTx, tokenTx] = await Promise.all([
-      axios.get(config.explorerApi, {
-        params: {
-          module: 'account',
-          action: 'txlist',
-          address: address,
-          startblock: 0,
-          endblock: 99999999,
-          page: 1,
-          offset: 100,
-          sort: 'asc' // oldest first to get first tx time
-        },
-        timeout: 15000
-      }).catch(() => ({ data: { result: [] } })),
-      
-      axios.get(config.explorerApi, {
-        params: {
-          module: 'account',
-          action: 'txlistinternal',
-          address: address,
-          startblock: 0,
-          endblock: 99999999,
-          page: 1,
-          offset: 50,
-          sort: 'asc'
-        },
-        timeout: 15000
-      }).catch(() => ({ data: { result: [] } })),
-      
-      axios.get(config.explorerApi, {
-        params: {
-          module: 'account',
-          action: 'tokentx',
-          address: address,
-          startblock: 0,
-          endblock: 99999999,
-          page: 1,
-          offset: 100,
-          sort: 'asc'
-        },
-        timeout: 15000
-      }).catch(() => ({ data: { result: [] } }))
-    ]);
-
-    const normalTxs = Array.isArray(normalTx.data.result) ? normalTx.data.result : [];
-    const internalTxs = Array.isArray(internalTx.data.result) ? internalTx.data.result : [];
-    const tokenTxs = Array.isArray(tokenTx.data.result) ? tokenTx.data.result : [];
+    const response = await axios.post(rpc, {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'eth_getTransactionCount',
+      params: [address, 'latest']
+    }, { timeout: 15000 });
     
-    // Find earliest transaction timestamp
-    let firstTxTime = null;
-    const allTimestamps = [
-      ...normalTxs.map(tx => parseInt(tx.timeStamp)),
-      ...internalTxs.map(tx => parseInt(tx.timeStamp)),
-      ...tokenTxs.map(tx => parseInt(tx.timeStamp))
-    ].filter(t => t > 0);
-    
-    if (allTimestamps.length > 0) {
-      firstTxTime = Math.min(...allTimestamps) * 1000; // Convert to ms
-    }
-    
-    // Total transaction count (unique hashes)
-    const uniqueHashes = new Set([
-      ...normalTxs.map(tx => tx.hash),
-      ...internalTxs.map(tx => tx.hash),
-      ...tokenTxs.map(tx => tx.hash)
-    ]);
-    
-    // Analyze transactions for trading behavior
-    const transactions = [];
-    const addressLower = address.toLowerCase();
-    
-    // Process normal transactions
-    for (const tx of normalTxs.slice(-50)) { // Most recent 50
-      const isOutgoing = tx.from?.toLowerCase() === addressLower;
-      const value = parseInt(tx.value) / 1e18;
-      transactions.push({
-        hash: tx.hash,
-        timestamp: parseInt(tx.timeStamp) * 1000,
-        type: isOutgoing ? 'send' : 'receive',
-        value: value,
-        gasUsed: parseInt(tx.gasUsed || 0),
-        gasPrice: parseInt(tx.gasPrice || 0),
-        isError: tx.isError === '1',
-        to: tx.to,
-        from: tx.from
-      });
-    }
-    
-    // Process token transactions
-    const tokenTransactions = [];
-    for (const tx of tokenTxs.slice(-100)) {
-      const isOutgoing = tx.from?.toLowerCase() === addressLower;
-      const decimals = parseInt(tx.tokenDecimal) || 18;
-      const value = parseFloat(tx.value) / Math.pow(10, decimals);
-      tokenTransactions.push({
-        hash: tx.hash,
-        timestamp: parseInt(tx.timeStamp) * 1000,
-        type: isOutgoing ? 'sell' : 'buy',
-        tokenSymbol: tx.tokenSymbol,
-        tokenName: tx.tokenName,
-        value: value,
-        contractAddress: tx.contractAddress
-      });
-    }
-    
-    return {
-      transactions,
-      tokenTransactions,
-      firstTxTime,
-      totalTxCount: uniqueHashes.size,
-      normalTxCount: normalTxs.length,
-      tokenTxCount: tokenTxs.length
-    };
+    return parseInt(response.data.result, 16);
   } catch (error) {
-    console.log('EVM tx history error:', error.message);
-    return { transactions: [], tokenTransactions: [], firstTxTime: null, totalTxCount: 0 };
+    console.log('EVM tx count error:', error.message);
+    return 0;
   }
+};
+
+// Try to get EVM transaction history from multiple sources
+const getEVMTransactionHistory = async (address, chain) => {
+  const config = CHAIN_CONFIG[chain];
+  
+  // First, get the nonce (outgoing tx count) from RPC - this always works
+  const nonce = await getEVMTransactionCount(address, chain);
+  
+  // Try Blockscout API (free, no key needed) for supported chains
+  const blockscoutApis = {
+    ethereum: 'https://eth.blockscout.com/api',
+    base: 'https://base.blockscout.com/api',
+    optimism: 'https://optimism.blockscout.com/api',
+    arbitrum: 'https://arbitrum.blockscout.com/api',
+    polygon: 'https://polygon.blockscout.com/api',
+  };
+  
+  let transactions = [];
+  let tokenTransactions = [];
+  let firstTxTime = null;
+  let totalTxCount = nonce; // At minimum, we have nonce
+  
+  const blockscoutApi = blockscoutApis[chain];
+  
+  if (blockscoutApi) {
+    try {
+      // Try to get address info which includes tx count
+      const [addressInfo, tokenTransfers] = await Promise.all([
+        axios.get(`${blockscoutApi}/v2/addresses/${address}`, {
+          timeout: 15000
+        }).catch(() => ({ data: null })),
+        
+        axios.get(`${blockscoutApi}/v2/addresses/${address}/token-transfers`, {
+          timeout: 15000
+        }).catch(() => ({ data: { items: [] } }))
+      ]);
+      
+      // Get transaction count and other info from address endpoint
+      if (addressInfo.data) {
+        const info = addressInfo.data;
+        totalTxCount = (info.transaction_count || 0) + (info.token_transfer_count || 0);
+        
+        // If we have creation tx hash, we could get first tx time
+        if (info.creation_tx_hash) {
+          // Address was created via contract creation
+        }
+      }
+      
+      const tokenItems = tokenTransfers.data?.items || [];
+      const addressLower = address.toLowerCase();
+      
+      // Process token transfers
+      for (const tx of tokenItems) {
+        const isOutgoing = tx.from?.hash?.toLowerCase() === addressLower;
+        const decimals = parseInt(tx.token?.decimals) || 18;
+        tokenTransactions.push({
+          hash: tx.tx_hash,
+          timestamp: tx.timestamp ? new Date(tx.timestamp).getTime() : Date.now(),
+          type: isOutgoing ? 'sell' : 'buy',
+          tokenSymbol: tx.token?.symbol || 'UNKNOWN',
+          tokenName: tx.token?.name || 'Unknown Token',
+          value: parseFloat(tx.total?.value || 0) / Math.pow(10, decimals),
+          contractAddress: tx.token?.address
+        });
+      }
+      
+      // Calculate first tx time from token transfers if available
+      const tokenTimestamps = tokenTransactions
+        .map(tx => tx.timestamp)
+        .filter(t => t > 0);
+      
+      if (tokenTimestamps.length > 0) {
+        firstTxTime = Math.min(...tokenTimestamps);
+      }
+      
+      totalTxCount = Math.max(nonce, totalTxCount);
+      
+    } catch (error) {
+      console.log('Blockscout API error:', error.message);
+    }
+  }
+  
+  // Fallback: Try to estimate from nonce if no tx history
+  if (transactions.length === 0 && nonce > 0) {
+    // We at least know there are 'nonce' outgoing transactions
+    totalTxCount = nonce;
+    // Estimate wallet age based on typical usage (rough estimate)
+    // Average user might do 1 tx per week
+    const estimatedDays = Math.max(30, nonce * 7);
+    firstTxTime = Date.now() - (estimatedDays * 24 * 60 * 60 * 1000);
+  }
+  
+  return {
+    transactions,
+    tokenTransactions,
+    firstTxTime,
+    totalTxCount,
+    normalTxCount: transactions.length,
+    tokenTxCount: tokenTransactions.length,
+    nonce
+  };
 };
 
 // Get Solana transaction history with timestamps
 const getSolanaTransactionHistory = async (address) => {
   try {
+    console.log('[Solana] Fetching signatures for:', address);
+    
     // Get signatures to find first tx time and count
     const signaturesResponse = await axios.post(getSolanaRpc(), {
       jsonrpc: '2.0',
       id: 1,
       method: 'getSignaturesForAddress',
-      params: [address, { limit: 1000 }] // Get up to 1000 signatures
-    }, { timeout: 20000 });
+      params: [address, { limit: 1000 }]
+    }, { timeout: 30000 }); // Increased timeout
+    
+    if (signaturesResponse.data.error) {
+      console.log('[Solana] RPC error:', signaturesResponse.data.error);
+      return { transactions: [], firstTxTime: null, totalTxCount: 0 };
+    }
     
     const signatures = signaturesResponse.data.result || [];
+    console.log('[Solana] Signatures found:', signatures.length);
     
     if (signatures.length === 0) {
       return { transactions: [], firstTxTime: null, totalTxCount: 0 };
@@ -272,7 +276,7 @@ const getSolanaTransactionHistory = async (address) => {
       txFrequency
     };
   } catch (error) {
-    console.log('Solana tx history error:', error.message);
+    console.log('[Solana] tx history error:', error.message);
     return { transactions: [], firstTxTime: null, totalTxCount: 0 };
   }
 };
@@ -302,11 +306,14 @@ const KNOWN_SOLANA_TOKENS = {
 };
 
 // Fetch Solana token metadata from Jupiter API
-const getSolanaTokenMetadata = async (mints) => {
+const getSolanaTokenMetadata = async () => {
   try {
+    console.log('[Jupiter] Fetching token list...');
     // Use Jupiter's token list API (free)
-    const response = await axios.get('https://token.jup.ag/strict', { timeout: 10000 });
+    const response = await axios.get('https://token.jup.ag/strict', { timeout: 15000 });
     const tokenList = response.data || [];
+    
+    console.log('[Jupiter] Got', tokenList.length, 'tokens');
     
     const tokenMap = new Map();
     for (const token of tokenList) {
@@ -315,14 +322,21 @@ const getSolanaTokenMetadata = async (mints) => {
     
     return tokenMap;
   } catch (error) {
-    console.log('Jupiter token list error:', error.message);
+    console.log('[Jupiter] token list error:', error.message);
     return new Map();
   }
 };
 
+// Cache Jupiter token list
+let jupiterTokenCache = null;
+let jupiterCacheTime = 0;
+const JUPITER_CACHE_TTL = 600000; // 10 minutes
+
 // Get Solana token accounts with balances
 const getSolanaTokens = async (address) => {
   try {
+    console.log('[Solana] Fetching tokens for:', address);
+    
     const response = await axios.post(getSolanaRpc(), {
       jsonrpc: '2.0',
       id: 1,
@@ -332,9 +346,21 @@ const getSolanaTokens = async (address) => {
         { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
         { encoding: 'jsonParsed' }
       ]
-    }, { timeout: 15000 });
+    }, { 
+      timeout: 60000, // 60 second timeout for large wallets
+      maxContentLength: 50 * 1024 * 1024, // 50MB max response
+      maxBodyLength: 50 * 1024 * 1024
+    });
+    
+    if (response.data.error) {
+      console.log('[Solana] Token RPC error:', response.data.error);
+      return [];
+    }
     
     const accounts = response.data.result?.value || [];
+    console.log('[Solana] Total token accounts:', accounts.length);
+    
+    // Sort by balance (descending) and take top tokens
     const tokensWithBalance = accounts
       .filter(acc => {
         const amount = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
@@ -348,94 +374,94 @@ const getSolanaTokens = async (address) => {
           decimals: info.tokenAmount.decimals
         };
       })
-      .slice(0, 20);
+      .sort((a, b) => b.balance - a.balance) // Sort by balance descending
+      .slice(0, 50); // Top 50 tokens
     
-    // Get token metadata for the mints
-    const mints = tokensWithBalance.map(t => t.mint);
+    console.log('[Solana] Tokens with balance:', tokensWithBalance.length);
+    
+    // Get token metadata from Jupiter (cached)
     let jupiterTokens = new Map();
+    const now = Date.now();
     
-    // Try to get metadata from Jupiter (rate limited, so we cache)
-    try {
-      jupiterTokens = await getSolanaTokenMetadata(mints);
-    } catch (e) {
-      console.log('Could not fetch Jupiter tokens');
+    if (jupiterTokenCache && now - jupiterCacheTime < JUPITER_CACHE_TTL) {
+      jupiterTokens = jupiterTokenCache;
+    } else {
+      try {
+        jupiterTokens = await getSolanaTokenMetadata();
+        jupiterTokenCache = jupiterTokens;
+        jupiterCacheTime = now;
+      } catch (e) {
+        console.log('[Solana] Could not fetch Jupiter tokens:', e.message);
+      }
     }
     
     // Map tokens with metadata
-    return tokensWithBalance.map(token => {
+    const result = tokensWithBalance.map(token => {
       const known = KNOWN_SOLANA_TOKENS[token.mint];
       const jupiter = jupiterTokens.get(token.mint);
+      
+      const symbol = known?.symbol || jupiter?.symbol || token.mint.slice(0, 4) + '...' + token.mint.slice(-4);
+      const name = known?.name || jupiter?.name || 'Unknown Token';
       
       return {
         mint: token.mint,
         balance: token.balance,
         decimals: token.decimals,
-        symbol: known?.symbol || jupiter?.symbol || token.mint.slice(0, 4) + '...' + token.mint.slice(-4),
-        name: known?.name || jupiter?.name || 'Unknown Token'
+        symbol,
+        name
       };
     });
+    
+    console.log('[Solana] Returning', result.length, 'tokens');
+    return result;
   } catch (error) {
-    console.log('Solana tokens error:', error.message);
+    console.log('[Solana] tokens error:', error.message, error.code || '');
     return [];
   }
 };
 
-// Get token balances for EVM from explorer
+// Get token balances for EVM from Blockscout
 const getEVMTokenBalances = async (address, chain) => {
-  const config = CHAIN_CONFIG[chain];
-  if (!config?.explorerApi) return [];
+  const blockscoutApis = {
+    ethereum: 'https://eth.blockscout.com/api',
+    base: 'https://base.blockscout.com/api',
+    optimism: 'https://optimism.blockscout.com/api',
+    arbitrum: 'https://arbitrum.blockscout.com/api',
+    polygon: 'https://polygon.blockscout.com/api',
+  };
   
-  try {
-    const response = await axios.get(config.explorerApi, {
-      params: {
-        module: 'account',
-        action: 'tokentx',
-        address: address,
-        startblock: 0,
-        endblock: 99999999,
-        sort: 'desc',
-        page: 1,
-        offset: 100
-      },
-      timeout: 15000
-    });
-    
-    if (response.data.status === '1' && Array.isArray(response.data.result)) {
-      // Track token balances from tx history
-      const tokenMap = new Map();
-      const addressLower = address.toLowerCase();
+  const blockscoutApi = blockscoutApis[chain];
+  
+  if (blockscoutApi) {
+    try {
+      // Get token balances directly from Blockscout
+      const response = await axios.get(`${blockscoutApi}/v2/addresses/${address}/tokens`, {
+        params: { type: 'ERC-20' },
+        timeout: 15000
+      });
       
-      for (const tx of response.data.result) {
-        const contractAddr = tx.contractAddress?.toLowerCase();
-        if (!contractAddr) continue;
-        
-        const decimals = parseInt(tx.tokenDecimal) || 18;
-        const value = parseFloat(tx.value) / Math.pow(10, decimals);
-        const isIncoming = tx.to?.toLowerCase() === addressLower;
-        
-        if (!tokenMap.has(contractAddr)) {
-          tokenMap.set(contractAddr, {
-            symbol: tx.tokenSymbol,
-            name: tx.tokenName,
-            contractAddress: contractAddr,
-            balance: 0,
-            lastActivity: parseInt(tx.timeStamp) * 1000
-          });
-        }
-        
-        const token = tokenMap.get(contractAddr);
-        token.balance += isIncoming ? value : -value;
-      }
+      const items = response.data?.items || [];
       
-      // Filter to tokens with positive balance
-      return Array.from(tokenMap.values())
-        .filter(t => t.balance > 0.0001)
-        .slice(0, 15);
+      return items
+        .filter(item => {
+          const balance = parseFloat(item.value || 0) / Math.pow(10, parseInt(item.token?.decimals) || 18);
+          return balance > 0.0001;
+        })
+        .map(item => ({
+          symbol: item.token?.symbol || 'UNKNOWN',
+          name: item.token?.name || 'Unknown Token',
+          contractAddress: item.token?.address,
+          balance: parseFloat(item.value || 0) / Math.pow(10, parseInt(item.token?.decimals) || 18),
+          decimals: parseInt(item.token?.decimals) || 18
+        }))
+        .slice(0, 20);
+        
+    } catch (error) {
+      console.log('Blockscout token balances error:', error.message);
     }
-  } catch (error) {
-    console.log('EVM token balances error:', error.message);
   }
   
+  // Fallback: Return empty if no Blockscout support
   return [];
 };
 
@@ -779,23 +805,50 @@ router.get('/:address', async (req, res) => {
     }
 
     // Fetch all data in parallel
-    let nativeBalance, txHistory, tokens, nativePrice;
+    let nativeBalance = 0;
+    let txHistory = { transactions: [], totalTxCount: 0 };
+    let tokens = [];
+    let nativePrice = 0;
     
     try {
+      console.log(`[WalletAnalyzer] Fetching data for ${address} on ${chain}`);
+      
       if (chain === 'solana') {
-        [nativeBalance, txHistory, tokens, nativePrice] = await Promise.all([
+        const results = await Promise.allSettled([
           getNativeBalance(address, chain),
           getSolanaTransactionHistory(address),
           getSolanaTokens(address),
           getTokenPrices([config.coingeckoId]).then(p => p[config.coingeckoId] || 0)
         ]);
+        
+        nativeBalance = results[0].status === 'fulfilled' ? results[0].value : 0;
+        txHistory = results[1].status === 'fulfilled' ? results[1].value : { transactions: [], totalTxCount: 0 };
+        tokens = results[2].status === 'fulfilled' ? results[2].value : [];
+        nativePrice = results[3].status === 'fulfilled' ? results[3].value : 0;
+        
+        console.log(`[WalletAnalyzer] Solana results - Balance: ${nativeBalance}, Txs: ${txHistory?.totalTxCount || 0}, Tokens: ${tokens?.length || 0}`);
+        
+        // Log any errors
+        results.forEach((r, i) => {
+          if (r.status === 'rejected') {
+            console.error(`[WalletAnalyzer] Fetch ${i} failed:`, r.reason?.message || r.reason);
+          }
+        });
+        
       } else {
-        [nativeBalance, txHistory, tokens, nativePrice] = await Promise.all([
+        const results = await Promise.allSettled([
           getNativeBalance(address, chain),
           getEVMTransactionHistory(address, chain),
           getEVMTokenBalances(address, chain),
           getTokenPrices([config.coingeckoId]).then(p => p[config.coingeckoId] || 0)
         ]);
+        
+        nativeBalance = results[0].status === 'fulfilled' ? results[0].value : 0;
+        txHistory = results[1].status === 'fulfilled' ? results[1].value : { transactions: [], totalTxCount: 0 };
+        tokens = results[2].status === 'fulfilled' ? results[2].value : [];
+        nativePrice = results[3].status === 'fulfilled' ? results[3].value : 0;
+        
+        console.log(`[WalletAnalyzer] EVM results - Balance: ${nativeBalance}, Txs: ${txHistory?.totalTxCount || 0}, Tokens: ${tokens?.length || 0}`);
       }
     } catch (fetchError) {
       console.error('Blockchain fetch error:', fetchError.message);
@@ -942,6 +995,8 @@ router.get('/:address', async (req, res) => {
       profitable: !tx.isError
     }));
 
+    console.log(`[WalletAnalyzer] Response - Holdings: ${holdings.length}, Transactions: ${recentTransactions.length}`);
+    
     res.json({
       address,
       chain,
