@@ -938,13 +938,13 @@ const LandingPage = () => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Link to="/home?openDashboard=aquapay">
+                  <Link to="/home">
                     <motion.button
                       className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm md:text-base shadow-lg shadow-blue-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
@@ -953,6 +953,14 @@ const LandingPage = () => {
                       💸 Create Your Payment Link
                     </motion.button>
                   </Link>
+                  
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Login → Username → <span className="text-white">📊 Dashboard</span> → <span className="text-cyan-400 font-medium">💸 AquaPay</span> tab</span>
+                  </div>
                 </motion.div>
               </div>
               
