@@ -14,14 +14,13 @@ const PUBLIC_RPCS = {
   fantom: 'https://rpc.ftm.tools',
 };
 
-// Free public Solana RPCs (multiple for fallback)
+// Free public Solana RPCs (ordered by reliability for server-side use)
 const SOLANA_RPCS = [
-  'https://rpc.ankr.com/solana',
-  'https://solana.public-rpc.com',
-  'https://api.mainnet-beta.solana.com',
+  'https://api.mainnet-beta.solana.com',  // Official - works from Render
   'https://solana-mainnet.rpc.extrnode.com',
-  'https://mainnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff', // Free public key
-  'https://go.getblock.io/d7dab8149ec04a18aec4ffcdafb34dab', // Free tier
+  'https://mainnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff',
+  'https://rpc.shyft.to?api_key=jdXnGbRsn0Jvt5t9',  // Shyft free tier
+  'https://solana.getblock.io/mainnet/?api_key=free',
 ];
 
 let currentSolanaRpcIndex = 0;
@@ -417,25 +416,52 @@ const getSolanaTokens = async (address) => {
       }
     }
     
-    // Map tokens with metadata
+    // Get token prices from DexScreener
+    const mints = tokensWithBalance.map(t => t.mint);
+    let priceData = { prices: {}, symbols: {}, names: {} };
+    
+    try {
+      priceData = await getSolanaTokenPrices(mints);
+    } catch (e) {
+      console.log('[Solana] Could not fetch token prices:', e.message);
+    }
+    
+    // Map tokens with metadata and values
     const tokens = tokensWithBalance.map(token => {
       const known = KNOWN_SOLANA_TOKENS[token.mint];
       const jupiter = jupiterTokens.get(token.mint);
+      const dexScreener = priceData.symbols[token.mint] ? {
+        symbol: priceData.symbols[token.mint],
+        name: priceData.names[token.mint]
+      } : null;
       
-      const symbol = known?.symbol || jupiter?.symbol || token.mint.slice(0, 4) + '...' + token.mint.slice(-4);
-      const name = known?.name || jupiter?.name || 'Unknown Token';
+      // Prefer DexScreener symbol (most accurate for trading), then known, then Jupiter
+      const symbol = dexScreener?.symbol || known?.symbol || jupiter?.symbol || token.mint.slice(0, 4) + '...' + token.mint.slice(-4);
+      const name = dexScreener?.name || known?.name || jupiter?.name || 'Unknown Token';
+      
+      // Get price from DexScreener
+      const price = priceData.prices[token.mint] || 0;
+      const value = token.balance * price;
       
       return {
         mint: token.mint,
         balance: token.balance,
         decimals: token.decimals,
         symbol,
-        name
+        name,
+        price,
+        value
       };
     });
     
-    console.log('[Solana] Returning', tokens.length, 'tokens');
-    return tokens;
+    // Sort by value (highest first)
+    tokens.sort((a, b) => (b.value || 0) - (a.value || 0));
+    
+    // Calculate total token value
+    const totalTokenValue = tokens.reduce((sum, t) => sum + (t.value || 0), 0);
+    console.log('[Solana] Returning', tokens.length, 'tokens, total value: $' + totalTokenValue.toFixed(2));
+    
+    return { tokens, totalTokenValue };
   } catch (error) {
     console.log('[Solana] tokens error:', error.message);
     return [];
@@ -495,6 +521,100 @@ const FALLBACK_PRICES = {
   'matic-network': 0.5,
   'avalanche-2': 35,
   'fantom': 0.5
+};
+
+// Cache for token prices
+let tokenPriceCache = new Map();
+const TOKEN_PRICE_CACHE_TTL = 300000; // 5 minutes
+
+// Get token price from DexScreener (free, no API key needed)
+const getTokenPriceFromDexScreener = async (mint) => {
+  const now = Date.now();
+  
+  // Check cache first
+  const cached = tokenPriceCache.get(mint);
+  if (cached && now - cached.timestamp < TOKEN_PRICE_CACHE_TTL) {
+    return cached.price;
+  }
+  
+  try {
+    const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, { 
+      timeout: 5000 
+    });
+    
+    const pair = response.data?.pairs?.[0];
+    if (pair) {
+      const price = parseFloat(pair.priceUsd) || 0;
+      const symbol = pair.baseToken?.symbol || null;
+      const name = pair.baseToken?.name || null;
+      
+      tokenPriceCache.set(mint, { price, symbol, name, timestamp: now });
+      return price;
+    }
+  } catch (error) {
+    // Silently fail - will return 0
+  }
+  
+  tokenPriceCache.set(mint, { price: 0, timestamp: now });
+  return 0;
+};
+
+// Get prices for multiple tokens from DexScreener (with rate limiting)
+const getSolanaTokenPrices = async (mints) => {
+  console.log('[DexScreener] Fetching prices for', mints.length, 'tokens...');
+  
+  const prices = {};
+  const symbols = {};
+  const names = {};
+  
+  // Process in batches to avoid rate limiting
+  for (let i = 0; i < mints.length; i++) {
+    const mint = mints[i];
+    
+    // Check cache first
+    const cached = tokenPriceCache.get(mint);
+    if (cached && Date.now() - cached.timestamp < TOKEN_PRICE_CACHE_TTL) {
+      prices[mint] = cached.price;
+      if (cached.symbol) symbols[mint] = cached.symbol;
+      if (cached.name) names[mint] = cached.name;
+      continue;
+    }
+    
+    try {
+      const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, { 
+        timeout: 5000 
+      });
+      
+      const pair = response.data?.pairs?.[0];
+      if (pair) {
+        prices[mint] = parseFloat(pair.priceUsd) || 0;
+        symbols[mint] = pair.baseToken?.symbol || null;
+        names[mint] = pair.baseToken?.name || null;
+        
+        tokenPriceCache.set(mint, { 
+          price: prices[mint], 
+          symbol: symbols[mint], 
+          name: names[mint], 
+          timestamp: Date.now() 
+        });
+      } else {
+        prices[mint] = 0;
+        tokenPriceCache.set(mint, { price: 0, timestamp: Date.now() });
+      }
+    } catch (error) {
+      prices[mint] = 0;
+    }
+    
+    // Small delay between requests to avoid rate limiting (100ms)
+    if (i < mints.length - 1) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+  
+  const pricedCount = Object.values(prices).filter(p => p > 0).length;
+  console.log('[DexScreener] Got prices for', pricedCount, 'of', mints.length, 'tokens');
+  
+  return { prices, symbols, names };
 };
 
 // Get token prices from CoinGecko (with caching and fallback)
@@ -855,6 +975,8 @@ router.get('/:address', async (req, res) => {
     try {
       console.log(`[WalletAnalyzer] Fetching data for ${address} on ${chain}`);
       
+      let totalTokenValue = 0;
+      
       if (chain === 'solana') {
         const results = await Promise.allSettled([
           getNativeBalance(address, chain),
@@ -865,10 +987,15 @@ router.get('/:address', async (req, res) => {
         
         nativeBalance = results[0].status === 'fulfilled' ? results[0].value : 0;
         txHistory = results[1].status === 'fulfilled' ? results[1].value : { transactions: [], totalTxCount: 0 };
-        tokens = results[2].status === 'fulfilled' ? results[2].value : [];
+        
+        // Handle new token return format { tokens, totalTokenValue }
+        const tokenResult = results[2].status === 'fulfilled' ? results[2].value : { tokens: [], totalTokenValue: 0 };
+        tokens = tokenResult.tokens || tokenResult || [];
+        totalTokenValue = tokenResult.totalTokenValue || 0;
+        
         nativePrice = results[3].status === 'fulfilled' ? results[3].value : 0;
         
-        console.log(`[WalletAnalyzer] Solana results - Balance: ${nativeBalance}, Txs: ${txHistory?.totalTxCount || 0}, Tokens: ${tokens?.length || 0}`);
+        console.log(`[WalletAnalyzer] Solana results - Balance: ${nativeBalance}, Txs: ${txHistory?.totalTxCount || 0}, Tokens: ${tokens?.length || 0}, TokenValue: $${totalTokenValue.toFixed(2)}`);
         
         // Log any errors
         results.forEach((r, i) => {
@@ -889,6 +1016,9 @@ router.get('/:address', async (req, res) => {
         txHistory = results[1].status === 'fulfilled' ? results[1].value : { transactions: [], totalTxCount: 0 };
         tokens = results[2].status === 'fulfilled' ? results[2].value : [];
         nativePrice = results[3].status === 'fulfilled' ? results[3].value : 0;
+        
+        // EVM tokens don't have prices from our API yet, so totalTokenValue stays 0
+        totalTokenValue = 0;
         
         console.log(`[WalletAnalyzer] EVM results - Balance: ${nativeBalance}, Txs: ${txHistory?.totalTxCount || 0}, Tokens: ${tokens?.length || 0}`);
       }
@@ -938,14 +1068,18 @@ router.get('/:address', async (req, res) => {
       totalTxCount
     );
     
-    const isWhale = nativeValue > 100000 || nativeBalance > 50;
+    // Calculate total value including token values
+    const totalValue = nativeValue + totalTokenValue;
+    const tokenCount = tokens?.length || 0;
     
-    // Calculate total value including tokens (rough estimate)
-    let tokenTotalValue = 0;
-    // For tokens, we'd need individual price lookups which would hit rate limits
-    // So we just count them for now
+    // Check if we have priced vs unpriced tokens
+    const pricedTokens = tokens?.filter(t => t.value > 0).length || 0;
+    const unpricedTokens = tokenCount - pricedTokens;
+    const hasUnvaluedTokens = unpricedTokens > 0;
     
-    const totalValue = nativeValue + tokenTotalValue;
+    const isWhale = totalValue > 100000 || nativeBalance > 50;
+    
+    console.log(`[WalletAnalyzer] Total value: $${totalValue.toFixed(2)} (Native: $${nativeValue.toFixed(2)} + Tokens: $${totalTokenValue.toFixed(2)})`);
     
     // Estimate PnL
     const pnlData = estimatePnL(txHistory, nativeBalance, nativeValue, tokens);
@@ -1047,6 +1181,10 @@ router.get('/:address', async (req, res) => {
       primaryType,
       isWhale,
       totalValue,
+      totalTokenValue,
+      totalValueNote: hasUnvaluedTokens ? `${unpricedTokens} of ${tokenCount} tokens not priced` : null,
+      tokenCount,
+      pricedTokens,
       nativeBalance,
       nativeValue,
       nativeSymbol: config.nativeSymbol,

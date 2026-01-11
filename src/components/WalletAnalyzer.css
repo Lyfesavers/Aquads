@@ -850,6 +850,19 @@
   font-weight: 400;
 }
 
+.wa-metric-subtext.wa-value-note {
+  color: rgba(245, 158, 11, 0.8);
+  font-style: italic;
+  font-size: 0.7rem;
+}
+
+.wa-title-note {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  margin-left: 8px;
+}
+
 .wa-whale-badge {
   position: absolute;
   top: 8px;

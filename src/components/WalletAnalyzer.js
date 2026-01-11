@@ -426,9 +426,17 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
                     <div className="wa-metric-value-text">
                       {walletData.totalValue > 0 ? `$${formatNumber(walletData.totalValue)}` : 'N/A'}
                     </div>
-                    {walletData.nativeBalance > 0 && (
-                      <div className="wa-metric-subtext">
-                        {walletData.nativeBalance.toFixed(4)} {walletData.nativeSymbol}
+                    <div className="wa-metric-subtext">
+                      {walletData.nativeBalance > 0 && (
+                        <span>{walletData.nativeBalance.toFixed(4)} {walletData.nativeSymbol}</span>
+                      )}
+                      {walletData.totalTokenValue > 0 && (
+                        <span> + ${formatNumber(walletData.totalTokenValue)} tokens</span>
+                      )}
+                    </div>
+                    {walletData.totalValueNote && (
+                      <div className="wa-metric-subtext wa-value-note">
+                        ⚠️ {walletData.totalValueNote}
                       </div>
                     )}
                   </div>
@@ -583,6 +591,9 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
               <div className="wa-holdings-card">
                 <h3 className="wa-card-title">
                   <span>💼</span> Token Holdings ({walletData.holdings?.length || 0})
+                  {walletData.pricedTokens > 0 && walletData.pricedTokens < walletData.tokenCount && (
+                    <span className="wa-title-note">({walletData.pricedTokens} priced)</span>
+                  )}
                 </h3>
                 <div className="wa-holdings-list">
                   {walletData.holdings && walletData.holdings.length > 0 ? (
