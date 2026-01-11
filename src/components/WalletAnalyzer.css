@@ -275,6 +275,7 @@
 .wa-chain-selector {
   position: relative;
   flex-shrink: 0;
+  z-index: 1000;
 }
 
 .wa-chain-btn {
@@ -315,14 +316,15 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  right: 0;
+  min-width: 200px;
   background: rgba(15, 15, 20, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   overflow: hidden;
-  z-index: 100;
+  z-index: 9999;
   animation: dropdownSlide 0.2s ease;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
 }
 
 @keyframes dropdownSlide {
@@ -357,6 +359,7 @@
 .wa-input-container {
   flex: 1;
   position: relative;
+  z-index: 1;
 }
 
 .wa-address-input {
