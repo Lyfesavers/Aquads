@@ -639,12 +639,6 @@ const LandingPage = () => {
             >
               AquaSwap
             </Link>
-            <Link 
-              to="/marketplace"
-              className="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium flex items-center gap-1"
-            >
-              💸 AquaPay
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -742,14 +736,6 @@ const LandingPage = () => {
                     >
                       <span className="text-lg">💱</span>
                       <span className="font-medium">AquaSwap</span>
-                    </Link>
-                    <Link 
-                      to="/marketplace"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">💸</span>
-                      <span className="font-medium">AquaPay</span>
                     </Link>
                     <div className="h-px bg-white/10 my-2" />
                     <div className="flex items-center justify-center gap-6 py-3">
