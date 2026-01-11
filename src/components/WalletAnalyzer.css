@@ -125,16 +125,17 @@
 }
 
 .wa-logo {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+  transition: transform 0.3s ease, filter 0.3s ease;
+  display: inline-block;
+  filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
 }
 
 .wa-logo:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
 }
 
 .wa-title-container {

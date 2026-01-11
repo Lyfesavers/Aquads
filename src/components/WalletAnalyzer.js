@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../services/api';
 import './WalletAnalyzer.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com/api';
 
 // Chain configurations with colors and explorers
 const SUPPORTED_CHAINS = {
@@ -221,7 +220,10 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
             src="/Aquadsnewlogo.png" 
             alt="Aquads" 
             className="wa-logo"
+            width="72"
+            height="72"
             onClick={() => navigate('/home')}
+            title="Back to Home"
           />
         </div>
         <div className="wa-header-center">

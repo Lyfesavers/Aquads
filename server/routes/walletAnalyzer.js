@@ -260,6 +260,17 @@ const determineWalletType = (metrics, balance, txCount) => {
 
 // ==================== API ROUTES ====================
 
+// GET /api/wallet-analyzer/supported/chains - Get supported chains (MUST be before /:address)
+router.get('/supported/chains', async (req, res) => {
+  const chains = Object.entries(CHAIN_CONFIG).map(([key, config]) => ({
+    id: key,
+    name: key.charAt(0).toUpperCase() + key.slice(1),
+    symbol: config.nativeSymbol
+  }));
+
+  res.json({ chains });
+});
+
 // GET /api/wallet-analyzer/:address - Main analysis endpoint
 router.get('/:address', async (req, res) => {
   try {
@@ -426,17 +437,6 @@ router.get('/:address', async (req, res) => {
       message: error.message 
     });
   }
-});
-
-// GET /api/wallet-analyzer/supported/chains - Get supported chains
-router.get('/supported/chains', async (req, res) => {
-  const chains = Object.entries(CHAIN_CONFIG).map(([key, config]) => ({
-    id: key,
-    name: key.charAt(0).toUpperCase() + key.slice(1),
-    symbol: config.nativeSymbol
-  }));
-
-  res.json({ chains });
 });
 
 module.exports = router;
