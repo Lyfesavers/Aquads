@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+import { socket } from '../services/api';
 
 // Chain configurations
 const CHAINS = {
@@ -73,54 +71,99 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [copied, setCopied] = useState(false);
 
-  // Fetch settings on mount
+  // Fetch settings on mount using socket
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const token = currentUser?.token;
-      if (!token) {
-        showNotification('Please log in to access AquaPay settings', 'error');
-        return;
-      }
-
-      const response = await axios.get(`${API_URL}/api/aquapay/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        setSettings(response.data.settings);
-      }
-    } catch (error) {
-      console.error('Error fetching AquaPay settings:', error);
-      showNotification('Failed to load AquaPay settings', 'error');
-    } finally {
+    if (!socket || !currentUser) {
       setLoading(false);
+      return;
     }
-  };
 
-  // Debounced slug availability check
-  const checkSlugAvailability = useCallback(async (slug) => {
-    if (!slug || slug.length < 3) {
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    
+    // Request settings via socket
+    socket.emit('requestAquaPaySettings', { userId });
+
+    // Listen for settings loaded
+    const handleSettingsLoaded = (data) => {
+      if (data.settings) {
+        setSettings(data.settings);
+      }
+      setLoading(false);
+    };
+
+    // Listen for settings error
+    const handleSettingsError = (data) => {
+      console.error('AquaPay settings error:', data.error);
+      showNotification(data.error || 'Failed to load AquaPay settings', 'error');
+      setLoading(false);
+      setSaving(false);
+    };
+
+    // Listen for settings updated (after save)
+    const handleSettingsUpdated = (data) => {
+      if (data.success && data.settings) {
+        setSettings(data.settings);
+        showNotification(data.message || 'AquaPay settings saved successfully!', 'success');
+      }
+      setSaving(false);
+    };
+
+    // Listen for slug check result
+    const handleSlugCheckResult = (data) => {
+      setSlugAvailable(data.available);
+      setCheckingSlug(false);
+    };
+
+    // Listen for real-time payment received (updates stats)
+    const handlePaymentReceived = (data) => {
+      if (data.stats) {
+        setSettings(prev => ({
+          ...prev,
+          stats: data.stats
+        }));
+        showNotification('💰 New payment received!', 'success');
+      }
+    };
+
+    // Listen for stats updates
+    const handleStatsUpdated = (data) => {
+      if (data.userId === userId && data.stats) {
+        setSettings(prev => ({
+          ...prev,
+          stats: data.stats
+        }));
+      }
+    };
+
+    socket.on('aquaPaySettingsLoaded', handleSettingsLoaded);
+    socket.on('aquaPaySettingsError', handleSettingsError);
+    socket.on('aquaPaySettingsUpdated', handleSettingsUpdated);
+    socket.on('aquaPaySlugCheckResult', handleSlugCheckResult);
+    socket.on('aquaPayPaymentReceived', handlePaymentReceived);
+    socket.on('aquaPayStatsUpdated', handleStatsUpdated);
+
+    return () => {
+      socket.off('aquaPaySettingsLoaded', handleSettingsLoaded);
+      socket.off('aquaPaySettingsError', handleSettingsError);
+      socket.off('aquaPaySettingsUpdated', handleSettingsUpdated);
+      socket.off('aquaPaySlugCheckResult', handleSlugCheckResult);
+      socket.off('aquaPayPaymentReceived', handlePaymentReceived);
+      socket.off('aquaPayStatsUpdated', handleStatsUpdated);
+    };
+  }, [socket, currentUser, showNotification]);
+
+  // Debounced slug availability check using socket
+  const checkSlugAvailability = useCallback((slug) => {
+    if (!slug || slug.length < 3 || !socket || !currentUser) {
       setSlugAvailable(true);
+      setCheckingSlug(false);
       return;
     }
 
     setCheckingSlug(true);
-    try {
-      const token = currentUser?.token;
-      const response = await axios.get(`${API_URL}/api/aquapay/check-slug/${slug}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSlugAvailable(response.data.available);
-    } catch (error) {
-      console.error('Error checking slug:', error);
-    } finally {
-      setCheckingSlug(false);
-    }
-  }, [currentUser?.token]);
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    socket.emit('checkAquaPaySlug', { userId, slug });
+  }, [socket, currentUser]);
 
   // Handle slug change with debounce
   useEffect(() => {
@@ -150,42 +193,29 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
     }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const token = currentUser?.token;
-      if (!token) {
-        showNotification('Please log in to save settings', 'error');
+  const handleSave = () => {
+    if (!socket || !currentUser) {
+      showNotification('Please log in to save settings', 'error');
+      return;
+    }
+
+    // Validate at least one wallet is set if enabling
+    if (settings.isEnabled) {
+      const hasWallet = Object.values(settings.wallets).some(w => w && w.trim());
+      if (!hasWallet) {
+        showNotification('Please add at least one wallet address before enabling AquaPay', 'error');
         return;
       }
-
-      // Validate at least one wallet is set if enabling
-      if (settings.isEnabled) {
-        const hasWallet = Object.values(settings.wallets).some(w => w && w.trim());
-        if (!hasWallet) {
-          showNotification('Please add at least one wallet address before enabling AquaPay', 'error');
-          setSaving(false);
-          return;
-        }
-      }
-
-      const response = await axios.put(
-        `${API_URL}/api/aquapay/settings`,
-        settings,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        showNotification('AquaPay settings saved successfully!', 'success');
-        setSettings(response.data.settings);
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      const message = error.response?.data?.error || 'Failed to save settings';
-      showNotification(message, 'error');
-    } finally {
-      setSaving(false);
     }
+
+    setSaving(true);
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    
+    // Send update via socket
+    socket.emit('updateAquaPaySettings', {
+      userId,
+      ...settings
+    });
   };
 
   const copyPaymentLink = () => {

@@ -726,6 +726,249 @@ function init(server) {
     socket.on('leaderboardUpdate', (data) => {
       socket.broadcast.emit('leaderboardUpdated', data);
     });
+
+    // Handle user requesting AquaPay settings
+    socket.on('requestAquaPaySettings', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('aquaPaySettingsError', { error: 'User authentication required' });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        const user = await User.findById(userData.userId).select('username image aquaPay');
+        
+        if (!user) {
+          socket.emit('aquaPaySettingsError', { error: 'User not found' });
+          return;
+        }
+
+        // If AquaPay not initialized, return defaults
+        if (!user.aquaPay) {
+          socket.emit('aquaPaySettingsLoaded', {
+            settings: {
+              isEnabled: false,
+              paymentSlug: user.username.toLowerCase(),
+              displayName: user.username,
+              bio: null,
+              wallets: {
+                solana: null,
+                ethereum: null,
+                bitcoin: null,
+                tron: null
+              },
+              preferredChain: 'ethereum',
+              acceptedTokens: ['USDC', 'USDT', 'ETH', 'SOL', 'BTC'],
+              theme: 'default',
+              stats: {
+                totalReceived: 0,
+                totalTransactions: 0,
+                lastPaymentAt: null
+              }
+            }
+          });
+          return;
+        }
+
+        socket.emit('aquaPaySettingsLoaded', {
+          settings: {
+            isEnabled: user.aquaPay.isEnabled,
+            paymentSlug: user.aquaPay.paymentSlug || user.username.toLowerCase(),
+            displayName: user.aquaPay.displayName || user.username,
+            bio: user.aquaPay.bio,
+            wallets: user.aquaPay.wallets || {},
+            preferredChain: user.aquaPay.preferredChain || 'ethereum',
+            acceptedTokens: user.aquaPay.acceptedTokens || ['USDC', 'USDT', 'ETH', 'SOL', 'BTC'],
+            theme: user.aquaPay.theme || 'default',
+            stats: user.aquaPay.stats || { totalReceived: 0, totalTransactions: 0, lastPaymentAt: null }
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching AquaPay settings:', error);
+        socket.emit('aquaPaySettingsError', { error: 'Failed to fetch AquaPay settings' });
+      }
+    });
+
+    // Handle user updating AquaPay settings
+    socket.on('updateAquaPaySettings', async (data) => {
+      if (!data || !data.userId) {
+        socket.emit('aquaPaySettingsError', { error: 'User authentication required' });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        const {
+          userId,
+          isEnabled,
+          paymentSlug,
+          displayName,
+          bio,
+          wallets,
+          preferredChain,
+          acceptedTokens,
+          theme
+        } = data;
+
+        const user = await User.findById(userId);
+        if (!user) {
+          socket.emit('aquaPaySettingsError', { error: 'User not found' });
+          return;
+        }
+
+        // Initialize aquaPay if it doesn't exist
+        if (!user.aquaPay) {
+          user.aquaPay = {
+            isEnabled: false,
+            paymentSlug: user.username.toLowerCase(),
+            wallets: {},
+            stats: { totalReceived: 0, totalTransactions: 0 },
+            paymentHistory: [],
+            createdAt: new Date()
+          };
+        }
+
+        // Validate and update payment slug if provided
+        if (paymentSlug !== undefined) {
+          const normalizedSlug = paymentSlug.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '');
+          
+          if (normalizedSlug.length < 3) {
+            socket.emit('aquaPaySettingsError', { error: 'Payment slug must be at least 3 characters' });
+            return;
+          }
+          
+          if (normalizedSlug.length > 30) {
+            socket.emit('aquaPaySettingsError', { error: 'Payment slug must be 30 characters or less' });
+            return;
+          }
+
+          // Check if slug is already taken (by another user)
+          const existingUser = await User.findOne({
+            'aquaPay.paymentSlug': normalizedSlug,
+            _id: { $ne: userId }
+          });
+
+          if (existingUser) {
+            socket.emit('aquaPaySettingsError', { error: 'This payment link is already taken' });
+            return;
+          }
+
+          user.aquaPay.paymentSlug = normalizedSlug;
+        }
+
+        // Address validation helper
+        const validateWalletAddress = (chain, address) => {
+          if (!address) return true;
+          
+          const addressRegexes = {
+            solana: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+            ethereum: /^0x[a-fA-F0-9]{40}$/,
+            bitcoin: /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/,
+            tron: /^T[a-zA-Z0-9]{33}$/
+          };
+          
+          if (['ethereum', 'base', 'polygon', 'arbitrum', 'bnb'].includes(chain)) {
+            return addressRegexes.ethereum.test(address);
+          }
+          
+          return addressRegexes[chain]?.test(address) ?? false;
+        };
+
+        // Validate wallet addresses if provided
+        if (wallets) {
+          const walletErrors = [];
+          
+          if (wallets.solana && !validateWalletAddress('solana', wallets.solana)) {
+            walletErrors.push('Invalid Solana address');
+          }
+          if (wallets.ethereum && !validateWalletAddress('ethereum', wallets.ethereum)) {
+            walletErrors.push('Invalid Ethereum address');
+          }
+          if (wallets.bitcoin && !validateWalletAddress('bitcoin', wallets.bitcoin)) {
+            walletErrors.push('Invalid Bitcoin address');
+          }
+          if (wallets.tron && !validateWalletAddress('tron', wallets.tron)) {
+            walletErrors.push('Invalid TRON address');
+          }
+
+          if (walletErrors.length > 0) {
+            socket.emit('aquaPaySettingsError', { error: walletErrors.join(', ') });
+            return;
+          }
+
+          user.aquaPay.wallets = {
+            ...(user.aquaPay.wallets || {}),
+            ...wallets
+          };
+        }
+
+        // Update other fields
+        if (isEnabled !== undefined) user.aquaPay.isEnabled = isEnabled;
+        if (displayName !== undefined) user.aquaPay.displayName = displayName ? String(displayName).substring(0, 50) : null;
+        if (bio !== undefined) user.aquaPay.bio = bio ? String(bio).substring(0, 500) : null;
+        if (preferredChain !== undefined) user.aquaPay.preferredChain = preferredChain;
+        if (acceptedTokens !== undefined) user.aquaPay.acceptedTokens = acceptedTokens;
+        if (theme !== undefined) user.aquaPay.theme = theme;
+        
+        user.aquaPay.updatedAt = new Date();
+
+        await user.save();
+
+        const updatedSettings = {
+          isEnabled: user.aquaPay.isEnabled,
+          paymentSlug: user.aquaPay.paymentSlug,
+          displayName: user.aquaPay.displayName,
+          bio: user.aquaPay.bio,
+          wallets: user.aquaPay.wallets,
+          preferredChain: user.aquaPay.preferredChain,
+          acceptedTokens: user.aquaPay.acceptedTokens,
+          theme: user.aquaPay.theme,
+          stats: user.aquaPay.stats
+        };
+
+        // Send updated settings back to the user
+        socket.emit('aquaPaySettingsUpdated', {
+          success: true,
+          message: 'AquaPay settings updated successfully',
+          settings: updatedSettings
+        });
+
+      } catch (error) {
+        console.error('Error updating AquaPay settings:', error);
+        socket.emit('aquaPaySettingsError', { error: 'Failed to update AquaPay settings' });
+      }
+    });
+
+    // Handle checking AquaPay slug availability
+    socket.on('checkAquaPaySlug', async (data) => {
+      if (!data || !data.userId || !data.slug) {
+        socket.emit('aquaPaySlugCheckResult', { available: false, reason: 'Invalid request' });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        const slug = data.slug.toLowerCase().trim();
+        
+        if (slug.length < 3) {
+          socket.emit('aquaPaySlugCheckResult', { available: false, reason: 'Slug must be at least 3 characters' });
+          return;
+        }
+
+        const existingUser = await User.findOne({
+          'aquaPay.paymentSlug': slug,
+          _id: { $ne: data.userId }
+        });
+
+        socket.emit('aquaPaySlugCheckResult', {
+          available: !existingUser,
+          reason: existingUser ? 'This payment link is already taken' : null
+        });
+      } catch (error) {
+        console.error('Error checking slug availability:', error);
+        socket.emit('aquaPaySlugCheckResult', { available: false, reason: 'Error checking availability' });
+      }
+    });
   });
   
   return io;
@@ -971,6 +1214,19 @@ function emitNewVoteBoostPending(boostData) {
   }
 }
 
+// AquaPay socket emission functions
+function emitAquaPayPaymentReceived(paymentData) {
+  if (io) {
+    // Emit to the specific user who received the payment
+    io.to(`user_${paymentData.recipientId}`).emit('aquaPayPaymentReceived', paymentData);
+    // Also emit globally for any dashboard updates
+    io.emit('aquaPayStatsUpdated', {
+      userId: paymentData.recipientId,
+      stats: paymentData.stats
+    });
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1004,5 +1260,6 @@ module.exports = {
   emitVoteBoostUpdate,
   emitVoteBoostApproved,
   emitVoteBoostRejected,
-  emitNewVoteBoostPending
+  emitNewVoteBoostPending,
+  emitAquaPayPaymentReceived
 }; 

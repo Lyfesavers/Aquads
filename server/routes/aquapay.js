@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { emitAquaPayPaymentReceived } = require('../socket');
 
 // Supported chains configuration
 const SUPPORTED_CHAINS = {
@@ -406,6 +407,13 @@ router.post('/payment', async (req, res) => {
     user.aquaPay.stats.lastPaymentAt = new Date();
 
     await user.save();
+
+    // Emit real-time notification to recipient
+    emitAquaPayPaymentReceived({
+      recipientId: user._id.toString(),
+      payment: payment,
+      stats: user.aquaPay.stats
+    });
 
     res.json({
       success: true,
