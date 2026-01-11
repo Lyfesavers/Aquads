@@ -25,6 +25,7 @@ const gamesRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
 const aquapayRoutes = require('./routes/aquapay');
+const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
 
 
 // Middleware
@@ -511,6 +512,7 @@ app.use('/api/games', gamesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/aquapay', aquapayRoutes);
+app.use('/api/wallet-analyzer', walletAnalyzerRoutes);
 
 // Test route to verify API is working
 app.get('/api/test', (req, res) => {

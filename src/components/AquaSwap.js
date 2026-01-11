@@ -1662,6 +1662,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               >
                 💳 Fiat to Crypto
               </button>
+              <button 
+                onClick={() => navigate('/wallet-analyzer')}
+                className="wallet-analyzer-button"
+                title="Deep analyze any wallet - Whale, Jeet & Bot detection"
+              >
+                🔬 Wallet Analyzer
+              </button>
             </div>
           </div>
         </div>
