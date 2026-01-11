@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ethers } from 'ethers';
+import emailService from '../services/emailService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
 
@@ -307,12 +308,30 @@ const AquaPayPage = ({ currentUser }) => {
 
   const recordPayment = async (hash) => {
     try {
-      await axios.post(`${API_URL}/api/aquapay/payment`, {
+      const response = await axios.post(`${API_URL}/api/aquapay/payment`, {
         recipientSlug: slug, txHash: hash, chain: selectedChain,
         token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
         amount: parseFloat(amount), senderAddress: walletAddress,
         senderUsername: currentUser?.username, message
       });
+      
+      // Send email notification to recipient if they have an email
+      if (response.data.recipientEmail) {
+        try {
+          await emailService.sendAquaPayPaymentNotification(response.data.recipientEmail, {
+            recipientName: response.data.recipientName,
+            amount: parseFloat(amount),
+            token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
+            chain: selectedChain,
+            senderAddress: walletAddress,
+            txHash: hash,
+            message: message || null
+          });
+        } catch (emailError) {
+          console.error('Email notification error:', emailError);
+          // Don't fail the payment if email fails
+        }
+      }
     } catch (e) { console.error('Record error:', e); }
   };
 

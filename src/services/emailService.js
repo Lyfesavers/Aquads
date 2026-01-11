@@ -147,6 +147,61 @@ const emailService = {
       logger.error('EmailJS Error for buyer acceptance:', error.text || error.message);
       return false;
     }
+  },
+
+  sendAquaPayPaymentNotification: async (recipientEmail, paymentDetails) => {
+    try {
+      logger.log('EmailJS Config for AquaPay payment:', {
+        serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        templateId: process.env.REACT_APP_EMAILJS_AQUAPAY_PAYMENT_TEMPLATE,
+        publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      });
+
+      // Get explorer URL based on chain
+      const explorerUrls = {
+        solana: 'https://solscan.io/tx/',
+        ethereum: 'https://etherscan.io/tx/',
+        base: 'https://basescan.org/tx/',
+        polygon: 'https://polygonscan.com/tx/',
+        arbitrum: 'https://arbiscan.io/tx/',
+        bnb: 'https://bscscan.com/tx/',
+        bitcoin: 'https://mempool.space/tx/',
+        tron: 'https://tronscan.org/#/transaction/'
+      };
+
+      const explorerUrl = (explorerUrls[paymentDetails.chain] || explorerUrls.ethereum) + paymentDetails.txHash;
+
+      const templateParams = {
+        to_email: recipientEmail,
+        recipient_name: paymentDetails.recipientName,
+        amount: paymentDetails.amount,
+        token: paymentDetails.token,
+        chain: paymentDetails.chain.charAt(0).toUpperCase() + paymentDetails.chain.slice(1),
+        sender_address: paymentDetails.senderAddress,
+        tx_hash: paymentDetails.txHash,
+        explorer_url: explorerUrl,
+        message: paymentDetails.message || 'No message',
+        dashboard_link: 'https://aquads.xyz/home?openDashboard=aquapay'
+      };
+
+      logger.log('Sending AquaPay payment email with data:', templateParams);
+
+      const response = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_AQUAPAY_PAYMENT_TEMPLATE,
+        templateParams,
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      );
+
+      if (response.status === 200) {
+        logger.log('AquaPay payment notification sent successfully');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('EmailJS Error for AquaPay payment:', error.text || error.message);
+      return false;
+    }
   }
 };
 

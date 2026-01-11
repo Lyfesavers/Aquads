@@ -81,10 +81,12 @@ router.post('/payment', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Find recipient
-    let user = await User.findOne({ 'aquaPay.paymentSlug': recipientSlug.toLowerCase() });
+    // Find recipient - include email for notification
+    let user = await User.findOne({ 'aquaPay.paymentSlug': recipientSlug.toLowerCase() })
+      .select('username email aquaPay');
     if (!user) {
-      user = await User.findOne({ username: { $regex: new RegExp(`^${recipientSlug}$`, 'i') } });
+      user = await User.findOne({ username: { $regex: new RegExp(`^${recipientSlug}$`, 'i') } })
+        .select('username email aquaPay');
     }
 
     if (!user || !user.aquaPay?.isEnabled) {
@@ -136,7 +138,9 @@ router.post('/payment', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Payment recorded successfully'
+      message: 'Payment recorded successfully',
+      recipientEmail: user.email || null,
+      recipientName: user.aquaPay.displayName || user.username
     });
   } catch (error) {
     console.error('Error recording payment:', error);
