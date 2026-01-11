@@ -14,11 +14,14 @@ const PUBLIC_RPCS = {
   fantom: 'https://rpc.ftm.tools',
 };
 
-// Free public Solana RPCs (rotating to avoid rate limits)
+// Free public Solana RPCs (multiple for fallback)
 const SOLANA_RPCS = [
+  'https://rpc.ankr.com/solana',
+  'https://solana.public-rpc.com',
   'https://api.mainnet-beta.solana.com',
-  'https://solana-mainnet.g.alchemy.com/v2/demo',
-  'https://rpc.ankr.com/solana'
+  'https://solana-mainnet.rpc.extrnode.com',
+  'https://mainnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff', // Free public key
+  'https://go.getblock.io/d7dab8149ec04a18aec4ffcdafb34dab', // Free tier
 ];
 
 let currentSolanaRpcIndex = 0;
@@ -26,6 +29,45 @@ const getSolanaRpc = () => {
   const rpc = SOLANA_RPCS[currentSolanaRpcIndex];
   currentSolanaRpcIndex = (currentSolanaRpcIndex + 1) % SOLANA_RPCS.length;
   return rpc;
+};
+
+// Try multiple RPCs until one works
+const trySolanaRpc = async (method, params, timeout = 30000) => {
+  const errors = [];
+  
+  for (let i = 0; i < SOLANA_RPCS.length; i++) {
+    const rpc = SOLANA_RPCS[i];
+    try {
+      console.log(`[Solana] Trying RPC ${i + 1}/${SOLANA_RPCS.length}: ${rpc.slice(0, 40)}...`);
+      
+      const response = await axios.post(rpc, {
+        jsonrpc: '2.0',
+        id: 1,
+        method,
+        params
+      }, { 
+        timeout,
+        maxContentLength: 50 * 1024 * 1024,
+        maxBodyLength: 50 * 1024 * 1024
+      });
+      
+      if (response.data.error) {
+        console.log(`[Solana] RPC ${i + 1} error:`, response.data.error.message || response.data.error);
+        errors.push({ rpc, error: response.data.error });
+        continue;
+      }
+      
+      console.log(`[Solana] RPC ${i + 1} success`);
+      return response.data.result;
+      
+    } catch (error) {
+      console.log(`[Solana] RPC ${i + 1} failed:`, error.message);
+      errors.push({ rpc, error: error.message });
+    }
+  }
+  
+  console.log('[Solana] All RPCs failed');
+  throw new Error('All Solana RPCs failed: ' + errors.map(e => e.error).join(', '));
 };
 
 // Chain configurations
@@ -67,14 +109,13 @@ const PRICE_CACHE_TTL = 300000; // 5 minutes
 // Get native balance via RPC
 const getNativeBalance = async (address, chain) => {
   if (chain === 'solana') {
-    const response = await axios.post(getSolanaRpc(), {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getBalance',
-      params: [address, { commitment: 'confirmed' }]
-    }, { timeout: 15000 });
-    
-    return (response.data.result?.value || 0) / 1e9;
+    try {
+      const result = await trySolanaRpc('getBalance', [address, { commitment: 'confirmed' }], 20000);
+      return (result?.value || 0) / 1e9;
+    } catch (error) {
+      console.log('[Solana] Balance fetch failed:', error.message);
+      return 0;
+    }
   }
   
   const rpc = PUBLIC_RPCS[chain];
@@ -218,25 +259,15 @@ const getSolanaTransactionHistory = async (address) => {
   try {
     console.log('[Solana] Fetching signatures for:', address);
     
-    // Get signatures to find first tx time and count
-    const signaturesResponse = await axios.post(getSolanaRpc(), {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getSignaturesForAddress',
-      params: [address, { limit: 1000 }]
-    }, { timeout: 30000 }); // Increased timeout
+    // Get signatures using retry logic
+    const signatures = await trySolanaRpc('getSignaturesForAddress', [address, { limit: 1000 }], 30000);
     
-    if (signaturesResponse.data.error) {
-      console.log('[Solana] RPC error:', signaturesResponse.data.error);
+    if (!signatures || signatures.length === 0) {
+      console.log('[Solana] No signatures found');
       return { transactions: [], firstTxTime: null, totalTxCount: 0 };
     }
     
-    const signatures = signaturesResponse.data.result || [];
     console.log('[Solana] Signatures found:', signatures.length);
-    
-    if (signatures.length === 0) {
-      return { transactions: [], firstTxTime: null, totalTxCount: 0 };
-    }
     
     // Find oldest and newest timestamps
     const timestamps = signatures
@@ -337,27 +368,18 @@ const getSolanaTokens = async (address) => {
   try {
     console.log('[Solana] Fetching tokens for:', address);
     
-    const response = await axios.post(getSolanaRpc(), {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getTokenAccountsByOwner',
-      params: [
+    // Use retry logic for token accounts
+    const result = await trySolanaRpc(
+      'getTokenAccountsByOwner',
+      [
         address,
         { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
         { encoding: 'jsonParsed' }
-      ]
-    }, { 
-      timeout: 60000, // 60 second timeout for large wallets
-      maxContentLength: 50 * 1024 * 1024, // 50MB max response
-      maxBodyLength: 50 * 1024 * 1024
-    });
+      ],
+      60000 // 60 second timeout for large wallets
+    );
     
-    if (response.data.error) {
-      console.log('[Solana] Token RPC error:', response.data.error);
-      return [];
-    }
-    
-    const accounts = response.data.result?.value || [];
+    const accounts = result?.value || [];
     console.log('[Solana] Total token accounts:', accounts.length);
     
     // Sort by balance (descending) and take top tokens
@@ -396,7 +418,7 @@ const getSolanaTokens = async (address) => {
     }
     
     // Map tokens with metadata
-    const result = tokensWithBalance.map(token => {
+    const tokens = tokensWithBalance.map(token => {
       const known = KNOWN_SOLANA_TOKENS[token.mint];
       const jupiter = jupiterTokens.get(token.mint);
       
@@ -412,10 +434,10 @@ const getSolanaTokens = async (address) => {
       };
     });
     
-    console.log('[Solana] Returning', result.length, 'tokens');
-    return result;
+    console.log('[Solana] Returning', tokens.length, 'tokens');
+    return tokens;
   } catch (error) {
-    console.log('[Solana] tokens error:', error.message, error.code || '');
+    console.log('[Solana] tokens error:', error.message);
     return [];
   }
 };
@@ -465,7 +487,17 @@ const getEVMTokenBalances = async (address, chain) => {
   return [];
 };
 
-// Get token prices from CoinGecko (with caching)
+// Fallback prices for common tokens (updated periodically)
+const FALLBACK_PRICES = {
+  'solana': 140,
+  'ethereum': 3100,
+  'binancecoin': 600,
+  'matic-network': 0.5,
+  'avalanche-2': 35,
+  'fantom': 0.5
+};
+
+// Get token prices from CoinGecko (with caching and fallback)
 const getTokenPrices = async (coingeckoIds) => {
   const now = Date.now();
   const uncachedIds = [];
@@ -485,7 +517,7 @@ const getTokenPrices = async (coingeckoIds) => {
   if (uncachedIds.length > 0) {
     try {
       const response = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${uncachedIds.join(',')}&vs_currencies=usd&include_24hr_change=true`,
+        `https://api.coingecko.com/api/v3/simple/price?ids=${uncachedIds.join(',')}&vs_currencies=usd`,
         { timeout: 10000 }
       );
       
@@ -494,10 +526,20 @@ const getTokenPrices = async (coingeckoIds) => {
         if (data) {
           prices[id] = data.usd || 0;
           priceCache.set(id, { price: data.usd || 0, timestamp: now });
+        } else {
+          // Use fallback price
+          prices[id] = FALLBACK_PRICES[id] || 0;
+          priceCache.set(id, { price: prices[id], timestamp: now });
         }
       }
     } catch (error) {
-      console.log('CoinGecko price fetch error:', error.message);
+      console.log('[CoinGecko] price fetch error:', error.message, '- using fallback prices');
+      // Use fallback prices on error
+      for (const id of uncachedIds) {
+        prices[id] = FALLBACK_PRICES[id] || 0;
+        // Cache fallback for shorter time (1 minute)
+        priceCache.set(id, { price: prices[id], timestamp: now - PRICE_CACHE_TTL + 60000 });
+      }
     }
   }
   
