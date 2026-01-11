@@ -971,11 +971,10 @@ router.get('/:address', async (req, res) => {
     let txHistory = { transactions: [], totalTxCount: 0 };
     let tokens = [];
     let nativePrice = 0;
+    let totalTokenValue = 0;
     
     try {
       console.log(`[WalletAnalyzer] Fetching data for ${address} on ${chain}`);
-      
-      let totalTokenValue = 0;
       
       if (chain === 'solana') {
         const results = await Promise.allSettled([
