@@ -63,6 +63,9 @@
   let ducksCreated = 0;
   const maxDucks = 5; // Maximum number of ducks on screen - increased for more action
   let feathers = []; // Track all feather particles
+  let bullets = []; // Track all bullet projectiles
+  let cursorX = 0; // Track cursor position
+  let cursorY = 0; // Track cursor position
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
   let gameStarted = false; // Track if game has been started
@@ -325,7 +328,7 @@
     gameContainer.style.left = '0';
     gameContainer.style.width = '100%';
     gameContainer.style.height = '100%';
-    gameContainer.style.pointerEvents = 'none';
+    gameContainer.style.pointerEvents = 'auto'; // Enable clicks for shooting
     gameContainer.style.zIndex = '9998'; // High z-index but below modals
     gameContainer.style.overflow = 'hidden';
     
@@ -520,12 +523,51 @@
       const x = e.clientX;
       const y = e.clientY;
       
+      // Track cursor position for bullet origin
+      cursorX = x;
+      cursorY = y;
+      
       gunSight.style.left = `${x - 12}px`;
       gunSight.style.top = `${y - 12}px`;
       
       // Check if mouse is over a duck
       const isDuckUnder = e.target && e.target.classList && e.target.classList.contains('game-duck');
       gunSight.style.display = isDuckUnder ? 'block' : 'none';
+    });
+    
+    // Add click handler to game container for shooting
+    gameContainer.addEventListener('click', (e) => {
+      // Only shoot if game is running
+      if (!isGameRunning) return;
+      
+      // Don't shoot if clicking on UI elements
+      if (e.target.id === 'duck-hunt-sound-button' || 
+          e.target.id === 'duck-score' ||
+          e.target.closest('#duck-hunt-sound-button') ||
+          e.target.closest('#duck-score')) {
+        return;
+      }
+      
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      
+      // Use click position if cursor position not set yet
+      const startX = cursorX || clickX;
+      const startY = cursorY || clickY;
+      
+      // Create bullet projectile from cursor position to click position
+      createBullet(startX, startY, clickX, clickY);
+      
+      // Play shot sound immediately
+      if (soundEnabled) {
+        playSound('shot');
+      }
+      
+      // Show score display when first shot is fired
+      const scoreDisplay = document.getElementById('duck-score');
+      if (scoreDisplay) {
+        scoreDisplay.style.display = 'block';
+      }
     });
     
     // Add score display
@@ -711,7 +753,7 @@
     duck.style.height = `${size.height}px`;
     duck.style.transform = startFromLeft ? 'scaleX(1)' : 'scaleX(-1)';
     duck.style.zIndex = '9999';
-    duck.style.pointerEvents = 'auto';
+    duck.style.pointerEvents = 'auto'; // Need for hover detection
     duck.style.cursor = 'crosshair';
     duck.style.imageRendering = 'pixelated'; // Add pixel rendering style
     
@@ -861,35 +903,32 @@
     style.textContent = keyframes;
     document.head.appendChild(style);
     
-    // Add click handler to shoot duck
+    // Add click handler to duck - create bullet on click
     duck.addEventListener('click', (e) => {
       e.stopPropagation();
       
-      // Shoot the duck
-      shootDuck(duck);
+      // Only shoot if game is running
+      if (!isGameRunning) return;
       
-      // Show score when first duck is shot
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      
+      // Use cursor position or click position as start
+      const startX = cursorX || clickX;
+      const startY = cursorY || clickY;
+      
+      // Create bullet projectile from cursor position to click position
+      createBullet(startX, startY, clickX, clickY);
+      
+      // Play shot sound immediately
+      if (soundEnabled) {
+        playSound('shot');
+      }
+      
+      // Show score display when first shot is fired
       const scoreDisplay = document.getElementById('duck-score');
       if (scoreDisplay) {
         scoreDisplay.style.display = 'block';
-      }
-      
-      // If sound button is visible but sound not enabled yet, flash it
-      if (!soundEnabled) {
-        const soundButton = document.getElementById('duck-hunt-sound-button');
-        if (soundButton) {
-          soundButton.style.animation = 'pulsate 0.5s 3';
-          const animationKeyframes = `
-            @keyframes pulsate {
-              0% { transform: scale(1); }
-              50% { transform: scale(1.2); background-color: #ff0000; }
-              100% { transform: scale(1); }
-            }
-          `;
-          const animStyle = document.createElement('style');
-          animStyle.textContent = animationKeyframes;
-          document.head.appendChild(animStyle);
-        }
       }
     });
     
@@ -924,9 +963,91 @@
     }
   }
   
+  // Create bullet projectile
+  function createBullet(startX, startY, targetX, targetY) {
+    const bullet = document.createElement('div');
+    bullet.className = 'bullet-projectile';
+    bullet.style.position = 'absolute';
+    bullet.style.left = `${startX}px`;
+    bullet.style.top = `${startY}px`;
+    bullet.style.width = '6px';
+    bullet.style.height = '6px';
+    bullet.style.backgroundColor = '#FFD700'; // Gold bullet
+    bullet.style.borderRadius = '50%';
+    bullet.style.boxShadow = '0 0 6px #FFD700, 0 0 12px rgba(255, 215, 0, 0.8), 0 0 18px rgba(255, 215, 0, 0.4)';
+    bullet.style.pointerEvents = 'none';
+    bullet.style.zIndex = '9996';
+    bullet.style.transition = 'none'; // No CSS transitions for smooth animation
+    
+    // Add trail effect with CSS
+    const trail = document.createElement('div');
+    trail.style.position = 'absolute';
+    trail.style.left = '50%';
+    trail.style.top = '50%';
+    trail.style.transform = 'translate(-50%, -50%)';
+    trail.style.width = '3px';
+    trail.style.height = '3px';
+    trail.style.backgroundColor = '#FFA500'; // Orange trail
+    trail.style.borderRadius = '50%';
+    trail.style.opacity = '0.6';
+    bullet.appendChild(trail);
+    
+    // Calculate direction and distance
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Prevent division by zero
+    if (distance === 0) {
+      return;
+    }
+    
+    const speed = 20; // pixels per frame - faster for smoother feel
+    const maxDistance = Math.max(window.innerWidth, window.innerHeight) * 1.5; // Travel up to 1.5x screen size
+    
+    // Normalize direction
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    
+    // Track bullet data
+    const bulletData = {
+      element: bullet,
+      x: startX,
+      y: startY,
+      dirX,
+      dirY,
+      speed,
+      distanceTraveled: 0,
+      maxDistance,
+      hit: false
+    };
+    
+    // Add to game
+    gameContainer.appendChild(bullet);
+    bullets.push(bulletData);
+  }
+  
+  // Check if bullet hits a duck (with larger hit area for better accuracy)
+  function checkBulletHit(bullet, duck) {
+    if (duck.shot || bullet.hit) return false;
+    
+    // Get duck center and size
+    const duckCenterX = duck.x + duck.size.width / 2;
+    const duckCenterY = duck.y + duck.size.height / 2;
+    
+    // Calculate distance from bullet to duck center
+    const dx = bullet.x - duckCenterX;
+    const dy = bullet.y - duckCenterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Larger hit area - 1.5x the duck size for more forgiving accuracy
+    const hitRadius = Math.max(duck.size.width, duck.size.height) * 0.75;
+    
+    return distance <= hitRadius;
+  }
+  
   // Shoot a duck
-  function shootDuck(duckElement) {
-    const duckIndex = ducks.findIndex(duck => duck.element === duckElement);
+  function shootDuck(duckIndex) {
     if (duckIndex === -1 || ducks[duckIndex].shot) return;
     
     const duck = ducks[duckIndex];
@@ -939,8 +1060,8 @@
       el.style.backgroundColor = '#FFFFFF';
     });
     
-    // Create pixel feather particles
-    createFeathers(duck.x, duck.y, 8); // Fewer but more noticeable pixels
+    // Create pixel feather particles at duck position
+    createFeathers(duck.x + duck.size.width / 2, duck.y + duck.size.height / 2, 8);
     
     // Update score based on duck species
     const pointsEarned = duck.species.points;
@@ -954,9 +1075,6 @@
     
     // Play sound effects if enabled
     if (soundEnabled) {
-      // Play shot sound
-      playSound('shot');
-      
       // Play fall sound after a short delay
       setTimeout(() => {
         playSound('fall');
@@ -1336,6 +1454,50 @@
       duck.element.style.top = `${Math.round(duck.y / 2) * 2}px`;
     }
     
+    // Update each bullet projectile
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const bullet = bullets[i];
+      
+      if (bullet.hit) {
+        // Remove hit bullets
+        if (bullet.element.parentNode === gameContainer) {
+          gameContainer.removeChild(bullet.element);
+        }
+        bullets.splice(i, 1);
+        continue;
+      }
+      
+      // Move bullet
+      bullet.x += bullet.dirX * bullet.speed;
+      bullet.y += bullet.dirY * bullet.speed;
+      bullet.distanceTraveled += bullet.speed;
+      
+      // Check collision with ducks
+      for (let j = 0; j < ducks.length; j++) {
+        const duck = ducks[j];
+        if (checkBulletHit(bullet, duck)) {
+          // Hit! Mark bullet as hit and shoot the duck
+          bullet.hit = true;
+          shootDuck(j);
+          break;
+        }
+      }
+      
+      // Update bullet position
+      bullet.element.style.left = `${bullet.x}px`;
+      bullet.element.style.top = `${bullet.y}px`;
+      
+      // Remove bullet if it traveled too far or went off-screen
+      if (bullet.distanceTraveled >= bullet.maxDistance ||
+          bullet.x < -10 || bullet.x > window.innerWidth + 10 ||
+          bullet.y < -10 || bullet.y > window.innerHeight + 10) {
+        if (bullet.element.parentNode === gameContainer) {
+          gameContainer.removeChild(bullet.element);
+        }
+        bullets.splice(i, 1);
+      }
+    }
+    
     // Update each feather particle
     for (let i = feathers.length - 1; i >= 0; i--) {
       const feather = feathers[i];
@@ -1551,6 +1713,14 @@
     
     // Clear the ducks array
     ducks = [];
+    
+    // Clear all bullets
+    bullets.forEach(bullet => {
+      if (bullet.element && bullet.element.parentNode) {
+        bullet.element.parentNode.removeChild(bullet.element);
+      }
+    });
+    bullets = [];
     
     // Hide the score display
     const scoreDisplay = document.getElementById('duck-score');
