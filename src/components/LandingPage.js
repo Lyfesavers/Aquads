@@ -463,6 +463,13 @@ const LandingPage = () => {
       gradient: 'from-blue-900/40 to-cyan-900/80'
     },
     {
+      icon: '👥',
+      title: 'Freelancer Marketplace',
+      description: 'Web3\'s premier talent marketplace. Complete booking system—get paid for your skills. Browse service listings, receive lead notifications, and connect directly with clients. No monthly fees, only pay for results.',
+      gradient: 'from-violet-900/40 to-slate-900/80',
+      link: '/marketplace'
+    },
+    {
       icon: '🔮',
       title: 'Dynamic Token Bubbles',
       description: 'Interactive visualization of crypto projects based on community engagement.',
@@ -497,6 +504,14 @@ const LandingPage = () => {
       title: 'Trust Score System',
       description: 'AI-powered freelancer vetting with transparent reliability metrics.',
       gradient: 'from-purple-900/40 to-slate-900/80'
+    },
+    {
+      icon: '💼',
+      title: 'Job Board',
+      description: 'Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities.',
+      gradient: 'from-amber-900/40 to-slate-900/80',
+      link: '/marketplace',
+      size: 'wide'
     }
   ];
 
