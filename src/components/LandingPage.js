@@ -170,7 +170,7 @@ const FeaturesCarousel = ({ features }) => {
             const zIndex = 1;
 
             return (
-              <motion.div
+  <motion.div
                 key={feature.title}
                 className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[45vw] lg:w-[35vw] xl:w-[30vw] snap-center"
                 style={{
@@ -257,13 +257,372 @@ const FeaturesCarousel = ({ features }) => {
   );
 };
 
+// Feature Preview SVG Component
+const FeaturePreviewSVG = ({ featureTitle }) => {
+  const svgProps = {
+    width: "100%",
+    height: "140",
+    viewBox: "0 0 300 140",
+    className: "mt-4 opacity-80"
+  };
+
+  switch (featureTitle) {
+    case 'Freelancer Marketplace':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="marketplaceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+            </linearGradient>
+          </defs>
+          {/* Service Card 1 */}
+          <rect x="10" y="20" width="85" height="100" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.4)" strokeWidth="1.5"/>
+          <rect x="15" y="25" width="75" height="40" rx="4" fill="rgba(99, 102, 241, 0.3)"/>
+          <text x="52.5" y="45" fontSize="10" fill="#a78bfa" textAnchor="middle" fontWeight="600">Web Dev</text>
+          <text x="52.5" y="58" fontSize="8" fill="#cbd5e1" textAnchor="middle">$50/hr</text>
+          <rect x="15" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <rect x="55" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <text x="52.5" y="95" fontSize="7" fill="#9ca3af" textAnchor="middle">⭐ 4.9 (120)</text>
+          
+          {/* Service Card 2 */}
+          <rect x="105" y="20" width="85" height="100" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.4)" strokeWidth="1.5"/>
+          <rect x="110" y="25" width="75" height="40" rx="4" fill="rgba(99, 102, 241, 0.3)"/>
+          <text x="147.5" y="45" fontSize="10" fill="#a78bfa" textAnchor="middle" fontWeight="600">Design</text>
+          <text x="147.5" y="58" fontSize="8" fill="#cbd5e1" textAnchor="middle">$75/hr</text>
+          <rect x="110" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <rect x="150" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <text x="147.5" y="95" fontSize="7" fill="#9ca3af" textAnchor="middle">⭐ 4.8 (89)</text>
+          
+          {/* Service Card 3 */}
+          <rect x="200" y="20" width="85" height="100" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.4)" strokeWidth="1.5"/>
+          <rect x="205" y="25" width="75" height="40" rx="4" fill="rgba(99, 102, 241, 0.3)"/>
+          <text x="242.5" y="45" fontSize="10" fill="#a78bfa" textAnchor="middle" fontWeight="600">Marketing</text>
+          <text x="242.5" y="58" fontSize="8" fill="#cbd5e1" textAnchor="middle">$60/hr</text>
+          <rect x="205" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <rect x="245" y="70" width="35" height="8" rx="2" fill="rgba(34, 211, 238, 0.3)"/>
+          <text x="242.5" y="95" fontSize="7" fill="#9ca3af" textAnchor="middle">⭐ 5.0 (156)</text>
+        </svg>
+      );
+
+    case 'Web3 Game Hub':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Game Card 1 */}
+          <rect x="10" y="15" width="90" height="110" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(249, 115, 22, 0.4)" strokeWidth="1.5"/>
+          <rect x="15" y="20" width="80" height="50" rx="4" fill="rgba(249, 115, 22, 0.3)"/>
+          <circle cx="55" cy="45" r="12" fill="rgba(251, 146, 60, 0.5)"/>
+          <text x="55" y="50" fontSize="16" fill="#fb923c" textAnchor="middle">🎮</text>
+          <text x="55" y="85" fontSize="9" fill="#fbbf24" textAnchor="middle" fontWeight="600">Blockchain RPG</text>
+          <text x="55" y="100" fontSize="7" fill="#9ca3af" textAnchor="middle">Play to Earn</text>
+          
+          {/* Game Card 2 */}
+          <rect x="110" y="15" width="90" height="110" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(249, 115, 22, 0.4)" strokeWidth="1.5"/>
+          <rect x="115" y="20" width="80" height="50" rx="4" fill="rgba(249, 115, 22, 0.3)"/>
+          <circle cx="155" cy="45" r="12" fill="rgba(251, 146, 60, 0.5)"/>
+          <text x="155" y="50" fontSize="16" fill="#fb923c" textAnchor="middle">⚔️</text>
+          <text x="155" y="85" fontSize="9" fill="#fbbf24" textAnchor="middle" fontWeight="600">NFT Battle</text>
+          <text x="155" y="100" fontSize="7" fill="#9ca3af" textAnchor="middle">Multiplayer</text>
+          
+          {/* Game Card 3 */}
+          <rect x="210" y="15" width="85" height="110" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(249, 115, 22, 0.4)" strokeWidth="1.5"/>
+          <rect x="215" y="20" width="75" height="50" rx="4" fill="rgba(249, 115, 22, 0.3)"/>
+          <circle cx="252.5" cy="45" r="12" fill="rgba(251, 146, 60, 0.5)"/>
+          <text x="252.5" y="50" fontSize="16" fill="#fb923c" textAnchor="middle">🏆</text>
+          <text x="252.5" y="85" fontSize="9" fill="#fbbf24" textAnchor="middle" fontWeight="600">Strategy</text>
+          <text x="252.5" y="100" fontSize="7" fill="#9ca3af" textAnchor="middle">DeFi Game</text>
+        </svg>
+      );
+
+    case 'Twitter Raids':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Twitter Icon */}
+          <circle cx="50" cy="40" r="25" fill="rgba(29, 161, 242, 0.2)" stroke="rgba(29, 161, 242, 0.5)" strokeWidth="2"/>
+          <path d="M 50 25 L 45 35 L 55 35 Z" fill="#1da1f2"/>
+          <text x="50" y="75" fontSize="8" fill="#60a5fa" textAnchor="middle">Twitter</text>
+          
+          {/* Raid Stats */}
+          <rect x="90" y="20" width="100" height="60" rx="6" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(14, 165, 233, 0.3)" strokeWidth="1.5"/>
+          <text x="140" y="40" fontSize="10" fill="#22d3ee" textAnchor="middle" fontWeight="600">Raid Campaign</text>
+          <text x="100" y="58" fontSize="8" fill="#cbd5e1">Likes: 1.2K</text>
+          <text x="100" y="72" fontSize="8" fill="#cbd5e1">RTs: 340</text>
+          
+          {/* Points Badge */}
+          <rect x="200" y="30" width="80" height="40" rx="6" fill="rgba(34, 211, 238, 0.2)" stroke="rgba(34, 211, 238, 0.4)" strokeWidth="1.5"/>
+          <text x="240" y="48" fontSize="9" fill="#22d3ee" textAnchor="middle" fontWeight="600">Points Earned</text>
+          <text x="240" y="62" fontSize="12" fill="#67e8f9" textAnchor="middle" fontWeight="700">2,000</text>
+        </svg>
+      );
+
+    case 'AquaPay':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* QR Code Box */}
+          <rect x="20" y="20" width="60" height="60" rx="4" fill="white" stroke="rgba(34, 211, 238, 0.5)" strokeWidth="2"/>
+          <rect x="25" y="25" width="50" height="50" fill="rgba(15, 23, 42, 0.8)"/>
+          {/* QR Pattern */}
+          <rect x="30" y="30" width="8" height="8" fill="white"/>
+          <rect x="42" y="30" width="8" height="8" fill="white"/>
+          <rect x="54" y="30" width="8" height="8" fill="white"/>
+          <rect x="30" y="42" width="8" height="8" fill="white"/>
+          <rect x="54" y="42" width="8" height="8" fill="white"/>
+          <rect x="30" y="54" width="8" height="8" fill="white"/>
+          <rect x="42" y="54" width="8" height="8" fill="white"/>
+          <rect x="54" y="54" width="8" height="8" fill="white"/>
+          
+          {/* Payment Link */}
+          <rect x="95" y="25" width="180" height="25" rx="4" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(34, 211, 238, 0.3)" strokeWidth="1"/>
+          <text x="100" y="42" fontSize="8" fill="#22d3ee">aquads.xyz/pay/username</text>
+          
+          {/* Chain Badges */}
+          <rect x="95" y="60" width="40" height="18" rx="3" fill="rgba(98, 126, 234, 0.3)" stroke="rgba(98, 126, 234, 0.5)" strokeWidth="1"/>
+          <text x="115" y="72" fontSize="7" fill="#818cf8" textAnchor="middle">ETH</text>
+          
+          <rect x="140" y="60" width="40" height="18" rx="3" fill="rgba(0, 102, 255, 0.3)" stroke="rgba(0, 102, 255, 0.5)" strokeWidth="1"/>
+          <text x="160" y="72" fontSize="7" fill="#60a5fa" textAnchor="middle">Base</text>
+          
+          <rect x="185" y="60" width="40" height="18" rx="3" fill="rgba(20, 241, 149, 0.3)" stroke="rgba(20, 241, 149, 0.5)" strokeWidth="1"/>
+          <text x="205" y="72" fontSize="7" fill="#34d399" textAnchor="middle">SOL</text>
+          
+          <rect x="230" y="60" width="50" height="18" rx="3" fill="rgba(130, 71, 229, 0.3)" stroke="rgba(130, 71, 229, 0.5)" strokeWidth="1"/>
+          <text x="255" y="72" fontSize="7" fill="#a78bfa" textAnchor="middle">Polygon</text>
+        </svg>
+      );
+
+    case 'Dynamic Token Bubbles':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          {/* Bubble 1 */}
+          <circle cx="60" cy="50" r="25" fill="rgba(98, 126, 234, 0.3)" stroke="rgba(98, 126, 234, 0.6)" strokeWidth="2" filter="url(#glow)"/>
+          <text x="60" y="48" fontSize="12" fill="#818cf8" textAnchor="middle" fontWeight="600">ETH</text>
+          <text x="60" y="60" fontSize="8" fill="#cbd5e1" textAnchor="middle">$2,450</text>
+          
+          {/* Bubble 2 */}
+          <circle cx="150" cy="40" r="22" fill="rgba(20, 241, 149, 0.3)" stroke="rgba(20, 241, 149, 0.6)" strokeWidth="2" filter="url(#glow)"/>
+          <text x="150" y="38" fontSize="11" fill="#34d399" textAnchor="middle" fontWeight="600">SOL</text>
+          <text x="150" y="50" fontSize="8" fill="#cbd5e1" textAnchor="middle">$98</text>
+          
+          {/* Bubble 3 */}
+          <circle cx="240" cy="55" r="20" fill="rgba(240, 185, 11, 0.3)" stroke="rgba(240, 185, 11, 0.6)" strokeWidth="2" filter="url(#glow)"/>
+          <text x="240" y="53" fontSize="10" fill="#fbbf24" textAnchor="middle" fontWeight="600">BNB</text>
+          <text x="240" y="65" fontSize="8" fill="#cbd5e1" textAnchor="middle">$315</text>
+          
+          {/* Bubble 4 */}
+          <circle cx="100" cy="100" r="18" fill="rgba(130, 71, 229, 0.3)" stroke="rgba(130, 71, 229, 0.6)" strokeWidth="2" filter="url(#glow)"/>
+          <text x="100" y="98" fontSize="9" fill="#a78bfa" textAnchor="middle" fontWeight="600">MATIC</text>
+          <text x="100" y="108" fontSize="7" fill="#cbd5e1" textAnchor="middle">$0.85</text>
+          
+          {/* Bubble 5 */}
+          <circle cx="200" cy="95" r="16" fill="rgba(0, 102, 255, 0.3)" stroke="rgba(0, 102, 255, 0.6)" strokeWidth="2" filter="url(#glow)"/>
+          <text x="200" y="93" fontSize="8" fill="#60a5fa" textAnchor="middle" fontWeight="600">BASE</text>
+          <text x="200" y="103" fontSize="7" fill="#cbd5e1" textAnchor="middle">$0.32</text>
+        </svg>
+      );
+
+    case 'AquaSwap':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Swap Box */}
+          <rect x="20" y="20" width="260" height="100" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(20, 184, 166, 0.4)" strokeWidth="2"/>
+          
+          {/* From Token */}
+          <rect x="30" y="30" width="110" height="35" rx="4" fill="rgba(15, 23, 42, 0.8)" stroke="rgba(20, 184, 166, 0.3)" strokeWidth="1"/>
+          <circle cx="50" cy="47.5" r="10" fill="rgba(98, 126, 234, 0.5)"/>
+          <text x="50" y="51" fontSize="10" fill="#818cf8" textAnchor="middle">ETH</text>
+          <text x="70" y="45" fontSize="10" fill="#e2e8f0" fontWeight="600">Ethereum</text>
+          <text x="70" y="58" fontSize="8" fill="#94a3b8">1.5</text>
+          
+          {/* Arrow */}
+          <path d="M 150 47.5 L 150 42.5 M 150 47.5 L 150 52.5 M 145 47.5 L 150 42.5 M 145 47.5 L 150 52.5" stroke="#14b8a6" strokeWidth="2" fill="none"/>
+          <circle cx="150" cy="47.5" r="8" fill="rgba(20, 184, 166, 0.2)"/>
+          
+          {/* To Token */}
+          <rect x="170" y="30" width="100" height="35" rx="4" fill="rgba(15, 23, 42, 0.8)" stroke="rgba(20, 184, 166, 0.3)" strokeWidth="1"/>
+          <circle cx="190" cy="47.5" r="10" fill="rgba(20, 241, 149, 0.5)"/>
+          <text x="190" y="51" fontSize="10" fill="#34d399" textAnchor="middle">SOL</text>
+          <text x="210" y="45" fontSize="10" fill="#e2e8f0" fontWeight="600">Solana</text>
+          <text x="210" y="58" fontSize="8" fill="#94a3b8">~98.5</text>
+          
+          {/* Chart Preview */}
+          <rect x="30" y="75" width="240" height="35" rx="4" fill="rgba(15, 23, 42, 0.8)"/>
+          <polyline points="40,100 60,85 80,90 100,75 120,80 140,70 160,75 180,65 200,70 220,60 240,65 260,55" 
+            fill="none" stroke="#14b8a6" strokeWidth="2"/>
+          <text x="155" y="105" fontSize="7" fill="#64748b" textAnchor="middle">TradingView Chart</text>
+        </svg>
+      );
+
+    case 'Trust Score System':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Score Circle */}
+          <circle cx="80" cy="50" r="35" fill="none" stroke="rgba(139, 92, 246, 0.3)" strokeWidth="4"/>
+          <circle cx="80" cy="50" r="35" fill="none" stroke="#8b5cf6" strokeWidth="4" 
+            strokeDasharray={`${2 * Math.PI * 35 * 0.92} ${2 * Math.PI * 35}`} 
+            strokeDashoffset={2 * Math.PI * 35 * 0.08}
+            transform="rotate(-90 80 50)"/>
+          <text x="80" y="48" fontSize="20" fill="#a78bfa" textAnchor="middle" fontWeight="700">92</text>
+          <text x="80" y="62" fontSize="8" fill="#cbd5e1" textAnchor="middle">Trust Score</text>
+          
+          {/* Metrics */}
+          <rect x="140" y="25" width="140" height="20" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.3)" strokeWidth="1"/>
+          <text x="145" y="38" fontSize="8" fill="#cbd5e1">Verification: ✓ Verified</text>
+          
+          <rect x="140" y="50" width="140" height="20" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.3)" strokeWidth="1"/>
+          <text x="145" y="63" fontSize="8" fill="#cbd5e1">Projects: 45 Completed</text>
+          
+          <rect x="140" y="75" width="140" height="20" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(139, 92, 246, 0.3)" strokeWidth="1"/>
+          <text x="145" y="88" fontSize="8" fill="#cbd5e1">Rating: ⭐ 4.9/5.0</text>
+          
+          {/* Badge */}
+          <rect x="140" y="100" width="140" height="25" rx="4" fill="rgba(139, 92, 246, 0.2)" stroke="rgba(139, 92, 246, 0.4)" strokeWidth="1.5"/>
+          <text x="210" y="117" fontSize="10" fill="#a78bfa" textAnchor="middle" fontWeight="600">🏆 Top Rated</text>
+        </svg>
+      );
+
+    case 'Live Market Data':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Chart Area */}
+          <rect x="20" y="20" width="260" height="100" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(244, 63, 94, 0.3)" strokeWidth="1.5"/>
+          
+          {/* Price Line */}
+          <polyline points="30,100 50,85 70,90 90,75 110,80 130,70 150,75 170,65 190,70 210,60 230,65 250,55 270,50" 
+            fill="none" stroke="#f43f5e" strokeWidth="2.5"/>
+          
+          {/* Grid Lines */}
+          <line x1="30" y1="100" x2="270" y2="100" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="1"/>
+          <line x1="30" y1="80" x2="270" y2="80" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="1"/>
+          <line x1="30" y1="60" x2="270" y2="60" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="1"/>
+          <line x1="30" y1="40" x2="270" y2="40" stroke="rgba(148, 163, 184, 0.2)" strokeWidth="1"/>
+          
+          {/* Price Label */}
+          <rect x="200" y="25" width="60" height="20" rx="3" fill="rgba(244, 63, 94, 0.2)" stroke="rgba(244, 63, 94, 0.4)" strokeWidth="1"/>
+          <text x="230" y="38" fontSize="9" fill="#f43f5e" textAnchor="middle" fontWeight="600">$2,450.32</text>
+          
+          {/* Change Indicator */}
+          <text x="30" y="35" fontSize="8" fill="#22c55e" fontWeight="600">+2.45%</text>
+          
+          {/* Time Labels */}
+          <text x="30" y="115" fontSize="7" fill="#64748b">24h</text>
+          <text x="150" y="115" fontSize="7" fill="#64748b" textAnchor="middle">7d</text>
+          <text x="270" y="115" fontSize="7" fill="#64748b" textAnchor="end">30d</text>
+        </svg>
+      );
+
+    case 'Job Board':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Job Card 1 */}
+          <rect x="10" y="15" width="130" height="110" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="1.5"/>
+          <rect x="15" y="20" width="120" height="30" rx="3" fill="rgba(245, 158, 11, 0.2)"/>
+          <circle cx="35" cy="35" r="8" fill="rgba(251, 191, 36, 0.5)"/>
+          <text x="35" y="38" fontSize="10" fill="#fbbf24" textAnchor="middle">💼</text>
+          <text x="50" y="32" fontSize="9" fill="#fbbf24" fontWeight="600">Senior Dev</text>
+          <text x="50" y="43" fontSize="7" fill="#cbd5e1">Remote • Full-time</text>
+          <text x="15" y="65" fontSize="8" fill="#e2e8f0" fontWeight="500">Blockchain Developer</text>
+          <text x="15" y="80" fontSize="7" fill="#94a3b8">$80K - $120K</text>
+          <rect x="15" y="90" width="50" height="15" rx="2" fill="rgba(34, 211, 238, 0.2)"/>
+          <text x="40" y="100" fontSize="6" fill="#22d3ee" textAnchor="middle">Web3</text>
+          
+          {/* Job Card 2 */}
+          <rect x="150" y="15" width="130" height="110" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="1.5"/>
+          <rect x="155" y="20" width="120" height="30" rx="3" fill="rgba(245, 158, 11, 0.2)"/>
+          <circle cx="175" cy="35" r="8" fill="rgba(251, 191, 36, 0.5)"/>
+          <text x="175" y="38" fontSize="10" fill="#fbbf24" textAnchor="middle">🎨</text>
+          <text x="190" y="32" fontSize="9" fill="#fbbf24" fontWeight="600">Designer</text>
+          <text x="190" y="43" fontSize="7" fill="#cbd5e1">Hybrid • Contract</text>
+          <text x="155" y="65" fontSize="8" fill="#e2e8f0" fontWeight="500">UI/UX Designer</text>
+          <text x="155" y="80" fontSize="7" fill="#94a3b8">$60/hr</text>
+          <rect x="155" y="90" width="50" height="15" rx="2" fill="rgba(34, 211, 238, 0.2)"/>
+          <text x="180" y="100" fontSize="6" fill="#22d3ee" textAnchor="middle">NFT</text>
+        </svg>
+      );
+
+    case 'AquaFi':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Pool Card 1 */}
+          <rect x="10" y="20" width="85" height="100" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="1.5"/>
+          <text x="52.5" y="40" fontSize="10" fill="#22c55e" textAnchor="middle" fontWeight="600">USDC Vault</text>
+          <text x="52.5" y="55" fontSize="16" fill="#4ade80" textAnchor="middle" fontWeight="700">4.2%</text>
+          <text x="52.5" y="68" fontSize="7" fill="#9ca3af" textAnchor="middle">APY</text>
+          <rect x="15" y="75" width="75" height="8" rx="2" fill="rgba(34, 197, 94, 0.2)"/>
+          <text x="52.5" y="95" fontSize="7" fill="#cbd5e1" textAnchor="middle">Low Risk</text>
+          <text x="52.5" y="108" fontSize="6" fill="#64748b" textAnchor="middle">$1.25B TVL</text>
+          
+          {/* Pool Card 2 */}
+          <rect x="105" y="20" width="85" height="100" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="1.5"/>
+          <text x="147.5" y="40" fontSize="10" fill="#22c55e" textAnchor="middle" fontWeight="600">ETH Vault</text>
+          <text x="147.5" y="55" fontSize="16" fill="#4ade80" textAnchor="middle" fontWeight="700">2.1%</text>
+          <text x="147.5" y="68" fontSize="7" fill="#9ca3af" textAnchor="middle">APY</text>
+          <rect x="110" y="75" width="75" height="8" rx="2" fill="rgba(34, 197, 94, 0.2)"/>
+          <text x="147.5" y="95" fontSize="7" fill="#cbd5e1" textAnchor="middle">Low Risk</text>
+          <text x="147.5" y="108" fontSize="6" fill="#64748b" textAnchor="middle">$2.1B TVL</text>
+          
+          {/* Pool Card 3 */}
+          <rect x="200" y="20" width="85" height="100" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="1.5"/>
+          <text x="242.5" y="40" fontSize="10" fill="#22c55e" textAnchor="middle" fontWeight="600">USDT Vault</text>
+          <text x="242.5" y="55" fontSize="16" fill="#4ade80" textAnchor="middle" fontWeight="700">3.8%</text>
+          <text x="242.5" y="68" fontSize="7" fill="#9ca3af" textAnchor="middle">APY</text>
+          <rect x="205" y="75" width="75" height="8" rx="2" fill="rgba(34, 197, 94, 0.2)"/>
+          <text x="242.5" y="95" fontSize="7" fill="#cbd5e1" textAnchor="middle">Low Risk</text>
+          <text x="242.5" y="108" fontSize="6" fill="#64748b" textAnchor="middle">$890M TVL</text>
+        </svg>
+      );
+
+    case 'Marketing & PR':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Media Logos */}
+          <rect x="20" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
+          <text x="50" y="37" fontSize="8" fill="#ec4899" textAnchor="middle" fontWeight="700">Forbes</text>
+          
+          <rect x="90" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
+          <text x="120" y="37" fontSize="7" fill="#ec4899" textAnchor="middle" fontWeight="700">Yahoo Finance</text>
+          
+          <rect x="160" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
+          <text x="190" y="37" fontSize="8" fill="#ec4899" textAnchor="middle" fontWeight="700">Benzinga</text>
+          
+          <rect x="230" y="20" width="50" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
+          <text x="255" y="37" fontSize="7" fill="#ec4899" textAnchor="middle" fontWeight="700">+72 More</text>
+          
+          {/* Package Cards */}
+          <rect x="20" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
+          <text x="60" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaSplash</text>
+          <text x="60" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Starter</text>
+          
+          <rect x="110" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
+          <text x="150" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaWave</text>
+          <text x="150" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Premium</text>
+          
+          <rect x="200" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
+          <text x="240" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaStorm</text>
+          <text x="240" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Enterprise</text>
+        </svg>
+      );
+
+    default:
+      return null;
+  }
+};
+
 // Carousel Card Component
 const CarouselCard = ({ feature, index }) => {
   return (
     <motion.div
       className={`relative h-full min-h-[400px] md:min-h-[500px] rounded-3xl border border-white/10 backdrop-blur-xl bg-gradient-to-br ${feature.gradient} overflow-hidden group cursor-pointer`}
       initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
+    whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ delay: index * 0.1 }}
     >
@@ -292,6 +651,19 @@ const CarouselCard = ({ feature, index }) => {
         <p className="text-gray-300 text-sm md:text-base leading-relaxed flex-grow">
           {feature.description}
         </p>
+
+        {/* Feature Preview SVG - Show for all except On-Chain Resume and Telegram Bot */}
+        {!feature.hasVisual && feature.title !== 'Telegram Bot' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="mt-4"
+          >
+            <FeaturePreviewSVG featureTitle={feature.title} />
+          </motion.div>
+        )}
 
         {/* Special visual for On-Chain Resume */}
         {feature.hasVisual && (
@@ -441,7 +813,7 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
       <Link to={link}>
         <motion.div {...cardProps}>
           {CardContent}
-        </motion.div>
+  </motion.div>
       </Link>
     );
   }
