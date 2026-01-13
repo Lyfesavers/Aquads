@@ -449,6 +449,14 @@ const LandingPage = () => {
       hasVisual: true
     },
     {
+      icon: '🤖',
+      title: 'Telegram Bot',
+      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
+      gradient: 'from-indigo-900/40 to-slate-900/80',
+      link: '/telegram-bot',
+      size: 'wide'
+    },
+    {
       icon: '💸',
       title: 'AquaPay',
       description: 'Create your personal crypto payment link. Accept payments on Solana, Ethereum, Base, Polygon, BNB Chain & more. Non-custodial & instant.',
@@ -465,14 +473,6 @@ const LandingPage = () => {
       title: 'Web3 Game Hub',
       description: 'Discover and promote blockchain games. Connect developers with gamers.',
       gradient: 'from-orange-900/40 to-slate-900/80'
-    },
-    {
-      icon: '🤖',
-      title: 'Telegram Bot',
-      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
-      gradient: 'from-indigo-900/40 to-slate-900/80',
-      link: '/telegram-bot',
-      size: 'wide'
     },
     {
       icon: '📈',
@@ -898,7 +898,7 @@ const LandingPage = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-min items-start">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-min items-start" style={{ gridAutoFlow: 'dense' }}>
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
