@@ -78,10 +78,10 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     </div>
     
     {/* Content */}
-    <div className="relative z-10 h-full flex flex-col">
+    <div className={`relative z-10 flex flex-col ${size === 'large' || size === 'wide' ? 'h-full' : ''}`}>
       <div className="text-2xl md:text-4xl mb-2 md:mb-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{icon}</div>
       <h3 className={`${size === 'large' ? 'text-base md:text-2xl' : 'text-sm md:text-xl'} font-bold text-white mb-1 md:mb-2 font-display`}>{title}</h3>
-      <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed`}>{description}</p>
+      <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed ${size !== 'large' && size !== 'wide' ? 'flex-grow-0' : ''}`}>{description}</p>
       
       {/* Visual infographic for On-Chain Resume - hidden on small screens */}
       {hasVisual && (
@@ -161,6 +161,7 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
       backdrop-blur-xl bg-gradient-to-br ${gradient}
       ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-4 md:p-6'}
       group cursor-pointer
+      ${size !== 'large' && size !== 'wide' ? 'self-start' : ''}
     `
   };
 
@@ -470,7 +471,8 @@ const LandingPage = () => {
       title: 'Telegram Bot',
       description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
       gradient: 'from-indigo-900/40 to-slate-900/80',
-      link: '/telegram-bot'
+      link: '/telegram-bot',
+      size: 'wide'
     },
     {
       icon: '📈',
@@ -896,7 +898,7 @@ const LandingPage = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-fr">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-min items-start">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
