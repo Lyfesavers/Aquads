@@ -69,20 +69,9 @@ const GridLine = ({ vertical, position }) => (
 );
 
 // Feature card for bento grid
-const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal', hasVisual = false }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ duration: 0.6, delay }}
-    whileHover={{ scale: 1.02, y: -5 }}
-    className={`
-      relative overflow-hidden rounded-2xl border border-white/10
-      backdrop-blur-xl bg-gradient-to-br ${gradient}
-      ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-4 md:p-6'}
-      group cursor-pointer
-    `}
-  >
+const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal', hasVisual = false, link }) => {
+  const CardContent = (
+    <>
     {/* Glow effect on hover */}
     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10" />
@@ -158,8 +147,39 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     
     {/* Corner accent */}
     <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
-  </motion.div>
-);
+    </>
+  );
+
+  const cardProps = {
+    initial: { opacity: 0, y: 30 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: "-50px" },
+    transition: { duration: 0.6, delay },
+    whileHover: { scale: 1.02, y: -5 },
+    className: `
+      relative overflow-hidden rounded-2xl border border-white/10
+      backdrop-blur-xl bg-gradient-to-br ${gradient}
+      ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-4 md:p-6'}
+      group cursor-pointer
+    `
+  };
+
+  if (link) {
+    return (
+      <Link to={link}>
+        <motion.div {...cardProps}>
+          {CardContent}
+        </motion.div>
+      </Link>
+    );
+  }
+
+  return (
+    <motion.div {...cardProps}>
+      {CardContent}
+    </motion.div>
+  );
+};
 
 // Animated counter
 const AnimatedCounter = ({ value, suffix = '', prefix = '' }) => {
@@ -444,6 +464,13 @@ const LandingPage = () => {
       title: 'Web3 Game Hub',
       description: 'Discover and promote blockchain games. Connect developers with gamers.',
       gradient: 'from-orange-900/40 to-slate-900/80'
+    },
+    {
+      icon: '🤖',
+      title: 'Telegram Bot',
+      description: 'Manage your project, create raids, vote on bubbles, and earn points—all from Telegram. 5 FREE raids daily, trending visibility, and community engagement tools.',
+      gradient: 'from-indigo-900/40 to-slate-900/80',
+      link: '/telegram-bot'
     },
     {
       icon: '📈',
