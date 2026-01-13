@@ -78,10 +78,10 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     </div>
     
     {/* Content */}
-    <div className={`relative z-10 flex flex-col ${size === 'large' || size === 'wide' ? 'h-full' : ''}`}>
-      <div className="text-2xl md:text-4xl mb-2 md:mb-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{icon}</div>
-      <h3 className={`${size === 'large' ? 'text-base md:text-2xl' : 'text-sm md:text-xl'} font-bold text-white mb-1 md:mb-2 font-display`}>{title}</h3>
-      <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed ${size !== 'large' && size !== 'wide' ? 'flex-grow-0' : ''}`}>{description}</p>
+    <div className={`relative z-10 flex flex-col ${size === 'large' || size === 'wide' ? 'h-full' : 'min-h-0'}`}>
+      <div className="text-2xl md:text-4xl mb-2 md:mb-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] flex-shrink-0">{icon}</div>
+      <h3 className={`${size === 'large' ? 'text-base md:text-2xl' : 'text-sm md:text-xl'} font-bold text-white mb-1 md:mb-2 font-display flex-shrink-0`}>{title}</h3>
+      <p className={`text-gray-400 ${size === 'large' ? 'text-xs md:text-base' : 'text-[11px] md:text-sm'} leading-relaxed flex-grow-0`}>{description}</p>
       
       {/* Visual infographic for On-Chain Resume - hidden on small screens */}
       {hasVisual && (
@@ -159,9 +159,9 @@ const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal
     className: `
       relative overflow-hidden rounded-2xl border border-white/10
       backdrop-blur-xl bg-gradient-to-br ${gradient}
-      ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-4 md:p-6'}
+      ${size === 'large' ? 'md:col-span-2 md:row-span-2 p-4 md:p-8' : size === 'wide' ? 'md:col-span-2 p-4 md:p-6' : 'p-3 md:p-4'}
       group cursor-pointer
-      ${size !== 'large' && size !== 'wide' ? 'self-start' : ''}
+      ${size !== 'large' && size !== 'wide' ? 'self-start h-fit' : ''}
     `
   };
 
@@ -475,17 +475,16 @@ const LandingPage = () => {
       gradient: 'from-orange-900/40 to-slate-900/80'
     },
     {
-      icon: '📈',
-      title: 'Live Market Data',
-      description: 'Real-time token tracking, price alerts, and community-driven reviews.',
-      gradient: 'from-rose-900/40 to-slate-900/80',
-      size: 'wide'
-    },
-    {
       icon: '🚀',
       title: 'Twitter Raids',
       description: 'Boost visibility with coordinated social campaigns. Earn points for engagement.',
       gradient: 'from-sky-900/40 to-slate-900/80'
+    },
+    {
+      icon: '📈',
+      title: 'Live Market Data',
+      description: 'Real-time token tracking, price alerts, and community-driven reviews.',
+      gradient: 'from-rose-900/40 to-slate-900/80'
     },
     {
       icon: '💱',
@@ -898,7 +897,13 @@ const LandingPage = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 auto-rows-min items-start" style={{ gridAutoFlow: 'dense' }}>
+          <div 
+            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 items-start" 
+            style={{ 
+              gridAutoFlow: 'dense',
+              gridAutoRows: 'min-content'
+            }}
+          >
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
