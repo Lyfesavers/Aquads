@@ -913,7 +913,7 @@ const LandingPage = () => {
           </motion.div>
 
           <div 
-            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 items-start" 
+            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-0 items-start" 
             style={{ 
               gridAutoFlow: 'dense',
               gridAutoRows: 'min-content'
