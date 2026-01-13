@@ -71,39 +71,17 @@ const GridLine = ({ vertical, position }) => (
 // Interactive 3D Carousel Component
 const FeaturesCarousel = ({ features }) => {
   const [activeIndex, setActiveIndex] = useState(-1); // Start with no card selected
-  const [mouseX, setMouseX] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   const scrollRef = useRef(null);
   const autoScrollInterval = useRef(null);
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (carouselRef.current) {
-        const rect = carouselRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        setMouseX((e.clientX - centerX) / (rect.width / 2));
-      }
-    };
-
-    const carousel = carouselRef.current;
-    if (carousel) {
-      carousel.addEventListener('mousemove', handleMouseMove);
-      return () => carousel.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, []);
 
   const handleScroll = (e) => {
-    const scrollLeft = e.target.scrollLeft;
-    const cardWidth = e.target.scrollWidth / features.length;
-    const newIndex = Math.round(scrollLeft / cardWidth);
-    // Only set active index if user has scrolled (not on initial load)
-    if (scrollLeft > 0 || newIndex > 0) {
-      setActiveIndex(newIndex);
-    }
+    // Don't auto-select on scroll - let user interact manually
   };
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality - pauses on hover
   useEffect(() => {
     if (!scrollRef.current || isPaused) return;
 
@@ -133,8 +111,7 @@ const FeaturesCarousel = ({ features }) => {
         behavior: 'smooth'
       });
       
-      // Update active index when auto-scrolling
-      setActiveIndex(currentIndex);
+      // Don't auto-select - just scroll
     };
 
     // Start auto-scroll after initial delay
@@ -178,14 +155,14 @@ const FeaturesCarousel = ({ features }) => {
           }}
         >
           {features.map((feature, index) => {
-            // If no card is selected yet, all cards are equal
-            const isActive = activeIndex >= 0 && Math.abs(index - activeIndex) <= 2;
+            // No auto-selection - all cards equal until user interacts
+            const isActive = activeIndex >= 0 && index === activeIndex;
             const distance = activeIndex >= 0 ? Math.abs(index - activeIndex) : 0;
-            // All cards start at same scale/opacity until one is selected
-            const scale = activeIndex < 0 ? 0.9 : (distance === 0 ? 1 : Math.max(0.85, 1 - distance * 0.1));
-            const opacity = activeIndex < 0 ? 0.8 : (distance <= 2 ? 1 : Math.max(0.3, 1 - distance * 0.3));
-            const rotateY = activeIndex >= 0 ? (index - activeIndex) * 15 + mouseX * 10 : 0;
-            const zIndex = activeIndex >= 0 ? features.length - distance : 1;
+            // All cards same scale - no zoom until user selects
+            const scale = activeIndex < 0 ? 0.95 : (distance === 0 ? 1.02 : 0.95);
+            const opacity = activeIndex < 0 ? 0.8 : (distance === 0 ? 1 : 0.8);
+            const rotateY = 0; // No tilt
+            const zIndex = 1;
 
             return (
               <motion.div
@@ -198,8 +175,8 @@ const FeaturesCarousel = ({ features }) => {
                 animate={{
                   scale,
                   opacity,
-                  rotateY: activeIndex >= 0 && isActive ? rotateY : 0,
-                  y: activeIndex >= 0 && distance === 0 ? -10 : 0
+                  rotateY: 0, // No tilt
+                  y: 0 // No lift
                 }}
                 transition={{
                   type: 'spring',
@@ -207,10 +184,11 @@ const FeaturesCarousel = ({ features }) => {
                   damping: 30
                 }}
                 whileHover={{
-                  scale: 1.05,
-                  y: -15,
-                  rotateY: 0
+                  scale: 1.03, // Subtle hover zoom
+                  y: -8, // Subtle hover lift
+                  rotateY: 0 // No tilt on hover
                 }}
+                onClick={() => setActiveIndex(index === activeIndex ? -1 : index)} // Toggle selection on click
               >
                 {feature.link ? (
                   <Link to={feature.link} className="block h-full">
