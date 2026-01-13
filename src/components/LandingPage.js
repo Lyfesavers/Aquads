@@ -70,10 +70,12 @@ const GridLine = ({ vertical, position }) => (
 
 // Interactive 3D Carousel Component
 const FeaturesCarousel = ({ features }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1); // Start with no card selected
   const [mouseX, setMouseX] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   const scrollRef = useRef(null);
+  const autoScrollInterval = useRef(null);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -95,21 +97,79 @@ const FeaturesCarousel = ({ features }) => {
     const scrollLeft = e.target.scrollLeft;
     const cardWidth = e.target.scrollWidth / features.length;
     const newIndex = Math.round(scrollLeft / cardWidth);
-    setActiveIndex(newIndex);
+    // Only set active index if user has scrolled (not on initial load)
+    if (scrollLeft > 0 || newIndex > 0) {
+      setActiveIndex(newIndex);
+    }
   };
 
+  // Auto-scroll functionality
+  useEffect(() => {
+    if (!scrollRef.current || isPaused) return;
+
+    const scrollContainer = scrollRef.current;
+    let currentIndex = 0;
+
+    const getCardWidth = () => {
+      // Calculate card width based on viewport
+      const viewportWidth = window.innerWidth;
+      if (viewportWidth >= 1280) return viewportWidth * 0.30; // xl: 30vw
+      if (viewportWidth >= 1024) return viewportWidth * 0.35; // lg: 35vw
+      if (viewportWidth >= 768) return viewportWidth * 0.45;  // md: 45vw
+      if (viewportWidth >= 640) return viewportWidth * 0.70;  // sm: 70vw
+      return viewportWidth * 0.85; // default: 85vw
+    };
+
+    const autoScroll = () => {
+      if (isPaused || !scrollContainer) return;
+      
+      currentIndex = (currentIndex + 1) % features.length;
+      const cardWidth = getCardWidth();
+      const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 = 24px, gap-4 = 16px
+      const targetScroll = currentIndex * (cardWidth + gap);
+
+      scrollContainer.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+      
+      // Update active index when auto-scrolling
+      setActiveIndex(currentIndex);
+    };
+
+    // Start auto-scroll after initial delay
+    const startDelay = setTimeout(() => {
+      autoScrollInterval.current = setInterval(autoScroll, 3500); // Scroll every 3.5 seconds
+    }, 2000);
+
+    return () => {
+      clearTimeout(startDelay);
+      if (autoScrollInterval.current) {
+        clearInterval(autoScrollInterval.current);
+      }
+    };
+  }, [features.length, isPaused]);
+
+  // Pause on hover
+  const handleMouseEnter = () => setIsPaused(true);
+  const handleMouseLeave = () => setIsPaused(false);
+
   return (
-    <div className="relative">
-      {/* Scrollable container */}
+    <div 
+      className="relative w-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Scrollable container - full width */}
       <div
         ref={carouselRef}
-        className="relative perspective-1000"
+        className="relative perspective-1000 w-full"
         style={{ perspective: '1000px' }}
       >
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-4 md:gap-6 overflow-x-auto overflow-y-visible pb-8 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-4 md:gap-6 overflow-x-auto overflow-y-visible pb-8 snap-x snap-mandatory scrollbar-hide w-full px-4 md:px-0"
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
@@ -118,17 +178,19 @@ const FeaturesCarousel = ({ features }) => {
           }}
         >
           {features.map((feature, index) => {
-            const isActive = Math.abs(index - activeIndex) <= 2;
-            const distance = Math.abs(index - activeIndex);
-            const scale = distance === 0 ? 1 : Math.max(0.85, 1 - distance * 0.1);
-            const opacity = distance <= 2 ? 1 : Math.max(0.3, 1 - distance * 0.3);
-            const rotateY = (index - activeIndex) * 15 + mouseX * 10;
-            const zIndex = features.length - distance;
+            // If no card is selected yet, all cards are equal
+            const isActive = activeIndex >= 0 && Math.abs(index - activeIndex) <= 2;
+            const distance = activeIndex >= 0 ? Math.abs(index - activeIndex) : 0;
+            // All cards start at same scale/opacity until one is selected
+            const scale = activeIndex < 0 ? 0.9 : (distance === 0 ? 1 : Math.max(0.85, 1 - distance * 0.1));
+            const opacity = activeIndex < 0 ? 0.8 : (distance <= 2 ? 1 : Math.max(0.3, 1 - distance * 0.3));
+            const rotateY = activeIndex >= 0 ? (index - activeIndex) * 15 + mouseX * 10 : 0;
+            const zIndex = activeIndex >= 0 ? features.length - distance : 1;
 
             return (
               <motion.div
                 key={feature.title}
-                className="flex-shrink-0 w-[280px] md:w-[380px] snap-center"
+                className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[45vw] lg:w-[35vw] xl:w-[30vw] snap-center"
                 style={{
                   transformStyle: 'preserve-3d',
                   zIndex
@@ -136,8 +198,8 @@ const FeaturesCarousel = ({ features }) => {
                 animate={{
                   scale,
                   opacity,
-                  rotateY: isActive ? rotateY : 0,
-                  y: distance === 0 ? -10 : 0
+                  rotateY: activeIndex >= 0 && isActive ? rotateY : 0,
+                  y: activeIndex >= 0 && distance === 0 ? -10 : 0
                 }}
                 transition={{
                   type: 'spring',
@@ -169,14 +231,24 @@ const FeaturesCarousel = ({ features }) => {
           <button
             key={index}
             onClick={() => {
-              const cardWidth = scrollRef.current?.scrollWidth / features.length;
+              const getCardWidth = () => {
+                const viewportWidth = window.innerWidth;
+                if (viewportWidth >= 1280) return viewportWidth * 0.30;
+                if (viewportWidth >= 1024) return viewportWidth * 0.35;
+                if (viewportWidth >= 768) return viewportWidth * 0.45;
+                if (viewportWidth >= 640) return viewportWidth * 0.70;
+                return viewportWidth * 0.85;
+              };
+              const cardWidth = getCardWidth();
+              const gap = window.innerWidth >= 768 ? 24 : 16;
               scrollRef.current?.scrollTo({
-                left: index * cardWidth,
+                left: index * (cardWidth + gap),
                 behavior: 'smooth'
               });
+              setActiveIndex(index);
             }}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === activeIndex
+              index === activeIndex && activeIndex >= 0
                 ? 'bg-cyan-400 w-8'
                 : 'bg-gray-600 hover:bg-gray-500'
             }`}
@@ -1124,10 +1196,10 @@ const LandingPage = () => {
       </section>
 
       {/* Features Interactive Carousel */}
-      <section className="relative px-4 md:px-6 py-12 md:py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative w-full py-12 md:py-20 overflow-hidden">
+        <div className="w-full">
           <motion.div
-            className="text-center mb-8 md:mb-12"
+            className="text-center mb-8 md:mb-12 px-4"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
