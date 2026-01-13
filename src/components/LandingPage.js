@@ -755,14 +755,15 @@ const LandingPage = () => {
     {
       icon: '🔮',
       title: 'Dynamic Token Bubbles',
-      description: 'Interactive visualization of crypto projects based on community engagement.',
+      description: 'Interactive visualization of crypto projects based on community engagement. BEX trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.',
       gradient: 'from-cyan-900/40 to-slate-900/80'
     },
     {
       icon: '💱',
       title: 'AquaSwap',
-      description: 'Seamless token swapping across multiple chains with professional charts.',
-      gradient: 'from-teal-900/40 to-slate-900/80'
+      description: 'Seamless token swapping across multiple chains with professional TradingView charts. Available as Chrome browser extension—swap tokens from any webpage instantly. Cross-chain bridging and professional trading tools.',
+      gradient: 'from-teal-900/40 to-slate-900/80',
+      link: '/aquaswap'
     },
     {
       icon: '⚡',
@@ -782,6 +783,20 @@ const LandingPage = () => {
       description: 'Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities.',
       gradient: 'from-amber-900/40 to-slate-900/80',
       link: '/marketplace',
+      size: 'wide'
+    },
+    {
+      icon: '💰',
+      title: 'AquaFi',
+      description: 'Savings & Staking Hub. Professional DeFi management with yield farming and staking pools across multiple chains (Ethereum, Base, BNB). Built-in savings calculator. Earn passive income with automated optimization.',
+      gradient: 'from-green-900/40 to-slate-900/80',
+      link: '/aquafi'
+    },
+    {
+      icon: '📢',
+      title: 'Marketing & PR',
+      description: 'Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, Benzinga, and 75+ media outlets. AquaSplash, AquaRipple, AquaWave, AquaFlow, AquaStorm packages. SEO optimization included. Reach millions with professional PR campaigns.',
+      gradient: 'from-pink-900/40 to-slate-900/80',
       size: 'wide'
     }
   ];
