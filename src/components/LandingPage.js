@@ -83,10 +83,11 @@ const FeaturesCarousel = ({ features }) => {
 
   // Auto-scroll functionality - pauses on hover
   useEffect(() => {
-    if (!scrollRef.current || isPaused) return;
+    if (!scrollRef.current) return;
 
     const scrollContainer = scrollRef.current;
     let currentIndex = 0;
+    let startDelayTimeout = null;
 
     const getCardWidth = () => {
       // Calculate card width based on viewport
@@ -110,19 +111,23 @@ const FeaturesCarousel = ({ features }) => {
         left: targetScroll,
         behavior: 'smooth'
       });
-      
-      // Don't auto-select - just scroll
     };
 
     // Start auto-scroll after initial delay
-    const startDelay = setTimeout(() => {
-      autoScrollInterval.current = setInterval(autoScroll, 3500); // Scroll every 3.5 seconds
-    }, 2000);
+    startDelayTimeout = setTimeout(() => {
+      // Start first scroll immediately
+      autoScroll();
+      // Then continue with interval - reduced for smoother flow
+      autoScrollInterval.current = setInterval(autoScroll, 2000); // Scroll every 2 seconds
+    }, 1500);
 
     return () => {
-      clearTimeout(startDelay);
+      if (startDelayTimeout) {
+        clearTimeout(startDelayTimeout);
+      }
       if (autoScrollInterval.current) {
         clearInterval(autoScrollInterval.current);
+        autoScrollInterval.current = null;
       }
     };
   }, [features.length, isPaused]);
