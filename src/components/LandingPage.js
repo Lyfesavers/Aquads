@@ -68,7 +68,223 @@ const GridLine = ({ vertical, position }) => (
   />
 );
 
-// Feature card for bento grid
+// Interactive 3D Carousel Component
+const FeaturesCarousel = ({ features }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [mouseX, setMouseX] = useState(0);
+  const carouselRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (carouselRef.current) {
+        const rect = carouselRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        setMouseX((e.clientX - centerX) / (rect.width / 2));
+      }
+    };
+
+    const carousel = carouselRef.current;
+    if (carousel) {
+      carousel.addEventListener('mousemove', handleMouseMove);
+      return () => carousel.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, []);
+
+  const handleScroll = (e) => {
+    const scrollLeft = e.target.scrollLeft;
+    const cardWidth = e.target.scrollWidth / features.length;
+    const newIndex = Math.round(scrollLeft / cardWidth);
+    setActiveIndex(newIndex);
+  };
+
+  return (
+    <div className="relative">
+      {/* Scrollable container */}
+      <div
+        ref={carouselRef}
+        className="relative perspective-1000"
+        style={{ perspective: '1000px' }}
+      >
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex gap-4 md:gap-6 overflow-x-auto overflow-y-visible pb-8 snap-x snap-mandatory scrollbar-hide"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          {features.map((feature, index) => {
+            const isActive = Math.abs(index - activeIndex) <= 2;
+            const distance = Math.abs(index - activeIndex);
+            const scale = distance === 0 ? 1 : Math.max(0.85, 1 - distance * 0.1);
+            const opacity = distance <= 2 ? 1 : Math.max(0.3, 1 - distance * 0.3);
+            const rotateY = (index - activeIndex) * 15 + mouseX * 10;
+            const zIndex = features.length - distance;
+
+            return (
+              <motion.div
+                key={feature.title}
+                className="flex-shrink-0 w-[280px] md:w-[380px] snap-center"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  zIndex
+                }}
+                animate={{
+                  scale,
+                  opacity,
+                  rotateY: isActive ? rotateY : 0,
+                  y: distance === 0 ? -10 : 0
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  y: -15,
+                  rotateY: 0
+                }}
+              >
+                {feature.link ? (
+                  <Link to={feature.link} className="block h-full">
+                    <CarouselCard feature={feature} index={index} />
+                  </Link>
+                ) : (
+                  <CarouselCard feature={feature} index={index} />
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Navigation dots */}
+      <div className="flex justify-center gap-2 mt-8">
+        {features.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              const cardWidth = scrollRef.current?.scrollWidth / features.length;
+              scrollRef.current?.scrollTo({
+                left: index * cardWidth,
+                behavior: 'smooth'
+              });
+            }}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === activeIndex
+                ? 'bg-cyan-400 w-8'
+                : 'bg-gray-600 hover:bg-gray-500'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Scroll hint */}
+      <motion.div
+        className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 text-gray-400 text-sm"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        <span>Scroll</span>
+        <motion.div
+          animate={{ x: [0, 5, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          →
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Carousel Card Component
+const CarouselCard = ({ feature, index }) => {
+  return (
+    <motion.div
+      className={`relative h-full min-h-[400px] md:min-h-[500px] rounded-3xl border border-white/10 backdrop-blur-xl bg-gradient-to-br ${feature.gradient} overflow-hidden group cursor-pointer`}
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ delay: index * 0.1 }}
+    >
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20 animate-pulse" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col p-6 md:p-8">
+        {/* Icon */}
+        <motion.div
+          className="text-5xl md:text-6xl mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+          whileHover={{ scale: 1.2, rotate: 10 }}
+          transition={{ type: 'spring', stiffness: 400 }}
+        >
+          {feature.icon}
+        </motion.div>
+
+        {/* Title */}
+        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 font-display">
+          {feature.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-gray-300 text-sm md:text-base leading-relaxed flex-grow">
+          {feature.description}
+        </p>
+
+        {/* Special visual for On-Chain Resume */}
+        {feature.hasVisual && (
+          <div className="mt-6 space-y-3">
+            {[
+              { label: 'Skills Verified', icon: '✓', color: 'emerald' },
+              { label: 'Work History', icon: '📋', color: 'blue' },
+              { label: 'Reputation', icon: '⭐', color: 'amber' }
+            ].map((block, i) => (
+              <motion.div
+                key={block.label}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + i * 0.15 }}
+                className={`flex items-center gap-3 p-3 rounded-lg bg-${block.color}-500/20 border border-${block.color}-500/30`}
+              >
+                <div className="text-xl">{block.icon}</div>
+                <div className="flex-1 text-white text-sm font-medium">{block.label}</div>
+                <div className="text-emerald-400">✓</div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Hover indicator */}
+        <motion.div
+          className="mt-auto pt-4 flex items-center gap-2 text-cyan-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+          animate={{ x: [0, 5, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          {feature.link && (
+            <>
+              <span>Learn more</span>
+              <span>→</span>
+            </>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Glow effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 blur-xl" />
+      </div>
+    </motion.div>
+  );
+};
+
+// Feature card for bento grid (keeping for reference but not used)
 const FeatureCard = ({ icon, title, description, gradient, delay, size = 'normal', hasVisual = false, link }) => {
   const CardContent = (
     <>
@@ -586,6 +802,18 @@ const LandingPage = () => {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+
+        /* Carousel styles */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .perspective-1000 {
+          perspective: 1000px;
+        }
       `}</style>
 
       {/* Background effects */}
@@ -895,11 +1123,11 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Features Bento Grid */}
-      <section className="relative px-4 md:px-6 py-8 md:py-12">
-        <div className="max-w-6xl mx-auto">
+      {/* Features Interactive Carousel */}
+      <section className="relative px-4 md:px-6 py-12 md:py-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
           <motion.div
-            className="text-center mb-6 md:mb-10"
+            className="text-center mb-8 md:mb-12"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -912,21 +1140,8 @@ const LandingPage = () => {
             </p>
           </motion.div>
 
-          <div 
-            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-0 items-start" 
-            style={{ 
-              gridAutoFlow: 'dense',
-              gridAutoRows: 'min-content'
-            }}
-          >
-            {features.map((feature, index) => (
-              <FeatureCard
-                key={feature.title}
-                {...feature}
-                delay={index * 0.1}
-              />
-            ))}
-          </div>
+          {/* Interactive 3D Carousel */}
+          <FeaturesCarousel features={features} />
         </div>
       </section>
 
