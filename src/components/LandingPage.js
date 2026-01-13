@@ -468,7 +468,7 @@ const LandingPage = () => {
     {
       icon: '🤖',
       title: 'Telegram Bot',
-      description: 'Manage your project, create raids, vote on bubbles, and earn points—all from Telegram. 5 FREE raids daily, trending visibility, and community engagement tools.',
+      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
       gradient: 'from-indigo-900/40 to-slate-900/80',
       link: '/telegram-bot'
     },
