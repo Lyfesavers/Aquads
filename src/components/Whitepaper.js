@@ -58,6 +58,7 @@ const Whitepaper = () => {
               <li>A new Twitter Raid Feature that rewards users with points for engaging with Twitter posts</li>
               <li><strong>Industry-First Trust Score & Risk Gauge System</strong> - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills</li>
               <li><strong>World's First On-Chain Freelancer Resume</strong> - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation</li>
+              <li><strong>AquaPay - Multi-Chain Payment Link System</strong> - A non-custodial, zero-fee payment solution enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks</li>
             </ul>
             
 
@@ -74,6 +75,8 @@ const Whitepaper = () => {
               <li>Integrates dynamic advertising solutions specifically designed for crypto projects.</li>
               <li>Offers real-time token data and market insights in a centralized, community-driven resource.</li>
               <li>Caters to the growing demand in blockchain gaming, empowering game developers and enthusiasts.</li>
+              <li>Enables seamless, low-cost cryptocurrency payments without custodial risks or high transaction fees.</li>
+              <li>Supports multi-chain payment processing, allowing users to receive payments across different blockchain networks through a single interface.</li>
             </ul>
 
             <h3 className="text-xl font-semibold mb-3">2.2. The Aquads Solution</h3>
@@ -125,6 +128,13 @@ const Whitepaper = () => {
               <h4 className="text-lg font-semibold mb-2">Twitter Raid Feature:</h4>
               <ul className="list-disc pl-6 mb-4">
                 <li>Users earn points for engaging with Twitter posts, further boosting community participation and platform engagement.</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">AquaPay Payment Link System:</h4>
+              <ul className="list-disc pl-6 mb-4">
+                <li>A revolutionary non-custodial payment solution that enables users to create personalized payment pages and receive cryptocurrency payments directly to their wallets across multiple blockchain networks, with zero platform fees and real-time notifications.</li>
               </ul>
             </div>
           </section>
@@ -206,6 +216,14 @@ const Whitepaper = () => {
               <ul className="list-disc pl-6 mb-4">
                 <li><strong>Features:</strong> Earn points for engaging with targeted Twitter posts.</li>
                 <li><strong>Benefits:</strong> Drive community engagement and reward active participation.</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">AquaPay Payment Link System:</h4>
+              <ul className="list-disc pl-6 mb-4">
+                <li><strong>Features:</strong> Multi-chain payment pages, wallet integration, payment history tracking, real-time notifications, QR code generation, customizable themes, and zero platform fees.</li>
+                <li><strong>Benefits:</strong> Enable seamless cryptocurrency payments for freelancers, creators, and businesses without intermediaries, fees, or custody risks.</li>
               </ul>
             </div>
           </section>
@@ -427,6 +445,316 @@ const Whitepaper = () => {
             </ul>
           </section>
 
+          {/* NEW SECTION: AquaPay */}
+          <section className="mb-8">
+            <div className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border border-cyan-500/30 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-bold text-cyan-400 mb-2">💸 Revolutionary Payment Infrastructure: AquaPay</h3>
+              <p className="text-gray-200">
+                AquaPay represents a paradigm shift in cryptocurrency payment processing, offering a <strong>non-custodial, zero-fee payment link system</strong> that enables direct wallet-to-wallet transactions across multiple blockchain networks. Unlike traditional payment processors that act as intermediaries, AquaPay empowers users to receive payments directly to their own wallets, eliminating custody risks, platform fees, and unnecessary complexity.
+              </p>
+            </div>
+
+            <h2 className="text-2xl font-bold mb-4">4.4. AquaPay Payment Link System</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">The Problem with Traditional Crypto Payment Solutions</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li><strong>Custodial Risk:</strong> Most payment processors hold user funds in centralized wallets, creating single points of failure and trust dependencies.</li>
+              <li><strong>High Fees:</strong> Traditional payment processors charge significant transaction fees (2-5% or more), reducing profitability for freelancers and creators.</li>
+              <li><strong>Limited Chain Support:</strong> Most solutions support only one or two blockchain networks, forcing users to choose between ecosystems.</li>
+              <li><strong>Complex Integration:</strong> Businesses and individuals face technical barriers when implementing crypto payments, requiring API integrations and technical expertise.</li>
+              <li><strong>Poor User Experience:</strong> Payment flows are often clunky, requiring multiple steps, wallet switches, and manual address copying.</li>
+              <li><strong>Lack of Transparency:</strong> Users cannot easily track payment history, view statistics, or receive notifications about incoming payments.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">The AquaPay Solution: Direct, Non-Custodial Payments</h3>
+            <p className="mb-4">
+              AquaPay eliminates intermediaries by enabling direct wallet-to-wallet transactions. Users create personalized payment pages accessible via simple links (e.g., <code className="bg-gray-800 px-2 py-1 rounded">aquads.xyz/pay/username</code>), allowing anyone to send cryptocurrency payments directly to the recipient's wallet. The system never touches user funds, ensuring complete financial sovereignty and security.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3">Core Features & Capabilities</h3>
+            
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-cyan-400">🌐 Multi-Chain Support (8+ Networks)</h4>
+              <p className="text-gray-300 mb-2">AquaPay supports payments across the most popular blockchain networks:</p>
+              <div className="grid md:grid-cols-2 gap-3 mb-3">
+                <div className="bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-white font-medium mb-1">EVM-Compatible Chains</p>
+                  <ul className="text-gray-400 text-sm space-y-1">
+                    <li>• Ethereum (ETH, USDC)</li>
+                    <li>• Base (ETH, USDC)</li>
+                    <li>• Polygon (MATIC, USDC)</li>
+                    <li>• Arbitrum (ETH, USDC)</li>
+                    <li>• BNB Smart Chain (BNB, USDC)</li>
+                  </ul>
+                </div>
+                <div className="bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-white font-medium mb-1">Non-EVM Chains</p>
+                  <ul className="text-gray-400 text-sm space-y-1">
+                    <li>• Solana (SOL, USDC)</li>
+                    <li>• Bitcoin (BTC) - Manual transfer</li>
+                    <li>• TRON (TRX) - Manual transfer</li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm">Each chain supports native tokens and USDC stablecoins where applicable, providing maximum flexibility for recipients and senders.</p>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-green-400">🔐 Non-Custodial Architecture</h4>
+              <p className="text-gray-300 mb-2">AquaPay operates on a non-custodial model, meaning:</p>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li>All payments go directly to the recipient's wallet address</li>
+                <li>Aquads never holds, controls, or has access to user funds</li>
+                <li>Users maintain complete control over their private keys and assets</li>
+                <li>No risk of platform insolvency, hacks, or fund freezes affecting user assets</li>
+                <li>Compliance with the core principles of Web3 and decentralized finance</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-yellow-400">💰 Zero Platform Fees</h4>
+              <p className="text-gray-300 mb-2">AquaPay charges absolutely no fees for payment processing:</p>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li>No transaction fees - 100% of payment goes to recipient</li>
+                <li>No setup fees or monthly subscriptions</li>
+                <li>No withdrawal fees or hidden charges</li>
+                <li>Users only pay standard blockchain network fees (gas), which are unavoidable and paid directly to the network</li>
+                <li>This makes AquaPay the most cost-effective payment solution for crypto transactions</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-purple-400">🔗 Personalized Payment Links</h4>
+              <p className="text-gray-300 mb-2">Each user can create a custom payment page with:</p>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>Custom Payment Slug:</strong> Users can set a custom URL slug (e.g., <code className="bg-gray-900 px-1.5 py-0.5 rounded text-xs">aquads.xyz/pay/mybusiness</code>) or use their username</li>
+                <li><strong>Display Name:</strong> Customizable name shown on the payment page</li>
+                <li><strong>Bio/Description:</strong> Optional description explaining what payments are for</li>
+                <li><strong>Profile Image:</strong> Visual branding for the payment page</li>
+                <li><strong>Theme Customization:</strong> Choose from multiple visual themes (default, dark, light, gradient, neon)</li>
+                <li><strong>Preferred Chain:</strong> Set default blockchain network for payments</li>
+                <li><strong>Accepted Tokens:</strong> Specify which tokens you accept (USDC, USDT, ETH, SOL, BTC, etc.)</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-blue-400">📊 Payment Tracking & Analytics</h4>
+              <p className="text-gray-300 mb-2">Comprehensive payment management features:</p>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>Payment History:</strong> Complete transaction log with last 100 payments, including transaction hash, amount, token, chain, sender address, timestamp, and optional messages</li>
+                <li><strong>Real-Time Statistics:</strong> Track total received (USD value), total transactions, and last payment timestamp</li>
+                <li><strong>Transaction Explorer Links:</strong> Direct links to blockchain explorers for transaction verification</li>
+                <li><strong>Payment Notifications:</strong> Real-time WebSocket notifications when payments are received</li>
+                <li><strong>Email Notifications:</strong> Optional email alerts with payment details and explorer links</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-orange-400">⚡ Seamless Wallet Integration</h4>
+              <p className="text-gray-300 mb-2">AquaPay supports all major wallet providers:</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <p className="text-white font-medium mb-1 text-sm">EVM Wallets:</p>
+                  <ul className="text-gray-400 text-sm space-y-0.5">
+                    <li>• MetaMask</li>
+                    <li>• WalletConnect (300+ wallets)</li>
+                    <li>• Coinbase Wallet</li>
+                    <li>• Rabby</li>
+                    <li>• Any EIP-1193 compatible wallet</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-white font-medium mb-1 text-sm">Solana Wallets:</p>
+                  <ul className="text-gray-400 text-sm space-y-0.5">
+                    <li>• Phantom</li>
+                    <li>• Solflare</li>
+                    <li>• Backpack</li>
+                    <li>• Any Solana wallet adapter</li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mt-3">For Bitcoin and TRON, users can copy addresses or scan QR codes for manual transfers.</p>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-pink-400">📱 User Experience Features</h4>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>One-Click Wallet Connection:</strong> Senders can connect wallets with a single click</li>
+                <li><strong>Multi-Token Support:</strong> Send native tokens (ETH, SOL, etc.) or USDC stablecoins on supported chains</li>
+                <li><strong>Real-Time Price Display:</strong> USD value estimates for native tokens using CoinGecko integration</li>
+                <li><strong>Quick Amount Buttons:</strong> Pre-set amount buttons for common payment values</li>
+                <li><strong>Optional Payment Messages:</strong> Senders can include notes with payments (up to 200 characters)</li>
+                <li><strong>QR Code Generation:</strong> Automatic QR codes for Bitcoin and TRON addresses</li>
+                <li><strong>Transaction Status Tracking:</strong> Real-time confirmation status with explorer links</li>
+                <li><strong>Mobile-Responsive Design:</strong> Optimized for all device sizes</li>
+              </ul>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Technical Architecture</h3>
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-indigo-400">Backend Infrastructure</h4>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>RESTful API:</strong> Public endpoints for fetching payment page data (no authentication required for viewing)</li>
+                <li><strong>Payment Recording:</strong> Secure endpoint for recording completed transactions with validation</li>
+                <li><strong>Solana RPC Proxy:</strong> Backend proxy service to avoid CORS issues and rate limits when interacting with Solana network</li>
+                <li><strong>Real-Time Updates:</strong> WebSocket integration for instant payment notifications</li>
+                <li><strong>Database Schema:</strong> MongoDB storage for user payment settings, history, and statistics</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-teal-400">Frontend Implementation</h4>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>React-Based UI:</strong> Modern, responsive payment interface</li>
+                <li><strong>Ethers.js Integration:</strong> For EVM chain interactions (Ethereum, Base, Polygon, Arbitrum, BNB)</li>
+                <li><strong>Solana Web3.js:</strong> For Solana blockchain transactions</li>
+                <li><strong>WalletConnect SDK:</strong> For multi-wallet support on EVM chains</li>
+                <li><strong>Proxied Connection Class:</strong> Custom Solana connection handler using backend proxy</li>
+                <li><strong>Token Price Integration:</strong> CoinGecko API for real-time price data</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold mb-3 text-amber-400">Security Features</h4>
+              <ul className="list-disc pl-6 text-gray-400 space-y-1">
+                <li><strong>No Private Key Storage:</strong> All transactions are signed client-side using user wallets</li>
+                <li><strong>Input Validation:</strong> Server-side validation of all payment data</li>
+                <li><strong>Address Verification:</strong> Validation of wallet addresses before payment processing</li>
+                <li><strong>Transaction Confirmation:</strong> Automatic confirmation polling for Solana transactions</li>
+                <li><strong>Error Handling:</strong> Comprehensive error messages and fallback mechanisms</li>
+                <li><strong>Rate Limiting:</strong> Protection against abuse and spam</li>
+              </ul>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Use Cases & Applications</h3>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-green-400 mb-2">For Freelancers</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                  <li>Receive payments from clients worldwide</li>
+                  <li>No payment processing fees eating into earnings</li>
+                  <li>Multi-chain support for client flexibility</li>
+                  <li>Professional payment pages for credibility</li>
+                  <li>Payment history for accounting and tax purposes</li>
+                </ul>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-400 mb-2">For Content Creators</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                  <li>Accept tips and donations from fans</li>
+                  <li>Share payment links on social media</li>
+                  <li>Track supporter contributions</li>
+                  <li>Receive payments in preferred cryptocurrencies</li>
+                  <li>Zero fees maximize donation value</li>
+                </ul>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-purple-400 mb-2">For Businesses</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                  <li>Accept crypto payments for products/services</li>
+                  <li>Custom payment pages with branding</li>
+                  <li>Multi-chain support for customer convenience</li>
+                  <li>Payment tracking and analytics</li>
+                  <li>Integration with existing workflows</li>
+                </ul>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-orange-400 mb-2">For Individuals</h4>
+                <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                  <li>Split bills with friends in crypto</li>
+                  <li>Receive payments for services</li>
+                  <li>Accept gifts and payments</li>
+                  <li>Simple, shareable payment links</li>
+                  <li>No technical knowledge required</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Competitive Advantages</h3>
+            <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-lg p-6 mb-4">
+              <p className="text-gray-200 mb-4">
+                AquaPay differentiates itself from competitors through several key advantages:
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-green-400 mb-2">vs. Traditional Payment Processors (PayPal, Stripe)</h4>
+                  <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                    <li>✅ Supports cryptocurrency (they don't or have limited support)</li>
+                    <li>✅ Zero platform fees (they charge 2-5%)</li>
+                    <li>✅ Non-custodial (they hold funds)</li>
+                    <li>✅ Multi-chain support (they're fiat-only)</li>
+                    <li>✅ Direct wallet transfers (they require bank accounts)</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-blue-400 mb-2">vs. Crypto Payment Services (Coinbase Commerce, BitPay)</h4>
+                  <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                    <li>✅ Zero platform fees (they charge 1-2%)</li>
+                    <li>✅ Non-custodial architecture (many are custodial)</li>
+                    <li>✅ 8+ blockchain networks (most support 1-3)</li>
+                    <li>✅ Personalized payment pages (they're generic)</li>
+                    <li>✅ Integrated with freelancer marketplace</li>
+                    <li>✅ Real-time notifications and tracking</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-purple-400 mb-2">vs. Payment Link Services (Request Network, BTCPay)</h4>
+                  <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                    <li>✅ Simpler setup and user experience</li>
+                    <li>✅ Multi-chain in one interface (they're often single-chain)</li>
+                    <li>✅ Modern, intuitive UI (many are technical/complex)</li>
+                    <li>✅ Integrated wallet connection</li>
+                    <li>✅ Real-time price display</li>
+                    <li>✅ Payment history and analytics</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-cyan-400 mb-2">vs. Manual Address Sharing</h4>
+                  <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
+                    <li>✅ Professional payment pages</li>
+                    <li>✅ Multi-chain support in one link</li>
+                    <li>✅ Payment tracking and history</li>
+                    <li>✅ Real-time notifications</li>
+                    <li>✅ QR codes for easy scanning</li>
+                    <li>✅ Customizable branding</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold mb-3">Future Enhancements</h3>
+            <p className="mb-4 text-gray-300">
+              AquaPay is continuously evolving. Planned enhancements include:
+            </p>
+            <ul className="list-disc pl-6 mb-4 text-gray-400">
+              <li><strong>Recurring Payments:</strong> Subscription and recurring payment support</li>
+              <li><strong>Payment Requests:</strong> Send payment requests with specific amounts and due dates</li>
+              <li><strong>Invoice Generation:</strong> Automatic invoice creation for business payments</li>
+              <li><strong>Multi-Signature Wallets:</strong> Support for multi-sig wallet addresses</li>
+              <li><strong>Additional Chains:</strong> Support for more blockchain networks (Avalanche, Optimism, etc.)</li>
+              <li><strong>Token Swaps:</strong> Automatic token conversion for cross-token payments</li>
+              <li><strong>Payment Analytics Dashboard:</strong> Advanced analytics and reporting tools</li>
+              <li><strong>API Access:</strong> Public API for developers to integrate AquaPay into their applications</li>
+              <li><strong>Webhook Support:</strong> Real-time webhooks for payment events</li>
+              <li><strong>Mobile Apps:</strong> Native mobile applications for iOS and Android</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">Why AquaPay Matters</h3>
+            <p className="mb-4 text-gray-300">
+              AquaPay represents the future of cryptocurrency payments—a future where:
+            </p>
+            <ul className="list-disc pl-6 mb-4 text-gray-400">
+              <li>Users maintain complete control over their funds without trusting intermediaries</li>
+              <li>Payment processing is free and accessible to everyone, regardless of transaction size</li>
+              <li>Multi-chain interoperability is seamless and user-friendly</li>
+              <li>Payment infrastructure integrates naturally with Web3 ecosystems</li>
+              <li>Freelancers, creators, and businesses can accept crypto payments without technical barriers</li>
+            </ul>
+            <p className="mb-4 text-gray-300">
+              By combining non-custodial architecture, zero fees, multi-chain support, and exceptional user experience, AquaPay sets a new standard for cryptocurrency payment solutions. It empowers users to participate fully in the Web3 economy while maintaining the security, transparency, and decentralization that make blockchain technology revolutionary.
+            </p>
+          </section>
+
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">5. Revenue Model</h2>
             
@@ -505,13 +833,16 @@ const Whitepaper = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">8. Conclusion</h2>
             <p className="mb-4">
-              Aquads.xyz represents the future of Web3 work, gaming, and crypto projects by uniting advertising, freelance services, and cutting-edge blockchain features in one platform. With dynamic features such as our new Game Hub, comprehensive How-To page, robust booking system with watermarking, upgraded messaging, and an engaging Twitter Raid feature, Aquads.xyz is poised to lead the decentralized marketplace revolution.
+              Aquads.xyz represents the future of Web3 work, gaming, and crypto projects by uniting advertising, freelance services, and cutting-edge blockchain features in one platform. With dynamic features such as our new Game Hub, comprehensive How-To page, robust booking system with watermarking, upgraded messaging, an engaging Twitter Raid feature, and our revolutionary <strong>AquaPay payment link system</strong>, Aquads.xyz is poised to lead the decentralized marketplace revolution.
             </p>
             <p className="mb-4">
               Our groundbreaking innovations in freelancer vetting—the <strong>Trust Score & Risk Gauge system</strong>—combined with the <strong>world's first On-Chain Freelancer Resume</strong>, set a new standard for professional reputation in the gig economy. By leveraging blockchain technology through Ethereum Attestation Service on Base, we've created a paradigm where freelancer credentials are portable, verifiable, and truly owned by the professional.
             </p>
             <p className="mb-4">
-              These innovations solve longstanding problems in freelancing: platform lock-in, unverifiable credentials, and the "cold start" reputation problem. Aquads is not just building a marketplace—we're building the infrastructure for the future of decentralized work.
+              <strong>AquaPay</strong> further revolutionizes the platform by enabling seamless, non-custodial cryptocurrency payments with zero platform fees across 8+ blockchain networks. This eliminates the traditional barriers of payment processing—custodial risk, high fees, and limited chain support—empowering freelancers, creators, and businesses to receive payments directly to their wallets without intermediaries.
+            </p>
+            <p className="mb-4">
+              These innovations solve longstanding problems in freelancing: platform lock-in, unverifiable credentials, the "cold start" reputation problem, and payment processing friction. Aquads is not just building a marketplace—we're building the complete infrastructure for the future of decentralized work, combining professional reputation systems, blockchain verification, and seamless payment processing in one integrated platform.
             </p>
             <p className="mb-4">
               Join us as we build a vibrant community where innovation meets opportunity. Let's transform the world of digital freelancing and crypto projects together!
