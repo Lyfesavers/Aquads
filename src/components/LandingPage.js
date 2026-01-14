@@ -1122,7 +1122,8 @@ const LandingPage = () => {
       icon: '💸',
       title: 'AquaPay',
       description: 'Create your personal crypto payment link. Accept payments on Solana, Ethereum, Base, Polygon, BNB Chain & more. Non-custodial & instant.',
-      gradient: 'from-blue-900/40 to-cyan-900/80'
+      gradient: 'from-blue-900/40 to-cyan-900/80',
+      link: '/aquapay'
     },
     {
       icon: '🔮',
