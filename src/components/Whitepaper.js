@@ -58,7 +58,7 @@ const Whitepaper = () => {
               <li>A new Twitter Raid Feature that rewards users with points for engaging with Twitter posts</li>
               <li><strong>Industry-First Trust Score & Risk Gauge System</strong> - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills</li>
               <li><strong>World's First On-Chain Freelancer Resume</strong> - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation</li>
-              <li><strong>AquaPay - Multi-Chain Payment Link System</strong> - A non-custodial, zero-fee payment solution enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks</li>
+              <li><strong>AquaPay - Multi-Chain Payment Link System</strong> - A non-custodial payment solution with competitive 0.5% transaction fees enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks</li>
             </ul>
             
 
@@ -134,7 +134,7 @@ const Whitepaper = () => {
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">AquaPay Payment Link System:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>A revolutionary non-custodial payment solution that enables users to create personalized payment pages and receive cryptocurrency payments directly to their wallets across multiple blockchain networks, with zero platform fees and real-time notifications.</li>
+                <li>A revolutionary non-custodial payment solution that enables users to create personalized payment pages and receive cryptocurrency payments directly to their wallets across multiple blockchain networks, with competitive 0.5% transaction fees and real-time notifications.</li>
               </ul>
             </div>
           </section>
@@ -222,7 +222,7 @@ const Whitepaper = () => {
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">AquaPay Payment Link System:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Multi-chain payment pages, wallet integration, payment history tracking, real-time notifications, QR code generation, customizable themes, and zero platform fees.</li>
+                <li><strong>Features:</strong> Multi-chain payment pages, wallet integration, payment history tracking, real-time notifications, QR code generation, customizable themes, and competitive 0.5% transaction fees.</li>
                 <li><strong>Benefits:</strong> Enable seamless cryptocurrency payments for freelancers, creators, and businesses without intermediaries, fees, or custody risks.</li>
               </ul>
             </div>
@@ -450,7 +450,7 @@ const Whitepaper = () => {
             <div className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border border-cyan-500/30 rounded-lg p-6 mb-6">
               <h3 className="text-xl font-bold text-cyan-400 mb-2">💸 Revolutionary Payment Infrastructure: AquaPay</h3>
               <p className="text-gray-200">
-                AquaPay represents a paradigm shift in cryptocurrency payment processing, offering a <strong>non-custodial, zero-fee payment link system</strong> that enables direct wallet-to-wallet transactions across multiple blockchain networks. Unlike traditional payment processors that act as intermediaries, AquaPay empowers users to receive payments directly to their own wallets, eliminating custody risks, platform fees, and unnecessary complexity.
+                AquaPay represents a paradigm shift in cryptocurrency payment processing, offering a <strong>non-custodial payment link system with competitive 0.5% transaction fees</strong> that enables direct wallet-to-wallet transactions across multiple blockchain networks. Unlike traditional payment processors that act as intermediaries, AquaPay empowers users to receive payments directly to their own wallets, eliminating custody risks while maintaining transparent, low-cost fee structure.
               </p>
             </div>
 
@@ -512,14 +512,15 @@ const Whitepaper = () => {
             </div>
 
             <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-3 text-yellow-400">💰 Zero Platform Fees</h4>
-              <p className="text-gray-300 mb-2">AquaPay charges absolutely no fees for payment processing:</p>
+              <h4 className="text-lg font-semibold mb-3 text-yellow-400">💰 Competitive Transaction Fees</h4>
+              <p className="text-gray-300 mb-2">AquaPay charges a transparent 0.5% transaction fee on all payments:</p>
               <ul className="list-disc pl-6 text-gray-400 space-y-1">
-                <li>No transaction fees - 100% of payment goes to recipient</li>
-                <li>No setup fees or monthly subscriptions</li>
-                <li>No withdrawal fees or hidden charges</li>
-                <li>Users only pay standard blockchain network fees (gas), which are unavoidable and paid directly to the network</li>
-                <li>This makes AquaPay the most cost-effective payment solution for crypto transactions</li>
+                <li><strong>0.5% Transaction Fee:</strong> Applied to all successful payments, deducted from the payment amount</li>
+                <li><strong>No Setup Fees:</strong> No monthly subscriptions or account setup costs</li>
+                <li><strong>No Withdrawal Fees:</strong> Payments go directly to recipient wallets - no additional withdrawal charges</li>
+                <li><strong>Gas Fees:</strong> Users pay standard blockchain network fees (gas), which are unavoidable and paid directly to the network</li>
+                <li><strong>Transparent Pricing:</strong> The 0.5% fee is clearly displayed and significantly lower than traditional payment processors (2-5%)</li>
+                <li>This makes AquaPay one of the most cost-effective payment solutions for crypto transactions</li>
               </ul>
             </div>
 
@@ -596,7 +597,7 @@ const Whitepaper = () => {
                 <h4 className="font-semibold text-green-400 mb-2">For Freelancers</h4>
                 <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
                   <li>Receive payments from clients worldwide</li>
-                  <li>No payment processing fees eating into earnings</li>
+                  <li>Low 0.5% transaction fees preserve more of your earnings compared to traditional processors</li>
                   <li>Multi-chain support for client flexibility</li>
                   <li>Professional payment pages for credibility</li>
                   <li>Payment history for accounting and tax purposes</li>
@@ -609,7 +610,7 @@ const Whitepaper = () => {
                   <li>Share payment links on social media</li>
                   <li>Track supporter contributions</li>
                   <li>Receive payments in preferred cryptocurrencies</li>
-                  <li>Zero fees maximize donation value</li>
+                  <li>Low 0.5% fees maximize donation value compared to traditional payment processors</li>
                 </ul>
               </div>
               <div className="bg-gray-800/50 rounded-lg p-4">
@@ -644,7 +645,7 @@ const Whitepaper = () => {
                   <h4 className="font-semibold text-green-400 mb-2">vs. Traditional Payment Processors (PayPal, Stripe)</h4>
                   <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
                     <li>✅ Supports cryptocurrency (they don't or have limited support)</li>
-                    <li>✅ Zero platform fees (they charge 2-5%)</li>
+                    <li>✅ Low 0.5% transaction fee (they charge 2-5%)</li>
                     <li>✅ Non-custodial (they hold funds)</li>
                     <li>✅ Multi-chain support (they're fiat-only)</li>
                     <li>✅ Direct wallet transfers (they require bank accounts)</li>
@@ -653,7 +654,7 @@ const Whitepaper = () => {
                 <div>
                   <h4 className="font-semibold text-blue-400 mb-2">vs. Crypto Payment Services (Coinbase Commerce, BitPay)</h4>
                   <ul className="list-disc pl-4 text-gray-400 text-sm space-y-1">
-                    <li>✅ Zero platform fees (they charge 1-2%)</li>
+                    <li>✅ Competitive 0.5% transaction fee (they charge 1-2%)</li>
                     <li>✅ Non-custodial architecture (many are custodial)</li>
                     <li>✅ 8+ blockchain networks (most support 1-3)</li>
                     <li>✅ Personalized payment pages (they're generic)</li>
@@ -712,7 +713,7 @@ const Whitepaper = () => {
               <li>Freelancers, creators, and businesses can accept crypto payments without technical barriers</li>
             </ul>
             <p className="mb-4 text-gray-300">
-              By combining non-custodial architecture, zero fees, multi-chain support, and exceptional user experience, AquaPay sets a new standard for cryptocurrency payment solutions. It empowers users to participate fully in the Web3 economy while maintaining the security, transparency, and decentralization that make blockchain technology revolutionary.
+              By combining non-custodial architecture, competitive 0.5% transaction fees, multi-chain support, and exceptional user experience, AquaPay sets a new standard for cryptocurrency payment solutions. It empowers users to participate fully in the Web3 economy while maintaining the security, transparency, and decentralization that make blockchain technology revolutionary.
             </p>
           </section>
 
@@ -733,21 +734,29 @@ const Whitepaper = () => {
               <li>Revenue generated from DeFi trading activities and cross-chain token exchanges.</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">5.3. AquaFi Savings Platform Fees</h3>
+            <h3 className="text-xl font-semibold mb-3">5.3. AquaPay Transaction Fees</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>0.5% transaction fee on all successful payments processed through AquaPay.</li>
+              <li>Fee is deducted from the payment amount before it reaches the recipient's wallet.</li>
+              <li>Revenue generated from payment processing across all supported blockchain networks (Ethereum, Base, Polygon, Arbitrum, BNB, Solana, Bitcoin, TRON).</li>
+              <li>Competitive fee structure that is significantly lower than traditional payment processors (2-5%) while maintaining sustainable revenue.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">5.4. AquaFi Savings Platform Fees</h3>
             <ul className="list-disc pl-6 mb-4">
               <li>0% fee on deposits to encourage user adoption and remove barriers to entry.</li>
               <li>2.5% fee on withdrawals, optimizing revenue while maintaining user-friendly deposit experience.</li>
               <li>Strategic fee structure designed to balance user experience with sustainable revenue generation.</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">5.4. Advertising Revenue</h3>
+            <h3 className="text-xl font-semibold mb-3">5.5. Advertising Revenue</h3>
             <ul className="list-disc pl-6 mb-4">
               <li>Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.</li>
               <li>VIP ad banners, AMAs, and additional monetized features are planned for future phases and more.</li>
               <li>Paid twitter raid post</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">5.5. On-Chain Resume Services (Planned)</h3>
+            <h3 className="text-xl font-semibold mb-3">5.6. On-Chain Resume Services (Planned)</h3>
             <ul className="list-disc pl-6 mb-4">
               <li>Optional minting fee for On-Chain Resume attestations (in addition to minimal blockchain gas fees).</li>
               <li>Premium resume features such as enhanced public profiles and priority verification badges.</li>
@@ -800,7 +809,7 @@ const Whitepaper = () => {
               Our groundbreaking innovations in freelancer vetting—the <strong>Trust Score & Risk Gauge system</strong>—combined with the <strong>world's first On-Chain Freelancer Resume</strong>, set a new standard for professional reputation in the gig economy. By leveraging blockchain technology through Ethereum Attestation Service on Base, we've created a paradigm where freelancer credentials are portable, verifiable, and truly owned by the professional.
             </p>
             <p className="mb-4">
-              <strong>AquaPay</strong> further revolutionizes the platform by enabling seamless, non-custodial cryptocurrency payments with zero platform fees across 8+ blockchain networks. This eliminates the traditional barriers of payment processing—custodial risk, high fees, and limited chain support—empowering freelancers, creators, and businesses to receive payments directly to their wallets without intermediaries.
+              <strong>AquaPay</strong> further revolutionizes the platform by enabling seamless, non-custodial cryptocurrency payments with competitive 0.5% transaction fees across 8+ blockchain networks. This eliminates the traditional barriers of payment processing—custodial risk, high fees, and limited chain support—empowering freelancers, creators, and businesses to receive payments directly to their wallets without intermediaries.
             </p>
             <p className="mb-4">
               These innovations solve longstanding problems in freelancing: platform lock-in, unverifiable credentials, the "cold start" reputation problem, and payment processing friction. Aquads is not just building a marketplace—we're building the complete infrastructure for the future of decentralized work, combining professional reputation systems, blockchain verification, and seamless payment processing in one integrated platform.
