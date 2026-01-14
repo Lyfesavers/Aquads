@@ -590,42 +590,6 @@ const Whitepaper = () => {
               </ul>
             </div>
 
-            <h3 className="text-xl font-semibold mb-3">Technical Architecture</h3>
-            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-3 text-indigo-400">Backend Infrastructure</h4>
-              <ul className="list-disc pl-6 text-gray-400 space-y-1">
-                <li><strong>RESTful API:</strong> Public endpoints for fetching payment page data (no authentication required for viewing)</li>
-                <li><strong>Payment Recording:</strong> Secure endpoint for recording completed transactions with validation</li>
-                <li><strong>Solana RPC Proxy:</strong> Backend proxy service to avoid CORS issues and rate limits when interacting with Solana network</li>
-                <li><strong>Real-Time Updates:</strong> WebSocket integration for instant payment notifications</li>
-                <li><strong>Database Schema:</strong> MongoDB storage for user payment settings, history, and statistics</li>
-              </ul>
-            </div>
-
-            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-3 text-teal-400">Frontend Implementation</h4>
-              <ul className="list-disc pl-6 text-gray-400 space-y-1">
-                <li><strong>React-Based UI:</strong> Modern, responsive payment interface</li>
-                <li><strong>Ethers.js Integration:</strong> For EVM chain interactions (Ethereum, Base, Polygon, Arbitrum, BNB)</li>
-                <li><strong>Solana Web3.js:</strong> For Solana blockchain transactions</li>
-                <li><strong>WalletConnect SDK:</strong> For multi-wallet support on EVM chains</li>
-                <li><strong>Proxied Connection Class:</strong> Custom Solana connection handler using backend proxy</li>
-                <li><strong>Token Price Integration:</strong> CoinGecko API for real-time price data</li>
-              </ul>
-            </div>
-
-            <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="text-lg font-semibold mb-3 text-amber-400">Security Features</h4>
-              <ul className="list-disc pl-6 text-gray-400 space-y-1">
-                <li><strong>No Private Key Storage:</strong> All transactions are signed client-side using user wallets</li>
-                <li><strong>Input Validation:</strong> Server-side validation of all payment data</li>
-                <li><strong>Address Verification:</strong> Validation of wallet addresses before payment processing</li>
-                <li><strong>Transaction Confirmation:</strong> Automatic confirmation polling for Solana transactions</li>
-                <li><strong>Error Handling:</strong> Comprehensive error messages and fallback mechanisms</li>
-                <li><strong>Rate Limiting:</strong> Protection against abuse and spam</li>
-              </ul>
-            </div>
-
             <h3 className="text-xl font-semibold mb-3">Use Cases & Applications</h3>
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-800/50 rounded-lg p-4">
@@ -734,9 +698,6 @@ const Whitepaper = () => {
               <li><strong>Additional Chains:</strong> Support for more blockchain networks (Avalanche, Optimism, etc.)</li>
               <li><strong>Token Swaps:</strong> Automatic token conversion for cross-token payments</li>
               <li><strong>Payment Analytics Dashboard:</strong> Advanced analytics and reporting tools</li>
-              <li><strong>API Access:</strong> Public API for developers to integrate AquaPay into their applications</li>
-              <li><strong>Webhook Support:</strong> Real-time webhooks for payment events</li>
-              <li><strong>Mobile Apps:</strong> Native mobile applications for iOS and Android</li>
             </ul>
 
             <h3 className="text-xl font-semibold mb-3">Why AquaPay Matters</h3>
@@ -768,7 +729,7 @@ const Whitepaper = () => {
 
             <h3 className="text-xl font-semibold mb-3">5.2. AquaSwap Trading Fees</h3>
             <ul className="list-disc pl-6 mb-4">
-              <li>0.25% fee on all token swaps and trading activities within the AquaSwap platform.</li>
+              <li>0.5% fee on all token swaps and trading activities within the AquaSwap platform.</li>
               <li>Revenue generated from DeFi trading activities and cross-chain token exchanges.</li>
             </ul>
 
