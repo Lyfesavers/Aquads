@@ -1850,6 +1850,42 @@ function App() {
   }, [showUserDropdown]);
 
   // Set up event listeners for dashboard opening from notifications
+  // Separate effect to handle URL parameter for opening dashboard (runs on location change)
+  const location = useLocation();
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const openDashboardTab = searchParams.get('openDashboard');
+    
+    if (openDashboardTab) {
+      if (currentUser) {
+        // User is logged in, open dashboard immediately
+        setDashboardActiveTab(openDashboardTab);
+        setShowDashboard(true);
+        // Clean up the URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        // User not logged in, store the tab to open after login
+        localStorage.setItem('aquads_pending_dashboard_tab', openDashboardTab);
+        // Clean up the URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [location.search, currentUser]);
+
+  // Effect to open dashboard after login if there was a pending tab
+  useEffect(() => {
+    if (currentUser) {
+      const pendingTab = localStorage.getItem('aquads_pending_dashboard_tab');
+      if (pendingTab) {
+        setDashboardActiveTab(pendingTab);
+        setShowDashboard(true);
+        localStorage.removeItem('aquads_pending_dashboard_tab');
+      }
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     // Define handler for opening dashboard with booking
     const handleOpenDashboardWithBooking = (event) => {
@@ -1912,16 +1948,6 @@ function App() {
     
     // Check for localStorage flags on mount
     checkLocalStorage();
-    
-    // Check for URL query parameter to open dashboard
-    const urlParams = new URLSearchParams(window.location.search);
-    const openDashboardTab = urlParams.get('openDashboard');
-    if (openDashboardTab && currentUser) {
-      setDashboardActiveTab(openDashboardTab);
-      setShowDashboard(true);
-      // Clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
     
     // Return cleanup function
     return () => {
