@@ -161,6 +161,13 @@ const Footer = () => {
                   <FaTelegram className="mr-2" />
                   <span>Telegram Bot</span>
                 </Link>
+                <Link
+                  to="/aquapay"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaCoins className="mr-2" />
+                  <span>AquaPay</span>
+                </Link>
               </div>
             </div>
 

@@ -77,6 +77,7 @@ import TelegramBot from './components/TelegramBot';
 import PublicResume from './components/PublicResume';
 import LandingPage from './components/LandingPage';
 import AquaPayPage from './components/AquaPayPage';
+import AquaPayInfo from './components/AquaPayInfo';
 
 window.Buffer = Buffer;
 
@@ -3384,6 +3385,7 @@ function App() {
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
             <Route path="/telegram-bot" element={<TelegramBot />} />
+            <Route path="/aquapay" element={<AquaPayInfo />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
