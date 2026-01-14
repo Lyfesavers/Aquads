@@ -301,6 +301,35 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
   return null;
 };
 
+// Handle URL parameters for opening dashboard with specific tab
+const DashboardTabHandler = ({ currentUser, setShowDashboard, setDashboardActiveTab }) => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const openDashboardTab = searchParams.get('openDashboard');
+    
+    if (openDashboardTab) {
+      if (currentUser) {
+        // User is logged in, open dashboard immediately
+        setDashboardActiveTab(openDashboardTab);
+        setShowDashboard(true);
+        // Clean up the URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        // User not logged in, store the tab to open after login
+        localStorage.setItem('aquads_pending_dashboard_tab', openDashboardTab);
+        // Clean up the URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [location.search, currentUser, setShowDashboard, setDashboardActiveTab]);
+  
+  return null;
+};
+
 // Component to handle bubble layout when navigating to home page from landing page
 const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   const location = useLocation();
@@ -1850,29 +1879,6 @@ function App() {
   }, [showUserDropdown]);
 
   // Set up event listeners for dashboard opening from notifications
-  // Separate effect to handle URL parameter for opening dashboard (runs on location change)
-  const location = useLocation();
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const openDashboardTab = searchParams.get('openDashboard');
-    
-    if (openDashboardTab) {
-      if (currentUser) {
-        // User is logged in, open dashboard immediately
-        setDashboardActiveTab(openDashboardTab);
-        setShowDashboard(true);
-        // Clean up the URL
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-      } else {
-        // User not logged in, store the tab to open after login
-        localStorage.setItem('aquads_pending_dashboard_tab', openDashboardTab);
-        // Clean up the URL
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-      }
-    }
-  }, [location.search, currentUser]);
 
   // Effect to open dashboard after login if there was a pending tab
   useEffect(() => {
@@ -2387,6 +2393,11 @@ function App() {
           currentUser={currentUser}
           setShowProfileModal={setShowProfileModal}
           setProfileModalInitialTab={setProfileModalInitialTab}
+        />
+        <DashboardTabHandler 
+          currentUser={currentUser}
+          setShowDashboard={setShowDashboard}
+          setDashboardActiveTab={setDashboardActiveTab}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <Routes>
