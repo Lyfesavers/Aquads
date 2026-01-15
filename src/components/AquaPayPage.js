@@ -306,8 +306,7 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }
         
-        // Use ethers.js for both WalletConnect and injected wallets
-        // WalletConnect provider works with ethers.js BrowserProvider
+        // Try standard ethers.js approach first (works with most wallets)
         let txHash;
         try {
           const provider = new ethers.BrowserProvider(ethProvider);
@@ -338,6 +337,23 @@ const AquaPayPage = ({ currentUser }) => {
           }
         } catch (txError) {
           console.error('Transaction failed:', txError);
+          
+          // Check if this is a known Trust Wallet + WalletConnect limitation
+          const isTrustWalletError = txError.message?.includes('Unknown method') || 
+                                    txError.message?.includes('5201') ||
+                                    txError.code === 'UNKNOWN_ERROR' ||
+                                    txError.message?.includes('could not coalesce');
+          
+          if (isTrustWalletError && wcProvider) {
+            throw new Error(
+              '⚠️ Trust Wallet via WalletConnect has known limitations with Base network transactions.\n\n' +
+              '✅ Solutions:\n' +
+              '1. Use MetaMask (click "Connect Wallet" → "Browser Wallet")\n' +
+              '2. Try a different wallet via WalletConnect\n' +
+              '3. Switch to Solana payments (works with all wallets)'
+            );
+          }
+          
           throw new Error('Transaction failed: ' + (txError.message || 'Unknown error. Please ensure your wallet is on Base network and try again.'));
         }
       } else if (selectedChain === 'solana') {
