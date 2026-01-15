@@ -7,11 +7,11 @@ const Footer = () => {
   const { isInstallable, isIOS, handleInstallClick } = usePWAInstall();
 
   return (
-    <footer className="bg-gray-800 text-gray-300 py-8 mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col space-y-6">
+    <footer className="bg-gray-800 text-gray-300 py-8 mt-auto overflow-visible">
+      <div className="container mx-auto px-4 overflow-visible">
+        <div className="flex flex-col space-y-6 overflow-visible">
           {/* Links organized in sections */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-center lg:text-left">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-center lg:text-left overflow-visible">
             {/* Social Media */}
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Social</h4>
@@ -116,9 +116,9 @@ const Footer = () => {
             </div>
 
             {/* Platform */}
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-visible">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Platform</h4>
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-visible">
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
