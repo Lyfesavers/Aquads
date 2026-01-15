@@ -1757,7 +1757,7 @@ const LandingPage = () => {
               Everything You Need
             </h2>
             <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
-              A complete ecosystem for Web3 projects and professionals
+              A complete ecosystem for Web3 projects and professionals tools.
             </p>
           </motion.div>
 
