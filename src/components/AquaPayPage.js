@@ -200,36 +200,24 @@ const AquaPayPage = ({ currentUser }) => {
   const connectWithWallet = async (walletId) => {
     setShowWalletModal(false); setConnecting(true); setTxError(null);
     try {
+      if (!selectedChain) {
+        throw new Error('Please select a network first');
+      }
       let accounts = [];
       const evmConfig = EVM_CHAINS[selectedChain];
+      if (!evmConfig) {
+        throw new Error('Invalid network selected');
+      }
       if (walletId === 'walletconnect') {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
         const provider = await EthereumProvider.init({
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
-          chains: [parseInt(evmConfig.chainId, 16)], 
-          showQrModal: true,
-          methods: [
-            'eth_sendTransaction',
-            'eth_signTransaction',
-            'eth_sign',
-            'personal_sign',
-            'eth_requestAccounts',
-            'eth_accounts',
-            'eth_chainId',
-            'wallet_switchEthereumChain',
-            'wallet_addEthereumChain'
-          ], 
-          events: ['chainChanged', 'accountsChanged'],
-          metadata: { 
-            name: 'AquaPay', 
-            description: 'Crypto payments', 
-            url: window.location.origin, 
-            icons: [`${window.location.origin}/logo192.png`] 
-          }
+          chains: [parseInt(evmConfig.chainId, 16)], showQrModal: true,
+          methods: ['eth_sendTransaction', 'personal_sign'], events: ['chainChanged', 'accountsChanged'],
+          metadata: { name: 'AquaPay', description: 'Crypto payments', url: window.location.origin, icons: [`${window.location.origin}/logo192.png`] }
         });
         await provider.connect();
-        accounts = provider.accounts; 
-        setWcProvider(provider);
+        accounts = provider.accounts; setWcProvider(provider);
         provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
       } else {
         if (!window.ethereum) throw new Error('No wallet detected');
@@ -296,17 +284,30 @@ const AquaPayPage = ({ currentUser }) => {
         } else if (window.ethereum) {
           // For injected wallets, ensure chain is correct
           try {
-            await window.ethereum.request({ 
-              method: 'wallet_switchEthereumChain', 
-              params: [{ chainId: evmConfig.chainId }] 
-            });
-          } catch (e) {
-            if (e.code === 4902) {
-              await window.ethereum.request({ 
-                method: 'wallet_addEthereumChain', 
-                params: [evmConfig] 
-              });
+            const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+            if (currentChainId !== evmConfig.chainId) {
+              try {
+                await window.ethereum.request({ 
+                  method: 'wallet_switchEthereumChain', 
+                  params: [{ chainId: evmConfig.chainId }] 
+                });
+              } catch (e) {
+                if (e.code === 4902) {
+                  await window.ethereum.request({ 
+                    method: 'wallet_addEthereumChain', 
+                    params: [evmConfig] 
+                  });
+                } else if (e.code === 4001) {
+                  // User rejected the chain switch
+                  throw new Error('Please switch to ' + evmConfig.chainName + ' to continue');
+                } else {
+                  throw e;
+                }
+              }
             }
+          } catch (chainError) {
+            // If chain switching fails, still try to proceed (user might manually switch)
+            console.warn('Chain switch warning:', chainError);
           }
         }
         
