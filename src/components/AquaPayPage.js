@@ -333,26 +333,38 @@ const AquaPayPage = ({ currentUser }) => {
               } else {
                 // Native token transfer - convert to hex with 0x prefix
                 const valueBigInt = ethers.parseEther(amount);
-                // Ensure hex format with 0x prefix (ethers format)
-                const valueHex = ethers.hexlify(valueBigInt);
+                // Ensure hex format with 0x prefix
                 txParams = {
                   from: fromAddress,
                   to: recipientAddress,
-                  value: valueHex
+                  value: '0x' + valueBigInt.toString(16)
                 };
               }
               
-              // Get gas estimate and nonce
+              // Get gas estimate and nonce - ensure all are hex strings
               const [gasEstimate, nonce, gasPrice] = await Promise.all([
                 ethProvider.request({ method: 'eth_estimateGas', params: [txParams] }),
                 ethProvider.request({ method: 'eth_getTransactionCount', params: [fromAddress, 'pending'] }),
                 ethProvider.request({ method: 'eth_gasPrice' })
               ]);
               
-              // Add gas and nonce to transaction
-              txParams.gas = gasEstimate;
-              txParams.nonce = nonce;
-              txParams.gasPrice = gasPrice;
+              // Helper to ensure hex format with 0x prefix
+              const toHex = (value) => {
+                if (!value && value !== 0) return '0x0';
+                if (typeof value === 'string') {
+                  if (value.startsWith('0x')) return value.toLowerCase();
+                  // If it's a decimal string, convert it
+                  return '0x' + BigInt(value).toString(16);
+                }
+                // Handle number or bigint
+                const bigIntValue = typeof value === 'bigint' ? value : BigInt(value);
+                return '0x' + bigIntValue.toString(16);
+              };
+              
+              // Add gas and nonce to transaction - ensure all are hex strings
+              txParams.gas = toHex(gasEstimate);
+              txParams.nonce = toHex(nonce);
+              txParams.gasPrice = toHex(gasPrice);
               txParams.chainId = evmConfig.chainId;
               
               // Use eth_signTransaction if available, otherwise try eth_sendTransaction
