@@ -204,13 +204,41 @@ const AquaPayPage = ({ currentUser }) => {
       const evmConfig = EVM_CHAINS[selectedChain];
       if (walletId === 'walletconnect') {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
+        const baseChainId = parseInt(evmConfig.chainId, 16);
         const provider = await EthereumProvider.init({
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
-          chains: [parseInt(evmConfig.chainId, 16)], showQrModal: true,
-          methods: ['eth_sendTransaction', 'personal_sign'], events: ['chainChanged', 'accountsChanged'],
-          metadata: { name: 'AquaPay', description: 'Crypto payments', url: window.location.origin, icons: [`${window.location.origin}/logo192.png`] }
+          chains: [baseChainId], 
+          showQrModal: true,
+          methods: [
+            'eth_sendTransaction',
+            'eth_signTransaction', 
+            'eth_sendRawTransaction',
+            'personal_sign',
+            'eth_sign',
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+          ], 
+          events: ['chainChanged', 'accountsChanged'],
+          metadata: { 
+            name: 'AquaPay', 
+            description: 'Crypto payments', 
+            url: window.location.origin, 
+            icons: [`${window.location.origin}/logo192.png`] 
+          }
         });
         await provider.connect();
+        // Ensure we're on the correct chain after connection
+        try {
+          const currentChainId = await provider.request({ method: 'eth_chainId' });
+          if (currentChainId !== evmConfig.chainId) {
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: evmConfig.chainId }]
+            });
+          }
+        } catch (chainError) {
+          console.warn('Chain switch after WalletConnect connection:', chainError);
+        }
         accounts = provider.accounts; setWcProvider(provider);
         provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
       } else {
@@ -253,7 +281,24 @@ const AquaPayPage = ({ currentUser }) => {
         const ethProvider = wcProvider || window.ethereum;
         
         // Ensure wallet is on the correct chain before sending
-        if (ethProvider && evmConfig) {
+        // For WalletConnect, ensure chain is set correctly
+        if (wcProvider) {
+          try {
+            const currentChainId = await wcProvider.request({ method: 'eth_chainId' });
+            if (currentChainId !== evmConfig.chainId) {
+              await wcProvider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: evmConfig.chainId }]
+              });
+              // Wait a bit for chain switch to complete
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          } catch (chainError) {
+            if (chainError.code !== 4001) { // 4001 = user rejected
+              console.warn('WalletConnect chain switch issue:', chainError);
+            }
+          }
+        } else if (ethProvider && evmConfig) {
           try {
             const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
             if (currentChainId !== evmConfig.chainId) {
@@ -281,25 +326,82 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }
         
-        // Try ethers.js first, fallback to direct RPC if it fails (for Trust Wallet compatibility)
+        // For WalletConnect, use direct request method (better compatibility)
         let txHash;
-        try {
-          const provider = new ethers.BrowserProvider(ethProvider);
-          const signer = await provider.getSigner();
-          let tx;
-          if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-            const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
-            const decimals = await contract.decimals();
-            tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
-          } else {
-            tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+        if (wcProvider) {
+          // WalletConnect path - use direct request
+          try {
+            const fromAddress = walletAddress;
+            let txParams;
+            
+            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+              // For ERC20, encode the transfer function
+              const provider = new ethers.BrowserProvider(wcProvider);
+              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
+              const decimals = await contract.decimals();
+              const iface = new ethers.Interface(ERC20_ABI);
+              const data = iface.encodeFunctionData('transfer', [
+                recipientAddress,
+                ethers.parseUnits(amount, decimals)
+              ]);
+              
+              txParams = {
+                from: fromAddress,
+                to: USDC_ADDRESSES[selectedChain],
+                data: data,
+                value: '0x0'
+              };
+            } else {
+              // Native token transfer
+              const valueBigInt = ethers.parseEther(amount);
+              txParams = {
+                from: fromAddress,
+                to: recipientAddress,
+                value: '0x' + valueBigInt.toString(16)
+              };
+            }
+            
+            // Send transaction through WalletConnect
+            txHash = await wcProvider.request({
+              method: 'eth_sendTransaction',
+              params: [txParams]
+            });
+            
+            setTxHash(txHash);
+            setTxStatus('pending');
+            
+            // Wait for transaction
+            const provider = new ethers.BrowserProvider(wcProvider);
+            const receipt = await provider.waitForTransaction(txHash);
+            if (receipt.status === 1) {
+              setTxStatus('success');
+              await recordPayment(txHash);
+            } else {
+              throw new Error('Transaction failed');
+            }
+          } catch (wcError) {
+            console.error('WalletConnect transaction failed:', wcError);
+            throw new Error('Transaction failed: ' + (wcError.message || 'Unknown error. Please ensure your wallet is on Base network and try again.'));
           }
-          txHash = tx.hash;
-          setTxHash(txHash);
-          const receipt = await tx.wait();
-          if (receipt.status === 1) { setTxStatus('success'); await recordPayment(txHash); }
-          else throw new Error('Transaction failed');
-        } catch (ethersError) {
+        } else {
+          // Standard injected wallet path - try ethers.js first
+          try {
+            const provider = new ethers.BrowserProvider(ethProvider);
+            const signer = await provider.getSigner();
+            let tx;
+            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
+              const decimals = await contract.decimals();
+              tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
+            } else {
+              tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+            }
+            txHash = tx.hash;
+            setTxHash(txHash);
+            const receipt = await tx.wait();
+            if (receipt.status === 1) { setTxStatus('success'); await recordPayment(txHash); }
+            else throw new Error('Transaction failed');
+          } catch (ethersError) {
           // If ethers.js fails with "Unknown method" error, use sign + sendRawTransaction (for Trust Wallet)
           if (ethersError.message?.includes('Unknown method') || 
               ethersError.message?.includes('5201') || 
@@ -367,43 +469,31 @@ const AquaPayPage = ({ currentUser }) => {
               txParams.gasPrice = toHex(gasPrice);
               txParams.chainId = evmConfig.chainId;
               
-              // Use ethers.js to sign, then broadcast via public RPC (Trust Wallet compatibility)
+              // For Trust Wallet compatibility, try direct provider request with minimal transaction
+              // Trust Wallet may not support eth_signTransaction, so we'll try the simplest approach
               try {
-                // Build transaction request using proper types
-                const txRequest = {
-                  to: txParams.to,
-                  value: BigInt(txParams.value),
-                  data: txParams.data || '0x',
-                  gasLimit: BigInt(txParams.gas),
-                  gasPrice: BigInt(txParams.gasPrice),
-                  nonce: parseInt(txParams.nonce, 16),
-                  chainId: parseInt(txParams.chainId, 16)
-                };
-                
-                // Sign transaction using ethers signer (this will prompt wallet UI)
-                const signedTx = await signer.signTransaction(txRequest);
-                
-                // Broadcast via public RPC endpoint (bypass wallet provider)
-                const rpcUrl = evmConfig.rpcUrls[0];
-                const response = await fetch(rpcUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'eth_sendRawTransaction',
-                    params: [signedTx],
-                    id: 1
-                  })
+                // Try direct sendTransaction with minimal params (some wallets work better this way)
+                txHash = await ethProvider.request({
+                  method: 'eth_sendTransaction',
+                  params: [{
+                    from: txParams.from,
+                    to: txParams.to,
+                    value: txParams.value,
+                    data: txParams.data || undefined,
+                    gas: txParams.gas,
+                    gasPrice: txParams.gasPrice
+                    // Don't include nonce or chainId - let wallet handle it
+                  }]
                 });
-                
-                const result = await response.json();
-                if (result.error) {
-                  throw new Error(result.error.message || 'Transaction failed');
+              } catch (directError) {
+                console.error('Direct sendTransaction failed:', directError);
+                // If direct method fails, provide helpful error message
+                if (directError.message?.includes('Unknown method') || 
+                    directError.code === 5201 ||
+                    directError.code === 'UNKNOWN_ERROR') {
+                  throw new Error('Your wallet does not support sending transactions on Base network. Please try using WalletConnect (supports 300+ wallets) or MetaMask. Click "Connect Wallet" and select WalletConnect for better compatibility.');
                 }
-                txHash = result.result;
-              } catch (signError) {
-                console.error('Sign and broadcast failed:', signError);
-                throw new Error('Transaction signing failed: ' + (signError.message || 'Unknown error'));
+                throw directError;
               }
               
               setTxHash(txHash);
@@ -425,6 +515,7 @@ const AquaPayPage = ({ currentUser }) => {
             // Re-throw if it's a different error
             throw ethersError;
           }
+        }
         }
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
