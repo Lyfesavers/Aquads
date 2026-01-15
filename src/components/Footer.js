@@ -19,9 +19,9 @@ const Footer = () => {
       <div className="container mx-auto px-4 overflow-visible">
         <div className="flex flex-col space-y-6 overflow-visible">
           {/* Links organized in sections */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-center lg:text-left overflow-visible">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center lg:text-left overflow-visible">
             {/* Social Media */}
-            <div className="relative">
+            <div className="relative" style={{ zIndex: openSections.social ? 99999 : 'auto' }}>
               <button
                 onClick={() => toggleSection('social')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -34,7 +34,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.social && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999 }}>
                 <a
                   href="https://x.com/_Aquads_"
                   target="_blank"
@@ -94,7 +94,7 @@ const Footer = () => {
             </div>
 
             {/* Resources */}
-            <div className="relative">
+            <div className="relative" style={{ zIndex: openSections.resources ? 99999 : 'auto' }}>
               <button
                 onClick={() => toggleSection('resources')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -107,7 +107,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.resources && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999 }}>
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -148,7 +148,7 @@ const Footer = () => {
             </div>
 
             {/* Platform */}
-            <div className="relative overflow-visible">
+            <div className="relative overflow-visible" style={{ zIndex: openSections.platform ? 99999 : 'auto' }}>
               <button
                 onClick={() => toggleSection('platform')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -161,7 +161,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.platform && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999 }}>
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -216,7 +216,7 @@ const Footer = () => {
             </div>
 
             {/* Legal */}
-            <div className="relative">
+            <div className="relative" style={{ zIndex: openSections.legal ? 99999 : 'auto' }}>
               <button
                 onClick={() => toggleSection('legal')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -229,7 +229,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.legal && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999 }}>
                 <Link
                   to="/terms"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -249,7 +249,7 @@ const Footer = () => {
             </div>
 
             {/* Mobile Apps */}
-            <div className="relative">
+            <div className="relative" style={{ zIndex: openSections.mobile ? 99999 : 'auto' }}>
               <button
                 onClick={() => toggleSection('mobile')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -262,7 +262,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.mobile && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999 }}>
                 {/* PWA Install Button - Only show on mobile when installable */}
                 {isInstallable && (
                   <button
