@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import usePWAInstall from '../hooks/usePWAInstall';
@@ -6,6 +6,15 @@ import usePWAInstall from '../hooks/usePWAInstall';
 const Footer = () => {
   const { isInstallable, isIOS, handleInstallClick } = usePWAInstall();
   const [openSections, setOpenSections] = useState({});
+  const sectionRefs = {
+    social: useRef(null),
+    resources: useRef(null),
+    platform: useRef(null),
+    legal: useRef(null),
+    mobile: useRef(null)
+  };
+
+  const [dropdownPositions, setDropdownPositions] = useState({});
 
   const toggleSection = (section) => {
     setOpenSections(prev => ({
@@ -14,14 +23,70 @@ const Footer = () => {
     }));
   };
 
+  // Calculate and update dropdown positions
+  useEffect(() => {
+    const updatePositions = () => {
+      const positions = {};
+      Object.keys(sectionRefs).forEach(section => {
+        const ref = sectionRefs[section]?.current;
+        if (ref && openSections[section]) {
+          const rect = ref.getBoundingClientRect();
+          const dropdownBottom = rect.top - 8;
+          const bottomPosition = window.innerHeight - dropdownBottom;
+          positions[section] = {
+            position: 'fixed',
+            bottom: bottomPosition,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 300000,
+          };
+        }
+      });
+      setDropdownPositions(positions);
+    };
+
+    // Small delay to ensure refs are ready
+    const timeoutId = setTimeout(updatePositions, 0);
+    window.addEventListener('resize', updatePositions);
+    window.addEventListener('scroll', updatePositions);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updatePositions);
+      window.removeEventListener('scroll', updatePositions);
+    };
+  }, [openSections]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const isClickInside = Object.values(sectionRefs).some(ref => 
+        ref.current && ref.current.contains(event.target)
+      );
+      if (!isClickInside && Object.values(openSections).some(Boolean)) {
+        setOpenSections({});
+      }
+    };
+
+    if (Object.values(openSections).some(Boolean)) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openSections]);
+
+  // Calculate dropdown position for fixed positioning
+  const getDropdownStyle = (section) => {
+    return dropdownPositions[section] || {};
+  };
+
   return (
-    <footer className="bg-gray-800 text-gray-300 py-8 mt-auto overflow-visible" style={{ position: 'relative', zIndex: 1000 }}>
-      <div className="container mx-auto px-4 overflow-visible" style={{ position: 'relative', zIndex: 1000 }}>
-        <div className="flex flex-col space-y-6 overflow-visible" style={{ position: 'relative', zIndex: 1000 }}>
+    <footer className="bg-gray-800 text-gray-300 py-8 mt-auto overflow-visible" style={{ position: 'relative', zIndex: 1 }}>
+      <div className="container mx-auto px-4 overflow-visible" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="flex flex-col space-y-6 overflow-visible" style={{ position: 'relative', zIndex: 1 }}>
           {/* Links organized in sections */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center lg:text-left overflow-visible" style={{ position: 'relative', isolation: 'isolate' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center lg:text-left overflow-visible" style={{ position: 'relative', zIndex: 1 }}>
             {/* Social Media */}
-            <div className="relative" style={{ zIndex: openSections.social ? 99999 : 1, position: 'relative' }}>
+            <div ref={sectionRefs.social} className="relative" style={{ zIndex: openSections.social ? 300000 : 1, position: 'relative' }}>
               <button
                 onClick={() => toggleSection('social')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -34,7 +99,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.social && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg max-h-64 overflow-y-auto" style={getDropdownStyle('social')}>
                 <a
                   href="https://x.com/_Aquads_"
                   target="_blank"
@@ -94,7 +159,7 @@ const Footer = () => {
             </div>
 
             {/* Resources */}
-            <div className="relative" style={{ zIndex: openSections.resources ? 99999 : 1, position: 'relative' }}>
+            <div ref={sectionRefs.resources} className="relative" style={{ zIndex: openSections.resources ? 300000 : 1, position: 'relative' }}>
               <button
                 onClick={() => toggleSection('resources')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -107,7 +172,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.resources && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg max-h-64 overflow-y-auto" style={getDropdownStyle('resources')}>
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -148,7 +213,7 @@ const Footer = () => {
             </div>
 
             {/* Platform */}
-            <div className="relative overflow-visible" style={{ zIndex: openSections.platform ? 99999 : 1, position: 'relative' }}>
+            <div ref={sectionRefs.platform} className="relative overflow-visible" style={{ zIndex: openSections.platform ? 300000 : 1, position: 'relative' }}>
               <button
                 onClick={() => toggleSection('platform')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -161,7 +226,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.platform && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg max-h-64 overflow-y-auto" style={getDropdownStyle('platform')}>
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -216,7 +281,7 @@ const Footer = () => {
             </div>
 
             {/* Legal */}
-            <div className="relative" style={{ zIndex: openSections.legal ? 99999 : 1, position: 'relative' }}>
+            <div ref={sectionRefs.legal} className="relative" style={{ zIndex: openSections.legal ? 300000 : 1, position: 'relative' }}>
               <button
                 onClick={() => toggleSection('legal')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -229,7 +294,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.legal && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg max-h-64 overflow-y-auto" style={getDropdownStyle('legal')}>
                 <Link
                   to="/terms"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -249,7 +314,7 @@ const Footer = () => {
             </div>
 
             {/* Mobile Apps */}
-            <div className="relative" style={{ zIndex: openSections.mobile ? 99999 : 1, position: 'relative' }}>
+            <div ref={sectionRefs.mobile} className="relative" style={{ zIndex: openSections.mobile ? 300000 : 1, position: 'relative' }}>
               <button
                 onClick={() => toggleSection('mobile')}
                 className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
@@ -262,7 +327,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.mobile && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[99999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg max-h-64 overflow-y-auto" style={getDropdownStyle('mobile')}>
                 {/* PWA Install Button - Only show on mobile when installable */}
                 {isInstallable && (
                   <button
