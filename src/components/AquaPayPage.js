@@ -300,63 +300,93 @@ const AquaPayPage = ({ currentUser }) => {
           if (receipt.status === 1) { setTxStatus('success'); await recordPayment(txHash); }
           else throw new Error('Transaction failed');
         } catch (ethersError) {
-          // If ethers.js fails with "Unknown method" error, use direct RPC call
+          // If ethers.js fails with "Unknown method" error, use sign + sendRawTransaction (for Trust Wallet)
           if (ethersError.message?.includes('Unknown method') || 
               ethersError.message?.includes('5201') || 
               ethersError.code === 'UNKNOWN_ERROR' ||
               ethersError.message?.includes('could not coalesce')) {
-            console.warn('Ethers.js failed, using direct RPC call:', ethersError);
+            console.warn('Ethers.js failed, using sign + sendRawTransaction:', ethersError);
             
-            // Get sender address
-            const accounts = await ethProvider.request({ method: 'eth_accounts' });
-            if (!accounts || accounts.length === 0) {
-              throw new Error('No accounts found');
-            }
-            const fromAddress = accounts[0];
-            
-            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-              // For ERC20, encode the transfer function
+            try {
               const provider = new ethers.BrowserProvider(ethProvider);
-              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
-              const decimals = await contract.decimals();
-              const iface = new ethers.Interface(ERC20_ABI);
-              const data = iface.encodeFunctionData('transfer', [
-                recipientAddress,
-                ethers.parseUnits(amount, decimals)
-              ]);
+              const signer = await provider.getSigner();
+              const fromAddress = await signer.getAddress();
               
-              txHash = await ethProvider.request({
-                method: 'eth_sendTransaction',
-                params: [{
+              // Build transaction parameters
+              let txParams;
+              if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+                // For ERC20, encode the transfer function
+                const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
+                const decimals = await contract.decimals();
+                const iface = new ethers.Interface(ERC20_ABI);
+                const data = iface.encodeFunctionData('transfer', [
+                  recipientAddress,
+                  ethers.parseUnits(amount, decimals)
+                ]);
+                
+                txParams = {
                   from: fromAddress,
                   to: USDC_ADDRESSES[selectedChain],
                   data: data,
                   value: '0x0'
-                }]
-              });
-            } else {
-              // Native token transfer
-              txHash = await ethProvider.request({
-                method: 'eth_sendTransaction',
-                params: [{
+                };
+              } else {
+                // Native token transfer
+                txParams = {
                   from: fromAddress,
                   to: recipientAddress,
                   value: ethers.parseEther(amount).toString()
-                }]
-              });
-            }
-            
-            setTxHash(txHash);
-            setTxStatus('pending');
-            
-            // Wait for transaction using ethers provider
-            const provider = new ethers.BrowserProvider(ethProvider);
-            const receipt = await provider.waitForTransaction(txHash);
-            if (receipt.status === 1) {
-              setTxStatus('success');
-              await recordPayment(txHash);
-            } else {
-              throw new Error('Transaction failed');
+                };
+              }
+              
+              // Get gas estimate and nonce
+              const [gasEstimate, nonce, gasPrice] = await Promise.all([
+                ethProvider.request({ method: 'eth_estimateGas', params: [txParams] }),
+                ethProvider.request({ method: 'eth_getTransactionCount', params: [fromAddress, 'pending'] }),
+                ethProvider.request({ method: 'eth_gasPrice' })
+              ]);
+              
+              // Add gas and nonce to transaction
+              txParams.gas = gasEstimate;
+              txParams.nonce = nonce;
+              txParams.gasPrice = gasPrice;
+              txParams.chainId = evmConfig.chainId;
+              
+              // Use eth_signTransaction if available, otherwise try eth_sendTransaction
+              try {
+                // Try eth_signTransaction first (wallet signs but doesn't send)
+                const signedTx = await ethProvider.request({
+                  method: 'eth_signTransaction',
+                  params: [txParams]
+                });
+                
+                // Send the signed raw transaction
+                txHash = await ethProvider.request({
+                  method: 'eth_sendRawTransaction',
+                  params: [signedTx.raw]
+                });
+              } catch (signError) {
+                // If eth_signTransaction not supported, try direct send (some wallets support this)
+                txHash = await ethProvider.request({
+                  method: 'eth_sendTransaction',
+                  params: [txParams]
+                });
+              }
+              
+              setTxHash(txHash);
+              setTxStatus('pending');
+              
+              // Wait for transaction using provider
+              const receipt = await provider.waitForTransaction(txHash);
+              if (receipt.status === 1) {
+                setTxStatus('success');
+                await recordPayment(txHash);
+              } else {
+                throw new Error('Transaction failed');
+              }
+            } catch (rawTxError) {
+              console.error('Raw transaction also failed:', rawTxError);
+              throw new Error('Transaction failed: ' + (rawTxError.message || 'Unknown error. Please try using a different wallet or ensure your wallet supports Base network.'));
             }
           } else {
             // Re-throw if it's a different error
