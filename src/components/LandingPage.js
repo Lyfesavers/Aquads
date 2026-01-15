@@ -75,10 +75,49 @@ const FeaturesCarousel = ({ features }) => {
   const carouselRef = useRef(null);
   const scrollRef = useRef(null);
   const autoScrollInterval = useRef(null);
-
+  const isProgrammaticScroll = useRef(false);
+  const lastScrollLeft = useRef(0);
+  const resumeTimeout = useRef(null);
 
   const handleScroll = (e) => {
     // Don't auto-select on scroll - let user interact manually
+    if (!scrollRef.current) return;
+    
+    const currentScrollLeft = scrollRef.current.scrollLeft;
+    
+    // If scroll is not programmatic, it's a user scroll
+    if (!isProgrammaticScroll.current) {
+      // Pause auto-scroll when user manually scrolls
+      setIsPaused(true);
+      
+      // Clear any existing resume timeout
+      if (resumeTimeout.current) {
+        clearTimeout(resumeTimeout.current);
+      }
+      
+      // Resume auto-scroll after 3 seconds of no manual scrolling
+      resumeTimeout.current = setTimeout(() => {
+        setIsPaused(false);
+      }, 3000);
+    }
+    
+    lastScrollLeft.current = currentScrollLeft;
+    isProgrammaticScroll.current = false;
+  };
+
+  // Handle touch events for mobile
+  const handleTouchStart = () => {
+    setIsPaused(true);
+    if (resumeTimeout.current) {
+      clearTimeout(resumeTimeout.current);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // Resume auto-scroll after 3 seconds of no touch interaction
+    resumeTimeout.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 3000);
   };
 
   // Auto-scroll functionality - pauses on hover
@@ -107,6 +146,8 @@ const FeaturesCarousel = ({ features }) => {
       const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 = 24px, gap-4 = 16px
       const targetScroll = currentIndex * (cardWidth + gap);
 
+      // Mark as programmatic scroll before scrolling
+      isProgrammaticScroll.current = true;
       scrollContainer.scrollTo({
         left: targetScroll,
         behavior: 'smooth'
@@ -128,6 +169,9 @@ const FeaturesCarousel = ({ features }) => {
       if (autoScrollInterval.current) {
         clearInterval(autoScrollInterval.current);
         autoScrollInterval.current = null;
+      }
+      if (resumeTimeout.current) {
+        clearTimeout(resumeTimeout.current);
       }
     };
   }, [features.length, isPaused]);
@@ -151,6 +195,8 @@ const FeaturesCarousel = ({ features }) => {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="flex gap-4 md:gap-6 overflow-x-auto overflow-y-visible pb-8 snap-x snap-mandatory scrollbar-hide w-full px-4 md:px-0"
           style={{
             scrollSnapType: 'x mandatory',
@@ -214,6 +260,15 @@ const FeaturesCarousel = ({ features }) => {
           <button
             key={index}
             onClick={() => {
+              // Pause auto-scroll when user clicks navigation dots
+              setIsPaused(true);
+              if (resumeTimeout.current) {
+                clearTimeout(resumeTimeout.current);
+              }
+              resumeTimeout.current = setTimeout(() => {
+                setIsPaused(false);
+              }, 3000);
+              
               const getCardWidth = () => {
                 const viewportWidth = window.innerWidth;
                 if (viewportWidth >= 1280) return viewportWidth * 0.30;
@@ -224,6 +279,7 @@ const FeaturesCarousel = ({ features }) => {
               };
               const cardWidth = getCardWidth();
               const gap = window.innerWidth >= 768 ? 24 : 16;
+              isProgrammaticScroll.current = true;
               scrollRef.current?.scrollTo({
                 left: index * (cardWidth + gap),
                 behavior: 'smooth'
