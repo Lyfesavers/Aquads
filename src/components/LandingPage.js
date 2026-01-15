@@ -231,7 +231,7 @@ const FeaturesCarousel = ({ features }) => {
       </div>
 
       {/* Navigation dots */}
-      <div className="flex justify-center gap-2 mt-1 mb-1">
+      <div className="flex justify-center gap-2 -mt-2 mb-1">
         {features.map((_, index) => (
           <button
             key={index}
@@ -789,7 +789,7 @@ const CarouselCard = ({ feature, index }) => {
   const colors = getGradientColors(feature.gradient);
 
   return (
-    <section className="relative w-full min-h-screen px-4 md:px-6 py-4 md:py-6 overflow-hidden">
+    <section className="relative w-full min-h-screen px-4 md:px-6 pt-4 md:pt-6 pb-0 overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
