@@ -331,11 +331,14 @@ const AquaPayPage = ({ currentUser }) => {
                   value: '0x0'
                 };
               } else {
-                // Native token transfer
+                // Native token transfer - convert to hex with 0x prefix
+                const valueBigInt = ethers.parseEther(amount);
+                // Ensure hex format with 0x prefix (ethers format)
+                const valueHex = ethers.hexlify(valueBigInt);
                 txParams = {
                   from: fromAddress,
                   to: recipientAddress,
-                  value: ethers.parseEther(amount).toString()
+                  value: valueHex
                 };
               }
               
