@@ -231,7 +231,7 @@ const FeaturesCarousel = ({ features }) => {
       </div>
 
       {/* Navigation dots */}
-      <div className="flex justify-center gap-2 mt-2 mb-2">
+      <div className="flex justify-center gap-2 mt-1 mb-1">
         {features.map((_, index) => (
           <button
             key={index}
@@ -789,7 +789,7 @@ const CarouselCard = ({ feature, index }) => {
   const colors = getGradientColors(feature.gradient);
 
   return (
-    <section className="relative w-full min-h-screen px-4 md:px-6 py-8 md:py-12 overflow-hidden">
+    <section className="relative w-full min-h-screen px-4 md:px-6 py-4 md:py-6 overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
@@ -822,10 +822,10 @@ const CarouselCard = ({ feature, index }) => {
           </div>
 
           {/* Content */}
-          <div className="relative p-4 md:p-8 flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+          <div className="relative p-3 md:p-6 flex flex-col lg:flex-row items-center gap-4 lg:gap-6">
             {/* Left content */}
             <div className="flex-1 text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start gap-3 mb-3">
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <span className="text-3xl md:text-4xl drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
                   {feature.icon}
                 </span>
@@ -834,7 +834,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
               </div>
               
-              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-4 max-w-xl mx-auto lg:mx-0">
+              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-3 max-w-xl mx-auto lg:mx-0">
                 {feature.description}
               </p>
               
@@ -1745,15 +1745,15 @@ const LandingPage = () => {
       </section>
 
       {/* Features Interactive Carousel */}
-      <section className="relative w-full py-4 md:py-8 overflow-hidden">
+      <section className="relative w-full py-2 md:py-4 overflow-hidden">
         <div className="w-full">
           <motion.div
-            className="text-center mb-2 md:mb-3 px-4"
+            className="text-center mb-1 md:mb-2 px-4"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-1 md:mb-2 font-display">
+            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-0.5 md:mb-1 font-display">
               Everything You Need
             </h2>
             <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
