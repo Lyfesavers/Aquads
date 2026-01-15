@@ -231,7 +231,7 @@ const FeaturesCarousel = ({ features }) => {
       </div>
 
       {/* Navigation dots */}
-      <div className="flex justify-center gap-2 -mt-30 mb-0">
+      <div className="flex justify-center gap-12 -mt-30 mb-0">
         {features.map((_, index) => (
           <button
             key={index}
