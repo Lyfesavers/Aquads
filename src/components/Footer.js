@@ -15,7 +15,7 @@ const Footer = () => {
             {/* Social Media */}
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Social</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="space-y-2">
                 <a
                   href="https://x.com/_Aquads_"
                   target="_blank"
@@ -76,7 +76,7 @@ const Footer = () => {
             {/* Resources */}
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Resources</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="space-y-2">
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -118,7 +118,7 @@ const Footer = () => {
             {/* Platform */}
             <div className="space-y-3 overflow-visible">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Platform</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 overflow-visible">
+              <div className="space-y-2 overflow-visible">
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -174,7 +174,7 @@ const Footer = () => {
             {/* Legal */}
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Legal</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="space-y-2">
                 <Link
                   to="/terms"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -195,7 +195,7 @@ const Footer = () => {
             {/* Mobile Apps */}
             <div className="space-y-3">
               <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Mobile Apps</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="space-y-2">
                 {/* PWA Install Button - Only show on mobile when installable */}
                 {isInstallable && (
                   <button
