@@ -306,196 +306,39 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }
         
-        // For WalletConnect, use direct request method (better compatibility)
+        // Use ethers.js for both WalletConnect and injected wallets
+        // WalletConnect provider works with ethers.js BrowserProvider
         let txHash;
-        if (wcProvider) {
-          // WalletConnect path - use direct request
-          try {
-            const fromAddress = walletAddress;
-            let txParams;
-            
-            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-              // For ERC20, encode the transfer function
-              const provider = new ethers.BrowserProvider(wcProvider);
-              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
-              const decimals = await contract.decimals();
-              const iface = new ethers.Interface(ERC20_ABI);
-              const data = iface.encodeFunctionData('transfer', [
-                recipientAddress,
-                ethers.parseUnits(amount, decimals)
-              ]);
-              
-              txParams = {
-                from: fromAddress,
-                to: USDC_ADDRESSES[selectedChain],
-                data: data,
-                value: '0x0'
-              };
-            } else {
-              // Native token transfer
-              const valueBigInt = ethers.parseEther(amount);
-              txParams = {
-                from: fromAddress,
-                to: recipientAddress,
-                value: '0x' + valueBigInt.toString(16)
-              };
-            }
-            
-            // Send transaction through WalletConnect
-            txHash = await wcProvider.request({
-              method: 'eth_sendTransaction',
-              params: [txParams]
-            });
-            
-            setTxHash(txHash);
-            setTxStatus('pending');
-            
-            // Wait for transaction
-            const provider = new ethers.BrowserProvider(wcProvider);
-            const receipt = await provider.waitForTransaction(txHash);
-            if (receipt.status === 1) {
-              setTxStatus('success');
-              await recordPayment(txHash);
-            } else {
-              throw new Error('Transaction failed');
-            }
-          } catch (wcError) {
-            console.error('WalletConnect transaction failed:', wcError);
-            throw new Error('Transaction failed: ' + (wcError.message || 'Unknown error. Please ensure your wallet is on Base network and try again.'));
-          }
-        } else {
-          // Standard injected wallet path - try ethers.js first
-          try {
-            const provider = new ethers.BrowserProvider(ethProvider);
-            const signer = await provider.getSigner();
-            let tx;
-            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
-              const decimals = await contract.decimals();
-              tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
-            } else {
-              tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
-            }
-            txHash = tx.hash;
-            setTxHash(txHash);
-            const receipt = await tx.wait();
-            if (receipt.status === 1) { setTxStatus('success'); await recordPayment(txHash); }
-            else throw new Error('Transaction failed');
-          } catch (ethersError) {
-          // If ethers.js fails with "Unknown method" error, use sign + sendRawTransaction (for Trust Wallet)
-          if (ethersError.message?.includes('Unknown method') || 
-              ethersError.message?.includes('5201') || 
-              ethersError.code === 'UNKNOWN_ERROR' ||
-              ethersError.message?.includes('could not coalesce')) {
-            console.warn('Ethers.js failed, using sign + sendRawTransaction:', ethersError);
-            
-            try {
-              const provider = new ethers.BrowserProvider(ethProvider);
-              const signer = await provider.getSigner();
-              const fromAddress = await signer.getAddress();
-              
-              // Build transaction parameters
-              let txParams;
-              if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-                // For ERC20, encode the transfer function
-                const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
-                const decimals = await contract.decimals();
-                const iface = new ethers.Interface(ERC20_ABI);
-                const data = iface.encodeFunctionData('transfer', [
-                  recipientAddress,
-                  ethers.parseUnits(amount, decimals)
-                ]);
-                
-                txParams = {
-                  from: fromAddress,
-                  to: USDC_ADDRESSES[selectedChain],
-                  data: data,
-                  value: '0x0'
-                };
-              } else {
-                // Native token transfer - convert to hex with 0x prefix
-                const valueBigInt = ethers.parseEther(amount);
-                // Ensure hex format with 0x prefix
-                txParams = {
-                  from: fromAddress,
-                  to: recipientAddress,
-                  value: '0x' + valueBigInt.toString(16)
-                };
-              }
-              
-              // Get gas estimate and nonce - ensure all are hex strings
-              const [gasEstimate, nonce, gasPrice] = await Promise.all([
-                ethProvider.request({ method: 'eth_estimateGas', params: [txParams] }),
-                ethProvider.request({ method: 'eth_getTransactionCount', params: [fromAddress, 'pending'] }),
-                ethProvider.request({ method: 'eth_gasPrice' })
-              ]);
-              
-              // Helper to ensure hex format with 0x prefix
-              const toHex = (value) => {
-                if (!value && value !== 0) return '0x0';
-                if (typeof value === 'string') {
-                  if (value.startsWith('0x')) return value.toLowerCase();
-                  // If it's a decimal string, convert it
-                  return '0x' + BigInt(value).toString(16);
-                }
-                // Handle number or bigint
-                const bigIntValue = typeof value === 'bigint' ? value : BigInt(value);
-                return '0x' + bigIntValue.toString(16);
-              };
-              
-              // Add gas and nonce to transaction - ensure all are hex strings
-              txParams.gas = toHex(gasEstimate);
-              txParams.nonce = toHex(nonce);
-              txParams.gasPrice = toHex(gasPrice);
-              txParams.chainId = evmConfig.chainId;
-              
-              // For Trust Wallet compatibility, try direct provider request with minimal transaction
-              // Trust Wallet may not support eth_signTransaction, so we'll try the simplest approach
-              try {
-                // Try direct sendTransaction with minimal params (some wallets work better this way)
-                txHash = await ethProvider.request({
-                  method: 'eth_sendTransaction',
-                  params: [{
-                    from: txParams.from,
-                    to: txParams.to,
-                    value: txParams.value,
-                    data: txParams.data || undefined,
-                    gas: txParams.gas,
-                    gasPrice: txParams.gasPrice
-                    // Don't include nonce or chainId - let wallet handle it
-                  }]
-                });
-              } catch (directError) {
-                console.error('Direct sendTransaction failed:', directError);
-                // If direct method fails, provide helpful error message
-                if (directError.message?.includes('Unknown method') || 
-                    directError.code === 5201 ||
-                    directError.code === 'UNKNOWN_ERROR') {
-                  throw new Error('Your wallet does not support sending transactions on Base network. Please try using WalletConnect (supports 300+ wallets) or MetaMask. Click "Connect Wallet" and select WalletConnect for better compatibility.');
-                }
-                throw directError;
-              }
-              
-              setTxHash(txHash);
-              setTxStatus('pending');
-              
-              // Wait for transaction using provider
-              const receipt = await provider.waitForTransaction(txHash);
-              if (receipt.status === 1) {
-                setTxStatus('success');
-                await recordPayment(txHash);
-              } else {
-                throw new Error('Transaction failed');
-              }
-            } catch (rawTxError) {
-              console.error('Raw transaction also failed:', rawTxError);
-              throw new Error('Transaction failed: ' + (rawTxError.message || 'Unknown error. Please try using a different wallet or ensure your wallet supports Base network.'));
-            }
+        try {
+          const provider = new ethers.BrowserProvider(ethProvider);
+          const signer = await provider.getSigner();
+          let tx;
+          
+          if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+            const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
+            const decimals = await contract.decimals();
+            tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
           } else {
-            // Re-throw if it's a different error
-            throw ethersError;
+            tx = await signer.sendTransaction({ 
+              to: recipientAddress, 
+              value: ethers.parseEther(amount) 
+            });
           }
-        }
+          
+          txHash = tx.hash;
+          setTxHash(txHash);
+          setTxStatus('pending');
+          
+          const receipt = await tx.wait();
+          if (receipt.status === 1) {
+            setTxStatus('success');
+            await recordPayment(txHash);
+          } else {
+            throw new Error('Transaction failed');
+          }
+        } catch (txError) {
+          console.error('Transaction failed:', txError);
+          throw new Error('Transaction failed: ' + (txError.message || 'Unknown error. Please ensure your wallet is on Base network and try again.'));
         }
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
