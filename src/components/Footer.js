@@ -34,7 +34,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.social && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
                 <a
                   href="https://x.com/_Aquads_"
                   target="_blank"
@@ -107,7 +107,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.resources && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -161,7 +161,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.platform && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -229,7 +229,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.legal && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
                 <Link
                   to="/terms"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -262,7 +262,7 @@ const Footer = () => {
                 )}
               </button>
               {openSections.mobile && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999] max-h-64 overflow-y-auto">
                 {/* PWA Install Button - Only show on mobile when installable */}
                 {isInstallable && (
                   <button
