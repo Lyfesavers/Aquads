@@ -206,12 +206,30 @@ const AquaPayPage = ({ currentUser }) => {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
         const provider = await EthereumProvider.init({
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
-          chains: [parseInt(evmConfig.chainId, 16)], showQrModal: true,
-          methods: ['eth_sendTransaction', 'personal_sign'], events: ['chainChanged', 'accountsChanged'],
-          metadata: { name: 'AquaPay', description: 'Crypto payments', url: window.location.origin, icons: [`${window.location.origin}/logo192.png`] }
+          chains: [parseInt(evmConfig.chainId, 16)], 
+          showQrModal: true,
+          methods: [
+            'eth_sendTransaction',
+            'eth_signTransaction',
+            'eth_sign',
+            'personal_sign',
+            'eth_requestAccounts',
+            'eth_accounts',
+            'eth_chainId',
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+          ], 
+          events: ['chainChanged', 'accountsChanged'],
+          metadata: { 
+            name: 'AquaPay', 
+            description: 'Crypto payments', 
+            url: window.location.origin, 
+            icons: [`${window.location.origin}/logo192.png`] 
+          }
         });
         await provider.connect();
-        accounts = provider.accounts; setWcProvider(provider);
+        accounts = provider.accounts; 
+        setWcProvider(provider);
         provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
       } else {
         if (!window.ethereum) throw new Error('No wallet detected');
@@ -245,20 +263,76 @@ const AquaPayPage = ({ currentUser }) => {
   const sendPayment = async () => {
     if (!amount || parseFloat(amount) <= 0) { setTxError('Enter a valid amount'); return; }
     if (!recipientAddress) { setTxError('Recipient not found'); return; }
+    if (!walletAddress) { setTxError('Wallet not connected'); return; }
     setSending(true); setTxError(null); setTxStatus('pending');
     
     try {
       if (CHAINS[selectedChain]?.isEVM) {
+        const evmConfig = EVM_CHAINS[selectedChain];
         const ethProvider = wcProvider || window.ethereum;
+        
+        // Ensure we're on the correct chain before sending
+        if (wcProvider) {
+          // For WalletConnect, check and switch chain if needed
+          try {
+            const currentChainId = await wcProvider.request({ method: 'eth_chainId' });
+            if (currentChainId !== evmConfig.chainId) {
+              await wcProvider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: evmConfig.chainId }]
+              });
+            }
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              // Chain not added, add it
+              await wcProvider.request({
+                method: 'wallet_addEthereumChain',
+                params: [evmConfig]
+              });
+            } else {
+              throw switchError;
+            }
+          }
+        } else if (window.ethereum) {
+          // For injected wallets, ensure chain is correct
+          try {
+            await window.ethereum.request({ 
+              method: 'wallet_switchEthereumChain', 
+              params: [{ chainId: evmConfig.chainId }] 
+            });
+          } catch (e) {
+            if (e.code === 4902) {
+              await window.ethereum.request({ 
+                method: 'wallet_addEthereumChain', 
+                params: [evmConfig] 
+              });
+            }
+          }
+        }
+        
         const provider = new ethers.BrowserProvider(ethProvider);
         const signer = await provider.getSigner();
+        
+        // Verify recipient address is valid and different from sender
+        const signerAddress = await signer.getAddress();
+        if (signerAddress.toLowerCase() === recipientAddress.toLowerCase()) {
+          throw new Error('Cannot send to your own address');
+        }
+        
+        if (!ethers.isAddress(recipientAddress)) {
+          throw new Error('Invalid recipient address');
+        }
+        
         let tx;
         if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
           const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
           const decimals = await contract.decimals();
           tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
         } else {
-          tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+          tx = await signer.sendTransaction({ 
+            to: recipientAddress, 
+            value: ethers.parseEther(amount) 
+          });
         }
         setTxHash(tx.hash);
         const receipt = await tx.wait();
