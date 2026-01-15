@@ -209,15 +209,7 @@ const AquaPayPage = ({ currentUser }) => {
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
           chains: [baseChainId], 
           showQrModal: true,
-          methods: [
-            'eth_sendTransaction',
-            'eth_signTransaction', 
-            'eth_sendRawTransaction',
-            'personal_sign',
-            'eth_sign',
-            'wallet_switchEthereumChain',
-            'wallet_addEthereumChain'
-          ], 
+          methods: ['eth_sendTransaction', 'personal_sign'],
           events: ['chainChanged', 'accountsChanged'],
           metadata: { 
             name: 'AquaPay', 
@@ -227,18 +219,6 @@ const AquaPayPage = ({ currentUser }) => {
           }
         });
         await provider.connect();
-        // Ensure we're on the correct chain after connection
-        try {
-          const currentChainId = await provider.request({ method: 'eth_chainId' });
-          if (currentChainId !== evmConfig.chainId) {
-            await provider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: evmConfig.chainId }]
-            });
-          }
-        } catch (chainError) {
-          console.warn('Chain switch after WalletConnect connection:', chainError);
-        }
         accounts = provider.accounts; setWcProvider(provider);
         provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
       } else {
