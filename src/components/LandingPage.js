@@ -129,13 +129,8 @@ const FeaturesCarousel = ({ features }) => {
     let startDelayTimeout = null;
 
     const getCardWidth = () => {
-      // Calculate card width based on viewport
-      const viewportWidth = window.innerWidth;
-      if (viewportWidth >= 1280) return viewportWidth * 0.30; // xl: 30vw
-      if (viewportWidth >= 1024) return viewportWidth * 0.35; // lg: 35vw
-      if (viewportWidth >= 768) return viewportWidth * 0.45;  // md: 45vw
-      if (viewportWidth >= 640) return viewportWidth * 0.70;  // sm: 70vw
-      return viewportWidth * 0.85; // default: 85vw
+      // Full viewport width for each card
+      return window.innerWidth;
     };
 
     const autoScroll = () => {
@@ -143,8 +138,7 @@ const FeaturesCarousel = ({ features }) => {
       
       currentIndex = (currentIndex + 1) % features.length;
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 = 24px, gap-4 = 16px
-      const targetScroll = currentIndex * (cardWidth + gap);
+      const targetScroll = currentIndex * cardWidth;
 
       // Mark as programmatic scroll before scrolling
       isProgrammaticScroll.current = true;
@@ -197,7 +191,7 @@ const FeaturesCarousel = ({ features }) => {
           onScroll={handleScroll}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="flex gap-4 md:gap-6 overflow-x-auto overflow-y-visible pb-8 snap-x snap-mandatory scrollbar-hide w-full px-4 md:px-0"
+          className="flex overflow-x-auto overflow-y-visible snap-x snap-mandatory scrollbar-hide w-full"
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
@@ -206,40 +200,10 @@ const FeaturesCarousel = ({ features }) => {
           }}
         >
           {features.map((feature, index) => {
-            // No auto-selection - all cards equal until user interacts
-            const isActive = activeIndex >= 0 && index === activeIndex;
-            const distance = activeIndex >= 0 ? Math.abs(index - activeIndex) : 0;
-            // All cards same scale - no zoom until user selects
-            const scale = activeIndex < 0 ? 0.95 : (distance === 0 ? 1.02 : 0.95);
-            const opacity = activeIndex < 0 ? 0.8 : (distance === 0 ? 1 : 0.8);
-            const rotateY = 0; // No tilt
-            const zIndex = 1;
-
             return (
-  <motion.div
+              <div
                 key={feature.title}
-                className="flex-shrink-0 w-[85vw] sm:w-[70vw] md:w-[45vw] lg:w-[35vw] xl:w-[30vw] snap-center"
-                style={{
-                  transformStyle: 'preserve-3d',
-                  zIndex
-                }}
-                animate={{
-                  scale,
-                  opacity,
-                  rotateY: 0, // No tilt
-                  y: 0 // No lift
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30
-                }}
-                whileHover={{
-                  scale: 1.03, // Subtle hover zoom
-                  y: -8, // Subtle hover lift
-                  rotateY: 0 // No tilt on hover
-                }}
-                onClick={() => setActiveIndex(index === activeIndex ? -1 : index)} // Toggle selection on click
+                className="flex-shrink-0 w-screen snap-center"
               >
                 {feature.link ? (
                   <Link to={feature.link} className="block h-full">
@@ -248,7 +212,7 @@ const FeaturesCarousel = ({ features }) => {
                 ) : (
                   <CarouselCard feature={feature} index={index} />
                 )}
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -269,19 +233,10 @@ const FeaturesCarousel = ({ features }) => {
                 setIsPaused(false);
               }, 3000);
               
-              const getCardWidth = () => {
-                const viewportWidth = window.innerWidth;
-                if (viewportWidth >= 1280) return viewportWidth * 0.30;
-                if (viewportWidth >= 1024) return viewportWidth * 0.35;
-                if (viewportWidth >= 768) return viewportWidth * 0.45;
-                if (viewportWidth >= 640) return viewportWidth * 0.70;
-                return viewportWidth * 0.85;
-              };
-              const cardWidth = getCardWidth();
-              const gap = window.innerWidth >= 768 ? 24 : 16;
+              const cardWidth = window.innerWidth;
               isProgrammaticScroll.current = true;
               scrollRef.current?.scrollTo({
-                left: index * (cardWidth + gap),
+                left: index * cardWidth,
                 behavior: 'smooth'
               });
               setActiveIndex(index);
@@ -822,96 +777,103 @@ const CarouselCard = ({ feature, index }) => {
   const colors = getGradientColors(feature.gradient);
 
   return (
-    <motion.div
-      className={`relative h-full min-h-[500px] md:min-h-[600px] rounded-3xl border border-white/10 bg-gradient-to-br ${colors.bgGradient} backdrop-blur-xl overflow-hidden group cursor-pointer`}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.7, delay: index * 0.1 }}
-    >
-      {/* Animated border glow */}
-      <div className="absolute inset-0 rounded-3xl opacity-50">
-        <div 
-          className="absolute inset-0 rounded-3xl animate-pulse" 
-          style={{ 
-            background: `linear-gradient(to right, transparent, ${colors.glowColor}, transparent)`,
-            maskImage: 'linear-gradient(black, transparent)'
-          }} 
-        />
-      </div>
-
+    <section className="relative w-full min-h-screen px-4 md:px-6 py-12 md:py-20 overflow-hidden">
       {/* Background glow effects */}
-      <div className="absolute inset-0 pointer-events-none opacity-30">
+      <div className="absolute inset-0 pointer-events-none">
         <div 
-          className="absolute top-1/2 left-1/4 w-64 h-64 rounded-full blur-3xl -translate-y-1/2" 
+          className="absolute top-1/2 left-1/4 w-96 h-96 rounded-full blur-3xl -translate-y-1/2" 
           style={{ backgroundColor: colors.glowBg }}
         />
         <div 
-          className="absolute top-1/2 right-1/4 w-64 h-64 rounded-full blur-3xl -translate-y-1/2" 
+          className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full blur-3xl -translate-y-1/2" 
           style={{ backgroundColor: colors.glowBg }}
         />
       </div>
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col p-6 md:p-8">
-        {/* Header with Icon and Title */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl md:text-5xl drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-            {feature.icon}
-          </span>
-          <h3 className="text-2xl md:text-3xl font-black text-white font-display">
-            {feature.title}
-          </h3>
-        </div>
-
-        {/* Description */}
-        <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 leading-relaxed flex-grow">
-          {feature.description}
-        </p>
-
-        {/* Feature Preview SVG - Show for all features */}
+      
+      <div className="max-w-6xl mx-auto relative">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          className={`relative rounded-3xl border border-white/10 bg-gradient-to-br ${colors.bgGradient} backdrop-blur-xl overflow-hidden group cursor-pointer`}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="mt-auto"
+          transition={{ duration: 0.7 }}
         >
-          <div className="relative bg-gray-900/50 rounded-2xl p-4 border border-white/20 shadow-2xl">
-            <FeaturePreviewSVG featureTitle={feature.title} />
+          {/* Animated border glow */}
+          <div className="absolute inset-0 rounded-3xl opacity-50">
+            <div 
+              className="absolute inset-0 rounded-3xl animate-pulse" 
+              style={{ 
+                background: `linear-gradient(to right, transparent, ${colors.glowColor}, transparent)`,
+                maskImage: 'linear-gradient(black, transparent)'
+              }} 
+            />
+          </div>
+
+          {/* Content */}
+          <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Left content */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+                <span className="text-4xl md:text-5xl drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+                  {feature.icon}
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display">
+                  {feature.title}
+                </h2>
+              </div>
+              
+              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl mx-auto lg:mx-0">
+                {feature.description}
+              </p>
+              
+              {feature.link && (
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to={feature.link}>
+                    <motion.button
+                      className={`w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r ${colors.buttonGradient} text-white font-bold text-sm md:text-base shadow-lg`}
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Explore {feature.title} →
+                    </motion.button>
+                  </Link>
+                </motion.div>
+              )}
+            </div>
+            
+            {/* Right visual - SVG mockup */}
+            <motion.div
+              className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+              initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <div className="relative">
+                {/* Glow behind card */}
+                <div 
+                  className="absolute inset-0 rounded-2xl blur-2xl scale-110" 
+                  style={{ 
+                    background: `linear-gradient(to bottom right, ${colors.glowBg.replace('0.2', '0.3')}, ${colors.glowBg.replace('0.2', '0.3')})`
+                  }}
+                />
+                
+                {/* Mockup card */}
+                <div className="relative bg-gray-900 rounded-2xl p-4 border border-white/20 shadow-2xl">
+                  <FeaturePreviewSVG featureTitle={feature.title} />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
-
-        {/* CTA Button */}
-        {feature.link && (
-          <motion.div
-            className="mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5 }}
-          >
-            <motion.button
-              className={`w-full px-6 py-3 rounded-xl bg-gradient-to-r ${colors.buttonGradient} text-white font-bold text-sm md:text-base shadow-lg`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Explore {feature.title} →
-            </motion.button>
-          </motion.div>
-        )}
       </div>
-
-      {/* Hover glow effect */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-        <div 
-          className="absolute inset-0 blur-xl" 
-          style={{ 
-            background: `linear-gradient(to bottom right, ${colors.glowBg.replace('0.2', '0.1')}, ${colors.glowBg.replace('0.2', '0.05')})`
-          }}
-        />
-      </div>
-    </motion.div>
+    </section>
   );
 };
 
