@@ -84,6 +84,11 @@ const FeaturesCarousel = ({ features }) => {
     if (!scrollRef.current) return;
     
     const currentScrollLeft = scrollRef.current.scrollLeft;
+    const cardWidth = window.innerWidth;
+    const currentIndex = Math.round(currentScrollLeft / cardWidth);
+    
+    // Update active index based on scroll position
+    setActiveIndex(currentIndex);
     
     // If scroll is not programmatic, it's a user scroll
     if (!isProgrammaticScroll.current) {
@@ -125,7 +130,6 @@ const FeaturesCarousel = ({ features }) => {
     if (!scrollRef.current) return;
 
     const scrollContainer = scrollRef.current;
-    let currentIndex = 0;
     let startDelayTimeout = null;
 
     const getCardWidth = () => {
@@ -133,12 +137,20 @@ const FeaturesCarousel = ({ features }) => {
       return window.innerWidth;
     };
 
+    const getCurrentIndex = () => {
+      // Calculate current index based on scroll position
+      const scrollLeft = scrollContainer.scrollLeft;
+      const cardWidth = getCardWidth();
+      return Math.round(scrollLeft / cardWidth);
+    };
+
     const autoScroll = () => {
       if (isPaused || !scrollContainer) return;
       
-      currentIndex = (currentIndex + 1) % features.length;
+      const currentIndex = getCurrentIndex();
+      const nextIndex = (currentIndex + 1) % features.length;
       const cardWidth = getCardWidth();
-      const targetScroll = currentIndex * cardWidth;
+      const targetScroll = nextIndex * cardWidth;
 
       // Mark as programmatic scroll before scrolling
       isProgrammaticScroll.current = true;
@@ -153,7 +165,7 @@ const FeaturesCarousel = ({ features }) => {
       // Start first scroll immediately
       autoScroll();
       // Then continue with interval - reduced for smoother flow
-      autoScrollInterval.current = setInterval(autoScroll, 2000); // Scroll every 2 seconds
+      autoScrollInterval.current = setInterval(autoScroll, 3000); // Scroll every 3 seconds
     }, 1500);
 
     return () => {
@@ -219,7 +231,7 @@ const FeaturesCarousel = ({ features }) => {
       </div>
 
       {/* Navigation dots */}
-      <div className="flex justify-center gap-2 mt-4">
+      <div className="flex justify-center gap-2 mt-2 mb-2">
         {features.map((_, index) => (
           <button
             key={index}
@@ -1736,7 +1748,7 @@ const LandingPage = () => {
       <section className="relative w-full py-4 md:py-8 overflow-hidden">
         <div className="w-full">
           <motion.div
-            className="text-center mb-4 md:mb-6 px-4"
+            className="text-center mb-2 md:mb-3 px-4"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
