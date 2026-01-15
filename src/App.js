@@ -3383,12 +3383,12 @@ function App() {
               </div>
 
               {/* Onboarding Section */}
-              <div className="relative z-10">
+              <div className="relative z-0">
                 <OnboardingSection calendlyUrl="https://calendly.com/aquads-info/15min" />
               </div>
 
               {/* Footer */}
-              <div className="relative z-0">
+              <div className="relative z-10">
                 <Footer />
               </div>
             </div>

@@ -50,7 +50,7 @@ const OnboardingSection = ({ calendlyUrl }) => {
       </div>
 
       {/* Content container - full width */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8">
+      <div className="relative z-0 w-full px-4 sm:px-6 lg:px-8">
         <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           
           {/* Main card - full width, thinner padding */}
