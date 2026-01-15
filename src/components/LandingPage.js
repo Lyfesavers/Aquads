@@ -188,7 +188,7 @@ const FeaturesCarousel = ({ features }) => {
 
   return (
     <div 
-      className="relative w-full"
+      className="relative w-full h-screen"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -230,8 +230,8 @@ const FeaturesCarousel = ({ features }) => {
         </div>
       </div>
 
-      {/* Navigation dots */}
-      <div className="flex justify-center gap-12 -mt-30 mb-0">
+      {/* Navigation dots - positioned absolutely to be right below cards */}
+      <div className="flex justify-center gap-5 absolute bottom-4 left-0 right-0 z-10">
         {features.map((_, index) => (
           <button
             key={index}
@@ -789,7 +789,7 @@ const CarouselCard = ({ feature, index }) => {
   const colors = getGradientColors(feature.gradient);
 
   return (
-    <section className="relative w-full min-h-screen px-4 md:px-6 pt-4 md:pt-6 pb-2 overflow-hidden">
+    <section className="relative w-full min-h-screen px-4 md:px-6 pt-4 md:pt-6 pb-0 overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
@@ -802,7 +802,7 @@ const CarouselCard = ({ feature, index }) => {
         />
       </div>
       
-      <div className="max-w-6xl mx-auto relative">
+      <div className="max-w-6xl mx-auto relative pb-0">
         <motion.div
           className={`relative rounded-3xl border border-white/10 bg-gradient-to-br ${colors.bgGradient} backdrop-blur-xl overflow-hidden group cursor-pointer`}
           initial={{ opacity: 0, y: 40 }}
