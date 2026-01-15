@@ -281,20 +281,88 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }
         
-        const provider = new ethers.BrowserProvider(ethProvider);
-        const signer = await provider.getSigner();
-        let tx;
-        if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
-          const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
-          const decimals = await contract.decimals();
-          tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
-        } else {
-          tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+        // Try ethers.js first, fallback to direct RPC if it fails (for Trust Wallet compatibility)
+        let txHash;
+        try {
+          const provider = new ethers.BrowserProvider(ethProvider);
+          const signer = await provider.getSigner();
+          let tx;
+          if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+            const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
+            const decimals = await contract.decimals();
+            tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
+          } else {
+            tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
+          }
+          txHash = tx.hash;
+          setTxHash(txHash);
+          const receipt = await tx.wait();
+          if (receipt.status === 1) { setTxStatus('success'); await recordPayment(txHash); }
+          else throw new Error('Transaction failed');
+        } catch (ethersError) {
+          // If ethers.js fails with "Unknown method" error, use direct RPC call
+          if (ethersError.message?.includes('Unknown method') || 
+              ethersError.message?.includes('5201') || 
+              ethersError.code === 'UNKNOWN_ERROR' ||
+              ethersError.message?.includes('could not coalesce')) {
+            console.warn('Ethers.js failed, using direct RPC call:', ethersError);
+            
+            // Get sender address
+            const accounts = await ethProvider.request({ method: 'eth_accounts' });
+            if (!accounts || accounts.length === 0) {
+              throw new Error('No accounts found');
+            }
+            const fromAddress = accounts[0];
+            
+            if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
+              // For ERC20, encode the transfer function
+              const provider = new ethers.BrowserProvider(ethProvider);
+              const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, provider);
+              const decimals = await contract.decimals();
+              const iface = new ethers.Interface(ERC20_ABI);
+              const data = iface.encodeFunctionData('transfer', [
+                recipientAddress,
+                ethers.parseUnits(amount, decimals)
+              ]);
+              
+              txHash = await ethProvider.request({
+                method: 'eth_sendTransaction',
+                params: [{
+                  from: fromAddress,
+                  to: USDC_ADDRESSES[selectedChain],
+                  data: data,
+                  value: '0x0'
+                }]
+              });
+            } else {
+              // Native token transfer
+              txHash = await ethProvider.request({
+                method: 'eth_sendTransaction',
+                params: [{
+                  from: fromAddress,
+                  to: recipientAddress,
+                  value: ethers.parseEther(amount).toString()
+                }]
+              });
+            }
+            
+            setTxHash(txHash);
+            setTxStatus('pending');
+            
+            // Wait for transaction using ethers provider
+            const provider = new ethers.BrowserProvider(ethProvider);
+            const receipt = await provider.waitForTransaction(txHash);
+            if (receipt.status === 1) {
+              setTxStatus('success');
+              await recordPayment(txHash);
+            } else {
+              throw new Error('Transaction failed');
+            }
+          } else {
+            // Re-throw if it's a different error
+            throw ethersError;
+          }
         }
-        setTxHash(tx.hash);
-        const receipt = await tx.wait();
-        if (receipt.status === 1) { setTxStatus('success'); await recordPayment(tx.hash); }
-        else throw new Error('Transaction failed');
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
         const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
