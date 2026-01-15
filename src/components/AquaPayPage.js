@@ -367,25 +367,43 @@ const AquaPayPage = ({ currentUser }) => {
               txParams.gasPrice = toHex(gasPrice);
               txParams.chainId = evmConfig.chainId;
               
-              // Use eth_signTransaction if available, otherwise try eth_sendTransaction
+              // Use ethers.js to sign, then broadcast via public RPC (Trust Wallet compatibility)
               try {
-                // Try eth_signTransaction first (wallet signs but doesn't send)
-                const signedTx = await ethProvider.request({
-                  method: 'eth_signTransaction',
-                  params: [txParams]
+                // Build transaction request using proper types
+                const txRequest = {
+                  to: txParams.to,
+                  value: BigInt(txParams.value),
+                  data: txParams.data || '0x',
+                  gasLimit: BigInt(txParams.gas),
+                  gasPrice: BigInt(txParams.gasPrice),
+                  nonce: parseInt(txParams.nonce, 16),
+                  chainId: parseInt(txParams.chainId, 16)
+                };
+                
+                // Sign transaction using ethers signer (this will prompt wallet UI)
+                const signedTx = await signer.signTransaction(txRequest);
+                
+                // Broadcast via public RPC endpoint (bypass wallet provider)
+                const rpcUrl = evmConfig.rpcUrls[0];
+                const response = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'eth_sendRawTransaction',
+                    params: [signedTx],
+                    id: 1
+                  })
                 });
                 
-                // Send the signed raw transaction
-                txHash = await ethProvider.request({
-                  method: 'eth_sendRawTransaction',
-                  params: [signedTx.raw]
-                });
+                const result = await response.json();
+                if (result.error) {
+                  throw new Error(result.error.message || 'Transaction failed');
+                }
+                txHash = result.result;
               } catch (signError) {
-                // If eth_signTransaction not supported, try direct send (some wallets support this)
-                txHash = await ethProvider.request({
-                  method: 'eth_sendTransaction',
-                  params: [txParams]
-                });
+                console.error('Sign and broadcast failed:', signError);
+                throw new Error('Transaction signing failed: ' + (signError.message || 'Unknown error'));
               }
               
               setTxHash(txHash);
