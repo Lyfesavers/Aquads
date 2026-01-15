@@ -200,14 +200,8 @@ const AquaPayPage = ({ currentUser }) => {
   const connectWithWallet = async (walletId) => {
     setShowWalletModal(false); setConnecting(true); setTxError(null);
     try {
-      if (!selectedChain) {
-        throw new Error('Please select a network first');
-      }
       let accounts = [];
       const evmConfig = EVM_CHAINS[selectedChain];
-      if (!evmConfig) {
-        throw new Error('Invalid network selected');
-      }
       if (walletId === 'walletconnect') {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
         const provider = await EthereumProvider.init({
@@ -251,7 +245,6 @@ const AquaPayPage = ({ currentUser }) => {
   const sendPayment = async () => {
     if (!amount || parseFloat(amount) <= 0) { setTxError('Enter a valid amount'); return; }
     if (!recipientAddress) { setTxError('Recipient not found'); return; }
-    if (!walletAddress) { setTxError('Wallet not connected'); return; }
     setSending(true); setTxError(null); setTxStatus('pending');
     
     try {
@@ -259,81 +252,44 @@ const AquaPayPage = ({ currentUser }) => {
         const evmConfig = EVM_CHAINS[selectedChain];
         const ethProvider = wcProvider || window.ethereum;
         
-        // Ensure we're on the correct chain before sending
-        if (wcProvider) {
-          // For WalletConnect, check and switch chain if needed
+        // Ensure wallet is on the correct chain before sending
+        if (ethProvider && evmConfig) {
           try {
-            const currentChainId = await wcProvider.request({ method: 'eth_chainId' });
-            if (currentChainId !== evmConfig.chainId) {
-              await wcProvider.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: evmConfig.chainId }]
-              });
-            }
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              // Chain not added, add it
-              await wcProvider.request({
-                method: 'wallet_addEthereumChain',
-                params: [evmConfig]
-              });
-            } else {
-              throw switchError;
-            }
-          }
-        } else if (window.ethereum) {
-          // For injected wallets, ensure chain is correct
-          try {
-            const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+            const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
             if (currentChainId !== evmConfig.chainId) {
               try {
-                await window.ethereum.request({ 
-                  method: 'wallet_switchEthereumChain', 
-                  params: [{ chainId: evmConfig.chainId }] 
+                await ethProvider.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: evmConfig.chainId }]
                 });
-              } catch (e) {
-                if (e.code === 4902) {
-                  await window.ethereum.request({ 
-                    method: 'wallet_addEthereumChain', 
-                    params: [evmConfig] 
+              } catch (switchError) {
+                if (switchError.code === 4902) {
+                  // Chain not added, add it
+                  await ethProvider.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [evmConfig]
                   });
-                } else if (e.code === 4001) {
-                  // User rejected the chain switch
-                  throw new Error('Please switch to ' + evmConfig.chainName + ' to continue');
-                } else {
-                  throw e;
+                } else if (switchError.code !== 4001) {
+                  // 4001 = user rejected, which is fine - they can manually switch
+                  throw switchError;
                 }
               }
             }
           } catch (chainError) {
-            // If chain switching fails, still try to proceed (user might manually switch)
-            console.warn('Chain switch warning:', chainError);
+            // Log but don't fail - user might manually switch
+            console.warn('Chain switch issue:', chainError);
           }
         }
         
         const provider = new ethers.BrowserProvider(ethProvider);
         const signer = await provider.getSigner();
-        
-        // Verify recipient address is valid and different from sender
-        const signerAddress = await signer.getAddress();
-        if (signerAddress.toLowerCase() === recipientAddress.toLowerCase()) {
-          throw new Error('Cannot send to your own address');
-        }
-        
-        if (!ethers.isAddress(recipientAddress)) {
-          throw new Error('Invalid recipient address');
-        }
-        
         let tx;
         if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
           const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
           const decimals = await contract.decimals();
           tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
         } else {
-          tx = await signer.sendTransaction({ 
-            to: recipientAddress, 
-            value: ethers.parseEther(amount) 
-          });
+          tx = await signer.sendTransaction({ to: recipientAddress, value: ethers.parseEther(amount) });
         }
         setTxHash(tx.hash);
         const receipt = await tx.wait();
