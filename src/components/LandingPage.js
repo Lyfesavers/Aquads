@@ -219,7 +219,7 @@ const FeaturesCarousel = ({ features }) => {
       </div>
 
       {/* Navigation dots */}
-      <div className="flex justify-center gap-2 mt-8">
+      <div className="flex justify-center gap-2 mt-4">
         {features.map((_, index) => (
           <button
             key={index}
@@ -777,7 +777,7 @@ const CarouselCard = ({ feature, index }) => {
   const colors = getGradientColors(feature.gradient);
 
   return (
-    <section className="relative w-full min-h-screen px-4 md:px-6 py-12 md:py-20 overflow-hidden">
+    <section className="relative w-full min-h-screen px-4 md:px-6 py-8 md:py-12 overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
@@ -810,19 +810,19 @@ const CarouselCard = ({ feature, index }) => {
           </div>
 
           {/* Content */}
-          <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+          <div className="relative p-4 md:p-8 flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
             {/* Left content */}
             <div className="flex-1 text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
-                <span className="text-4xl md:text-5xl drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-3">
+                <span className="text-3xl md:text-4xl drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
                   {feature.icon}
                 </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white font-display">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-display">
                   {feature.title}
                 </h2>
               </div>
               
-              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl mx-auto lg:mx-0">
+              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-4 max-w-xl mx-auto lg:mx-0">
                 {feature.description}
               </p>
               
@@ -1733,15 +1733,15 @@ const LandingPage = () => {
       </section>
 
       {/* Features Interactive Carousel */}
-      <section className="relative w-full py-12 md:py-20 overflow-hidden">
+      <section className="relative w-full py-4 md:py-8 overflow-hidden">
         <div className="w-full">
           <motion.div
-            className="text-center mb-8 md:mb-12 px-4"
+            className="text-center mb-4 md:mb-6 px-4"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-2 md:mb-3 font-display">
+            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-1 md:mb-2 font-display">
               Everything You Need
             </h2>
             <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
