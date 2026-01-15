@@ -284,9 +284,9 @@ const FeaturesCarousel = ({ features }) => {
 const FeaturePreviewSVG = ({ featureTitle }) => {
   const svgProps = {
     width: "100%",
-    height: "280",
+    height: "220",
     viewBox: "0 0 300 140",
-    className: "mt-4 opacity-90"
+    className: "opacity-90"
   };
 
   switch (featureTitle) {
@@ -294,33 +294,33 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
       return (
         <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
           {/* Trust Score Circle */}
-          <circle cx="120" cy="100" r="60" fill="none" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="6"/>
-          <circle cx="120" cy="100" r="60" fill="none" stroke="#10b981" strokeWidth="6" 
-            strokeDasharray={`${2 * Math.PI * 60 * 0.88} ${2 * Math.PI * 60}`} 
-            strokeDashoffset={2 * Math.PI * 60 * 0.12}
-            transform="rotate(-90 120 100)"/>
-          <text x="120" y="96" fontSize="36" fill="#10b981" textAnchor="middle" fontWeight="700">88</text>
-          <text x="120" y="124" fontSize="14" fill="#cbd5e1" textAnchor="middle">Trust Score</text>
+          <circle cx="60" cy="50" r="30" fill="none" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="3"/>
+          <circle cx="60" cy="50" r="30" fill="none" stroke="#10b981" strokeWidth="3" 
+            strokeDasharray={`${2 * Math.PI * 30 * 0.88} ${2 * Math.PI * 30}`} 
+            strokeDashoffset={2 * Math.PI * 30 * 0.12}
+            transform="rotate(-90 60 50)"/>
+          <text x="60" y="48" fontSize="20" fill="#10b981" textAnchor="middle" fontWeight="700">88</text>
+          <text x="60" y="62" fontSize="8" fill="#cbd5e1" textAnchor="middle">Trust Score</text>
           
           {/* Blockchain Badge */}
-          <rect x="220" y="50" width="160" height="40" rx="6" fill="rgba(59, 130, 246, 0.2)" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="2"/>
-          <text x="300" y="74" fontSize="16" fill="#3b82f6" textAnchor="middle" fontWeight="600">⛓️ Base Chain</text>
+          <rect x="110" y="25" width="80" height="20" rx="3" fill="rgba(59, 130, 246, 0.2)" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="1"/>
+          <text x="150" y="37" fontSize="9" fill="#3b82f6" textAnchor="middle" fontWeight="600">⛓️ Base Chain</text>
           
           {/* Skills Badges */}
-          <rect x="220" y="100" width="70" height="30" rx="4" fill="rgba(16, 185, 129, 0.2)"/>
-          <text x="255" y="120" fontSize="12" fill="#10b981" textAnchor="middle">React</text>
-          <rect x="300" y="100" width="70" height="30" rx="4" fill="rgba(16, 185, 129, 0.2)"/>
-          <text x="335" y="120" fontSize="12" fill="#10b981" textAnchor="middle">Web3</text>
-          <rect x="380" y="100" width="70" height="30" rx="4" fill="rgba(16, 185, 129, 0.2)"/>
-          <text x="415" y="120" fontSize="12" fill="#10b981" textAnchor="middle">Solidity</text>
+          <rect x="110" y="50" width="35" height="15" rx="2" fill="rgba(16, 185, 129, 0.2)"/>
+          <text x="127.5" y="60" fontSize="7" fill="#10b981" textAnchor="middle">React</text>
+          <rect x="150" y="50" width="35" height="15" rx="2" fill="rgba(16, 185, 129, 0.2)"/>
+          <text x="167.5" y="60" fontSize="7" fill="#10b981" textAnchor="middle">Web3</text>
+          <rect x="190" y="50" width="35" height="15" rx="2" fill="rgba(16, 185, 129, 0.2)"/>
+          <text x="207.5" y="60" fontSize="7" fill="#10b981" textAnchor="middle">Solidity</text>
           
           {/* Verification Status */}
-          <rect x="220" y="150" width="240" height="40" rx="6" fill="rgba(16, 185, 129, 0.2)" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="2"/>
-          <text x="340" y="174" fontSize="16" fill="#10b981" textAnchor="middle" fontWeight="600">✓ Verified On-Chain</text>
+          <rect x="110" y="75" width="120" height="20" rx="3" fill="rgba(16, 185, 129, 0.2)" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="1"/>
+          <text x="170" y="87" fontSize="9" fill="#10b981" textAnchor="middle" fontWeight="600">✓ Verified On-Chain</text>
           
           {/* EAS Badge */}
-          <rect x="220" y="200" width="240" height="50" rx="8" fill="rgba(59, 130, 246, 0.2)" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="3"/>
-          <text x="340" y="232" fontSize="18" fill="#3b82f6" textAnchor="middle" fontWeight="600">🔗 Ethereum Attestation</text>
+          <rect x="110" y="100" width="120" height="25" rx="4" fill="rgba(59, 130, 246, 0.2)" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="1.5"/>
+          <text x="170" y="116" fontSize="10" fill="#3b82f6" textAnchor="middle" fontWeight="600">🔗 Ethereum Attestation</text>
         </svg>
       );
 
@@ -328,38 +328,38 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
       return (
         <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
           {/* Telegram Chat Interface */}
-          <rect x="20" y="30" width="260" height="220" rx="16" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="3"/>
+          <rect x="10" y="15" width="130" height="110" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5"/>
           
           {/* Bot Message */}
-          <rect x="30" y="40" width="200" height="70" rx="12" fill="rgba(99, 102, 241, 0.3)" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="2"/>
-          <text x="40" y="64" fontSize="14" fill="#818cf8" fontWeight="600">🤖 Aquads Bot</text>
-          <text x="40" y="84" fontSize="12" fill="#cbd5e1">Twitter Raid Available!</text>
-          <text x="40" y="100" fontSize="12" fill="#a5b4fc">💰 20 points</text>
+          <rect x="15" y="20" width="100" height="35" rx="6" fill="rgba(99, 102, 241, 0.3)" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="1"/>
+          <text x="20" y="32" fontSize="7" fill="#818cf8" fontWeight="600">🤖 Aquads Bot</text>
+          <text x="20" y="42" fontSize="6" fill="#cbd5e1">Twitter Raid Available!</text>
+          <text x="20" y="50" fontSize="6" fill="#a5b4fc">💰 20 points</text>
           
           {/* User Command */}
-          <rect x="90" y="130" width="160" height="40" rx="12" fill="rgba(6, 182, 212, 0.3)" stroke="rgba(6, 182, 212, 0.5)" strokeWidth="2"/>
-          <text x="170" y="154" fontSize="14" fill="#06b6d4" textAnchor="middle" fontWeight="600">/raids</text>
+          <rect x="45" y="65" width="80" height="20" rx="6" fill="rgba(6, 182, 212, 0.3)" stroke="rgba(6, 182, 212, 0.5)" strokeWidth="1"/>
+          <text x="85" y="77" fontSize="7" fill="#06b6d4" textAnchor="middle" fontWeight="600">/raids</text>
           
           {/* Raid Actions */}
-          <rect x="30" y="190" width="50" height="24" rx="4" fill="rgba(236, 72, 153, 0.2)"/>
-          <text x="55" y="206" fontSize="10" fill="#ec4899" textAnchor="middle">❤️</text>
-          <rect x="90" y="190" width="50" height="24" rx="4" fill="rgba(34, 197, 94, 0.2)"/>
-          <text x="115" y="206" fontSize="10" fill="#22c55e" textAnchor="middle">🔄</text>
-          <rect x="150" y="190" width="50" height="24" rx="4" fill="rgba(59, 130, 246, 0.2)"/>
-          <text x="175" y="206" fontSize="10" fill="#3b82f6" textAnchor="middle">💬</text>
+          <rect x="15" y="95" width="25" height="12" rx="2" fill="rgba(236, 72, 153, 0.2)"/>
+          <text x="27.5" y="103" fontSize="5" fill="#ec4899" textAnchor="middle">❤️</text>
+          <rect x="45" y="95" width="25" height="12" rx="2" fill="rgba(34, 197, 94, 0.2)"/>
+          <text x="57.5" y="103" fontSize="5" fill="#22c55e" textAnchor="middle">🔄</text>
+          <rect x="75" y="95" width="25" height="12" rx="2" fill="rgba(59, 130, 246, 0.2)"/>
+          <text x="87.5" y="103" fontSize="5" fill="#3b82f6" textAnchor="middle">💬</text>
           
           {/* Points Display */}
-          <rect x="300" y="40" width="260" height="100" rx="12" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="3"/>
-          <text x="430" y="70" fontSize="16" fill="#818cf8" textAnchor="middle" fontWeight="600">Your Points</text>
-          <text x="430" y="100" fontSize="32" fill="#a5b4fc" textAnchor="middle" fontWeight="700">2,450</text>
-          <text x="430" y="124" fontSize="12" fill="#9ca3af" textAnchor="middle">+20 from raid</text>
+          <rect x="150" y="20" width="130" height="50" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5"/>
+          <text x="215" y="35" fontSize="8" fill="#818cf8" textAnchor="middle" fontWeight="600">Your Points</text>
+          <text x="215" y="50" fontSize="16" fill="#a5b4fc" textAnchor="middle" fontWeight="700">2,450</text>
+          <text x="215" y="62" fontSize="6" fill="#9ca3af" textAnchor="middle">+20 from raid</text>
           
           {/* Features List */}
-          <rect x="300" y="160" width="260" height="90" rx="12" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="2"/>
-          <text x="310" y="184" fontSize="12" fill="#cbd5e1">🐦 Twitter Raids</text>
-          <text x="310" y="206" fontSize="12" fill="#cbd5e1">📘 Facebook Raids</text>
-          <text x="310" y="228" fontSize="12" fill="#cbd5e1">🔮 Bubble Ranking</text>
-          <text x="310" y="250" fontSize="12" fill="#cbd5e1">🎨 Custom Branding</text>
+          <rect x="150" y="80" width="130" height="45" rx="6" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="1"/>
+          <text x="155" y="92" fontSize="6" fill="#cbd5e1">🐦 Twitter Raids</text>
+          <text x="155" y="103" fontSize="6" fill="#cbd5e1">📘 Facebook Raids</text>
+          <text x="155" y="114" fontSize="6" fill="#cbd5e1">🔮 Bubble Ranking</text>
+          <text x="155" y="125" fontSize="6" fill="#cbd5e1">🎨 Custom Branding</text>
         </svg>
       );
 
@@ -877,8 +877,8 @@ const CarouselCard = ({ feature, index }) => {
                 />
                 
                 {/* Mockup card */}
-                <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl overflow-hidden">
-                  <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: '66.67%' }}>
+                <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl overflow-hidden flex items-center justify-center">
+                  <div className="w-full flex items-center justify-center">
                     <FeaturePreviewSVG featureTitle={feature.title} />
                   </div>
                 </div>
