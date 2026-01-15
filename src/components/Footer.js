@@ -1,10 +1,18 @@
-import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import usePWAInstall from '../hooks/usePWAInstall';
 
 const Footer = () => {
   const { isInstallable, isIOS, handleInstallClick } = usePWAInstall();
+  const [openSections, setOpenSections] = useState({});
+
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   return (
     <footer className="bg-gray-800 text-gray-300 py-8 mt-auto overflow-visible">
@@ -13,9 +21,20 @@ const Footer = () => {
           {/* Links organized in sections */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-center lg:text-left overflow-visible">
             {/* Social Media */}
-            <div className="space-y-3">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Social</h4>
-              <div className="space-y-2">
+            <div className="relative">
+              <button
+                onClick={() => toggleSection('social')}
+                className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
+              >
+                <span>Social</span>
+                {openSections.social ? (
+                  <FaChevronUp className="text-xs" />
+                ) : (
+                  <FaChevronDown className="text-xs" />
+                )}
+              </button>
+              {openSections.social && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
                 <a
                   href="https://x.com/_Aquads_"
                   target="_blank"
@@ -70,13 +89,25 @@ const Footer = () => {
                   <FaFacebook className="mr-2" />
                   <span>Facebook</span>
                 </a>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Resources */}
-            <div className="space-y-3">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Resources</h4>
-              <div className="space-y-2">
+            <div className="relative">
+              <button
+                onClick={() => toggleSection('resources')}
+                className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
+              >
+                <span>Resources</span>
+                {openSections.resources ? (
+                  <FaChevronUp className="text-xs" />
+                ) : (
+                  <FaChevronDown className="text-xs" />
+                )}
+              </button>
+              {openSections.resources && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -112,13 +143,25 @@ const Footer = () => {
                   <FaEnvelope className="mr-2" />
                   <span>Contact</span>
                 </a>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Platform */}
-            <div className="space-y-3 overflow-visible">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Platform</h4>
-              <div className="space-y-2 overflow-visible">
+            <div className="relative overflow-visible">
+              <button
+                onClick={() => toggleSection('platform')}
+                className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
+              >
+                <span>Platform</span>
+                {openSections.platform ? (
+                  <FaChevronUp className="text-xs" />
+                ) : (
+                  <FaChevronDown className="text-xs" />
+                )}
+              </button>
+              {openSections.platform && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
                 <Link
                   to="/aquafi"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -168,13 +211,25 @@ const Footer = () => {
                   <FaCoins className="mr-2" />
                   <span>AquaPay</span>
                 </Link>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Legal */}
-            <div className="space-y-3">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Legal</h4>
-              <div className="space-y-2">
+            <div className="relative">
+              <button
+                onClick={() => toggleSection('legal')}
+                className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
+              >
+                <span>Legal</span>
+                {openSections.legal ? (
+                  <FaChevronUp className="text-xs" />
+                ) : (
+                  <FaChevronDown className="text-xs" />
+                )}
+              </button>
+              {openSections.legal && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
                 <Link
                   to="/terms"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
@@ -189,13 +244,25 @@ const Footer = () => {
                   <FaFileAlt className="mr-2" />
                   <span>Privacy Policy</span>
                 </Link>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Mobile Apps */}
-            <div className="space-y-3">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Mobile Apps</h4>
-              <div className="space-y-2">
+            <div className="relative">
+              <button
+                onClick={() => toggleSection('mobile')}
+                className="w-full flex items-center justify-between text-blue-400 font-semibold text-sm uppercase tracking-wide hover:text-blue-300 transition-colors mb-2"
+              >
+                <span>Mobile Apps</span>
+                {openSections.mobile ? (
+                  <FaChevronUp className="text-xs" />
+                ) : (
+                  <FaChevronDown className="text-xs" />
+                )}
+              </button>
+              {openSections.mobile && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-10 max-h-64 overflow-y-auto">
                 {/* PWA Install Button - Only show on mobile when installable */}
                 {isInstallable && (
                   <button
@@ -232,7 +299,8 @@ const Footer = () => {
                   <FaApple className="mr-2 text-blue-400" />
                   <span>App Store</span>
                 </div>
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
