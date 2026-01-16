@@ -217,7 +217,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen h-screen snap-center flex flex-col"
               >
-                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' ? (
+                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' && feature.title !== 'Marketing & PR' ? (
                   <Link to={feature.link} className="block h-full flex flex-col">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -679,31 +679,46 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
     case 'Marketing & PR':
       return (
         <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
-          {/* Media Logos */}
-          <rect x="20" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <text x="50" y="37" fontSize="8" fill="#ec4899" textAnchor="middle" fontWeight="700">Forbes</text>
+          {/* Main Package Card */}
+          <defs>
+            <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ec4899" stopOpacity="0.3"/>
+              <stop offset="100%" stopColor="#f472b6" stopOpacity="0.1"/>
+            </linearGradient>
+          </defs>
           
-          <rect x="90" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <text x="120" y="37" fontSize="7" fill="#ec4899" textAnchor="middle" fontWeight="700">Yahoo Finance</text>
+          {/* Package Card Background */}
+          <rect x="15" y="15" width="260" height="100" rx="8" fill="rgba(17, 24, 39, 0.8)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1.5"/>
+          <rect x="15" y="15" width="260" height="100" rx="8" fill="url(#pinkGrad)"/>
           
-          <rect x="160" y="20" width="60" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <text x="190" y="37" fontSize="8" fill="#ec4899" textAnchor="middle" fontWeight="700">Benzinga</text>
+          {/* Package Header */}
+          <rect x="20" y="20" width="250" height="30" rx="4" fill="rgba(236, 72, 153, 0.2)"/>
+          <text x="25" y="38" fontSize="11" fill="#f472b6" fontWeight="700">AquaFlow - Growth Package</text>
+          <text x="220" y="38" fontSize="9" fill="#ec4899" fontWeight="600">$2,754</text>
           
-          <rect x="230" y="20" width="50" height="25" rx="3" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <text x="255" y="37" fontSize="7" fill="#ec4899" textAnchor="middle" fontWeight="700">+72 More</text>
+          {/* Package Features */}
+          <circle cx="25" cy="60" r="3" fill="#ec4899"/>
+          <text x="32" y="63" fontSize="8" fill="#e5e7eb">9+ Media Pickups Guaranteed</text>
           
-          {/* Package Cards */}
-          <rect x="20" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
-          <text x="60" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaSplash</text>
-          <text x="60" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Starter</text>
+          <circle cx="25" cy="75" r="3" fill="#ec4899"/>
+          <text x="32" y="78" fontSize="8" fill="#e5e7eb">Cryptopolitan, CoinCodex, BraveNewCoin</text>
           
-          <rect x="110" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
-          <text x="150" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaWave</text>
-          <text x="150" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Premium</text>
+          <circle cx="25" cy="90" r="3" fill="#ec4899"/>
+          <text x="32" y="93" fontSize="8" fill="#e5e7eb">FREE SEO Optimizations</text>
           
-          <rect x="200" y="55" width="80" height="65" rx="4" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
-          <text x="240" y="72" fontSize="8" fill="#f472b6" textAnchor="middle" fontWeight="600">AquaStorm</text>
-          <text x="240" y="88" fontSize="7" fill="#cbd5e1" textAnchor="middle">Enterprise</text>
+          <circle cx="25" cy="105" r="3" fill="#ec4899"/>
+          <text x="32" y="108" fontSize="8" fill="#e5e7eb">24-72 Hour Distribution</text>
+          
+          {/* Media Outlets Badge */}
+          <rect x="180" y="60" width="85" height="45" rx="4" fill="rgba(236, 72, 153, 0.15)" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="1"/>
+          <text x="222.5" y="75" fontSize="7" fill="#9ca3af" textAnchor="middle">Coverage On</text>
+          <text x="222.5" y="88" fontSize="9" fill="#f472b6" textAnchor="middle" fontWeight="700">75+</text>
+          <text x="222.5" y="98" fontSize="7" fill="#ec4899" textAnchor="middle" fontWeight="600">Media Outlets</text>
+          
+          {/* Powered By Badge */}
+          <rect x="20" y="120" width="120" height="20" rx="3" fill="rgba(236, 72, 153, 0.2)"/>
+          <text x="25" y="133" fontSize="7" fill="#9ca3af">Powered by</text>
+          <text x="80" y="133" fontSize="8" fill="#f472b6" fontWeight="600">Coinbound/Mintfunnel</text>
         </svg>
       );
 
@@ -2903,6 +2918,190 @@ const CarouselCard = ({ feature, index }) => {
     );
   }
 
+  // Special design for Marketing & PR
+  if (feature.title === 'Marketing & PR') {
+    return (
+      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-pink-950/50 via-slate-900/90 to-rose-950/50 backdrop-blur-xl overflow-hidden flex-1 flex flex-col"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Animated border glow */}
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/0 via-rose-500/50 to-pink-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+            
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
+              {/* Left content */}
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="text-gradient-pink">Marketing & PR</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Press Release Distribution</span>
+                </h2>
+                
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.
+                </p>
+                
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: '📰', label: '7 Packages', value: 'From $99' },
+                    { icon: '🎯', label: '125+ Pickups', value: 'Guaranteed' },
+                    { icon: '🌐', label: '500M+ Reach', value: 'Audience' },
+                    { icon: '🔍', label: 'SEO Included', value: 'Free' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </div>
+                      <span className="text-pink-400 text-xs">{item.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to="/why-list">
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm md:text-base shadow-lg shadow-pink-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(236, 72, 153, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      📢 Get PR Coverage
+                    </motion.button>
+                  </Link>
+                  
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Choose package → Distribute → Get coverage</span>
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Right visual - Marketing Package mockup */}
+              <motion.div
+                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  {/* Glow behind card */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-rose-500/30 rounded-2xl blur-2xl scale-110" />
+                  
+                  {/* Mockup card */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
+                    {/* Package Header */}
+                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+                      <div>
+                        <div className="text-pink-400 font-bold text-lg mb-1">AquaFlow</div>
+                        <div className="text-gray-400 text-sm">Growth Package</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-gray-400 text-xs line-through">$2,899</div>
+                        <div className="text-pink-400 font-bold text-xl">$2,754</div>
+                      </div>
+                    </div>
+                    
+                    {/* Package Features */}
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-start gap-2">
+                        <span className="text-pink-400 mt-0.5">✓</span>
+                        <div>
+                          <div className="text-white text-sm font-semibold">9+ Media Pickups</div>
+                          <div className="text-gray-400 text-xs">Guaranteed coverage</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-pink-400 mt-0.5">✓</span>
+                        <div>
+                          <div className="text-white text-sm font-semibold">Tier-1 Crypto Sites</div>
+                          <div className="text-gray-400 text-xs">Cryptopolitan, CoinCodex, BraveNewCoin</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-pink-400 mt-0.5">✓</span>
+                        <div>
+                          <div className="text-white text-sm font-semibold">FREE SEO</div>
+                          <div className="text-gray-400 text-xs">Optimizations included</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-pink-400 mt-0.5">✓</span>
+                        <div>
+                          <div className="text-white text-sm font-semibold">24-72 Hours</div>
+                          <div className="text-gray-400 text-xs">Distribution time</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Media Outlets Badge */}
+                    <div className="bg-pink-500/20 border border-pink-500/40 rounded-xl p-4 mb-4 text-center">
+                      <div className="text-gray-400 text-xs mb-1">Coverage On</div>
+                      <div className="text-pink-400 font-bold text-2xl mb-1">75+</div>
+                      <div className="text-pink-300 text-xs font-semibold">Media Outlets</div>
+                    </div>
+                    
+                    {/* Powered By */}
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <div className="text-gray-400 text-xs mb-1">Powered by</div>
+                      <div className="text-pink-400 font-semibold text-sm">Coinbound/Mintfunnel</div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating badges */}
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ⚡ Popular
+                  </motion.div>
+                  <motion.div
+                    className="absolute -bottom-3 -left-3 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  >
+                    🔥 Trending
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
       {/* Background glow effects */}
@@ -3463,8 +3662,9 @@ const LandingPage = () => {
     {
       icon: '📢',
       title: 'Marketing & PR',
-      description: 'Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, Benzinga, and 75+ media outlets. AquaSplash, AquaRipple, AquaWave, AquaFlow, AquaStorm packages. SEO optimization included. Reach millions with professional PR campaigns.',
+      description: 'Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.',
       gradient: 'from-pink-900/40 to-slate-900/80',
+      link: '/why-list',
       size: 'wide'
     }
   ];
@@ -3542,6 +3742,13 @@ const LandingPage = () => {
         
         .text-gradient-green {
           background: linear-gradient(135deg, #22c55e 0%, #10b981 50%, #059669 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .text-gradient-pink {
+          background: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #db2777 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
