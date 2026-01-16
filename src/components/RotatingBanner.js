@@ -367,7 +367,7 @@ const ChromeExtensionBanner = () => {
 const OnChainResumeBanner = () => {
   return (
     <Link
-      to="/?tab=onchain"
+      to="/home?tab=onchain"
       className="block rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg h-full sm:no-underline"
       style={{
         background: 'linear-gradient(135deg, #5EEAD4, #2DD4BF, #99F6E4)',
@@ -449,7 +449,7 @@ const OnChainResumeBanner = () => {
         {/* Enhanced CTA button - Hidden on mobile */}
         <div className="relative hidden sm:block">
           <Link
-            to="/?tab=onchain"
+            to="/home?tab=onchain"
             className="relative px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
             style={{
               background: 'linear-gradient(to right, #0D9488, #0F766E)',

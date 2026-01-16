@@ -287,14 +287,21 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
     
-    // If tab=onchain is in URL and user is logged in as freelancer, open profile modal
-    if (tab === 'onchain' && currentUser && currentUser.userType === 'freelancer') {
-      setProfileModalInitialTab('onchain');
-      setShowProfileModal(true);
-      
-      // Clean up URL by removing the tab parameter
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
+    if (tab === 'onchain') {
+      if (currentUser && currentUser.userType === 'freelancer') {
+        // User is logged in as freelancer, open profile modal immediately
+        setProfileModalInitialTab('onchain');
+        setShowProfileModal(true);
+        // Clean up URL by removing the tab parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        // User not logged in or not a freelancer, store the tab to open after login
+        localStorage.setItem('aquads_pending_profile_tab', 'onchain');
+        // Clean up URL by removing the tab parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
     }
   }, [location.search, currentUser, setShowProfileModal, setProfileModalInitialTab]);
   
@@ -1888,6 +1895,14 @@ function App() {
         setDashboardActiveTab(pendingTab);
         setShowDashboard(true);
         localStorage.removeItem('aquads_pending_dashboard_tab');
+      }
+      
+      // Effect to open profile modal after login if there was a pending tab
+      const pendingProfileTab = localStorage.getItem('aquads_pending_profile_tab');
+      if (pendingProfileTab && currentUser.userType === 'freelancer') {
+        setProfileModalInitialTab(pendingProfileTab);
+        setShowProfileModal(true);
+        localStorage.removeItem('aquads_pending_profile_tab');
       }
     }
   }, [currentUser]);
