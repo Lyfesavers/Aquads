@@ -217,7 +217,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen h-screen snap-center flex flex-col"
               >
-                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' ? (
+                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' ? (
                   <Link to={feature.link} className="block h-full flex flex-col">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -945,6 +945,186 @@ const CarouselCard = ({ feature, index }) => {
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     🔵 Base
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // Special design for Freelancer Marketplace
+  if (feature.title === 'Freelancer Marketplace') {
+    return (
+      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-violet-950/50 via-slate-900/90 to-purple-950/50 backdrop-blur-xl overflow-hidden flex-1 flex flex-col"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Animated border glow */}
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-violet-500/0 via-purple-500/50 to-violet-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+            
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
+              {/* Left content */}
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="text-gradient-purple">Freelancer Marketplace</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Web3's Premier Talent Platform</span>
+                </h2>
+                
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Web3's premier talent marketplace. Complete booking system—get paid for your skills. Browse service listings, receive lead notifications, and connect directly with clients. No monthly fees, only pay for results.
+                </p>
+                
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: '⭐', label: 'Trust Score', value: 'AI-Powered' },
+                    { icon: '🤖', label: 'Job Matching', value: 'AI-Powered' },
+                    { icon: '📋', label: '30+ Categories', value: 'Web3 Focus' },
+                    { icon: '💰', label: 'No Monthly Fees', value: 'Pay for Results' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </div>
+                      <span className="text-purple-400 text-xs">{item.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to={feature.link}>
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold text-sm md:text-base shadow-lg shadow-violet-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(139, 92, 246, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      👥 Browse Freelancers
+                    </motion.button>
+                  </Link>
+                  
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Browse services → Book → Get paid in crypto</span>
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Right visual - Marketplace mockup */}
+              <motion.div
+                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  {/* Glow behind card */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-violet-500/30 to-purple-500/30 rounded-2xl blur-2xl scale-110" />
+                  
+                  {/* Mockup card */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
+                    {/* Service Card Header */}
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                        👥
+                      </div>
+                      <div>
+                        <div className="text-white font-bold">Smart Contract Dev</div>
+                        <div className="text-gray-400 text-sm">Web3 Developer</div>
+                      </div>
+                    </div>
+                    
+                    {/* Trust Score & Rating */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-white/5 rounded-xl p-3 text-center">
+                        <div className="text-gray-400 text-xs mb-1">Trust Score</div>
+                        <div className="text-2xl font-bold text-purple-400">92</div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-3 text-center">
+                        <div className="text-gray-400 text-xs mb-1">Rating</div>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-yellow-400">⭐</span>
+                          <span className="text-white font-bold">4.9</span>
+                          <span className="text-gray-400 text-xs">(120)</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Service Details */}
+                    <div className="bg-white/5 rounded-xl p-3 mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 text-xs">Price</span>
+                        <span className="text-white font-bold">0.5 ETH</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-xs">Delivery</span>
+                        <span className="text-purple-400 text-xs">7 Days</span>
+                      </div>
+                    </div>
+                    
+                    {/* Skills Badges */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {['Solidity', 'Web3', 'React'].map((skill, i) => (
+                        <div key={i} className="bg-violet-500/20 border border-violet-500/40 rounded-lg px-2 py-1">
+                          <div className="text-xs text-violet-400 font-semibold">{skill}</div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Book Button */}
+                    <div className="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-center py-3 rounded-xl font-bold text-sm">
+                      Book Service
+                    </div>
+                  </div>
+                  
+                  {/* Floating badges */}
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ✓ Verified
+                  </motion.div>
+                  <motion.div
+                    className="absolute -bottom-3 -left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  >
+                    🥇 Gold
                   </motion.div>
                 </div>
               </motion.div>
