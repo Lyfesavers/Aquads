@@ -207,9 +207,10 @@ const AquaPayPage = ({ currentUser }) => {
         const baseChainId = parseInt(evmConfig.chainId, 16);
         const provider = await EthereumProvider.init({
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
-          chains: [baseChainId], 
+          chains: [baseChainId],
           showQrModal: true,
-          methods: ['eth_sendTransaction', 'personal_sign'],
+          // Don't specify methods array - let WalletConnect use defaults (like SavingsPools)
+          // This works better with Trust Wallet and other wallets
           events: ['chainChanged', 'accountsChanged'],
           metadata: { 
             name: 'AquaPay', 
