@@ -5336,7 +5336,7 @@ Let's make today amazing! 🚀`;
     }
   },
 
-  // Award points for daily message (2.5 points, once per day)
+  // Award points for daily message (5 points, once per day)
   awardDailyMessagePoints: async (telegramUserId, groupId) => {
     try {
       const TelegramDailyEngagement = require('../models/TelegramDailyEngagement');
@@ -5365,8 +5365,8 @@ Let's make today amazing! 🚀`;
         return;
       }
 
-      // Award 2.5 points
-      const POINTS = 2.5;
+      // Award 5 points
+      const POINTS = 5;
       user.points += POINTS;
       user.pointsHistory.push({
         amount: POINTS,
@@ -5417,7 +5417,7 @@ Let's make today amazing! 🚀`;
     }
   },
 
-  // Award points for daily reaction (2.5 points, once per day)
+  // Award points for daily reaction (5 points, once per day)
   awardDailyReactionPoints: async (telegramUserId, groupId) => {
     try {
       const TelegramDailyEngagement = require('../models/TelegramDailyEngagement');
@@ -5446,8 +5446,8 @@ Let's make today amazing! 🚀`;
         return;
       }
 
-      // Award 2.5 points
-      const POINTS = 2.5;
+      // Award 5 points
+      const POINTS = 5;
       user.points += POINTS;
       user.pointsHistory.push({
         amount: POINTS,
