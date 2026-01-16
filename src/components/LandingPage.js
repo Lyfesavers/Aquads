@@ -217,7 +217,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen snap-center"
               >
-                {feature.link ? (
+                {feature.link && feature.title !== 'AquaPay' ? (
                   <Link to={feature.link} className="block h-full">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -787,6 +787,163 @@ const CarouselCard = ({ feature, index }) => {
   };
 
   const colors = getGradientColors(feature.gradient);
+
+  // Special design for AquaPay - match the standalone section exactly
+  if (feature.title === 'AquaPay') {
+    return (
+      <section className="relative w-full px-4 md:px-6 pt-4 md:pt-6 pb-0 overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative pb-0">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-blue-950/50 via-slate-900/90 to-cyan-950/50 backdrop-blur-xl overflow-hidden"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Animated border glow */}
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/0 via-cyan-500/50 to-blue-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+            
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+              {/* Left content */}
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="text-gradient-cyan">AquaPay</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Your Universal Crypto Payment Link</span>
+                </h2>
+                
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Create a single payment link to receive crypto on any chain. Share it with anyone, anywhere. 
+                  Funds go directly to your wallet - no middleman, no fees from us.
+                </p>
+                
+                {/* Feature highlights */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  {[
+                    { icon: '⚡', label: 'Instant Payments' },
+                    { icon: '🔐', label: 'Non-Custodial' },
+                    { icon: '🌐', label: '8+ Chains' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex items-center gap-2 text-white text-xs md:text-sm bg-white/5 rounded-lg px-2 py-1.5"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to={feature.link}>
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm md:text-base shadow-lg shadow-blue-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      💸 Create Your Payment Link
+                    </motion.button>
+                  </Link>
+                  
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Login → Username → <span className="text-white">📊 Dashboard</span> → <span className="text-cyan-400 font-medium">💸 AquaPay</span> tab</span>
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Right visual - Payment link mockup */}
+              <motion.div
+                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  {/* Glow behind card */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl blur-2xl scale-110" />
+                  
+                  {/* Mockup card */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                        💸
+                      </div>
+                      <div>
+                        <div className="text-white font-bold">yourname</div>
+                        <div className="text-gray-400 text-sm">aquads.xyz/pay/yourname</div>
+                      </div>
+                    </div>
+                    
+                    {/* Chain selector mockup */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {[
+                        { icon: '◎', color: 'text-purple-400', bg: 'bg-purple-500/30 border border-purple-500/50', active: true },
+                        { icon: 'Ξ', color: 'text-blue-400', bg: 'bg-white/10' },
+                        { icon: '▣', color: 'text-blue-400', bg: 'bg-white/10' },
+                        { icon: '◆', color: 'text-purple-400', bg: 'bg-white/10' }
+                      ].map((item, i) => (
+                        <div 
+                          key={i} 
+                          className={`p-2 rounded-lg text-center text-lg font-bold ${item.active ? item.bg : item.bg} ${item.color}`}
+                        >
+                          {item.icon}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Amount mockup */}
+                    <div className="bg-white/5 rounded-xl p-4 mb-4">
+                      <div className="text-gray-400 text-sm mb-1">Amount</div>
+                      <div className="text-white text-2xl font-bold">0.5 SOL</div>
+                      <div className="text-gray-400 text-sm">≈ $52.50 USD</div>
+                    </div>
+                    
+                    {/* Pay button mockup */}
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 rounded-xl font-bold">
+                      Connect Wallet & Pay
+                    </div>
+                  </div>
+                  
+                  {/* Floating badges */}
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ✓ Verified
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative w-full px-4 md:px-6 pt-4 md:pt-6 pb-0 overflow-hidden">
