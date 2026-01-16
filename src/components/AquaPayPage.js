@@ -154,7 +154,14 @@ const AquaPayPage = ({ currentUser }) => {
       if (wcProvider) { wcProvider.disconnect().catch(() => {}); setWcProvider(null); }
       setWalletConnected(false); setWalletAddress(null);
     }
-    setSelectedToken('native'); setTokenPrice(null);
+    // For EVM chains, default to USDC (native ETH has issues with Trust Wallet)
+    // For Solana, default to native SOL
+    if (CHAINS[selectedChain]?.isEVM) {
+      setSelectedToken('usdc');
+    } else {
+      setSelectedToken('native');
+    }
+    setTokenPrice(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChain]);
 
@@ -207,10 +214,9 @@ const AquaPayPage = ({ currentUser }) => {
         const baseChainId = parseInt(evmConfig.chainId, 16);
         const provider = await EthereumProvider.init({
           projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo',
-          chains: [baseChainId],
+          chains: [baseChainId], 
           showQrModal: true,
-          // Don't specify methods array - let WalletConnect use defaults (like SavingsPools)
-          // This works better with Trust Wallet and other wallets
+          methods: ['eth_sendTransaction', 'personal_sign'],
           events: ['chainChanged', 'accountsChanged'],
           metadata: { 
             name: 'AquaPay', 
@@ -254,6 +260,13 @@ const AquaPayPage = ({ currentUser }) => {
   const sendPayment = async () => {
     if (!amount || parseFloat(amount) <= 0) { setTxError('Enter a valid amount'); return; }
     if (!recipientAddress) { setTxError('Recipient not found'); return; }
+    
+    // For EVM chains, only USDC is supported (native ETH removed due to Trust Wallet limitations)
+    if (CHAINS[selectedChain]?.isEVM && selectedToken !== 'usdc') {
+      setTxError('Native ETH transfers are not supported for EVM chains. Please use USDC.');
+      return;
+    }
+    
     setSending(true); setTxError(null); setTxStatus('pending');
     
     try {
@@ -314,11 +327,16 @@ const AquaPayPage = ({ currentUser }) => {
           const signer = await provider.getSigner();
           let tx;
           
+          // For EVM chains, only USDC is supported (native ETH removed due to Trust Wallet limitations)
           if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
             const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
             const decimals = await contract.decimals();
             tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
+          } else if (CHAINS[selectedChain]?.isEVM) {
+            // If somehow native token is selected for EVM (shouldn't happen), default to USDC
+            throw new Error('Native ETH transfers are not supported for EVM chains. Please use USDC.');
           } else {
+            // This should only happen for Solana
             tx = await signer.sendTransaction({ 
               to: recipientAddress, 
               value: ethers.parseEther(amount) 
@@ -429,7 +447,21 @@ const AquaPayPage = ({ currentUser }) => {
   };
 
   const copyAddress = () => { navigator.clipboard.writeText(recipientAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const resetPayment = () => { setTxHash(null); setTxStatus(null); setTxError(null); setAmount(''); setMessage(''); setWalletConnected(false); setWalletAddress(null); setSelectedToken('native'); };
+  const resetPayment = () => { 
+    setTxHash(null); 
+    setTxStatus(null); 
+    setTxError(null); 
+    setAmount(''); 
+    setMessage(''); 
+    setWalletConnected(false); 
+    setWalletAddress(null); 
+    // Reset token selection: USDC for EVM chains, native for Solana
+    if (CHAINS[selectedChain]?.isEVM) {
+      setSelectedToken('usdc');
+    } else {
+      setSelectedToken('native');
+    }
+  };
   
   const getAvailableChains = useCallback(() => {
     if (!paymentPage) return [];
@@ -666,7 +698,7 @@ const AquaPayPage = ({ currentUser }) => {
                         </div>
 
                         {/* Token Selector */}
-                        {(chainConfig?.isEVM || selectedChain === 'solana') && (
+                        {selectedChain === 'solana' && (
                           <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => setSelectedToken('native')}
                               className={`py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${selectedToken === 'native' ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300' : 'bg-slate-800/50 border border-slate-700 text-slate-400'}`}>
@@ -676,6 +708,13 @@ const AquaPayPage = ({ currentUser }) => {
                               className={`py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${selectedToken === 'usdc' ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-300' : 'bg-slate-800/50 border border-slate-700 text-slate-400'}`}>
                               💵 USDC
                             </button>
+                          </div>
+                        )}
+                        {/* For EVM chains, only show USDC (native ETH removed due to Trust Wallet limitations) */}
+                        {chainConfig?.isEVM && selectedChain !== 'solana' && (
+                          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-center">
+                            <span className="text-slate-300 font-medium">💵 USDC</span>
+                            <p className="text-slate-500 text-xs mt-1">Only USDC supported for EVM chains</p>
                           </div>
                         )}
 
