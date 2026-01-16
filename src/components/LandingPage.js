@@ -217,7 +217,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen h-screen snap-center flex flex-col"
               >
-                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' ? (
+                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' ? (
                   <Link to={feature.link} className="block h-full flex flex-col">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -945,6 +945,185 @@ const CarouselCard = ({ feature, index }) => {
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     🔵 Base
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // Special design for Dynamic Token Bubbles
+  if (feature.title === 'Dynamic Token Bubbles') {
+    return (
+      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-950/50 via-slate-900/90 to-teal-950/50 backdrop-blur-xl overflow-hidden flex-1 flex flex-col"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Animated border glow */}
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-500/0 via-teal-500/50 to-cyan-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+            
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
+              {/* Left content */}
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="text-gradient-cyan">Dynamic Token Bubbles</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Interactive Project Visualization</span>
+                </h2>
+                
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Interactive visualization of crypto projects based on community engagement. BEX trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.
+                </p>
+                
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: '📊', label: 'Bubble Rankings', value: 'By Votes' },
+                    { icon: '🔥', label: 'BEX Trending', value: 'Multi-Platform' },
+                    { icon: '👍', label: '20 Pts/Vote', value: 'Earn Points' },
+                    { icon: '🏆', label: 'Top 10 Leaderboard', value: 'Trending' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </div>
+                      <span className="text-cyan-400 text-xs">{item.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to="/home">
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(6, 182, 212, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      🔮 View Bubbles
+                    </motion.button>
+                  </Link>
+                  
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>List project → Get votes → Rank & trend</span>
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Right visual - Bubble mockup */}
+              <motion.div
+                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  {/* Glow behind card */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 to-teal-500/30 rounded-2xl blur-2xl scale-110" />
+                  
+                  {/* Mockup card */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
+                    {/* Bubble Header */}
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                        🔮
+                      </div>
+                      <div>
+                        <div className="text-white font-bold">Token Project</div>
+                        <div className="text-gray-400 text-sm">Rank #3</div>
+                      </div>
+                    </div>
+                    
+                    {/* Vote Stats */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-white/5 rounded-xl p-3 text-center">
+                        <div className="text-gray-400 text-xs mb-1">Bullish</div>
+                        <div className="text-2xl font-bold text-green-400">1,234</div>
+                        <div className="text-gray-500 text-xs mt-1">👍 Votes</div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-3 text-center">
+                        <div className="text-gray-400 text-xs mb-1">Bearish</div>
+                        <div className="text-2xl font-bold text-red-400">89</div>
+                        <div className="text-gray-500 text-xs mt-1">👎 Votes</div>
+                      </div>
+                    </div>
+                    
+                    {/* Project Details */}
+                    <div className="bg-white/5 rounded-xl p-3 mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 text-xs">Status</span>
+                        <span className="text-cyan-400 text-xs font-bold">🔥 Trending</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-xs">Platforms</span>
+                        <span className="text-teal-400 text-xs">Aquads • BEX</span>
+                      </div>
+                    </div>
+                    
+                    {/* Vote Buttons */}
+                    <div className="flex gap-2 mb-3">
+                      <button className="flex-1 bg-green-500/20 border border-green-500/40 text-green-400 py-2 rounded-lg text-xs font-semibold">
+                        👍 Bullish
+                      </button>
+                      <button className="flex-1 bg-red-500/20 border border-red-500/40 text-red-400 py-2 rounded-lg text-xs font-semibold">
+                        👎 Bearish
+                      </button>
+                    </div>
+                    
+                    {/* Points Earned */}
+                    <div className="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-500/40 text-center py-2 rounded-xl">
+                      <div className="text-xs text-cyan-400 font-semibold">💰 Earn 20 Points Per Vote</div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating badges */}
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🥉 #3
+                  </motion.div>
+                  <motion.div
+                    className="absolute -bottom-3 -left-3 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  >
+                    🔥 Bumped
                   </motion.div>
                 </div>
               </motion.div>
