@@ -6,7 +6,7 @@ import DiscountCodeInput from './DiscountCodeInput';
 import { createBumpRequest } from '../services/api';
 
 const BUMP_OPTIONS = [
-  { duration: 'Lifetime', price: 150, durationMs: -1 }
+  { duration: 'Lifetime', price: 0.5, durationMs: -1 }
 ];
 
 const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {

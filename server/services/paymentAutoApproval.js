@@ -130,7 +130,7 @@ const paymentAutoApproval = {
         }
       }
 
-      // Calculate expected amount (150 USDC for lifetime, minus discount if any)
+      // Calculate expected amount (0.5 USDC for lifetime, minus discount if any)
       const expectedAmount = this.calculateBumpAmount(bumpRequest.duration, bumpRequest.discountAmount || 0);
       const paymentAmount = parseFloat(amount);
 
@@ -230,13 +230,13 @@ const paymentAutoApproval = {
    * Calculate expected bump amount from duration and discount
    */
   calculateBumpAmount(duration, discountAmount = 0) {
-    // Lifetime bump is 150 USDC
+    // Lifetime bump is 0.5 USDC (testing price)
     if (duration === -1) {
-      return 150 - discountAmount;
+      return 0.5 - discountAmount;
     }
     // For other durations, use the same logic as in bumps.js route
-    // Currently only lifetime is supported, so default to 150
-    return 150 - discountAmount;
+    // Currently only lifetime is supported, so default to 0.5
+    return 0.5 - discountAmount;
   },
 
   /**
