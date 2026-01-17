@@ -107,12 +107,17 @@ const AquaPayPage = ({ currentUser }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   
+  // Get bannerId and amount from URL search params if provided
+  const urlParams = new URLSearchParams(window.location.search);
+  const bannerId = urlParams.get('bannerId');
+  const urlAmount = urlParams.get('amount');
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paymentPage, setPaymentPage] = useState(null);
   const [selectedChain, setSelectedChain] = useState(null);
   const [selectedToken, setSelectedToken] = useState('native');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(urlAmount || '');
   const [message, setMessage] = useState('');
   const [payerEmail, setPayerEmail] = useState('');
   
@@ -155,16 +160,18 @@ const AquaPayPage = ({ currentUser }) => {
       if (wcProvider) { wcProvider.disconnect().catch(() => {}); setWcProvider(null); }
       setWalletConnected(false); setWalletAddress(null);
     }
-    // For EVM chains, default to USDC (native ETH has issues with Trust Wallet)
-    // For Solana, default to native SOL
-    if (CHAINS[selectedChain]?.isEVM) {
+    // If amount is provided from URL (e.g., from banner ad payment), default to USDC
+    // Otherwise, for EVM chains default to USDC, for Solana default to native SOL
+    if (urlAmount) {
+      setSelectedToken('usdc'); // Always use USDC when amount is pre-filled
+    } else if (CHAINS[selectedChain]?.isEVM) {
       setSelectedToken('usdc');
     } else {
       setSelectedToken('native');
     }
     setTokenPrice(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChain]);
+  }, [selectedChain, urlAmount]);
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -424,7 +431,8 @@ const AquaPayPage = ({ currentUser }) => {
         recipientSlug: slug, txHash: hash, chain: selectedChain,
         token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
         amount: parseFloat(amount), senderAddress: walletAddress,
-        senderUsername: currentUser?.username, message
+        senderUsername: currentUser?.username, message,
+        bannerId: bannerId || null // Include bannerId if provided in URL
       });
       
       // Send email notification to recipient if they have an email

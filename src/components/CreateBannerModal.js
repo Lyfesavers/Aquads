@@ -3,43 +3,13 @@ import Modal from './Modal';
 import { FaCopy, FaCheck, FaBullhorn, FaChartLine, FaEye, FaMousePointer, FaRocket, FaGlobe, FaClock, FaStar } from 'react-icons/fa';
 
 const BANNER_OPTIONS = [
-  { duration: '24 hours', price: 40, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '24 hours', price: 1, durationMs: 24 * 60 * 60 * 1000 },
   { duration: '3 days', price: 80, durationMs: 3 * 24 * 60 * 60 * 1000 },
   { duration: '7 days', price: 160, durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];
 
-const BLOCKCHAIN_OPTIONS = [
-  {
-    name: 'Solana',
-    symbol: 'SOL',
-    address: 'F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf',
-    amount: 'USDC'
-  },
-  {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Base',
-    symbol: 'BASE',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
-    amount: 'USDC'
-  }
-];
-
 const CreateBannerModal = ({ onClose, onSubmit }) => {
   const [selectedOption, setSelectedOption] = useState(BANNER_OPTIONS[0]);
-  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
-  const [txSignature, setTxSignature] = useState('');
-  const [copiedAddress, setCopiedAddress] = useState(false);
   const [bannerData, setBannerData] = useState({
     title: '',
     gif: '',
@@ -49,32 +19,33 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(selectedChain.address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!txSignature) {
-      alert('Please enter the transaction signature');
+    // Validate banner data before proceeding
+    if (!bannerData.title || !bannerData.gif || !bannerData.url) {
+      alert('Please fill in all banner details (Title, Image URL, and Website URL)');
       return;
     }
 
     try {
       setSubmitting(true);
-      await onSubmit({
+      
+      // Create banner first with pending status and AquaPay placeholder
+      const newBanner = await onSubmit({
         ...bannerData,
-        txSignature,
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address,
+        txSignature: 'aquapay-pending', // Placeholder - will be updated on payment
+        paymentChain: 'AquaPay',
+        chainSymbol: 'USDC',
+        chainAddress: 'https://aquads.xyz/pay/aquads',
         duration: selectedOption.durationMs,
-        paymentMethod: 'crypto'
+        paymentMethod: 'aquapay'
       });
       
-      alert('Banner ad created successfully! It will be reviewed by an admin for approval.');
+      // Open AquaPay link with banner ID and amount
+      const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${selectedOption.price}&bannerId=${newBanner._id}`;
+      window.open(aquaPayUrl, '_blank');
+      
+      alert(`Banner ad created! Please complete the payment of $${selectedOption.price} USDC on the AquaPay page. Your banner will be automatically approved once payment is confirmed.`);
       onClose();
     } catch (error) {
       console.error('Error creating banner:', error);
@@ -408,9 +379,9 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                     <div>
                       <strong>Crypto Payment:</strong>
                       <ul className="ml-3 sm:ml-4 mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 text-yellow-200">
-                        <li>• Send ${selectedOption.price} USDC</li>
-                        <li>• Copy transaction signature</li>
-                        <li>• Click "Pay with Crypto"</li>
+                        <li>• Click "Pay with Crypto" button</li>
+                        <li>• Complete ${selectedOption.price} USDC payment on AquaPay</li>
+                        <li>• Banner auto-approved when payment confirmed</li>
                       </ul>
                     </div>
                     <div>
@@ -418,95 +389,35 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                       <ul className="ml-3 sm:ml-4 mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 text-yellow-200">
                         <li>• Click "Pay with Card"</li>
                         <li>• Complete ${selectedOption.price} USD payment</li>
-                        <li>• Auto-submits for approval</li>
+                        <li>• Admin verification required</li>
                       </ul>
                     </div>
                     <div className="border-t border-yellow-500/30 pt-1.5 sm:pt-2 mt-1.5 sm:mt-2">
-                      <li>• Admin will verify payment</li>
-                      <li>• Banner activates after approval</li>
+                      <li>• Crypto: Auto-approved after payment</li>
+                      <li>• Card/PayPal: Admin verification required</li>
                     </div>
                   </div>
           </div>
 
-                {/* Payment Options */}
-                <div className="bg-gray-800/50 rounded-xl p-4 sm:p-6 border border-gray-700">
+                {/* AquaPay Payment Section */}
+                <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-4 sm:p-6 border-gray-700">
                   <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-white flex items-center">
-                    <FaGlobe className="mr-2 text-green-400 text-base sm:text-lg" />
-                    Crypto Payment Chain
+                    <FaGlobe className="mr-2 text-blue-400 text-base sm:text-lg" />
+                    Crypto Payment via AquaPay
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-              {BLOCKCHAIN_OPTIONS.map((chain) => (
-                <button
-                  key={chain.symbol}
-                  type="button"
-                  onClick={() => setSelectedChain(chain)}
-                        className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center justify-center h-20 sm:h-24 transition-all ${
-                    selectedChain === chain
-                            ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
-                            : 'border-gray-600 hover:border-green-400 hover:bg-gray-700/50'
-                        }`}
-                      >
-                        <div className="font-bold text-center text-white text-xs sm:text-sm mb-0.5 sm:mb-1">{chain.name}</div>
-                        <div className="text-[10px] sm:text-xs text-gray-400 text-center">
-                          ${selectedOption.price}
-                  </div>
-                        {selectedChain === chain && (
-                          <div className="mt-1 text-[10px] sm:text-xs text-green-400">✓</div>
-                        )}
-                </button>
-              ))}
-          </div>
-
-                  {/* Payment Address */}
-                  <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-700/50 border border-gray-600 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="text-xs sm:text-sm font-medium text-gray-300">Send ${selectedOption.price} USDC to:</div>
+                  <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">
+                    Use our secure AquaPay system to send ${selectedOption.price} USDC. Supports multiple chains including Solana, Ethereum, Base, Polygon, Arbitrum, and more.
+                  </p>
+                  <div className="p-3 sm:p-4 bg-gray-700/50 border border-gray-600 rounded-lg">
+                    <div className="text-xs sm:text-sm font-medium text-gray-300 mb-1">Payment Amount:</div>
+                    <div className="text-lg sm:text-xl font-bold text-blue-400">
+                      ${selectedOption.price} USDC
                     </div>
-                    <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-                        <div className="font-mono text-[10px] sm:text-xs break-all text-white bg-gray-800 p-2 rounded">
-                          {selectedChain.address}
-                        </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleCopyAddress}
-                        className="p-2 sm:p-3 hover:bg-gray-600 rounded-lg text-white transition-colors flex-shrink-0"
-                        title="Copy address"
-                      >
-                        {copiedAddress ? (
-                          <span className="flex items-center text-green-400 text-xs">
-                            <FaCheck className="text-xs sm:text-sm" />
-                          </span>
-                        ) : (
-                          <FaCopy className="text-xs sm:text-sm" />
-                        )}
-            </button>
-                    </div>
-                  </div>
-          </div>
-
-                {/* Transaction Signature - Only for Crypto Payment */}
-                <div className="bg-gray-800/50 rounded-xl p-4 sm:p-6 border border-gray-700">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-white">
-                    Crypto Confirmation
-                  </h3>
-          <div>
-                    <label className="block text-xs sm:text-sm font-medium mb-2 text-gray-300">
-                      Transaction Signature <span className="text-gray-500 text-[10px] sm:text-xs">(Crypto only)</span>
-                    </label>
-            <input
-              type="text"
-              value={txSignature}
-              onChange={(e) => setTxSignature(e.target.value)}
-                      placeholder="Paste transaction signature (for crypto)"
-                      className="w-full p-2 sm:p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-xs sm:text-sm"
-            />
-                    <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-gray-400">
-                      After sending crypto, paste tx signature here
+                    <p className="mt-2 text-[10px] sm:text-xs text-gray-400">
+                      Click "Pay with Crypto" below to create your banner and open the AquaPay page
                     </p>
                   </div>
-          </div>
+                </div>
 
                 {/* Submit Buttons */}
                 <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t border-gray-700">
@@ -523,7 +434,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <button
                       type="submit"
-                      disabled={submitting || !txSignature.trim()}
+                      disabled={submitting}
                       className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
                     >
                       {submitting ? (
@@ -560,7 +471,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                   </div>
 
                   <p className="text-gray-400 text-[10px] sm:text-xs text-center">
-                    * Your payment will be manually verified by an admin
+                    * Crypto payments are auto-approved. Card/PayPal requires admin verification.
                   </p>
                 </div>
               </form>

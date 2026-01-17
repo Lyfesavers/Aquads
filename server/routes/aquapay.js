@@ -74,7 +74,10 @@ router.post('/payment', async (req, res) => {
       amountUSD,
       senderAddress,
       senderUsername,
-      message
+      message,
+      bannerId, // Optional: for banner ad payments
+      bumpId,   // Optional: for bump payments (future)
+      projectId // Optional: for project listing payments (future)
     } = req.body;
 
     if (!recipientSlug || !txHash || !chain || !amount) {
@@ -129,6 +132,25 @@ router.post('/payment', async (req, res) => {
 
     await user.save();
 
+    // Process auto-approval for various payment types (banner, bump, project, etc.)
+    // This is handled by a separate service to keep aquapay.js clean
+    let approvedItem = null;
+    if (bannerId || bumpId || projectId) {
+      const paymentAutoApproval = require('../services/paymentAutoApproval');
+      approvedItem = await paymentAutoApproval.processPayment({
+        bannerId,
+        bumpId,
+        projectId,
+        recipientSlug,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
     // Emit real-time notification to recipient
     emitAquaPayPaymentReceived({
       recipientId: user._id.toString(),
@@ -140,7 +162,8 @@ router.post('/payment', async (req, res) => {
       success: true,
       message: 'Payment recorded successfully',
       recipientEmail: user.email || null,
-      recipientName: user.aquaPay.displayName || user.username
+      recipientName: user.aquaPay.displayName || user.username,
+      approvedItem // Return approved item info if any
     });
   } catch (error) {
     console.error('Error recording payment:', error);
