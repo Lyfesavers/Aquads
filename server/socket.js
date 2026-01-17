@@ -186,6 +186,36 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending redemptions
+    socket.on('requestPendingRedemptions', async (userData) => {
+      if (userData && userData.isAdmin) {
+        try {
+          const User = require('./models/User');
+          
+          // Get all users with pending redemptions
+          const users = await User.find({
+            'giftCardRedemptions': {
+              $elemMatch: { status: 'pending' }
+            }
+          }).select('username giftCardRedemptions');
+
+          const pendingUsers = users.filter(user => 
+            user.giftCardRedemptions.some(redemption => redemption.status === 'pending')
+          );
+
+          // Send pending redemptions data to admin
+          socket.emit('pendingRedemptionsLoaded', {
+            redemptions: pendingUsers,
+            total: pendingUsers.length
+          });
+          
+        } catch (error) {
+          console.error('Error fetching pending redemptions:', error);
+          socket.emit('pendingRedemptionsError', { error: 'Failed to fetch redemptions' });
+        }
+      }
+    });
+
     // Handle admin requesting pending completions
     socket.on('requestPendingCompletions', async (userData) => {
       if (userData && userData.isAdmin) {
@@ -1105,6 +1135,24 @@ function emitNewServicePending(serviceData) {
   }
 }
 
+// Redemption socket emission functions
+function emitRedemptionCreated(redemptionData) {
+  if (io) {
+    // Emit to all admins to notify them of a new pending redemption
+    io.emit('redemptionCreated', redemptionData);
+  }
+}
+
+function emitRedemptionProcessed(redemptionData) {
+  if (io) {
+    // Emit to all admins and the user who made the redemption
+    io.emit('redemptionProcessed', redemptionData);
+    if (redemptionData.userId) {
+      io.to(`user_${redemptionData.userId}`).emit('redemptionStatusUpdated', redemptionData);
+    }
+  }
+}
+
 // Token purchase socket emission functions
 function emitTokenPurchaseApproved(tokenPurchaseData) {
   if (io) {
@@ -1263,5 +1311,7 @@ module.exports = {
   emitVoteBoostApproved,
   emitVoteBoostRejected,
   emitNewVoteBoostPending,
+  emitRedemptionCreated,
+  emitRedemptionProcessed,
   emitAquaPayPaymentReceived
 }; 

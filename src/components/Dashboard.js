@@ -178,33 +178,107 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser, socket]);
 
+  // Request initial redemptions via socket (like bookings system)
   useEffect(() => {
-    if (currentUser?.isAdmin) {
-      fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/pending`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => {
-          if (!response.ok) {
-            if (response.status === 403) {
-              throw new Error('Not authorized to view redemptions');
-            }
-            throw new Error('Failed to fetch redemptions');
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Ensure we always set an array
-          setPendingRedemptions(Array.isArray(data) ? data : []);
-        })
-        .catch(error => {
-          setPendingRedemptions([]); // Set empty array on error
-        });
-
-
+    if (currentUser?.isAdmin && socket) {
+      // Request pending redemptions via socket instead of API call
+      socket.emit('requestPendingRedemptions', {
+        isAdmin: currentUser.isAdmin
+      });
     }
-  }, [currentUser]);
+  }, [currentUser, socket]);
+
+  // Socket listener for real-time redemption updates and initial data
+  useEffect(() => {
+    if (socket && currentUser?.isAdmin) {
+      const handlePendingRedemptionsLoaded = (data) => {
+        // Set initial redemptions data from socket
+        setPendingRedemptions(Array.isArray(data.redemptions) ? data.redemptions : []);
+      };
+
+      const handlePendingRedemptionsError = (error) => {
+        console.error('Error loading redemptions via socket:', error);
+        // Fallback to empty array on error
+        setPendingRedemptions([]);
+      };
+
+      const handleRedemptionCreated = (data) => {
+        // Add new redemption to the list
+        setPendingRedemptions(prev => {
+          // Check if user already exists in the list
+          const existingUserIndex = prev.findIndex(user => user._id === data.userId || user._id?.toString() === data.userId?.toString());
+          
+          if (existingUserIndex >= 0) {
+            // Update existing user with new redemption
+            const updated = [...prev];
+            updated[existingUserIndex] = {
+              ...updated[existingUserIndex],
+              giftCardRedemptions: updated[existingUserIndex].giftCardRedemptions || []
+            };
+            // Make sure we include the new redemption
+            if (data.redemption && !updated[existingUserIndex].giftCardRedemptions.some(r => r._id?.toString() === data.redemption._id?.toString())) {
+              updated[existingUserIndex].giftCardRedemptions.push(data.redemption);
+            }
+            return updated;
+          } else {
+            // Add new user with redemption
+            return [
+              ...prev,
+              {
+                _id: data.userId,
+                username: data.username,
+                giftCardRedemptions: data.redemption ? [data.redemption] : []
+              }
+            ];
+          }
+        });
+      };
+
+      const handleRedemptionProcessed = (data) => {
+        // Remove processed redemption from the list
+        setPendingRedemptions(prev => {
+          return prev.map(user => {
+            if (user._id === data.userId || user._id?.toString() === data.userId?.toString()) {
+              // Update the redemption status or remove if no pending redemptions left
+              const updatedRedemptions = (user.giftCardRedemptions || []).map(redemption => {
+                if (redemption._id?.toString() === data.redemption._id?.toString()) {
+                  return { ...redemption, status: data.status };
+                }
+                return redemption;
+              });
+              
+              // Check if there are any pending redemptions left
+              const hasPending = updatedRedemptions.some(r => r.status === 'pending');
+              
+              if (!hasPending) {
+                // No pending redemptions, remove this user from the list
+                return null;
+              }
+              
+              return {
+                ...user,
+                giftCardRedemptions: updatedRedemptions
+              };
+            }
+            return user;
+          }).filter(user => user !== null); // Remove null entries
+        });
+      };
+
+      // Listen for socket events
+      socket.on('pendingRedemptionsLoaded', handlePendingRedemptionsLoaded);
+      socket.on('pendingRedemptionsError', handlePendingRedemptionsError);
+      socket.on('redemptionCreated', handleRedemptionCreated);
+      socket.on('redemptionProcessed', handleRedemptionProcessed);
+
+      return () => {
+        socket.off('pendingRedemptionsLoaded', handlePendingRedemptionsLoaded);
+        socket.off('pendingRedemptionsError', handlePendingRedemptionsError);
+        socket.off('redemptionCreated', handleRedemptionCreated);
+        socket.off('redemptionProcessed', handleRedemptionProcessed);
+      };
+    }
+  }, [socket, currentUser]);
 
   // Request initial bookings data via socket (like raids system)
   useEffect(() => {
@@ -1073,10 +1147,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error('Failed to process redemption');
       }
 
-      // Remove the processed redemption from the list
-      setPendingRedemptions(prev => 
-        prev.filter(user => user._id !== userId)
-      );
+      // Socket event will handle updating the list automatically
+      // No need to manually update here - the socket listener will handle it
     } catch (error) {
       alert('Failed to process redemption');
     }

@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
-const { emitAffiliateEarningUpdate } = require('../socket');
+const { emitAffiliateEarningUpdate, emitRedemptionCreated, emitRedemptionProcessed } = require('../socket');
 
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
@@ -148,6 +148,21 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
     });
 
     await user.save();
+
+    // Emit socket event for new redemption (notify admins)
+    try {
+      const redemptionData = {
+        userId: user._id,
+        username: user.username,
+        redemption: user.giftCardRedemptions[user.giftCardRedemptions.length - 1],
+        timestamp: new Date()
+      };
+      emitRedemptionCreated(redemptionData);
+    } catch (socketError) {
+      console.error('Error emitting redemption created event:', socketError);
+      // Don't fail the redemption if socket emission fails
+    }
+
     res.json({ message: 'Redemption request submitted successfully', user });
   } catch (error) {
     res.status(500).json({ error: 'Failed to process redemption' });
@@ -215,6 +230,23 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
     }
 
     await user.save();
+
+    // Emit socket event for redemption processed (notify admins and user)
+    try {
+      const redemptionData = {
+        userId: user._id,
+        username: user.username,
+        redemption: redemption,
+        status: status,
+        processedBy: req.user.username,
+        timestamp: new Date()
+      };
+      emitRedemptionProcessed(redemptionData);
+    } catch (socketError) {
+      console.error('Error emitting redemption processed event:', socketError);
+      // Don't fail the processing if socket emission fails
+    }
+
     res.json({ message: 'Redemption processed successfully', user });
   } catch (error) {
     res.status(500).json({ error: 'Failed to process redemption' });
