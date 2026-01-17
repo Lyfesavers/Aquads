@@ -202,6 +202,61 @@ const emailService = {
       logger.error('EmailJS Error for AquaPay payment:', error.text || error.message);
       return false;
     }
+  },
+
+  sendAquaPayReceipt: async (payerEmail, paymentDetails) => {
+    try {
+      logger.log('EmailJS Config for AquaPay receipt:', {
+        serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        templateId: process.env.REACT_APP_EMAILJS_AQUAPAY_RECEIPT_TEMPLATE,
+        publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      });
+
+      // Get explorer URL based on chain
+      const explorerUrls = {
+        solana: 'https://solscan.io/tx/',
+        ethereum: 'https://etherscan.io/tx/',
+        base: 'https://basescan.org/tx/',
+        polygon: 'https://polygonscan.com/tx/',
+        arbitrum: 'https://arbiscan.io/tx/',
+        bnb: 'https://bscscan.com/tx/',
+        bitcoin: 'https://mempool.space/tx/',
+        tron: 'https://tronscan.org/#/transaction/'
+      };
+
+      const explorerUrl = (explorerUrls[paymentDetails.chain] || explorerUrls.ethereum) + paymentDetails.txHash;
+
+      const templateParams = {
+        to_email: payerEmail,
+        recipient_name: paymentDetails.recipientName,
+        amount: paymentDetails.amount,
+        token: paymentDetails.token,
+        chain: paymentDetails.chain.charAt(0).toUpperCase() + paymentDetails.chain.slice(1),
+        sender_address: paymentDetails.senderAddress,
+        tx_hash: paymentDetails.txHash,
+        explorer_url: explorerUrl,
+        message: paymentDetails.message || null,
+        year: new Date().getFullYear()
+      };
+
+      logger.log('Sending AquaPay receipt email with data:', templateParams);
+
+      const response = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_AQUAPAY_RECEIPT_TEMPLATE,
+        templateParams,
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      );
+
+      if (response.status === 200) {
+        logger.log('AquaPay receipt sent successfully');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('EmailJS Error for AquaPay receipt:', error.text || error.message);
+      return false;
+    }
   }
 };
 

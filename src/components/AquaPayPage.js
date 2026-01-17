@@ -114,6 +114,7 @@ const AquaPayPage = ({ currentUser }) => {
   const [selectedToken, setSelectedToken] = useState('native');
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
+  const [payerEmail, setPayerEmail] = useState('');
   
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
@@ -443,6 +444,24 @@ const AquaPayPage = ({ currentUser }) => {
           // Don't fail the payment if email fails
         }
       }
+
+      // Send receipt email to payer if they provided an email
+      if (payerEmail && payerEmail.trim()) {
+        try {
+          await emailService.sendAquaPayReceipt(payerEmail.trim(), {
+            recipientName: response.data.recipientName,
+            amount: parseFloat(amount),
+            token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
+            chain: selectedChain,
+            senderAddress: walletAddress,
+            txHash: hash,
+            message: message || null
+          });
+        } catch (emailError) {
+          console.error('Receipt email error:', emailError);
+          // Don't fail the payment if email fails
+        }
+      }
     } catch (e) { console.error('Record error:', e); }
   };
 
@@ -453,6 +472,7 @@ const AquaPayPage = ({ currentUser }) => {
     setTxError(null); 
     setAmount(''); 
     setMessage(''); 
+    setPayerEmail('');
     setWalletConnected(false); 
     setWalletAddress(null); 
     // Reset token selection: USDC for EVM chains, native for Solana
@@ -743,6 +763,13 @@ const AquaPayPage = ({ currentUser }) => {
                         <div>
                           <label className="block text-slate-400 text-sm mb-2">Note (optional)</label>
                           <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="What's this for?"
+                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 focus:border-cyan-500 rounded-xl text-white text-sm focus:outline-none transition-colors" />
+                        </div>
+
+                        {/* Email for Receipt */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-2">Email for receipt (optional)</label>
+                          <input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="your@email.com"
                             className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 focus:border-cyan-500 rounded-xl text-white text-sm focus:outline-none transition-colors" />
                         </div>
 
