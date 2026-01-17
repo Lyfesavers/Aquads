@@ -119,16 +119,18 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Check redemption frequency
-    const lastRedemption = user.giftCardRedemptions[user.giftCardRedemptions.length - 1];
-    if (lastRedemption) {
-      const timeSinceLastRedemption = Date.now() - lastRedemption.requestedAt.getTime();
-      const minimumInterval = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-      
-      if (timeSinceLastRedemption < minimumInterval) {
-        return res.status(400).json({ 
-          error: 'You can only redeem points once every 30 days' 
-        });
+    // Check redemption frequency (skip for admin accounts)
+    if (!req.user.isAdmin) {
+      const lastRedemption = user.giftCardRedemptions[user.giftCardRedemptions.length - 1];
+      if (lastRedemption) {
+        const timeSinceLastRedemption = Date.now() - lastRedemption.requestedAt.getTime();
+        const minimumInterval = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        
+        if (timeSinceLastRedemption < minimumInterval) {
+          return res.status(400).json({ 
+            error: 'You can only redeem points once every 30 days' 
+          });
+        }
       }
     }
 
