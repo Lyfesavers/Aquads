@@ -3,7 +3,7 @@ import Modal from './Modal';
 import { FaCopy, FaCheck, FaBullhorn, FaChartLine, FaEye, FaMousePointer, FaRocket, FaGlobe, FaClock, FaStar } from 'react-icons/fa';
 
 const BANNER_OPTIONS = [
-  { duration: '24 hours', price: 1, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '24 hours', price: 40, durationMs: 24 * 60 * 60 * 1000 },
   { duration: '3 days', price: 80, durationMs: 3 * 24 * 60 * 60 * 1000 },
   { duration: '7 days', price: 160, durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];

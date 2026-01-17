@@ -46,7 +46,7 @@ const calculateBannerAmount = (duration) => {
     const threeDaysMs = 3 * oneDayMs;
     const sevenDaysMs = 7 * oneDayMs;
     
-    if (duration <= oneDayMs) return 1; // Testing: 1 USDC for 24 hours
+    if (duration <= oneDayMs) return 40;
     if (duration <= threeDaysMs) return 80;
     if (duration <= sevenDaysMs) return 160;
     return 160;
@@ -55,13 +55,13 @@ const calculateBannerAmount = (duration) => {
   // Duration as string (legacy support)
   switch (duration) {
     case '24 hours':
-      return 1;  // Testing: 1 USDC for 24h banner
+      return 40;  // 40 USDC for 24h banner
     case '3 days':
       return 80;  // 80 USDC for 3 day banner
     case '7 days':
       return 160; // 160 USDC for 7 day banner
     default:
-      return 1; // Testing: 1 USDC default
+      return 40;
   }
 };
 

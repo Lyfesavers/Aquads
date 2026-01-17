@@ -470,6 +470,17 @@ const AquaPayPage = ({ currentUser }) => {
           // Don't fail the payment if email fails
         }
       }
+
+      // If this payment was for a banner ad (bannerId in URL), close the window after successful payment
+      if (bannerId && response.data.approvedItem) {
+        // Small delay to show success message, then close
+        setTimeout(() => {
+          if (window.opener) {
+            // This window was opened by another window, close it
+            window.close();
+          }
+        }, 2000);
+      }
     } catch (e) { console.error('Record error:', e); }
   };
 
