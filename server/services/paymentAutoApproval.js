@@ -1,4 +1,9 @@
 const BannerAd = require('../models/BannerAd');
+const BumpRequest = require('../models/BumpRequest');
+const Ad = require('../models/Ad');
+const User = require('../models/User');
+const AffiliateEarning = require('../models/AffiliateEarning');
+const { emitBumpRequestUpdate } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types
@@ -31,10 +36,18 @@ const paymentAutoApproval = {
       });
     }
 
-    // TODO: Handle bump payments
-    // if (bumpId) {
-    //   return await this.handleBumpPayment({ bumpId, ... });
-    // }
+    // Handle bump payments
+    if (bumpId) {
+      return await this.handleBumpPayment({
+        bumpId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
 
     // TODO: Handle project listing payments
     // if (projectId) {
@@ -95,6 +108,135 @@ const paymentAutoApproval = {
       console.error('Error auto-approving banner ad:', error);
       return null;
     }
+  },
+
+  /**
+   * Handle bump payment auto-approval
+   */
+  async handleBumpPayment({ bumpId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+    try {
+      const bumpRequest = await BumpRequest.findById(bumpId);
+
+      if (!bumpRequest || bumpRequest.status !== 'pending' || bumpRequest.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      // Verify ownership if senderUsername provided (owner is a String in BumpRequest model)
+      if (senderUsername && bumpRequest.owner) {
+        const bumpOwnerUsername = bumpRequest.owner.toString();
+        if (senderUsername.toLowerCase() !== bumpOwnerUsername.toLowerCase()) {
+          console.log(`Bump request ${bumpRequest._id} ownership mismatch: bump owner is ${bumpOwnerUsername}, payment sender is ${senderUsername}`);
+          return null;
+        }
+      }
+
+      // Calculate expected amount (150 USDC for lifetime, minus discount if any)
+      const expectedAmount = this.calculateBumpAmount(bumpRequest.duration, bumpRequest.discountAmount || 0);
+      const paymentAmount = parseFloat(amount);
+
+      if (paymentAmount !== expectedAmount) {
+        console.log(`Bump request ${bumpRequest._id} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
+        return null;
+      }
+
+      // Verify transaction on-chain
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(`Bump request ${bumpRequest._id} transaction verification failed for ${txHash} on ${chain}`);
+        return null;
+      }
+
+      // Auto-approve the bump
+      bumpRequest.status = 'approved';
+      bumpRequest.processedAt = new Date();
+      bumpRequest.txSignature = txHash;
+      await bumpRequest.save();
+
+      // Update the ad
+      const now = new Date();
+      const expiresAt = bumpRequest.duration === -1 ? null : new Date(now.getTime() + bumpRequest.duration);
+      
+      const ad = await Ad.findOneAndUpdate(
+        { id: bumpRequest.adId },
+        { 
+          size: 100, // MAX_SIZE
+          isBumped: true,
+          status: 'approved',
+          bumpedAt: now,
+          bumpDuration: bumpRequest.duration,
+          bumpExpiresAt: expiresAt,
+          lastBumpTx: txHash
+        },
+        { new: true }
+      );
+
+      if (!ad) {
+        console.log(`Bump request ${bumpRequest._id} approved but ad ${bumpRequest.adId} not found`);
+        return { type: 'bump', id: bumpRequest._id, status: bumpRequest.status };
+      }
+
+      // Record affiliate commission if applicable (same logic as manual approve endpoint)
+      try {
+        const adOwner = await User.findOne({ username: ad.owner });
+        if (adOwner && adOwner.referredBy) {
+          // Calculate USDC amount based on bump duration
+          let adAmount;
+          if (bumpRequest.duration === 90 * 24 * 60 * 60 * 1000) { // 3 months
+            adAmount = 99; // 99 USDC
+          } else if (bumpRequest.duration === 180 * 24 * 60 * 60 * 1000) { // 6 months
+            adAmount = 150; // 150 USDC
+          } else if (bumpRequest.duration === 365 * 24 * 60 * 60 * 1000) { // 1 year (legacy)
+            adAmount = 300; // 300 USDC
+          } else if (bumpRequest.duration === -1) { // Lifetime
+            adAmount = 300; // 300 USDC
+          }
+
+          if (adAmount) {
+            const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
+            const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
+            
+            const earning = new AffiliateEarning({
+              affiliateId: adOwner.referredBy,
+              referredUserId: adOwner._id,
+              adId: ad._id,
+              adAmount,           // This will now be in USDC
+              currency: 'USDC',   // Specify USDC currency
+              commissionRate,
+              commissionEarned
+            });
+            
+            await earning.save();
+          }
+        }
+      } catch (commissionError) {
+        console.error('Error recording affiliate commission:', commissionError);
+        // Don't fail the approval if commission recording fails
+      }
+
+      // Emit socket events
+      emitBumpRequestUpdate('approve', bumpRequest);
+      const socket = require('../socket');
+      socket.emitAdUpdate('update', ad);
+
+      console.log(`Bump request ${bumpRequest._id} auto-approved after verified AquaPay payment of ${paymentAmount} USDC on ${chain} by ${senderUsername || 'anonymous'}`);
+      return { type: 'bump', id: bumpRequest._id, status: bumpRequest.status };
+    } catch (error) {
+      console.error('Error auto-approving bump request:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Calculate expected bump amount from duration and discount
+   */
+  calculateBumpAmount(duration, discountAmount = 0) {
+    // Lifetime bump is 150 USDC
+    if (duration === -1) {
+      return 150 - discountAmount;
+    }
+    // For other durations, use the same logic as in bumps.js route
+    // Currently only lifetime is supported, so default to 150
+    return 150 - discountAmount;
   },
 
   /**

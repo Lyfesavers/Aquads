@@ -107,9 +107,10 @@ const AquaPayPage = ({ currentUser }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   
-  // Get bannerId and amount from URL search params if provided
+  // Get bannerId, bumpId and amount from URL search params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const bannerId = urlParams.get('bannerId');
+  const bumpId = urlParams.get('bumpId');
   const urlAmount = urlParams.get('amount');
   
   const [loading, setLoading] = useState(true);
@@ -152,6 +153,13 @@ const AquaPayPage = ({ currentUser }) => {
       } catch (err) { setError(err.response?.data?.error || 'Payment page not found'); }
       finally { setLoading(false); }
     };
+    
+    // Set amount and default token if provided in URL
+    if (urlAmount) {
+      setAmount(urlAmount);
+      setSelectedToken('usdc'); // Default to USDC if amount is pre-filled
+    }
+    
     if (slug) fetchPaymentPage();
   }, [slug]);
 
@@ -432,7 +440,8 @@ const AquaPayPage = ({ currentUser }) => {
         token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
         amount: parseFloat(amount), senderAddress: walletAddress,
         senderUsername: currentUser?.username, message,
-        bannerId: bannerId || null // Include bannerId if provided in URL
+        bannerId: bannerId || null, // Include bannerId if provided in URL
+        bumpId: bumpId || null // Include bumpId if provided in URL
       });
       
       // Send email notification to recipient if they have an email
@@ -471,8 +480,8 @@ const AquaPayPage = ({ currentUser }) => {
         }
       }
 
-      // If this payment was for a banner ad (bannerId in URL), close the window after successful payment
-      if (bannerId && response.data.approvedItem) {
+      // If this payment was for a banner ad or bump (bannerId/bumpId in URL), close the window after successful payment
+      if ((bannerId || bumpId) && response.data.approvedItem) {
         // Small delay to show success message, then close
         setTimeout(() => {
           if (window.opener) {

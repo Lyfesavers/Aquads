@@ -1,53 +1,18 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaRocket, FaChartLine, FaEye, FaTrophy, FaStar, FaFire, FaCrown, FaBolt, FaTimes } from 'react-icons/fa';
+import { FaRocket, FaChartLine, FaEye, FaTrophy, FaStar, FaFire, FaCrown, FaBolt, FaTimes } from 'react-icons/fa';
 import logger from '../utils/logger';
 import DiscountCodeInput from './DiscountCodeInput';
+import { createBumpRequest } from '../services/api';
 
 const BUMP_OPTIONS = [
   { duration: 'Lifetime', price: 150, durationMs: -1 }
 ];
 
-const BLOCKCHAIN_OPTIONS = [
-  {
-    name: 'Solana',
-    symbol: 'SOL',
-    address: 'F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf',
-    amount: 'USDC'
-  },
-  {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Base',
-    symbol: 'BASE',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
-    amount: 'USDC'
-  }
-];
-
 const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
-  const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
-  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
-  const [copiedAddress, setCopiedAddress] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const handleCopyAddress = async () => {
-    await navigator.clipboard.writeText(selectedChain.address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
 
   const handleDiscountApplied = (discountData) => {
     setAppliedDiscount(discountData);
@@ -57,22 +22,51 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
     setAppliedDiscount(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    logger.log("Form submitted with signature:", txSignature);
-    
-    if (!txSignature || txSignature.trim() === '') {
-      alert('Please enter the transaction signature');
-      return;
-    }
     
     if (!ad?.id) {
       alert('Invalid ad data');
       return;
     }
-    
-    // Call the parent component's callback with the transaction data
-    onSubmitPayment(ad.id, txSignature, selectedOption.durationMs, appliedDiscount ? appliedDiscount.discountCode.code : null);
+
+    if (!currentUser) {
+      alert('Please log in first!');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Calculate final amount with discount
+      const finalAmount = appliedDiscount 
+        ? (selectedOption.price - appliedDiscount.finalDiscount) 
+        : selectedOption.price;
+      
+      // Create bump request first with pending status and AquaPay placeholder
+      const newBumpRequest = await createBumpRequest({
+        adId: ad.id,
+        owner: currentUser.username,
+        txSignature: 'aquapay-pending', // Placeholder - will be updated on payment
+        duration: selectedOption.durationMs,
+        discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+      });
+      
+      // Open AquaPay link with bump ID and amount
+      const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${finalAmount}&bumpId=${newBumpRequest._id}`;
+      const newWindow = window.open(aquaPayUrl, '_blank'); // Store reference to the new window
+      
+      // Store the newWindow reference to close it later
+      window.aquaPayPopup = newWindow;
+
+      alert(`Bump request created! Please complete the payment of $${finalAmount} USDC on the AquaPay page. Your bump will be automatically approved once payment is confirmed.`);
+      onClose();
+    } catch (error) {
+      console.error('Error creating bump request:', error);
+      alert(error.message || 'Failed to create bump request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handlePayPalPurchase = async () => {
@@ -269,79 +263,37 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
                 currentUser={currentUser}
               />
 
-              {/* Network Selection */}
+              {/* Payment Instructions */}
               <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 text-base sm:text-lg">Select Payment Network</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {BLOCKCHAIN_OPTIONS.map((chain) => (
-                    <button
-                      key={chain.symbol}
-                      type="button"
-                      onClick={() => setSelectedChain(chain)}
-                      className={`p-3 sm:p-4 rounded-lg border transition-all ${
-                        selectedChain === chain
-                          ? 'border-blue-500 bg-blue-500/20 shadow-lg'
-                          : 'border-gray-600 hover:border-blue-400 bg-gray-700/30'
-                      }`}
-                    >
-                      <div className="text-center">
-                        <div className="text-white font-semibold text-sm sm:text-base">{chain.name}</div>
-                        <div className="text-gray-400 text-xs sm:text-sm">{chain.amount}</div>
-                      </div>
-                    </button>
-                  ))}
+                <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
+                  <p className="text-gray-300 text-xs sm:text-sm text-center mb-3">
+                    <span className="font-semibold text-blue-400">Pay with Crypto</span> - Click the button below to complete payment via AquaPay
+                  </p>
+                  <p className="text-gray-400 text-xs text-center">
+                    Your bump will be automatically approved once payment is confirmed
+                  </p>
                 </div>
               </div>
 
-              {/* Payment Address */}
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 text-base sm:text-lg">Payment Address</h3>
-                <div className="flex items-center gap-2 p-3 sm:p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-                  <input
-                    type="text"
-                    value={selectedChain.address}
-                    readOnly
-                    className="bg-transparent flex-1 outline-none text-white text-xs sm:text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCopyAddress}
-                    className="text-blue-400 hover:text-blue-300 transition-colors p-2"
-                  >
-                    {copiedAddress ? <FaCheck className="text-xl" /> : <FaCopy className="text-xl" />}
-                  </button>
-                </div>
-                {copiedAddress && (
-                  <p className="text-green-400 text-xs mt-2">✓ Address copied to clipboard!</p>
-                )}
-              </div>
-
-              {/* Transaction Signature Form */}
+              {/* Payment Method Buttons */}
               <form onSubmit={handleSubmit} className="mb-6">
-                <div className="mb-6">
-                  <label className="block text-white font-semibold mb-3 text-base sm:text-lg">
-                    Transaction Signature
-                  </label>
-                  <input
-                    type="text"
-                    value={txSignature}
-                    onChange={(e) => setTxSignature(e.target.value)}
-                    placeholder="Enter transaction signature or hash"
-                    className="w-full p-3 sm:p-4 bg-gray-700/50 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
-                    required
-                  />
-                  <p className="text-gray-400 text-xs mt-2">Paste your transaction hash after sending payment</p>
-                </div>
-
-                {/* Payment Method Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
                     type="submit"
                     disabled={submitting}
                     className="px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center text-sm sm:text-base"
                   >
-                    <span className="mr-2 text-lg">🔗</span>
-                    Pay with Crypto
+                    {submitting ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </div>
+                    ) : (
+                      <>
+                        <span className="mr-2 text-lg">🔗</span>
+                        Pay with Crypto
+                      </>
+                    )}
                   </button>
                   
                   <button
@@ -368,7 +320,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
               {/* Footer Note */}
               <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                 <p className="text-gray-300 text-xs sm:text-sm text-center">
-                  <span className="font-semibold text-blue-400">Secure Payment</span> - Your payment will be verified by our admin team within 24 hours
+                  <span className="font-semibold text-blue-400">Secure Payment</span> - Crypto payments are automatically verified and approved
                 </p>
               </div>
             </div>
@@ -376,7 +328,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
             {/* Money Back Guarantee */}
             <div className="mt-6 text-center">
               <p className="text-gray-400 text-sm">
-                <span className="text-green-400 font-semibold">✓</span> Instant activation after verification
+                <span className="text-green-400 font-semibold">✓</span> Instant activation after payment confirmation
               </p>
               <p className="text-gray-400 text-sm mt-1">
                 <span className="text-green-400 font-semibold">✓</span> 24/7 customer support

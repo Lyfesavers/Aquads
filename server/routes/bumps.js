@@ -26,8 +26,13 @@ router.post('/', async (req, res) => {
   try {
     const { adId, owner, txSignature, duration, discountCode } = req.body;
     
-    if (!adId || !owner || !txSignature || !duration) {
-      return res.status(400).json({ error: 'Missing required fields: adId, owner, txSignature, or duration' });
+    if (!adId || !owner || !duration) {
+      return res.status(400).json({ error: 'Missing required fields: adId, owner, or duration' });
+    }
+
+    // Allow 'aquapay-pending' as a placeholder for AquaPay payments
+    if (!txSignature || (txSignature !== 'aquapay-pending' && txSignature.trim() === '')) {
+      return res.status(400).json({ error: 'Missing required field: txSignature' });
     }
 
     // Check if there's already a pending bump request for this ad
