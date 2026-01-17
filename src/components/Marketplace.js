@@ -1085,17 +1085,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           >
                             🎨 Create Banner Ad
                           </button>
-                          {currentUser.userType === 'project' && (
-                            <button
-                              onClick={() => {
-                                setShowDashboard(true);
-                                setShowUserDropdown(false);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-green-600/50 transition-colors"
-                            >
-                              🎁 List Reward
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              setServiceToUpgrade(null);
+                              setShowPremiumPaymentModal(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-yellow-600/50 transition-colors"
+                          >
+                            ⭐ Get Premium
+                          </button>
                           <button
                             onClick={() => {
                               setShowProfileModal(true);
@@ -1205,17 +1204,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                   >
                     Create Banner Ad
                   </button>
-                  {currentUser.userType === 'project' && (
-                    <button
-                      onClick={() => {
-                        setShowDashboard(true);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="bg-green-600/90 hover:bg-green-500/90 px-4 py-2 rounded shadow-lg hover:shadow-green-500/30 transition-all duration-300 backdrop-blur-sm text-white"
-                    >
-                      🎁 List Reward
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setServiceToUpgrade(null);
+                      setShowPremiumPaymentModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-yellow-600/90 hover:bg-yellow-500/90 px-4 py-2 rounded shadow-lg hover:shadow-yellow-500/30 transition-all duration-300 backdrop-blur-sm text-white"
+                  >
+                    ⭐ Get Premium
+                  </button>
                   <button
                     onClick={() => {
                       setShowProfileModal(true);
