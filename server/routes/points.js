@@ -134,11 +134,42 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
       }
     }
 
+    // Validate and extract AquaPay link
+    const { aquaPayLink } = req.body;
+    
+    // Validate AquaPay link format (should be a valid URL)
+    if (!aquaPayLink || !aquaPayLink.trim()) {
+      return res.status(400).json({ 
+        error: 'AquaPay link is required to receive payment' 
+      });
+    }
+
+    // Basic URL validation and normalization
+    let validatedLink = aquaPayLink.trim();
+    try {
+      // If it doesn't start with http/https, assume it's a slug and prepend the base URL
+      if (!validatedLink.startsWith('http://') && !validatedLink.startsWith('https://')) {
+        // Remove leading slash if present
+        validatedLink = validatedLink.replace(/^\//, '');
+        // Remove any existing domain/path if user pasted partial URL
+        validatedLink = validatedLink.replace(/^(https?:\/\/)?(www\.)?aquads\.xyz\/pay\//i, '');
+        // Construct full URL
+        validatedLink = `https://aquads.xyz/pay/${validatedLink}`;
+      }
+      // Validate it's a proper URL
+      new URL(validatedLink);
+    } catch (error) {
+      return res.status(400).json({ 
+        error: 'Invalid AquaPay link format. Please provide a valid AquaPay payment link (e.g., aquads.xyz/pay/yourname or your full payment link)' 
+      });
+    }
+
     // Create redemption request
     user.giftCardRedemptions.push({
       amount: 100,
       status: 'pending',
-      requestedAt: new Date()
+      requestedAt: new Date(),
+      aquaPayLink: validatedLink
     });
 
     // Deduct points

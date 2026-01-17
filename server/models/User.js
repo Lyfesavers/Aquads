@@ -199,7 +199,8 @@ const userSchema = new Schema({
       default: Date.now
     },
     processedAt: Date,
-    processedBy: String
+    processedBy: String,
+    aquaPayLink: String
   }],
   
   // Partner Store Information (for project users)

@@ -36,6 +36,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
+  const [showRedemptionModal, setShowRedemptionModal] = useState(false);
+  const [aquaPayLink, setAquaPayLink] = useState('');
 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
   const [isLoadingMembership, setIsLoadingMembership] = useState(true);
@@ -879,6 +881,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleRedeemPoints = async () => {
+    if (!aquaPayLink || !aquaPayLink.trim()) {
+      setRedeemError('Please enter your AquaPay link');
+      return;
+    }
+
     try {
       setIsRedeeming(true);
       setRedeemError('');
@@ -888,7 +895,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          aquaPayLink: aquaPayLink.trim()
+        })
       });
 
       const data = await response.json();
@@ -901,6 +911,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.emit('requestAffiliateInfo', {
         userId: currentUser.userId || currentUser.id || currentUser._id
       });
+      
+      // Close modal and reset form
+      setShowRedemptionModal(false);
+      setAquaPayLink('');
       alert('Redemption request submitted successfully! Our team will process your request soon.');
     } catch (error) {
       setRedeemError(error.message);
@@ -2782,7 +2796,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                         {pointsInfo.points >= 10000 && (
                           <button
-                            onClick={handleRedeemPoints}
+                            onClick={() => setShowRedemptionModal(true)}
                             disabled={isRedeeming}
                             className={`px-4 py-2 rounded ${
                               isRedeeming 
@@ -4270,6 +4284,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                       <div key={index} className="text-gray-400 text-sm">
                                         <p>Amount: ${redemption.amount}</p>
                                         <p>Requested: {new Date(redemption.requestedAt).toLocaleString()}</p>
+                                        {redemption.aquaPayLink && (
+                                          <div className="mt-2">
+                                            <p className="text-gray-300 font-medium">AquaPay Link:</p>
+                                            <a 
+                                              href={redemption.aquaPayLink} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="text-blue-400 hover:text-blue-300 break-all"
+                                            >
+                                              {redemption.aquaPayLink}
+                                            </a>
+                                          </div>
+                                        )}
                                       </div>
                                     )
                                   ))}
@@ -5756,6 +5783,63 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           onPurchaseComplete={handleTokenPurchaseComplete}
           currentUser={currentUser}
         />
+      )}
+
+      {/* Redemption Modal */}
+      {showRedemptionModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-xl font-bold mb-4 text-green-400">Redeem $100 CAD Gift Card</h3>
+            <p className="mb-4 text-gray-300">
+              To receive your payment, please provide your AquaPay link. You can enter either:
+            </p>
+            <ul className="mb-4 text-sm text-gray-400 list-disc list-inside space-y-1">
+              <li>Your full AquaPay link (e.g., https://aquads.xyz/pay/yourname)</li>
+              <li>Or just your payment slug (e.g., yourname)</li>
+            </ul>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                AquaPay Link <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={aquaPayLink}
+                onChange={(e) => setAquaPayLink(e.target.value)}
+                placeholder="aquads.xyz/pay/yourname or yourname"
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                disabled={isRedeeming}
+              />
+              {redeemError && (
+                <p className="text-red-400 text-sm mt-2">{redeemError}</p>
+              )}
+            </div>
+            <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-3 mb-4">
+              <p className="text-sm text-yellow-200">
+                <strong>Note:</strong> This will redeem 10,000 points for $100 CAD. Your payment will be sent to the AquaPay link you provide.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowRedemptionModal(false);
+                  setAquaPayLink('');
+                  setRedeemError('');
+                }}
+                disabled={isRedeeming}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRedeemPoints}
+                disabled={isRedeeming || !aquaPayLink.trim()}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRedeeming ? 'Processing...' : 'Confirm Redemption'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* AquaPay Settings Modal */}
