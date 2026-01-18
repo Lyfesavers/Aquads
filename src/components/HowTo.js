@@ -21,7 +21,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs', 'workshop'
+  // Initialize activeTab from sessionStorage or default to 'videos'
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('learnActiveTab') || 'videos';
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -49,25 +52,27 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     };
   }, [showUserDropdown]);
 
+  // Store activeTab in sessionStorage whenever it changes
   useEffect(() => {
-    let shouldClearState = false;
-    
+    sessionStorage.setItem('learnActiveTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
     // Check if we're coming from BlogPage with edit state
     if (location.state?.editBlog) {
       setEditingBlog(location.state.editBlog);
       setShowCreateBlogModal(true);
-      shouldClearState = true;
-    }
-    
-    // Check if we're coming from BlogPage and should show blogs tab
-    if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-      shouldClearState = true;
-    }
-    
-    // Clear the state to prevent re-triggering if any state was set
-    if (shouldClearState) {
+      // Clear the state to prevent re-triggering
       navigate(location.pathname, { replace: true, state: {} });
+    }
+    
+    // Check if we're coming back from a blog page (indicated by sessionStorage)
+    const returningFromBlog = sessionStorage.getItem('returningFromBlog');
+    if (returningFromBlog === 'true') {
+      // User is returning from blog page, ensure blogs tab is active
+      setActiveTab('blogs');
+      // Clear the flag
+      sessionStorage.removeItem('returningFromBlog');
     }
     
     // Fetch blogs for the list view

@@ -115,6 +115,13 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
   // Extract blog ID from slug, /share/blog/:id, or URL params
   const blogId = id || extractBlogIdFromSlug(slug) || new URLSearchParams(location.search).get('blogId');
 
+  // Set flag in sessionStorage when BlogPage mounts to indicate user is viewing a blog
+  useEffect(() => {
+    sessionStorage.setItem('returningFromBlog', 'true');
+    // Store that blogs tab should be active when returning to learn page
+    sessionStorage.setItem('learnActiveTab', 'blogs');
+  }, []);
+
   useEffect(() => {
     if (!blogId) {
       setError('Blog ID not found');
@@ -364,7 +371,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <h1 className="text-4xl font-bold mb-4">Blog Not Found</h1>
             <p className="text-gray-400 mb-8">{error || 'The blog post you\'re looking for doesn\'t exist.'}</p>
             <Link
-              to={{ pathname: "/learn", state: { activeTab: 'blogs' } }}
+              to="/learn"
               className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <FaArrowLeft />
@@ -724,7 +731,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             {/* Navigation */}
             <nav className="mb-8">
               <Link
-                to={{ pathname: "/learn", state: { activeTab: 'blogs' } }}
+                to="/learn"
                 className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-2"
               >
                 <FaArrowLeft />
