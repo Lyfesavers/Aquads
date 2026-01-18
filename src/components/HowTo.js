@@ -50,11 +50,23 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   }, [showUserDropdown]);
 
   useEffect(() => {
+    let shouldClearState = false;
+    
     // Check if we're coming from BlogPage with edit state
     if (location.state?.editBlog) {
       setEditingBlog(location.state.editBlog);
       setShowCreateBlogModal(true);
-      // Clear the state to prevent re-triggering
+      shouldClearState = true;
+    }
+    
+    // Check if we're coming from BlogPage and should show blogs tab
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      shouldClearState = true;
+    }
+    
+    // Clear the state to prevent re-triggering if any state was set
+    if (shouldClearState) {
       navigate(location.pathname, { replace: true, state: {} });
     }
     

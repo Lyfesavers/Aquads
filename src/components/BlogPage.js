@@ -364,7 +364,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <h1 className="text-4xl font-bold mb-4">Blog Not Found</h1>
             <p className="text-gray-400 mb-8">{error || 'The blog post you\'re looking for doesn\'t exist.'}</p>
             <Link
-              to="/learn"
+              to={{ pathname: "/learn", state: { activeTab: 'blogs' } }}
               className="bg-blue-500 hover:bg-blue-600 text-yellow-400 px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <FaArrowLeft />
@@ -724,7 +724,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             {/* Navigation */}
             <nav className="mb-8">
               <Link
-                to="/learn"
+                to={{ pathname: "/learn", state: { activeTab: 'blogs' } }}
                 className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-2"
               >
                 <FaArrowLeft />
