@@ -109,6 +109,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Banner edit states
   const [showBannerEditModal, setShowBannerEditModal] = useState(false);
   const [showAquaPaySettings, setShowAquaPaySettings] = useState(false);
+  const [aquaPayStats, setAquaPayStats] = useState({ totalReceived: 0, totalTransactions: 0 });
+  const [aquaPayPaymentHistory, setAquaPayPaymentHistory] = useState([]);
   const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
   const [bannerEditData, setBannerEditData] = useState({
     title: '',
@@ -531,6 +533,52 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('membershipActionError', handleMembershipActionError);
     };
   }, [socket, currentUser]);
+
+  // Fetch AquaPay stats when aquapay tab is active
+  useEffect(() => {
+    if (!socket || !currentUser || activeTab !== 'aquapay') return;
+
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    
+    // Request settings via socket to get stats
+    socket.emit('requestAquaPaySettings', { userId });
+
+    const handleSettingsLoaded = (data) => {
+      if (data.settings?.stats) {
+        setAquaPayStats(data.settings.stats);
+      }
+      if (data.settings?.paymentHistory) {
+        setAquaPayPaymentHistory(data.settings.paymentHistory || []);
+      }
+    };
+
+    const handleStatsUpdated = (data) => {
+      if (data.userId === userId && data.stats) {
+        setAquaPayStats(data.stats);
+      }
+    };
+
+    const handlePaymentReceived = (data) => {
+      if (data.recipientId === userId || data.userId === userId) {
+        if (data.stats) {
+          setAquaPayStats(data.stats);
+        }
+        if (data.payment) {
+          setAquaPayPaymentHistory(prev => [data.payment, ...prev].slice(0, 100));
+        }
+      }
+    };
+
+    socket.on('aquaPaySettingsLoaded', handleSettingsLoaded);
+    socket.on('aquaPayStatsUpdated', handleStatsUpdated);
+    socket.on('aquaPayPaymentReceived', handlePaymentReceived);
+
+    return () => {
+      socket.off('aquaPaySettingsLoaded', handleSettingsLoaded);
+      socket.off('aquaPayStatsUpdated', handleStatsUpdated);
+      socket.off('aquaPayPaymentReceived', handlePaymentReceived);
+    };
+  }, [socket, currentUser, activeTab]);
 
   // Socket listeners for bump request updates
   useEffect(() => {
@@ -3101,52 +3149,299 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 </div>
               </div>
 
-              {/* How it Works */}
-              <div className="bg-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-white mb-4">How AquaPay Works</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-                      1️⃣
-                    </div>
-                    <h4 className="text-white font-medium mb-1">Setup</h4>
-                    <p className="text-gray-400 text-sm">Add your wallet addresses for each chain</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-                      2️⃣
-                    </div>
-                    <h4 className="text-white font-medium mb-1">Share</h4>
-                    <p className="text-gray-400 text-sm">Share your payment link anywhere</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-                      3️⃣
-                    </div>
-                    <h4 className="text-white font-medium mb-1">Receive</h4>
-                    <p className="text-gray-400 text-sm">Payers connect wallet and send directly</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-                      4️⃣
-                    </div>
-                    <h4 className="text-white font-medium mb-1">Done</h4>
-                    <p className="text-gray-400 text-sm">Funds arrive in your wallet instantly</p>
-                  </div>
-                </div>
-              </div>
+              {/* Stats Cards */}
+              {(() => {
+                // Calculate token totals from payment history
+                const paymentHistory = aquaPayPaymentHistory || [];
+                const tokenTotals = {};
+                
+                paymentHistory.forEach(payment => {
+                  if (payment.token && payment.amount) {
+                    tokenTotals[payment.token] = (tokenTotals[payment.token] || 0) + parseFloat(payment.amount);
+                  }
+                });
 
-              {/* CTA */}
-              <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-6 border border-blue-500/30 text-center">
-                <h3 className="text-xl font-semibold text-white mb-2">Ready to receive payments?</h3>
-                <p className="text-gray-400 mb-4">Configure your wallet addresses and start accepting crypto payments</p>
-                <button
-                  onClick={() => setShowAquaPaySettings(true)}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all hover:scale-105"
-                >
-                  🚀 Get Started
-                </button>
-              </div>
+                // Determine which tokens to display (prioritize USDC and SOL, then others)
+                const tokenDisplayOrder = ['USDC', 'SOL', 'USDT', 'ETH', 'BTC'];
+                const otherTokens = Object.keys(tokenTotals).filter(t => !tokenDisplayOrder.includes(t));
+                const tokensToShow = [
+                  ...tokenDisplayOrder.filter(t => tokenTotals[t] > 0),
+                  ...otherTokens.filter(t => tokenTotals[t] > 0)
+                ];
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Total USD */}
+                    <div className="bg-gradient-to-br from-blue-600/20 to-blue-900/20 rounded-xl p-6 border border-blue-500/30">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 bg-blue-500/30 rounded-xl flex items-center justify-center text-2xl">
+                          💰
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-lg">Total Received</h3>
+                          <p className="text-gray-400 text-sm">All-time (USD)</p>
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-blue-400">
+                        ${(aquaPayStats.totalReceived || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+
+                    {/* Total Payments Count */}
+                    <div className="bg-gradient-to-br from-purple-600/20 to-purple-900/20 rounded-xl p-6 border border-purple-500/30">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center text-2xl">
+                          📊
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-lg">Total Payments</h3>
+                          <p className="text-gray-400 text-sm">Transactions received</p>
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-purple-400">
+                        {aquaPayStats.totalTransactions || 0}
+                      </p>
+                    </div>
+
+                    {/* Token-specific totals */}
+                    {tokensToShow.slice(0, 4).map(token => {
+                      const total = tokenTotals[token];
+                      const tokenConfig = {
+                        USDC: { 
+                          gradient: 'from-green-600/20 to-green-900/20', 
+                          border: 'border-green-500/30', 
+                          text: 'text-green-400', 
+                          iconBg: 'bg-green-500/30',
+                          icon: '💵'
+                        },
+                        SOL: { 
+                          gradient: 'from-purple-600/20 to-indigo-900/20', 
+                          border: 'border-purple-500/30', 
+                          text: 'text-purple-400', 
+                          iconBg: 'bg-purple-500/30',
+                          icon: '◎'
+                        },
+                        USDT: { 
+                          gradient: 'from-blue-600/20 to-cyan-900/20', 
+                          border: 'border-blue-500/30', 
+                          text: 'text-cyan-400', 
+                          iconBg: 'bg-blue-500/30',
+                          icon: '💵'
+                        },
+                        ETH: { 
+                          gradient: 'from-gray-600/20 to-gray-900/20', 
+                          border: 'border-gray-500/30', 
+                          text: 'text-gray-300', 
+                          iconBg: 'bg-gray-500/30',
+                          icon: 'Ξ'
+                        },
+                        BTC: { 
+                          gradient: 'from-orange-600/20 to-orange-900/20', 
+                          border: 'border-orange-500/30', 
+                          text: 'text-orange-400', 
+                          iconBg: 'bg-orange-500/30',
+                          icon: '₿'
+                        }
+                      };
+                      const config = tokenConfig[token] || { 
+                        gradient: 'from-gray-600/20 to-gray-900/20', 
+                        border: 'border-gray-500/30', 
+                        text: 'text-gray-300', 
+                        iconBg: 'bg-gray-500/30',
+                        icon: '🪙'
+                      };
+
+                      return (
+                        <div key={token} className={`bg-gradient-to-br ${config.gradient} rounded-xl p-6 border ${config.border}`}>
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className={`w-12 h-12 ${config.iconBg} rounded-xl flex items-center justify-center text-2xl`}>
+                              {config.icon}
+                            </div>
+                            <div>
+                              <h3 className="text-white font-semibold text-lg">Total {token}</h3>
+                              <p className="text-gray-400 text-sm">Received</p>
+                            </div>
+                          </div>
+                          <p className={`text-3xl font-bold ${config.text}`}>
+                            {total.toLocaleString('en-US', { 
+                              minimumFractionDigits: token === 'USDC' || token === 'USDT' ? 2 : 4, 
+                              maximumFractionDigits: token === 'USDC' || token === 'USDT' ? 2 : 8 
+                            })}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Analytics & Payment History */}
+              {(() => {
+                // Helper functions
+                const EXPLORER_URLS = {
+                  solana: 'https://solscan.io/tx/',
+                  ethereum: 'https://etherscan.io/tx/',
+                  base: 'https://basescan.org/tx/',
+                  polygon: 'https://polygonscan.com/tx/',
+                  arbitrum: 'https://arbiscan.io/tx/',
+                  bnb: 'https://bscscan.com/tx/',
+                  bitcoin: 'https://mempool.space/tx/',
+                  tron: 'https://tronscan.org/#/transaction/'
+                };
+
+                const getExplorerUrl = (chain, txHash) => {
+                  const baseUrl = EXPLORER_URLS[chain] || EXPLORER_URLS.ethereum;
+                  return `${baseUrl}${txHash}`;
+                };
+
+                const formatAddress = (address) => {
+                  if (!address) return 'Unknown';
+                  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+                };
+
+                // Calculate analytics from payment history
+                const paymentHistory = aquaPayPaymentHistory || [];
+                const chainBreakdown = {};
+                const tokenBreakdown = {};
+                const tokenTotals = {}; // Track total amounts by token
+                let totalWithUSD = 0;
+                let countWithUSD = 0;
+
+                paymentHistory.forEach(payment => {
+                  // Chain breakdown
+                  chainBreakdown[payment.chain] = (chainBreakdown[payment.chain] || 0) + 1;
+                  
+                  // Token breakdown (count)
+                  tokenBreakdown[payment.token] = (tokenBreakdown[payment.token] || 0) + 1;
+                  
+                  // Token totals (amount)
+                  if (payment.token && payment.amount) {
+                    tokenTotals[payment.token] = (tokenTotals[payment.token] || 0) + parseFloat(payment.amount);
+                  }
+                  
+                  // Average calculation
+                  if (payment.amountUSD) {
+                    totalWithUSD += payment.amountUSD;
+                    countWithUSD++;
+                  }
+                });
+
+                const avgPayment = countWithUSD > 0 ? totalWithUSD / countWithUSD : 0;
+                const lastPayment = paymentHistory.length > 0 ? paymentHistory[0] : null;
+
+                return (
+                  <div className="space-y-6">
+                    {/* Additional Analytics */}
+                    {(Object.keys(chainBreakdown).length > 0 || Object.keys(tokenBreakdown).length > 0) && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {avgPayment > 0 && (
+                          <div className="bg-gray-800 rounded-xl p-4">
+                            <p className="text-gray-400 text-sm mb-1">Average Payment</p>
+                            <p className="text-2xl font-bold text-green-400">
+                              ${avgPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {lastPayment && (
+                          <div className="bg-gray-800 rounded-xl p-4">
+                            <p className="text-gray-400 text-sm mb-1">Last Payment</p>
+                            <p className="text-lg font-semibold text-white">
+                              {new Date(lastPayment.createdAt).toLocaleDateString()}
+                            </p>
+                            {lastPayment.amountUSD && (
+                              <p className="text-sm text-gray-400">
+                                ${lastPayment.amountUSD.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {Object.keys(chainBreakdown).length > 0 && (
+                          <div className="bg-gray-800 rounded-xl p-4">
+                            <p className="text-gray-400 text-sm mb-2">Top Chain</p>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(chainBreakdown)
+                                .sort(([,a], [,b]) => b - a)
+                                .slice(0, 3)
+                                .map(([chain, count]) => (
+                                  <div key={chain} className="flex items-center gap-1">
+                                    <span className="text-xs uppercase bg-gray-700 px-2 py-1 rounded text-gray-300">
+                                      {chain}
+                                    </span>
+                                    <span className="text-white font-semibold">{count}</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Payment History */}
+                    <div className="bg-gray-800 rounded-xl p-6">
+                      <h3 className="text-xl font-semibold text-white mb-4">Payment History</h3>
+                      {paymentHistory.length > 0 ? (
+                        <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                          {paymentHistory.map((payment, index) => (
+                            <div 
+                              key={payment.txHash || index} 
+                              className="bg-gray-900 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-gray-700 hover:border-blue-500/50 transition-colors"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                  <span className="text-green-400 font-semibold text-base">
+                                    +{payment.amount} {payment.token}
+                                  </span>
+                                  {payment.amountUSD && (
+                                    <span className="text-gray-400 text-sm">
+                                      (${payment.amountUSD.toFixed(2)})
+                                    </span>
+                                  )}
+                                  <span className="text-gray-500 text-xs uppercase bg-gray-800 px-2 py-1 rounded">
+                                    {payment.chain}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+                                  <span>From: {formatAddress(payment.senderAddress)}</span>
+                                  <span>•</span>
+                                  <span>{new Date(payment.createdAt).toLocaleString()}</span>
+                                </div>
+                                {payment.message && (
+                                  <p className="text-gray-500 text-xs mt-2 italic">
+                                    "{payment.message}"
+                                  </p>
+                                )}
+                              </div>
+                              {payment.txHash && (
+                                <a
+                                  href={getExplorerUrl(payment.chain, payment.txHash)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 flex-shrink-0"
+                                >
+                                  View TX
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <p className="text-6xl mb-4">💰</p>
+                          <p className="text-gray-400 text-lg mb-2">No payments yet</p>
+                          <p className="text-gray-500 text-sm">
+                            Share your payment link to start receiving crypto!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
