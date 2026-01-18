@@ -3171,22 +3171,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Total USD */}
-                    <div className="bg-gradient-to-br from-blue-600/20 to-blue-900/20 rounded-xl p-6 border border-blue-500/30">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 bg-blue-500/30 rounded-xl flex items-center justify-center text-2xl">
-                          💰
-                        </div>
-                        <div>
-                          <h3 className="text-white font-semibold text-lg">Total Received</h3>
-                          <p className="text-gray-400 text-sm">All-time (USD)</p>
-                        </div>
-                      </div>
-                      <p className="text-3xl font-bold text-blue-400">
-                        ${(aquaPayStats.totalReceived || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
-
                     {/* Total Payments Count */}
                     <div className="bg-gradient-to-br from-purple-600/20 to-purple-900/20 rounded-xl p-6 border border-purple-500/30">
                       <div className="flex items-center gap-4 mb-4">

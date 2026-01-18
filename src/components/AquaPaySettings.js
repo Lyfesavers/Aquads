@@ -317,8 +317,7 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
             {[
               { id: 'general', label: '⚙️', fullLabel: '⚙️ General' },
               { id: 'wallets', label: '👛', fullLabel: '👛 Wallets' },
-              { id: 'appearance', label: '🎨', fullLabel: '🎨 Theme' },
-              { id: 'stats', label: '📊', fullLabel: '📊 Stats' }
+              { id: 'appearance', label: '🎨', fullLabel: '🎨 Theme' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -497,75 +496,6 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
             </div>
           )}
 
-          {/* Stats Tab */}
-          {activeTab === 'stats' && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 text-center">
-                <p className="text-3xl sm:text-5xl font-bold text-blue-400">
-                  {settings.stats?.totalTransactions || 0}
-                </p>
-                <p className="text-gray-400 mt-2 text-sm sm:text-base">Total Payments Received</p>
-              </div>
-
-              {/* Payment History */}
-              {settings.paymentHistory && settings.paymentHistory.length > 0 ? (
-                <div className="bg-gray-800 rounded-xl p-3 sm:p-4">
-                  <h4 className="text-white font-medium mb-3 text-sm sm:text-base">Payment History</h4>
-                  <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                    {settings.paymentHistory.map((payment, index) => (
-                      <div 
-                        key={payment.txHash || index} 
-                        className="bg-gray-900 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-green-400 font-medium text-sm">
-                              +{payment.amount} {payment.token}
-                            </span>
-                            {payment.amountUSD && (
-                              <span className="text-gray-500 text-xs">
-                                (${payment.amountUSD.toFixed(2)})
-                              </span>
-                            )}
-                            <span className="text-gray-600 text-xs uppercase bg-gray-800 px-1.5 py-0.5 rounded">
-                              {payment.chain}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                            <span>From: {formatAddress(payment.senderAddress)}</span>
-                            <span>•</span>
-                            <span>{new Date(payment.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          {payment.message && (
-                            <p className="text-gray-500 text-xs mt-1 italic truncate">"{payment.message}"</p>
-                          )}
-                        </div>
-                        <a
-                          href={getExplorerUrl(payment.chain, payment.txHash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors flex-shrink-0"
-                        >
-                          View TX
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 sm:py-8">
-                  <p className="text-4xl sm:text-6xl mb-3 sm:mb-4">💰</p>
-                  <p className="text-gray-400 text-sm sm:text-base">No payments yet</p>
-                  <p className="text-gray-500 text-xs sm:text-sm mt-1 sm:mt-2">
-                    Share your link to start receiving crypto!
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Footer */}
