@@ -725,11 +725,35 @@ function App() {
       
       if (data.type === 'update') {
         setAds(prevAds => {
-          const newAds = prevAds.map(ad => 
-            ad.id === data.ad.id ? {...ad, ...data.ad} : ad
-          );
-          localStorage.setItem('cachedAds', JSON.stringify(newAds));
-          return newAds;
+          const existingAdIndex = prevAds.findIndex(ad => ad.id === data.ad.id);
+          
+          // If ad exists in the list, update it
+          if (existingAdIndex !== -1) {
+            const updatedAd = {...prevAds[existingAdIndex], ...data.ad};
+            
+            // If updated ad is now pending/rejected and user is not admin, remove it
+            if (!currentUser?.isAdmin && (updatedAd.status === 'pending' || updatedAd.status === 'rejected')) {
+              const newAds = prevAds.filter(ad => ad.id !== data.ad.id);
+              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              return newAds;
+            }
+            
+            // Otherwise, update the ad
+            const newAds = prevAds.map(ad => 
+              ad.id === data.ad.id ? updatedAd : ad
+            );
+            localStorage.setItem('cachedAds', JSON.stringify(newAds));
+            return newAds;
+          } else {
+            // Ad doesn't exist in list - check if we should add it (if it's active/approved)
+            if (currentUser?.isAdmin || (data.ad.status !== 'pending' && data.ad.status !== 'rejected')) {
+              const newAds = [...prevAds, data.ad];
+              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              return newAds;
+            }
+          }
+          
+          return prevAds;
         });
       } else if (data.type === 'delete') {
         setAds(prevAds => {
@@ -742,9 +766,13 @@ function App() {
           // Add the new ad to the list if it doesn't already exist
           const exists = prevAds.some(ad => ad.id === data.ad.id);
           if (!exists) {
-            const newAds = [...prevAds, data.ad];
-            localStorage.setItem('cachedAds', JSON.stringify(newAds));
-            return newAds;
+            // Filter out pending and rejected ads - only show active/approved ads (unless admin)
+            // Admins can see all ads including pending ones
+            if (currentUser?.isAdmin || (data.ad.status !== 'pending' && data.ad.status !== 'rejected')) {
+              const newAds = [...prevAds, data.ad];
+              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              return newAds;
+            }
           }
           return prevAds;
         });
