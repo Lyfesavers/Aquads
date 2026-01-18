@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
-import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob, refreshJob, socket } from '../services/api';
+import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob, refreshJob, socket, register as apiRegister } from '../services/api';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
+import emailService from '../services/emailService';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
 import CreateBannerModal from './CreateBannerModal';
 
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
+import EmailVerificationModal from './EmailVerificationModal';
 import EditServiceModal from './EditServiceModal';
 import { FaCrown, FaCheck, FaFileAlt } from 'react-icons/fa';
 import BookingButton from './BookingButton';
@@ -168,6 +170,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [showCVPreview, setShowCVPreview] = useState(false);
   const [cvUserId, setCvUserId] = useState(null);
   const [cvUsername, setCvUsername] = useState(null);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   
   // Pagination state for services
   const [currentPage, setCurrentPage] = useState(1);
@@ -731,14 +735,80 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
 
   const handleCreateAccountSubmit = async (formData) => {
     try {
-      await onCreateAccount(formData);
-      setShowCreateAccountModal(false);
-      // The welcome modal and other state updates are handled in App.js
-      // No need to duplicate that logic here
+      // Call onCreateAccount to ensure App.js state is updated
+      // But we'll handle the verification modal locally on this page
+      const result = await onCreateAccount(formData);
+      
+      // Get the user from localStorage (onCreateAccount stores it there)
+      const savedUser = localStorage.getItem('currentUser');
+      const user = savedUser ? JSON.parse(savedUser) : null;
+      
+      if (user) {
+        setShowCreateAccountModal(false);
+        
+        // Check if email verification is required
+        if (user.verificationRequired && !user.emailVerified) {
+          // Send verification email
+          if (user.verificationCode) {
+            logger.log('Attempting to send verification email...');
+            try {
+              await emailService.sendVerificationEmail(
+                user.email,
+                user.username,
+                user.verificationCode
+              );
+              logger.log('Verification email sent successfully');
+            } catch (emailError) {
+              logger.error('Failed to send verification email:', emailError);
+              alert('Account created but failed to send verification email. Please try resending.');
+            }
+          }
+          
+          // Show verification modal on Marketplace page (this will appear instead of the global one)
+          setPendingVerificationEmail(user.email);
+          setShowEmailVerificationModal(true);
+        }
+      }
     } catch (error) {
       logger.error('Create account error:', error);
       // Error will be shown in the CreateAccountModal component
+      throw error; // Re-throw so CreateAccountModal can handle it
     }
+  };
+
+  const handleEmailVerificationComplete = async (message) => {
+    alert(message);
+    
+    // Get current user from props or localStorage (in case App.js state hasn't synced yet)
+    const user = currentUser || (() => {
+      try {
+        const savedUser = localStorage.getItem('currentUser');
+        return savedUser ? JSON.parse(savedUser) : null;
+      } catch {
+        return null;
+      }
+    })();
+    
+    // Send welcome email after successful verification
+    if (pendingVerificationEmail && user) {
+      logger.log('Sending welcome email after verification...');
+      try {
+        await emailService.sendWelcomeEmail(
+          pendingVerificationEmail,
+          user.username,
+          user.referralCode
+        );
+        logger.log('Welcome email sent successfully after verification');
+      } catch (emailError) {
+        logger.error('Failed to send welcome email after verification:', emailError);
+      }
+    }
+    
+    setShowEmailVerificationModal(false);
+    setPendingVerificationEmail('');
+    
+    // Trigger a page event to help App.js sync currentUser state from localStorage
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleEditService = async (serviceId, updatedData) => {
@@ -1900,6 +1970,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
         <CreateAccountModal
           onClose={() => setShowCreateAccountModal(false)}
           onCreateAccount={handleCreateAccountSubmit}
+        />
+      )}
+
+      {/* Email Verification Modal - shown on Marketplace page when account is created here */}
+      {showEmailVerificationModal && (
+        <EmailVerificationModal
+          email={pendingVerificationEmail}
+          onVerificationComplete={handleEmailVerificationComplete}
+          onClose={() => {
+            setShowEmailVerificationModal(false);
+            setPendingVerificationEmail('');
+          }}
         />
       )}
 
