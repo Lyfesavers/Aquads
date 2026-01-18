@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
+import { createAd as apiCreateAd } from '../services/api';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -346,7 +347,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       }
       
       // Regular project listing - create Ad first with aquapay-pending
-      const newAd = await onCreateAd({
+      // Call API directly to get the created ad's ID for the AquaPay URL
+      const adDataForApi = {
         ...formData,
         txSignature: 'aquapay-pending',
         paymentMethod: 'aquapay',
@@ -356,12 +358,17 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
         discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
-      });
+      };
+      
+      // Call API directly to get the created ad with ID
+      const newAd = await apiCreateAd(adDataForApi);
       
       // Open AquaPay link with amount and projectId
       const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${formData.totalAmount}&projectId=${newAd._id || newAd.id}`;
       window.open(aquaPayUrl, '_blank');
       
+      // Close modal and show success message
+      onClose();
       alert('Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
     } catch (error) {
       console.error('Error submitting:', error);
