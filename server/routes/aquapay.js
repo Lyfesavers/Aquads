@@ -76,8 +76,9 @@ router.post('/payment', async (req, res) => {
       senderUsername,
       message,
       bannerId, // Optional: for banner ad payments
-      bumpId,   // Optional: for bump payments (future)
-      projectId // Optional: for project listing payments (future)
+      bumpId,   // Optional: for bump payments
+      projectId, // Optional: for project listing payments (for admin reference)
+      addonOrderId // Optional: for addon order payments (for admin reference)
     } = req.body;
 
     if (!recipientSlug || !txHash || !chain || !amount) {

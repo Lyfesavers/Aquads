@@ -107,10 +107,12 @@ const AquaPayPage = ({ currentUser }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   
-  // Get bannerId, bumpId and amount from URL search params if provided
+  // Get bannerId, bumpId, projectId, addonOrderId and amount from URL search params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const bannerId = urlParams.get('bannerId');
   const bumpId = urlParams.get('bumpId');
+  const projectId = urlParams.get('projectId');
+  const addonOrderId = urlParams.get('addonOrderId');
   const urlAmount = urlParams.get('amount');
   
   const [loading, setLoading] = useState(true);
@@ -441,7 +443,9 @@ const AquaPayPage = ({ currentUser }) => {
         amount: parseFloat(amount), senderAddress: walletAddress,
         senderUsername: currentUser?.username, message,
         bannerId: bannerId || null, // Include bannerId if provided in URL
-        bumpId: bumpId || null // Include bumpId if provided in URL
+        bumpId: bumpId || null, // Include bumpId if provided in URL
+        projectId: projectId || null, // Include projectId if provided in URL (for admin reference)
+        addonOrderId: addonOrderId || null // Include addonOrderId if provided in URL (for admin reference)
       });
       
       // Send email notification to recipient if they have an email

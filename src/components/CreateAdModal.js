@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 
 const BLOCKCHAIN_OPTIONS = [
@@ -197,9 +197,9 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     pairAddress: '',
     blockchain: 'ethereum',
     txSignature: '',
-    paymentChain: BLOCKCHAIN_OPTIONS[0].name,
-    chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
-    chainAddress: BLOCKCHAIN_OPTIONS[0].address,
+    paymentChain: '',
+    chainSymbol: '',
+    chainAddress: '',
     selectedAddons: preSelectedPackage ? [preSelectedPackage] : [], // Pre-select package if provided
     totalAmount: discountedBaseFee + getInitialAddonTotal(), // Base listing fee + pre-selected addon
     isAffiliate: isAffiliate,
@@ -208,8 +208,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
-  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
-  const [copiedAddress, setCopiedAddress] = useState(false);
   const [expandedPackages, setExpandedPackages] = useState(new Set()); // Track expanded packages
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -263,11 +261,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     }
   };
 
-  const handleCopyAddress = async () => {
-    await navigator.clipboard.writeText(selectedChain.address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
 
   const handleInfoSubmit = (e) => {
     e.preventDefault();
@@ -307,11 +300,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       handleInfoSubmit(e);
       return;
     }
-    
-    if (!formData.txSignature) {
-      setError('Please enter the transaction signature');
-      return;
-    }
 
     try {
       setIsSubmitting(true);
@@ -334,35 +322,47 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
             projectLogo: selectedExistingProject.logo,
             selectedAddons: formData.selectedAddons,
             totalAmount: formData.totalAmount,
-            txSignature: formData.txSignature,
-            paymentMethod: 'crypto',
-            paymentChain: selectedChain.name,
-            chainSymbol: selectedChain.symbol,
-            chainAddress: selectedChain.address,
+            txSignature: 'aquapay-pending',
+            paymentMethod: 'aquapay',
+            paymentChain: 'AquaPay',
+            chainSymbol: 'USDC',
+            chainAddress: 'https://aquads.xyz/pay/aquads',
             discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
           })
         });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to submit addon order');
-        }
+        const newAddonOrder = await response.json();
         
-        alert('Marketing package order submitted successfully! It will be processed once payment is verified.');
+        if (!response.ok) {
+          throw new Error(newAddonOrder.error || 'Failed to submit addon order');
+        }
+        // Open AquaPay link with amount and addonOrderId
+        const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${formData.totalAmount}&addonOrderId=${newAddonOrder._id || newAddonOrder.id}`;
+        window.open(aquaPayUrl, '_blank');
+        
+        alert('Please complete the payment in the opened window. Your marketing package order will be processed once payment is verified by an admin.');
         onClose();
         return;
       }
       
-      // Regular project listing
-      await onCreateAd({
+      // Regular project listing - create Ad first with aquapay-pending
+      const newAd = await onCreateAd({
         ...formData,
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address,
+        txSignature: 'aquapay-pending',
+        paymentMethod: 'aquapay',
+        paymentChain: 'AquaPay',
+        chainSymbol: 'USDC',
+        chainAddress: 'https://aquads.xyz/pay/aquads',
         isAffiliate: isAffiliate,
         affiliateDiscount: affiliateDiscount,
         discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
       });
+      
+      // Open AquaPay link with amount and projectId
+      const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${formData.totalAmount}&projectId=${newAd._id || newAd.id}`;
+      window.open(aquaPayUrl, '_blank');
+      
+      alert('Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
     } catch (error) {
       console.error('Error submitting:', error);
       setError(error.message || 'Failed to submit. Please try again.');
@@ -1195,62 +1195,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   </div>
                 )}
 
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-4">Select Payment Network</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {BLOCKCHAIN_OPTIONS.map((chain) => (
-                      <button
-                        key={chain.symbol}
-                        type="button"
-                        onClick={() => setSelectedChain(chain)}
-                        className={`p-4 rounded-lg border transition-all ${
-                          selectedChain === chain
-                            ? 'border-blue-500 bg-blue-500/20 ring-2 ring-blue-500/50'
-                            : 'border-gray-600 hover:border-blue-400 hover:bg-gray-700/50'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">{chain.name}</span>
-                          <span className="text-sm text-gray-300">${formData.totalAmount} {chain.amount}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-4">Payment Address</h3>
-                  <div className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg">
-                    <input
-                      type="text"
-                      value={selectedChain.address}
-                      readOnly
-                      className="bg-transparent flex-1 outline-none text-sm font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCopyAddress}
-                      className="text-blue-400 hover:text-blue-300 p-2 rounded"
-                    >
-                      {copiedAddress ? <FaCheck /> : <FaCopy />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-lg font-medium text-gray-300 mb-2">
-                    Transaction Signature
-                  </label>
-                  <input
-                    type="text"
-                    name="txSignature"
-                    value={formData.txSignature}
-                    onChange={handleChange}
-                    placeholder="Enter transaction signature after payment"
-                    className="w-full p-4 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
-                    required
-                  />
-                  {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                {/* Payment Instructions */}
+                <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/50 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-2">Pay with Crypto via AquaPay</h4>
+                  <p className="text-gray-300 text-sm mb-3">
+                    Click "Pay with Crypto" below to open the AquaPay payment page. The amount will be pre-filled for your convenience.
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    After payment is completed, an admin will verify and approve your listing.
+                  </p>
                 </div>
 
                 <div className="space-y-4 pt-4">
