@@ -3397,6 +3397,144 @@ const FreelancersIcon = () => (
   </svg>
 );
 
+// Data Surge Animation Component - flows between triangles
+const DataSurgeAnimation = () => {
+  const particleCount = 15;
+  const particles = Array.from({ length: particleCount }, (_, i) => ({
+    id: i,
+    delay: i * 0.12,
+    size: Math.random() * 5 + 3,
+    yOffset: (Math.random() * 120 - 60), // Random vertical offset
+    speed: Math.random() * 0.3 + 0.7, // Varying speeds
+  }));
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+      {/* Left to Right Surge - Cyan particles */}
+      {particles.map((particle) => (
+        <motion.div
+          key={`lr-${particle.id}`}
+          className="absolute rounded-full"
+          style={{
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            left: '25%',
+            top: `calc(50% + ${particle.yOffset}px)`,
+            background: 'radial-gradient(circle, rgba(34, 211, 238, 0.9) 0%, rgba(34, 211, 238, 0.5) 40%, transparent 100%)',
+            boxShadow: '0 0 12px rgba(34, 211, 238, 0.8), 0 0 24px rgba(34, 211, 238, 0.5)',
+            filter: 'blur(0.5px)',
+          }}
+          animate={{
+            x: ['0px', '50vw'],
+            y: [`${particle.yOffset}px`, `${particle.yOffset + (Math.random() * 40 - 20)}px`],
+            opacity: [0, 0.3, 1, 1, 0.3, 0],
+            scale: [0.3, 0.8, 1.2, 1, 0.8, 0.3],
+          }}
+          transition={{
+            duration: 3.5 * particle.speed,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: [0.4, 0, 0.6, 1],
+          }}
+        />
+      ))}
+
+      {/* Right to Left Surge - Purple particles */}
+      {particles.map((particle) => (
+        <motion.div
+          key={`rl-${particle.id}`}
+          className="absolute rounded-full"
+          style={{
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            left: '75%',
+            top: `calc(50% + ${particle.yOffset}px)`,
+            background: 'radial-gradient(circle, rgba(192, 132, 252, 0.9) 0%, rgba(192, 132, 252, 0.5) 40%, transparent 100%)',
+            boxShadow: '0 0 12px rgba(192, 132, 252, 0.8), 0 0 24px rgba(192, 132, 252, 0.5)',
+            filter: 'blur(0.5px)',
+          }}
+          animate={{
+            x: ['0px', '-50vw'],
+            y: [`${particle.yOffset}px`, `${particle.yOffset + (Math.random() * 40 - 20)}px`],
+            opacity: [0, 0.3, 1, 1, 0.3, 0],
+            scale: [0.3, 0.8, 1.2, 1, 0.8, 0.3],
+          }}
+          transition={{
+            duration: 3.5 * particle.speed,
+            delay: particle.delay + 1.75,
+            repeat: Infinity,
+            ease: [0.4, 0, 0.6, 1],
+          }}
+        />
+      ))}
+
+      {/* Pulsing Connection Beam - Left to Right */}
+      <motion.div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-px"
+        style={{
+          width: '0%',
+          background: 'linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), rgba(34, 211, 238, 0.6), rgba(34, 211, 238, 0.4), transparent)',
+          boxShadow: '0 0 15px rgba(34, 211, 238, 0.5), 0 0 30px rgba(34, 211, 238, 0.3)',
+        }}
+        animate={{
+          width: ['0%', '50vw', '0%'],
+          opacity: [0, 0.8, 0],
+        }}
+        transition={{
+          duration: 3.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      {/* Pulsing Connection Beam - Right to Left */}
+      <motion.div
+        className="absolute left-1/2 top-1/2 translate-x-1/2 -translate-y-1/2 h-px"
+        style={{
+          width: '0%',
+          background: 'linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.4), rgba(192, 132, 252, 0.6), rgba(192, 132, 252, 0.4), transparent)',
+          boxShadow: '0 0 15px rgba(192, 132, 252, 0.5), 0 0 30px rgba(192, 132, 252, 0.3)',
+        }}
+        animate={{
+          width: ['0%', '50vw', '0%'],
+          opacity: [0, 0.8, 0],
+        }}
+        transition={{
+          duration: 3.5,
+          delay: 1.75,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      {/* Data Stream Lines */}
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={`stream-${i}`}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-0.5"
+          style={{
+            width: '0%',
+            background: i % 2 === 0 
+              ? 'linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.3), transparent)'
+              : 'linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.3), transparent)',
+            top: `calc(50% + ${(i - 1) * 30}px)`,
+          }}
+          animate={{
+            width: ['0%', '50vw', '0%', '50vw', '0%'],
+            opacity: [0, 0.4, 0.4, 0.4, 0],
+          }}
+          transition={{
+            duration: 4,
+            delay: i * 0.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 // Main orb component for hero - Triangle design
 const HeroOrb = ({ side, onClick, label, sublabel }) => (
   <motion.div
@@ -4035,6 +4173,9 @@ const LandingPage = () => {
       >
         {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
+
+        {/* Data Surge Animation */}
+        <DataSurgeAnimation />
 
         {/* Left side - Projects */}
         <Link to="/home" className="flex-1 h-full">
