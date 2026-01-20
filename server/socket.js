@@ -1277,6 +1277,14 @@ function emitAquaPayPaymentReceived(paymentData) {
   }
 }
 
+// User token balance update socket emission function
+function emitUserTokenBalanceUpdate(userId, balanceData) {
+  if (io) {
+    // Emit to the specific user's room
+    io.to(`user_${userId}`).emit('userTokenBalanceUpdated', balanceData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1297,6 +1305,7 @@ module.exports = {
   emitTokenPurchaseApproved,
   emitTokenPurchaseRejected,
   emitNewTokenPurchasePending,
+  emitUserTokenBalanceUpdate,
   emitNewNotification,
   emitNotificationRead,
   emitAllNotificationsRead,

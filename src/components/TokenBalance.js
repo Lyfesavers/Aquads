@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TokenPurchaseModal from './TokenPurchaseModal';
+import { socket } from '../services/api';
 
 const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, currentUser }) => {
   const [balance, setBalance] = useState(0);
@@ -13,6 +14,34 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
   useEffect(() => {
     fetchBalance();
   }, []);
+
+  // Socket listener for real-time token balance updates
+  useEffect(() => {
+    if (socket && currentUser) {
+      // Join user's room for direct updates
+      socket.emit('userOnline', {
+        userId: currentUser.userId,
+        username: currentUser.username
+      });
+
+      const handleTokenBalanceUpdate = (data) => {
+        // Update balance immediately when tokens are added
+        setBalance(data.tokens);
+        // Refresh history to get the latest transaction
+        fetchBalance();
+        
+        if (onBalanceUpdate) {
+          onBalanceUpdate(data.tokens);
+        }
+      };
+
+      socket.on('userTokenBalanceUpdated', handleTokenBalanceUpdate);
+
+      return () => {
+        socket.off('userTokenBalanceUpdated', handleTokenBalanceUpdate);
+      };
+    }
+  }, [socket, currentUser, onBalanceUpdate]);
 
   const fetchBalance = async () => {
     try {

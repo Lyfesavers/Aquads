@@ -5,7 +5,7 @@ const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitBumpRequestUpdate, emitTokenPurchaseApproved } = require('../socket');
+const { emitBumpRequestUpdate, emitTokenPurchaseApproved, emitUserTokenBalanceUpdate } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types
@@ -336,6 +336,19 @@ const paymentAutoApproval = {
       });
 
       await user.save();
+
+      // Emit user-specific token balance update
+      try {
+        emitUserTokenBalanceUpdate(user._id.toString(), {
+          tokens: user.tokens,
+          amount: tokenPurchase.amount,
+          balanceBefore,
+          balanceAfter: user.tokens
+        });
+      } catch (balanceUpdateError) {
+        console.error('Error emitting token balance update:', balanceUpdateError);
+        // Don't fail the approval if balance update emission fails
+      }
 
       // Create notification for user
       try {

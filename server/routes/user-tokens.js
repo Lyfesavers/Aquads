@@ -6,7 +6,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending } = require('../socket');
+const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending, emitUserTokenBalanceUpdate } = require('../socket');
 
 // Get user's token balance and history
 router.get('/balance', auth, async (req, res) => {
@@ -194,6 +194,18 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 
     await user.save();
 
+    // Emit user-specific token balance update
+    try {
+      emitUserTokenBalanceUpdate(user._id.toString(), {
+        tokens: user.tokens,
+        amount: tokenPurchase.amount,
+        balanceBefore,
+        balanceAfter: user.tokens
+      });
+    } catch (balanceUpdateError) {
+      console.error('Error emitting token balance update:', balanceUpdateError);
+      // Don't fail the approval if balance update emission fails
+    }
 
     // Create notification for user (with error handling)
     try {
