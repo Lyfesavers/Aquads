@@ -464,7 +464,7 @@ const paymentAutoApproval = {
       // Auto-fulfill: Place order on Socialplug immediately
       try {
         // Validate we have sufficient balance
-        const balanceCheck = await socialplugService.validateBalance(order.listeners, order.duration);
+        const balanceCheck = await socialplugService.validateBalance(order.listenerCount, order.duration);
         
         if (!balanceCheck.sufficient) {
           order.status = 'failed';
@@ -477,7 +477,7 @@ const paymentAutoApproval = {
         // Place order on Socialplug
         const socialplugResult = await socialplugService.placeOrder(
           order.spaceUrl,
-          order.listeners,
+          order.listenerCount,
           order.duration
         );
 

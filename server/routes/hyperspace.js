@@ -161,7 +161,7 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       userId: req.user._id,
       username: req.user.username,
       spaceUrl,
-      listeners: listenersNum,
+      listenerCount: listenersNum,
       duration: durationNum,
       socialplugCost: cost,
       customerPrice: finalPrice,
@@ -183,7 +183,7 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       order: {
         orderId: order.orderId,
         spaceUrl: order.spaceUrl,
-        listeners: order.listeners,
+        listeners: order.listenerCount,
         duration: order.duration,
         price: order.customerPrice,
         status: order.status,
@@ -240,7 +240,7 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
       await order.save();
 
       // Validate we have sufficient balance
-      const balanceCheck = await socialplugService.validateBalance(order.listeners, order.duration);
+      const balanceCheck = await socialplugService.validateBalance(order.listenerCount, order.duration);
       
       if (!balanceCheck.sufficient) {
         order.status = 'failed';
@@ -267,7 +267,7 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
       // Place order on Socialplug
       const socialplugResult = await socialplugService.placeOrder(
         order.spaceUrl,
-        order.listeners,
+        order.listenerCount,
         order.duration
       );
 
@@ -378,7 +378,7 @@ router.get('/order/:orderId', auth, async (req, res) => {
       order: {
         orderId: order.orderId,
         spaceUrl: order.spaceUrl,
-        listeners: order.listeners,
+        listeners: order.listenerCount,
         duration: order.duration,
         durationLabel: order.durationLabel,
         price: order.customerPrice,
@@ -414,7 +414,7 @@ router.get('/my-orders', auth, async (req, res) => {
       orders: orders.map(order => ({
         orderId: order.orderId,
         spaceUrl: order.spaceUrl,
-        listeners: order.listeners,
+        listeners: order.listenerCount,
         duration: order.duration,
         price: order.customerPrice,
         status: order.status,
@@ -513,7 +513,7 @@ router.post('/admin/retry/:orderId', auth, async (req, res) => {
 
     const socialplugResult = await socialplugService.placeOrder(
       order.spaceUrl,
-      order.listeners,
+      order.listenerCount,
       order.duration
     );
 

@@ -26,7 +26,7 @@ const hyperSpaceOrderSchema = new mongoose.Schema({
   },
   
   // Package details
-  listeners: {
+  listenerCount: {
     type: Number,
     required: true,
     enum: [100, 200, 500, 1000, 2500, 5000]
@@ -141,7 +141,7 @@ const hyperSpaceOrderSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient queries
-hyperSpaceOrderSchema.index({ orderId: 1 });
+// Note: orderId already has unique:true which creates an index
 hyperSpaceOrderSchema.index({ userId: 1, createdAt: -1 });
 hyperSpaceOrderSchema.index({ username: 1 });
 hyperSpaceOrderSchema.index({ status: 1 });
