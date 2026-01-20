@@ -3,7 +3,9 @@ const BumpRequest = require('../models/BumpRequest');
 const Ad = require('../models/Ad');
 const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const { emitBumpRequestUpdate } = require('../socket');
+const TokenPurchase = require('../models/TokenPurchase');
+const Notification = require('../models/Notification');
+const { emitBumpRequestUpdate, emitTokenPurchaseApproved } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types
@@ -16,7 +18,7 @@ const paymentAutoApproval = {
    * @returns {Object|null} - Approved item or null
    */
   async processPayment(paymentData) {
-    const { bannerId, bumpId, projectId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
+    const { bannerId, bumpId, projectId, tokenPurchaseId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
 
     // Only process payments to 'aquads' slug
     if (recipientSlug.toLowerCase() !== 'aquads') {
@@ -40,6 +42,19 @@ const paymentAutoApproval = {
     if (bumpId) {
       return await this.handleBumpPayment({
         bumpId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
+    // Handle token purchase payments
+    if (tokenPurchaseId) {
+      return await this.handleTokenPurchasePayment({
+        tokenPurchaseId,
         amount,
         txHash,
         chain,
@@ -251,6 +266,114 @@ const paymentAutoApproval = {
     if (duration <= threeDaysMs) return 80;
     if (duration <= sevenDaysMs) return 160;
     return 160;
+  },
+
+  /**
+   * Handle token purchase payment auto-approval
+   */
+  async handleTokenPurchasePayment({ tokenPurchaseId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+    try {
+      const tokenPurchase = await TokenPurchase.findById(tokenPurchaseId).populate('userId', 'username');
+
+      if (!tokenPurchase || tokenPurchase.status !== 'pending' || tokenPurchase.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      // Verify ownership if senderUsername provided
+      if (senderUsername && tokenPurchase.userId) {
+        const purchaseOwnerUsername = tokenPurchase.userId.username || tokenPurchase.userId.toString();
+        if (senderUsername.toLowerCase() !== purchaseOwnerUsername.toLowerCase()) {
+          console.log(`Token purchase ${tokenPurchase._id} ownership mismatch: purchase owner is ${purchaseOwnerUsername}, payment sender is ${senderUsername}`);
+          return null;
+        }
+      }
+
+      // Verify exact amount match (cost in USDC)
+      const expectedAmount = parseFloat(tokenPurchase.cost);
+      const paymentAmount = parseFloat(amount);
+
+      if (paymentAmount !== expectedAmount) {
+        console.log(`Token purchase ${tokenPurchase._id} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
+        return null;
+      }
+
+      // Verify transaction on-chain
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(`Token purchase ${tokenPurchase._id} transaction verification failed for ${txHash} on ${chain}`);
+        return null;
+      }
+
+      // Auto-approve the token purchase
+      tokenPurchase.status = 'approved';
+      tokenPurchase.approvedAt = new Date();
+      tokenPurchase.completedAt = new Date();
+      tokenPurchase.txSignature = txHash;
+      tokenPurchase.paymentChain = chain;
+      tokenPurchase.chainSymbol = token || 'USDC';
+      tokenPurchase.chainAddress = senderAddress || '';
+      await tokenPurchase.save();
+
+      // Add tokens to user account
+      const user = await User.findById(tokenPurchase.userId);
+      if (!user) {
+        console.log(`Token purchase ${tokenPurchase._id} approved but user ${tokenPurchase.userId} not found`);
+        return { type: 'tokenPurchase', id: tokenPurchase._id, status: tokenPurchase.status };
+      }
+
+      const balanceBefore = user.tokens || 0;
+      user.tokens = (user.tokens || 0) + tokenPurchase.amount;
+      user.lastActivity = new Date();
+
+      // Add to token history
+      user.tokenHistory.push({
+        type: 'purchase',
+        amount: tokenPurchase.amount,
+        reason: `Token purchase approved (${tokenPurchase.amount} tokens)`,
+        relatedId: tokenPurchase._id.toString(),
+        balanceBefore,
+        balanceAfter: user.tokens
+      });
+
+      await user.save();
+
+      // Create notification for user
+      try {
+        const notification = new Notification({
+          userId: tokenPurchase.userId,
+          type: 'tokens',
+          message: `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
+          link: '/dashboard?tab=tokens',
+          relatedId: tokenPurchase._id,
+          relatedModel: 'TokenPurchase'
+        });
+        await notification.save();
+      } catch (notificationError) {
+        console.error('Error creating notification for token purchase:', notificationError);
+        // Don't fail the approval if notification fails
+      }
+
+      // Emit real-time socket update for token purchase approval
+      try {
+        emitTokenPurchaseApproved({
+          purchaseId: tokenPurchase._id,
+          amount: tokenPurchase.amount,
+          cost: tokenPurchase.cost,
+          userId: tokenPurchase.userId,
+          username: tokenPurchase.userId?.username,
+          approvedAt: tokenPurchase.approvedAt
+        });
+      } catch (socketError) {
+        console.error('Error emitting token purchase approval:', socketError);
+        // Don't fail the approval if socket emission fails
+      }
+
+      console.log(`Token purchase ${tokenPurchase._id} auto-approved after verified AquaPay payment of ${paymentAmount} USDC on ${chain} by ${senderUsername || 'anonymous'}`);
+      return { type: 'tokenPurchase', id: tokenPurchase._id, status: tokenPurchase.status };
+    } catch (error) {
+      console.error('Error auto-approving token purchase:', error);
+      return null;
+    }
   },
 
   /**

@@ -57,7 +57,7 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Invalid token amount' });
     }
 
-    if (!txSignature) {
+    if (!txSignature || (txSignature !== 'aquapay-pending' && txSignature.trim() === '')) {
       return res.status(400).json({ error: 'Transaction signature is required' });
     }
 
@@ -414,7 +414,7 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
 // Get token packages/pricing
 router.get('/packages', (req, res) => {
   const packages = [
-    { tokens: 10, price: 10, popular: false },
+    { tokens: 10, price: 0.01, popular: false }, // Testing: 0.01 USDC
     { tokens: 25, price: 25, popular: false, discount: 0 },
     { tokens: 50, price: 47.5, popular: true, discount: 5 }, // 5% discount
     { tokens: 100, price: 90, popular: false, discount: 10 }, // 10% discount

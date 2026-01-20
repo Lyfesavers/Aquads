@@ -1,42 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaCopy, FaCheck } from 'react-icons/fa';
-
-const BLOCKCHAIN_OPTIONS = [
-  {
-    name: 'Solana',
-    symbol: 'SOL',
-    address: 'F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf',
-    amount: 'USDC'
-  },
-  {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Base',
-    symbol: 'BASE',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
-    amount: 'USDC'
-  }
-];
 
 const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotification, currentUser }) => {
   const [packages, setPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
-  const [txSignature, setTxSignature] = useState('');
   const [purchasing, setPurchasing] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
-  const [copiedAddress, setCopiedAddress] = useState(false);
   const [step, setStep] = useState(1); // 1: Package selection, 2: Payment
 
   useEffect(() => {
@@ -77,15 +46,9 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
     }
   };
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(selectedChain.address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
-
   const handlePurchase = async () => {
-    if (!selectedPackage || !txSignature.trim()) {
-      alert('Please enter the transaction signature');
+    if (!selectedPackage) {
+      alert('Please select a package first');
       return;
     }
     
@@ -102,24 +65,29 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
         return;
       }
       
-      // Submit purchase for admin approval
-      await axios.post(
+      // Create token purchase with aquapay-pending status
+      const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/user-tokens/purchase`,
         {
           amount: selectedPackage.tokens,
           cost: selectedPackage.price, // Use the discounted package price, not token count
           paymentMethod: 'crypto',
-          txSignature: txSignature.trim(),
-          paymentChain: selectedChain.name,
-          chainSymbol: selectedChain.symbol,
-          chainAddress: selectedChain.address
+          txSignature: 'aquapay-pending',
+          paymentChain: 'AquaPay',
+          chainSymbol: 'USDC',
+          chainAddress: 'https://aquads.xyz/pay/aquads'
         },
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
       );
 
-      const successMessage = 'Purchase submitted successfully! Your payment will be verified by an admin and tokens will be added to your account once approved.';
+      const newPurchase = response.data.purchase;
+      const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${selectedPackage.price}&tokenPurchaseId=${newPurchase._id}`;
+      const newWindow = window.open(aquaPayUrl, '_blank');
+      window.aquaPayPopup = newWindow;
+
+      const successMessage = `Token purchase created! Please complete the payment of $${selectedPackage.price} USDC on the AquaPay page. Your tokens will be automatically added to your account once payment is confirmed.`;
       if (showNotification) {
         showNotification(successMessage, 'success');
       } else {
@@ -127,7 +95,6 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
       }
       
       // Reset form
-      setTxSignature('');
       setStep(1);
       onClose();
 
@@ -301,31 +268,29 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
           <>
             {/* Payment Step */}
             <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4 mb-6">
-              <h4 className="text-yellow-400 font-semibold mb-2">💳 Payment Options:</h4>
+              <h4 className="text-yellow-400 font-semibold mb-2">💳 Payment Instructions:</h4>
               <div className="text-yellow-300 text-sm space-y-2">
                 <div>
-                  <strong>Crypto Payment:</strong>
+                  <strong>Crypto Payment (AquaPay):</strong>
                   <ul className="ml-4 mt-1 space-y-1">
-                    <li>• Send exactly ${selectedPackage?.price} USDC to the address below</li>
-                    <li>• Copy the transaction signature after payment</li>
+                    <li>• Click "Pay with Crypto" to open AquaPay payment page</li>
+                    <li>• Complete payment of exactly ${selectedPackage?.price} USDC</li>
+                    <li>• Your tokens will be automatically added once payment is confirmed</li>
                   </ul>
                 </div>
                 <div>
                   <strong>PayPal Payment:</strong>
                   <ul className="ml-4 mt-1 space-y-1">
-                    <li>• Click "Pay with PayPal" to open payment link</li>
+                    <li>• Click "Pay with Card" to open PayPal payment link</li>
                     <li>• Complete payment of ${selectedPackage?.price} USD</li>
+                    <li>• Admin will verify and approve your purchase</li>
                   </ul>
-                </div>
-                <div className="border-t border-yellow-500/30 pt-2 mt-2">
-                  <li>• Admin will verify and approve your purchase</li>
-                  <li>• Tokens will be added to your account once approved</li>
                 </div>
               </div>
             </div>
 
             {/* Selected Package Summary */}
-            <div className="bg-gray-700/50 rounded-lg p-4 mb-4">
+            <div className="bg-gray-700/50 rounded-lg p-4 mb-6">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-white font-semibold">{selectedPackage?.tokens} Tokens</span>
@@ -337,65 +302,6 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
                 </div>
                 <div className="text-white font-bold">${selectedPackage?.price}</div>
               </div>
-            </div>
-
-            {/* Blockchain Selection */}
-            <div className="space-y-3 mb-6">
-              <h3 className="text-white font-semibold">Select Payment Network:</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {BLOCKCHAIN_OPTIONS.map((chain) => (
-                  <button
-                    key={chain.symbol}
-                    type="button"
-                    onClick={() => setSelectedChain(chain)}
-                    className={`p-3 rounded-lg border transition-all ${
-                      selectedChain === chain
-                        ? 'border-blue-500 bg-blue-500/20 ring-2 ring-blue-500/50'
-                        : 'border-gray-600 hover:border-blue-400'
-                    }`}
-                  >
-                    <div className="text-center">
-                      <div className="font-medium text-white">{chain.name}</div>
-                      <div className="text-sm text-gray-300">${selectedPackage?.price} {chain.amount}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Payment Address */}
-            <div className="mb-6">
-              <h3 className="text-white font-semibold mb-2">Payment Address:</h3>
-              <div className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg">
-                <input
-                  type="text"
-                  value={selectedChain.address}
-                  readOnly
-                  className="bg-transparent flex-1 outline-none text-sm font-mono text-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleCopyAddress}
-                  className="text-blue-400 hover:text-blue-300 p-2 rounded"
-                >
-                  {copiedAddress ? <FaCheck /> : <FaCopy />}
-                </button>
-              </div>
-            </div>
-
-            {/* Transaction Signature Input */}
-            <div className="mb-6">
-              <label className="block text-white font-semibold mb-2">
-                Transaction Signature:
-              </label>
-              <input
-                type="text"
-                value={txSignature}
-                onChange={(e) => setTxSignature(e.target.value)}
-                placeholder="Enter transaction signature after payment"
-                className="w-full p-4 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                required
-              />
             </div>
 
             {/* Action Buttons */}
@@ -412,7 +318,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
               <div className="flex gap-3">
                 <button
                   onClick={handlePurchase}
-                  disabled={purchasing || !txSignature.trim()}
+                  disabled={purchasing}
                   className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
                 >
                   {purchasing ? (
@@ -443,7 +349,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
             </div>
 
             <p className="text-gray-400 text-xs text-center mt-4">
-              * Your payment will be manually verified by an admin
+              * Crypto payments are auto-approved. PayPal payments require admin verification.
             </p>
           </>
         )}
