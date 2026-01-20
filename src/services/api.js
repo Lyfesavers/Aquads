@@ -26,6 +26,9 @@ export const socket = io('https://aquads.onrender.com', {
   pingInterval: 25000
 });
 
+// Configure axios default base URL
+axios.defaults.baseURL = API_URL;
+
 // Store original fetch before we override it
 const originalFetch = window.fetch;
 
@@ -76,9 +79,13 @@ const refreshAccessToken = async () => {
       
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       
-      // Update socket auth
+      // Update socket auth and reconnect if needed
       socket.auth = { token: data.token };
-      if (!socket.connected) {
+      if (socket.disconnected) {
+        socket.connect();
+      } else if (!socket.connected) {
+        // Force reconnection with new token
+        socket.disconnect();
         socket.connect();
       }
 
@@ -97,6 +104,60 @@ const refreshAccessToken = async () => {
 
   return refreshPromise;
 };
+
+// Axios request interceptor - add auth token to all requests
+axios.interceptors.request.use(
+  (config) => {
+    try {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        if (user.token) {
+          config.headers.Authorization = `Bearer ${user.token}`;
+        }
+      }
+    } catch (error) {
+      logger.error('Error setting axios auth header:', error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Axios response interceptor - handle 401 errors and token refresh
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If 401 and we haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          // Only try refresh if we have a refresh token
+          if (user.refreshToken) {
+            const newToken = await refreshAccessToken();
+            // Update the authorization header and retry the request
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return axios(originalRequest);
+          }
+        }
+      } catch (refreshError) {
+        logger.error('Token refresh failed in axios interceptor:', refreshError);
+        // If refresh fails, return the original error
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Global fetch interceptor - wraps ALL fetch calls to auto-refresh tokens
 window.fetch = async function(url, options = {}) {
