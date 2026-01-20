@@ -161,6 +161,59 @@ window.fetch = async function(url, options = {}) {
   return response;
 };
 
+// Axios request interceptor - automatically attach auth token
+axios.interceptors.request.use(
+  (config) => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      if (user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Axios response interceptor - handle 401 errors and refresh token
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If 401 and not a retry, and we have a refresh token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark as retried
+      
+      try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          // Only try refresh if we have a refresh token
+          if (user.refreshToken) {
+            try {
+              const newToken = await refreshAccessToken();
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return axios(originalRequest); // Retry the original request
+            } catch (refreshError) {
+              logger.error('Failed to refresh token during axios intercept:', refreshError);
+              // If refresh fails, clear user data
+              localStorage.removeItem('currentUser');
+              socket.disconnect();
+              return Promise.reject(error);
+            }
+          }
+        }
+      } catch (err) {
+        logger.error('Error in axios response interceptor:', err);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 const getAuthHeader = () => {
   try {
     const savedUser = localStorage.getItem('currentUser');
