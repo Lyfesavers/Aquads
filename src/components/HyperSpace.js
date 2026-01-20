@@ -427,7 +427,7 @@ const HyperSpace = ({ currentUser }) => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300 font-medium">Total Price</span>
                   <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    ${getCurrentPrice()}
+                    {getCurrentPrice()} USDC
                   </span>
                 </div>
               </div>
@@ -567,7 +567,7 @@ const HyperSpace = ({ currentUser }) => {
                               <span className="font-bold">{order.listeners.toLocaleString()}</span>
                               <span className="text-gray-400"> listeners</span>
                             </div>
-                            <span className="text-white font-bold">${order.price}</span>
+                            <span className="text-white font-bold">{order.price} USDC</span>
                           </div>
                           <div className="flex justify-between text-xs text-gray-400">
                             <span>{formatDuration(order.duration)}</span>
@@ -598,7 +598,7 @@ const HyperSpace = ({ currentUser }) => {
                               <td className="px-4 py-3 text-sm text-white">
                                 {order.duration >= 60 ? `${order.duration / 60} Hour${order.duration > 60 ? 's' : ''}` : `${order.duration} Min`}
                               </td>
-                              <td className="px-4 py-3 text-sm text-white font-bold">${order.price}</td>
+                              <td className="px-4 py-3 text-sm text-white font-bold">{order.price} USDC</td>
                               <td className="px-4 py-3">
                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                                   {getStatusIcon(order.status)}
@@ -629,7 +629,7 @@ const HyperSpace = ({ currentUser }) => {
               {formatListeners(selectedListeners)} listeners • {DURATIONS.find(d => d.value === selectedDuration)?.label}
             </div>
             <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              ${getCurrentPrice()}
+              {getCurrentPrice()} <span className="text-sm">USDC</span>
             </div>
           </div>
           
@@ -687,7 +687,7 @@ const HyperSpace = ({ currentUser }) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Amount</span>
-                <span className="text-2xl sm:text-3xl font-bold text-purple-400">${getCurrentPrice()}</span>
+                <span className="text-2xl sm:text-3xl font-bold text-purple-400">{getCurrentPrice()} USDC</span>
               </div>
             </div>
 

@@ -158,7 +158,7 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
     // Create the order
     const order = new HyperSpaceOrder({
       orderId,
-      userId: req.user._id,
+      userId: req.user.userId,
       username: req.user.username,
       spaceUrl,
       listenerCount: listenersNum,
@@ -213,7 +213,7 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
     }
 
     // Verify ownership
-    if (order.userId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+    if (order.userId.toString() !== req.user.userId.toString() && !req.user.isAdmin) {
       return res.status(403).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -345,7 +345,7 @@ router.get('/order/:orderId', auth, async (req, res) => {
     }
 
     // Verify ownership or admin
-    if (order.userId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+    if (order.userId.toString() !== req.user.userId.toString() && !req.user.isAdmin) {
       return res.status(403).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -402,12 +402,12 @@ router.get('/my-orders', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     
-    const orders = await HyperSpaceOrder.find({ userId: req.user._id })
+    const orders = await HyperSpaceOrder.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
     
-    const total = await HyperSpaceOrder.countDocuments({ userId: req.user._id });
+    const total = await HyperSpaceOrder.countDocuments({ userId: req.user.userId });
 
     res.json({
       success: true,

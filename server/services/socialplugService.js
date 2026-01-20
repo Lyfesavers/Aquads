@@ -12,7 +12,7 @@ const SOCIALPLUG_API_KEY = process.env.SOCIALPLUG_API_KEY;
 // Service ID for Twitter Spaces Listeners (from Socialplug)
 const TWITTER_SPACES_LISTENERS_SERVICE_ID = 46;
 
-// Pricing table based on Socialplug's actual pricing (in USD)
+// Pricing table based on Socialplug's actual pricing (in USDC)
 // Format: { listeners: { duration: cost } }
 const SOCIALPLUG_PRICING = {
   100: { 30: 11, 60: 15, 120: 21 },
@@ -21,6 +21,13 @@ const SOCIALPLUG_PRICING = {
   1000: { 30: 67, 60: 92, 120: 130 },
   2500: { 30: 143, 60: 195, 120: 275 },
   5000: { 30: 218, 60: 300, 120: 420 }
+};
+
+// TEST MODE: Override price for 100 listeners / 30 min package (set to 0 to disable)
+const TEST_PRICE_OVERRIDE = {
+  listeners: 100,
+  duration: 30,
+  price: 0.01 // USDC - Set to 0 to disable test mode
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
@@ -54,9 +61,16 @@ const getSocialplugCost = (listeners, duration) => {
  * Get the customer-facing price for a package
  * @param {number} listeners - Number of listeners
  * @param {number} duration - Duration in minutes
- * @returns {number|null} - Customer price in USD
+ * @returns {number|null} - Customer price in USDC
  */
 const getCustomerPrice = (listeners, duration) => {
+  // Check for test price override
+  if (TEST_PRICE_OVERRIDE.price > 0 && 
+      listeners === TEST_PRICE_OVERRIDE.listeners && 
+      duration === TEST_PRICE_OVERRIDE.duration) {
+    return TEST_PRICE_OVERRIDE.price;
+  }
+  
   const cost = getSocialplugCost(listeners, duration);
   if (cost === null) return null;
   return calculateSellingPrice(cost);
