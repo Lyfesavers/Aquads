@@ -115,11 +115,11 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
       for (const admin of admins) {
         const notification = new Notification({
           userId: admin._id,
-          type: 'admin',
+          type: 'system',
           message: `New token purchase pending approval: ${amount} tokens ($${finalCost}) from ${username}`,
           link: '/admin/token-purchases',
           relatedId: tokenPurchase._id,
-          relatedModel: 'TokenPurchase'
+          relatedModel: null
         });
         await notification.save();
       }
@@ -200,11 +200,11 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 
       const notification = new Notification({
         userId: tokenPurchase.userId,
-        type: 'tokens',
+        type: 'system',
         message: `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
         link: '/dashboard?tab=tokens',
         relatedId: tokenPurchase._id,
-        relatedModel: 'TokenPurchase'
+        relatedModel: null
       });
       await notification.save();
 
@@ -265,11 +265,11 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
     try {
       const notification = new Notification({
         userId: tokenPurchase.userId,
-        type: 'tokens',
+        type: 'system',
         message: `Your token purchase was rejected: ${tokenPurchase.rejectionReason}`,
         link: '/dashboard?tab=tokens',
         relatedId: tokenPurchase._id,
-        relatedModel: 'TokenPurchase'
+        relatedModel: null
       });
       await notification.save();
     } catch (notificationError) {

@@ -341,11 +341,11 @@ const paymentAutoApproval = {
       try {
         const notification = new Notification({
           userId: tokenPurchase.userId,
-          type: 'tokens',
+          type: 'system',
           message: `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
           link: '/dashboard?tab=tokens',
           relatedId: tokenPurchase._id,
-          relatedModel: 'TokenPurchase'
+          relatedModel: null
         });
         await notification.save();
       } catch (notificationError) {
