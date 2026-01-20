@@ -6,7 +6,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending, emitUserTokenBalanceUpdate } = require('../socket');
+const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending } = require('../socket');
 
 // Get user's token balance and history
 router.get('/balance', auth, async (req, res) => {
@@ -194,13 +194,24 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 
     await user.save();
 
-    // Emit user-specific token balance update
+    // Get pending purchases count for socket update
+    const pendingPurchasesCount = await TokenPurchase.countDocuments({ 
+      userId: user._id, 
+      status: 'pending' 
+    });
+
+    // Get the last history entry (the one we just added)
+    const lastHistoryEntry = user.tokenHistory[user.tokenHistory.length - 1];
+
+    // Emit user-specific token balance update with all necessary data
     try {
       emitUserTokenBalanceUpdate(user._id.toString(), {
         tokens: user.tokens,
         amount: tokenPurchase.amount,
         balanceBefore,
-        balanceAfter: user.tokens
+        balanceAfter: user.tokens,
+        historyEntry: lastHistoryEntry,
+        pendingPurchases: pendingPurchasesCount
       });
     } catch (balanceUpdateError) {
       console.error('Error emitting token balance update:', balanceUpdateError);

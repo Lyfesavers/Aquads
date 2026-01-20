@@ -765,6 +765,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPendingTokenPurchases(prev => 
         prev.filter(purchase => purchase._id.toString() !== data.purchaseId.toString())
       );
+      // Note: TokenBalance component will handle balance update via socket
+    };
+
+    // Listen for token balance updates
+    const handleTokenBalanceUpdate = (data) => {
+      // This will be handled by TokenBalance component, but we can also update here if needed
+      // The TokenBalance component has its own socket listener
     };
 
     const handleTokenPurchaseRejected = (data) => {
@@ -835,6 +842,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     socket.on('newTokenPurchasePending', handleNewTokenPurchasePending);
     socket.on('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
     socket.on('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
+    socket.on('userTokenBalanceUpdated', handleTokenBalanceUpdate);
 
     // Add-on order socket listeners
     socket.on('addonOrderApproved', handleAddonOrderApproved);
@@ -870,6 +878,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newTokenPurchasePending', handleNewTokenPurchasePending);
       socket.off('pendingTokenPurchasesLoaded', handlePendingTokenPurchasesLoaded);
       socket.off('pendingTokenPurchasesError', handlePendingTokenPurchasesError);
+      socket.off('userTokenBalanceUpdated', handleTokenBalanceUpdate);
 
       // Add-on order socket cleanup
       socket.off('addonOrderApproved', handleAddonOrderApproved);

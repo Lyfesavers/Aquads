@@ -5,7 +5,7 @@ const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitBumpRequestUpdate, emitTokenPurchaseApproved, emitUserTokenBalanceUpdate } = require('../socket');
+const { emitBumpRequestUpdate, emitTokenPurchaseApproved } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types
@@ -337,13 +337,24 @@ const paymentAutoApproval = {
 
       await user.save();
 
-      // Emit user-specific token balance update
+      // Get pending purchases count for socket update
+      const pendingPurchasesCount = await TokenPurchase.countDocuments({ 
+        userId: user._id, 
+        status: 'pending' 
+      });
+
+      // Get the last history entry (the one we just added)
+      const lastHistoryEntry = user.tokenHistory[user.tokenHistory.length - 1];
+
+      // Emit user-specific token balance update with all necessary data
       try {
         emitUserTokenBalanceUpdate(user._id.toString(), {
           tokens: user.tokens,
           amount: tokenPurchase.amount,
           balanceBefore,
-          balanceAfter: user.tokens
+          balanceAfter: user.tokens,
+          historyEntry: lastHistoryEntry,
+          pendingPurchases: pendingPurchasesCount
         });
       } catch (balanceUpdateError) {
         console.error('Error emitting token balance update:', balanceUpdateError);

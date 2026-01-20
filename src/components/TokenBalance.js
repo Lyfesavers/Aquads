@@ -11,38 +11,6 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
   const [showHistory, setShowHistory] = useState(false);
   const [pendingPurchases, setPendingPurchases] = useState(0);
 
-  useEffect(() => {
-    fetchBalance();
-  }, []);
-
-  // Socket listener for real-time token balance updates
-  useEffect(() => {
-    if (socket && currentUser) {
-      // Join user's room for direct updates
-      socket.emit('userOnline', {
-        userId: currentUser.userId,
-        username: currentUser.username
-      });
-
-      const handleTokenBalanceUpdate = (data) => {
-        // Update balance immediately when tokens are added
-        setBalance(data.tokens);
-        // Refresh history to get the latest transaction
-        fetchBalance();
-        
-        if (onBalanceUpdate) {
-          onBalanceUpdate(data.tokens);
-        }
-      };
-
-      socket.on('userTokenBalanceUpdated', handleTokenBalanceUpdate);
-
-      return () => {
-        socket.off('userTokenBalanceUpdated', handleTokenBalanceUpdate);
-      };
-    }
-  }, [socket, currentUser, onBalanceUpdate]);
-
   const fetchBalance = async () => {
     try {
       setLoading(true);
@@ -71,9 +39,127 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
     }
   };
 
+  // Initial load via socket (reduces API calls)
+  useEffect(() => {
+    if (!socket || !currentUser) {
+      // Fallback to API if socket not available
+      fetchBalance();
+      return;
+    }
+
+    const userId = currentUser.userId || currentUser.id;
+    if (!userId) {
+      fetchBalance();
+      return;
+    }
+
+    // Request token balance via socket
+    socket.emit('requestTokenBalance', { userId });
+
+    const handleTokenBalanceLoaded = (data) => {
+      setBalance(data.tokens);
+      setTokenHistory(data.history || []);
+      setPendingPurchases(data.pendingPurchases || 0);
+      setLoading(false);
+      
+      if (onBalanceUpdate) {
+        onBalanceUpdate(data.tokens);
+      }
+    };
+
+    const handleTokenBalanceError = (error) => {
+      console.error('Error loading token balance via socket:', error);
+      // Fallback to API call
+      fetchBalance();
+    };
+
+    socket.on('tokenBalanceLoaded', handleTokenBalanceLoaded);
+    socket.on('tokenBalanceError', handleTokenBalanceError);
+
+    return () => {
+      socket.off('tokenBalanceLoaded', handleTokenBalanceLoaded);
+      socket.off('tokenBalanceError', handleTokenBalanceError);
+    };
+  }, [socket, currentUser, onBalanceUpdate]);
+
+  // Socket listener for real-time token balance updates
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const userId = currentUser.userId || currentUser.id;
+    if (!userId) return;
+
+    // Join user's room for direct updates (like Dashboard does)
+    socket.emit('userOnline', {
+      userId: userId,
+      username: currentUser.username
+    });
+
+    const handleTokenBalanceUpdate = (data) => {
+      // The socket event is sent to user room, so it's for this user
+      // Update balance immediately from socket data (no API call needed)
+      console.log('Token balance update received via socket:', data);
+      if (data.tokens !== undefined) {
+        setBalance(data.tokens);
+        // Add new transaction to history if provided
+        if (data.historyEntry) {
+          setTokenHistory(prev => {
+            const newHistory = [data.historyEntry, ...prev];
+            return newHistory.slice(0, 10);
+          });
+        }
+        // Update pending purchases count if provided
+        if (data.pendingPurchases !== undefined) {
+          setPendingPurchases(data.pendingPurchases);
+        }
+        
+        if (onBalanceUpdate) {
+          onBalanceUpdate(data.tokens);
+        }
+      }
+    };
+
+    // Also listen to tokenPurchaseApproved event as fallback
+    const handleTokenPurchaseApproved = (data) => {
+      // Check if this is for the current user
+      const purchaseUserId = data.userId;
+      if (purchaseUserId && purchaseUserId.toString() === userId.toString()) {
+        // Update balance if amount is provided
+        if (data.amount) {
+          setBalance(prev => {
+            const newBalance = prev + data.amount;
+            if (onBalanceUpdate) {
+              onBalanceUpdate(newBalance);
+            }
+            return newBalance;
+          });
+          // Decrease pending purchases
+          setPendingPurchases(prev => Math.max(0, prev - 1));
+        }
+      }
+    };
+
+    socket.on('userTokenBalanceUpdated', handleTokenBalanceUpdate);
+    socket.on('tokenPurchaseApproved', handleTokenPurchaseApproved);
+
+    return () => {
+      socket.off('userTokenBalanceUpdated', handleTokenBalanceUpdate);
+      socket.off('tokenPurchaseApproved', handleTokenPurchaseApproved);
+    };
+  }, [socket, currentUser, onBalanceUpdate]);
+
   const handlePurchaseComplete = (tokensPurchased) => {
+    // Update balance optimistically
     setBalance(prev => prev + tokensPurchased);
-    fetchBalance(); // Refresh to get updated history
+    // Request updated data via socket instead of API call
+    if (socket && currentUser) {
+      const userId = currentUser.userId || currentUser.id;
+      if (userId) {
+        socket.emit('requestTokenBalance', { userId });
+      }
+    } else {
+      fetchBalance(); // Fallback to API if socket not available
+    }
   };
 
   const formatDate = (dateString) => {

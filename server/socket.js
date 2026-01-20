@@ -458,6 +458,58 @@ function init(server) {
       }
     });
 
+    // Handle user requesting their token balance
+    socket.on('requestTokenBalance', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('tokenBalanceError', { error: 'User ID required' });
+        return;
+      }
+
+      try {
+        const User = require('./models/User');
+        const TokenPurchase = require('./models/TokenPurchase');
+        
+        const user = await User.findById(userData.userId).select('tokens tokenHistory');
+        
+        if (!user) {
+          socket.emit('tokenBalanceError', { error: 'User not found' });
+          return;
+        }
+
+        // Get pending purchases
+        const pendingPurchases = await TokenPurchase.find({ 
+          userId: userData.userId, 
+          status: 'pending' 
+        }).sort({ createdAt: -1 });
+
+        // Add pending purchases to history with special formatting
+        const combinedHistory = [...user.tokenHistory];
+        
+        pendingPurchases.forEach(purchase => {
+          combinedHistory.push({
+            type: 'pending',
+            amount: purchase.amount,
+            reason: `Token purchase pending approval (${purchase.amount} tokens - $${purchase.cost})`,
+            relatedId: purchase._id.toString(),
+            balanceBefore: user.tokens,
+            balanceAfter: user.tokens, // No change yet
+            createdAt: purchase.createdAt
+          });
+        });
+
+        // Send token balance data to user
+        socket.emit('tokenBalanceLoaded', {
+          tokens: user.tokens,
+          history: combinedHistory.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+          pendingPurchases: pendingPurchases.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching token balance:', error);
+        socket.emit('tokenBalanceError', { error: 'Failed to fetch token balance' });
+      }
+    });
+
     // Handle admin requesting pending token purchases
     socket.on('requestPendingTokenPurchases', async (userData) => {
       if (!userData || !userData.userId || !userData.isAdmin) {
@@ -1277,14 +1329,6 @@ function emitAquaPayPaymentReceived(paymentData) {
   }
 }
 
-// User token balance update socket emission function
-function emitUserTokenBalanceUpdate(userId, balanceData) {
-  if (io) {
-    // Emit to the specific user's room
-    io.to(`user_${userId}`).emit('userTokenBalanceUpdated', balanceData);
-  }
-}
-
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1305,7 +1349,6 @@ module.exports = {
   emitTokenPurchaseApproved,
   emitTokenPurchaseRejected,
   emitNewTokenPurchasePending,
-  emitUserTokenBalanceUpdate,
   emitNewNotification,
   emitNotificationRead,
   emitAllNotificationsRead,
