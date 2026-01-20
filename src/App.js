@@ -729,7 +729,13 @@ function App() {
           
           // If ad exists in the list, update it
           if (existingAdIndex !== -1) {
-            const updatedAd = {...prevAds[existingAdIndex], ...data.ad};
+            const oldAd = prevAds[existingAdIndex];
+            const updatedAd = {...oldAd, ...data.ad};
+            
+            // Check if this is a banner ad that was just approved (status changed from pending to active)
+            if (oldAd.status === 'pending' && updatedAd.status === 'active' && currentUser && updatedAd.owner === currentUser.username) {
+              showNotification('Your banner ad has been approved and is now active!', 'success');
+            }
             
             // If updated ad is now pending/rejected and user is not admin, remove it
             if (!currentUser?.isAdmin && (updatedAd.status === 'pending' || updatedAd.status === 'rejected')) {
@@ -1568,11 +1574,30 @@ function App() {
       ));
     });
 
+    // Listen for token purchase approval (after successful payment)
+    socket.on('tokenPurchaseApproved', (data) => {
+      if (data.userId && currentUser && (data.userId.toString() === (currentUser.userId || currentUser.id)?.toString())) {
+        showNotification(`Your token purchase has been approved! ${data.amount} tokens have been added to your account.`, 'success');
+      }
+    });
+
+    // Listen for bump request approval (after successful payment)
+    socket.on('bumpRequestUpdate', (data) => {
+      if (data.type === 'approve' && data.bumpRequest) {
+        const bumpOwner = data.bumpRequest.owner;
+        if (currentUser && bumpOwner === currentUser.username) {
+          showNotification('Your bump request has been approved! Your ad is now bumped.', 'success');
+        }
+      }
+    });
+
     return () => {
       socket.off('userAuthenticated');
       socket.off('adVoteUpdated'); // Remove listener on cleanup
+      socket.off('tokenPurchaseApproved');
+      socket.off('bumpRequestUpdate');
     };
-  }, []);
+  }, [currentUser]);
 
   // Initial ads fetch - WebSocket handles real-time updates
   useEffect(() => {

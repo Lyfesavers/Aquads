@@ -87,12 +87,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
       const newWindow = window.open(aquaPayUrl, '_blank');
       window.aquaPayPopup = newWindow;
 
-      const successMessage = `Token purchase created! Please complete the payment of $${selectedPackage.price} USDC on the AquaPay page. Your tokens will be automatically added to your account once payment is confirmed.`;
-      if (showNotification) {
-        showNotification(successMessage, 'success');
-      } else {
-        alert(successMessage);
-      }
+      // No notification here - will show after successful payment
       
       // Reset form
       setStep(1);

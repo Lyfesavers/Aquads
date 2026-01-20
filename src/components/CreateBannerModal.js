@@ -45,7 +45,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
       const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${selectedOption.price}&bannerId=${newBanner._id}`;
       window.open(aquaPayUrl, '_blank');
       
-      alert(`Banner ad created! Please complete the payment of $${selectedOption.price} USDC on the AquaPay page. Your banner will be automatically approved once payment is confirmed.`);
+      // No notification here - will show after successful payment
       onClose();
     } catch (error) {
       console.error('Error creating banner:', error);

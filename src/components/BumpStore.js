@@ -59,7 +59,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
       // Store the newWindow reference to close it later
       window.aquaPayPopup = newWindow;
 
-      alert(`Bump request created! Please complete the payment of $${finalAmount} USDC on the AquaPay page. Your bump will be automatically approved once payment is confirmed.`);
+      // No notification here - will show after successful payment
       onClose();
     } catch (error) {
       console.error('Error creating bump request:', error);
