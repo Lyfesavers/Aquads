@@ -107,13 +107,14 @@ const AquaPayPage = ({ currentUser }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   
-  // Get bannerId, bumpId, projectId, addonOrderId, tokenPurchaseId and amount from URL search params if provided
+  // Get bannerId, bumpId, projectId, addonOrderId, tokenPurchaseId, hyperspaceOrderId and amount from URL search params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const bannerId = urlParams.get('bannerId');
   const bumpId = urlParams.get('bumpId');
   const projectId = urlParams.get('projectId');
   const addonOrderId = urlParams.get('addonOrderId');
   const tokenPurchaseId = urlParams.get('tokenPurchaseId');
+  const hyperspaceOrderId = urlParams.get('hyperspaceOrderId');
   const urlAmount = urlParams.get('amount');
   
   const [loading, setLoading] = useState(true);
@@ -447,7 +448,8 @@ const AquaPayPage = ({ currentUser }) => {
         bumpId: bumpId || null, // Include bumpId if provided in URL
         projectId: projectId || null, // Include projectId if provided in URL (for admin reference)
         addonOrderId: addonOrderId || null, // Include addonOrderId if provided in URL (for admin reference)
-        tokenPurchaseId: tokenPurchaseId || null // Include tokenPurchaseId if provided in URL
+        tokenPurchaseId: tokenPurchaseId || null, // Include tokenPurchaseId if provided in URL
+        hyperspaceOrderId: hyperspaceOrderId || null // Include hyperspaceOrderId if provided in URL
       });
       
       // Send email notification to recipient if they have an email
@@ -486,8 +488,8 @@ const AquaPayPage = ({ currentUser }) => {
         }
       }
 
-      // If this payment was for a banner ad, bump, or token purchase (bannerId/bumpId/tokenPurchaseId in URL), close the window after successful payment
-      if ((bannerId || bumpId || tokenPurchaseId) && response.data.approvedItem) {
+      // If this payment was for a banner ad, bump, token purchase, or hyperspace order, close the window after successful payment
+      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId) && response.data.approvedItem) {
         // Small delay to show success message, then close quickly
         setTimeout(() => {
           if (window.opener) {

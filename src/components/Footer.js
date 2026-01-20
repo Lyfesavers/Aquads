@@ -211,6 +211,13 @@ const Footer = () => {
                   <FaCoins className="mr-2" />
                   <span>AquaPay</span>
                 </Link>
+                <Link
+                  to="/hyperspace"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaCoins className="mr-2" />
+                  <span>HyperSpace</span>
+                </Link>
                 </div>
               )}
             </div>

@@ -18,7 +18,7 @@ const paymentAutoApproval = {
    * @returns {Object|null} - Approved item or null
    */
   async processPayment(paymentData) {
-    const { bannerId, bumpId, projectId, tokenPurchaseId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
+    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
 
     // Only process payments to 'aquads' slug
     if (recipientSlug.toLowerCase() !== 'aquads') {
@@ -55,6 +55,19 @@ const paymentAutoApproval = {
     if (tokenPurchaseId) {
       return await this.handleTokenPurchasePayment({
         tokenPurchaseId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
+    // Handle HyperSpace (Twitter Space Listeners) payments
+    if (hyperspaceOrderId) {
+      return await this.handleHyperSpacePayment({
+        hyperspaceOrderId,
         amount,
         txHash,
         chain,
@@ -396,6 +409,106 @@ const paymentAutoApproval = {
       return { type: 'tokenPurchase', id: tokenPurchase._id, status: tokenPurchase.status };
     } catch (error) {
       console.error('Error auto-approving token purchase:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Handle HyperSpace (Twitter Space Listeners) payment auto-approval
+   */
+  async handleHyperSpacePayment({ hyperspaceOrderId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+    try {
+      const HyperSpaceOrder = require('../models/HyperSpaceOrder');
+      const socialplugService = require('./socialplugService');
+
+      const order = await HyperSpaceOrder.findOne({ orderId: hyperspaceOrderId });
+
+      if (!order || order.status !== 'awaiting_payment') {
+        console.log(`HyperSpace order ${hyperspaceOrderId} not found or not awaiting payment`);
+        return null;
+      }
+
+      // Verify ownership if senderUsername provided
+      if (senderUsername && order.username) {
+        if (senderUsername.toLowerCase() !== order.username.toLowerCase()) {
+          console.log(`HyperSpace order ${hyperspaceOrderId} ownership mismatch: order owner is ${order.username}, payment sender is ${senderUsername}`);
+          return null;
+        }
+      }
+
+      // Verify exact amount match
+      const expectedAmount = parseFloat(order.customerPrice);
+      const paymentAmount = parseFloat(amount);
+
+      if (paymentAmount !== expectedAmount) {
+        console.log(`HyperSpace order ${hyperspaceOrderId} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
+        return null;
+      }
+
+      // Verify transaction on-chain
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(`HyperSpace order ${hyperspaceOrderId} transaction verification failed for ${txHash} on ${chain}`);
+        return null;
+      }
+
+      // Update payment info
+      order.txSignature = txHash;
+      order.paymentChain = chain;
+      order.chainSymbol = token || 'USDC';
+      order.paymentStatus = 'completed';
+      order.paymentReceivedAt = new Date();
+      order.status = 'processing';
+      await order.save();
+
+      // Auto-fulfill: Place order on Socialplug immediately
+      try {
+        // Validate we have sufficient balance
+        const balanceCheck = await socialplugService.validateBalance(order.listeners, order.duration);
+        
+        if (!balanceCheck.sufficient) {
+          order.status = 'failed';
+          order.errorMessage = `Insufficient Socialplug balance. Required: $${balanceCheck.required}, Available: $${balanceCheck.balance}`;
+          await order.save();
+          console.log(`HyperSpace order ${hyperspaceOrderId} failed: insufficient Socialplug balance`);
+          return { type: 'hyperspace', id: order.orderId, status: order.status, error: order.errorMessage };
+        }
+
+        // Place order on Socialplug
+        const socialplugResult = await socialplugService.placeOrder(
+          order.spaceUrl,
+          order.listeners,
+          order.duration
+        );
+
+        if (socialplugResult.success) {
+          order.socialplugOrderId = socialplugResult.orderId;
+          order.socialplugCharge = socialplugResult.charge;
+          order.socialplugStatus = socialplugResult.status || 'pending';
+          order.socialplugOrderedAt = new Date();
+          order.status = 'delivering';
+          await order.save();
+
+          console.log(`HyperSpace order ${hyperspaceOrderId} auto-approved and placed on Socialplug. Socialplug Order ID: ${socialplugResult.orderId}`);
+          return { type: 'hyperspace', id: order.orderId, status: order.status, socialplugOrderId: socialplugResult.orderId };
+        } else {
+          order.status = 'failed';
+          order.errorMessage = socialplugResult.error;
+          order.retryCount += 1;
+          await order.save();
+
+          console.log(`HyperSpace order ${hyperspaceOrderId} failed to place on Socialplug: ${socialplugResult.error}`);
+          return { type: 'hyperspace', id: order.orderId, status: order.status, error: socialplugResult.error };
+        }
+      } catch (fulfillError) {
+        console.error(`HyperSpace order ${hyperspaceOrderId} fulfillment error:`, fulfillError);
+        order.status = 'failed';
+        order.errorMessage = fulfillError.message;
+        await order.save();
+        return { type: 'hyperspace', id: order.orderId, status: order.status, error: fulfillError.message };
+      }
+    } catch (error) {
+      console.error('Error auto-approving HyperSpace order:', error);
       return null;
     }
   },

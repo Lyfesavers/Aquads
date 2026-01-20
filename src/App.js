@@ -78,6 +78,7 @@ import PublicResume from './components/PublicResume';
 import LandingPage from './components/LandingPage';
 import AquaPayPage from './components/AquaPayPage';
 import AquaPayInfo from './components/AquaPayInfo';
+import HyperSpace from './components/HyperSpace';
 
 window.Buffer = Buffer;
 
@@ -3491,6 +3492,7 @@ function App() {
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
             <Route path="/telegram-bot" element={<TelegramBot />} />
             <Route path="/aquapay" element={<AquaPayInfo />} />
+            <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
