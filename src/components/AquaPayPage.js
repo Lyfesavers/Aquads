@@ -494,7 +494,7 @@ const AquaPayPage = ({ currentUser }) => {
             // This window was opened by another window, close it
             window.close();
           }
-        }, 1000); // 1 second - faster close
+        }, 500); // 0.5 seconds - very fast close
       }
     } catch (e) { console.error('Record error:', e); }
   };

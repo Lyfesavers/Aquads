@@ -1329,6 +1329,13 @@ function emitAquaPayPaymentReceived(paymentData) {
   }
 }
 
+// Emit user-specific token balance update
+function emitUserTokenBalanceUpdate(userId, balanceData) {
+  if (io) {
+    io.to(`user_${userId}`).emit('userTokenBalanceUpdated', balanceData);
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1365,5 +1372,6 @@ module.exports = {
   emitNewVoteBoostPending,
   emitRedemptionCreated,
   emitRedemptionProcessed,
-  emitAquaPayPaymentReceived
+  emitAquaPayPaymentReceived,
+  emitUserTokenBalanceUpdate
 }; 

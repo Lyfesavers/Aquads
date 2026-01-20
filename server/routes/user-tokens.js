@@ -6,7 +6,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending } = require('../socket');
+const { emitTokenPurchaseApproved, emitTokenPurchaseRejected, emitNewTokenPurchasePending, emitUserTokenBalanceUpdate } = require('../socket');
 
 // Get user's token balance and history
 router.get('/balance', auth, async (req, res) => {
