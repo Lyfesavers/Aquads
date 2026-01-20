@@ -5,7 +5,7 @@ const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitBumpRequestUpdate, emitTokenPurchaseApproved } = require('../socket');
+const { emitBumpRequestUpdate, emitTokenPurchaseApproved, emitUserTokenBalanceUpdate } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types

@@ -488,13 +488,13 @@ const AquaPayPage = ({ currentUser }) => {
 
       // If this payment was for a banner ad, bump, or token purchase (bannerId/bumpId/tokenPurchaseId in URL), close the window after successful payment
       if ((bannerId || bumpId || tokenPurchaseId) && response.data.approvedItem) {
-        // Small delay to show success message, then close
+        // Small delay to show success message, then close quickly
         setTimeout(() => {
           if (window.opener) {
             // This window was opened by another window, close it
             window.close();
           }
-        }, 2000);
+        }, 1000); // 1 second - faster close
       }
     } catch (e) { console.error('Record error:', e); }
   };
