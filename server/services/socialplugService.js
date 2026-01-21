@@ -144,7 +144,7 @@ const checkBalance = async () => {
       timeout: 10000
     });
 
-    console.log('[Socialplug] Balance response:', JSON.stringify(response.data));
+    // Balance check successful
 
     if (response.data && response.data.balance !== undefined) {
       return { 
@@ -191,42 +191,21 @@ const getServices = async () => {
       timeout: 10000
     });
 
-    console.log('[Socialplug] Services response received');
-
     if (response.data && !response.data.error) {
       // Per docs: response is { discount_percentage, services: [...] }
       const services = response.data.services || response.data || [];
-      
-      // Log ALL services with correct field names from docs
-      console.log(`[Socialplug] Found ${services.length} services. Full list:`);
-      services.forEach(s => {
-        // Docs show: id, serviceName, platform, category
-        console.log(`  - ID: "${s.id}", Name: "${s.serviceName}", Platform: ${s.platform}, Category: ${s.category}`);
-      });
       
       // Look for Twitter Spaces Listeners service
       const spaceServices = services.filter(s => {
         const id = String(s.id || '').toLowerCase();
         const name = String(s.serviceName || '').toLowerCase();
-        const platform = String(s.platform || '').toLowerCase();
-        const category = String(s.category || '').toLowerCase();
-        const searchText = `${id} ${name} ${platform} ${category}`;
-        return searchText.includes('space') || 
-               (searchText.includes('twitter') && searchText.includes('listener')) ||
-               (searchText.includes('x') && searchText.includes('listener'));
+        const searchText = `${id} ${name}`;
+        return searchText.includes('space') && searchText.includes('listener');
       });
       
       if (spaceServices.length > 0) {
-        console.log('[Socialplug] *** FOUND SPACE/LISTENER SERVICES: ***');
-        spaceServices.forEach(s => {
-          console.log(`  >>> ID: "${s.id}", Name: "${s.serviceName}", Min: ${s.minQuantity}, Max: ${s.maxQuantity}`);
-        });
-        
-        // Use the first matching service
         TWITTER_SPACES_SERVICE_ID = spaceServices[0].id;
-        console.log(`[Socialplug] Using service ID: ${TWITTER_SPACES_SERVICE_ID}`);
-      } else {
-        console.log('[Socialplug] *** NO TWITTER SPACES LISTENERS SERVICE FOUND ***');
+        console.log(`[Socialplug] Found Twitter Spaces service: ${TWITTER_SPACES_SERVICE_ID}`);
       }
       
       return { success: true, services };
@@ -301,8 +280,7 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
       runs: duration  // Duration in minutes
     };
 
-    console.log(`[Socialplug] Placing order - Service: ${serviceId}, Listeners: ${listeners}, Duration: ${duration}min, URL: ${spaceUrl}`);
-    console.log('[Socialplug] Order payload:', JSON.stringify(orderData));
+    console.log(`[Socialplug] Placing order - Service: ${serviceId}, Listeners: ${listeners}, Duration: ${duration}min`);
 
     const response = await axios.post(`${SOCIALPLUG_API_URL}/order`, orderData, {
       headers: {
@@ -312,7 +290,7 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
       timeout: 30000
     });
 
-    console.log('[Socialplug] Order response:', JSON.stringify(response.data));
+    // Order placed successfully
 
     // Handle successful response - check various possible response formats
     if (response.data) {
@@ -368,7 +346,7 @@ const checkOrderStatus = async (orderId) => {
       timeout: 10000
     });
 
-    console.log('[Socialplug] Status response:', JSON.stringify(response.data));
+    // Status check successful
 
     if (response.data && !response.data.error) {
       return { 
