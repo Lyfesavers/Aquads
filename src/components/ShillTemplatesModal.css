@@ -187,6 +187,23 @@
   margin: 0;
 }
 
+/* Loading Spinner */
+.shill-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: shill-spin 0.7s linear infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+@keyframes shill-spin {
+  to { transform: rotate(360deg); }
+}
+
 .shill-price-badge {
   display: flex;
   flex-direction: column;

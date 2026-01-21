@@ -141,46 +141,44 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
     }, 200);
   };
 
-  const handleShare = async (template) => {
+  const handleShare = (template) => {
     const text = template.text;
     
-    // Award shill points if user is logged in (once daily)
-    if (currentUser) {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/api/points/shill-completed`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        
-        // Check if already claimed today
-        if (data.alreadyClaimed) {
-          setAlreadyShilledToday(true);
-        }
-        setShowPointsMessage(true);
-      } catch (error) {
-        console.error('Failed to award shill points:', error);
-      }
-    }
-    
-    // Open social platform
+    // IMMEDIATELY open social platform - don't wait for API
     if (selectedPlatform === 'twitter') {
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
       window.open(twitterUrl, 'twitter-share', 'width=550,height=420,scrollbars=yes');
     } else if (selectedPlatform === 'telegram') {
-      // Link to AquaSwap to retain traffic
       const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(aquaSwapUrl)}&text=${encodeURIComponent(text)}`;
       window.open(telegramUrl, 'telegram-share', 'width=550,height=420,scrollbars=yes');
     }
     
-    // Delay close to show points message
+    // Fire-and-forget: Award shill points in background (don't block UI)
+    if (currentUser) {
+      const token = localStorage.getItem('token');
+      fetch(`${API_URL}/api/points/shill-completed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.alreadyClaimed) {
+            setAlreadyShilledToday(true);
+          }
+          setShowPointsMessage(true);
+        })
+        .catch(error => {
+          console.error('Failed to award shill points:', error);
+        });
+    }
+    
+    // Close modal after brief delay
     setTimeout(() => {
       handleClose();
-    }, currentUser ? 1500 : 0);
+    }, currentUser ? 1200 : 0);
   };
 
   const handleCopyContract = async () => {
@@ -222,9 +220,10 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
             <div className="shill-token-details">
               <h2 className="shill-modal-title">
                 Shill <span className="token-highlight">{isLoadingToken ? '...' : `$${tokenSymbol}`}</span>
+                {isLoadingToken && <span className="shill-loading-spinner"></span>}
               </h2>
               <p className="shill-modal-subtitle">
-                {isLoadingToken ? 'Loading token info...' : 'Help spread the word!'}
+                {isLoadingToken ? 'Fetching token data...' : 'Help spread the word!'}
               </p>
             </div>
           </div>
