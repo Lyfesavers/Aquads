@@ -14,15 +14,15 @@ const SOCIALPLUG_API_KEY = process.env.SOCIALPLUG_API_KEY;
 // We'll fetch this dynamically or use the one from their service catalog
 let TWITTER_SPACES_SERVICE_ID = null;
 
-// Pricing table based on Socialplug's actual pricing (in USDC)
-// Format: { listeners: { duration: cost } }
+// Pricing table based on Socialplug's actual pricing (in USD)
+// Format: { listeners: { duration_in_minutes: cost } }
 const SOCIALPLUG_PRICING = {
   100: { 30: 11, 60: 15, 120: 21 },
-  200: { 30: 22, 60: 30, 120: 42 },
-  500: { 30: 57, 60: 78, 120: 110 },
-  1000: { 30: 67, 60: 92, 120: 130 },
-  2500: { 30: 143, 60: 195, 120: 275 },
-  5000: { 30: 218, 60: 300, 120: 420 }
+  200: { 30: 18, 60: 25, 120: 31 },
+  500: { 30: 34, 60: 60, 120: 110 },
+  1000: { 30: 60, 60: 100, 120: 130 },
+  2500: { 30: 180, 60: 250, 120: 350 },
+  5000: { 30: 350, 60: 450, 120: 550 }
 };
 
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
@@ -33,19 +33,22 @@ const TEST_PRICE_OVERRIDE = {
   price: 0 // DISABLED - Using regular pricing ($14.30 for 100 listeners/30min)
 };
 
-// Markup: 30% OR $5 minimum, whichever is higher
-const MINIMUM_PROFIT = 5;
+// Markup: 30% OR minimum $5 profit, whichever is higher
 const MARKUP_PERCENTAGE = 0.30;
+const MINIMUM_PROFIT = 5;
 
 /**
  * Calculate the selling price with markup
  * @param {number} socialplugCost - The cost from Socialplug
- * @returns {number} - The price to charge customers
+ * @returns {number} - The price to charge customers (30% markup or $5 minimum profit)
  */
 const calculateSellingPrice = (socialplugCost) => {
-  const percentageMarkup = socialplugCost * (1 + MARKUP_PERCENTAGE);
-  const minimumMarkup = socialplugCost + MINIMUM_PROFIT;
-  return Math.ceil(Math.max(percentageMarkup, minimumMarkup));
+  // Calculate both options
+  const percentageMarkupPrice = socialplugCost * (1 + MARKUP_PERCENTAGE);
+  const minimumProfitPrice = socialplugCost + MINIMUM_PROFIT;
+  
+  // Use whichever is higher to ensure at least $5 profit
+  return Math.ceil(Math.max(percentageMarkupPrice, minimumProfitPrice));
 };
 
 /**
@@ -439,7 +442,6 @@ module.exports = {
   isTestOrder,
   isTestPricedOrder,
   SOCIALPLUG_PRICING,
-  MINIMUM_PROFIT,
   MARKUP_PERCENTAGE,
   TEST_PRICE_OVERRIDE
 };
