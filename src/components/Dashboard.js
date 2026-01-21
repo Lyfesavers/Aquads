@@ -2618,11 +2618,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setIsLoadingHyperSpaceOrders(true);
       const token = currentUser?.token || localStorage.getItem('token');
       // Fetch both pending_approval and delivering orders
+      // Note: API_URL already includes /api, so use /hyperspace not /api/hyperspace
       const [pendingRes, deliveringRes] = await Promise.all([
-        fetch(`${API_URL}/api/hyperspace/admin/orders?status=pending_approval`, {
+        fetch(`${API_URL}/hyperspace/admin/orders?status=pending_approval`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`${API_URL}/api/hyperspace/admin/orders?status=delivering`, {
+        fetch(`${API_URL}/hyperspace/admin/orders?status=delivering`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -2646,7 +2647,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       setProcessingHyperSpaceOrderId(orderId);
       const token = currentUser?.token || localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/hyperspace/admin/approve/${orderId}`, {
+      const response = await fetch(`${API_URL}/hyperspace/admin/approve/${orderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2672,7 +2673,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       setProcessingHyperSpaceOrderId(orderId);
       const token = currentUser?.token || localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/hyperspace/admin/complete/${orderId}`, {
+      const response = await fetch(`${API_URL}/hyperspace/admin/complete/${orderId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -2696,7 +2697,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       setProcessingHyperSpaceOrderId(orderId);
       const token = currentUser?.token || localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/api/hyperspace/admin/reject/${orderId}`, {
+      const response = await fetch(`${API_URL}/hyperspace/admin/reject/${orderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
