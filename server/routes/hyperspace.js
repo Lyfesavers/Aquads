@@ -146,7 +146,7 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
           await validDiscountCode.incrementUsage();
         }
       } catch (discountError) {
-        console.log('Discount code not found or invalid:', discountCode);
+        // Discount code not found or invalid - continue without discount
       }
     }
 

@@ -205,7 +205,6 @@ const getServices = async () => {
       
       if (spaceServices.length > 0) {
         TWITTER_SPACES_SERVICE_ID = spaceServices[0].id;
-        console.log(`[Socialplug] Found Twitter Spaces service: ${TWITTER_SPACES_SERVICE_ID}`);
       }
       
       return { success: true, services };
@@ -256,15 +255,9 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     return { success: false, error: 'Invalid Twitter Space URL' };
   }
 
-  // Log if this is a test-priced order (customer paid less, but real order placed)
-  if (isTestPricedOrder(listeners, duration)) {
-    console.log('[Socialplug] Test-priced order - placing REAL order on Socialplug');
-  }
-
   try {
     // If we don't have the service ID yet, try to fetch services first
     if (!TWITTER_SPACES_SERVICE_ID) {
-      console.log('[Socialplug] Service ID not cached, fetching services...');
       await getServices();
     }
 
@@ -279,8 +272,6 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
       quantity: listeners,
       runs: duration  // Duration in minutes
     };
-
-    console.log(`[Socialplug] Placing order - Service: ${serviceId}, Listeners: ${listeners}, Duration: ${duration}min`);
 
     const response = await axios.post(`${SOCIALPLUG_API_URL}/order`, orderData, {
       headers: {
@@ -401,17 +392,12 @@ const validateBalance = async (listeners, duration) => {
     return { sufficient: false, error: 'Invalid package selection' };
   }
 
-  if (isTestPricedOrder(listeners, duration)) {
-    console.log('[Socialplug] Test-priced order - cost would be $' + cost);
-  }
-
   // Try to check balance, but don't fail if the API doesn't support it
   // The order placement will fail if there's truly insufficient balance
   const balanceResult = await checkBalance();
   
   if (!balanceResult.success) {
-    console.log('[Socialplug] Balance check failed, proceeding anyway - Socialplug will reject if insufficient:', balanceResult.error);
-    // Return sufficient=true to proceed, let order placement handle the actual check
+    // Balance check failed - proceed anyway, let order placement handle the actual check
     return {
       sufficient: true,
       balance: null,

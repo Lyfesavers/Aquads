@@ -59,6 +59,7 @@ const Whitepaper = () => {
               <li><strong>Industry-First Trust Score & Risk Gauge System</strong> - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills</li>
               <li><strong>World's First On-Chain Freelancer Resume</strong> - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation</li>
               <li><strong>AquaPay - Multi-Chain Payment Link System</strong> - A non-custodial payment solution with competitive 0.5% transaction fees enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks</li>
+              <li><strong>HyperSpace - Twitter Spaces Listener Boost</strong> - A service enabling projects to boost their Twitter Spaces with real listeners (100-5,000) for durations of 30 minutes to 2 hours, enhancing trending potential and audience reach</li>
             </ul>
             
 
@@ -128,6 +129,13 @@ const Whitepaper = () => {
               <h4 className="text-lg font-semibold mb-2">Twitter Raid Feature:</h4>
               <ul className="list-disc pl-6 mb-4">
                 <li>Users earn points for engaging with Twitter posts, further boosting community participation and platform engagement.</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">HyperSpace - Twitter Spaces Listener Boost:</h4>
+              <ul className="list-disc pl-6 mb-4">
+                <li>A powerful service that enables crypto projects to boost their Twitter Spaces with real listeners. Choose from packages of 100 to 5,000 listeners for durations of 30 minutes, 1 hour, or 2 hours. Listeners appear in the overflow section, significantly boosting trending potential and discoverability. Best results when scheduling Spaces at least 24 hours in advance. Seamless payment via AquaPay crypto integration.</li>
               </ul>
             </div>
 

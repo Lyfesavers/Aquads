@@ -102,7 +102,6 @@ const HyperSpace = ({ currentUser }) => {
     const handleOrderStatusChange = (data) => {
       // Check if this update is for our current order
       if (data.orderId === currentOrderId) {
-        console.log('Socket: Order status changed', data);
         setOrderStatus(data.status);
         
         // If order is no longer awaiting payment, show confirmation immediately
@@ -127,7 +126,6 @@ const HyperSpace = ({ currentUser }) => {
 
     const handleOrderStatusLoaded = (data) => {
       if (data.order && data.order.orderId === currentOrderId) {
-        console.log('Socket: Order status loaded', data.order);
         setOrderStatus(data.order.status);
         if (data.order.status !== 'awaiting_payment') {
           setShowPayment(false);

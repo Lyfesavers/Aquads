@@ -451,6 +451,49 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
         </svg>
       );
 
+    case 'HyperSpace':
+      return (
+        <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
+          {/* Twitter Space Circle - Main Host */}
+          <circle cx="100" cy="55" r="35" fill="rgba(139, 92, 246, 0.2)" stroke="rgba(168, 85, 247, 0.6)" strokeWidth="2"/>
+          <circle cx="100" cy="55" r="28" fill="rgba(168, 85, 247, 0.3)"/>
+          <text x="100" y="50" fontSize="18" fill="#c084fc" textAnchor="middle">🎙️</text>
+          <text x="100" y="68" fontSize="7" fill="#e9d5ff" textAnchor="middle" fontWeight="600">LIVE</text>
+          
+          {/* Listener Avatars - Orbiting */}
+          <circle cx="45" cy="35" r="12" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.5)" strokeWidth="1.5"/>
+          <text x="45" y="39" fontSize="10" textAnchor="middle">👤</text>
+          
+          <circle cx="155" cy="35" r="12" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.5)" strokeWidth="1.5"/>
+          <text x="155" y="39" fontSize="10" textAnchor="middle">👤</text>
+          
+          <circle cx="45" cy="75" r="12" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.5)" strokeWidth="1.5"/>
+          <text x="45" y="79" fontSize="10" textAnchor="middle">👤</text>
+          
+          <circle cx="155" cy="75" r="12" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.5)" strokeWidth="1.5"/>
+          <text x="155" y="79" fontSize="10" textAnchor="middle">👤</text>
+          
+          {/* Listener Count Panel */}
+          <rect x="190" y="20" width="90" height="45" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1.5"/>
+          <text x="235" y="38" fontSize="8" fill="#d8b4fe" textAnchor="middle">Listeners</text>
+          <text x="235" y="55" fontSize="16" fill="#f0abfc" textAnchor="middle" fontWeight="700">+2,500</text>
+          
+          {/* Duration Options */}
+          <rect x="190" y="75" width="28" height="18" rx="4" fill="rgba(139, 92, 246, 0.3)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1"/>
+          <text x="204" y="87" fontSize="7" fill="#c4b5fd" textAnchor="middle">30m</text>
+          
+          <rect x="222" y="75" width="28" height="18" rx="4" fill="rgba(168, 85, 247, 0.4)" stroke="rgba(192, 132, 252, 0.6)" strokeWidth="1"/>
+          <text x="236" y="87" fontSize="7" fill="#e9d5ff" textAnchor="middle">1hr</text>
+          
+          <rect x="254" y="75" width="28" height="18" rx="4" fill="rgba(139, 92, 246, 0.3)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1"/>
+          <text x="268" y="87" fontSize="7" fill="#c4b5fd" textAnchor="middle">2hr</text>
+          
+          {/* Trending indicator */}
+          <rect x="190" y="100" width="90" height="20" rx="4" fill="rgba(34, 197, 94, 0.2)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="1"/>
+          <text x="235" y="114" fontSize="8" fill="#86efac" textAnchor="middle">📈 Boost Trending</text>
+        </svg>
+      );
+
     case 'AquaPay':
       return (
         <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
@@ -778,6 +821,12 @@ const CarouselCard = ({ feature, index }) => {
         bgGradient: 'from-purple-950/50 via-slate-900/90 to-slate-950/50',
         glowColor: 'rgba(168, 85, 247, 0.5)',
         glowBg: 'rgba(168, 85, 247, 0.2)',
+        buttonGradient: 'from-purple-500 to-pink-500'
+      },
+      'from-purple-900/40 to-pink-900/80': { 
+        bgGradient: 'from-purple-950/50 via-pink-950/40 to-slate-950/50',
+        glowColor: 'rgba(192, 132, 252, 0.5)',
+        glowBg: 'rgba(236, 72, 153, 0.2)',
         buttonGradient: 'from-purple-500 to-pink-500'
       },
       'from-rose-900/40': { 
@@ -3611,6 +3660,13 @@ const LandingPage = () => {
       title: 'Twitter Raids',
       description: 'Boost visibility with coordinated social campaigns. Earn points for engagement.',
       gradient: 'from-sky-900/40 to-slate-900/80'
+    },
+    {
+      icon: '🎧',
+      title: 'HyperSpace',
+      description: 'Boost your Twitter Spaces with real listeners. Choose from 100 to 5,000 listeners for 30min, 1hr, or 2hr durations. Listeners appear in overflow, boosting trending potential. Schedule 24hrs ahead for best results. Pay with crypto via AquaPay.',
+      gradient: 'from-purple-900/40 to-pink-900/80',
+      link: '/hyperspace'
     },
     {
       icon: '💸',
