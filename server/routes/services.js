@@ -75,17 +75,36 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // Add review data and completion rate to each service efficiently
-    const servicesWithReviews = await Promise.all(services.map(async (service) => {
+    // Fetch all booking stats in a single query (fixes N+1 problem - was 40 queries, now 1)
+    const bookingAggregation = await Booking.aggregate([
+      { $match: { serviceId: { $in: serviceIds } } },
+      {
+        $group: {
+          _id: '$serviceId',
+          totalContacts: { $sum: 1 },
+          completedBookings: {
+            $sum: { $cond: [{ $in: ['$status', ['completed', 'confirmed']] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    // Create booking stats map for quick lookup
+    const bookingMap = {};
+    bookingAggregation.forEach(booking => {
+      bookingMap[booking._id.toString()] = {
+        totalContacts: booking.totalContacts,
+        completedBookings: booking.completedBookings
+      };
+    });
+
+    // Add review data and completion rate to each service
+    const servicesWithReviews = services.map(service => {
       const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
-      
-      // Calculate completion rate for each service
-      const contactCount = await Booking.countDocuments({ serviceId: service._id });
-      const bookingCount = await Booking.countDocuments({ 
-        serviceId: service._id, 
-        status: { $in: ['completed', 'confirmed'] } 
-      });
-      const completionRate = contactCount > 0 ? Math.round((bookingCount / contactCount) * 100) : 0;
+      const bookingData = bookingMap[service._id.toString()] || { totalContacts: 0, completedBookings: 0 };
+      const completionRate = bookingData.totalContacts > 0 
+        ? Math.round((bookingData.completedBookings / bookingData.totalContacts) * 100) 
+        : 0;
 
       return {
         ...service.toObject(),
@@ -93,7 +112,7 @@ router.get('/', async (req, res) => {
         reviews: reviewData.reviews,
         completionRate: completionRate
       };
-    }));
+    });
 
     const total = await Service.countDocuments(query);
 
