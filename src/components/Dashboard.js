@@ -172,28 +172,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser]);
 
+  // STAGGERED LOADING: Load data sequentially to avoid overwhelming the server
+  // This prevents all API/socket calls from firing at once
   useEffect(() => {
-    if (currentUser?.token && socket) {
-      // Request affiliate info via socket instead of API call
-      socket.emit('requestAffiliateInfo', {
-        userId: currentUser.userId || currentUser.id || currentUser._id
-      });
-      
-      // Request membership info via socket instead of API call
-      socket.emit('requestMembershipInfo', {
-        userId: currentUser.userId || currentUser.id || currentUser._id
-      });
+    if (!currentUser?.token || !socket) return;
+    
+    const userId = currentUser.userId || currentUser.id || currentUser._id;
+    const timers = [];
+    
+    // STEP 1: Main tab data loads IMMEDIATELY (0ms)
+    socket.emit('requestAffiliateInfo', { userId });
+    socket.emit('requestMembershipInfo', { userId });
+    
+    // STEP 2: Bookings data loads after 300ms
+    timers.push(setTimeout(() => {
+      if (socket) {
+        socket.emit('requestUserBookings', { userId: currentUser.userId });
+      }
+    }, 300));
+    
+    // STEP 3: Admin data loads after 600ms (if admin)
+    if (currentUser?.isAdmin) {
+      timers.push(setTimeout(() => {
+        if (socket) {
+          socket.emit('requestPendingRedemptions', { isAdmin: currentUser.isAdmin });
+        }
+      }, 600));
     }
-  }, [currentUser, socket]);
-
-  // Request initial redemptions via socket (like bookings system)
-  useEffect(() => {
-    if (currentUser?.isAdmin && socket) {
-      // Request pending redemptions via socket instead of API call
-      socket.emit('requestPendingRedemptions', {
-        isAdmin: currentUser.isAdmin
-      });
-    }
+    
+    // Cleanup timers on unmount
+    return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, socket]);
 
   // Socket listener for real-time redemption updates and initial data
@@ -288,17 +296,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [socket, currentUser]);
 
-  // Request initial bookings data via socket (like raids system)
-  useEffect(() => {
-    if (currentUser && socket) {
-      // Request bookings data via socket instead of API call
-      socket.emit('requestUserBookings', {
-        userId: currentUser.userId
-      });
-    }
-  }, [currentUser, socket]);
-
   // Socket listener for real-time booking updates and initial data
+  // Note: Initial request is now in the staggered loader above
   useEffect(() => {
     if (socket && currentUser) {
       // Join user's room for direct updates
@@ -394,28 +393,49 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser]);
 
+  // STAGGERED ADMIN LOADING: Load admin data sequentially (starting at 800ms after main data)
   useEffect(() => {
-    if (currentUser?.isAdmin && socket) {
-      // Request pending completions via socket instead of API call
-      socket.emit('requestPendingCompletions', {
-        isAdmin: currentUser.isAdmin,
-        userId: currentUser.userId || currentUser.id
-      });
-      
-      // Request pending bump requests via socket instead of API call
-      socket.emit('requestPendingBumpRequests', {
-        isAdmin: currentUser.isAdmin,
-        userId: currentUser.userId || currentUser.id
-      });
-      
-      // Request pending ads via socket instead of API call
-      socket.emit('requestPendingAds', {
-        isAdmin: currentUser.isAdmin,
-        userId: currentUser.userId || currentUser.id
-      });
-      
+    if (!currentUser?.isAdmin || !socket) return;
+    
+    const userId = currentUser.userId || currentUser.id;
+    const timers = [];
+    
+    // Admin Step 1: Pending completions (800ms after dashboard opens)
+    timers.push(setTimeout(() => {
+      if (socket) {
+        socket.emit('requestPendingCompletions', {
+          isAdmin: currentUser.isAdmin,
+          userId
+        });
+      }
+    }, 800));
+    
+    // Admin Step 2: Bump requests (1000ms)
+    timers.push(setTimeout(() => {
+      if (socket) {
+        socket.emit('requestPendingBumpRequests', {
+          isAdmin: currentUser.isAdmin,
+          userId
+        });
+      }
+    }, 1000));
+    
+    // Admin Step 3: Pending ads (1200ms)
+    timers.push(setTimeout(() => {
+      if (socket) {
+        socket.emit('requestPendingAds', {
+          isAdmin: currentUser.isAdmin,
+          userId
+        });
+      }
+    }, 1200));
+    
+    // Admin Step 4: Facebook raids (1400ms)
+    timers.push(setTimeout(() => {
       fetchPendingFacebookRaids();
-    }
+    }, 1400));
+    
+    return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, socket]);
 
   // Add Socket.io listeners for affiliate data (ALL USERS)
@@ -891,23 +911,41 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
   }, [socket, currentUser]);
 
+  // STAGGERED: When admin clicks Admin tab, load additional data sequentially
   useEffect(() => {
-    if (currentUser?.isAdmin && activeTab === 'admin') {
-      requestPendingAdsViaSocket();
-      // Request token purchases via socket instead of API call
+    if (!currentUser?.isAdmin || activeTab !== 'admin') return;
+    
+    const timers = [];
+    
+    // Step 1: Ads (immediate)
+    requestPendingAdsViaSocket();
+    
+    // Step 2: Token purchases (200ms)
+    timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingTokenPurchases', {
           userId: currentUser.userId,
           isAdmin: currentUser.isAdmin
         });
-        // Request pending vote boosts via socket
+      }
+    }, 200));
+    
+    // Step 3: Vote boosts (400ms)
+    timers.push(setTimeout(() => {
+      if (socket) {
         socket.emit('requestPendingVoteBoosts', {
           userId: currentUser.userId,
           isAdmin: currentUser.isAdmin
         });
       }
+    }, 400));
+    
+    // Step 4: Services (600ms)
+    timers.push(setTimeout(() => {
       requestPendingServicesViaSocket();
-    }
+    }, 600));
+    
+    return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, activeTab, socket]);
 
   useEffect(() => {
