@@ -366,12 +366,22 @@ const validateBalance = async (listeners, duration) => {
   }
 
   if (isTestPricedOrder(listeners, duration)) {
-    console.log('[Socialplug] Test-priced order - checking real Socialplug balance for $' + cost);
+    console.log('[Socialplug] Test-priced order - cost would be $' + cost);
   }
 
+  // Try to check balance, but don't fail if the API doesn't support it
+  // The order placement will fail if there's truly insufficient balance
   const balanceResult = await checkBalance();
+  
   if (!balanceResult.success) {
-    return { sufficient: false, error: balanceResult.error };
+    console.log('[Socialplug] Balance check failed, proceeding anyway - Socialplug will reject if insufficient:', balanceResult.error);
+    // Return sufficient=true to proceed, let order placement handle the actual check
+    return {
+      sufficient: true,
+      balance: null,
+      required: cost,
+      balanceCheckSkipped: true
+    };
   }
 
   return {
