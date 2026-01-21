@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { socket } from '../services/api';
 import Footer from './Footer';
@@ -425,6 +425,15 @@ const HyperSpace = ({ currentUser }) => {
       </div>
 
       <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 pb-32 lg:pb-12">
+        {/* Back to Home Button */}
+        <button
+          onClick={() => navigate('/')}
+          className="mb-6 sm:mb-8 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700 hover:border-purple-500/50 text-gray-300 hover:text-white transition-all duration-200 group"
+        >
+          <FaArrowLeft className="text-sm group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Back to Home</span>
+        </button>
+
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 mb-4 sm:mb-6 shadow-lg shadow-purple-500/30">
