@@ -431,6 +431,54 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending HyperSpace orders
+    socket.on('requestPendingHyperSpaceOrders', async (userData) => {
+      if (!userData || !userData.isAdmin) {
+        socket.emit('pendingHyperSpaceOrdersError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const HyperSpaceOrder = require('./models/HyperSpaceOrder');
+        
+        // Fetch pending_approval and delivering orders
+        const orders = await HyperSpaceOrder.find({ 
+          status: { $in: ['pending_approval', 'delivering'] }
+        }).sort({ createdAt: -1 }).lean();
+
+        socket.emit('pendingHyperSpaceOrdersLoaded', {
+          orders,
+          total: orders.length
+        });
+        
+      } catch (error) {
+        console.error('Error fetching HyperSpace orders:', error);
+        socket.emit('pendingHyperSpaceOrdersError', { error: 'Failed to fetch orders' });
+      }
+    });
+
+    // Handle user requesting their HyperSpace order status
+    socket.on('requestHyperSpaceOrderStatus', async (data) => {
+      if (!data || !data.orderId) {
+        socket.emit('hyperSpaceOrderStatusError', { error: 'Order ID required' });
+        return;
+      }
+
+      try {
+        const HyperSpaceOrder = require('./models/HyperSpaceOrder');
+        const order = await HyperSpaceOrder.findOne({ orderId: data.orderId }).lean();
+        
+        if (order) {
+          socket.emit('hyperSpaceOrderStatusLoaded', { order });
+        } else {
+          socket.emit('hyperSpaceOrderStatusError', { error: 'Order not found' });
+        }
+      } catch (error) {
+        console.error('Error fetching HyperSpace order status:', error);
+        socket.emit('hyperSpaceOrderStatusError', { error: 'Failed to fetch order' });
+      }
+    });
+
     // Handle admin requesting pending ads
     socket.on('requestPendingAds', async (userData) => {
       if (!userData || !userData.userId || !userData.isAdmin) {
@@ -1336,6 +1384,28 @@ function emitUserTokenBalanceUpdate(userId, balanceData) {
   }
 }
 
+// HyperSpace order emit functions
+function emitHyperSpaceOrderUpdate(orderData) {
+  if (io) {
+    // Emit to admins for dashboard updates
+    io.emit('hyperSpaceOrderUpdate', orderData);
+  }
+}
+
+function emitNewHyperSpaceOrder(orderData) {
+  if (io) {
+    // Emit to admins when new order is pending
+    io.emit('newHyperSpaceOrderPending', orderData);
+  }
+}
+
+function emitHyperSpaceOrderStatusChange(orderId, status, additionalData = {}) {
+  if (io) {
+    // Emit to everyone so the user who placed the order gets the update
+    io.emit('hyperSpaceOrderStatusChanged', { orderId, status, ...additionalData });
+  }
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1373,5 +1443,8 @@ module.exports = {
   emitRedemptionCreated,
   emitRedemptionProcessed,
   emitAquaPayPaymentReceived,
-  emitUserTokenBalanceUpdate
+  emitUserTokenBalanceUpdate,
+  emitHyperSpaceOrderUpdate,
+  emitNewHyperSpaceOrder,
+  emitHyperSpaceOrderStatusChange
 }; 

@@ -451,13 +451,12 @@ router.post('/admin/approve/:orderId', auth, async (req, res) => {
     
     await order.save();
 
-    // Notify user via socket
+    // Notify via socket
     try {
-      socket.getIO().emit('hyperspaceOrderUpdate', {
-        orderId: order.orderId,
-        status: 'delivering',
+      socket.emitHyperSpaceOrderStatusChange(order.orderId, 'delivering', {
         message: 'Your listeners are being delivered!'
       });
+      socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'delivering' });
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
     }
@@ -511,13 +510,12 @@ router.post('/admin/complete/:orderId', auth, async (req, res) => {
     
     await order.save();
 
-    // Notify user via socket
+    // Notify via socket
     try {
-      socket.getIO().emit('hyperspaceOrderUpdate', {
-        orderId: order.orderId,
-        status: 'completed',
+      socket.emitHyperSpaceOrderStatusChange(order.orderId, 'completed', {
         message: 'Your listeners have been delivered!'
       });
+      socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'completed' });
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
     }
@@ -558,6 +556,16 @@ router.post('/admin/reject/:orderId', auth, async (req, res) => {
     order.adminNotes = `Rejected by ${req.user.username}: ${reason || 'No reason provided'}`;
     
     await order.save();
+
+    // Notify via socket
+    try {
+      socket.emitHyperSpaceOrderStatusChange(order.orderId, order.status, {
+        message: refund ? 'Your order has been refunded' : 'Your order was cancelled'
+      });
+      socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: order.status });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
 
     res.json({
       success: true,

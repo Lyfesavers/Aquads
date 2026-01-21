@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt } from 'react-icons/fa';
 import axios from 'axios';
+import { socket } from '../services/api';
 import Footer from './Footer';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
@@ -94,40 +95,84 @@ const HyperSpace = ({ currentUser }) => {
     }
   }, [error, success]);
 
-  // Poll for order status when we have a pending order
+  // Socket listener for real-time order status updates (much faster than polling)
   useEffect(() => {
-    let pollInterval;
-    
-    if (currentOrderId && showPayment) {
-      // Start polling after payment modal is shown
-      pollInterval = setInterval(async () => {
+    if (!currentOrderId) return;
+
+    let fallbackTimeout;
+    let isResolved = false;
+
+    const resolveOrder = (order) => {
+      if (isResolved) return;
+      isResolved = true;
+      
+      setOrderStatus(order.status);
+      if (order.status !== 'awaiting_payment') {
+        setShowPayment(false);
+        setConfirmedOrder(order);
+        setShowConfirmation(true);
+        setSpaceUrl('');
+        // Refresh orders list
+        if (currentUser?.token) {
+          axios.get(`${API_URL}/api/hyperspace/my-orders`, {
+            headers: { Authorization: `Bearer ${currentUser.token}` }
+          }).then(res => {
+            if (res.data.success) setMyOrders(res.data.orders);
+          }).catch(() => {});
+        }
+      }
+    };
+
+    const handleOrderStatusChange = (data) => {
+      if (data.orderId === currentOrderId) {
+        resolveOrder({
+          orderId: data.orderId,
+          status: data.status,
+          message: data.message
+        });
+      }
+    };
+
+    const handleOrderStatusLoaded = (data) => {
+      if (data.order && data.order.orderId === currentOrderId) {
+        resolveOrder(data.order);
+      }
+    };
+
+    // Listen for socket updates
+    if (socket) {
+      socket.on('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
+      socket.on('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
+      
+      // Request current status via socket
+      if (showPayment) {
+        socket.emit('requestHyperSpaceOrderStatus', { orderId: currentOrderId });
+      }
+    }
+
+    // Fallback: Check via API after 2 seconds if socket hasn't responded
+    if (showPayment && currentUser?.token) {
+      fallbackTimeout = setTimeout(async () => {
+        if (isResolved) return;
         try {
           const response = await axios.get(`${API_URL}/api/hyperspace/order/${currentOrderId}`, {
-            headers: { Authorization: `Bearer ${currentUser?.token}` }
+            headers: { Authorization: `Bearer ${currentUser.token}` }
           });
-          
           if (response.data.success) {
-            const order = response.data.order;
-            setOrderStatus(order.status);
-            
-            // If order is no longer awaiting payment, show confirmation
-            if (order.status !== 'awaiting_payment') {
-              setShowPayment(false);
-              setConfirmedOrder(order);
-              setShowConfirmation(true);
-              setSpaceUrl('');
-              fetchMyOrders();
-              clearInterval(pollInterval);
-            }
+            resolveOrder(response.data.order);
           }
         } catch (err) {
-          console.log('Order status check:', err.message);
+          console.log('Fallback order check:', err.message);
         }
-      }, 3000); // Poll every 3 seconds
+      }, 2000);
     }
-    
+
     return () => {
-      if (pollInterval) clearInterval(pollInterval);
+      if (socket) {
+        socket.off('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
+        socket.off('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
+      }
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
     };
   }, [currentOrderId, showPayment, currentUser?.token]);
 

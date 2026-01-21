@@ -2611,37 +2611,58 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     'aqua_storm': 'AquaStorm ($6,174)'
   };
 
-  // HyperSpace order management functions
-  const fetchPendingHyperSpaceOrders = async () => {
-    if (!currentUser?.isAdmin) return;
-    try {
-      setIsLoadingHyperSpaceOrders(true);
-      const token = currentUser?.token || localStorage.getItem('token');
-      // Fetch both pending_approval and delivering orders
-      // Note: API_URL already includes /api, so use /hyperspace not /api/hyperspace
-      const [pendingRes, deliveringRes] = await Promise.all([
-        fetch(`${API_URL}/hyperspace/admin/orders?status=pending_approval`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_URL}/hyperspace/admin/orders?status=delivering`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
-      
-      const pendingData = pendingRes.ok ? await pendingRes.json() : { orders: [] };
-      const deliveringData = deliveringRes.ok ? await deliveringRes.json() : { orders: [] };
-      
-      // Combine and sort by createdAt (newest first)
-      const allOrders = [...(pendingData.orders || []), ...(deliveringData.orders || [])];
-      allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-      setPendingHyperSpaceOrders(allOrders);
-    } catch (error) {
-      console.error('Failed to fetch HyperSpace orders:', error);
-    } finally {
-      setIsLoadingHyperSpaceOrders(false);
-    }
+  // HyperSpace order management functions - using sockets for real-time updates
+  const fetchPendingHyperSpaceOrders = () => {
+    if (!currentUser?.isAdmin || !socket) return;
+    setIsLoadingHyperSpaceOrders(true);
+    socket.emit('requestPendingHyperSpaceOrders', {
+      isAdmin: currentUser.isAdmin,
+      userId: currentUser.userId || currentUser.id
+    });
   };
+
+  // Socket listeners for HyperSpace orders
+  useEffect(() => {
+    if (!socket || !currentUser?.isAdmin) return;
+
+    const handleHyperSpaceOrdersLoaded = (data) => {
+      setPendingHyperSpaceOrders(data.orders || []);
+      setIsLoadingHyperSpaceOrders(false);
+    };
+
+    const handleHyperSpaceOrdersError = (error) => {
+      console.error('HyperSpace orders error:', error);
+      setIsLoadingHyperSpaceOrders(false);
+    };
+
+    const handleNewHyperSpaceOrder = (orderData) => {
+      // Add new order to the list
+      setPendingHyperSpaceOrders(prev => [orderData, ...prev]);
+    };
+
+    const handleHyperSpaceOrderUpdate = (data) => {
+      // Update or remove order from list based on status
+      if (['completed', 'cancelled', 'refunded', 'failed'].includes(data.status)) {
+        setPendingHyperSpaceOrders(prev => prev.filter(o => o.orderId !== data.orderId));
+      } else {
+        setPendingHyperSpaceOrders(prev => 
+          prev.map(o => o.orderId === data.orderId ? { ...o, status: data.status } : o)
+        );
+      }
+    };
+
+    socket.on('pendingHyperSpaceOrdersLoaded', handleHyperSpaceOrdersLoaded);
+    socket.on('pendingHyperSpaceOrdersError', handleHyperSpaceOrdersError);
+    socket.on('newHyperSpaceOrderPending', handleNewHyperSpaceOrder);
+    socket.on('hyperSpaceOrderUpdate', handleHyperSpaceOrderUpdate);
+
+    return () => {
+      socket.off('pendingHyperSpaceOrdersLoaded', handleHyperSpaceOrdersLoaded);
+      socket.off('pendingHyperSpaceOrdersError', handleHyperSpaceOrdersError);
+      socket.off('newHyperSpaceOrderPending', handleNewHyperSpaceOrder);
+      socket.off('hyperSpaceOrderUpdate', handleHyperSpaceOrderUpdate);
+    };
+  }, [socket, currentUser]);
 
   const handleApproveHyperSpaceOrder = async (orderId, socialplugOrderId = '') => {
     try {

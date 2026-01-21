@@ -463,16 +463,24 @@ const paymentAutoApproval = {
 
       console.log(`HyperSpace order ${hyperspaceOrderId} payment received, pending admin approval`);
       
-      // Emit socket notification for admin
+      // Emit socket notifications
       try {
         const socket = require('../socket');
-        socket.getIO().emit('hyperspaceOrderPending', {
+        // Notify admins of new pending order
+        socket.emitNewHyperSpaceOrder({
           orderId: order.orderId,
           username: order.username,
-          listeners: order.listenerCount,
+          listenerCount: order.listenerCount,
           duration: order.duration,
           spaceUrl: order.spaceUrl,
-          price: order.customerPrice
+          customerPrice: order.customerPrice,
+          socialplugCost: order.socialplugCost,
+          createdAt: order.createdAt,
+          status: order.status
+        });
+        // Notify the user their order status changed
+        socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
+          message: 'Payment received! Your order is being processed.'
         });
       } catch (socketError) {
         console.error('Socket emit error:', socketError);
