@@ -307,6 +307,17 @@ const HyperSpace = ({ currentUser }) => {
     return pkg ? pkg.price : 0;
   }, [packages, selectedListeners, selectedDuration]);
 
+  // Get current package details including savings
+  const getCurrentPackage = useCallback(() => {
+    return packages.find(p => p.listeners === selectedListeners && p.duration === selectedDuration);
+  }, [packages, selectedListeners, selectedDuration]);
+
+  // Get savings for a specific duration
+  const getSavingsForDuration = useCallback((duration) => {
+    const pkg = packages.find(p => p.listeners === selectedListeners && p.duration === duration);
+    return pkg ? { savings: pkg.savings, savingsPercent: pkg.savingsPercent, originalPrice: pkg.originalPrice } : null;
+  }, [packages, selectedListeners]);
+
   // Validate Twitter Space URL
   const validateSpaceUrl = (url) => {
     if (!url) return false;
@@ -457,6 +468,8 @@ const HyperSpace = ({ currentUser }) => {
                 {DURATIONS.map((duration) => {
                   const Icon = duration.icon;
                   const isSelected = selectedDuration === duration.value;
+                  const savingsInfo = getSavingsForDuration(duration.value);
+                  const hasSavings = savingsInfo && savingsInfo.savingsPercent > 0;
                   return (
                     <button
                       key={duration.value}
@@ -467,7 +480,12 @@ const HyperSpace = ({ currentUser }) => {
                           : 'border-gray-600 bg-gray-700/50 hover:border-purple-500/50 active:bg-gray-700'
                       }`}
                     >
-                      {duration.popular && (
+                      {hasSavings && (
+                        <span className="absolute -top-1.5 -right-1 sm:-top-2 sm:-right-2 px-1.5 sm:px-2 py-0.5 bg-green-500 text-white text-[10px] sm:text-xs font-bold rounded-full shadow-lg">
+                          SAVE {savingsInfo.savingsPercent}%
+                        </span>
+                      )}
+                      {duration.popular && !hasSavings && (
                         <span className="absolute -top-1.5 -right-1 sm:-top-2 sm:-right-2 px-1.5 sm:px-2 py-0.5 bg-yellow-500 text-black text-[10px] sm:text-xs font-bold rounded-full">
                           HOT
                         </span>
@@ -620,9 +638,21 @@ const HyperSpace = ({ currentUser }) => {
               <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300 font-medium">Total Price</span>
-                  <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    {getCurrentPrice()} USDC
-                  </span>
+                  <div className="text-right">
+                    {getCurrentPackage()?.originalPrice && getCurrentPackage()?.savings > 0 && (
+                      <div className="text-sm text-gray-400 line-through mb-0.5">
+                        ${getCurrentPackage().originalPrice} USDC
+                      </div>
+                    )}
+                    <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      {getCurrentPrice()} USDC
+                    </span>
+                    {getCurrentPackage()?.savings > 0 && (
+                      <div className="text-sm text-green-400 font-medium mt-0.5">
+                        You save ${getCurrentPackage().savings}!
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

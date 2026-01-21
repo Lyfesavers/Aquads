@@ -30,7 +30,7 @@ const SOCIALPLUG_PRICING = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.001 // TEST MODE - 0.001 USDC for testing
+  price: 0 // DISABLED - Using regular pricing ($14.30 for 100 listeners/30min)
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
@@ -93,21 +93,32 @@ const getAllPackages = () => {
     60: '1 Hour',
     120: '2 Hours'
   };
-  
-  const listenerDiscounts = {
-    100: 5,
-    200: 10,
-    500: 15,
-    1000: 20,
-    2500: 25,
-    5000: 30
-  };
 
   for (const listeners of listenerOptions) {
+    // Get the base 30-min price for calculating savings
+    const base30minPrice = getCustomerPrice(listeners, 30);
+    
     for (const duration of durationOptions) {
       const cost = getSocialplugCost(listeners, duration);
       const price = getCustomerPrice(listeners, duration);
       const profit = price - cost;
+      
+      // Calculate savings compared to buying multiple 30-min packages
+      let originalPrice = null;
+      let savings = 0;
+      let savingsPercent = 0;
+      
+      if (duration === 60) {
+        // Compare 1hr to 2x 30min
+        originalPrice = base30minPrice * 2;
+        savings = originalPrice - price;
+        savingsPercent = Math.round((savings / originalPrice) * 100);
+      } else if (duration === 120) {
+        // Compare 2hr to 4x 30min
+        originalPrice = base30minPrice * 4;
+        savings = originalPrice - price;
+        savingsPercent = Math.round((savings / originalPrice) * 100);
+      }
       
       packages.push({
         id: `space_${listeners}_${duration}`,
@@ -117,7 +128,9 @@ const getAllPackages = () => {
         cost, // Our cost from Socialplug
         price, // Customer price
         profit, // Our profit
-        discount: listenerDiscounts[listeners]
+        originalPrice, // Price if buying multiple 30-min packages
+        savings, // Dollar amount saved
+        savingsPercent // Percentage saved
       });
     }
   }
