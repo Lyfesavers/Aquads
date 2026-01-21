@@ -132,11 +132,14 @@ const checkBalance = async () => {
   }
 
   try {
-    const response = await axios.post(`${SOCIALPLUG_API_URL}/balance`, {
-      key: SOCIALPLUG_API_KEY
-    }, {
+    // Socialplug API uses form-urlencoded data
+    const params = new URLSearchParams();
+    params.append('key', SOCIALPLUG_API_KEY);
+    params.append('action', 'balance');
+
+    const response = await axios.post(SOCIALPLUG_API_URL, params, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       timeout: 10000
     });
@@ -147,6 +150,11 @@ const checkBalance = async () => {
         balance: parseFloat(response.data.balance),
         currency: response.data.currency || 'USD'
       };
+    }
+    
+    // Handle error response
+    if (response.data && response.data.error) {
+      return { success: false, error: response.data.error };
     }
     
     return { success: false, error: 'Invalid response from Socialplug' };
@@ -169,17 +177,23 @@ const getServices = async () => {
   }
 
   try {
-    const response = await axios.post(`${SOCIALPLUG_API_URL}/services`, {
-      key: SOCIALPLUG_API_KEY
-    }, {
+    const params = new URLSearchParams();
+    params.append('key', SOCIALPLUG_API_KEY);
+    params.append('action', 'services');
+
+    const response = await axios.post(SOCIALPLUG_API_URL, params, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       timeout: 10000
     });
 
-    if (response.data) {
+    if (response.data && !response.data.error) {
       return { success: true, services: response.data };
+    }
+    
+    if (response.data && response.data.error) {
+      return { success: false, error: response.data.error };
     }
     
     return { success: false, error: 'Invalid response from Socialplug' };
@@ -220,38 +234,42 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     return { success: false, error: 'Invalid Twitter Space URL' };
   }
 
+  // Handle test orders - return mock success without calling Socialplug
+  if (isTestOrder(listeners, duration)) {
+    console.log('[Socialplug] Test order detected - returning mock success');
+    return {
+      success: true,
+      orderId: `TEST-${Date.now()}`,
+      charge: 0,
+      startCount: 0,
+      status: 'completed',
+      isTest: true
+    };
+  }
+
   try {
-    // Map duration to Socialplug's expected format
-    const durationMap = {
-      30: '30 Minutes',
-      60: '60 Minutes',
-      120: '120 Minutes'
-    };
+    // Use form-urlencoded format for Socialplug API
+    const params = new URLSearchParams();
+    params.append('key', SOCIALPLUG_API_KEY);
+    params.append('action', 'add');
+    params.append('service', TWITTER_SPACES_LISTENERS_SERVICE_ID);
+    params.append('link', spaceUrl);
+    params.append('quantity', listeners); // Listener count as quantity
+    
+    // Add duration as a custom field if the API supports it
+    // Some SMM panels use 'runs' or custom fields for duration
+    params.append('runs', duration); // Duration in minutes
 
-    const listenerMap = {
-      100: '100 Listeners',
-      200: '200 Listeners',
-      500: '500 Listeners',
-      1000: '1,000 Listeners',
-      2500: '2,500 Listeners',
-      5000: '5,000 Listeners'
-    };
+    console.log(`[Socialplug] Placing order - Service: ${TWITTER_SPACES_LISTENERS_SERVICE_ID}, Listeners: ${listeners}, Duration: ${duration}min, URL: ${spaceUrl}`);
 
-    const response = await axios.post(`${SOCIALPLUG_API_URL}/order`, {
-      key: SOCIALPLUG_API_KEY,
-      service: TWITTER_SPACES_LISTENERS_SERVICE_ID,
-      link: spaceUrl,
-      quantity: 1,
-      options: {
-        'Amount of Listeners': listenerMap[listeners],
-        'Select Listening Time': durationMap[duration]
-      }
-    }, {
+    const response = await axios.post(SOCIALPLUG_API_URL, params, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       timeout: 30000
     });
+
+    console.log('[Socialplug] Order response:', JSON.stringify(response.data));
 
     if (response.data && response.data.order) {
       return { 
@@ -271,6 +289,9 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     return { success: false, error: 'Invalid response from Socialplug' };
   } catch (error) {
     console.error('Socialplug order placement error:', error.message);
+    if (error.response) {
+      console.error('Socialplug error response:', error.response.data);
+    }
     return { 
       success: false, 
       error: error.response?.data?.error || error.message 
@@ -289,17 +310,19 @@ const checkOrderStatus = async (orderId) => {
   }
 
   try {
-    const response = await axios.post(`${SOCIALPLUG_API_URL}/status`, {
-      key: SOCIALPLUG_API_KEY,
-      order: orderId
-    }, {
+    const params = new URLSearchParams();
+    params.append('key', SOCIALPLUG_API_KEY);
+    params.append('action', 'status');
+    params.append('order', orderId);
+
+    const response = await axios.post(SOCIALPLUG_API_URL, params, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       timeout: 10000
     });
 
-    if (response.data) {
+    if (response.data && !response.data.error) {
       return { 
         success: true, 
         status: response.data.status,
@@ -308,6 +331,10 @@ const checkOrderStatus = async (orderId) => {
         remains: response.data.remains,
         currency: response.data.currency
       };
+    }
+    
+    if (response.data && response.data.error) {
+      return { success: false, error: response.data.error };
     }
     
     return { success: false, error: 'Invalid response from Socialplug' };
@@ -321,12 +348,27 @@ const checkOrderStatus = async (orderId) => {
 };
 
 /**
+ * Check if this is a test order (using test price override)
+ */
+const isTestOrder = (listeners, duration) => {
+  return TEST_PRICE_OVERRIDE.price > 0 && 
+         listeners === TEST_PRICE_OVERRIDE.listeners && 
+         duration === TEST_PRICE_OVERRIDE.duration;
+};
+
+/**
  * Validate that we have sufficient balance for an order
  * @param {number} listeners - Number of listeners
  * @param {number} duration - Duration in minutes
  * @returns {Promise<{sufficient: boolean, balance?: number, required?: number, error?: string}>}
  */
 const validateBalance = async (listeners, duration) => {
+  // Skip balance check for test orders
+  if (isTestOrder(listeners, duration)) {
+    console.log('[Socialplug] Test order detected - skipping balance check');
+    return { sufficient: true, balance: 999, required: 0, isTest: true };
+  }
+
   const cost = getSocialplugCost(listeners, duration);
   if (cost === null) {
     return { sufficient: false, error: 'Invalid package selection' };
@@ -354,8 +396,10 @@ module.exports = {
   getAllPackages,
   validateBalance,
   calculateSellingPrice,
+  isTestOrder,
   SOCIALPLUG_PRICING,
   MINIMUM_PROFIT,
-  MARKUP_PERCENTAGE
+  MARKUP_PERCENTAGE,
+  TEST_PRICE_OVERRIDE
 };
 
