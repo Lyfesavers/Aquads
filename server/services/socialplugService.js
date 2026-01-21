@@ -25,30 +25,36 @@ const SOCIALPLUG_PRICING = {
   5000: { 30: 350, 60: 450, 120: 550 }
 };
 
+// Selling prices - manually set for sequential profit increase
+// Profits increase as: more listeners = more profit, longer duration = more profit
+// Format: { listeners: { duration_in_minutes: selling_price } }
+const SELLING_PRICES = {
+  100: { 30: 25, 60: 30, 120: 40 },      // Profits: $14, $15, $19
+  200: { 30: 40, 60: 50, 120: 60 },      // Profits: $22, $25, $29
+  500: { 30: 65, 60: 100, 120: 165 },    // Profits: $31, $40, $55
+  1000: { 30: 120, 60: 175, 120: 225 },  // Profits: $60, $75, $95
+  2500: { 30: 300, 60: 400, 120: 525 },  // Profits: $120, $150, $175
+  5000: { 30: 575, 60: 725, 120: 925 }   // Profits: $225, $275, $375
+};
+
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
 // Note: Set price to 0 to use normal pricing
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using regular pricing ($14.30 for 100 listeners/30min)
+  price: 0 // DISABLED - Using regular pricing
 };
 
-// Markup: 30% OR minimum $5 profit, whichever is higher
-const MARKUP_PERCENTAGE = 0.30;
-const MINIMUM_PROFIT = 5;
-
 /**
- * Calculate the selling price with markup
- * @param {number} socialplugCost - The cost from Socialplug
- * @returns {number} - The price to charge customers (30% markup or $5 minimum profit)
+ * Calculate the selling price from the pricing table
+ * @param {number} listeners - Number of listeners
+ * @param {number} duration - Duration in minutes
+ * @returns {number} - The price to charge customers
  */
-const calculateSellingPrice = (socialplugCost) => {
-  // Calculate both options
-  const percentageMarkupPrice = socialplugCost * (1 + MARKUP_PERCENTAGE);
-  const minimumProfitPrice = socialplugCost + MINIMUM_PROFIT;
-  
-  // Use whichever is higher to ensure at least $5 profit
-  return Math.ceil(Math.max(percentageMarkupPrice, minimumProfitPrice));
+const calculateSellingPrice = (listeners, duration) => {
+  const listenerPrices = SELLING_PRICES[listeners];
+  if (!listenerPrices) return null;
+  return listenerPrices[duration] || null;
 };
 
 /**
@@ -77,9 +83,7 @@ const getCustomerPrice = (listeners, duration) => {
     return TEST_PRICE_OVERRIDE.price;
   }
   
-  const cost = getSocialplugCost(listeners, duration);
-  if (cost === null) return null;
-  return calculateSellingPrice(cost);
+  return calculateSellingPrice(listeners, duration);
 };
 
 /**
