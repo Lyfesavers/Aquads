@@ -194,50 +194,39 @@ const getServices = async () => {
     console.log('[Socialplug] Services response received');
 
     if (response.data && !response.data.error) {
-      // Find Twitter Spaces Listeners service and cache the ID
-      const services = Array.isArray(response.data) ? response.data : response.data.services || response.data.data || [];
+      // Per docs: response is { discount_percentage, services: [...] }
+      const services = response.data.services || response.data || [];
       
-      // Log all services to help find the correct one
-      console.log(`[Socialplug] Found ${services.length} services`);
+      // Log ALL services with correct field names from docs
+      console.log(`[Socialplug] Found ${services.length} services. Full list:`);
+      services.forEach(s => {
+        // Docs show: id, serviceName, platform, category
+        console.log(`  - ID: "${s.id}", Name: "${s.serviceName}", Platform: ${s.platform}, Category: ${s.category}`);
+      });
       
-      // Look for Twitter/X Space related services
+      // Look for Twitter Spaces Listeners service
       const spaceServices = services.filter(s => {
-        const id = String(s.id || s.service_id || s.slug || '').toLowerCase();
-        const name = (s.name || s.title || '').toLowerCase();
-        const category = (s.category || '').toLowerCase();
-        // Check ID, name, and category for twitter/space keywords
-        const searchText = `${id} ${name} ${category}`;
-        return searchText.includes('space') || searchText.includes('twitter') || 
-               searchText.includes('x_') || searchText.includes('listener');
+        const id = String(s.id || '').toLowerCase();
+        const name = String(s.serviceName || '').toLowerCase();
+        const platform = String(s.platform || '').toLowerCase();
+        const category = String(s.category || '').toLowerCase();
+        const searchText = `${id} ${name} ${platform} ${category}`;
+        return searchText.includes('space') || 
+               (searchText.includes('twitter') && searchText.includes('listener')) ||
+               (searchText.includes('x') && searchText.includes('listener'));
       });
       
       if (spaceServices.length > 0) {
-        console.log('[Socialplug] Twitter/Space related services found:');
+        console.log('[Socialplug] *** FOUND SPACE/LISTENER SERVICES: ***');
         spaceServices.forEach(s => {
-          console.log(`  - ID: ${s.id || s.service_id}, Name: ${s.name || s.title}, Category: ${s.category}`);
+          console.log(`  >>> ID: "${s.id}", Name: "${s.serviceName}", Min: ${s.minQuantity}, Max: ${s.maxQuantity}`);
         });
         
-        // Try to find listeners specifically
-        const listenersService = spaceServices.find(s => 
-          (s.name || s.title || '').toLowerCase().includes('listener')
-        );
-        
-        if (listenersService) {
-          TWITTER_SPACES_SERVICE_ID = listenersService.id || listenersService.service_id;
-          console.log(`[Socialplug] Using service ID: ${TWITTER_SPACES_SERVICE_ID}`);
-        } else {
-          // Use first space service as fallback
-          TWITTER_SPACES_SERVICE_ID = spaceServices[0].id || spaceServices[0].service_id;
-          console.log(`[Socialplug] Using first space service ID: ${TWITTER_SPACES_SERVICE_ID}`);
-        }
+        // Use the first matching service
+        TWITTER_SPACES_SERVICE_ID = spaceServices[0].id;
+        console.log(`[Socialplug] Using service ID: ${TWITTER_SPACES_SERVICE_ID}`);
       } else {
-        // Log ALL services for debugging - need to find Twitter Spaces
-        console.log('[Socialplug] No space services found. ALL services:');
-        services.forEach(s => {
-          const id = s.id || s.service_id || s.slug;
-          const name = s.name || s.title || 'unnamed';
-          console.log(`  - ID: ${id}, Name: ${name}`);
-        });
+        console.log('[Socialplug] *** NO TWITTER SPACES LISTENERS SERVICE FOUND ***');
       }
       
       return { success: true, services };
