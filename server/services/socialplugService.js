@@ -195,16 +195,44 @@ const getServices = async () => {
 
     if (response.data && !response.data.error) {
       // Find Twitter Spaces Listeners service and cache the ID
-      const services = Array.isArray(response.data) ? response.data : response.data.services || [];
-      const twitterSpacesService = services.find(s => 
-        s.name?.toLowerCase().includes('twitter') && 
-        s.name?.toLowerCase().includes('space') &&
-        s.name?.toLowerCase().includes('listener')
-      );
+      const services = Array.isArray(response.data) ? response.data : response.data.services || response.data.data || [];
       
-      if (twitterSpacesService) {
-        TWITTER_SPACES_SERVICE_ID = twitterSpacesService.id;
-        console.log(`[Socialplug] Found Twitter Spaces Listeners service ID: ${TWITTER_SPACES_SERVICE_ID}`);
+      // Log all services to help find the correct one
+      console.log(`[Socialplug] Found ${services.length} services`);
+      
+      // Look for Twitter/X Space related services
+      const spaceServices = services.filter(s => {
+        const name = (s.name || s.title || '').toLowerCase();
+        const category = (s.category || '').toLowerCase();
+        return name.includes('space') || name.includes('twitter') || name.includes('x ') || 
+               category.includes('space') || category.includes('twitter');
+      });
+      
+      if (spaceServices.length > 0) {
+        console.log('[Socialplug] Twitter/Space related services found:');
+        spaceServices.forEach(s => {
+          console.log(`  - ID: ${s.id || s.service_id}, Name: ${s.name || s.title}, Category: ${s.category}`);
+        });
+        
+        // Try to find listeners specifically
+        const listenersService = spaceServices.find(s => 
+          (s.name || s.title || '').toLowerCase().includes('listener')
+        );
+        
+        if (listenersService) {
+          TWITTER_SPACES_SERVICE_ID = listenersService.id || listenersService.service_id;
+          console.log(`[Socialplug] Using service ID: ${TWITTER_SPACES_SERVICE_ID}`);
+        } else {
+          // Use first space service as fallback
+          TWITTER_SPACES_SERVICE_ID = spaceServices[0].id || spaceServices[0].service_id;
+          console.log(`[Socialplug] Using first space service ID: ${TWITTER_SPACES_SERVICE_ID}`);
+        }
+      } else {
+        // Log first 10 services for debugging
+        console.log('[Socialplug] No space services found. First 10 services:');
+        services.slice(0, 10).forEach(s => {
+          console.log(`  - ID: ${s.id || s.service_id}, Name: ${s.name || s.title}`);
+        });
       }
       
       return { success: true, services };
