@@ -446,7 +446,7 @@ module.exports = {
   isTestOrder,
   isTestPricedOrder,
   SOCIALPLUG_PRICING,
-  MARKUP_PERCENTAGE,
+  SELLING_PRICES,
   TEST_PRICE_OVERRIDE
 };
 
