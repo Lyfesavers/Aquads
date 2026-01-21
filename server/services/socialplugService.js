@@ -23,11 +23,11 @@ const SOCIALPLUG_PRICING = {
   5000: { 30: 218, 60: 300, 120: 420 }
 };
 
-// TEST MODE: Override price for 100 listeners / 30 min package (set to 0 to disable)
+// TEST MODE: Override price for specific package (set price to 0 to disable)
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.01 // USDC - Set to 0 to disable test mode
+  price: 0 // USDC - Set to 0 to disable test mode (LIVE MODE ACTIVE)
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
