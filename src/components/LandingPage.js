@@ -2336,7 +2336,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Get real listeners for your Twitter Spaces. Choose packages from 100 to 5,000 listeners with flexible durations. Listeners appear in the overflow section, boosting your trending potential and credibility. Schedule 24hrs ahead for best delivery.
+                  Get real listeners for your Twitter Spaces. Choose packages from 100 to 5,000 listeners with flexible durations. 100% safe and undetectable — no risk to your account. Trusted by thousands of brands and influencers.
                 </p>
                 
                 {/* Stats grid */}
@@ -2344,8 +2344,8 @@ const CarouselCard = ({ feature, index }) => {
                   {[
                     { icon: '👥', label: '100-5K', value: 'Listeners' },
                     { icon: '⏱️', label: '30m-2hr', value: 'Duration' },
-                    { icon: '📈', label: 'Trending', value: 'Boost' },
-                    { icon: '💳', label: 'Crypto', value: 'Pay with USDC' }
+                    { icon: '🛡️', label: '100% Safe', value: 'No Account Risk' },
+                    { icon: '✓', label: 'Trusted', value: 'By Thousands' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -3852,7 +3852,7 @@ const LandingPage = () => {
     {
       icon: '🎧',
       title: 'HyperSpace',
-      description: 'Boost your Twitter Spaces with real listeners. Choose from 100 to 5,000 listeners for 30min, 1hr, or 2hr durations. Listeners appear in overflow, boosting trending potential. Schedule 24hrs ahead for best results. Pay with crypto via AquaPay.',
+      description: 'Boost your Twitter Spaces with real listeners. Choose from 100 to 5,000 listeners for 30min to 2hr durations. 100% safe & undetectable — no risk to your account. Trusted by thousands of brands and influencers worldwide.',
       gradient: 'from-purple-900/40 to-pink-900/80',
       link: '/hyperspace'
     },

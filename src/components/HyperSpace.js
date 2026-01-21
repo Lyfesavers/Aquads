@@ -577,6 +577,32 @@ const HyperSpace = ({ currentUser }) => {
               </ul>
             </div>
 
+            {/* Safe & Compliant Info Box */}
+            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-green-500/30">
+              <h3 className="text-sm sm:text-base font-semibold text-green-400 mb-2 flex items-center gap-2">
+                <FaShieldAlt />
+                100% Safe & Compliant
+              </h3>
+              <ul className="text-xs sm:text-sm text-gray-300 space-y-1.5 sm:space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">✓</span>
+                  <span><strong className="text-white">No risk to your account</strong> — listeners join naturally and leave organically</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">✓</span>
+                  <span><strong className="text-white">Undetectable</strong> — mimics real listener behavior, no automated patterns</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">✓</span>
+                  <span><strong className="text-white">Trusted by thousands</strong> — brands, influencers & projects use this daily</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 mt-0.5">✓</span>
+                  <span><strong className="text-white">Your Space, your growth</strong> — we just help you get the visibility you deserve</span>
+                </li>
+              </ul>
+            </div>
+
             {/* Space URL Input */}
             <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-500/20">
               <h2 className="text-base sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
