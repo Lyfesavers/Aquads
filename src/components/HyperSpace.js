@@ -53,6 +53,12 @@ const HyperSpace = ({ currentUser }) => {
   
   // Mobile state
   const [showMobileOrderSummary, setShowMobileOrderSummary] = useState(false);
+  
+  // Order confirmation state
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [orderStatus, setOrderStatus] = useState(null);
+  const [pollingOrder, setPollingOrder] = useState(false);
 
   // Memoized star positions for background
   const stars = useMemo(() => 
@@ -87,6 +93,43 @@ const HyperSpace = ({ currentUser }) => {
       return () => clearTimeout(timer);
     }
   }, [error, success]);
+
+  // Poll for order status when we have a pending order
+  useEffect(() => {
+    let pollInterval;
+    
+    if (currentOrderId && showPayment) {
+      // Start polling after payment modal is shown
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await axios.get(`${API_URL}/api/hyperspace/order/${currentOrderId}`, {
+            headers: { Authorization: `Bearer ${currentUser?.token}` }
+          });
+          
+          if (response.data.success) {
+            const order = response.data.order;
+            setOrderStatus(order.status);
+            
+            // If order is no longer awaiting payment, show confirmation
+            if (order.status !== 'awaiting_payment') {
+              setShowPayment(false);
+              setConfirmedOrder(order);
+              setShowConfirmation(true);
+              setSpaceUrl('');
+              fetchMyOrders();
+              clearInterval(pollInterval);
+            }
+          }
+        } catch (err) {
+          console.log('Order status check:', err.message);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+    
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [currentOrderId, showPayment, currentUser?.token]);
 
   const fetchPackages = async () => {
     try {
@@ -770,6 +813,113 @@ const HyperSpace = ({ currentUser }) => {
             <p className="text-xs text-gray-500 mt-4 text-center">
               Order processes automatically within minutes after payment.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Order Confirmation Modal */}
+      {showConfirmation && confirmedOrder && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-8 max-w-md w-full border border-purple-500/30 shadow-2xl shadow-purple-500/20 animate-slide-up">
+            {/* Success Icon */}
+            <div className="flex justify-center mb-6">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                confirmedOrder.status === 'failed' 
+                  ? 'bg-gradient-to-br from-red-500 to-red-600' 
+                  : confirmedOrder.status === 'completed'
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                    : 'bg-gradient-to-br from-purple-500 to-pink-600'
+              }`}>
+                {confirmedOrder.status === 'failed' ? (
+                  <FaTimes className="text-4xl text-white" />
+                ) : confirmedOrder.status === 'completed' ? (
+                  <FaCheck className="text-4xl text-white" />
+                ) : (
+                  <FaHeadphones className="text-4xl text-white animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-center mb-2 text-white">
+              {confirmedOrder.status === 'failed' 
+                ? 'Order Failed' 
+                : confirmedOrder.status === 'completed'
+                  ? 'Order Completed!'
+                  : 'Payment Received!'}
+            </h3>
+
+            {/* Status message */}
+            <p className="text-gray-300 text-center mb-6">
+              {confirmedOrder.status === 'failed' 
+                ? 'Something went wrong. Please contact support.' 
+                : confirmedOrder.status === 'completed'
+                  ? 'Your listeners have been delivered successfully!'
+                  : confirmedOrder.status === 'delivering'
+                    ? 'Listeners are now joining your Space!'
+                    : 'Your order is being processed...'}
+            </p>
+
+            {/* Order Details */}
+            <div className="bg-black/40 rounded-xl p-4 mb-6 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Order ID</span>
+                <span className="text-white font-mono">{confirmedOrder.orderId}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Package</span>
+                <span className="text-white">{confirmedOrder.listenerCount || confirmedOrder.listeners} listeners</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Duration</span>
+                <span className="text-white">{confirmedOrder.duration} minutes</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Status</span>
+                <span className={`font-semibold ${
+                  confirmedOrder.status === 'failed' ? 'text-red-400' :
+                  confirmedOrder.status === 'completed' ? 'text-green-400' :
+                  confirmedOrder.status === 'delivering' ? 'text-blue-400' :
+                  'text-yellow-400'
+                }`}>
+                  {confirmedOrder.status === 'delivering' ? '🚀 Delivering...' :
+                   confirmedOrder.status === 'completed' ? '✅ Completed' :
+                   confirmedOrder.status === 'failed' ? '❌ Failed' :
+                   '⏳ Processing...'}
+                </span>
+              </div>
+            </div>
+
+            {/* Live indicator for delivering status */}
+            {confirmedOrder.status === 'delivering' && (
+              <div className="flex items-center justify-center gap-2 mb-6 text-blue-400">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+                <span className="text-sm">Listeners are joining your Space in real-time</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowConfirmation(false);
+                  setConfirmedOrder(null);
+                  setShowOrderHistory(true);
+                }}
+                className="flex-1 py-3 bg-gray-700/50 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors"
+              >
+                View Orders
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmation(false);
+                  setConfirmedOrder(null);
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
