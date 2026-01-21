@@ -30,7 +30,7 @@ const SOCIALPLUG_PRICING = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using manual fulfillment mode
+  price: 0.001 // TEST MODE - 0.001 USDC for testing
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
