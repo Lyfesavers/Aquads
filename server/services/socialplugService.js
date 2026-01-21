@@ -202,10 +202,13 @@ const getServices = async () => {
       
       // Look for Twitter/X Space related services
       const spaceServices = services.filter(s => {
+        const id = String(s.id || s.service_id || s.slug || '').toLowerCase();
         const name = (s.name || s.title || '').toLowerCase();
         const category = (s.category || '').toLowerCase();
-        return name.includes('space') || name.includes('twitter') || name.includes('x ') || 
-               category.includes('space') || category.includes('twitter');
+        // Check ID, name, and category for twitter/space keywords
+        const searchText = `${id} ${name} ${category}`;
+        return searchText.includes('space') || searchText.includes('twitter') || 
+               searchText.includes('x_') || searchText.includes('listener');
       });
       
       if (spaceServices.length > 0) {
@@ -228,10 +231,12 @@ const getServices = async () => {
           console.log(`[Socialplug] Using first space service ID: ${TWITTER_SPACES_SERVICE_ID}`);
         }
       } else {
-        // Log first 10 services for debugging
-        console.log('[Socialplug] No space services found. First 10 services:');
-        services.slice(0, 10).forEach(s => {
-          console.log(`  - ID: ${s.id || s.service_id}, Name: ${s.name || s.title}`);
+        // Log ALL services for debugging - need to find Twitter Spaces
+        console.log('[Socialplug] No space services found. ALL services:');
+        services.forEach(s => {
+          const id = s.id || s.service_id || s.slug;
+          const name = s.name || s.title || 'unnamed';
+          console.log(`  - ID: ${id}, Name: ${name}`);
         });
       }
       
