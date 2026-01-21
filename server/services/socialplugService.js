@@ -133,17 +133,12 @@ const checkBalance = async () => {
   }
 
   try {
-    // Socialplug API uses form-urlencoded data
-    const params = new URLSearchParams();
-    params.append('key', SOCIALPLUG_API_KEY);
-    params.append('action', 'balance');
+    // Socialplug API uses GET requests with query parameters
+    const url = `${SOCIALPLUG_API_URL}?key=${encodeURIComponent(SOCIALPLUG_API_KEY)}&action=balance`;
+    
+    const response = await axios.get(url, { timeout: 10000 });
 
-    const response = await axios.post(SOCIALPLUG_API_URL, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      timeout: 10000
-    });
+    console.log('[Socialplug] Balance response:', JSON.stringify(response.data));
 
     if (response.data && response.data.balance !== undefined) {
       return { 
@@ -161,9 +156,12 @@ const checkBalance = async () => {
     return { success: false, error: 'Invalid response from Socialplug' };
   } catch (error) {
     console.error('Socialplug balance check error:', error.message);
+    if (error.response) {
+      console.error('Socialplug error response:', error.response.data);
+    }
     return { 
       success: false, 
-      error: error.response?.data?.error || error.message 
+      error: error.response?.data?.error || error.response?.data?.message || error.message 
     };
   }
 };
@@ -178,16 +176,10 @@ const getServices = async () => {
   }
 
   try {
-    const params = new URLSearchParams();
-    params.append('key', SOCIALPLUG_API_KEY);
-    params.append('action', 'services');
-
-    const response = await axios.post(SOCIALPLUG_API_URL, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      timeout: 10000
-    });
+    // Socialplug API uses GET requests
+    const url = `${SOCIALPLUG_API_URL}?key=${encodeURIComponent(SOCIALPLUG_API_KEY)}&action=services`;
+    
+    const response = await axios.get(url, { timeout: 10000 });
 
     if (response.data && !response.data.error) {
       return { success: true, services: response.data };
@@ -202,7 +194,7 @@ const getServices = async () => {
     console.error('Socialplug services fetch error:', error.message);
     return { 
       success: false, 
-      error: error.response?.data?.error || error.message 
+      error: error.response?.data?.error || error.response?.data?.message || error.message 
     };
   }
 };
@@ -241,26 +233,20 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
   }
 
   try {
-    // Use form-urlencoded format for Socialplug API
+    // Socialplug API uses GET requests with query parameters
     const params = new URLSearchParams();
     params.append('key', SOCIALPLUG_API_KEY);
     params.append('action', 'add');
     params.append('service', TWITTER_SPACES_LISTENERS_SERVICE_ID);
     params.append('link', spaceUrl);
     params.append('quantity', listeners); // Listener count as quantity
-    
-    // Add duration as a custom field if the API supports it
-    // Some SMM panels use 'runs' or custom fields for duration
     params.append('runs', duration); // Duration in minutes
+
+    const url = `${SOCIALPLUG_API_URL}?${params.toString()}`;
 
     console.log(`[Socialplug] Placing order - Service: ${TWITTER_SPACES_LISTENERS_SERVICE_ID}, Listeners: ${listeners}, Duration: ${duration}min, URL: ${spaceUrl}`);
 
-    const response = await axios.post(SOCIALPLUG_API_URL, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      timeout: 30000
-    });
+    const response = await axios.get(url, { timeout: 30000 });
 
     console.log('[Socialplug] Order response:', JSON.stringify(response.data));
 
@@ -287,7 +273,7 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     }
     return { 
       success: false, 
-      error: error.response?.data?.error || error.message 
+      error: error.response?.data?.error || error.response?.data?.message || error.message 
     };
   }
 };
@@ -303,17 +289,10 @@ const checkOrderStatus = async (orderId) => {
   }
 
   try {
-    const params = new URLSearchParams();
-    params.append('key', SOCIALPLUG_API_KEY);
-    params.append('action', 'status');
-    params.append('order', orderId);
+    // Socialplug API uses GET requests
+    const url = `${SOCIALPLUG_API_URL}?key=${encodeURIComponent(SOCIALPLUG_API_KEY)}&action=status&order=${encodeURIComponent(orderId)}`;
 
-    const response = await axios.post(SOCIALPLUG_API_URL, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      timeout: 10000
-    });
+    const response = await axios.get(url, { timeout: 10000 });
 
     if (response.data && !response.data.error) {
       return { 
@@ -335,7 +314,7 @@ const checkOrderStatus = async (orderId) => {
     console.error('Socialplug status check error:', error.message);
     return { 
       success: false, 
-      error: error.response?.data?.error || error.message 
+      error: error.response?.data?.error || error.response?.data?.message || error.message 
     };
   }
 };
