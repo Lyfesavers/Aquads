@@ -95,118 +95,213 @@ const HyperSpace = ({ currentUser }) => {
     }
   }, [error, success]);
 
-  // Socket listener for real-time order status updates (much faster than polling)
+  // Socket listener for real-time order status updates - ALWAYS listen when we have an orderId
   useEffect(() => {
-    if (!currentOrderId) return;
-
-    let fallbackTimeout;
-    let isResolved = false;
-
-    const resolveOrder = (order) => {
-      if (isResolved) return;
-      isResolved = true;
-      
-      setOrderStatus(order.status);
-      if (order.status !== 'awaiting_payment') {
-        setShowPayment(false);
-        setConfirmedOrder(order);
-        setShowConfirmation(true);
-        setSpaceUrl('');
-        // Refresh orders list
-        if (currentUser?.token) {
-          axios.get(`${API_URL}/api/hyperspace/my-orders`, {
-            headers: { Authorization: `Bearer ${currentUser.token}` }
-          }).then(res => {
-            if (res.data.success) setMyOrders(res.data.orders);
-          }).catch(() => {});
-        }
-      }
-    };
+    if (!socket || !currentOrderId) return;
 
     const handleOrderStatusChange = (data) => {
+      // Check if this update is for our current order
       if (data.orderId === currentOrderId) {
-        resolveOrder({
-          orderId: data.orderId,
-          status: data.status,
-          message: data.message
-        });
+        console.log('Socket: Order status changed', data);
+        setOrderStatus(data.status);
+        
+        // If order is no longer awaiting payment, show confirmation immediately
+        if (data.status !== 'awaiting_payment') {
+          setShowPayment(false);
+          setConfirmedOrder({
+            orderId: data.orderId,
+            status: data.status,
+            message: data.message,
+            listenerCount: data.listenerCount,
+            duration: data.duration
+          });
+          setShowConfirmation(true);
+          setSpaceUrl('');
+          // Request updated orders via socket
+          if (currentUser) {
+            socket.emit('requestUserHyperSpaceOrders', { userId: currentUser.userId || currentUser.id });
+          }
+        }
       }
     };
 
     const handleOrderStatusLoaded = (data) => {
       if (data.order && data.order.orderId === currentOrderId) {
-        resolveOrder(data.order);
+        console.log('Socket: Order status loaded', data.order);
+        setOrderStatus(data.order.status);
+        if (data.order.status !== 'awaiting_payment') {
+          setShowPayment(false);
+          setConfirmedOrder(data.order);
+          setShowConfirmation(true);
+          setSpaceUrl('');
+          if (currentUser) {
+            socket.emit('requestUserHyperSpaceOrders', { userId: currentUser.userId || currentUser.id });
+          }
+        }
       }
     };
 
-    // Listen for socket updates
-    if (socket) {
-      socket.on('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
-      socket.on('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
-      
-      // Request current status via socket
-      if (showPayment) {
-        socket.emit('requestHyperSpaceOrderStatus', { orderId: currentOrderId });
-      }
-    }
+    socket.on('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
+    socket.on('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
 
-    // Fallback: Check via API after 2 seconds if socket hasn't responded
-    if (showPayment && currentUser?.token) {
-      fallbackTimeout = setTimeout(async () => {
-        if (isResolved) return;
-        try {
-          const response = await axios.get(`${API_URL}/api/hyperspace/order/${currentOrderId}`, {
-            headers: { Authorization: `Bearer ${currentUser.token}` }
-          });
-          if (response.data.success) {
-            resolveOrder(response.data.order);
-          }
-        } catch (err) {
-          console.log('Fallback order check:', err.message);
-        }
-      }, 2000);
-    }
+    // Request current status immediately
+    socket.emit('requestHyperSpaceOrderStatus', { orderId: currentOrderId });
 
     return () => {
-      if (socket) {
-        socket.off('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
-        socket.off('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
+      socket.off('hyperSpaceOrderStatusChanged', handleOrderStatusChange);
+      socket.off('hyperSpaceOrderStatusLoaded', handleOrderStatusLoaded);
+    };
+  }, [socket, currentOrderId, currentUser]);
+
+  // Fallback polling - check every 1.5 seconds while payment modal is open
+  useEffect(() => {
+    if (!currentOrderId || !showPayment || !currentUser?.token) return;
+
+    const checkOrderStatus = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/hyperspace/order/${currentOrderId}`, {
+          headers: { Authorization: `Bearer ${currentUser.token}` }
+        });
+        if (response.data.success && response.data.order.status !== 'awaiting_payment') {
+          setShowPayment(false);
+          setConfirmedOrder(response.data.order);
+          setShowConfirmation(true);
+          setSpaceUrl('');
+          fetchMyOrders();
+        }
+      } catch (err) {
+        // Silent fail for polling
       }
-      if (fallbackTimeout) clearTimeout(fallbackTimeout);
+    };
+
+    // Check immediately after 1 second, then every 1.5 seconds
+    const initialCheck = setTimeout(checkOrderStatus, 1000);
+    const pollInterval = setInterval(checkOrderStatus, 1500);
+
+    return () => {
+      clearTimeout(initialCheck);
+      clearInterval(pollInterval);
     };
   }, [currentOrderId, showPayment, currentUser?.token]);
 
-  const fetchPackages = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/hyperspace/packages`);
-      if (response.data.success) {
-        setPackages(response.data.packages);
-      }
-    } catch (err) {
-      console.error('Error fetching packages:', err);
-      setError('Failed to load packages. Please refresh the page.');
-    } finally {
-      setLoading(false);
+  // Fetch packages via socket with API fallback
+  const fetchPackages = useCallback(() => {
+    if (socket) {
+      socket.emit('requestHyperSpacePackages');
+      // Fallback to API if socket doesn't respond in 1.5s
+      setTimeout(async () => {
+        if (loading) {
+          try {
+            const response = await axios.get(`${API_URL}/api/hyperspace/packages`);
+            if (response.data.success) {
+              setPackages(response.data.packages);
+            }
+          } catch (err) {
+            console.error('Error fetching packages:', err);
+            setError('Failed to load packages. Please refresh the page.');
+          } finally {
+            setLoading(false);
+          }
+        }
+      }, 1500);
+    } else {
+      // No socket, use API directly
+      axios.get(`${API_URL}/api/hyperspace/packages`)
+        .then(res => {
+          if (res.data.success) setPackages(res.data.packages);
+        })
+        .catch(err => {
+          console.error('Error fetching packages:', err);
+          setError('Failed to load packages. Please refresh the page.');
+        })
+        .finally(() => setLoading(false));
     }
-  };
+  }, [socket, loading]);
 
-  const fetchMyOrders = async () => {
-    if (!currentUser?.token) return;
+  // Socket listener for packages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePackagesLoaded = (data) => {
+      if (data.packages) {
+        setPackages(data.packages);
+        setLoading(false);
+      }
+    };
+
+    socket.on('hyperSpacePackagesLoaded', handlePackagesLoaded);
+
+    return () => {
+      socket.off('hyperSpacePackagesLoaded', handlePackagesLoaded);
+    };
+  }, [socket]);
+
+  // Fetch orders via socket (faster) with API fallback
+  const fetchMyOrders = useCallback(() => {
+    if (!currentUser) return;
     
     setLoadingOrders(true);
-    try {
-      const response = await axios.get(`${API_URL}/api/hyperspace/my-orders`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` }
+    
+    // Try socket first
+    if (socket) {
+      socket.emit('requestUserHyperSpaceOrders', { 
+        userId: currentUser.userId || currentUser.id 
       });
-      if (response.data.success) {
-        setMyOrders(response.data.orders);
-      }
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-    } finally {
-      setLoadingOrders(false);
+      
+      // Set a short timeout - if socket doesn't respond, use API
+      setTimeout(async () => {
+        if (loadingOrders && currentUser?.token) {
+          try {
+            const response = await axios.get(`${API_URL}/api/hyperspace/my-orders`, {
+              headers: { Authorization: `Bearer ${currentUser.token}` }
+            });
+            if (response.data.success) {
+              setMyOrders(response.data.orders);
+            }
+          } catch (err) {
+            console.error('Error fetching orders:', err);
+          } finally {
+            setLoadingOrders(false);
+          }
+        }
+      }, 1500);
+    } else if (currentUser?.token) {
+      // No socket, use API directly
+      axios.get(`${API_URL}/api/hyperspace/my-orders`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
+      }).then(res => {
+        if (res.data.success) setMyOrders(res.data.orders);
+      }).catch(err => {
+        console.error('Error fetching orders:', err);
+      }).finally(() => {
+        setLoadingOrders(false);
+      });
     }
-  };
+  }, [currentUser, socket, loadingOrders]);
+
+  // Socket listener for user's order history
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const handleOrdersLoaded = (data) => {
+      if (data.orders) {
+        setMyOrders(data.orders);
+        setLoadingOrders(false);
+      }
+    };
+
+    const handleOrdersError = () => {
+      setLoadingOrders(false);
+    };
+
+    socket.on('userHyperSpaceOrdersLoaded', handleOrdersLoaded);
+    socket.on('userHyperSpaceOrdersError', handleOrdersError);
+
+    return () => {
+      socket.off('userHyperSpaceOrdersLoaded', handleOrdersLoaded);
+      socket.off('userHyperSpaceOrdersError', handleOrdersError);
+    };
+  }, [socket, currentUser]);
 
   // Get current package price
   const getCurrentPrice = useCallback(() => {

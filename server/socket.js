@@ -431,6 +431,26 @@ function init(server) {
       }
     });
 
+    // Handle requesting HyperSpace packages (public - no auth needed)
+    socket.on('requestHyperSpacePackages', async () => {
+      try {
+        const socialplugService = require('./services/socialplugService');
+        const packages = socialplugService.getAllPackages();
+        
+        socket.emit('hyperSpacePackagesLoaded', {
+          packages,
+          grouped: {
+            '30': packages.filter(p => p.duration === 30),
+            '60': packages.filter(p => p.duration === 60),
+            '120': packages.filter(p => p.duration === 120)
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching HyperSpace packages:', error);
+        socket.emit('hyperSpacePackagesError', { error: 'Failed to fetch packages' });
+      }
+    });
+
     // Handle admin requesting pending HyperSpace orders
     socket.on('requestPendingHyperSpaceOrders', async (userData) => {
       if (!userData || !userData.isAdmin) {
@@ -476,6 +496,38 @@ function init(server) {
       } catch (error) {
         console.error('Error fetching HyperSpace order status:', error);
         socket.emit('hyperSpaceOrderStatusError', { error: 'Failed to fetch order' });
+      }
+    });
+
+    // Handle user requesting their HyperSpace order history
+    socket.on('requestUserHyperSpaceOrders', async (data) => {
+      if (!data || !data.userId) {
+        socket.emit('userHyperSpaceOrdersError', { error: 'User ID required' });
+        return;
+      }
+
+      try {
+        const HyperSpaceOrder = require('./models/HyperSpaceOrder');
+        const orders = await HyperSpaceOrder.find({ userId: data.userId })
+          .sort({ createdAt: -1 })
+          .limit(20)
+          .lean();
+
+        socket.emit('userHyperSpaceOrdersLoaded', {
+          orders: orders.map(order => ({
+            orderId: order.orderId,
+            spaceUrl: order.spaceUrl,
+            listeners: order.listenerCount,
+            duration: order.duration,
+            price: order.customerPrice,
+            status: order.status,
+            createdAt: order.createdAt,
+            completedAt: order.completedAt
+          }))
+        });
+      } catch (error) {
+        console.error('Error fetching user HyperSpace orders:', error);
+        socket.emit('userHyperSpaceOrdersError', { error: 'Failed to fetch orders' });
       }
     });
 
