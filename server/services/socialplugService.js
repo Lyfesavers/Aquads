@@ -23,11 +23,12 @@ const SOCIALPLUG_PRICING = {
   5000: { 30: 218, 60: 300, 120: 420 }
 };
 
-// TEST MODE: Override price for specific package (set price to 0 to disable)
+// TEST PRICING: Override customer price for specific package (set price to 0 to disable)
+// Note: This only affects what the customer pays - Socialplug still gets the real order
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // USDC - Set to 0 to disable test mode (LIVE MODE ACTIVE)
+  price: 0.01 // USDC - Customer pays this, but real order goes to Socialplug
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
@@ -234,17 +235,9 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     return { success: false, error: 'Invalid Twitter Space URL' };
   }
 
-  // Handle test orders - return mock success without calling Socialplug
-  if (isTestOrder(listeners, duration)) {
-    console.log('[Socialplug] Test order detected - returning mock success');
-    return {
-      success: true,
-      orderId: `TEST-${Date.now()}`,
-      charge: 0,
-      startCount: 0,
-      status: 'completed',
-      isTest: true
-    };
+  // Log if this is a test-priced order (customer paid less, but real order placed)
+  if (isTestPricedOrder(listeners, duration)) {
+    console.log('[Socialplug] Test-priced order - placing REAL order on Socialplug');
   }
 
   try {
@@ -348,13 +341,16 @@ const checkOrderStatus = async (orderId) => {
 };
 
 /**
- * Check if this is a test order (using test price override)
+ * Check if this is a test-priced order (customer pays less, but real order still placed)
  */
-const isTestOrder = (listeners, duration) => {
+const isTestPricedOrder = (listeners, duration) => {
   return TEST_PRICE_OVERRIDE.price > 0 && 
          listeners === TEST_PRICE_OVERRIDE.listeners && 
          duration === TEST_PRICE_OVERRIDE.duration;
 };
+
+// Alias for backwards compatibility
+const isTestOrder = isTestPricedOrder;
 
 /**
  * Validate that we have sufficient balance for an order
@@ -363,15 +359,14 @@ const isTestOrder = (listeners, duration) => {
  * @returns {Promise<{sufficient: boolean, balance?: number, required?: number, error?: string}>}
  */
 const validateBalance = async (listeners, duration) => {
-  // Skip balance check for test orders
-  if (isTestOrder(listeners, duration)) {
-    console.log('[Socialplug] Test order detected - skipping balance check');
-    return { sufficient: true, balance: 999, required: 0, isTest: true };
-  }
-
+  // Get actual Socialplug cost (regardless of customer test price)
   const cost = getSocialplugCost(listeners, duration);
   if (cost === null) {
     return { sufficient: false, error: 'Invalid package selection' };
+  }
+
+  if (isTestPricedOrder(listeners, duration)) {
+    console.log('[Socialplug] Test-priced order - checking real Socialplug balance for $' + cost);
   }
 
   const balanceResult = await checkBalance();
@@ -397,6 +392,7 @@ module.exports = {
   validateBalance,
   calculateSellingPrice,
   isTestOrder,
+  isTestPricedOrder,
   SOCIALPLUG_PRICING,
   MINIMUM_PROFIT,
   MARKUP_PERCENTAGE,
