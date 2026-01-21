@@ -454,52 +454,47 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
     case 'HyperSpace':
       return (
         <svg {...svgProps} xmlns="http://www.w3.org/2000/svg">
-          {/* Twitter Space Card - Main Panel */}
-          <rect x="10" y="15" width="130" height="110" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1.5"/>
+          {/* Main Container - Full Width Like AquaSwap */}
+          <rect x="10" y="10" width="280" height="120" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="2"/>
           
-          {/* Space Header */}
-          <rect x="15" y="20" width="120" height="35" rx="6" fill="rgba(168, 85, 247, 0.3)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1"/>
-          <text x="25" y="34" fontSize="7" fill="#e9d5ff" fontWeight="600">🎙️ Twitter Space</text>
-          <rect x="95" y="25" width="35" height="14" rx="7" fill="rgba(239, 68, 68, 0.4)" stroke="rgba(239, 68, 68, 0.6)" strokeWidth="1"/>
-          <text x="112.5" y="35" fontSize="7" fill="#fca5a5" textAnchor="middle" fontWeight="600">LIVE</text>
-          <text x="25" y="48" fontSize="6" fill="#c4b5fd">Crypto Project AMA</text>
+          {/* Twitter Space Header Bar */}
+          <rect x="20" y="18" width="260" height="28" rx="4" fill="rgba(15, 23, 42, 0.8)" stroke="rgba(168, 85, 247, 0.3)" strokeWidth="1"/>
+          <circle cx="35" cy="32" r="8" fill="rgba(168, 85, 247, 0.5)"/>
+          <text x="35" y="35" fontSize="10" fill="#c084fc" textAnchor="middle">🎙️</text>
+          <text x="50" y="30" fontSize="9" fill="#e2e8f0" fontWeight="600">Your Twitter Space</text>
+          <text x="50" y="40" fontSize="7" fill="#94a3b8">Crypto Project AMA</text>
+          <rect x="220" y="24" width="50" height="16" rx="8" fill="rgba(239, 68, 68, 0.4)" stroke="rgba(239, 68, 68, 0.6)" strokeWidth="1"/>
+          <text x="245" y="35" fontSize="8" fill="#fca5a5" textAnchor="middle" fontWeight="600">● LIVE</text>
           
-          {/* Listener Icons Row */}
-          <circle cx="30" cy="72" r="10" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <circle cx="50" cy="72" r="10" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <circle cx="70" cy="72" r="10" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <circle cx="90" cy="72" r="10" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.4)" strokeWidth="1"/>
-          <rect x="105" y="65" width="30" height="14" rx="7" fill="rgba(168, 85, 247, 0.4)"/>
-          <text x="120" y="75" fontSize="7" fill="#e9d5ff" textAnchor="middle">+2.5K</text>
+          {/* Listener Avatars Row */}
+          <circle cx="35" cy="65" r="12" fill="rgba(236, 72, 153, 0.3)" stroke="rgba(236, 72, 153, 0.5)" strokeWidth="1.5"/>
+          <circle cx="60" cy="65" r="12" fill="rgba(168, 85, 247, 0.3)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5"/>
+          <circle cx="85" cy="65" r="12" fill="rgba(59, 130, 246, 0.3)" stroke="rgba(59, 130, 246, 0.5)" strokeWidth="1.5"/>
+          <circle cx="110" cy="65" r="12" fill="rgba(34, 197, 94, 0.3)" stroke="rgba(34, 197, 94, 0.5)" strokeWidth="1.5"/>
+          <rect x="130" y="56" width="40" height="18" rx="9" fill="rgba(168, 85, 247, 0.4)" stroke="rgba(192, 132, 252, 0.6)" strokeWidth="1"/>
+          <text x="150" y="68" fontSize="8" fill="#f0abfc" textAnchor="middle" fontWeight="700">+2,496</text>
           
-          {/* Listener Count */}
-          <text x="75" y="100" fontSize="8" fill="#d8b4fe" textAnchor="middle">👥 2,500 Listeners</text>
-          <text x="75" y="115" fontSize="6" fill="#9ca3af" textAnchor="middle">Boosting trending...</text>
+          {/* Stats Panel */}
+          <rect x="180" y="52" width="100" height="30" rx="4" fill="rgba(15, 23, 42, 0.8)"/>
+          <text x="230" y="65" fontSize="10" fill="#c084fc" textAnchor="middle" fontWeight="700">2,500</text>
+          <text x="230" y="76" fontSize="7" fill="#94a3b8" textAnchor="middle">Total Listeners</text>
           
-          {/* Package Selection Panel */}
-          <rect x="150" y="15" width="135" height="55" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1.5"/>
-          <text x="217.5" y="30" fontSize="8" fill="#e9d5ff" textAnchor="middle" fontWeight="600">Select Package</text>
+          {/* Bottom Options Row */}
+          <rect x="20" y="90" width="70" height="32" rx="4" fill="rgba(139, 92, 246, 0.2)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1"/>
+          <text x="55" y="103" fontSize="7" fill="#c4b5fd" textAnchor="middle">100-5K</text>
+          <text x="55" y="115" fontSize="6" fill="#9ca3af" textAnchor="middle">Listeners</text>
           
-          {/* Listener Options */}
-          <rect x="155" y="38" width="40" height="14" rx="3" fill="rgba(139, 92, 246, 0.2)"/>
-          <text x="175" y="48" fontSize="6" fill="#c4b5fd" textAnchor="middle">100</text>
-          <rect x="198" y="38" width="40" height="14" rx="3" fill="rgba(168, 85, 247, 0.4)" stroke="rgba(192, 132, 252, 0.6)" strokeWidth="1"/>
-          <text x="218" y="48" fontSize="6" fill="#f0abfc" textAnchor="middle" fontWeight="600">500</text>
-          <rect x="241" y="38" width="40" height="14" rx="3" fill="rgba(139, 92, 246, 0.2)"/>
-          <text x="261" y="48" fontSize="6" fill="#c4b5fd" textAnchor="middle">2,500</text>
-          <text x="217.5" y="64" fontSize="6" fill="#9ca3af" textAnchor="middle">listeners</text>
+          <rect x="95" y="90" width="70" height="32" rx="4" fill="rgba(168, 85, 247, 0.3)" stroke="rgba(192, 132, 252, 0.5)" strokeWidth="1"/>
+          <text x="130" y="103" fontSize="7" fill="#e9d5ff" textAnchor="middle">30m-2hr</text>
+          <text x="130" y="115" fontSize="6" fill="#9ca3af" textAnchor="middle">Duration</text>
           
-          {/* Duration Panel */}
-          <rect x="150" y="75" width="135" height="50" rx="8" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1.5"/>
-          <text x="217.5" y="88" fontSize="8" fill="#e9d5ff" textAnchor="middle" fontWeight="600">Duration</text>
+          <rect x="170" y="90" width="70" height="32" rx="4" fill="rgba(34, 197, 94, 0.2)" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="1"/>
+          <text x="205" y="103" fontSize="7" fill="#86efac" textAnchor="middle">📈 Trending</text>
+          <text x="205" y="115" fontSize="6" fill="#9ca3af" textAnchor="middle">Boost</text>
           
-          {/* Duration Options */}
-          <rect x="155" y="95" width="38" height="18" rx="4" fill="rgba(139, 92, 246, 0.2)"/>
-          <text x="174" y="107" fontSize="7" fill="#c4b5fd" textAnchor="middle">30min</text>
-          <rect x="197" y="95" width="38" height="18" rx="4" fill="rgba(168, 85, 247, 0.4)" stroke="rgba(192, 132, 252, 0.6)" strokeWidth="1"/>
-          <text x="216" y="107" fontSize="7" fill="#f0abfc" textAnchor="middle" fontWeight="600">1hr</text>
-          <rect x="239" y="95" width="38" height="18" rx="4" fill="rgba(139, 92, 246, 0.2)"/>
-          <text x="258" y="107" fontSize="7" fill="#c4b5fd" textAnchor="middle">2hr</text>
+          <rect x="245" y="90" width="45" height="32" rx="4" fill="rgba(59, 130, 246, 0.3)" stroke="rgba(59, 130, 246, 0.5)" strokeWidth="1"/>
+          <text x="267.5" y="103" fontSize="7" fill="#93c5fd" textAnchor="middle">💳 Crypto</text>
+          <text x="267.5" y="115" fontSize="6" fill="#9ca3af" textAnchor="middle">Pay</text>
         </svg>
       );
 
