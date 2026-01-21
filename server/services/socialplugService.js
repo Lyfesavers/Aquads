@@ -271,10 +271,10 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     const serviceId = TWITTER_SPACES_SERVICE_ID || 46;
 
     // Socialplug API uses POST for placing orders
-    // Per docs: POST /order with JSON body
+    // Field names per validation error: service, targetUrl, quantity, runs
     const orderData = {
-      service_id: serviceId,
-      link: spaceUrl,
+      service: serviceId,
+      targetUrl: spaceUrl,
       quantity: listeners,
       runs: duration  // Duration in minutes
     };
