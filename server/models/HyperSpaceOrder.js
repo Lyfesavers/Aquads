@@ -97,8 +97,22 @@ const hyperSpaceOrderSchema = new mongoose.Schema({
   // Order status
   status: {
     type: String,
-    enum: ['awaiting_payment', 'payment_received', 'processing', 'delivering', 'completed', 'failed', 'refunded', 'cancelled'],
+    enum: ['awaiting_payment', 'payment_received', 'pending_approval', 'processing', 'delivering', 'completed', 'failed', 'refunded', 'cancelled'],
     default: 'awaiting_payment'
+  },
+  
+  // Admin notes for manual processing
+  adminNotes: {
+    type: String,
+    default: null
+  },
+  approvedBy: {
+    type: String,
+    default: null
+  },
+  approvedAt: {
+    type: Date,
+    default: null
   },
   
   // Error tracking

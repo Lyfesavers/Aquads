@@ -103,6 +103,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showRejectAddonOrderModal, setShowRejectAddonOrderModal] = useState(false);
   const [selectedAddonOrder, setSelectedAddonOrder] = useState(null);
   const [addonOrderRejectionReason, setAddonOrderRejectionReason] = useState('');
+  // HyperSpace order approval states
+  const [pendingHyperSpaceOrders, setPendingHyperSpaceOrders] = useState([]);
+  const [isLoadingHyperSpaceOrders, setIsLoadingHyperSpaceOrders] = useState(false);
+  const [processingHyperSpaceOrderId, setProcessingHyperSpaceOrderId] = useState(null);
   // Referral QR code states
   const [showReferralQRModal, setShowReferralQRModal] = useState(false);
   const [referralLinkCopied, setReferralLinkCopied] = useState(false);
@@ -2607,6 +2611,113 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     'aqua_storm': 'AquaStorm ($6,174)'
   };
 
+  // HyperSpace order management functions
+  const fetchPendingHyperSpaceOrders = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      setIsLoadingHyperSpaceOrders(true);
+      const token = currentUser?.token || localStorage.getItem('token');
+      // Fetch both pending_approval and delivering orders
+      const [pendingRes, deliveringRes] = await Promise.all([
+        fetch(`${API_URL}/api/hyperspace/admin/orders?status=pending_approval`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/hyperspace/admin/orders?status=delivering`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+      
+      const pendingData = pendingRes.ok ? await pendingRes.json() : { orders: [] };
+      const deliveringData = deliveringRes.ok ? await deliveringRes.json() : { orders: [] };
+      
+      // Combine and sort by createdAt (newest first)
+      const allOrders = [...(pendingData.orders || []), ...(deliveringData.orders || [])];
+      allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      setPendingHyperSpaceOrders(allOrders);
+    } catch (error) {
+      console.error('Failed to fetch HyperSpace orders:', error);
+    } finally {
+      setIsLoadingHyperSpaceOrders(false);
+    }
+  };
+
+  const handleApproveHyperSpaceOrder = async (orderId, socialplugOrderId = '') => {
+    try {
+      setProcessingHyperSpaceOrderId(orderId);
+      const token = currentUser?.token || localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/hyperspace/admin/approve/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ socialplugOrderId })
+      });
+      if (response.ok) {
+        showNotification('HyperSpace order approved and marked as delivering', 'success');
+        setPendingHyperSpaceOrders(prev => prev.filter(order => order.orderId !== orderId));
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to approve');
+      }
+    } catch (error) {
+      showNotification(error.message || 'Failed to approve HyperSpace order', 'error');
+    } finally {
+      setProcessingHyperSpaceOrderId(null);
+    }
+  };
+
+  const handleCompleteHyperSpaceOrder = async (orderId) => {
+    try {
+      setProcessingHyperSpaceOrderId(orderId);
+      const token = currentUser?.token || localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/hyperspace/admin/complete/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        showNotification('HyperSpace order marked as completed', 'success');
+        setPendingHyperSpaceOrders(prev => prev.filter(order => order.orderId !== orderId));
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to complete');
+      }
+    } catch (error) {
+      showNotification(error.message || 'Failed to complete HyperSpace order', 'error');
+    } finally {
+      setProcessingHyperSpaceOrderId(null);
+    }
+  };
+
+  const handleRejectHyperSpaceOrder = async (orderId, reason = '', refund = false) => {
+    try {
+      setProcessingHyperSpaceOrderId(orderId);
+      const token = currentUser?.token || localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/hyperspace/admin/reject/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason, refund })
+      });
+      if (response.ok) {
+        showNotification(`HyperSpace order ${refund ? 'refunded' : 'rejected'}`, 'success');
+        setPendingHyperSpaceOrders(prev => prev.filter(order => order.orderId !== orderId));
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to reject');
+      }
+    } catch (error) {
+      showNotification(error.message || 'Failed to reject HyperSpace order', 'error');
+    } finally {
+      setProcessingHyperSpaceOrderId(null);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -3936,6 +4047,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     }`}
                   >
                     📊 Click Analytics
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveAdminSection('hyperspace');
+                      if (pendingHyperSpaceOrders.length === 0) fetchPendingHyperSpaceOrders();
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'hyperspace' 
+                        ? 'bg-blue-600 text-white' 
+                        : pendingHyperSpaceOrders.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🎧 HyperSpace Orders
+                    {pendingHyperSpaceOrders.length > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {pendingHyperSpaceOrders.length}
+                      </span>
+                    )}
                   </button>
                 </nav>
               </div>
@@ -5766,6 +5897,174 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         >
                           Load Analytics
                         </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* HyperSpace Orders Section */}
+                {activeAdminSection === 'hyperspace' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-semibold text-white">🎧 HyperSpace Orders</h3>
+                      <button
+                        onClick={fetchPendingHyperSpaceOrders}
+                        disabled={isLoadingHyperSpaceOrders}
+                        className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                      >
+                        {isLoadingHyperSpaceOrders ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Loading...
+                          </>
+                        ) : (
+                          '🔄 Refresh'
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Info Banner */}
+                    <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg p-4 mb-6">
+                      <p className="text-purple-300 text-sm">
+                        <strong>Manual Fulfillment Mode:</strong> Place orders manually on Socialplug.io, then use the Approve button to mark as delivering.
+                        Once delivered, click Complete to finalize the order.
+                      </p>
+                    </div>
+
+                    {isLoadingHyperSpaceOrders ? (
+                      <div className="flex justify-center py-12">
+                        <svg className="animate-spin h-8 w-8 text-purple-500" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                      </div>
+                    ) : pendingHyperSpaceOrders.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-6xl mb-4">🎧</p>
+                        <p className="text-gray-400 text-lg">No pending HyperSpace orders</p>
+                        <p className="text-gray-500 text-sm mt-2">Orders will appear here when users pay for Twitter Space listeners</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingHyperSpaceOrders.map(order => (
+                          <div key={order.orderId} className="bg-gray-800 rounded-xl p-5 border border-purple-500/20">
+                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                              {/* Order Info */}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <span className="text-2xl">🎧</span>
+                                  <div>
+                                    <h4 className="text-white font-bold text-lg">{order.orderId}</h4>
+                                    <p className="text-gray-400 text-sm">by @{order.username}</p>
+                                  </div>
+                                  <span className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold ${
+                                    order.status === 'pending_approval' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+                                    order.status === 'delivering' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                                    order.status === 'completed' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                    'bg-gray-500/20 text-gray-300 border border-gray-500/30'
+                                  }`}>
+                                    {order.status?.replace(/_/g, ' ')}
+                                  </span>
+                                </div>
+
+                                {/* Package Details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                  <div className="bg-gray-700/50 rounded-lg p-3">
+                                    <p className="text-gray-400 text-xs mb-1">Listeners</p>
+                                    <p className="text-white font-bold text-lg">{order.listenerCount?.toLocaleString()}</p>
+                                  </div>
+                                  <div className="bg-gray-700/50 rounded-lg p-3">
+                                    <p className="text-gray-400 text-xs mb-1">Duration</p>
+                                    <p className="text-white font-bold text-lg">{order.duration >= 60 ? `${order.duration/60}h` : `${order.duration}m`}</p>
+                                  </div>
+                                  <div className="bg-gray-700/50 rounded-lg p-3">
+                                    <p className="text-gray-400 text-xs mb-1">Customer Paid</p>
+                                    <p className="text-green-400 font-bold text-lg">${order.customerPrice}</p>
+                                  </div>
+                                  <div className="bg-gray-700/50 rounded-lg p-3">
+                                    <p className="text-gray-400 text-xs mb-1">Our Cost</p>
+                                    <p className="text-yellow-400 font-bold text-lg">${order.socialplugCost}</p>
+                                  </div>
+                                </div>
+
+                                {/* Space URL */}
+                                <div className="bg-gray-700/30 rounded-lg p-3 mb-3">
+                                  <p className="text-gray-400 text-xs mb-1">Twitter Space URL</p>
+                                  <a 
+                                    href={order.spaceUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 text-sm break-all hover:underline"
+                                  >
+                                    {order.spaceUrl}
+                                  </a>
+                                </div>
+
+                                {/* Payment Info */}
+                                <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+                                  <span>📅 {new Date(order.createdAt).toLocaleString()}</span>
+                                  {order.txSignature && (
+                                    <a 
+                                      href={`https://solscan.io/tx/${order.txSignature}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:underline"
+                                    >
+                                      🔗 View TX
+                                    </a>
+                                  )}
+                                  <span className="text-green-400">💰 Profit: ${(order.customerPrice - order.socialplugCost).toFixed(2)}</span>
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex flex-col gap-2 min-w-[180px]">
+                                {order.status === 'pending_approval' && (
+                                  <>
+                                    <a
+                                      href="https://socialplug.io/order"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-center text-sm transition-colors"
+                                    >
+                                      🌐 Open Socialplug
+                                    </a>
+                                    <button
+                                      onClick={() => handleApproveHyperSpaceOrder(order.orderId)}
+                                      disabled={processingHyperSpaceOrderId === order.orderId}
+                                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+                                    >
+                                      {processingHyperSpaceOrderId === order.orderId ? '...' : '✓ Mark Delivering'}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (window.confirm('Reject this order? The customer will need to be refunded manually.')) {
+                                          handleRejectHyperSpaceOrder(order.orderId, 'Space not available or invalid', false);
+                                        }
+                                      }}
+                                      disabled={processingHyperSpaceOrderId === order.orderId}
+                                      className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+                                    >
+                                      ✗ Reject
+                                    </button>
+                                  </>
+                                )}
+                                {order.status === 'delivering' && (
+                                  <button
+                                    onClick={() => handleCompleteHyperSpaceOrder(order.orderId)}
+                                    disabled={processingHyperSpaceOrderId === order.orderId}
+                                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+                                  >
+                                    {processingHyperSpaceOrderId === order.orderId ? '...' : '✓ Mark Completed'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

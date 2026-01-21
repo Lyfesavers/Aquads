@@ -200,7 +200,7 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-// POST /api/hyperspace/order/:orderId/confirm-payment - Confirm payment and auto-fulfill
+// POST /api/hyperspace/order/:orderId/confirm-payment - Confirm payment (manual approval mode)
 router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -224,106 +224,39 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
       });
     }
 
-    // Update payment info
+    // Update payment info - set to pending_approval for manual processing
     if (txSignature) order.txSignature = txSignature;
     if (paypalOrderId) order.paypalOrderId = paypalOrderId;
     
     order.paymentStatus = 'completed';
     order.paymentReceivedAt = new Date();
-    order.status = 'payment_received';
+    order.status = 'pending_approval'; // Manual approval required
     
     await order.save();
 
-    // Auto-fulfill: Place order on Socialplug immediately
+    // Notify admin via socket
     try {
-      order.status = 'processing';
-      await order.save();
-
-      // Validate we have sufficient balance
-      const balanceCheck = await socialplugService.validateBalance(order.listenerCount, order.duration);
-      
-      if (!balanceCheck.sufficient) {
-        order.status = 'failed';
-        order.errorMessage = `Insufficient Socialplug balance. Required: $${balanceCheck.required}, Available: $${balanceCheck.balance}`;
-        await order.save();
-        
-        // Notify admin
-        try {
-          socket.getIO().emit('hyperspaceOrderFailed', {
-            orderId: order.orderId,
-            error: order.errorMessage
-          });
-        } catch (socketError) {
-          console.error('Socket emit error:', socketError);
-        }
-        
-        return res.status(500).json({
-          success: false,
-          error: 'Service temporarily unavailable. Please contact support.',
-          orderId: order.orderId
-        });
-      }
-
-      // Place order on Socialplug
-      const socialplugResult = await socialplugService.placeOrder(
-        order.spaceUrl,
-        order.listenerCount,
-        order.duration
-      );
-
-      if (socialplugResult.success) {
-        order.socialplugOrderId = socialplugResult.orderId;
-        order.socialplugCharge = socialplugResult.charge;
-        order.socialplugStatus = socialplugResult.status || 'pending';
-        order.socialplugOrderedAt = new Date();
-        order.status = 'delivering';
-        await order.save();
-
-        // Notify via socket
-        try {
-          socket.getIO().emit('hyperspaceOrderProcessing', {
-            orderId: order.orderId,
-            username: order.username,
-            status: 'delivering'
-          });
-        } catch (socketError) {
-          console.error('Socket emit error:', socketError);
-        }
-
-        res.json({
-          success: true,
-          message: 'Payment confirmed and order is being delivered',
-          order: {
-            orderId: order.orderId,
-            status: order.status,
-            socialplugStatus: order.socialplugStatus,
-            estimatedDelivery: '5-15 minutes'
-          }
-        });
-      } else {
-        order.status = 'failed';
-        order.errorMessage = socialplugResult.error;
-        order.retryCount += 1;
-        await order.save();
-
-        res.status(500).json({
-          success: false,
-          error: 'Failed to process order. Our team has been notified.',
-          orderId: order.orderId
-        });
-      }
-    } catch (fulfillError) {
-      console.error('Auto-fulfillment error:', fulfillError);
-      order.status = 'failed';
-      order.errorMessage = fulfillError.message;
-      await order.save();
-
-      res.status(500).json({
-        success: false,
-        error: 'Order processing failed. Please contact support.',
-        orderId: order.orderId
+      socket.getIO().emit('hyperspaceOrderPending', {
+        orderId: order.orderId,
+        username: order.username,
+        listeners: order.listenerCount,
+        duration: order.duration,
+        spaceUrl: order.spaceUrl,
+        price: order.customerPrice
       });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
     }
+
+    res.json({
+      success: true,
+      message: 'Payment received! Your order is being processed and will be delivered shortly.',
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        estimatedDelivery: 'Within 24 hours'
+      }
+    });
   } catch (error) {
     console.error('Error confirming payment:', error);
     res.status(500).json({
@@ -485,7 +418,163 @@ router.get('/admin/orders', auth, async (req, res) => {
   }
 });
 
+// POST /api/hyperspace/admin/approve/:orderId - Approve order and mark as delivering (admin only)
+router.post('/admin/approve/:orderId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { orderId } = req.params;
+    const { socialplugOrderId, adminNotes } = req.body;
+
+    const order = await HyperSpaceOrder.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    if (order.status !== 'pending_approval') {
+      return res.status(400).json({
+        success: false,
+        error: `Order cannot be approved. Current status: ${order.status}`
+      });
+    }
+
+    // Mark as delivering (manually placed on Socialplug)
+    order.status = 'delivering';
+    order.socialplugOrderId = socialplugOrderId || `MANUAL-${Date.now()}`;
+    order.socialplugOrderedAt = new Date();
+    order.approvedBy = req.user.username;
+    order.approvedAt = new Date();
+    if (adminNotes) order.adminNotes = adminNotes;
+    
+    await order.save();
+
+    // Notify user via socket
+    try {
+      socket.getIO().emit('hyperspaceOrderUpdate', {
+        orderId: order.orderId,
+        status: 'delivering',
+        message: 'Your listeners are being delivered!'
+      });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Order approved and marked as delivering',
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        socialplugOrderId: order.socialplugOrderId
+      }
+    });
+  } catch (error) {
+    console.error('Error approving order:', error);
+    res.status(500).json({ success: false, error: 'Failed to approve order' });
+  }
+});
+
+// POST /api/hyperspace/admin/complete/:orderId - Mark order as completed (admin only)
+router.post('/admin/complete/:orderId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { orderId } = req.params;
+    const { adminNotes } = req.body;
+
+    const order = await HyperSpaceOrder.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    if (!['delivering', 'pending_approval', 'processing'].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Order cannot be completed. Current status: ${order.status}`
+      });
+    }
+
+    order.status = 'completed';
+    order.completedAt = new Date();
+    order.socialplugStatus = 'completed';
+    if (adminNotes) order.adminNotes = adminNotes;
+    if (!order.approvedBy) {
+      order.approvedBy = req.user.username;
+      order.approvedAt = new Date();
+    }
+    
+    await order.save();
+
+    // Notify user via socket
+    try {
+      socket.getIO().emit('hyperspaceOrderUpdate', {
+        orderId: order.orderId,
+        status: 'completed',
+        message: 'Your listeners have been delivered!'
+      });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Order marked as completed',
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        completedAt: order.completedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error completing order:', error);
+    res.status(500).json({ success: false, error: 'Failed to complete order' });
+  }
+});
+
+// POST /api/hyperspace/admin/reject/:orderId - Reject/refund order (admin only)
+router.post('/admin/reject/:orderId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { orderId } = req.params;
+    const { reason, refund } = req.body;
+
+    const order = await HyperSpaceOrder.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    order.status = refund ? 'refunded' : 'cancelled';
+    order.errorMessage = reason || 'Order rejected by admin';
+    order.adminNotes = `Rejected by ${req.user.username}: ${reason || 'No reason provided'}`;
+    
+    await order.save();
+
+    res.json({
+      success: true,
+      message: `Order ${refund ? 'refunded' : 'cancelled'}`,
+      order: {
+        orderId: order.orderId,
+        status: order.status
+      }
+    });
+  } catch (error) {
+    console.error('Error rejecting order:', error);
+    res.status(500).json({ success: false, error: 'Failed to reject order' });
+  }
+});
+
 // POST /api/hyperspace/admin/retry/:orderId - Retry failed order (admin only)
+// Note: Currently manual mode - this just resets to pending_approval
 router.post('/admin/retry/:orderId', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
@@ -499,53 +588,27 @@ router.post('/admin/retry/:orderId', auth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
-    if (!order.canRetry()) {
+    if (order.status !== 'failed') {
       return res.status(400).json({
         success: false,
-        error: 'Order cannot be retried. Max retries reached or order not in failed state.'
+        error: 'Only failed orders can be retried'
       });
     }
 
-    // Retry placing order on Socialplug
-    order.status = 'processing';
+    // Reset to pending_approval for manual retry
+    order.status = 'pending_approval';
     order.errorMessage = null;
+    order.retryCount += 1;
     await order.save();
 
-    const socialplugResult = await socialplugService.placeOrder(
-      order.spaceUrl,
-      order.listenerCount,
-      order.duration
-    );
-
-    if (socialplugResult.success) {
-      order.socialplugOrderId = socialplugResult.orderId;
-      order.socialplugCharge = socialplugResult.charge;
-      order.socialplugStatus = socialplugResult.status || 'pending';
-      order.socialplugOrderedAt = new Date();
-      order.status = 'delivering';
-      order.retryCount += 1;
-      await order.save();
-
-      res.json({
-        success: true,
-        message: 'Order retry successful',
-        order: {
-          orderId: order.orderId,
-          status: order.status,
-          socialplugOrderId: order.socialplugOrderId
-        }
-      });
-    } else {
-      order.status = 'failed';
-      order.errorMessage = socialplugResult.error;
-      order.retryCount += 1;
-      await order.save();
-
-      res.status(500).json({
-        success: false,
-        error: socialplugResult.error
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Order reset to pending approval for retry',
+      order: {
+        orderId: order.orderId,
+        status: order.status
+      }
+    });
   } catch (error) {
     console.error('Error retrying order:', error);
     res.status(500).json({ success: false, error: 'Failed to retry order' });

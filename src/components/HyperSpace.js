@@ -222,6 +222,7 @@ const HyperSpace = ({ currentUser }) => {
       completed: 'text-green-400 bg-green-400/20 border-green-400/30',
       delivering: 'text-blue-400 bg-blue-400/20 border-blue-400/30',
       processing: 'text-yellow-400 bg-yellow-400/20 border-yellow-400/30',
+      pending_approval: 'text-purple-400 bg-purple-400/20 border-purple-400/30',
       failed: 'text-red-400 bg-red-400/20 border-red-400/30',
       awaiting_payment: 'text-orange-400 bg-orange-400/20 border-orange-400/30'
     };
@@ -294,8 +295,8 @@ const HyperSpace = ({ currentUser }) => {
               <span>Safe & Secure</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-blue-400 whitespace-nowrap">
-              <FaBolt className="text-sm sm:text-base" />
-              <span>Instant Delivery</span>
+              <FaClock className="text-sm sm:text-base" />
+              <span>Timely Delivery</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-purple-400 whitespace-nowrap">
               <FaUsers className="text-sm sm:text-base" />
@@ -374,6 +375,18 @@ const HyperSpace = ({ currentUser }) => {
               <p className="text-xs sm:text-sm text-gray-400 mt-2 sm:mt-3 flex items-center gap-1.5">
                 <FaInfoCircle className="flex-shrink-0" />
                 <span>More listeners = higher trending potential + bulk savings!</span>
+              </p>
+            </div>
+
+            {/* Important Notice - 24 Hour Scheduling */}
+            <div className="bg-gradient-to-r from-red-500/10 to-pink-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-red-500/30">
+              <h3 className="text-sm sm:text-base font-semibold text-red-400 mb-2 flex items-center gap-2">
+                <FaClock />
+                ⚠️ Important: Schedule Ahead
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-300">
+                <strong className="text-white">Your Space must be scheduled at least 24 hours in advance</strong> to ensure delivery. 
+                Orders placed for Spaces starting sooner may not be fulfilled in time. Plan ahead!
               </p>
             </div>
 
@@ -462,7 +475,7 @@ const HyperSpace = ({ currentUser }) => {
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-gray-700">
                   <span className="text-gray-400">Delivery</span>
-                  <span className="text-green-400 font-medium">Instant Start</span>
+                  <span className="text-purple-400 font-medium">Before Space</span>
                 </div>
               </div>
 
@@ -538,7 +551,7 @@ const HyperSpace = ({ currentUser }) => {
               <div className="mt-6 space-y-2 text-sm text-gray-400">
                 <div className="flex items-center gap-2">
                   <FaCheck className="text-green-400 flex-shrink-0" />
-                  <span>Instant delivery start</span>
+                  <span>Delivered before your Space</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaCheck className="text-green-400 flex-shrink-0" />
@@ -554,8 +567,15 @@ const HyperSpace = ({ currentUser }) => {
                 </div>
               </div>
 
+              {/* Important Notice */}
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-xs text-red-300">
+                  <strong>⚠️ Important:</strong> Schedule your Space at least 24 hours in advance to ensure delivery!
+                </p>
+              </div>
+
               {/* Pro Tip */}
-              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <p className="text-xs text-blue-300">
                   <strong>💡 Pro Tip:</strong> Invite real friends as speakers/co-hosts so their PFPs show in the main circle while our listeners boost your count!
                 </p>
@@ -811,7 +831,7 @@ const HyperSpace = ({ currentUser }) => {
             )}
 
             <p className="text-xs text-gray-500 mt-4 text-center">
-              Order processes automatically within minutes after payment.
+              Your order will be processed and delivered before your scheduled Space.
             </p>
           </div>
         </div>
@@ -856,8 +876,10 @@ const HyperSpace = ({ currentUser }) => {
                 : confirmedOrder.status === 'completed'
                   ? 'Your listeners have been delivered successfully!'
                   : confirmedOrder.status === 'delivering'
-                    ? 'Listeners are now joining your Space!'
-                    : 'Your order is being processed...'}
+                    ? 'Listeners are being delivered to your Space!'
+                    : confirmedOrder.status === 'pending_approval'
+                      ? 'Your order is confirmed and will be processed within 24 hours before your Space starts.'
+                      : 'Your order is being processed...'}
             </p>
 
             {/* Order Details */}
@@ -880,11 +902,13 @@ const HyperSpace = ({ currentUser }) => {
                   confirmedOrder.status === 'failed' ? 'text-red-400' :
                   confirmedOrder.status === 'completed' ? 'text-green-400' :
                   confirmedOrder.status === 'delivering' ? 'text-blue-400' :
+                  confirmedOrder.status === 'pending_approval' ? 'text-purple-400' :
                   'text-yellow-400'
                 }`}>
                   {confirmedOrder.status === 'delivering' ? '🚀 Delivering...' :
                    confirmedOrder.status === 'completed' ? '✅ Completed' :
                    confirmedOrder.status === 'failed' ? '❌ Failed' :
+                   confirmedOrder.status === 'pending_approval' ? '✨ Confirmed' :
                    '⏳ Processing...'}
                 </span>
               </div>
@@ -895,6 +919,19 @@ const HyperSpace = ({ currentUser }) => {
               <div className="flex items-center justify-center gap-2 mb-6 text-blue-400">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
                 <span className="text-sm">Listeners are joining your Space in real-time</span>
+              </div>
+            )}
+
+            {/* Pending approval info */}
+            {confirmedOrder.status === 'pending_approval' && (
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <FaClock className="text-purple-400 text-lg flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-300">
+                    <p className="font-medium text-purple-300 mb-1">Order Confirmed!</p>
+                    <p>Listeners will be delivered before your scheduled Space. Make sure your Space is scheduled at least 24 hours in advance.</p>
+                  </div>
+                </div>
               </div>
             )}
 

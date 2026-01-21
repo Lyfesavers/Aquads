@@ -414,12 +414,12 @@ const paymentAutoApproval = {
   },
 
   /**
-   * Handle HyperSpace (Twitter Space Listeners) payment auto-approval
+   * Handle HyperSpace (Twitter Space Listeners) payment
+   * Note: Currently manual approval mode - Socialplug API doesn't have the service yet
    */
   async handleHyperSpacePayment({ hyperspaceOrderId, amount, txHash, chain, token, senderAddress, senderUsername }) {
     try {
       const HyperSpaceOrder = require('../models/HyperSpaceOrder');
-      const socialplugService = require('./socialplugService');
 
       const order = await HyperSpaceOrder.findOne({ orderId: hyperspaceOrderId });
 
@@ -452,63 +452,35 @@ const paymentAutoApproval = {
         return null;
       }
 
-      // Update payment info
+      // Update payment info and set to pending_approval for manual processing
       order.txSignature = txHash;
       order.paymentChain = chain;
       order.chainSymbol = token || 'USDC';
       order.paymentStatus = 'completed';
       order.paymentReceivedAt = new Date();
-      order.status = 'processing';
+      order.status = 'pending_approval'; // Manual approval required
       await order.save();
 
-      // Auto-fulfill: Place order on Socialplug immediately
+      console.log(`HyperSpace order ${hyperspaceOrderId} payment received, pending admin approval`);
+      
+      // Emit socket notification for admin
       try {
-        // Validate we have sufficient balance
-        const balanceCheck = await socialplugService.validateBalance(order.listenerCount, order.duration);
-        
-        if (!balanceCheck.sufficient) {
-          order.status = 'failed';
-          order.errorMessage = `Insufficient Socialplug balance. Required: $${balanceCheck.required}, Available: $${balanceCheck.balance}`;
-          await order.save();
-          console.log(`HyperSpace order ${hyperspaceOrderId} failed: insufficient Socialplug balance`);
-          return { type: 'hyperspace', id: order.orderId, status: order.status, error: order.errorMessage };
-        }
-
-        // Place order on Socialplug
-        const socialplugResult = await socialplugService.placeOrder(
-          order.spaceUrl,
-          order.listenerCount,
-          order.duration
-        );
-
-        if (socialplugResult.success) {
-          order.socialplugOrderId = socialplugResult.orderId;
-          order.socialplugCharge = socialplugResult.charge;
-          order.socialplugStatus = socialplugResult.status || 'pending';
-          order.socialplugOrderedAt = new Date();
-          order.status = 'delivering';
-          await order.save();
-
-          console.log(`HyperSpace order ${hyperspaceOrderId} auto-approved and placed on Socialplug. Socialplug Order ID: ${socialplugResult.orderId}`);
-          return { type: 'hyperspace', id: order.orderId, status: order.status, socialplugOrderId: socialplugResult.orderId };
-        } else {
-          order.status = 'failed';
-          order.errorMessage = socialplugResult.error;
-          order.retryCount += 1;
-          await order.save();
-
-          console.log(`HyperSpace order ${hyperspaceOrderId} failed to place on Socialplug: ${socialplugResult.error}`);
-          return { type: 'hyperspace', id: order.orderId, status: order.status, error: socialplugResult.error };
-        }
-      } catch (fulfillError) {
-        console.error(`HyperSpace order ${hyperspaceOrderId} fulfillment error:`, fulfillError);
-        order.status = 'failed';
-        order.errorMessage = fulfillError.message;
-        await order.save();
-        return { type: 'hyperspace', id: order.orderId, status: order.status, error: fulfillError.message };
+        const socket = require('../socket');
+        socket.getIO().emit('hyperspaceOrderPending', {
+          orderId: order.orderId,
+          username: order.username,
+          listeners: order.listenerCount,
+          duration: order.duration,
+          spaceUrl: order.spaceUrl,
+          price: order.customerPrice
+        });
+      } catch (socketError) {
+        console.error('Socket emit error:', socketError);
       }
+
+      return { type: 'hyperspace', id: order.orderId, status: order.status };
     } catch (error) {
-      console.error('Error auto-approving HyperSpace order:', error);
+      console.error('Error processing HyperSpace payment:', error);
       return null;
     }
   },

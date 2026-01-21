@@ -26,11 +26,11 @@ const SOCIALPLUG_PRICING = {
 };
 
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
-// Note: This only affects what the customer pays - Socialplug still gets the real order
+// Note: Set price to 0 to use normal pricing
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.01 // USDC - Customer pays this, but real order goes to Socialplug
+  price: 0 // DISABLED - Using manual fulfillment mode
 };
 
 // Markup: 30% OR $5 minimum, whichever is higher
