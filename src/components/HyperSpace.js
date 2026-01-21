@@ -427,7 +427,7 @@ const HyperSpace = ({ currentUser }) => {
       <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 pb-32 lg:pb-12">
         {/* Back to Home Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="mb-6 sm:mb-8 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700 hover:border-purple-500/50 text-gray-300 hover:text-white transition-all duration-200 group"
         >
           <FaArrowLeft className="text-sm group-hover:-translate-x-1 transition-transform" />
