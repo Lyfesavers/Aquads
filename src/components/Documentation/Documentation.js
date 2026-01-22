@@ -111,6 +111,7 @@ const documentationStructure = [
       { id: 'facebook-raids', title: 'Facebook Raids', content: 'facebookRaids' },
       { id: 'shill-templates', title: 'Shill Templates', content: 'shillTemplates' },
       { id: 'points-rewards', title: 'Points & Rewards', content: 'pointsRewards' },
+      { id: 'hyperspace', title: 'HyperSpace', content: 'hyperspace' },
     ]
   },
   {
@@ -121,7 +122,6 @@ const documentationStructure = [
       { id: 'gamehub-overview', title: 'Overview', content: 'gamehubOverview' },
       { id: 'available-games', title: 'Available Games', content: 'availableGames' },
       { id: 'listing-game', title: 'Listing Your Game', content: 'listingGame' },
-      { id: 'hyperspace', title: 'HyperSpace', content: 'hyperspace' },
     ]
   },
   {
@@ -2953,7 +2953,7 @@ We monitor for:
 > 💡 **Tip**: Consistent daily engagement builds points faster than sporadic activity.
     `,
     prevPage: { id: 'shill-templates', title: 'Shill Templates' },
-    nextPage: { id: 'gamehub-overview', title: 'GameHub Overview' },
+    nextPage: { id: 'hyperspace', title: 'HyperSpace' },
   },
   
   // GameHub
@@ -3039,7 +3039,7 @@ Play games built into Aquads:
 
 > 💡 **Tip**: Check GameHub regularly for new games and tournaments.
     `,
-    prevPage: { id: 'points-rewards', title: 'Points & Rewards' },
+    prevPage: { id: 'hyperspace', title: 'HyperSpace' },
     nextPage: { id: 'available-games', title: 'Available Games' },
   },
   
@@ -3225,7 +3225,7 @@ Boost visibility:
 > 💡 **Tip**: Games with video previews get 3x more clicks.
     `,
     prevPage: { id: 'available-games', title: 'Available Games' },
-    nextPage: { id: 'hyperspace', title: 'HyperSpace' },
+    nextPage: { id: 'affiliate-program', title: 'Affiliate Program' },
   },
   
   hyperspace: {
@@ -3342,8 +3342,8 @@ Need help with your order?
 
 > 💡 **Tip**: Practice mode lets you learn without affecting your stats.
     `,
-    prevPage: { id: 'listing-game', title: 'Listing Your Game' },
-    nextPage: { id: 'affiliate-program', title: 'Affiliate Program' },
+    prevPage: { id: 'points-rewards', title: 'Points & Rewards' },
+    nextPage: { id: 'gamehub-overview', title: 'GameHub Overview' },
   },
   
   // Partners & Affiliate
@@ -3460,7 +3460,7 @@ Active affiliates with good referral activity may become eligible for:
 
 > 💡 **Tip**: Active affiliates who help their referrals succeed have higher retention and earn more rewards.
     `,
-    prevPage: { id: 'hyperspace', title: 'HyperSpace' },
+    prevPage: { id: 'listing-game', title: 'Listing Your Game' },
     nextPage: { id: 'partner-rewards', title: 'Partner Rewards' },
   },
   
