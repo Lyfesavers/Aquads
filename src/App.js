@@ -79,6 +79,7 @@ import LandingPage from './components/LandingPage';
 import AquaPayPage from './components/AquaPayPage';
 import AquaPayInfo from './components/AquaPayInfo';
 import HyperSpace from './components/HyperSpace';
+import Documentation from './components/Documentation/Documentation';
 
 window.Buffer = Buffer;
 
@@ -3493,6 +3494,7 @@ function App() {
             <Route path="/telegram-bot" element={<TelegramBot />} />
             <Route path="/aquapay" element={<AquaPayInfo />} />
             <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />
+            <Route path="/docs" element={<Documentation />} />
         </Routes>
       </Router>
     </AuthContext.Provider>

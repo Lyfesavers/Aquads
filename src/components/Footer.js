@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaInstagram, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown, FaBook } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import usePWAInstall from '../hooks/usePWAInstall';
 
@@ -108,6 +108,13 @@ const Footer = () => {
               </button>
               {openSections.resources && (
                 <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-700 rounded-lg p-3 space-y-2 shadow-lg z-[9999999] max-h-64 overflow-y-auto" style={{ zIndex: 99999, position: 'absolute' }}>
+                <Link
+                  to="/docs"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaBook className="mr-2" />
+                  <span>Documentation</span>
+                </Link>
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
