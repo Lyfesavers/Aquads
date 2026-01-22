@@ -369,6 +369,29 @@
   }
 }
 
+/* Tablet screens - prevent cutoff issues */
+@media (min-width: 640px) and (max-width: 1024px) {
+  /* Ensure carousel cards don't overflow */
+  .carousel-card-content {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  
+  /* Scale down mockup cards on tablets */
+  .mockup-card-container {
+    max-width: 280px !important;
+  }
+  
+  /* Better text scaling */
+  .feature-title {
+    font-size: 1.75rem !important;
+  }
+  
+  .feature-subtitle {
+    font-size: 1.125rem !important;
+  }
+}
+
 /* Extra small screens */
 @media (max-width: 480px) {
   /* Further reduce effects on small phones */
@@ -385,6 +408,54 @@
   .glow-purple {
     box-shadow: 0 0 20px rgba(34, 211, 238, 0.2) !important;
   }
+}
+
+/* Very small screens (below 360px) */
+@media (max-width: 360px) {
+  /* Reduce padding to prevent cutoff */
+  .landing-section {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Scale down mockup cards further */
+  .mockup-card-container {
+    max-width: 220px !important;
+  }
+  
+  /* Smaller stats */
+  .stat-value {
+    font-size: 1.25rem !important;
+  }
+  
+  .stat-label {
+    font-size: 0.625rem !important;
+  }
+}
+
+/* Prevent horizontal overflow on all screens */
+.landing-page-container {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+/* Ensure background glows don't cause overflow */
+.background-glow {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Safe area insets for modern mobile devices */
+@supports (padding: max(0px)) {
+  .landing-safe-area {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Smooth responsive transitions */
+.responsive-element {
+  transition: all 0.3s ease;
 }
 
 /* Reduced motion preference */

@@ -859,11 +859,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for On-Chain Resume
   if (feature.title === 'On-Chain Resume') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -945,7 +945,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Resume mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1026,11 +1026,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaFi
   if (feature.title === 'AquaFi') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-green-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -1113,7 +1113,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - AquaFi mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1206,11 +1206,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Job Board
   if (feature.title === 'Job Board') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-yellow-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-yellow-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -1293,7 +1293,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Job Board mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1388,11 +1388,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Live Market Data
   if (feature.title === 'Live Market Data') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -1475,7 +1475,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Market Data mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1575,11 +1575,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Trust Score System
   if (feature.title === 'Trust Score System') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -1662,7 +1662,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Trust Score mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1762,11 +1762,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaSwap
   if (feature.title === 'AquaSwap') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -1849,7 +1849,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - AquaSwap mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1949,11 +1949,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Dynamic Token Bubbles
   if (feature.title === 'Dynamic Token Bubbles') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2036,7 +2036,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Bubble mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2128,11 +2128,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Twitter Raids
   if (feature.title === 'Twitter Raids') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-sky-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-sky-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2215,7 +2215,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Twitter Raid mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2306,11 +2306,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for HyperSpace
   if (feature.title === 'HyperSpace') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2393,7 +2393,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - HyperSpace mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2490,11 +2490,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Web3 Game Hub
   if (feature.title === 'Web3 Game Hub') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-orange-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2577,7 +2577,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Game Hub mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2664,11 +2664,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Freelancer Marketplace
   if (feature.title === 'Freelancer Marketplace') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2751,7 +2751,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Marketplace mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2844,11 +2844,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Telegram Bot
   if (feature.title === 'Telegram Bot') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -2931,7 +2931,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Telegram Bot mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -3001,11 +3001,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaPay - match the standalone section exactly
   if (feature.title === 'AquaPay') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -3085,7 +3085,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Payment link mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -3158,11 +3158,11 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Marketing & PR
   if (feature.title === 'Marketing & PR') {
     return (
-      <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-        {/* Background glow effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
         </div>
         
         <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
@@ -3245,7 +3245,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Marketing Package mockup */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-xs lg:max-w-sm"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -3340,15 +3340,15 @@ const CarouselCard = ({ feature, index }) => {
   }
 
   return (
-    <section className="relative w-full h-full px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col">
-      {/* Background glow effects */}
-      <div className="absolute inset-0 pointer-events-none">
+    <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+      {/* Background glow effects - contained to prevent overflow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div 
-          className="absolute top-1/2 left-1/4 w-96 h-96 rounded-full blur-3xl -translate-y-1/2" 
+          className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-3xl -translate-y-1/2" 
           style={{ backgroundColor: colors.glowBg }}
         />
         <div 
-          className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full blur-3xl -translate-y-1/2" 
+          className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-3xl -translate-y-1/2" 
           style={{ backgroundColor: colors.glowBg }}
         />
       </div>
@@ -3412,7 +3412,7 @@ const CarouselCard = ({ feature, index }) => {
             
             {/* Right visual - SVG mockup */}
             <motion.div
-              className="flex-shrink-0 w-full max-w-md lg:max-w-lg xl:max-w-xl"
+              className="flex-shrink-0 w-full max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mockup-card-container"
               initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
               whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
               viewport={{ once: true }}
@@ -3644,9 +3644,9 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     whileHover={{ scale: 1.02 }}
     onClick={onClick}
   >
-    {/* Large central triangle container */}
+    {/* Large central triangle container - responsive sizing */}
     <motion.div
-      className="absolute w-44 h-44 xs:w-52 xs:h-52 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 flex items-center justify-center"
+      className="absolute w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 flex items-center justify-center"
       animate={{
         scale: [1, 1.05, 0.98, 1],
         rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
@@ -3725,9 +3725,9 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     </motion.div>
 
     {/* Labels */}
-    <div className="absolute bottom-16 md:bottom-24 left-0 right-0 text-center px-2">
+    <div className="absolute bottom-16 sm:bottom-20 md:bottom-24 left-0 right-0 text-center px-3 sm:px-4">
       <motion.h2 
-        className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-1 md:mb-2 tracking-tight"
+        className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-1 md:mb-2 tracking-tight"
         style={{ fontFamily: "'Clash Display', 'Space Grotesk', sans-serif" }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -3736,7 +3736,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
         {label}
       </motion.h2>
       <motion.p
-        className="text-gray-400 text-[10px] xs:text-xs sm:text-sm md:text-base"
+        className="text-gray-400 text-[10px] sm:text-xs md:text-sm lg:text-base"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
@@ -3748,8 +3748,8 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     {/* Click indicator */}
     <motion.div
       className={`
-        absolute bottom-4 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
-        px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-3 rounded-full border backdrop-blur-sm
+        absolute bottom-3 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
+        px-3 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-3 rounded-full border backdrop-blur-sm
         ${side === 'left' 
           ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20' 
           : 'border-purple-500/50 text-purple-400 hover:bg-purple-500/20'
@@ -3759,7 +3759,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <span className="font-semibold text-[10px] xs:text-xs sm:text-sm md:text-base">Enter →</span>
+      <span className="font-semibold text-[10px] sm:text-xs md:text-sm lg:text-base">Enter →</span>
     </motion.div>
 
     {/* Floating particles */}
@@ -3923,8 +3923,8 @@ const LandingPage = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-screen overflow-y-auto overflow-x-hidden bg-slate-950"
-      style={{ scrollBehavior: 'smooth' }}
+      className="relative w-full h-screen overflow-y-auto overflow-x-hidden bg-slate-950 landing-page-container"
+      style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       {/* Global styles */}
       <style>{`
@@ -4048,33 +4048,35 @@ const LandingPage = () => {
       `}</style>
 
       {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ maxWidth: '100vw' }}>
         {/* Gradient mesh */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
         
-        {/* Animated blobs */}
-        <MorphingBlob 
-          color="rgba(34, 211, 238, 0.15)" 
-          size="600px" 
-          position={{ top: '-200px', left: '-200px' }} 
-          delay={0} 
-        />
-        <MorphingBlob 
-          color="rgba(192, 132, 252, 0.15)" 
-          size="500px" 
-          position={{ bottom: '-150px', right: '-150px' }} 
-          delay={5} 
-        />
-        <MorphingBlob 
-          color="rgba(20, 184, 166, 0.1)" 
-          size="400px" 
-          position={{ top: '40%', right: '20%' }} 
-          delay={10} 
-        />
+        {/* Animated blobs - contained within viewport */}
+        <div className="absolute inset-0 overflow-hidden">
+          <MorphingBlob 
+            color="rgba(34, 211, 238, 0.15)" 
+            size="min(600px, 80vw)" 
+            position={{ top: '-200px', left: '-200px' }} 
+            delay={0} 
+          />
+          <MorphingBlob 
+            color="rgba(192, 132, 252, 0.15)" 
+            size="min(500px, 70vw)" 
+            position={{ bottom: '-150px', right: '-150px' }} 
+            delay={5} 
+          />
+          <MorphingBlob 
+            color="rgba(20, 184, 166, 0.1)" 
+            size="min(400px, 60vw)" 
+            position={{ top: '40%', right: '10%' }} 
+            delay={10} 
+          />
+        </div>
 
-        {/* Mouse follow glow */}
+        {/* Mouse follow glow - hidden on mobile for performance */}
         <motion.div
-          className="absolute w-96 h-96 rounded-full blur-3xl opacity-20"
+          className="absolute w-96 h-96 max-w-[80vw] max-h-[80vw] rounded-full blur-3xl opacity-20 hidden md:block"
           style={{
             background: 'radial-gradient(circle, rgba(34, 211, 238, 0.4) 0%, transparent 70%)',
             left: mousePosition.x - 192,
@@ -4333,13 +4335,13 @@ const LandingPage = () => {
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
-                className="relative p-3 md:p-6 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm"
+                className="relative p-2 sm:p-3 md:p-6 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm"
                 whileHover={{ scale: 1.05, borderColor: 'rgba(34, 211, 238, 0.5)' }}
               >
-                <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gradient-gold mb-1 md:mb-2">
+                <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gradient-gold mb-1 md:mb-2 stat-value">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
                 </div>
-                <div className="text-gray-500 text-[10px] sm:text-xs md:text-sm">{stat.label}</div>
+                <div className="text-gray-500 text-[9px] sm:text-[10px] md:text-xs lg:text-sm stat-label leading-tight">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
