@@ -3558,86 +3558,70 @@ Want to list your offer?
   // Telegram Bot
   botSetup: {
     title: 'Telegram Bot Setup',
-    description: 'Set up and connect the Aquads Telegram bot.',
+    description: 'Set up the Aquads Bump Bot for raids, voting, and boosting your meme coin.',
     mockup: <TelegramBotMockup />,
     content: `
 ## Telegram Bot Setup
 
-Connect with Aquads through our official Telegram bot.
+The Aquads Bump Bot helps meme coin projects grow through coordinated raids, voting, and trending features.
 
 ### Finding the Bot
 
 Search in Telegram:
-\`@AquadsBot\`
+\`@aquadsbumpbot\`
 
-Or click: [t.me/AquadsBot](https://t.me/AquadsBot)
+Or click: [t.me/aquadsbumpbot](https://t.me/aquadsbumpbot)
 
 ### Initial Setup
 
 **Step 1: Start the Bot**
-Click "Start" or send \`/start\`
+Click "Start" or send \`/start\` to begin onboarding.
 
-**Step 2: Connect Account**
-Link your Aquads account:
-\`/connect <your_username>\`
+**Step 2: Link Your Account**
+Connect your Aquads account:
+\`/link your_username\`
 
-**Step 3: Verify**
-Follow the verification steps.
+**Step 3: Set Twitter Handle**
+Required for raid verification:
+\`/twitter your_handle\`
 
-**Step 4: Configure**
-Set your preferences.
+**Step 4: Set Facebook Handle (Optional)**
+For Facebook raid participation:
+\`/facebook your_handle\`
 
-### Connecting Your Account
+### What You Get (Free)
 
-\`\`\`
-1. /connect username
-2. Bot sends verification code
-3. Enter code on Aquads website
-4. Account linked!
-\`\`\`
+- ✅ 5 FREE raid posts daily
+- ✅ Complete raids & earn 20 points each
+- ✅ Vote on projects (earn 20 pts per first vote)
+- ✅ View top 10 bubble rankings
+- ✅ Create extra raids (2000 pts each after free daily)
 
-### Notification Settings
+### Premium Features (List & Bump Required)
 
-Configure alerts for:
-- New bookings
-- Payment received
-- Raid opportunities
-- Price alerts
-- Messages
+When you list and bump your project:
+- 🔥 Trending across Aquads homepage
+- 🔥 BEX trending section visibility
+- 🔥 Bubble ranking boost
+- 🔥 5K+ trending channel exposure
+- 🔥 Custom branding on vote notifications
+- 🔥 Vote + Member boost packages
 
-### Bot Permissions
+### Adding Bot to Your Group
 
-The bot can:
-- Send notifications
-- Provide information
-- Verify actions
+1. Invite @aquadsbumpbot to your TG group
+2. Raids will be shared directly to your community
+3. Use \`/raidin\` to opt-in to community raid network
+4. Use \`/raidout\` to opt-out anytime
 
-The bot cannot:
-- Access your wallet
-- Make transactions
-- Change account settings
+### Points System
 
-### Group Integration
+- **Earn**: 20 points per raid completion
+- **Earn**: 20 points per first vote on each project
+- **Spend**: 2000 points for additional raids
+- **Redeem**: $100 CAD per 10,000 points
 
-Add the bot to your group:
-1. Invite @AquadsBot
-2. Make it admin (optional)
-3. Configure settings
-4. Use group features
-
-### Troubleshooting
-
-**Bot Not Responding**
-- Check if bot is up
-- Try /start again
-- Restart Telegram
-
-**Connection Issues**
-- Verify username correct
-- Check Aquads account
-- Try reconnecting
-
-> 💡 **Tip**: Enable notifications for important alerts like bookings and payments.
+> 💡 **Tip**: Start with /help to see the interactive menu with all features.
     `,
     prevPage: { id: 'partner-rewards', title: 'Partner Rewards' },
     nextPage: { id: 'bot-commands', title: 'Bot Commands' },
@@ -3645,73 +3629,71 @@ Add the bot to your group:
   
   botCommands: {
     title: 'Bot Commands',
-    description: 'Complete list of Telegram bot commands.',
+    description: 'Complete list of Aquads Bump Bot commands.',
     content: `
 ## Bot Commands
 
-Full reference of available Telegram bot commands.
-
-### Basic Commands
-
-| Command | Description |
-|---------|-------------|
-| \`/start\` | Initialize bot |
-| \`/help\` | Show command list |
-| \`/connect\` | Link Aquads account |
-| \`/disconnect\` | Unlink account |
-| \`/status\` | Check connection status |
+Full reference of all 16 commands available in @aquadsbumpbot.
 
 ### Account Commands
 
 | Command | Description |
 |---------|-------------|
-| \`/profile\` | View your profile |
-| \`/points\` | Check points balance |
-| \`/bookings\` | View active bookings |
-| \`/notifications\` | Configure alerts |
-
-### Token Commands
-
-| Command | Description |
-|---------|-------------|
-| \`/price <token>\` | Get token price |
-| \`/trending\` | See trending tokens |
-| \`/vote <token>\` | Vote on token |
-| \`/alerts\` | Manage price alerts |
+| \`/start\` | Begin onboarding and link your account |
+| \`/link username\` | Connect your Telegram to Aquads account |
+| \`/twitter handle\` | Set your Twitter username for raids |
+| \`/facebook handle\` | Set your Facebook username for raids |
+| \`/help\` | View interactive menu with all features |
+| \`/cancel\` | Cancel any ongoing operation |
 
 ### Raid Commands
 
 | Command | Description |
 |---------|-------------|
-| \`/raids\` | List active raids |
-| \`/myraids\` | Your raid history |
-| \`/leaderboard\` | Points leaderboard |
+| \`/raids\` | View all available Twitter & Facebook raids |
+| \`/createraid URL\` | Create a Twitter raid (5 FREE daily, then 2000 pts) |
+| \`/cancelraid URL\` | Cancel a raid you created |
 
-### Group Commands
-
-For use in Telegram groups:
+### Bubble & Voting Commands
 
 | Command | Description |
 |---------|-------------|
-| \`/raid\` | Start raid in group |
-| \`/verify\` | Verify raid completion |
-| \`/stats\` | Group statistics |
+| \`/bubbles\` | View top 10 bubbles by bullish votes |
+| \`/mybubble\` | View YOUR projects with voting buttons |
+| \`/boostvote\` | Purchase vote + member boost packages |
 
-### Alert Commands
+### Branding Commands
 
-| Command | Example |
-|---------|---------|
-| \`/setalert\` | \`/setalert BTC 50000\` |
-| \`/removealert\` | \`/removealert BTC\` |
-| \`/myalerts\` | List your alerts |
+| Command | Description |
+|---------|-------------|
+| \`/setbranding\` | Upload custom branding image (bumped projects only) |
+| \`/removebranding\` | Remove your custom branding |
 
-### Command Tips
+### Group Commands
 
-- Commands are case-insensitive
-- Some require parameters
-- Use /help <command> for details
+| Command | Description |
+|---------|-------------|
+| \`/raidin\` | Opt-in your group to community raid sharing |
+| \`/raidout\` | Opt-out your group from community raids |
 
-> 💡 **Tip**: Pin the /help message for quick reference.
+### Command Examples
+
+**Creating a Raid:**
+\`\`\`
+/createraid https://twitter.com/yourproject/status/123456789
+\`\`\`
+
+**Linking Account:**
+\`\`\`
+/link myaquadsusername
+\`\`\`
+
+**Setting Twitter:**
+\`\`\`
+/twitter myhandle
+\`\`\`
+
+> 💡 **Tip**: Use /help to see an interactive menu with buttons for quick access to all features.
     `,
     prevPage: { id: 'bot-setup', title: 'Telegram Bot Setup' },
     nextPage: { id: 'bot-features', title: 'Bot Features' },
@@ -3719,98 +3701,86 @@ For use in Telegram groups:
   
   botFeatures: {
     title: 'Bot Features',
-    description: 'Advanced features of the Aquads Telegram bot.',
+    description: 'Core features of the Aquads Bump Bot for meme coin projects.',
     content: `
 ## Bot Features
 
-Explore the full capabilities of the Aquads Telegram bot.
+The Aquads Bump Bot is built specifically for meme coin projects to grow their community and visibility.
 
-### Real-Time Notifications
+### Twitter & Facebook Raids
 
-Get instant alerts for:
-- Booking requests
-- Payment confirmations
-- Raid opportunities
-- Price movements
-- Platform updates
+**How Raids Work:**
+1. Project owners create raids with tweet/post URLs
+2. Community members complete raids (like, RT, comment)
+3. Completions are admin-verified
+4. Participants earn 20 points per completion
 
-### Price Tracking
+**Raid Details:**
+- 5 FREE raid posts per day
+- Additional raids cost 2000 points each
+- Raids auto-expire after 48 hours
+- Support both Twitter and Facebook
 
-**Set Alerts**
-\`\`\`
-/setalert ETH 2000
-\`\`\`
-Get notified when ETH hits $2000.
+### Voting System
 
-**Check Prices**
-\`\`\`
-/price SOL
-\`\`\`
-Get current SOL price.
+**Bullish vs Bearish:**
+- Click 👍 (Bullish) or 👎 (Bearish) on any project
+- First vote on each project earns 20 points
+- Votes affect bubble rankings
+- Projects with more bullish votes trend higher
 
-### Quick Actions
+### Bubble Rankings & Trending
 
-Perform actions directly in Telegram:
-- View bookings
-- Check points
-- See leaderboard
-- Browse raids
+**Multi-Platform Visibility:**
+- **Aquads Homepage**: Bumped projects appear in trending
+- **BEX Trending Section**: Featured visibility
+- **Bubble Leaderboards**: Ranked by bullish votes
+- **5K+ Trending Channel**: Vote notifications reach thousands
 
-### Group Features
+Use \`/bubbles\` to see top 10 and \`/mybubble\` to manage your projects.
 
-**Raid Verification**
-- Post raids in groups
-- Members verify participation
-- Automatic point distribution
+### Vote + Member Boost Packages
 
-**Community Stats**
-- Group engagement metrics
-- Member leaderboards
-- Activity tracking
+Purchase boosts via \`/boostvote\`:
 
-### Inline Features
+| Package | Votes + Members | Price | Discount |
+|---------|-----------------|-------|----------|
+| Starter | 100 | $20 USDC | - |
+| Basic | 250 | $40 USDC | 20% OFF |
+| Growth | 500 | $80 USDC | 20% OFF |
+| Pro | 1000 | $150 USDC | 25% OFF |
 
-Use @AquadsBot inline:
-- Search tokens
-- Share prices
-- Post project info
+**Every package includes:**
+- Guaranteed bullish votes
+- Real Telegram group members
+- Vote notifications to trending channel
 
-### Automation
+### Custom Branding
 
-**Scheduled Alerts**
-- Daily summaries
-- Weekly reports
-- Custom schedules
+**For Bumped Projects:**
+- Upload your logo/image (max 500KB, JPG/PNG)
+- Your branding appears on vote notifications
+- Notifications go to 5K+ member trending channel
+- Set with \`/setbranding\`, remove with \`/removebranding\`
 
-**Auto-Responses**
-- Quick replies
-- Status updates
-- FAQ answers
+### Community Raid Network
 
-### Security Features
+**Cross-Group Sharing:**
+- \`/raidin\` - Opt your group into the network
+- \`/raidout\` - Opt out anytime
+- Raids shared across all participating groups
+- Multiply your reach beyond your own community
 
-- Account verification
-- Action confirmation
-- Session management
-- Activity logs
+### Points Economy
 
-### Integration Benefits
+| Action | Points |
+|--------|--------|
+| Complete a raid | +20 pts |
+| First vote on project | +20 pts |
+| Create extra raid | -2000 pts |
+| Redeem for cash | 10,000 pts = $100 CAD |
 
-| Feature | Benefit |
-|---------|---------|
-| Notifications | Never miss updates |
-| Quick Access | Action without browser |
-| Group Integration | Community engagement |
-| Mobile-First | Use on the go |
-
-### Coming Soon
-
-- More trading features
-- Enhanced analytics
-- Additional automations
-- Token swaps via bot
-
-> 💡 **Tip**: The Telegram bot is perfect for staying connected on mobile.
+> 💡 **Tip**: List and bump your project on Aquads to unlock premium features like trending visibility and custom branding.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },

@@ -1332,7 +1332,7 @@ export const TokenListingMockup = () => (
 
 // Telegram Bot Mockup
 export const TelegramBotMockup = () => (
-  <MockupContainer title="Aquads Telegram Bot">
+  <MockupContainer title="Aquads Bump Bot (@aquadsbumpbot)">
     <div className="bg-gray-900 rounded-lg overflow-hidden max-w-md mx-auto">
       {/* Telegram-style header */}
       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 flex items-center gap-3">
@@ -1340,61 +1340,77 @@ export const TelegramBotMockup = () => (
           🤖
         </div>
         <div>
-          <h3 className="text-white font-bold">Aquads Bot</h3>
-          <p className="text-blue-100 text-xs">online</p>
+          <h3 className="text-white font-bold">Aquads Bump Bot</h3>
+          <p className="text-blue-100 text-xs">@aquadsbumpbot • online</p>
         </div>
       </div>
 
       {/* Chat area */}
       <div className="p-4 space-y-3 bg-[#0e1621] min-h-[300px]">
-        {/* Bot message */}
+        {/* Bot welcome */}
         <div className="flex gap-2">
           <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm">🤖</div>
           <div className="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 max-w-xs">
-            <p className="text-white text-sm">Welcome to Aquads! 🌊</p>
-            <p className="text-gray-400 text-xs mt-1">Here's what I can do:</p>
+            <p className="text-white text-sm font-medium">🤖 Aquads Bump Bot</p>
+            <p className="text-gray-400 text-xs mt-1">👤 User123 | 💰 450 pts</p>
+            <p className="text-gray-400 text-xs">🐦 Twitter: ✅ | 🎨 Branding: ✅</p>
           </div>
         </div>
 
         {/* Command buttons */}
         <div className="ml-10 flex flex-wrap gap-2">
           <button className="bg-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-lg text-sm border border-cyan-500/30">
-            /price
+            /raids
           </button>
           <button className="bg-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-lg text-sm border border-cyan-500/30">
-            /trending
+            /bubbles
           </button>
-          <button className="bg-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-lg text-sm border border-cyan-500/30">
-            /alerts
+          <button className="bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg text-sm border border-purple-500/30">
+            /boostvote
           </button>
         </div>
 
         {/* User message */}
         <div className="flex justify-end">
           <div className="bg-cyan-600 rounded-lg rounded-tr-none px-3 py-2 max-w-xs">
-            <p className="text-white text-sm">/price SOL</p>
+            <p className="text-white text-sm">/raids</p>
           </div>
         </div>
 
-        {/* Bot response */}
+        {/* Bot response - Raid */}
         <div className="flex gap-2">
           <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm">🤖</div>
           <div className="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 max-w-xs">
-            <p className="text-white text-sm font-medium">📊 SOL/USDT</p>
-            <p className="text-green-400 text-lg font-bold">$142.50 <span className="text-xs">+5.2%</span></p>
-            <div className="text-gray-400 text-xs mt-1 space-y-0.5">
-              <p>24h Vol: $2.4B</p>
-              <p>MCap: $61.2B</p>
+            <p className="text-white text-sm font-medium">🚀 Twitter Raid Available!</p>
+            <p className="text-gray-400 text-xs mt-1">💰 Reward: 20 points</p>
+            <div className="flex gap-2 mt-2">
+              <span className="text-[10px] bg-pink-500/20 text-pink-400 px-2 py-1 rounded flex items-center gap-1">
+                ❤️ Like
+              </span>
+              <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded flex items-center gap-1">
+                🔁 RT
+              </span>
+              <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded flex items-center gap-1">
+                💬 Comment
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Alert setup */}
+        {/* Voting buttons */}
         <div className="flex gap-2">
           <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm">🤖</div>
           <div className="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 max-w-xs">
-            <p className="text-white text-sm">Set up price alerts:</p>
-            <code className="text-cyan-400 text-xs block mt-1">/alert SOL 150</code>
+            <p className="text-white text-sm">Vote on MoonCoin:</p>
+            <div className="flex gap-2 mt-2">
+              <button className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded text-sm border border-green-500/30">
+                👍 Bullish
+              </button>
+              <button className="bg-red-500/20 text-red-400 px-4 py-1.5 rounded text-sm border border-red-500/30">
+                👎 Bearish
+              </button>
+            </div>
+            <p className="text-gray-500 text-xs mt-1">Earn 20 pts for first vote</p>
           </div>
         </div>
       </div>
@@ -1403,7 +1419,7 @@ export const TelegramBotMockup = () => (
       <div className="bg-gray-800 px-4 py-3 flex items-center gap-2 border-t border-gray-700">
         <input 
           type="text" 
-          placeholder="Type a command..." 
+          placeholder="/createraid URL (5 FREE daily)" 
           className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg text-sm"
           readOnly
         />
