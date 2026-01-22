@@ -859,7 +859,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for On-Chain Resume
   if (feature.title === 'On-Chain Resume') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -879,21 +879,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/0 via-teal-500/50 to-emerald-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-cyan">On-Chain Resume</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Blockchain-Verified Credentials</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Blockchain-Verified Credentials</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   World's first blockchain-verified freelancer credentials. Your skills, reputation, and work history permanently stored on Base via Ethereum Attestation Service. Portable, tamper-proof, and truly yours.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                   {[
                     { icon: '⛓️', label: 'Base Chain', value: '100% On-Chain' },
                     { icon: '🔒', label: 'Tamper-Proof', value: 'Immutable' },
@@ -901,7 +901,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -917,7 +917,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -925,7 +925,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/home?tab=onchain">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-emerald-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-emerald-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(16, 185, 129, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -945,7 +945,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Resume mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -956,15 +956,15 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 to-teal-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         ⛓️
                       </div>
                       <div>
-                        <div className="text-white font-bold text-[10px] sm:text-xs md:text-sm lg:text-base">John Doe</div>
-                        <div className="text-gray-400 text-[8px] sm:text-[10px] md:text-xs lg:text-sm">Web3 Developer</div>
+                        <div className="text-white font-bold">John Doe</div>
+                        <div className="text-gray-400 text-sm">Web3 Developer</div>
                       </div>
                     </div>
                     
@@ -1026,7 +1026,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaFi
   if (feature.title === 'AquaFi') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-green-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1046,21 +1046,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-green-500/0 via-emerald-500/50 to-green-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-green">AquaFi</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Savings & Staking Hub</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Savings & Staking Hub</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Savings & Staking Hub. Professional DeFi management with yield farming and staking pools across multiple chains (Ethereum, Base, BNB). Built-in savings calculator. Earn passive income with automated optimization.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '💰', label: 'Up to 4.8% APY', value: 'High Yield' },
                     { icon: '🔗', label: '3 Chains', value: 'ETH/Base/BNB' },
@@ -1069,7 +1069,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -1085,7 +1085,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1093,7 +1093,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/aquafi">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-green-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-sm md:text-base shadow-lg shadow-green-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1113,7 +1113,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - AquaFi mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1124,10 +1124,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/30 to-emerald-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Vault Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         💰
                       </div>
                       <div>
@@ -1206,7 +1206,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Job Board
   if (feature.title === 'Job Board') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1226,21 +1226,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500/0 via-yellow-500/50 to-amber-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-amber">Job Board</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Web3 Jobs & Opportunities</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Web3 Jobs & Opportunities</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities. Integrated with Remotive & CryptoJobsList.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🤖', label: 'AI Matching', value: 'CV Skills' },
                     { icon: '🌍', label: 'Remote/Hybrid', value: 'Flexible' },
@@ -1249,7 +1249,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -1265,7 +1265,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1273,7 +1273,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/marketplace">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-amber-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm md:text-base shadow-lg shadow-amber-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(245, 158, 11, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1293,7 +1293,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Job Board mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1304,10 +1304,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Job Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         💼
                       </div>
                       <div>
@@ -1388,7 +1388,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Live Market Data
   if (feature.title === 'Live Market Data') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-rose-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1408,21 +1408,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-rose-500/0 via-pink-500/50 to-rose-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-rose">Live Market Data</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Real-Time Token Tracking</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Real-Time Token Tracking</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Real-time token tracking, price alerts, and community-driven reviews. Track 100+ tokens with live updates via WebSocket. View market cap, volume, price changes, and community sentiment. Integrated with AquaSwap for instant trading.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '📊', label: '100+ Tokens', value: 'Tracked' },
                     { icon: '⚡', label: 'Real-Time', value: 'WebSocket' },
@@ -1431,7 +1431,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -1447,7 +1447,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1455,7 +1455,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/tokens">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-rose-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-sm md:text-base shadow-lg shadow-rose-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(244, 63, 94, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1475,7 +1475,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Market Data mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1486,10 +1486,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-rose-500/30 to-pink-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Token Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         📈
                       </div>
                       <div>
@@ -1575,7 +1575,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Trust Score System
   if (feature.title === 'Trust Score System') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1595,21 +1595,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-violet-500/50 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-purple">Trust Score System</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">AI-Powered Freelancer Vetting</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">AI-Powered Freelancer Vetting</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   AI-powered freelancer vetting with transparent reliability metrics. Trust scores calculated from ratings, completion rates, verification status, and skill badges. Make informed decisions with real-time trust metrics.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '⭐', label: 'Rating (50%)', value: 'Reviews' },
                     { icon: '✅', label: 'Completion (20%)', value: 'Job Rate' },
@@ -1618,7 +1618,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -1634,7 +1634,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1642,7 +1642,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/marketplace">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-purple-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-sm md:text-base shadow-lg shadow-purple-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(168, 85, 247, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1662,7 +1662,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Trust Score mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1673,10 +1673,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-violet-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Trust Score Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         ⚡
                       </div>
                       <div>
@@ -1762,7 +1762,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaSwap
   if (feature.title === 'AquaSwap') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1782,21 +1782,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-teal-500/0 via-emerald-500/50 to-teal-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-teal">AquaSwap</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Cross-Chain DEX & Trading</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain DEX & Trading</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Seamless token swapping across multiple chains with professional TradingView charts. Available as Chrome browser extension—swap tokens from any webpage instantly. Cross-chain bridging and professional trading tools.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🔗', label: '50+ Blockchains', value: 'Multi-Chain' },
                     { icon: '📊', label: 'TradingView Charts', value: 'Pro Tools' },
@@ -1805,7 +1805,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -1821,7 +1821,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1829,7 +1829,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/aquaswap">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-teal-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-sm md:text-base shadow-lg shadow-teal-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(20, 184, 166, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1849,7 +1849,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - AquaSwap mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -1860,10 +1860,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-teal-500/30 to-emerald-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Swap Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         💱
                       </div>
                       <div>
@@ -1949,7 +1949,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Dynamic Token Bubbles
   if (feature.title === 'Dynamic Token Bubbles') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-cyan-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -1969,21 +1969,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-500/0 via-teal-500/50 to-cyan-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-cyan">Dynamic Token Bubbles</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Interactive Project Visualization</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Interactive Project Visualization</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Interactive visualization of crypto projects based on community engagement. BEX trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '📊', label: 'Bubble Rankings', value: 'By Votes' },
                     { icon: '🔥', label: 'BEX Trending', value: 'Multi-Platform' },
@@ -1992,7 +1992,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2008,7 +2008,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2016,7 +2016,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/home">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-cyan-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(6, 182, 212, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2036,7 +2036,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Bubble mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2047,10 +2047,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 to-teal-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Bubble Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         🔮
                       </div>
                       <div>
@@ -2128,7 +2128,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Twitter Raids
   if (feature.title === 'Twitter Raids') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-sky-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -2148,21 +2148,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-sky-500/0 via-blue-500/50 to-sky-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-sky">Twitter Raids</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Boost Visibility with Coordinated Campaigns</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Boost Visibility with Coordinated Campaigns</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Boost visibility with coordinated social campaigns. Create Twitter raids—5 FREE daily for eligible projects, then use 2000 points for additional posts. Community earns 20 points per completion (50 with verified account). Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🆓', label: '5 Free Daily', value: 'For Projects' },
                     { icon: '💎', label: '2000 Points', value: 'After Free' },
@@ -2171,7 +2171,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2187,7 +2187,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2195,7 +2195,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/social-raids">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-sky-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-bold text-sm md:text-base shadow-lg shadow-sky-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(14, 165, 233, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2215,7 +2215,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Twitter Raid mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2226,10 +2226,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-sky-500/30 to-blue-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Twitter Raid Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         🐦
                       </div>
                       <div>
@@ -2306,7 +2306,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for HyperSpace
   if (feature.title === 'HyperSpace') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -2326,21 +2326,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-pink-500/50 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">HyperSpace</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Boost Your Twitter Spaces Instantly</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Boost Your Twitter Spaces Instantly</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Get real listeners for your Twitter Spaces. Choose packages from 100 to 5,000 listeners with flexible durations. 100% safe and undetectable — no risk to your account. Trusted by thousands of brands and influencers.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '👥', label: '100-5K', value: 'Listeners' },
                     { icon: '⏱️', label: '30m-2hr', value: 'Duration' },
@@ -2349,7 +2349,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2365,7 +2365,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2373,7 +2373,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/hyperspace">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-purple-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm md:text-base shadow-lg shadow-purple-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(168, 85, 247, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2393,7 +2393,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - HyperSpace mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2404,9 +2404,9 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Space Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         🎙️
                       </div>
@@ -2490,7 +2490,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Web3 Game Hub
   if (feature.title === 'Web3 Game Hub') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-orange-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -2510,21 +2510,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500/0 via-amber-500/50 to-orange-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-orange">Web3 Game Hub</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Discover & Play Blockchain Games</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Discover & Play Blockchain Games</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Discover and promote blockchain games. Connect developers with gamers. Browse games across 13+ blockchains, vote for your favorites, and play instantly. Earn 20 points per vote!
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🔗', label: '13+ Blockchains', value: 'Multi-Chain' },
                     { icon: '🎮', label: '16+ Categories', value: 'All Genres' },
@@ -2533,7 +2533,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2549,7 +2549,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2557,7 +2557,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/games">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-orange-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-sm md:text-base shadow-lg shadow-orange-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(251, 146, 60, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2577,7 +2577,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Game Hub mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2588,7 +2588,7 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500/30 to-amber-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Game Card Header */}
                     <div className="relative mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-orange-600/30 to-amber-600/30 h-32 flex items-center justify-center">
                       <div className="text-5xl drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">🎮</div>
@@ -2664,7 +2664,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Freelancer Marketplace
   if (feature.title === 'Freelancer Marketplace') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -2684,21 +2684,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-violet-500/0 via-purple-500/50 to-violet-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-purple">Freelancer Marketplace</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Web3's Premier Talent Platform</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Web3's Premier Talent Platform</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Web3's premier talent marketplace. Complete booking system—get paid for your skills. Browse service listings, receive lead notifications, and connect directly with clients. No monthly fees, only pay for results.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '⭐', label: 'Trust Score', value: 'AI-Powered' },
                     { icon: '🤖', label: 'Job Matching', value: 'AI-Powered' },
@@ -2707,7 +2707,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2723,7 +2723,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2731,7 +2731,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to={feature.link}>
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-violet-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold text-sm md:text-base shadow-lg shadow-violet-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(139, 92, 246, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2751,7 +2751,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Marketplace mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2762,10 +2762,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-violet-500/30 to-purple-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Service Card Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         👥
                       </div>
                       <div>
@@ -2844,7 +2844,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Telegram Bot
   if (feature.title === 'Telegram Bot') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -2864,21 +2864,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/0 via-purple-500/50 to-indigo-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-purple">Telegram Bot</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Complete Project Growth Platform</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Complete Project Growth Platform</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Boost trending across Aquads, BEX, and bubble rankings. Custom branding in 5K+ trending channel.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🐦', label: 'Twitter Raids', value: '5 Free Daily' },
                     { icon: '👍', label: 'Voting for Ranking', value: '20 Pts/Vote' },
@@ -2887,7 +2887,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -2903,7 +2903,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -2911,7 +2911,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to={feature.link}>
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-indigo-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-sm md:text-base shadow-lg shadow-indigo-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(99, 102, 241, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -2931,7 +2931,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Telegram Bot mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -2942,10 +2942,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Telegram Header */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4 pb-2 sm:pb-3 md:pb-4 border-b border-white/10">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         🤖
                       </div>
                       <div>
@@ -3001,7 +3001,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for AquaPay - match the standalone section exactly
   if (feature.title === 'AquaPay') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -3021,16 +3021,16 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/0 via-cyan-500/50 to-blue-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-cyan">AquaPay</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Your Universal Crypto Payment Link</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Your Universal Crypto Payment Link</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Create a single payment link to receive crypto on any chain. Share it with anyone, anywhere. 
                   Funds go directly to your wallet - no middleman, no fees from us.
                 </p>
@@ -3057,7 +3057,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -3065,7 +3065,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to={feature.link}>
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-blue-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm md:text-base shadow-lg shadow-blue-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -3085,7 +3085,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Payment link mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -3096,10 +3096,10 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs sm:text-sm md:text-lg lg:text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                         💸
                       </div>
                       <div>
@@ -3158,7 +3158,7 @@ const CarouselCard = ({ feature, index }) => {
   // Special design for Marketing & PR
   if (feature.title === 'Marketing & PR') {
     return (
-      <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
         {/* Background glow effects - contained to prevent overflow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl -translate-y-1/2" />
@@ -3178,21 +3178,21 @@ const CarouselCard = ({ feature, index }) => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/0 via-rose-500/50 to-pink-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
-            <div className="relative p-3 sm:p-4 md:p-6 lg:p-10 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
               {/* Left content */}
-              <div className="flex-1 text-center md:text-left w-full">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-2 sm:mb-3 md:mb-4 font-display">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-pink">Marketing & PR</span>
                   <br />
-                  <span className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl text-gray-300">Press Release Distribution</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Press Release Distribution</span>
                 </h2>
                 
-                <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-6 max-w-xl">
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.
                 </p>
                 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '📰', label: '7 Packages', value: 'From $99' },
                     { icon: '🎯', label: '125+ Pickups', value: 'Guaranteed' },
@@ -3201,7 +3201,7 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center md:items-start gap-0.5 sm:gap-1 text-white text-[10px] sm:text-xs md:text-sm bg-white/5 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2"
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -3217,7 +3217,7 @@ const CarouselCard = ({ feature, index }) => {
                 </div>
                 
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -3225,7 +3225,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to="/why-list">
                     <motion.button
-                      className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-pink-500/25"
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm md:text-base shadow-lg shadow-pink-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(236, 72, 153, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -3245,7 +3245,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {/* Right visual - Marketing Package mockup */}
               <motion.div
-                className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[160px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[320px] xl:max-w-[380px] mockup-card-container"
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
                 initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
@@ -3256,7 +3256,7 @@ const CarouselCard = ({ feature, index }) => {
                   <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-rose-500/30 rounded-2xl blur-2xl scale-110" />
                   
                   {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl">
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
                     {/* Package Header */}
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                       <div>
@@ -3340,7 +3340,7 @@ const CarouselCard = ({ feature, index }) => {
   }
 
   return (
-    <section className="relative w-full h-full px-2 sm:px-3 md:px-4 lg:px-6 pt-2 sm:pt-3 md:pt-4 lg:pt-6 pb-10 sm:pb-12 md:pb-16 overflow-hidden flex flex-col landing-section">
+    <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
       {/* Background glow effects - contained to prevent overflow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div 
@@ -3391,7 +3391,7 @@ const CarouselCard = ({ feature, index }) => {
               
               {feature.link && (
                 <motion.div
-                  className="flex flex-col gap-2 sm:gap-3 justify-center md:justify-start items-center md:items-start"
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -3399,7 +3399,7 @@ const CarouselCard = ({ feature, index }) => {
                 >
                   <Link to={feature.link}>
                     <motion.button
-                      className={`w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r ${colors.buttonGradient} text-white font-bold text-xs sm:text-sm md:text-base shadow-lg`}
+                      className={`w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r ${colors.buttonGradient} text-white font-bold text-sm md:text-base shadow-lg`}
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -3412,7 +3412,7 @@ const CarouselCard = ({ feature, index }) => {
             
             {/* Right visual - SVG mockup */}
             <motion.div
-              className="flex-shrink-0 w-2/5 min-w-[120px] max-w-[180px] sm:max-w-[240px] md:max-w-[320px] lg:max-w-[400px] xl:max-w-[480px] mockup-card-container"
+              className="flex-shrink-0 w-full max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mockup-card-container"
               initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
               whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
               viewport={{ once: true }}
@@ -3428,7 +3428,7 @@ const CarouselCard = ({ feature, index }) => {
                 />
                 
                 {/* Mockup card */}
-                <div className="relative bg-gray-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 lg:p-6 border border-white/20 shadow-2xl overflow-hidden flex items-center justify-center">
+                <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl overflow-hidden flex items-center justify-center">
                   <div className="w-full flex items-center justify-center">
                     <FeaturePreviewSVG featureTitle={feature.title} />
                   </div>
@@ -4306,7 +4306,7 @@ const LandingPage = () => {
       </motion.section>
 
       {/* Tagline Section */}
-      <section className="relative min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] flex items-center justify-center px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
+      <section className="relative min-h-[70vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -4314,19 +4314,19 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black text-white mb-3 sm:mb-4 md:mb-6 leading-tight font-display">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 md:mb-6 leading-tight font-display">
               The <span className="text-gradient-cyan">Web3</span> Hub for
               <br />
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base lg:text-xl xl:text-2xl text-gray-400 max-w-3xl mx-auto mb-4 sm:mb-6 md:mb-8 leading-relaxed px-2">
+            <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
             </p>
           </motion.div>
 
           {/* Stats */}
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 lg:gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -4349,18 +4349,18 @@ const LandingPage = () => {
       </section>
 
       {/* Features Interactive Carousel */}
-      <section className="relative w-full py-1 sm:py-2 md:py-4 overflow-hidden">
+      <section className="relative w-full py-2 md:py-4 overflow-hidden">
         <div className="w-full">
           <motion.div
-            className="text-center mb-1 md:mb-2 px-3 sm:px-4"
+            className="text-center mb-1 md:mb-2 px-4"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-lg sm:text-xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-0.5 md:mb-1 font-display">
+            <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-0.5 md:mb-1 font-display">
               Everything You Need
             </h2>
-            <p className="text-gray-400 text-[10px] sm:text-xs md:text-sm lg:text-lg max-w-2xl mx-auto">
+            <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
               A complete ecosystem for Web3 projects and professionals tools.
             </p>
           </motion.div>
@@ -4371,7 +4371,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative min-h-[30vh] sm:min-h-[35vh] md:min-h-[40vh] flex items-center justify-center px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
+      <section className="relative min-h-[40vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
         <motion.div
           className="text-center"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -4379,14 +4379,14 @@ const LandingPage = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-3 sm:mb-4 md:mb-6 font-display">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-4 md:mb-6 font-display">
             Ready to <span className="text-gradient-cyan">Dive In</span>?
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
             <Link to="/home">
               <motion.button
-                className="px-4 sm:px-5 md:px-6 lg:px-8 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg glow-cyan"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-lg glow-cyan"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(34, 211, 238, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -4396,7 +4396,7 @@ const LandingPage = () => {
             
             <Link to="/marketplace">
               <motion.button
-                className="px-4 sm:px-5 md:px-6 lg:px-8 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg glow-purple"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold text-sm md:text-lg glow-purple"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(192, 132, 252, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -4418,7 +4418,7 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-white/10 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-12">
+      <footer className="relative border-t border-white/10 px-4 md:px-6 py-6 md:py-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-5 md:gap-6">
             {/* Logo & Copyright */}
