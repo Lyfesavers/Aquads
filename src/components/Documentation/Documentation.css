@@ -23,6 +23,7 @@
   background: linear-gradient(135deg, #0a0a0f 0%, #111827 50%, #0f172a 100%);
   min-height: 100vh;
   color: var(--doc-text-primary);
+  position: relative;
 }
 
 /* Header Styles */
@@ -62,8 +63,6 @@
 /* Main Content Styles */
 .doc-content {
   background: transparent;
-  min-height: calc(100vh - 64px);
-  overflow-y: auto;
 }
 
 .doc-content-body {
@@ -572,18 +571,8 @@
 }
 
 .doc-header,
-.doc-sidebar {
-  position: relative;
-  z-index: 1;
-}
-
+.doc-sidebar,
 .doc-content {
-  position: relative;
   z-index: 1;
-}
-
-/* Ensure main content inner wrapper aligns to top */
-.doc-content > div:first-child {
-  margin-top: 0;
 }
 

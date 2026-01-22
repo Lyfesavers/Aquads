@@ -4744,7 +4744,7 @@ const Documentation = () => {
       {/* Main Content */}
       <main 
         ref={contentRef}
-        className="doc-content lg:ml-72 pt-16"
+        className="doc-content absolute top-16 left-0 right-0 lg:left-72 bottom-0 overflow-y-auto"
       >
         <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Breadcrumb */}
