@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import emailService from '../services/emailService';
+import { AQUADS_WALLETS, FEE_CONFIG } from '../config/wallets';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+
+// Platform Solana wallet for fee collection
+const SOLANA_PLATFORM_WALLET = AQUADS_WALLETS.SOLANA;
 
 // CoinGecko IDs for price fetching
 const COINGECKO_IDS = {
@@ -139,6 +143,25 @@ const AquaPayPage = ({ currentUser }) => {
   const [showSolanaWalletModal, setShowSolanaWalletModal] = useState(false);
   const [wcProvider, setWcProvider] = useState(null);
   const [tokenPrice, setTokenPrice] = useState(null);
+
+  // Calculate platform fee (0.5%) for Solana only
+  const solanaFeeDetails = useMemo(() => {
+    if (selectedChain !== 'solana') return null;
+    
+    const amountNum = parseFloat(amount) || 0;
+    if (amountNum <= 0) return null;
+    
+    const feePercentage = FEE_CONFIG.AQUAPAY_FEE_PERCENTAGE;
+    const feeAmount = amountNum * feePercentage;
+    const totalAmount = amountNum + feeAmount;
+    
+    return {
+      recipientAmount: amountNum,
+      feeAmount: parseFloat(feeAmount.toFixed(6)),
+      totalAmount: parseFloat(totalAmount.toFixed(6)),
+      feePercentage: feePercentage * 100 // 0.5
+    };
+  }, [amount, selectedChain]);
 
   useEffect(() => {
     const fetchPaymentPage = async () => {
@@ -405,33 +428,74 @@ const AquaPayPage = ({ currentUser }) => {
         
         const fromPubkey = new PublicKey(walletAddress);
         const toPubkey = new PublicKey(recipientAddress);
-        let transaction;
+        
+        // Platform wallet for fee collection
+        if (!SOLANA_PLATFORM_WALLET) {
+          throw new Error('Platform wallet not configured. Please contact support.');
+        }
+        const platformPubkey = new PublicKey(SOLANA_PLATFORM_WALLET);
+        
+        // Calculate amounts (recipient gets full amount, fee is additional)
+        const recipientAmount = parseFloat(amount);
+        const feeAmount = recipientAmount * FEE_CONFIG.AQUAPAY_FEE_PERCENTAGE;
+        
+        let transaction = new Transaction();
+        
         if (selectedToken === 'usdc') {
           const { getAssociatedTokenAddress, createTransferInstruction, createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
           const mint = new PublicKey(SOLANA_USDC_MINT);
+          
+          // Get all ATAs
           const fromATA = await getAssociatedTokenAddress(mint, fromPubkey);
-          const toATA = await getAssociatedTokenAddress(mint, toPubkey);
-          transaction = new Transaction();
-          // Check if recipient ATA exists via proxy
+          const recipientATA = await getAssociatedTokenAddress(mint, toPubkey);
+          const platformATA = await getAssociatedTokenAddress(mint, platformPubkey);
+          
+          // Check if recipient ATA exists, create if needed
           try {
-            const acctInfo = await connection.getAccountInfo(toATA);
+            const acctInfo = await connection.getAccountInfo(recipientATA);
             if (!acctInfo?.value) {
-              transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint));
+              transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, recipientATA, toPubkey, mint));
             }
           } catch { 
-            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint)); 
+            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, recipientATA, toPubkey, mint)); 
           }
-          transaction.add(createTransferInstruction(fromATA, toATA, fromPubkey, Math.floor(parseFloat(amount) * 1e6)));
+          
+          // Check if platform ATA exists, create if needed (should already exist)
+          try {
+            const platformAcctInfo = await connection.getAccountInfo(platformATA);
+            if (!platformAcctInfo?.value) {
+              transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, platformATA, platformPubkey, mint));
+            }
+          } catch { 
+            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, platformATA, platformPubkey, mint)); 
+          }
+          
+          // Calculate amounts in USDC smallest units (6 decimals)
+          const recipientAmountUnits = Math.floor(recipientAmount * 1e6);
+          const feeAmountUnits = Math.floor(feeAmount * 1e6);
+          
+          // Add fee transfer FIRST, then recipient transfer (both in same transaction)
+          transaction.add(createTransferInstruction(fromATA, platformATA, fromPubkey, feeAmountUnits));
+          transaction.add(createTransferInstruction(fromATA, recipientATA, fromPubkey, recipientAmountUnits));
         } else {
-          transaction = new Transaction().add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL) }));
+          // SOL (native token) transfer with fee
+          const recipientLamports = Math.floor(recipientAmount * LAMPORTS_PER_SOL);
+          const feeLamports = Math.floor(feeAmount * LAMPORTS_PER_SOL);
+          
+          // Add fee transfer FIRST, then recipient transfer (both in same transaction)
+          transaction.add(SystemProgram.transfer({ fromPubkey, toPubkey: platformPubkey, lamports: feeLamports }));
+          transaction.add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: recipientLamports }));
         }
-        transaction.recentBlockhash = blockhash; transaction.feePayer = fromPubkey;
+        
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromPubkey;
         const signed = await solana.signTransaction(transaction);
         const sig = await connection.sendRawTransaction(signed.serialize());
         setTxHash(sig);
         setTxStatus('pending');
         await connection.confirmTransaction(sig);
-        setTxStatus('success'); await recordPayment(sig);
+        setTxStatus('success'); 
+        await recordPayment(sig);
       }
     } catch (err) { setTxStatus('error'); setTxError(err.reason || err.message); }
     finally { setSending(false); }
@@ -665,8 +729,8 @@ const AquaPayPage = ({ currentUser }) => {
                   <p className="text-slate-500 text-xs">Instant<br/>transfers</p>
                 </div>
                 <div>
-                  <div className="text-lg mb-1">🛡️</div>
-                  <p className="text-slate-500 text-xs">No fees<br/>from us</p>
+                  <div className="text-lg mb-1">{selectedChain === 'solana' ? '💎' : '🛡️'}</div>
+                  <p className="text-slate-500 text-xs">{selectedChain === 'solana' ? 'Low 0.5%' : 'No fees'}<br/>{selectedChain === 'solana' ? 'fee' : 'from us'}</p>
                 </div>
               </div>
             </div>
@@ -831,7 +895,7 @@ const AquaPayPage = ({ currentUser }) => {
                           <span className="text-white">{paymentPage?.displayName}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Amount</span>
+                          <span className="text-slate-500">{solanaFeeDetails ? 'Recipient gets' : 'Amount'}</span>
                           <span className="text-white font-semibold">{amount || '0'} {displaySymbol}</span>
                         </div>
                         {usdValue && (
@@ -844,6 +908,21 @@ const AquaPayPage = ({ currentUser }) => {
                           <span className="text-slate-500">Network</span>
                           <span className="text-white">{chainConfig?.name}</span>
                         </div>
+                        
+                        {/* Solana Platform Fee Section */}
+                        {solanaFeeDetails && (
+                          <div className="border-t border-slate-700/50 pt-2 mt-2 space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-500">Platform Fee ({solanaFeeDetails.feePercentage}%)</span>
+                              <span className="text-amber-400">{solanaFeeDetails.feeAmount.toFixed(6)} {displaySymbol}</span>
+                            </div>
+                            <div className="flex justify-between text-sm font-semibold">
+                              <span className="text-slate-400">You Pay</span>
+                              <span className="text-cyan-400">{solanaFeeDetails.totalAmount.toFixed(6)} {displaySymbol}</span>
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="border-t border-slate-700/50 pt-2 mt-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-500">Network Fee</span>
@@ -852,14 +931,16 @@ const AquaPayPage = ({ currentUser }) => {
                         </div>
                       </div>
 
-                      <button onClick={sendPayment} disabled={sending || !amount || parseFloat(amount) <= 0}
+                      <button onClick={sendPayment} disabled={sending || !amount || parseFloat(amount) <= 0 || (selectedChain === 'solana' && !SOLANA_PLATFORM_WALLET)}
                         className={`w-full py-4 bg-gradient-to-r ${chainConfig?.gradient} text-white font-bold rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg`}>
                         {sending ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {txStatus === 'pending' ? 'Confirming...' : 'Processing...'}</> :
-                          <>Pay {amount || '0'} {displaySymbol}</>}
+                          <>Pay {solanaFeeDetails ? solanaFeeDetails.totalAmount.toFixed(6) : (amount || '0')} {displaySymbol}</>}
                       </button>
 
                       <p className="text-slate-600 text-xs text-center mt-3">
-                        By continuing, you agree to send this payment directly to the recipient's wallet.
+                        {solanaFeeDetails 
+                          ? `Recipient receives ${amount} ${displaySymbol}. A 0.5% platform fee applies.`
+                          : 'By continuing, you agree to send this payment directly to the recipient\'s wallet.'}
                       </p>
                     </div>
                   )}

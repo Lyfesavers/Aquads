@@ -21,6 +21,9 @@ export const FEE_CONFIG = {
   // AquaSwap fees (existing)
   SWAP_FEE_PERCENTAGE: 0.005, // 0.5%
   
+  // AquaPay fees (0.5% transaction fee - Solana only for now)
+  AQUAPAY_FEE_PERCENTAGE: 0.005, // 0.5%
+  
   // AquaFi fees (strategic structure - 0% deposit, 2.5% withdrawal)
   SAVINGS_MANAGEMENT_FEE: 0.0, // 0% fee on deposit (no barrier to entry)
   SAVINGS_WITHDRAWAL_FEE: 0.025 // 2.5% fee on withdrawal (revenue optimization)
