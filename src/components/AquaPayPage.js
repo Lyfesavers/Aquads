@@ -7,8 +7,9 @@ import { AQUADS_WALLETS, FEE_CONFIG } from '../config/wallets';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
 
-// Platform Solana wallet for fee collection
+// Platform wallets for fee collection
 const SOLANA_PLATFORM_WALLET = AQUADS_WALLETS.SOLANA;
+const EVM_PLATFORM_WALLET = AQUADS_WALLETS.ETHEREUM; // Same wallet for all EVM chains
 
 // CoinGecko IDs for price fetching
 const COINGECKO_IDS = {
@@ -144,9 +145,11 @@ const AquaPayPage = ({ currentUser }) => {
   const [wcProvider, setWcProvider] = useState(null);
   const [tokenPrice, setTokenPrice] = useState(null);
 
-  // Calculate platform fee (0.5%) for Solana only
-  const solanaFeeDetails = useMemo(() => {
-    if (selectedChain !== 'solana') return null;
+  // Calculate platform fee (0.5%) for Solana and EVM chains
+  // Bitcoin and TRON are exempt (manual transfers)
+  const feeDetails = useMemo(() => {
+    // Exempt chains (manual transfers)
+    if (!selectedChain || selectedChain === 'bitcoin' || selectedChain === 'tron') return null;
     
     const amountNum = parseFloat(amount) || 0;
     if (amountNum <= 0) return null;
@@ -159,7 +162,8 @@ const AquaPayPage = ({ currentUser }) => {
       recipientAmount: amountNum,
       feeAmount: parseFloat(feeAmount.toFixed(6)),
       totalAmount: parseFloat(totalAmount.toFixed(6)),
-      feePercentage: feePercentage * 100 // 0.5
+      feePercentage: feePercentage * 100, // 0.5
+      isEVM: CHAINS[selectedChain]?.isEVM || false
     };
   }, [amount, selectedChain]);
 
@@ -363,42 +367,67 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }
         
-        // Try standard ethers.js approach first (works with most wallets)
+        // EVM chains: Two transactions required (fee first, then payment)
+        // Check platform wallet is configured
+        if (!EVM_PLATFORM_WALLET) {
+          throw new Error('Platform wallet not configured. Please contact support.');
+        }
+        
         let txHash;
         try {
           const provider = new ethers.BrowserProvider(ethProvider);
           const signer = await provider.getSigner();
-          let tx;
           
-          // For EVM chains, only USDC is supported (native ETH removed due to Trust Wallet limitations)
+          // For EVM chains, only USDC is supported
           if (selectedToken === 'usdc' && USDC_ADDRESSES[selectedChain]) {
             const contract = new ethers.Contract(USDC_ADDRESSES[selectedChain], ERC20_ABI, signer);
             const decimals = await contract.decimals();
-            tx = await contract.transfer(recipientAddress, ethers.parseUnits(amount, decimals));
+            
+            // Calculate amounts
+            const recipientAmount = parseFloat(amount);
+            const feeAmount = recipientAmount * FEE_CONFIG.AQUAPAY_FEE_PERCENTAGE;
+            
+            const recipientAmountUnits = ethers.parseUnits(recipientAmount.toString(), decimals);
+            const feeAmountUnits = ethers.parseUnits(feeAmount.toFixed(6), decimals);
+            
+            // TRANSACTION 1: Platform fee (user must sign)
+            setTxStatus('Signing fee (1/2)...');
+            const feeTx = await contract.transfer(EVM_PLATFORM_WALLET, feeAmountUnits);
+            
+            setTxStatus('Confirming fee...');
+            const feeReceipt = await feeTx.wait();
+            if (feeReceipt.status !== 1) {
+              throw new Error('Fee transaction failed');
+            }
+            
+            // Small delay between transactions for wallet stability
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // TRANSACTION 2: Payment to recipient (user must sign again)
+            setTxStatus('Signing payment (2/2)...');
+            const paymentTx = await contract.transfer(recipientAddress, recipientAmountUnits);
+            
+            txHash = paymentTx.hash;
+            setTxHash(txHash);
+            setTxStatus('Confirming payment...');
+            
+            const paymentReceipt = await paymentTx.wait();
+            if (paymentReceipt.status === 1) {
+              setTxStatus('success');
+              await recordPayment(txHash);
+            } else {
+              throw new Error('Payment transaction failed');
+            }
           } else if (CHAINS[selectedChain]?.isEVM) {
-            // If somehow native token is selected for EVM (shouldn't happen), default to USDC
             throw new Error('Native ETH transfers are not supported for EVM chains. Please use USDC.');
-          } else {
-            // This should only happen for Solana
-            tx = await signer.sendTransaction({ 
-              to: recipientAddress, 
-              value: ethers.parseEther(amount) 
-            });
-          }
-          
-          txHash = tx.hash;
-          setTxHash(txHash);
-          setTxStatus('pending');
-          
-          const receipt = await tx.wait();
-          if (receipt.status === 1) {
-            setTxStatus('success');
-            await recordPayment(txHash);
-          } else {
-            throw new Error('Transaction failed');
           }
         } catch (txError) {
           console.error('Transaction failed:', txError);
+          
+          // Check if user rejected the transaction
+          if (txError.code === 'ACTION_REJECTED' || txError.code === 4001) {
+            throw new Error('Transaction rejected. Both transactions must be approved to complete payment.');
+          }
           
           // Check if this is a known Trust Wallet + WalletConnect limitation
           const isTrustWalletError = txError.message?.includes('Unknown method') || 
@@ -416,7 +445,7 @@ const AquaPayPage = ({ currentUser }) => {
             );
           }
           
-          throw new Error('Transaction failed: ' + (txError.message || 'Unknown error. Please ensure your wallet is on Base network and try again.'));
+          throw new Error('Transaction failed: ' + (txError.message || 'Unknown error. Please ensure your wallet is on the correct network and try again.'));
         }
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
@@ -729,8 +758,8 @@ const AquaPayPage = ({ currentUser }) => {
                   <p className="text-slate-500 text-xs">Instant<br/>transfers</p>
                 </div>
                 <div>
-                  <div className="text-lg mb-1">{selectedChain === 'solana' ? '💎' : '🛡️'}</div>
-                  <p className="text-slate-500 text-xs">{selectedChain === 'solana' ? 'Low 0.5%' : 'No fees'}<br/>{selectedChain === 'solana' ? 'fee' : 'from us'}</p>
+                  <div className="text-lg mb-1">{feeDetails ? '💎' : '🛡️'}</div>
+                  <p className="text-slate-500 text-xs">{feeDetails ? 'Low 0.5%' : 'No fees'}<br/>{feeDetails ? 'fee' : 'from us'}</p>
                 </div>
               </div>
             </div>
@@ -895,7 +924,7 @@ const AquaPayPage = ({ currentUser }) => {
                           <span className="text-white">{paymentPage?.displayName}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">{solanaFeeDetails ? 'Recipient gets' : 'Amount'}</span>
+                          <span className="text-slate-500">{feeDetails ? 'Recipient gets' : 'Amount'}</span>
                           <span className="text-white font-semibold">{amount || '0'} {displaySymbol}</span>
                         </div>
                         {usdValue && (
@@ -909,16 +938,16 @@ const AquaPayPage = ({ currentUser }) => {
                           <span className="text-white">{chainConfig?.name}</span>
                         </div>
                         
-                        {/* Solana Platform Fee Section */}
-                        {solanaFeeDetails && (
+                        {/* Platform Fee Section (Solana + EVM) */}
+                        {feeDetails && (
                           <div className="border-t border-slate-700/50 pt-2 mt-2 space-y-2">
                             <div className="flex justify-between text-sm">
-                              <span className="text-slate-500">Platform Fee ({solanaFeeDetails.feePercentage}%)</span>
-                              <span className="text-amber-400">{solanaFeeDetails.feeAmount.toFixed(6)} {displaySymbol}</span>
+                              <span className="text-slate-500">Platform Fee ({feeDetails.feePercentage}%)</span>
+                              <span className="text-amber-400">{feeDetails.feeAmount.toFixed(6)} {displaySymbol}</span>
                             </div>
                             <div className="flex justify-between text-sm font-semibold">
                               <span className="text-slate-400">You Pay</span>
-                              <span className="text-cyan-400">{solanaFeeDetails.totalAmount.toFixed(6)} {displaySymbol}</span>
+                              <span className="text-cyan-400">{feeDetails.totalAmount.toFixed(6)} {displaySymbol}</span>
                             </div>
                           </div>
                         )}
@@ -931,14 +960,35 @@ const AquaPayPage = ({ currentUser }) => {
                         </div>
                       </div>
 
-                      <button onClick={sendPayment} disabled={sending || !amount || parseFloat(amount) <= 0 || (selectedChain === 'solana' && !SOLANA_PLATFORM_WALLET)}
+                      {/* EVM Two-Signature Warning */}
+                      {feeDetails?.isEVM && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4">
+                          <div className="flex items-start gap-2">
+                            <span className="text-amber-400 text-sm">⚠️</span>
+                            <div>
+                              <p className="text-amber-300 text-sm font-medium">Two signatures required</p>
+                              <p className="text-amber-400/70 text-xs mt-1">
+                                You'll approve 2 transactions: fee first, then payment. Please complete both.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <button onClick={sendPayment} disabled={sending || !amount || parseFloat(amount) <= 0 || (feeDetails && !feeDetails.isEVM && !SOLANA_PLATFORM_WALLET) || (feeDetails?.isEVM && !EVM_PLATFORM_WALLET)}
                         className={`w-full py-4 bg-gradient-to-r ${chainConfig?.gradient} text-white font-bold rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg`}>
-                        {sending ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {txStatus === 'pending' ? 'Confirming...' : 'Processing...'}</> :
-                          <>Pay {solanaFeeDetails ? solanaFeeDetails.totalAmount.toFixed(6) : (amount || '0')} {displaySymbol}</>}
+                        {sending ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            {typeof txStatus === 'string' && txStatus.includes('/') ? txStatus : (txStatus === 'pending' ? 'Confirming...' : 'Processing...')}
+                          </>
+                        ) : (
+                          <>Pay {feeDetails ? feeDetails.totalAmount.toFixed(6) : (amount || '0')} {displaySymbol}</>
+                        )}
                       </button>
 
                       <p className="text-slate-600 text-xs text-center mt-3">
-                        {solanaFeeDetails 
+                        {feeDetails 
                           ? `Recipient receives ${amount} ${displaySymbol}. A 0.5% platform fee applies.`
                           : 'By continuing, you agree to send this payment directly to the recipient\'s wallet.'}
                       </p>
