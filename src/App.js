@@ -6,7 +6,6 @@ import {
   fetchAds, 
   createAd as apiCreateAd, 
   updateAd as apiUpdateAd,
-  updateAdPosition as apiUpdateAdPosition,
   deleteAd as apiDeleteAd, 
   loginUser, 
   loginWithGoogle,
@@ -697,17 +696,9 @@ function App() {
         setIsLoading(false);
         setLoadingMessage('');
         
-        // Update any repositioned ads on the server (optional)
-        for (const ad of repositionedAds) {
-          if (ad.x !== 0 && ad.y !== 0) {
-            try {
-              // Use position-only update to avoid auth issues
-              await apiUpdateAdPosition(ad.id, ad.x, ad.y);
-            } catch (error) {
-              logger.error('Error updating ad position:', error);
-            }
-          }
-        }
+        // Note: Position updates are now only sent when user drags an ad
+        // This reduces server load from 12+ API calls per page load to 0
+        // Positions are stored in DB and recalculated client-side for display
       } catch (error) {
         logger.error('Error loading ads:', error);
         setIsLoading(false);
