@@ -252,18 +252,56 @@ const AquaPayPage = ({ currentUser }) => {
 
   // Detect which browser wallet is available
   const getDetectedWallet = useCallback(() => {
-    if (!window.ethereum) return null;
+    if (typeof window === 'undefined') return null;
     
-    // Check for specific wallet providers
-    if (window.ethereum.isMetaMask) return { name: 'MetaMask', icon: '🦊' };
-    if (window.ethereum.isRabby) return { name: 'Rabby', icon: '🐰' };
-    if (window.ethereum.isCoinbaseWallet) return { name: 'Coinbase Wallet', icon: '🔵' };
-    if (window.ethereum.isBraveWallet) return { name: 'Brave Wallet', icon: '🦁' };
-    if (window.ethereum.isTrust) return { name: 'Trust Wallet', icon: '🛡️' };
-    if (window.ethereum.isTokenPocket) return { name: 'TokenPocket', icon: '💼' };
-    if (window.ethereum.isFrame) return { name: 'Frame', icon: '🖼️' };
+    const eth = window.ethereum;
+    if (!eth) return null;
     
-    // Generic browser wallet detected
+    // Check for specific wallet providers (order matters - check specific ones first)
+    // Many wallets set isMetaMask for compatibility, so check other flags first
+    
+    // Rabby sets isRabby
+    if (eth.isRabby) return { name: 'Rabby', icon: '🐰' };
+    
+    // Coinbase Wallet
+    if (eth.isCoinbaseWallet) return { name: 'Coinbase Wallet', icon: '🔵' };
+    
+    // Brave Wallet (built into Brave browser)
+    if (eth.isBraveWallet) return { name: 'Brave Wallet', icon: '🦁' };
+    
+    // Trust Wallet
+    if (eth.isTrust || eth.isTrustWallet) return { name: 'Trust Wallet', icon: '🛡️' };
+    
+    // TokenPocket
+    if (eth.isTokenPocket) return { name: 'TokenPocket', icon: '💼' };
+    
+    // Frame
+    if (eth.isFrame) return { name: 'Frame', icon: '🖼️' };
+    
+    // OKX Wallet
+    if (eth.isOKExWallet || eth.isOkxWallet) return { name: 'OKX Wallet', icon: '⭕' };
+    
+    // Phantom (also supports EVM)
+    if (eth.isPhantom) return { name: 'Phantom', icon: '👻' };
+    
+    // Zerion
+    if (eth.isZerion) return { name: 'Zerion', icon: '💎' };
+    
+    // Rainbow
+    if (eth.isRainbow) return { name: 'Rainbow', icon: '🌈' };
+    
+    // Check for actual MetaMask LAST (many wallets fake isMetaMask)
+    // Real MetaMask has specific provider info
+    if (eth.isMetaMask && !eth.isRabby && !eth.isBraveWallet && !eth.isTrust && !eth.isPhantom) {
+      // Additional check: MetaMask has _metamask property
+      if (eth._metamask) {
+        return { name: 'MetaMask', icon: '🦊' };
+      }
+      // If isMetaMask but no _metamask, it's likely another wallet
+      return { name: 'Browser Wallet', icon: '🌐' };
+    }
+    
+    // Generic - something is injected but we don't know what
     return { name: 'Browser Wallet', icon: '🌐' };
   }, []);
 
