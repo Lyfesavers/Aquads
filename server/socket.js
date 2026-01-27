@@ -4,6 +4,29 @@ let io;
 // Store connected users
 const connectedUsers = new Map();
 
+// Constants for free raid limits
+const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
+
+// Helper function to check if user has a lifetime-bumped active ad
+async function checkUserHasLifetimeBumpedAd(username) {
+  try {
+    const Ad = require('./models/Ad');
+    const lifetimeBumpedAd = await Ad.findOne({
+      owner: username,
+      status: 'active',
+      isBumped: true,
+      $or: [
+        { bumpDuration: -1 },           // Lifetime bump indicator
+        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
+      ]
+    });
+    return lifetimeBumpedAd !== null;
+  } catch (error) {
+    console.error('Error checking lifetime bumped ad:', error);
+    return false;
+  }
+}
+
 // Initialize the socket.io instance
 function init(server) {
   io = require('socket.io')(server, {
@@ -27,8 +50,8 @@ function init(server) {
           
           const userId = userData.userId;
           
-          // Fetch affiliate info
-          const user = await User.findById(userId).select('affiliateCode referredBy referredUsers affiliateCount commissionRate isVipAffiliate freeRaidProjectEligibility points pointsHistory giftCardRedemptions powerUps');
+          // Fetch affiliate info (including username for free raid eligibility check)
+          const user = await User.findById(userId).select('username affiliateCode referredBy referredUsers affiliateCount commissionRate isVipAffiliate points pointsHistory giftCardRedemptions powerUps freeRaidsUsedToday lastFreeRaidDate');
           
           if (!user) {
             socket.emit('affiliateInfoError', { error: 'User not found' });
@@ -66,8 +89,30 @@ function init(server) {
             .sort({ createdAt: -1 })
             .limit(50);
           
-          // Calculate free raid eligibility
-          const freeRaidEligibility = user.checkFreeRaidEligibility ? user.checkFreeRaidEligibility() : { eligible: false, reason: 'Not available' };
+          // Calculate free raid eligibility using automatic system
+          // Check if user owns an active ad with lifetime bump (20 free raids/day)
+          const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
+          
+          let freeRaidEligibility;
+          if (hasLifetimeBumpedAd) {
+            // User has a lifetime bumped project - 20 free raids/day
+            const eligibility = user.checkFreeRaidEligibility ? user.checkFreeRaidEligibility(LIFETIME_BUMP_FREE_RAID_LIMIT) : { eligible: true, dailyLimit: LIFETIME_BUMP_FREE_RAID_LIMIT, raidsRemaining: LIFETIME_BUMP_FREE_RAID_LIMIT, raidsUsedToday: 0 };
+            freeRaidEligibility = {
+              ...eligibility,
+              eligibilitySource: 'lifetime_bump',
+              eligible: eligibility.eligible !== false
+            };
+          } else {
+            // User doesn't have a lifetime bumped project - not eligible for free raids
+            freeRaidEligibility = {
+              eligible: false,
+              reason: 'List a project in the bubbles and bump for life to get 20 free raids per day!',
+              dailyLimit: 0,
+              raidsRemaining: 0,
+              raidsUsedToday: 0,
+              eligibilitySource: null
+            };
+          }
           
           const affiliateData = {
             affiliateInfo: {
@@ -76,8 +121,7 @@ function init(server) {
               referredUsers: user.referredUsers || [],
               affiliateCount: user.affiliateCount || 0,
               commissionRate: user.commissionRate || 0,
-              isVipAffiliate: user.isVipAffiliate || false,
-              freeRaidProjectEligibility: user.freeRaidProjectEligibility || false
+              isVipAffiliate: user.isVipAffiliate || false
             },
             pointsInfo: {
               points: user.points || 0,

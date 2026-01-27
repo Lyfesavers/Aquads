@@ -8,6 +8,28 @@ const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 
+// Constants for free raid limits
+const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
+
+// Helper function to check if user has a lifetime-bumped active ad
+async function checkUserHasLifetimeBumpedAd(username) {
+  try {
+    const lifetimeBumpedAd = await Ad.findOne({
+      owner: username,
+      status: 'active',
+      isBumped: true,
+      $or: [
+        { bumpDuration: -1 },           // Lifetime bump indicator
+        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
+      ]
+    });
+    return lifetimeBumpedAd !== null;
+  } catch (error) {
+    console.error('Error checking lifetime bumped ad:', error);
+    return false;
+  }
+}
+
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
@@ -3755,12 +3777,19 @@ Tap to update:`;
       const title = `Twitter Raid by @${user.username}`;
       const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
       
-      // Check if user has free raids available
-      const eligibility = user.checkFreeRaidEligibility();
+      // Check if user has free raids available (automatic system based on lifetime bump)
+      const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
+      
+      let dailyLimit = 0;
+      if (hasLifetimeBumpedAd) {
+        dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT; // 20 raids for lifetime bumped projects
+      }
+      
+      const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
 
       if (eligibility.eligible) {
         // Use free raid
-        const usage = await user.useFreeRaid();
+        const usage = await user.useFreeRaid(dailyLimit);
         
         const raid = new TwitterRaid({
           tweetId,
@@ -3827,8 +3856,16 @@ Tap to update:`;
       // No free raids available, use points
       // Check if user has enough points
       if (user.points < POINTS_REQUIRED) {
-        await telegramService.sendBotMessage(chatId, 
-          `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.\n\n💡 Earn points by completing raids: /raids`);
+        let noPointsMessage = `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`;
+        
+        // If user doesn't have a lifetime bumped project, suggest getting one
+        if (!hasLifetimeBumpedAd) {
+          noPointsMessage += `\n\n🚀 Want 20 FREE raids per day?\nList your project in the bubbles at https://aquads.xyz and get a Lifetime Bump!`;
+        }
+        
+        noPointsMessage += `\n\n💡 Earn points by completing raids: /raids`;
+        
+        await telegramService.sendBotMessage(chatId, noPointsMessage);
         return;
       }
       

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const TwitterRaid = require('../models/TwitterRaid');
 const User = require('../models/User');
+const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const pointsModule = require('./points');
@@ -12,6 +13,28 @@ const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidComp
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
+
+// Constants for free raid limits
+const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
+
+// Helper function to check if user has a lifetime-bumped active ad
+async function checkUserHasLifetimeBumpedAd(username) {
+  try {
+    const lifetimeBumpedAd = await Ad.findOne({
+      owner: username,
+      status: 'active',
+      isBumped: true,
+      $or: [
+        { bumpDuration: -1 },           // Lifetime bump indicator
+        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
+      ]
+    });
+    return lifetimeBumpedAd !== null;
+  } catch (error) {
+    console.error('Error checking lifetime bumped ad:', error);
+    return false;
+  }
+}
 
 // Helper function to calculate user trust score
 async function calculateUserTrustScore(userId) {
@@ -949,7 +972,7 @@ router.get('/suspicious', auth, async (req, res) => {
   }
 });
 
-// Create a new free Twitter raid (for free raid projects)
+// Create a new free Twitter raid (for lifetime bumped projects or manually approved free raid projects)
 router.post('/free', auth, requireEmailVerification, async (req, res) => {
   try {
     const { tweetUrl, title, description } = req.body;
@@ -964,9 +987,28 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const eligibility = user.checkFreeRaidEligibility();
+    // Determine eligibility - only lifetime bumped projects get free raids
+    const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
+    
+    if (!hasLifetimeBumpedAd) {
+      return res.status(400).json({ 
+        error: 'Not eligible for free raids. You must have an active project with a lifetime bump in the bubbles.',
+        eligible: false 
+      });
+    }
+    
+    const dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT; // 20 raids for lifetime bumped projects
+    const eligibilitySource = 'lifetime_bump';
+
+    // Check eligibility with the determined daily limit
+    const eligibility = user.checkFreeRaidEligibility(dailyLimit);
     if (!eligibility.eligible) {
-      return res.status(400).json({ error: eligibility.reason });
+      return res.status(400).json({ 
+        error: eligibility.reason,
+        raidsRemaining: eligibility.raidsRemaining,
+        raidsUsedToday: eligibility.raidsUsedToday,
+        dailyLimit: eligibility.dailyLimit
+      });
     }
 
     // Extract tweet ID from URL
@@ -977,8 +1019,8 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
 
     const tweetId = tweetIdMatch[1];
 
-    // Use a free raid
-    const usage = await user.useFreeRaid();
+    // Use a free raid with the appropriate daily limit
+    const usage = await user.useFreeRaid(dailyLimit);
 
     // Create the raid
     const raid = new TwitterRaid({
@@ -1027,14 +1069,60 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     emitRaidUpdate('created', populatedRaid, 'twitter');
     
     res.status(201).json({
-      message: responseMessage, 
-      message: 'Free Twitter raid created successfully!',
+      message: responseMessage,
       raid,
-      usage
+      usage: {
+        ...usage,
+        eligibilitySource
+      }
     });
   } catch (error) {
     console.error('Error creating free raid:', error);
     res.status(500).json({ error: 'Failed to create free Twitter raid' });
+  }
+});
+
+// Check free raid eligibility status (for frontend display)
+router.get('/free/eligibility', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check eligibility sources
+    // Check if user has a lifetime bumped project
+    const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
+    
+    if (!hasLifetimeBumpedAd) {
+      return res.json({
+        eligible: false,
+        reason: 'You must have an active project with a lifetime bump in the bubbles to create free raids.',
+        dailyLimit: 0,
+        raidsRemaining: 0,
+        raidsUsedToday: 0,
+        eligibilitySource: null
+      });
+    }
+
+    // User has lifetime bump - 20 free raids per day
+    const dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT;
+    const eligibilitySource = 'lifetime_bump';
+
+    // Get current usage
+    const eligibility = user.checkFreeRaidEligibility(dailyLimit);
+    
+    res.json({
+      eligible: eligibility.eligible,
+      reason: eligibility.eligible ? null : eligibility.reason,
+      dailyLimit: eligibility.dailyLimit,
+      raidsRemaining: eligibility.raidsRemaining,
+      raidsUsedToday: eligibility.raidsUsedToday,
+      eligibilitySource
+    });
+  } catch (error) {
+    console.error('Error checking free raid eligibility:', error);
+    res.status(500).json({ error: 'Failed to check free raid eligibility' });
   }
 });
 

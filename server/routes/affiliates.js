@@ -202,56 +202,9 @@ router.post('/vip/:userId', auth, async (req, res) => {
   }
 });
 
-// Toggle free raid project status (admin only)
-router.post('/free-raid-project/:userId', auth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can manage free raid projects' });
-    }
-
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Toggle free raid project status
-    user.isFreeRaidProject = !user.isFreeRaidProject;
-    await user.save();
-
-    res.json({ 
-      message: `User ${user.username} ${user.isFreeRaidProject ? 'added to' : 'removed from'} free raid projects`,
-      isFreeRaidProject: user.isFreeRaidProject 
-    });
-  } catch (error) {
-    console.error('Error managing free raid project:', error);
-    res.status(500).json({ error: 'Failed to update free raid project status' });
-  }
-});
-
-// Get free raid project status (admin only)
-router.get('/free-raid-project/:userId', auth, async (req, res) => {
-  try {
-    // Allow users to check their own eligibility or admins to check any user
-    if (!req.user.isAdmin && req.user.userId !== req.params.userId) {
-      return res.status(403).json({ error: 'You can only check your own free raid project status' });
-    }
-
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const eligibility = user.checkFreeRaidEligibility();
-
-    res.json({ 
-      isFreeRaidProject: user.isFreeRaidProject,
-      eligibility
-    });
-  } catch (error) {
-    console.error('Error checking free raid project status:', error);
-    res.status(500).json({ error: 'Failed to check free raid project status' });
-  }
-});
+// Note: Manual free raid toggle has been removed.
+// Free raids are now automatic for projects with lifetime bumps in bubbles.
+// Users with lifetime bumped projects get 20 free raids per day automatically.
 
 // Get detailed affiliate analytics for current user (user-facing)
 router.get('/analytics', auth, async (req, res) => {

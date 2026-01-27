@@ -694,34 +694,36 @@ userSchema.methods.addAffiliate = async function(affiliateId) {
 };
 
 // Check if user is eligible for free raid
-userSchema.methods.checkFreeRaidEligibility = function() {
-  if (!this.isFreeRaidProject) {
-    return { eligible: false, reason: 'Not a free raid project' };
-  }
-
+// dailyLimit parameter allows dynamic limits (20 for lifetime bump, 5 for manual isFreeRaidProject)
+userSchema.methods.checkFreeRaidEligibility = function(dailyLimit = 5) {
+  // This method is now called after verifying eligibility through lifetime bump or isFreeRaidProject
+  // The eligibility check is done in the route before calling this method
+  
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   // Check if it's a new day
   if (!this.lastFreeRaidDate || this.lastFreeRaidDate < today) {
-    return { eligible: true, raidsRemaining: 5, raidsUsedToday: 0 };
+    return { eligible: true, raidsRemaining: dailyLimit, raidsUsedToday: 0, dailyLimit };
   }
 
   // Same day, check usage
-  if (this.freeRaidsUsedToday >= 5) {
-    return { eligible: false, reason: 'Daily limit reached', raidsRemaining: 0, raidsUsedToday: this.freeRaidsUsedToday };
+  if (this.freeRaidsUsedToday >= dailyLimit) {
+    return { eligible: false, reason: 'Daily limit reached', raidsRemaining: 0, raidsUsedToday: this.freeRaidsUsedToday, dailyLimit };
   }
 
   return { 
     eligible: true, 
-    raidsRemaining: 5 - this.freeRaidsUsedToday, 
-    raidsUsedToday: this.freeRaidsUsedToday 
+    raidsRemaining: dailyLimit - this.freeRaidsUsedToday, 
+    raidsUsedToday: this.freeRaidsUsedToday,
+    dailyLimit
   };
 };
 
 // Use a free raid
-userSchema.methods.useFreeRaid = async function() {
-  const eligibility = this.checkFreeRaidEligibility();
+// dailyLimit parameter should match what was used in checkFreeRaidEligibility
+userSchema.methods.useFreeRaid = async function(dailyLimit = 5) {
+  const eligibility = this.checkFreeRaidEligibility(dailyLimit);
   if (!eligibility.eligible) {
     throw new Error(eligibility.reason);
   }
@@ -739,8 +741,9 @@ userSchema.methods.useFreeRaid = async function() {
   await this.save();
 
   return { 
-    raidsRemaining: 5 - this.freeRaidsUsedToday, 
-    raidsUsedToday: this.freeRaidsUsedToday 
+    raidsRemaining: dailyLimit - this.freeRaidsUsedToday, 
+    raidsUsedToday: this.freeRaidsUsedToday,
+    dailyLimit
   };
 };
 

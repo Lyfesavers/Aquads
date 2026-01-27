@@ -767,14 +767,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const checkFreeRaidEligibility = async () => {
     try {
-      const currentId = currentUser?.userId || currentUser?.id || currentUser?._id;
-      
-      if (!currentId) {
-        setFreeRaidEligibility({ eligible: false, reason: 'User ID not available' });
+      if (!currentUser?.token) {
+        setFreeRaidEligibility({ eligible: false, reason: 'Not logged in' });
         return;
       }
       
-      const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentId}`, {
+      // Use the new automatic eligibility endpoint
+      const response = await fetch(`${API_URL}/api/twitter-raids/free/eligibility`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -782,9 +781,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       if (response.ok) {
         const data = await response.json();
-        setFreeRaidEligibility(data.eligibility);
+        setFreeRaidEligibility(data);
       } else {
-        setFreeRaidEligibility({ eligible: false, reason: 'Not a free raid project' });
+        setFreeRaidEligibility({ eligible: false, reason: 'List a project and bump for life to get 20 free raids per day!' });
       }
     } catch (error) {
       setFreeRaidEligibility({ eligible: false, reason: 'Error checking eligibility' });
@@ -1317,10 +1316,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </p>
                     <p className="text-sm">
                       {freeRaidEligibility.eligible 
-                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/5 used)`
+                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/${freeRaidEligibility.dailyLimit || 20} used)`
                         : freeRaidEligibility.reason
                       }
                     </p>
+                    {freeRaidEligibility.eligibilitySource === 'lifetime_bump' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Lifetime Bump Active</p>
+                    )}
                   </div>
                 </div>
               </div>
