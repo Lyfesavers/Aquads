@@ -17,12 +17,12 @@ const telegramService = require('../utils/telegramService');
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
 
-// Helper function to check if user has a lifetime-bumped active ad
+// Helper function to check if user has a lifetime-bumped ad in the bubbles
 async function checkUserHasLifetimeBumpedAd(username) {
   try {
     const lifetimeBumpedAd = await Ad.findOne({
       owner: username,
-      status: 'active',
+      status: { $in: ['active', 'approved'] }, // Bumped ads have status 'approved'
       isBumped: true,
       $or: [
         { bumpDuration: -1 },           // Lifetime bump indicator
