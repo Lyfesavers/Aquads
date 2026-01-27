@@ -250,6 +250,25 @@ const AquaPayPage = ({ currentUser }) => {
   const chainConfig = selectedChain ? CHAINS[selectedChain] : null;
   const recipientAddress = getRecipientAddress();
 
+  // Detect which browser wallet is available
+  const getDetectedWallet = useCallback(() => {
+    if (!window.ethereum) return null;
+    
+    // Check for specific wallet providers
+    if (window.ethereum.isMetaMask) return { name: 'MetaMask', icon: '🦊' };
+    if (window.ethereum.isRabby) return { name: 'Rabby', icon: '🐰' };
+    if (window.ethereum.isCoinbaseWallet) return { name: 'Coinbase Wallet', icon: '🔵' };
+    if (window.ethereum.isBraveWallet) return { name: 'Brave Wallet', icon: '🦁' };
+    if (window.ethereum.isTrust) return { name: 'Trust Wallet', icon: '🛡️' };
+    if (window.ethereum.isTokenPocket) return { name: 'TokenPocket', icon: '💼' };
+    if (window.ethereum.isFrame) return { name: 'Frame', icon: '🖼️' };
+    
+    // Generic browser wallet detected
+    return { name: 'Browser Wallet', icon: '🌐' };
+  }, []);
+
+  const detectedWallet = getDetectedWallet();
+
   // Wallet connection handlers
   const connectWithWallet = async (walletId) => {
     setShowWalletModal(false); setConnecting(true); setTxError(null);
@@ -276,10 +295,29 @@ const AquaPayPage = ({ currentUser }) => {
         accounts = provider.accounts; setWcProvider(provider);
         provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
       } else {
-        if (!window.ethereum) throw new Error('No wallet detected');
+        // Browser wallet (injected)
+        if (!window.ethereum) {
+          throw new Error('No browser wallet detected. Please install MetaMask or another Web3 wallet.');
+        }
+        
+        // Request accounts - user must approve in their wallet
         accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: evmConfig.chainId }] }); }
-        catch (e) { if (e.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [evmConfig] }); }
+        
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts found. Please unlock your wallet and try again.');
+        }
+        
+        // Switch to correct chain
+        try { 
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: evmConfig.chainId }] }); 
+        } catch (e) { 
+          if (e.code === 4902) {
+            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [evmConfig] }); 
+          } else if (e.code !== 4001) {
+            // 4001 = user rejected - that's fine
+            throw e;
+          }
+        }
       }
       if (accounts.length > 0) { setWalletAddress(accounts[0]); setWalletConnected(true); }
     } catch (err) { setTxError(err.message); }
@@ -1029,17 +1067,37 @@ const AquaPayPage = ({ currentUser }) => {
               <button onClick={() => setShowWalletModal(false)} className="text-slate-500 hover:text-white">✕</button>
             </div>
             <div className="space-y-2">
-              {EVM_WALLET_OPTIONS.map(opt => (
-                <button key={opt.id} onClick={() => connectWithWallet(opt.id)}
+              {/* WalletConnect Option */}
+              <button onClick={() => connectWithWallet('walletconnect')}
+                className="w-full p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl flex items-center gap-3 border border-slate-700/50 transition-colors relative">
+                <span className="absolute -top-2 right-2 px-2 py-0.5 bg-cyan-500 text-white text-xs rounded-full">Popular</span>
+                <span className="text-2xl">🔗</span>
+                <div className="text-left">
+                  <p className="text-white font-medium">WalletConnect</p>
+                  <p className="text-slate-500 text-xs">Mobile & 300+ wallets</p>
+                </div>
+              </button>
+              
+              {/* Browser Wallet Option - Shows detected wallet or generic */}
+              {detectedWallet ? (
+                <button onClick={() => connectWithWallet('injected')}
                   className="w-full p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl flex items-center gap-3 border border-slate-700/50 transition-colors relative">
-                  {opt.recommended && <span className="absolute -top-2 right-2 px-2 py-0.5 bg-cyan-500 text-white text-xs rounded-full">Popular</span>}
-                  <span className="text-2xl">{opt.icon}</span>
+                  <span className="absolute -top-2 right-2 px-2 py-0.5 bg-emerald-500 text-white text-xs rounded-full">Detected</span>
+                  <span className="text-2xl">{detectedWallet.icon}</span>
                   <div className="text-left">
-                    <p className="text-white font-medium">{opt.name}</p>
-                    <p className="text-slate-500 text-xs">{opt.description}</p>
+                    <p className="text-white font-medium">{detectedWallet.name}</p>
+                    <p className="text-slate-500 text-xs">Connect with your browser wallet</p>
                   </div>
                 </button>
-              ))}
+              ) : (
+                <div className="w-full p-4 bg-slate-800/30 rounded-xl flex items-center gap-3 border border-slate-700/30 opacity-50">
+                  <span className="text-2xl">🌐</span>
+                  <div className="text-left">
+                    <p className="text-slate-400 font-medium">Browser Wallet</p>
+                    <p className="text-slate-600 text-xs">No browser wallet detected</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
