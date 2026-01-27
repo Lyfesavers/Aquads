@@ -75,8 +75,11 @@ class ProxiedConnection {
   }
   
   async confirmTransaction(signature) {
-    // Poll for confirmation (up to 60 seconds)
-    for (let i = 0; i < 60; i++) {
+    // Poll every 2 seconds for bandwidth optimization
+    // Max 35 attempts = ~70 seconds timeout
+    const maxAttempts = 35;
+    
+    for (let i = 0; i < maxAttempts; i++) {
       try {
         const result = await this._call('getSignatureStatuses', [[signature]]);
         const status = result?.value?.[0];
@@ -87,7 +90,7 @@ class ProxiedConnection {
       } catch (e) {
         if (e.message.includes('Transaction failed')) throw e;
       }
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 2000)); // 2 second intervals
     }
     throw new Error('Transaction confirmation timeout - check explorer');
   }
@@ -213,32 +216,50 @@ const AquaPayPage = ({ currentUser }) => {
   }, [selectedChain, urlAmount]);
 
   useEffect(() => {
+    let isMounted = true;
+    let backendFallbackFailed = false; // Track if backend fallback already failed
+    
     const fetchPrice = async () => {
       if (!selectedChain || !COINGECKO_IDS[selectedChain]) return;
+      
+      const coinId = COINGECKO_IDS[selectedChain];
+      
+      // Try CoinGecko first (doesn't hit our backend)
       try {
-        const coinId = COINGECKO_IDS[selectedChain];
-        // Use CoinGecko proxy or alternative API to avoid CORS
         const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`, {
           headers: { 'Accept': 'application/json' }
         });
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const data = await res.json();
-          if (data[coinId]?.usd) setTokenPrice(data[coinId].usd);
+          if (data[coinId]?.usd) {
+            setTokenPrice(data[coinId].usd);
+            return; // Success - don't try backend
+          }
         }
-      } catch (e) {
-        // Fallback: Try fetching from our backend proxy
+      } catch {
+        // CoinGecko failed, will try backend below
+      }
+      
+      // Only try backend fallback once per session to reduce bandwidth
+      if (!backendFallbackFailed && isMounted) {
         try {
-          const res = await axios.get(`${API_URL}/api/tokens/price/${COINGECKO_IDS[selectedChain]}`);
-          if (res.data?.price) setTokenPrice(res.data.price);
+          const res = await axios.get(`${API_URL}/api/tokens/price/${coinId}`);
+          if (res.data?.price && isMounted) {
+            setTokenPrice(res.data.price);
+          }
         } catch {
-          // Price fetch failed, continue without price display
-          console.log('Price unavailable');
+          backendFallbackFailed = true; // Don't try backend again
         }
       }
     };
+    
     fetchPrice();
-    const interval = setInterval(fetchPrice, 60000); // Less frequent to avoid rate limits
-    return () => clearInterval(interval);
+    // Increase interval to 2 minutes to reduce load
+    const interval = setInterval(fetchPrice, 120000);
+    return () => { 
+      isMounted = false;
+      clearInterval(interval); 
+    };
   }, [selectedChain]);
 
   const getRecipientAddress = useCallback(() => {
@@ -411,9 +432,7 @@ const AquaPayPage = ({ currentUser }) => {
               await new Promise(resolve => setTimeout(resolve, 1000));
             }
           } catch (chainError) {
-            if (chainError.code !== 4001) { // 4001 = user rejected
-              console.warn('WalletConnect chain switch issue:', chainError);
-            }
+            // 4001 = user rejected, ignore other errors
           }
         } else if (ethProvider && evmConfig) {
           try {
@@ -438,8 +457,7 @@ const AquaPayPage = ({ currentUser }) => {
               }
             }
           } catch (chainError) {
-            // Log but don't fail - user might manually switch
-            console.warn('Chain switch issue:', chainError);
+            // Don't fail - user might manually switch
           }
         }
         
@@ -498,8 +516,6 @@ const AquaPayPage = ({ currentUser }) => {
             throw new Error('Native ETH transfers are not supported for EVM chains. Please use USDC.');
           }
         } catch (txError) {
-          console.error('Transaction failed:', txError);
-          
           // Check if user rejected the transaction
           if (txError.code === 'ACTION_REJECTED' || txError.code === 4001) {
             throw new Error('Transaction rejected. Both transactions must be approved to complete payment.');
@@ -634,7 +650,6 @@ const AquaPayPage = ({ currentUser }) => {
             message: message || null
           });
         } catch (emailError) {
-          console.error('Email notification error:', emailError);
           // Don't fail the payment if email fails
         }
       }
@@ -652,7 +667,6 @@ const AquaPayPage = ({ currentUser }) => {
             message: message || null
           });
         } catch (emailError) {
-          console.error('Receipt email error:', emailError);
           // Don't fail the payment if email fails
         }
       }
@@ -667,7 +681,7 @@ const AquaPayPage = ({ currentUser }) => {
           }
         }, 500); // 0.5 seconds - very fast close
       }
-    } catch (e) { console.error('Record error:', e); }
+    } catch (e) { /* Silent fail - payment already succeeded on chain */ }
   };
 
   const copyAddress = () => { navigator.clipboard.writeText(recipientAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -1051,6 +1065,43 @@ const AquaPayPage = ({ currentUser }) => {
                         </div>
                       )}
 
+                      {/* Processing Status Card - Shows during transaction */}
+                      {sending && (
+                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <div className="w-10 h-10 border-3 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-4 h-4 bg-cyan-400 rounded-full animate-pulse" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white font-medium">
+                                {typeof txStatus === 'string' && txStatus.includes('/') 
+                                  ? txStatus 
+                                  : txStatus === 'pending' 
+                                    ? 'Confirming on blockchain...' 
+                                    : 'Processing transaction...'}
+                              </p>
+                              <p className="text-slate-400 text-xs mt-0.5">
+                                {txStatus === 'pending' 
+                                  ? 'This usually takes a few seconds. Please wait...'
+                                  : 'Please approve in your wallet'}
+                              </p>
+                            </div>
+                          </div>
+                          {txHash && (
+                            <div className="mt-3 pt-3 border-t border-slate-700/50">
+                              <p className="text-slate-500 text-xs">Transaction submitted</p>
+                              <a href={`${chainConfig?.explorerUrl}${txHash}`} target="_blank" rel="noopener noreferrer"
+                                className="text-cyan-400 text-xs hover:text-cyan-300 flex items-center gap-1 mt-1">
+                                View on explorer <span>↗</span>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <button onClick={sendPayment} disabled={sending || !amount || parseFloat(amount) <= 0 || (feeDetails && !feeDetails.isEVM && !SOLANA_PLATFORM_WALLET) || (feeDetails?.isEVM && !EVM_PLATFORM_WALLET)}
                         className={`w-full py-4 bg-gradient-to-r ${chainConfig?.gradient} text-white font-bold rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg`}>
                         {sending ? (
@@ -1064,9 +1115,11 @@ const AquaPayPage = ({ currentUser }) => {
                       </button>
 
                       <p className="text-slate-600 text-xs text-center mt-3">
-                        {feeDetails 
-                          ? `Recipient receives ${amount} ${displaySymbol}. A 0.5% platform fee applies.`
-                          : 'By continuing, you agree to send this payment directly to the recipient\'s wallet.'}
+                        {sending 
+                          ? 'Do not close this page while transaction is processing.'
+                          : feeDetails 
+                            ? `Recipient receives ${amount} ${displaySymbol}. A 0.5% platform fee applies.`
+                            : 'By continuing, you agree to send this payment directly to the recipient\'s wallet.'}
                       </p>
                     </div>
                   )}
