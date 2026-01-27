@@ -1419,7 +1419,7 @@ export const TelegramBotMockup = () => (
       <div className="bg-gray-800 px-4 py-3 flex items-center gap-2 border-t border-gray-700">
         <input 
           type="text" 
-          placeholder="/createraid URL (5 FREE daily)" 
+          placeholder="/createraid URL (20 FREE daily)" 
           className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg text-sm"
           readOnly
         />

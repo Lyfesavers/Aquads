@@ -2158,7 +2158,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Boost visibility with coordinated social campaigns. Create Twitter raids—5 FREE daily for eligible projects, then use 2000 points for additional posts. Community earns 20 points per completion (50 with verified account). Auto-expires in 48hrs.
+                  Boost visibility with coordinated social campaigns. Create Twitter raids—20 FREE daily for lifetime bumped projects, then use 2000 points for additional posts. Community earns 20 points per completion (50 with verified account). Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
@@ -2874,13 +2874,13 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Boost trending across Aquads, BEX, and bubble rankings. Custom branding in 5K+ trending channel.
+                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BEX, and bubble rankings. Custom branding in 5K+ trending channel.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🐦', label: 'Twitter Raids', value: '5 Free Daily' },
+                    { icon: '🐦', label: 'Twitter Raids', value: '20 Free Daily' },
                     { icon: '👍', label: 'Voting for Ranking', value: '20 Pts/Vote' },
                     { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
                     { icon: '🎨', label: 'Custom Branding', value: '5K+ Channel' }
@@ -3825,7 +3825,7 @@ const LandingPage = () => {
     {
       icon: '🤖',
       title: 'Telegram Bot',
-      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—5 FREE daily, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
+      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
       gradient: 'from-indigo-900/40 to-slate-900/80',
       link: '/telegram-bot',
       size: 'wide'

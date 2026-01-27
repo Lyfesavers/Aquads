@@ -3591,7 +3591,7 @@ For Facebook raid participation:
 
 ### What You Get (Free)
 
-- ✅ 5 FREE raid posts daily
+- ✅ 20 FREE raid posts daily (for lifetime bumped projects)
 - ✅ Complete raids & earn 20 points each
 - ✅ Vote on projects (earn 20 pts per first vote)
 - ✅ View top 10 bubble rankings
@@ -3651,7 +3651,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | Command | Description |
 |---------|-------------|
 | \`/raids\` | View all available Twitter & Facebook raids |
-| \`/createraid URL\` | Create a Twitter raid (5 FREE daily, then 2000 pts) |
+| \`/createraid URL\` | Create a Twitter raid (20 FREE daily for lifetime bump, then 2000 pts) |
 | \`/cancelraid URL\` | Cancel a raid you created |
 
 ### Bubble & Voting Commands
@@ -3716,7 +3716,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 4. Participants earn 20 points per completion
 
 **Raid Details:**
-- 5 FREE raid posts per day
+- 20 FREE raid posts per day (for lifetime bumped projects)
 - Additional raids cost 2000 points each
 - Raids auto-expire after 48 hours
 - Support both Twitter and Facebook
