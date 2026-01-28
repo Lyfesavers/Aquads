@@ -307,6 +307,16 @@ const HyperSpace = ({ currentUser }) => {
     return pkg ? pkg.price : 0;
   }, [packages, selectedListeners, selectedDuration]);
 
+  // Get PayPal payment link based on selected duration
+  const getPayPalLink = useCallback(() => {
+    const paypalLinks = {
+      30: 'https://www.paypal.com/ncp/payment/PR4ZXFNWU7WFL',   // 30 min
+      60: 'https://www.paypal.com/ncp/payment/DAG9HMLF7SZGJ',   // 1 hour
+      120: 'https://www.paypal.com/ncp/payment/FK744D3UZL298'  // 2 hours
+    };
+    return paypalLinks[selectedDuration] || paypalLinks[60]; // Default to 1 hour if duration not found
+  }, [selectedDuration]);
+
   // Get current package details including savings
   const getCurrentPackage = useCallback(() => {
     return packages.find(p => p.listeners === selectedListeners && p.duration === selectedDuration);
@@ -1023,12 +1033,12 @@ const HyperSpace = ({ currentUser }) => {
                 </p>
                 <button
                   onClick={() => {
-                    window.open(`https://paypal.me/aquads/${getCurrentPrice()}`, '_blank');
+                    window.open(getPayPalLink(), '_blank');
                   }}
                   className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                   <FaExternalLinkAlt className="text-sm" />
-                  Pay with PayPal
+                  Pay with Card
                 </button>
               </>
             )}
