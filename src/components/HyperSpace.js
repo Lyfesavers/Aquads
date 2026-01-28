@@ -723,7 +723,7 @@ const HyperSpace = ({ currentUser }) => {
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
-                    PayPal
+                    Card
                   </button>
                 </div>
               </div>
@@ -987,7 +987,7 @@ const HyperSpace = ({ currentUser }) => {
                     : 'bg-gray-700 text-gray-300'
                 }`}
               >
-                PayPal
+                Card
               </button>
             </div>
 
@@ -1029,7 +1029,7 @@ const HyperSpace = ({ currentUser }) => {
             ) : (
               <>
                 <p className="text-gray-300 text-sm mb-4">
-                  You'll be redirected to PayPal to complete payment.
+                  You'll be redirected to complete payment with your card.
                 </p>
                 <button
                   onClick={() => {
