@@ -553,15 +553,15 @@ const HyperSpace = ({ currentUser }) => {
               </p>
             </div>
 
-            {/* Important Notice - 24 Hour Scheduling */}
+            {/* Important Notice - Crypto vs Card */}
             <div className="bg-gradient-to-r from-red-500/10 to-pink-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-red-500/30">
               <h3 className="text-sm sm:text-base font-semibold text-red-400 mb-2 flex items-center gap-2">
                 <FaClock />
-                ⚠️ Important: Schedule Ahead
+                ⚠️ Important: Payment & Timing
               </h3>
               <p className="text-xs sm:text-sm text-gray-300">
-                <strong className="text-white">Your Space must be scheduled at least 24 hours in advance</strong> to ensure delivery. 
-                Orders placed for Spaces starting sooner may not be fulfilled in time. Plan ahead!
+                <strong className="text-white">Crypto payments:</strong> delivery starts right away—just place your order.{' '}
+                <strong className="text-white">Paying with card?</strong> Place your order at least 24 hours before your Space starts.
               </p>
             </div>
 
@@ -783,7 +783,7 @@ const HyperSpace = ({ currentUser }) => {
               {/* Important Notice */}
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-xs text-red-300">
-                  <strong>⚠️ Important:</strong> Schedule your Space at least 24 hours in advance to ensure delivery!
+                  <strong>⚠️ Important:</strong> Crypto = delivery starts right away. Card = place order at least 24 hours before your Space.
                 </p>
               </div>
 
@@ -1091,7 +1091,7 @@ const HyperSpace = ({ currentUser }) => {
                   : confirmedOrder.status === 'delivering'
                     ? 'Listeners are being delivered to your Space!'
                     : confirmedOrder.status === 'pending_approval'
-                      ? 'Your order is confirmed and will be processed within 24 hours before your Space starts.'
+                      ? 'Your order is confirmed. Paying with card? It will be processed within 24 hours before your Space starts.'
                       : 'Your order is being processed...'}
             </p>
 
@@ -1142,7 +1142,7 @@ const HyperSpace = ({ currentUser }) => {
                   <FaClock className="text-purple-400 text-lg flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-gray-300">
                     <p className="font-medium text-purple-300 mb-1">Order Confirmed!</p>
-                    <p>Listeners will be delivered before your scheduled Space. Make sure your Space is scheduled at least 24 hours in advance.</p>
+                    <p>Listeners will be delivered before your scheduled Space. Crypto payments start delivery right away. Paying with card? Place your order at least 24 hours before your Space.</p>
                   </div>
                 </div>
               </div>

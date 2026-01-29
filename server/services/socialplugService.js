@@ -38,11 +38,10 @@ const SELLING_PRICES = {
 };
 
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
-// Customer pays this; order still goes to Socialplug at full quantity/duration and we pay real cost.
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.5 // 50 cents USDC for testing (100 listeners, 30 min). Set to 0 to use normal pricing.
+  price: 0 // DISABLED - Using normal pricing
 };
 
 /**
