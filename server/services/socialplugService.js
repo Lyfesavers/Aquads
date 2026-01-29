@@ -38,11 +38,11 @@ const SELLING_PRICES = {
 };
 
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
-// Note: Set price to 0 to use normal pricing
+// Customer pays this; order still goes to Socialplug at full quantity/duration and we pay real cost.
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using regular pricing
+  price: 0.5 // 50 cents USDC for testing (100 listeners, 30 min). Set to 0 to use normal pricing.
 };
 
 /**
@@ -247,8 +247,22 @@ const getServices = async () => {
   }
 };
 
+// Fixed service ID for Twitter Spaces Listeners (API: GET /services/twitter_spaces_listeners_46)
+const TWITTER_SPACES_LISTENERS_SERVICE_ID = 'twitter_spaces_listeners_46';
+
+/**
+ * Map duration in minutes to API option string
+ * API extra_fields: "Select Listening Time" allowed_values e.g. "5 Minutes", "30 Minutes"
+ */
+const durationToOption = (duration) => {
+  const valid = [5, 15, 30, 45, 60, 90, 120];
+  if (!valid.includes(duration)) return null;
+  return `${duration} Minutes`;
+};
+
 /**
  * Place an order on Socialplug for Twitter Space Listeners
+ * API: POST /api/v1/order with service, quantity, targetUrl, options["Select Listening Time"]
  * @param {string} spaceUrl - The Twitter Space URL
  * @param {number} listeners - Number of listeners (100, 200, 500, 1000, 2500, 5000)
  * @param {number} duration - Duration in minutes (30, 60, 120)
@@ -259,38 +273,34 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
     return { success: false, error: 'Socialplug API key not configured' };
   }
 
-  // Validate inputs
   const validListeners = [100, 200, 500, 1000, 2500, 5000];
   const validDurations = [30, 60, 120];
-  
+
   if (!validListeners.includes(listeners)) {
     return { success: false, error: `Invalid listener count. Must be one of: ${validListeners.join(', ')}` };
   }
-  
+
   if (!validDurations.includes(duration)) {
     return { success: false, error: `Invalid duration. Must be one of: ${validDurations.join(', ')} minutes` };
   }
 
-  if (!spaceUrl || !spaceUrl.includes('twitter.com') && !spaceUrl.includes('x.com')) {
+  if (!spaceUrl || (!spaceUrl.includes('twitter.com') && !spaceUrl.includes('x.com'))) {
     return { success: false, error: 'Invalid Twitter Space URL' };
   }
 
+  const listeningTimeOption = durationToOption(duration);
+  if (!listeningTimeOption) {
+    return { success: false, error: `Invalid duration. Must be one of: ${validDurations.join(', ')} minutes` };
+  }
+
   try {
-    // If we don't have the service ID yet, try to fetch services first
-    if (!TWITTER_SPACES_SERVICE_ID) {
-      await getServices();
-    }
-
-    // Fallback service ID if not found
-    const serviceId = TWITTER_SPACES_SERVICE_ID || 46;
-
-    // Socialplug API uses POST for placing orders
-    // Field names per validation error: service (string), targetUrl, quantity, runs
     const orderData = {
-      service: String(serviceId),  // Must be string, not number
-      targetUrl: spaceUrl,
+      service: TWITTER_SPACES_LISTENERS_SERVICE_ID,
       quantity: listeners,
-      runs: duration  // Duration in minutes
+      targetUrl: spaceUrl,
+      options: {
+        'Select Listening Time': listeningTimeOption
+      }
     };
 
     const response = await axios.post(`${SOCIALPLUG_API_URL}/order`, orderData, {

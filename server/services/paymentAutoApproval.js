@@ -414,12 +414,15 @@ const paymentAutoApproval = {
   },
 
   /**
-   * Handle HyperSpace (Twitter Space Listeners) payment
-   * Note: Currently manual approval mode - Socialplug API doesn't have the service yet
+   * Handle HyperSpace (Twitter Space Listeners) payment (crypto/AquaPay only).
+   * Verifies payment on-chain, then auto-places order with Socialplug so it goes to delivering.
+   * PayPal orders are not auto-placed; they stay pending_approval for admin.
    */
   async handleHyperSpacePayment({ hyperspaceOrderId, amount, txHash, chain, token, senderAddress, senderUsername }) {
     try {
       const HyperSpaceOrder = require('../models/HyperSpaceOrder');
+      const socialplugService = require('./socialplugService');
+      const socket = require('../socket');
 
       const order = await HyperSpaceOrder.findOne({ orderId: hyperspaceOrderId });
 
@@ -452,21 +455,57 @@ const paymentAutoApproval = {
         return null;
       }
 
-      // Update payment info and set to pending_approval for manual processing
+      // Update payment info
       order.txSignature = txHash;
       order.paymentChain = chain;
       order.chainSymbol = token || 'USDC';
       order.paymentStatus = 'completed';
       order.paymentReceivedAt = new Date();
-      order.status = 'pending_approval'; // Manual approval required
+
+      // Auto-place order with Socialplug (crypto payment verified)
+      const placeResult = await socialplugService.placeOrder(order.spaceUrl, order.listenerCount, order.duration);
+
+      if (placeResult.success) {
+        order.socialplugOrderId = placeResult.orderId;
+        order.socialplugOrderedAt = new Date();
+        order.status = 'delivering';
+        order.errorMessage = null;
+        await order.save();
+
+        console.log(`HyperSpace order ${hyperspaceOrderId} payment received and order placed with Socialplug: ${placeResult.orderId}`);
+
+        try {
+          socket.emitNewHyperSpaceOrder({
+            orderId: order.orderId,
+            username: order.username,
+            listenerCount: order.listenerCount,
+            duration: order.duration,
+            spaceUrl: order.spaceUrl,
+            customerPrice: order.customerPrice,
+            socialplugCost: order.socialplugCost,
+            createdAt: order.createdAt,
+            status: order.status,
+            socialplugOrderId: order.socialplugOrderId
+          });
+          socket.emitHyperSpaceOrderStatusChange(order.orderId, 'delivering', {
+            message: 'Your listeners are being delivered!'
+          });
+          socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'delivering' });
+        } catch (socketError) {
+          console.error('Socket emit error:', socketError);
+        }
+
+        return { type: 'hyperspace', id: order.orderId, status: order.status };
+      }
+
+      // Socialplug place order failed – keep pending_approval so admin can see and retry
+      order.status = 'pending_approval';
+      order.errorMessage = placeResult.error || 'Failed to place order with provider';
       await order.save();
 
-      console.log(`HyperSpace order ${hyperspaceOrderId} payment received, pending admin approval`);
-      
-      // Emit socket notifications
+      console.log(`HyperSpace order ${hyperspaceOrderId} payment received but Socialplug place order failed: ${order.errorMessage}`);
+
       try {
-        const socket = require('../socket');
-        // Notify admins of new pending order
         socket.emitNewHyperSpaceOrder({
           orderId: order.orderId,
           username: order.username,
@@ -476,11 +515,11 @@ const paymentAutoApproval = {
           customerPrice: order.customerPrice,
           socialplugCost: order.socialplugCost,
           createdAt: order.createdAt,
-          status: order.status
+          status: order.status,
+          errorMessage: order.errorMessage
         });
-        // Notify the user their order status changed
         socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
-          message: 'Payment received! Your order is being processed.'
+          message: 'Payment received! Your order is being processed (manual step may be needed).'
         });
       } catch (socketError) {
         console.error('Socket emit error:', socketError);
