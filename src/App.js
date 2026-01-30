@@ -2603,7 +2603,7 @@ function App() {
                               
                               {/* Dropdown Menu */}
                               {showUserDropdown && (
-                                <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                                <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                                   <div className="py-2">
                                     <button
                                       onClick={() => {
@@ -2642,6 +2642,13 @@ function App() {
                                     >
                                       ⚙️ Edit Profile
                                     </button>
+                                    <hr className="my-2 border-gray-700" />
+                                    <Link to="/aquafi" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💧 AquaFi</Link>
+                                    <Link to="/aquaswap" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💱 AquaSwap</Link>
+                                    <Link to="/partner-rewards" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🎁 Partner Rewards</Link>
+                                    <Link to="/telegram-bot" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤖 Telegram Bot</Link>
+                                    <Link to="/aquapay" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💸 AquaPay</Link>
+                                    <Link to="/hyperspace" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🚀 HyperSpace</Link>
                                     <hr className="my-2 border-gray-700" />
                                     <button
                                       onClick={() => {
@@ -2712,6 +2719,12 @@ function App() {
                         >
                           Why List?
                         </Link>
+                        <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaFi</Link>
+                        <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaSwap</Link>
+                        <Link to="/partner-rewards" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">Partner Rewards</Link>
+                        <Link to="/telegram-bot" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">Telegram Bot</Link>
+                        <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaPay</Link>
+                        <Link to="/hyperspace" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">HyperSpace</Link>
                         {currentUser ? (
                           <>
                             <div className="flex justify-center">

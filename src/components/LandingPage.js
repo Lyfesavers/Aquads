@@ -4233,6 +4233,46 @@ const LandingPage = () => {
                       <span className="text-lg">💱</span>
                       <span className="font-medium">AquaSwap</span>
                     </Link>
+                    <Link 
+                      to="/aquafi"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">💧</span>
+                      <span className="font-medium">AquaFi</span>
+                    </Link>
+                    <Link 
+                      to="/partner-rewards"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🎁</span>
+                      <span className="font-medium">Partner Rewards</span>
+                    </Link>
+                    <Link 
+                      to="/telegram-bot"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🤖</span>
+                      <span className="font-medium">Telegram Bot</span>
+                    </Link>
+                    <Link 
+                      to="/aquapay"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">💸</span>
+                      <span className="font-medium">AquaPay</span>
+                    </Link>
+                    <Link 
+                      to="/hyperspace"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🚀</span>
+                      <span className="font-medium">HyperSpace</span>
+                    </Link>
                     <div className="h-px bg-white/10 my-2" />
                     <div className="flex items-center justify-center gap-6 py-3">
                       <a 
