@@ -58,7 +58,7 @@ import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
 import BookingConversationPage from './components/BookingConversationPage';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
@@ -2521,7 +2521,7 @@ function App() {
               {/* Main content wrapper */}
               <div className="relative z-10">
                 {/* Navigation and banner stay fixed */}
-                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                       <div className="flex items-center">
@@ -2535,19 +2535,30 @@ function App() {
                         </Link>
                       </div>
                       
-                      {/* Mobile menu button */}
+                      {/* Mobile menu button - landing page style */}
                       <div className="md:hidden">
                         <button
                           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                          className="text-gray-300 hover:text-white p-2"
+                          className="relative w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm"
+                          aria-label="Toggle menu"
                         >
-                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {isMobileMenuOpen ? (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            ) : (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            )}
-                          </svg>
+                          <div className="relative w-5 h-4 flex flex-col justify-between">
+                            <motion.span
+                              className="w-full h-0.5 bg-cyan-400 rounded-full origin-center"
+                              animate={isMobileMenuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                            <motion.span
+                              className="w-full h-0.5 bg-cyan-400 rounded-full"
+                              animate={isMobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                            <motion.span
+                              className="w-full h-0.5 bg-cyan-400 rounded-full origin-center"
+                              animate={isMobileMenuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                          </div>
                         </button>
                       </div>
 
@@ -2683,125 +2694,159 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Mobile menu */}
-                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black max-h-[85vh] overflow-y-auto overscroll-contain`}>
-                      <div className="flex flex-col space-y-2">
-                        <Link
-                          to="/marketplace"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                        >
-                          Freelancer Hub
-                        </Link>
-                        <Link
-                          to="/games"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                        >
-                          GameHub
-                        </Link>
-                        <button
-                          onClick={() => {
-                            openMintFunnelPlatform();
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                        >
-                          Paid Ads
-                        </button>
-                        <Link
-                          to="/learn"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                        >
-                          Learn
-                        </Link>
-                        <Link
-                          to="/why-list"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                        >
-                          Why List?
-                        </Link>
-                        <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaFi</Link>
-                        <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaSwap</Link>
-                        <Link to="/partner-rewards" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">Partner Rewards</Link>
-                        <Link to="/telegram-bot" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">Telegram Bot</Link>
-                        <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">AquaPay</Link>
-                        <Link to="/hyperspace" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">HyperSpace</Link>
-                        {currentUser ? (
-                          <>
-                            <div className="flex justify-center">
-                              <NotificationBell currentUser={currentUser} />
+                    {/* Mobile menu - landing page style dropdown */}
+                    <AnimatePresence>
+                      {isMobileMenuOpen && (
+                        <>
+                          <motion.div
+                            className="md:hidden fixed inset-0 bg-black/50 z-[199999]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          />
+                          <motion.div
+                            className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 z-[200000] max-h-[85vh] flex flex-col"
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden overscroll-contain">
+                              <div className="p-2">
+                                <Link
+                                  to="/marketplace"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-purple-500/10 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">👥</span>
+                                  <span className="font-medium">Freelancer Hub</span>
+                                </Link>
+                                <Link
+                                  to="/games"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">🎮</span>
+                                  <span className="font-medium">GameHub</span>
+                                </Link>
+                                <button
+                                  onClick={() => { openMintFunnelPlatform(); setIsMobileMenuOpen(false); }}
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                                >
+                                  <span className="text-lg">📢</span>
+                                  <span className="font-medium">Paid Ads</span>
+                                </button>
+                                <Link
+                                  to="/learn"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">📚</span>
+                                  <span className="font-medium">Learn</span>
+                                </Link>
+                                <Link
+                                  to="/why-list"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">✨</span>
+                                  <span className="font-medium">Why List?</span>
+                                </Link>
+                                <div className="h-px bg-white/10 my-2" />
+                                <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">💧</span>
+                                  <span className="font-medium">AquaFi</span>
+                                </Link>
+                                <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">💱</span>
+                                  <span className="font-medium">AquaSwap</span>
+                                </Link>
+                                <Link to="/partner-rewards" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">🎁</span>
+                                  <span className="font-medium">Partner Rewards</span>
+                                </Link>
+                                <Link to="/telegram-bot" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">🤖</span>
+                                  <span className="font-medium">Telegram Bot</span>
+                                </Link>
+                                <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">💸</span>
+                                  <span className="font-medium">AquaPay</span>
+                                </Link>
+                                <Link to="/hyperspace" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+                                  <span className="text-lg">🚀</span>
+                                  <span className="font-medium">HyperSpace</span>
+                                </Link>
+                                {currentUser ? (
+                                  <>
+                                    <div className="h-px bg-white/10 my-2" />
+                                    <div className="flex justify-center py-2">
+                                      <NotificationBell currentUser={currentUser} />
+                                    </div>
+                                    <span className="block px-4 py-2 text-blue-300 text-sm">Welcome, {getDisplayName(currentUser)}!</span>
+                                    <button
+                                      onClick={() => { setDashboardActiveTab('ads'); setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">📊</span>
+                                      <span className="font-medium">Dashboard</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">⚙️</span>
+                                      <span className="font-medium">Edit Profile</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { setShowCreateModal(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">➕</span>
+                                      <span className="font-medium">List Project</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { setShowBannerModal(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">🎨</span>
+                                      <span className="font-medium">Create Banner Ad</span>
+                                    </button>
+                                    <div className="h-px bg-white/10 my-2" />
+                                    <button
+                                      onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-red-500/20 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">🚪</span>
+                                      <span className="font-medium">Logout</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="h-px bg-white/10 my-2" />
+                                    <button
+                                      onClick={() => { setShowLoginModal(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">🔑</span>
+                                      <span className="font-medium">Login</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { setShowCreateAccountModal(true); setIsMobileMenuOpen(false); }}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                                    >
+                                      <span className="text-lg">✨</span>
+                                      <span className="font-medium">Create Account</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                            <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                            <button
-                              onClick={() => {
-                                setDashboardActiveTab('ads');
-                                setShowDashboard(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Dashboard
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowProfileModal(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Edit Profile
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowCreateModal(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              List Project
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowBannerModal(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              🎨 Create Banner Ad
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleLogout();
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Logout
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => {
-                                setShowLoginModal(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Login
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowCreateAccountModal(true);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Create Account
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </nav>
 
