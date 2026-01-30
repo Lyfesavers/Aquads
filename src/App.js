@@ -2521,8 +2521,8 @@ function App() {
               {/* Main content wrapper */}
               <div className="relative z-10">
                 {/* Navigation and banner stay fixed */}
-                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav className="fixed top-0 left-0 right-0 h-16 min-h-[4rem] bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
                     <div className="flex items-center justify-between h-16">
                       <div className="flex items-center">
                         <Link to="/" className="flex items-center">
