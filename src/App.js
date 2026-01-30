@@ -2684,7 +2684,7 @@ function App() {
                     </div>
 
                     {/* Mobile menu */}
-                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
+                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black max-h-[85vh] overflow-y-auto overscroll-contain`}>
                       <div className="flex flex-col space-y-2">
                         <Link
                           to="/marketplace"
