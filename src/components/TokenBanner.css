@@ -20,9 +20,8 @@
   animation-play-state: paused;
 }
 
-/* Token Banner Container Styles */
+/* Token Banner Container Styles - do not set position so fixed/relative from Tailwind is not overridden */
 .token-banner-container {
-  position: relative;
   will-change: auto;
   contain: layout style paint;
 }

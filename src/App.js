@@ -2693,8 +2693,10 @@ function App() {
                         )}
                       </div>
                     </div>
-
-                    {/* Mobile menu - landing page style dropdown */}
+                  </div>
+                  {/* Mobile menu - out of flow so it never adds to nav height */}
+                  <div className="absolute left-0 right-0 top-full pointer-events-none md:pointer-events-auto" style={{ minHeight: 0 }}>
+                    <div className="pointer-events-auto">
                     <AnimatePresence>
                       {isMobileMenuOpen && (
                         <>
@@ -2847,10 +2849,11 @@ function App() {
                         </>
                       )}
                     </AnimatePresence>
+                    </div>
                   </div>
                 </nav>
 
-                <div className="fixed top-16 left-0 right-0 z-[3] token-banner-container">
+                <div className="fixed top-16 left-0 right-0 z-[3]" style={{ marginTop: 0 }}>
                   <TokenBanner />
                 </div>
 
