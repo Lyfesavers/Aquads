@@ -2735,55 +2735,38 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  /* Nav h-16 (4rem) + TokenBanner h-12 (3rem) = 7rem; keep dashboard below header/banner */
-  const headerOffset = '7rem';
-  const tabsStickyTop = '10.5rem'; /* header + dashboard title row height */
-
+  /* Panel starts below nav (4rem) + token banner (3rem) = 7rem; z above scroll so content is visible */
   return (
-    <div className="fixed inset-0 bg-gray-900 z-[100] overflow-y-auto pt-[7rem]">
-      {/* Header - sticks below app nav + token banner */}
-      <div className="sticky bg-gray-800/80 backdrop-blur-sm shadow-lg z-10 p-4" style={{ top: headerOffset }}>
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-white">Dashboard</h2>
-          <button 
-            onClick={onClose}
-            className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-
-      {/* Content - reuse existing dashboard content */}
-      <div className="max-w-7xl mx-auto p-4">
-        {/* Tabs bar - sticks below dashboard title row under app header */}
-        <div className="relative border-b border-gray-700 mb-6 sticky bg-gray-800 z-10" style={{ top: tabsStickyTop }}>
-          {/* Mobile scrollable tabs container */}
-          <div className="flex overflow-x-auto scrollbar-hide scroll-smooth md:overflow-x-visible">
-            {/* Fade indicators for mobile - show on mobile only */}
-            <div className="md:hidden absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-800 to-transparent z-10 pointer-events-none"></div>
-            <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-800 to-transparent z-10 pointer-events-none"></div>
-            
+    <div className="fixed left-0 right-0 bottom-0 bg-gray-900 z-[200002] overflow-y-auto" style={{ top: '7rem' }}>
+      {/* Single sticky bar: title + tabs + Close — no gap, fits all screens */}
+      <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-700 shadow-lg">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-4 min-h-0">
+            <h2 className="text-base sm:text-xl font-bold text-white flex-shrink-0">Dashboard</h2>
+            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide scroll-smooth flex items-center gap-0 relative">
+              {/* Fade indicators for mobile */}
+              <div className="md:hidden absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-gray-800 to-transparent z-10 pointer-events-none" />
+              <div className="md:hidden absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-gray-800 to-transparent z-10 pointer-events-none" />
+              <button
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'ads' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('ads')}
+              >
+                Main
+              </button>
             <button
-              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'ads' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('ads')}
-            >
-              Main
-            </button>
-            <button
-              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'bookings' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'bookings' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
               onClick={() => setActiveTab('bookings')}
             >
               Bookings
             </button>
             <button
-              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'aquapay' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'aquapay' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
               onClick={() => setActiveTab('aquapay')}
             >
               💸 AquaPay
             </button>
             <button
-              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
               onClick={() => {
                 setActiveTab('affiliateAnalytics');
                 if (!affiliateAnalytics) {
@@ -2795,7 +2778,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             </button>
             {currentUser.isAdmin && (
               <button
-                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
                 onClick={() => setActiveTab('admin')}
               >
                 Admin
@@ -2804,7 +2787,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
             {currentUser.isAdmin && (
               <button
-                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
                 onClick={() => setActiveTab('twitterRaids')}
               >
                 Twitter Raids
@@ -2813,7 +2796,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
             {currentUser.isAdmin && (
               <button
-                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
                 onClick={() => setActiveTab('facebookRaids')}
               >
                 Facebook Raids
@@ -2822,7 +2805,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             
             {currentUser.userType === 'project' && (
               <button
-                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
                 onClick={() => setActiveTab('partnerStore')}
               >
                 🎁 My Partner Store
@@ -2830,7 +2813,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             )}
 
             <button
-              className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'membership' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'membership' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
               onClick={() => setActiveTab('membership')}
             >
               👑 My Membership
@@ -2838,15 +2821,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
             {currentUser.isAdmin && (
               <button
-                className={`flex-shrink-0 px-4 py-2 whitespace-nowrap ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
                 onClick={() => setActiveTab('partnerAdmin')}
               >
                 🎯 Partner Stores
               </button>
             )}
+            </div>
+            <button
+              onClick={onClose}
+              aria-label="Close dashboard"
+              className="flex-shrink-0 ml-2 bg-red-500/80 hover:bg-red-600/80 px-3 sm:px-4 py-2 rounded text-sm font-medium text-white shadow"
+            >
+              Close
+            </button>
           </div>
         </div>
+      </div>
 
+      {/* Content */}
+      <div className="max-w-7xl mx-auto p-3 sm:p-4">
         <div className="overflow-y-auto">
           {activeTab === 'ads' && (
             <div className="space-y-6">

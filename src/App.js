@@ -3322,24 +3322,6 @@ function App() {
                   />
                 )}
 
-                {showDashboard && currentUser && (
-                  <Dashboard
-                    ads={ads}
-                    currentUser={currentUser}
-                    onClose={() => {
-                      setShowDashboard(false);
-                      setActiveBookingId(null);
-                    }}
-                    onDeleteAd={handleDeleteAd}
-                    onBumpAd={handleBumpPurchase}
-                    onEditAd={handleEditAd}
-                    onRejectBump={handleRejectBump}
-                    onApproveBump={handleApproveBump}
-                    initialBookingId={activeBookingId}
-                    initialActiveTab={dashboardActiveTab}
-                  />
-                )}
-
                 {showWelcomeModal && (
                   <WelcomeModal
                     username={currentUser.username}
@@ -3513,6 +3495,25 @@ function App() {
                 <Footer />
               </div>
               </div>
+
+              {/* Dashboard: rendered outside scroll area so it can sit below header with correct z-order */}
+              {showDashboard && currentUser && (
+                <Dashboard
+                  ads={ads}
+                  currentUser={currentUser}
+                  onClose={() => {
+                    setShowDashboard(false);
+                    setActiveBookingId(null);
+                  }}
+                  onDeleteAd={handleDeleteAd}
+                  onBumpAd={handleBumpPurchase}
+                  onEditAd={handleEditAd}
+                  onRejectBump={handleRejectBump}
+                  onApproveBump={handleApproveBump}
+                  initialBookingId={activeBookingId}
+                  initialActiveTab={dashboardActiveTab}
+                />
+              )}
             </div>
           } />
                       <Route path="/whitepaper" element={<Whitepaper />} />
