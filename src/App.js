@@ -3502,16 +3502,16 @@ function App() {
                     Ads loaded: {ads.length}
                   </div>
                 )}
-              </div>
 
-              {/* Onboarding Section */}
+              {/* Onboarding Section - inside scroll so it appears with rest of content */}
               <div className="relative z-0">
                 <OnboardingSection calendlyUrl="https://calendly.com/aquads-info/15min" />
               </div>
 
-              {/* Footer */}
+              {/* Footer - inside scroll so it appears with rest of content */}
               <div className="relative z-10">
                 <Footer />
+              </div>
               </div>
             </div>
           } />
