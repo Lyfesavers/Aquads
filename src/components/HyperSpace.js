@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { socket } from '../services/api';
@@ -26,8 +26,12 @@ const DURATIONS = [
 // Listener options
 const LISTENER_OPTIONS = [100, 200, 500, 1000, 2500, 5000];
 
+const STORAGE_KEY_PAYPAL_RETURN = 'hyperspacePaypalReturnOrder';
+const PAYPAL_RETURN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 const HyperSpace = ({ currentUser }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Package selection state
   const [packages, setPackages] = useState([]);
@@ -84,6 +88,55 @@ const HyperSpace = ({ currentUser }) => {
       fetchMyOrders();
     }
   }, [currentUser]);
+
+  // When user returns from PayPal (return-to-merchant): show confirmation modal
+  useEffect(() => {
+    if (!currentUser?.token) return;
+
+    const fromPayPal = searchParams.get('paypal') === 'return' || searchParams.get('paypal') === 'success';
+    let stored;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_PAYPAL_RETURN);
+      if (!raw) return;
+      stored = JSON.parse(raw);
+      if (!stored?.orderId || !stored?.ts) return;
+      const age = Date.now() - stored.ts;
+      if (age > PAYPAL_RETURN_WINDOW_MS && !fromPayPal) return; // only use old storage if URL says we came from PayPal
+      if (age > PAYPAL_RETURN_WINDOW_MS) return;
+    } catch {
+      return;
+    }
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/hyperspace/order/${stored.orderId}`, {
+          headers: { Authorization: `Bearer ${currentUser.token}` }
+        });
+        if (cancelled || !response.data.success || !response.data.order) return;
+        const order = response.data.order;
+        if (order.status === 'awaiting_payment') return; // not paid yet
+        setConfirmedOrder({
+          orderId: order.orderId,
+          status: order.status,
+          listenerCount: order.listenerCount ?? order.listeners,
+          duration: order.duration
+        });
+        setShowConfirmation(true);
+        setShowPayment(false);
+        setCurrentOrderId(order.orderId);
+        fetchMyOrders();
+      } catch {
+        // Silent fail
+      } finally {
+        try {
+          localStorage.removeItem(STORAGE_KEY_PAYPAL_RETURN);
+        } catch {}
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [currentUser?.token, searchParams]);
 
   // Clear error/success after timeout
   useEffect(() => {
@@ -330,6 +383,15 @@ const HyperSpace = ({ currentUser }) => {
         { headers: { Authorization: `Bearer ${currentUser.token}` } }
       );
       setSuccess('Order submitted for verification. Complete payment in the new tab. Our team will process it shortly.');
+      // Store for return-to-merchant: when PayPal redirects back to /hyperspace we can show confirmation modal
+      try {
+        localStorage.setItem(STORAGE_KEY_PAYPAL_RETURN, JSON.stringify({
+          orderId: currentOrderId,
+          listenerCount: selectedListeners,
+          duration: selectedDuration,
+          ts: Date.now()
+        }));
+      } catch {}
       window.open(getPayPalLink(), '_blank');
       // Show confirmation UI so user sees order is "pending"
       setShowPayment(false);
