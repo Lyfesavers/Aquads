@@ -95,6 +95,16 @@ nav .h-16,
 /* Content spacing adjustments for standard navigation */
 /* Removed .fixed.top-0 + * rule that was causing gap between nav and TokenBanner */
 
+/* Token banner: always fixed below header (4rem), never scrolls with page */
+.token-banner-fixed-wrapper {
+  position: fixed !important;
+  top: 4rem !important; /* same as nav h-16 */
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 3;
+  margin-top: 0;
+}
+
 .sticky.top-0 {
   height: 4rem !important; /* Ensure sticky navs have proper height */
 }
