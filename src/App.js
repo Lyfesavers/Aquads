@@ -2508,7 +2508,7 @@ function App() {
           } />
           <Route path="/" element={<LandingPage />} />
           <Route path="/home" element={
-            <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
+            <div className="bg-gradient-to-br from-gray-900 to-black text-white flex flex-col h-screen overflow-hidden">
               {/* Background stays fixed */}
               <div className="fixed inset-0">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
@@ -2516,14 +2516,9 @@ function App() {
                 <div className="tech-dots"></div>
               </div>
 
-              {/* Token banner: fixed at top below nav, direct child of scroll container so it stays with header */}
-              <div className="token-banner-fixed-wrapper fixed top-16 left-0 right-0 z-[3]" style={{ marginTop: 0 }}>
-                <TokenBanner />
-              </div>
-
-              {/* Main content wrapper */}
-              <div className="relative z-10">
-                {/* Navigation stays fixed */}
+              {/* Header + token banner: fixed, outside scroll so they stay at top */}
+              <div className="relative z-10 flex-shrink-0">
+                {/* Navigation and banner stay fixed */}
                 <nav className="fixed top-0 left-0 right-0 h-16 min-h-[4rem] bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
                     <div className="flex items-center justify-between h-16">
@@ -2856,7 +2851,13 @@ function App() {
                   </div>
                 </nav>
 
-                {/* Main content - allow natural scrolling */}
+                <div className="fixed top-16 left-0 right-0 z-[3]" style={{ marginTop: 0 }}>
+                  <TokenBanner />
+                </div>
+              </div>
+
+              {/* Only this area scrolls; nav + token banner stay fixed above */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="pt-20">
                   {/* Rotating Banner - AquaSwap & Chrome Extension */}
                   <RotatingBanner />
@@ -3502,6 +3503,7 @@ function App() {
                   </div>
                 )}
               </div>
+              {/* end scroll area */}
 
               {/* Onboarding Section */}
               <div className="relative z-0">
