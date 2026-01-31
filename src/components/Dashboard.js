@@ -2735,10 +2735,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  /* Nav h-16 (4rem) + TokenBanner h-12 (3rem) = 7rem; keep dashboard below header/banner */
+  const headerOffset = '7rem';
+  const tabsStickyTop = '10.5rem'; /* header + dashboard title row height */
+
   return (
-    <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg z-10 p-4">
+    <div className="fixed inset-0 bg-gray-900 z-[100] overflow-y-auto pt-[7rem]">
+      {/* Header - sticks below app nav + token banner */}
+      <div className="sticky bg-gray-800/80 backdrop-blur-sm shadow-lg z-10 p-4" style={{ top: headerOffset }}>
         <div className="flex justify-between items-center max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-white">Dashboard</h2>
           <button 
@@ -2752,7 +2756,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       {/* Content - reuse existing dashboard content */}
       <div className="max-w-7xl mx-auto p-4">
-        <div className="relative border-b border-gray-700 mb-6 sticky top-0 bg-gray-800 z-10">
+        {/* Tabs bar - sticks below dashboard title row under app header */}
+        <div className="relative border-b border-gray-700 mb-6 sticky bg-gray-800 z-10" style={{ top: tabsStickyTop }}>
           {/* Mobile scrollable tabs container */}
           <div className="flex overflow-x-auto scrollbar-hide scroll-smooth md:overflow-x-visible">
             {/* Fade indicators for mobile - show on mobile only */}
