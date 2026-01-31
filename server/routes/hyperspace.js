@@ -234,16 +234,24 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
     
     await order.save();
 
-    // Notify admin via socket
+    // Notify admin via socket (same event/payload as crypto flow so Dashboard shows the order)
     try {
-      socket.getIO().emit('hyperspaceOrderPending', {
-        orderId: order.orderId,
-        username: order.username,
-        listeners: order.listenerCount,
-        duration: order.duration,
-        spaceUrl: order.spaceUrl,
-        price: order.customerPrice
-      });
+      const io = socket.getIO();
+      if (io) {
+        io.emit('newHyperSpaceOrderPending', {
+          orderId: order.orderId,
+          username: order.username,
+          listenerCount: order.listenerCount,
+          duration: order.duration,
+          spaceUrl: order.spaceUrl,
+          customerPrice: order.customerPrice,
+          socialplugCost: order.socialplugCost,
+          createdAt: order.createdAt,
+          status: order.status,
+          errorMessage: order.errorMessage,
+          paymentMethod: order.paymentMethod
+        });
+      }
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
     }
@@ -434,11 +442,21 @@ router.post('/admin/approve/:orderId', auth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
-    if (order.status !== 'pending_approval') {
+    // Allow pending_approval or PayPal orders still in awaiting_payment (admin verified payment)
+    const canApprove = order.status === 'pending_approval' ||
+      (order.status === 'awaiting_payment' && order.paymentMethod === 'paypal');
+    if (!canApprove) {
       return res.status(400).json({
         success: false,
         error: `Order cannot be approved. Current status: ${order.status}`
       });
+    }
+
+    // If PayPal order was still awaiting_payment, confirm payment first
+    if (order.status === 'awaiting_payment' && order.paymentMethod === 'paypal') {
+      order.paymentStatus = 'completed';
+      order.paymentReceivedAt = new Date();
+      order.status = 'pending_approval';
     }
 
     // Mark as delivering (manually placed on Socialplug)

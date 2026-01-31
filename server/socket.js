@@ -505,9 +505,12 @@ function init(server) {
       try {
         const HyperSpaceOrder = require('./models/HyperSpaceOrder');
         
-        // Fetch pending_approval and delivering orders
-        const orders = await HyperSpaceOrder.find({ 
-          status: { $in: ['pending_approval', 'delivering'] }
+        // Fetch pending_approval, delivering, and PayPal orders still in awaiting_payment (so admin can verify and process)
+        const orders = await HyperSpaceOrder.find({
+          $or: [
+            { status: { $in: ['pending_approval', 'delivering'] } },
+            { status: 'awaiting_payment', paymentMethod: 'paypal' }
+          ]
         }).sort({ createdAt: -1 }).lean();
 
         socket.emit('pendingHyperSpaceOrdersLoaded', {

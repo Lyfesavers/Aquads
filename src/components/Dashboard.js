@@ -6058,7 +6058,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 {/* Payment Info */}
                                 <div className="flex flex-wrap gap-3 text-xs text-gray-400">
                                   <span>📅 {new Date(order.createdAt).toLocaleString()}</span>
-                                  {order.txSignature && (
+                                  {order.txSignature && order.txSignature !== 'paypal' && (
                                     <a 
                                       href={`https://solscan.io/tx/${order.txSignature}`}
                                       target="_blank"
@@ -6068,13 +6068,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                       🔗 View TX
                                     </a>
                                   )}
+                                  {order.paymentMethod === 'paypal' && (
+                                    <span className="text-yellow-400">💳 PayPal</span>
+                                  )}
                                   <span className="text-green-400">💰 Profit: ${(order.customerPrice - order.socialplugCost).toFixed(2)}</span>
                                 </div>
                               </div>
 
                               {/* Actions */}
                               <div className="flex flex-col gap-2 min-w-[180px]">
-                                {order.status === 'pending_approval' && (
+                                {(order.status === 'pending_approval' || (order.status === 'awaiting_payment' && order.paymentMethod === 'paypal')) && (
                                   <>
                                     <a
                                       href="https://socialplug.io/order"
@@ -6089,7 +6092,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                       disabled={processingHyperSpaceOrderId === order.orderId}
                                       className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
                                     >
-                                      {processingHyperSpaceOrderId === order.orderId ? '...' : '✓ Mark Delivering'}
+                                      {processingHyperSpaceOrderId === order.orderId ? '...' : order.status === 'awaiting_payment' ? '✓ Verify PayPal & Mark Delivering' : '✓ Mark Delivering'}
                                     </button>
                                     <button
                                       onClick={() => {

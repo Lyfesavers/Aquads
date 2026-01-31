@@ -60,6 +60,7 @@ const HyperSpace = ({ currentUser }) => {
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [orderStatus, setOrderStatus] = useState(null);
   const [pollingOrder, setPollingOrder] = useState(false);
+  const [confirmingPayPal, setConfirmingPayPal] = useState(false);
 
   // Memoized star positions for background
   const stars = useMemo(() => 
@@ -316,6 +317,37 @@ const HyperSpace = ({ currentUser }) => {
     };
     return paypalLinks[selectedDuration] || paypalLinks[60]; // Default to 1 hour if duration not found
   }, [selectedDuration]);
+
+  // When user pays via PayPal: confirm payment so order moves to pending_approval and shows in admin tab
+  const handlePayPalPayment = useCallback(async () => {
+    if (!currentOrderId || !currentUser) return;
+    setConfirmingPayPal(true);
+    setError(null);
+    try {
+      await axios.post(
+        `${API_URL}/api/hyperspace/order/${currentOrderId}/confirm-payment`,
+        { txSignature: 'paypal' },
+        { headers: { Authorization: `Bearer ${currentUser.token}` } }
+      );
+      setSuccess('Order submitted for verification. Complete payment in the new tab. Our team will process it shortly.');
+      window.open(getPayPalLink(), '_blank');
+      // Show confirmation UI so user sees order is "pending"
+      setShowPayment(false);
+      setConfirmedOrder({
+        orderId: currentOrderId,
+        status: 'pending_approval',
+        listenerCount: selectedListeners,
+        duration: selectedDuration
+      });
+      setShowConfirmation(true);
+      setSpaceUrl('');
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm payment. Please try again.';
+      setError(msg);
+    } finally {
+      setConfirmingPayPal(false);
+    }
+  }, [currentOrderId, currentUser, getPayPalLink, selectedListeners, selectedDuration]);
 
   // Get current package details including savings
   const getCurrentPackage = useCallback(() => {
@@ -1029,16 +1061,19 @@ const HyperSpace = ({ currentUser }) => {
             ) : (
               <>
                 <p className="text-gray-300 text-sm mb-4">
-                  You'll be redirected to complete payment with your card.
+                  You'll be redirected to complete payment with your card. Your order will appear for our team to verify once you click below.
                 </p>
                 <button
-                  onClick={() => {
-                    window.open(getPayPalLink(), '_blank');
-                  }}
-                  className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                  onClick={handlePayPalPayment}
+                  disabled={confirmingPayPal}
+                  className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <FaExternalLinkAlt className="text-sm" />
-                  Pay with Card
+                  {confirmingPayPal ? (
+                    <FaSpinner className="animate-spin text-sm" />
+                  ) : (
+                    <FaExternalLinkAlt className="text-sm" />
+                  )}
+                  {confirmingPayPal ? 'Submitting...' : 'Pay with Card'}
                 </button>
               </>
             )}
