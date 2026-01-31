@@ -2516,8 +2516,8 @@ function App() {
                 <div className="tech-dots"></div>
               </div>
 
-              {/* Header: nav + token banner fixed, outside scroll so they stay at top */}
-              <div className="relative z-10 flex-shrink-0">
+              {/* Header: nav + token banner fixed, above scroll content so dropdown is not blocked */}
+              <div className="relative z-[200001] flex-shrink-0">
                 {/* Navigation */}
                 <nav className="fixed top-0 left-0 right-0 h-16 min-h-[4rem] bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -2610,9 +2610,9 @@ function App() {
                                 </svg>
                               </button>
                               
-                              {/* Dropdown Menu */}
+                              {/* Dropdown Menu - above token banner and RotatingBanner */}
                               {showUserDropdown && (
-                                <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                                <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-[200002]">
                                   <div className="py-2">
                                     <button
                                       onClick={() => {
@@ -2856,8 +2856,8 @@ function App() {
                 </div>
               </div>
 
-              {/* Only this area scrolls; nav + token banner stay fixed above */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              {/* Only this area scrolls; stays below header so dropdown is not blocked */}
+              <div className="flex-1 min-h-0 overflow-y-auto relative z-0">
                 <div className="pt-20">
                   {/* Rotating Banner - AquaSwap & Chrome Extension */}
                   <RotatingBanner />
