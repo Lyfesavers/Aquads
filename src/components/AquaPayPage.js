@@ -379,7 +379,22 @@ const AquaPayPage = ({ currentUser }) => {
         }
       }
       if (accounts.length > 0) { setWalletAddress(accounts[0]); setWalletConnected(true); }
-    } catch (err) { setTxError(err.message); }
+    } catch (err) {
+      // Provide user-friendly error messages for common wallet issues
+      const errMsg = err.message || '';
+      if (err.code === 4001 || errMsg.includes('User rejected') || errMsg.includes('user rejected')) {
+        setTxError('⚠️ Connection request was rejected. Please approve the connection in your wallet to continue.');
+      } else if (errMsg.includes('not been authorized') || errMsg.includes('not authorized')) {
+        setTxError(
+          '⚠️ Connection was cancelled or has a pending request.\n\n' +
+          'Check if your wallet has a pending popup. If so, approve or reject it, then try again.'
+        );
+      } else if (errMsg.includes('pending') || errMsg.includes('already processing') || errMsg.includes('Request already pending')) {
+        setTxError('⏳ A previous request is still pending. Check your wallet for any pending popups and approve or reject them first.');
+      } else {
+        setTxError(err.message);
+      }
+    }
     finally { setConnecting(false); }
   };
 
@@ -388,10 +403,28 @@ const AquaPayPage = ({ currentUser }) => {
     try {
       let provider = walletId === 'phantom' ? (window.phantom?.solana || window.solana) :
                      walletId === 'solflare' ? window.solflare : window.backpack;
-      if (!provider) throw new Error(`${walletId} wallet not found`);
+      if (!provider) throw new Error(`${walletId} wallet not found. Please install ${walletId === 'phantom' ? 'Phantom' : walletId === 'solflare' ? 'Solflare' : 'Backpack'} wallet.`);
       const response = await provider.connect();
       setWalletAddress(response.publicKey.toString()); setWalletConnected(true);
-    } catch (err) { setTxError(err.message); }
+    } catch (err) {
+      // Provide user-friendly error messages for common wallet issues
+      const errMsg = err.message || '';
+      if (errMsg.includes('not been authorized') || errMsg.includes('User rejected')) {
+        setTxError(
+          '⚠️ Connection was cancelled or has a pending request.\n\n' +
+          '✅ How to fix:\n' +
+          '1. Check if your wallet has a pending popup - approve or reject it\n' +
+          '2. If no popup, click the wallet extension icon to open it\n' +
+          '3. Try connecting again and click APPROVE when prompted'
+        );
+      } else if (errMsg.includes('locked') || errMsg.includes('unlock')) {
+        setTxError('🔒 Your wallet is locked. Please unlock it and try again.');
+      } else if (errMsg.includes('pending') || errMsg.includes('already processing')) {
+        setTxError('⏳ A previous request is still pending. Please check your wallet for any pending popups and approve or reject them first.');
+      } else {
+        setTxError(err.message);
+      }
+    }
     finally { setConnecting(false); }
   };
 
@@ -618,7 +651,27 @@ const AquaPayPage = ({ currentUser }) => {
         setTxStatus('success'); 
         await recordPayment(sig);
       }
-    } catch (err) { setTxStatus('error'); setTxError(err.reason || err.message); }
+    } catch (err) { 
+      setTxStatus('error'); 
+      const errMsg = err.reason || err.message || '';
+      
+      // Handle common wallet/transaction errors with user-friendly messages
+      if (errMsg.includes('not been authorized') || errMsg.includes('not authorized')) {
+        setTxError(
+          '⚠️ Transaction was cancelled or has a pending request.\n\n' +
+          '✅ How to fix:\n' +
+          '1. Check your wallet for any pending transaction popups\n' +
+          '2. Either approve or reject the pending request\n' +
+          '3. Try the payment again'
+        );
+      } else if (errMsg.includes('User rejected') || errMsg.includes('user rejected') || err.code === 4001) {
+        setTxError('Transaction cancelled. Click "Pay" again when ready to approve.');
+      } else if (errMsg.includes('insufficient') || errMsg.includes('Insufficient')) {
+        setTxError('Insufficient balance. Please check your wallet has enough funds (including gas fees).');
+      } else {
+        setTxError(errMsg);
+      }
+    }
     finally { setSending(false); }
   };
 
