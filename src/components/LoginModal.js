@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Modal } from 'react-bootstrap';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ForgotPasswordModal from './ForgotPasswordModal';
@@ -88,7 +89,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
     setShowForgotPassword(false);
   };
 
-  return (
+  return ReactDOM.createPortal(
     <>
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999999]">
         <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
@@ -213,7 +214,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
           onHide={handleCloseForgotPassword}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
