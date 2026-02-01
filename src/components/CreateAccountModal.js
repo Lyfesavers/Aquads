@@ -515,7 +515,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[300000] overflow-y-auto p-2">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999999] overflow-y-auto p-2">
       <div className="bg-gray-800 p-8 rounded-lg w-full max-w-6xl relative my-2">
         <div className="max-h-[calc(100vh-2rem)] overflow-y-auto">
           <div 
