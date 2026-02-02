@@ -787,6 +787,8 @@ const Whitepaper = () => {
               <li>A tiered commission structure rewards affiliates based on the volume of referred sales.</li>
               <li>Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.</li>
               <li>Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.</li>
+              <li>Affiliates earn commission on: project listings, lifetime bumps, banner ads, and HyperSpace (Twitter Space Listeners) orders.</li>
+              <li>HyperSpace commissions are calculated on profit margin, ensuring sustainable affiliate rewards.</li>
               <li>This program serves as a key user acquisition and retention strategy rather than a primary revenue source.</li>
             </ul>
 

@@ -102,6 +102,54 @@ const Affiliate = () => {
                 </div>
 
                 <div>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">What You Earn Commission On:</h3>
+                  <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-600/50 rounded-lg p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <h4 className="text-lg font-semibold text-purple-400">Bubble Listings & Bumps</h4>
+                        <ul className="space-y-2 text-gray-300 text-sm">
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            Project Listing Fees
+                          </li>
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            Lifetime Bumps
+                          </li>
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            Banner Ads
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="text-lg font-semibold text-blue-400 flex items-center">
+                          <span className="mr-2">🚀</span> HyperSpace Orders
+                          <span className="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">NEW</span>
+                        </h4>
+                        <ul className="space-y-2 text-gray-300 text-sm">
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            Twitter Space Listeners
+                          </li>
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            Commission on profit margin
+                          </li>
+                          <li className="flex items-center">
+                            <span className="text-green-400 mr-2">•</span>
+                            All package sizes qualify
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-sm text-gray-400">
+                      Your referred users' purchases across all Aquads services contribute to your tier progression and earn you commissions!
+                    </p>
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Payouts:</h3>
                   <ul className="list-disc list-inside text-gray-300 space-y-2">
                     <li>You can request a payout once you've earned a minimum of $100.</li>

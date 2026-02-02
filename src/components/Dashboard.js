@@ -1423,6 +1423,27 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               </p>
             </div>
           )}
+          
+          {/* Earnings Breakdown by Source */}
+          {earningsSummary.breakdown && (earningsSummary.breakdown.ads?.earned > 0 || earningsSummary.breakdown.hyperspace?.earned > 0) && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <p className="text-gray-400 text-sm mb-2">Earnings Breakdown:</p>
+              <div className="grid grid-cols-2 gap-3">
+                {earningsSummary.breakdown.ads?.earned > 0 && (
+                  <div className="bg-purple-900/20 border border-purple-600/30 rounded-lg p-3">
+                    <p className="text-xs text-purple-400">Bubbles & Banners</p>
+                    <p className="text-lg font-semibold text-white">${earningsSummary.breakdown.ads.earned.toFixed(2)}</p>
+                  </div>
+                )}
+                {earningsSummary.breakdown.hyperspace?.earned > 0 && (
+                  <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
+                    <p className="text-xs text-blue-400">🚀 HyperSpace</p>
+                    <p className="text-lg font-semibold text-white">${earningsSummary.breakdown.hyperspace.earned.toFixed(2)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

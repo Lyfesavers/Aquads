@@ -3400,6 +3400,25 @@ You can customize:
 | Active referrals | Additional rewards |
 | Network building | Multiplier bonuses |
 
+### Commission Earnings
+
+Earn real USDC commissions when your referrals make purchases:
+
+**Commission Tiers:**
+| Tier | Volume | Rate |
+|------|--------|------|
+| Starter | $0 - $4,999 | 10% |
+| Silver | $5,000 - $24,999 | 15% |
+| Gold | $25,000+ | 20% |
+| VIP | By invitation | 30% |
+
+**What Earns Commission:**
+- 🫧 Bubble Listings & Bumps
+- 📺 Banner Ads  
+- 🚀 **HyperSpace Orders** (Twitter Space Listeners) - NEW!
+
+> Commission is calculated on Aquads profit margin, ensuring sustainable affiliate rewards.
+
 ### Affiliate Analytics
 
 Your dashboard shows detailed analytics:
