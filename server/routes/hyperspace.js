@@ -542,7 +542,17 @@ router.post('/admin/complete/:orderId', auth, async (req, res) => {
         
         if (!existingCommission) {
           // Calculate commission based on PROFIT, not gross amount
-          const profitAmount = order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0));
+          // Check for test profit override (TESTING ONLY - remove for production)
+          const { TEST_PRICE_OVERRIDE } = require('../services/socialplugService');
+          const isTestOrder = TEST_PRICE_OVERRIDE.price > 0 && 
+            order.listenerCount === TEST_PRICE_OVERRIDE.listeners && 
+            order.duration === TEST_PRICE_OVERRIDE.duration;
+          
+          const profitAmount = (isTestOrder && TEST_PRICE_OVERRIDE.testProfit) 
+            ? TEST_PRICE_OVERRIDE.testProfit 
+            : (order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0)));
+          
+          console.log(`Commission profit calculation: isTestOrder=${isTestOrder}, profitAmount=${profitAmount}`);
           
           if (profitAmount > 0) {
             const commissionRate = await AffiliateEarning.calculateCommissionRate(orderingUser.referredBy);
