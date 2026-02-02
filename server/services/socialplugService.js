@@ -41,7 +41,7 @@ const SELLING_PRICES = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using normal pricing
+  price: 0.25 // ENABLED - Test price for affiliate commission testing
 };
 
 /**
