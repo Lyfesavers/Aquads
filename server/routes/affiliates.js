@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const AffiliateEarning = require('../models/AffiliateEarning');
+const HyperSpaceAffiliateEarning = require('../models/HyperSpaceAffiliateEarning');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Job = require('../models/Job');
@@ -16,7 +17,7 @@ const requireEmailVerification = require('../middleware/emailVerification');
 const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calculateAdvancedFraudScore } = require('../utils/fraudDetection');
 const { emitAffiliateEarningUpdate } = require('../socket');
 
-// Get affiliate earnings from ads
+// Get affiliate earnings from all sources (ads + hyperspace)
 router.get('/earnings', auth, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
@@ -30,25 +31,54 @@ router.get('/earnings', auth, async (req, res) => {
       });
     }
 
-    const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(req.user.userId) })
+    const affiliateId = new mongoose.Types.ObjectId(req.user.userId);
+
+    // Get ad/bump/banner earnings
+    const adEarnings = await AffiliateEarning.find({ affiliateId })
       .populate('adId', 'title')
       .sort({ createdAt: -1 })
       .lean() || [];
     
+    // Get HyperSpace earnings
+    const hsEarnings = await HyperSpaceAffiliateEarning.find({ affiliateId })
+      .populate('hyperspaceOrderId', 'orderId listenerCount duration')
+      .sort({ createdAt: -1 })
+      .lean() || [];
+    
+    // Normalize and combine earnings with source type
+    const normalizedAdEarnings = adEarnings.map(e => ({
+      ...e,
+      sourceType: 'ad',
+      sourceLabel: e.adId?.title || 'Listing/Bump',
+      baseAmount: e.adAmount || 0
+    }));
+    
+    const normalizedHsEarnings = hsEarnings.map(e => ({
+      ...e,
+      sourceType: 'hyperspace',
+      sourceLabel: `HyperSpace: ${e.hyperspaceOrderId?.listenerCount || '?'} listeners`,
+      baseAmount: e.profitAmount || 0, // For HyperSpace, base is profit
+      adAmount: e.profitAmount || 0    // For backwards compatibility
+    }));
+    
+    // Combine and sort by date
+    const allEarnings = [...normalizedAdEarnings, ...normalizedHsEarnings]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
     // Calculate totals with null checks
-    const totalEarnings = earnings.reduce((sum, earning) => sum + (earning.commissionEarned || 0), 0);
-    const pendingEarnings = earnings
+    const totalEarnings = allEarnings.reduce((sum, earning) => sum + (earning.commissionEarned || 0), 0);
+    const pendingEarnings = allEarnings
       .filter(e => e?.status === 'pending')
       .reduce((sum, earning) => sum + (earning.commissionEarned || 0), 0);
-    const paidEarnings = earnings
+    const paidEarnings = allEarnings
       .filter(e => e?.status === 'paid')
       .reduce((sum, earning) => sum + (earning.commissionEarned || 0), 0);
     
-    // Get current commission rate
+    // Get current commission rate (now calculated across both models)
     const currentRate = await AffiliateEarning.calculateCommissionRate(req.user.userId) || 0.10;
     
     res.json({
-      earnings: earnings || [],
+      earnings: allEarnings || [],
       totalEarnings: totalEarnings || 0,
       pendingEarnings: pendingEarnings || 0,
       paidEarnings: paidEarnings || 0,
@@ -110,7 +140,7 @@ router.post('/record-ad-commission', auth, async (req, res) => {
   }
 });
 
-// Get earnings summary
+// Get earnings summary (aggregated from all sources)
 router.get('/summary', auth, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
@@ -118,7 +148,8 @@ router.get('/summary', auth, async (req, res) => {
         error: 'Invalid user ID',
         totalEarned: 0,
         pendingAmount: 0,
-        totalAdRevenue: 0,
+        totalReferredRevenue: 0,
+        totalAdRevenue: 0, // Kept for backwards compatibility
         currentRate: 0.10,
         isVipAffiliate: false,
         nextTier: {
@@ -129,31 +160,60 @@ router.get('/summary', auth, async (req, res) => {
       });
     }
 
+    const affiliateId = new mongoose.Types.ObjectId(req.user.userId);
+
     // Find user to get VIP status
     const user = await User.findById(req.user.userId);
     const isVipAffiliate = user?.isVipAffiliate || false;
 
-    const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(req.user.userId) })
-      .lean() || [];
+    // Get ad/bump/banner earnings
+    const adEarnings = await AffiliateEarning.find({ affiliateId }).lean() || [];
+    
+    // Get HyperSpace earnings
+    const hsEarnings = await HyperSpaceAffiliateEarning.find({ affiliateId }).lean() || [];
+    
+    // Get current commission rate (now calculated across both models)
     const currentRate = await AffiliateEarning.calculateCommissionRate(req.user.userId) || 0.10;
     
-    // Calculate total ad revenue with null check
-    const totalAdRevenue = earnings.reduce((sum, e) => sum + (e.adAmount || 0), 0);
-    const totalEarned = earnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
-    const pendingAmount = earnings
+    // Calculate ad revenue (gross amounts from ads/bumps/banners)
+    const adRevenue = adEarnings.reduce((sum, e) => sum + (e.adAmount || 0), 0);
+    
+    // Calculate HyperSpace profit volume (commission base for hyperspace)
+    const hsProfit = hsEarnings.reduce((sum, e) => sum + (e.profitAmount || 0), 0);
+    
+    // Total referred revenue for tier calculation (ad revenue + hyperspace profit)
+    const totalReferredRevenue = adRevenue + hsProfit;
+    
+    // Calculate total earned commission from both sources
+    const adEarned = adEarnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+    const hsEarned = hsEarnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+    const totalEarned = adEarned + hsEarned;
+    
+    // Calculate pending amounts from both sources
+    const adPending = adEarnings
       .filter(e => e?.status === 'pending')
       .reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+    const hsPending = hsEarnings
+      .filter(e => e?.status === 'pending')
+      .reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+    const pendingAmount = adPending + hsPending;
     
     const summary = {
       totalEarned: totalEarned || 0,
       pendingAmount: pendingAmount || 0,
-      totalAdRevenue: totalAdRevenue || 0,
+      totalReferredRevenue: totalReferredRevenue || 0, // New field - combined
+      totalAdRevenue: totalReferredRevenue || 0, // Kept for backwards compatibility (now shows combined)
       currentRate: currentRate || 0.10,
       isVipAffiliate: isVipAffiliate,
+      // Breakdown by source (optional - for detailed views)
+      breakdown: {
+        ads: { revenue: adRevenue, earned: adEarned, pending: adPending },
+        hyperspace: { revenue: hsProfit, earned: hsEarned, pending: hsPending }
+      },
       nextTier: currentRate < 0.20 ? {
         rate: currentRate === 0.10 ? 0.15 : 0.20,
         amountNeeded: currentRate === 0.10 ? 5000 : 25000,
-        progress: totalAdRevenue || 0
+        progress: totalReferredRevenue || 0
       } : null
     };
     
@@ -163,6 +223,7 @@ router.get('/summary', auth, async (req, res) => {
     res.status(500).json({
       totalEarned: 0,
       pendingAmount: 0,
+      totalReferredRevenue: 0,
       totalAdRevenue: 0,
       currentRate: 0.10,
       isVipAffiliate: false,

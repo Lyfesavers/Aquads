@@ -50,7 +50,8 @@ affiliateEarningSchema.statics.calculateCommission = function(amount, rate) {
   return finalAmount;
 };
 
-// When calculating total earnings, make sure we're not converting from SOL
+// Calculate commission rate based on COMBINED volume from all sources
+// Includes: AffiliateEarning (ads/bumps/banners) + HyperSpaceAffiliateEarning (hyperspace orders)
 affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliateId) {
   const user = await mongoose.model('User').findById(affiliateId);
   console.log('Calculating commission rate for user:', user?.username);
@@ -60,13 +61,30 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
     return 0.30;
   }
   
-  const totalEarnings = await this.aggregate([
+  // Get ad/bump/banner volume from AffiliateEarning
+  const adEarnings = await this.aggregate([
     { $match: { affiliateId: new mongoose.Types.ObjectId(affiliateId) } },
     { $group: { _id: null, total: { $sum: "$adAmount" } } }
   ]);
+  const adTotal = adEarnings[0]?.total || 0;
   
-  const total = totalEarnings[0]?.total || 0;
-  console.log('Total earnings found:', total, 'USDC');
+  // Get HyperSpace volume from HyperSpaceAffiliateEarning
+  let hsTotal = 0;
+  try {
+    const HyperSpaceAffiliateEarning = mongoose.model('HyperSpaceAffiliateEarning');
+    const hsEarnings = await HyperSpaceAffiliateEarning.aggregate([
+      { $match: { affiliateId: new mongoose.Types.ObjectId(affiliateId) } },
+      { $group: { _id: null, total: { $sum: "$profitAmount" } } }
+    ]);
+    hsTotal = hsEarnings[0]?.total || 0;
+  } catch (err) {
+    // HyperSpaceAffiliateEarning model may not be loaded yet, that's ok
+    console.log('HyperSpaceAffiliateEarning not available for tier calculation');
+  }
+  
+  // Combined total for tier calculation
+  const total = adTotal + hsTotal;
+  console.log('Total referred volume found:', total, 'USDC (ads:', adTotal, '+ hyperspace:', hsTotal, ')');
   
   let rate;
   if (total >= 25000) rate = 0.20;

@@ -3,9 +3,10 @@ const BumpRequest = require('../models/BumpRequest');
 const Ad = require('../models/Ad');
 const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
+const HyperSpaceAffiliateEarning = require('../models/HyperSpaceAffiliateEarning');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
-const { emitBumpRequestUpdate, emitTokenPurchaseApproved, emitUserTokenBalanceUpdate } = require('../socket');
+const { emitBumpRequestUpdate, emitTokenPurchaseApproved, emitUserTokenBalanceUpdate, emitAffiliateEarningUpdate } = require('../socket');
 
 /**
  * Auto-approval handler for different payment types
@@ -473,6 +474,60 @@ const paymentAutoApproval = {
         await order.save();
 
         console.log(`HyperSpace order ${hyperspaceOrderId} payment received and order placed with Socialplug: ${placeResult.orderId}`);
+
+        // Record affiliate commission if the ordering user was referred
+        try {
+          const orderingUser = await User.findById(order.userId);
+          if (orderingUser && orderingUser.referredBy) {
+            // Check if commission already recorded for this order
+            const existingCommission = await HyperSpaceAffiliateEarning.findOne({ 
+              hyperspaceOrderId: order._id 
+            });
+            
+            if (!existingCommission) {
+              // Calculate commission based on PROFIT, not gross amount
+              const profitAmount = order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0));
+              
+              if (profitAmount > 0) {
+                const commissionRate = await AffiliateEarning.calculateCommissionRate(orderingUser.referredBy);
+                const commissionEarned = HyperSpaceAffiliateEarning.calculateCommission(profitAmount, commissionRate);
+                
+                const affiliateEarning = new HyperSpaceAffiliateEarning({
+                  affiliateId: orderingUser.referredBy,
+                  referredUserId: orderingUser._id,
+                  hyperspaceOrderId: order._id,
+                  orderId: order.orderId,
+                  orderAmount: order.customerPrice,
+                  profitAmount: profitAmount,
+                  commissionRate,
+                  commissionEarned
+                });
+                
+                await affiliateEarning.save();
+                console.log(`HyperSpace affiliate commission recorded: $${commissionEarned} for order ${order.orderId}`);
+                
+                // Emit real-time update for affiliate
+                try {
+                  emitAffiliateEarningUpdate({
+                    affiliateId: orderingUser.referredBy.toString(),
+                    earningId: affiliateEarning._id,
+                    commissionEarned: affiliateEarning.commissionEarned,
+                    sourceType: 'hyperspace',
+                    sourceLabel: `HyperSpace: ${order.listenerCount} listeners`,
+                    profitAmount: profitAmount,
+                    commissionRate: commissionRate,
+                    createdAt: affiliateEarning.createdAt
+                  });
+                } catch (emitError) {
+                  console.error('Error emitting affiliate earning update:', emitError);
+                }
+              }
+            }
+          }
+        } catch (commissionError) {
+          console.error('Error recording HyperSpace affiliate commission:', commissionError);
+          // Don't fail the order if commission recording fails
+        }
 
         try {
           socket.emitNewHyperSpaceOrder({

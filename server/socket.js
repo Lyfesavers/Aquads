@@ -46,9 +46,11 @@ function init(server) {
         try {
           const User = require('./models/User');
           const AffiliateEarning = require('./models/AffiliateEarning');
+          const HyperSpaceAffiliateEarning = require('./models/HyperSpaceAffiliateEarning');
           const mongoose = require('mongoose');
           
           const userId = userData.userId;
+          const affiliateId = new mongoose.Types.ObjectId(userId);
           
           // Fetch affiliate info (including username for free raid eligibility check)
           const user = await User.findById(userId).select('username affiliateCode referredBy referredUsers affiliateCount commissionRate isVipAffiliate points pointsHistory giftCardRedemptions powerUps freeRaidsUsedToday lastFreeRaidDate');
@@ -58,36 +60,84 @@ function init(server) {
             return;
           }
           
-          // Calculate affiliate earnings summary (matching the original API format)
-          const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(userId) }).lean();
+          // Get ad/bump/banner earnings
+          const adEarnings = await AffiliateEarning.find({ affiliateId }).lean() || [];
+          
+          // Get HyperSpace earnings
+          const hsEarnings = await HyperSpaceAffiliateEarning.find({ affiliateId }).lean() || [];
+          
+          // Get current commission rate (now calculated across both models)
           const currentRate = await AffiliateEarning.calculateCommissionRate(userId) || 0.10;
           
-          // Calculate totals
-          const totalAdRevenue = earnings.reduce((sum, e) => sum + (e.adAmount || 0), 0);
-          const totalEarned = earnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
-          const pendingAmount = earnings
+          // Calculate totals from ad earnings
+          const adRevenue = adEarnings.reduce((sum, e) => sum + (e.adAmount || 0), 0);
+          const adEarned = adEarnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          const adPending = adEarnings
             .filter(e => e?.status === 'pending')
             .reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          
+          // Calculate totals from HyperSpace earnings
+          const hsProfit = hsEarnings.reduce((sum, e) => sum + (e.profitAmount || 0), 0);
+          const hsEarned = hsEarnings.reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          const hsPending = hsEarnings
+            .filter(e => e?.status === 'pending')
+            .reduce((sum, e) => sum + (e.commissionEarned || 0), 0);
+          
+          // Combined totals
+          const totalReferredRevenue = adRevenue + hsProfit;
+          const totalEarned = adEarned + hsEarned;
+          const pendingAmount = adPending + hsPending;
           
           const earningsSummary = {
             totalEarned: totalEarned || 0,
             pendingAmount: pendingAmount || 0,
-            totalAdRevenue: totalAdRevenue || 0,
+            totalReferredRevenue: totalReferredRevenue || 0,
+            totalAdRevenue: totalReferredRevenue || 0, // Backwards compatibility
             currentRate: currentRate || 0.10,
             isVipAffiliate: user.isVipAffiliate || false,
+            breakdown: {
+              ads: { revenue: adRevenue, earned: adEarned, pending: adPending },
+              hyperspace: { revenue: hsProfit, earned: hsEarned, pending: hsPending }
+            },
             nextTier: currentRate < 0.20 ? {
               rate: currentRate === 0.10 ? 0.15 : 0.20,
               amountNeeded: currentRate === 0.10 ? 5000 : 25000,
-              progress: totalAdRevenue || 0
+              progress: totalReferredRevenue || 0
             } : null
           };
           
-          // Calculate detailed earnings
-          const detailedEarnings = await AffiliateEarning.find({ affiliateId: userId })
+          // Get detailed ad earnings
+          const detailedAdEarnings = await AffiliateEarning.find({ affiliateId: userId })
             .populate('referredUserId', 'username email')
             .populate('adId', 'title')
             .sort({ createdAt: -1 })
-            .limit(50);
+            .limit(30);
+          
+          // Get detailed HyperSpace earnings
+          const detailedHsEarnings = await HyperSpaceAffiliateEarning.find({ affiliateId: userId })
+            .populate('referredUserId', 'username')
+            .populate('hyperspaceOrderId', 'orderId listenerCount duration')
+            .sort({ createdAt: -1 })
+            .limit(20);
+          
+          // Normalize and combine detailed earnings
+          const normalizedAdEarnings = detailedAdEarnings.map(e => ({
+            ...e.toObject(),
+            sourceType: 'ad',
+            sourceLabel: e.adId?.title || 'Listing/Bump'
+          }));
+          
+          const normalizedHsEarnings = detailedHsEarnings.map(e => ({
+            ...e.toObject(),
+            sourceType: 'hyperspace',
+            sourceLabel: `HyperSpace: ${e.hyperspaceOrderId?.listenerCount || '?'} listeners`,
+            adAmount: e.profitAmount // For backwards compatibility
+          }));
+          
+          // Combine and sort by date
+          const detailedEarnings = [...normalizedAdEarnings, ...normalizedHsEarnings]
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 50);
           
           // Calculate free raid eligibility using automatic system
           // Check if user owns an active ad with lifetime bump (20 free raids/day)

@@ -1369,8 +1369,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         <h3 className="text-xl font-semibold mb-4">Affiliate Earnings</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-gray-700/50 p-4 rounded-lg">
-            <p className="text-gray-400">Total Ad Revenue</p>
-            <p className="text-2xl font-bold">{earningsSummary.totalAdRevenue.toFixed(2)} USDC</p>
+            <p className="text-gray-400">Total Referred Revenue</p>
+            <p className="text-2xl font-bold">{(earningsSummary.totalReferredRevenue || earningsSummary.totalAdRevenue || 0).toFixed(2)} USDC</p>
           </div>
           <div className="bg-gray-700/50 p-4 rounded-lg">
             <p className="text-gray-400">Total Earned</p>
@@ -1414,12 +1414,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 <div
                   className="bg-blue-500 h-2 rounded-full"
                   style={{
-                    width: `${Math.min((earningsSummary.totalAdRevenue / earningsSummary.nextTier.amountNeeded) * 100, 100)}%`
+                    width: `${Math.min(((earningsSummary.totalReferredRevenue || earningsSummary.totalAdRevenue || 0) / earningsSummary.nextTier.amountNeeded) * 100, 100)}%`
                   }}
                 ></div>
               </div>
               <p className="text-sm text-gray-400 mt-1">
-                {earningsSummary.totalAdRevenue.toLocaleString()} / {earningsSummary.nextTier.amountNeeded.toLocaleString()} USDC
+                {(earningsSummary.totalReferredRevenue || earningsSummary.totalAdRevenue || 0).toLocaleString()} / {earningsSummary.nextTier.amountNeeded.toLocaleString()} USDC
               </p>
             </div>
           )}
