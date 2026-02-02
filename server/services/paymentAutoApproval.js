@@ -486,17 +486,7 @@ const paymentAutoApproval = {
             
             if (!existingCommission) {
               // Calculate commission based on PROFIT, not gross amount
-              // Check for test profit override (TESTING ONLY - remove for production)
-              const { TEST_PRICE_OVERRIDE } = require('./socialplugService');
-              const isTestOrder = TEST_PRICE_OVERRIDE.price > 0 && 
-                order.listenerCount === TEST_PRICE_OVERRIDE.listeners && 
-                order.duration === TEST_PRICE_OVERRIDE.duration;
-              
-              const profitAmount = (isTestOrder && TEST_PRICE_OVERRIDE.testProfit) 
-                ? TEST_PRICE_OVERRIDE.testProfit 
-                : (order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0)));
-              
-              console.log(`Commission profit calculation: isTestOrder=${isTestOrder}, profitAmount=${profitAmount}`);
+              const profitAmount = order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0));
               
               if (profitAmount > 0) {
                 const commissionRate = await AffiliateEarning.calculateCommissionRate(orderingUser.referredBy);

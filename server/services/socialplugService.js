@@ -41,8 +41,7 @@ const SELLING_PRICES = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.25, // ENABLED - Test price for testing
-  testProfit: 14 // TESTING ONLY - Hardcoded profit for commission calculation
+  price: 0 // DISABLED - Using normal pricing ($25 for 100 listeners / 30 min)
 };
 
 /**
