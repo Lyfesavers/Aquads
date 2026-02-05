@@ -619,7 +619,11 @@ function init(server) {
             price: order.customerPrice,
             status: order.status,
             createdAt: order.createdAt,
-            completedAt: order.completedAt
+            completedAt: order.completedAt,
+            // Timer data
+            deliveryEndsAt: order.deliveryEndsAt,
+            socialplugOrderedAt: order.socialplugOrderedAt,
+            autoCompleted: order.autoCompleted
           }))
         });
       } catch (error) {

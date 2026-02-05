@@ -299,6 +299,94 @@ setInterval(async () => {
   }
 }, 30000); // Run every 30 seconds
 
+// HyperSpace Auto-Complete Service - Complete orders when delivery timer expires
+setInterval(async () => {
+  try {
+    const HyperSpaceOrder = require('./models/HyperSpaceOrder');
+    const HyperSpaceAffiliateEarning = require('./models/HyperSpaceAffiliateEarning');
+    const AffiliateEarning = require('./models/AffiliateEarning');
+    
+    const now = new Date();
+    
+    // Find all delivering orders where delivery time has expired
+    const expiredOrders = await HyperSpaceOrder.find({
+      status: 'delivering',
+      deliveryEndsAt: { $lte: now }
+    });
+    
+    if (expiredOrders.length === 0) return;
+    
+    console.log(`[HyperSpace Auto-Complete] Found ${expiredOrders.length} orders to auto-complete`);
+    
+    for (const order of expiredOrders) {
+      try {
+        // Mark as completed
+        order.status = 'completed';
+        order.completedAt = now;
+        order.socialplugStatus = 'completed';
+        order.autoCompleted = true;
+        
+        await order.save();
+        
+        console.log(`[HyperSpace Auto-Complete] ✓ Order ${order.orderId} auto-completed (${order.listenerCount} listeners, ${order.duration}min)`);
+        
+        // Record affiliate commission if the ordering user was referred
+        try {
+          const orderingUser = await User.findById(order.userId);
+          if (orderingUser && orderingUser.referredBy) {
+            // Check if commission already recorded for this order
+            const existingCommission = await HyperSpaceAffiliateEarning.findOne({ 
+              hyperspaceOrderId: order._id 
+            });
+            
+            if (!existingCommission) {
+              // Calculate commission based on PROFIT, not gross amount
+              const profitAmount = order.profit || (order.customerPrice - order.socialplugCost - (order.discountAmount || 0));
+              
+              if (profitAmount > 0) {
+                const commissionRate = await AffiliateEarning.calculateCommissionRate(orderingUser.referredBy);
+                const commissionEarned = HyperSpaceAffiliateEarning.calculateCommission(profitAmount, commissionRate);
+                
+                const affiliateEarning = new HyperSpaceAffiliateEarning({
+                  affiliateId: orderingUser.referredBy,
+                  referredUserId: orderingUser._id,
+                  hyperspaceOrderId: order._id,
+                  orderId: order.orderId,
+                  orderAmount: order.customerPrice,
+                  profitAmount: profitAmount,
+                  commissionRate,
+                  commissionEarned
+                });
+                
+                await affiliateEarning.save();
+                console.log(`[HyperSpace Auto-Complete] Affiliate commission recorded: $${commissionEarned} for order ${order.orderId}`);
+              }
+            }
+          }
+        } catch (commissionError) {
+          console.error(`[HyperSpace Auto-Complete] Error recording affiliate commission for ${order.orderId}:`, commissionError.message);
+        }
+        
+        // Emit socket notification to user
+        try {
+          socketModule.emitHyperSpaceOrderStatusChange(order.orderId, 'completed', {
+            message: 'Your HyperSpace package has been delivered! Timer complete.',
+            autoCompleted: true
+          });
+          socketModule.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'completed', autoCompleted: true });
+        } catch (socketError) {
+          console.error(`[HyperSpace Auto-Complete] Socket emit error for ${order.orderId}:`, socketError.message);
+        }
+        
+      } catch (orderError) {
+        console.error(`[HyperSpace Auto-Complete] Error completing order ${order.orderId}:`, orderError.message);
+      }
+    }
+  } catch (error) {
+    console.error('[HyperSpace Auto-Complete] Error in auto-complete service:', error.message);
+  }
+}, 30000); // Run every 30 seconds to check for expired orders
+
 // Periodic task for sending daily bubble summary to trending channel
 setInterval(async () => {
   try {

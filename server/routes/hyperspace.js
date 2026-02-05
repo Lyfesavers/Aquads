@@ -332,7 +332,11 @@ router.get('/order/:orderId', auth, async (req, res) => {
         paymentStatus: order.paymentStatus,
         createdAt: order.createdAt,
         completedAt: order.completedAt,
-        errorMessage: order.errorMessage
+        errorMessage: order.errorMessage,
+        // Timer data
+        deliveryEndsAt: order.deliveryEndsAt,
+        socialplugOrderedAt: order.socialplugOrderedAt,
+        autoCompleted: order.autoCompleted
       }
     });
   } catch (error) {
@@ -363,7 +367,11 @@ router.get('/my-orders', auth, async (req, res) => {
         price: order.customerPrice,
         status: order.status,
         createdAt: order.createdAt,
-        completedAt: order.completedAt
+        completedAt: order.completedAt,
+        // Timer data
+        deliveryEndsAt: order.deliveryEndsAt,
+        socialplugOrderedAt: order.socialplugOrderedAt,
+        autoCompleted: order.autoCompleted
       })),
       pagination: {
         total,
@@ -408,6 +416,12 @@ router.get('/admin/orders', auth, async (req, res) => {
           totalProfit: { $sum: '$profit' },
           completedOrders: {
             $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+          },
+          deliveringOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'delivering'] }, 1, 0] }
+          },
+          autoCompletedOrders: {
+            $sum: { $cond: [{ $eq: ['$autoCompleted', true] }, 1, 0] }
           }
         }
       }
@@ -470,14 +484,26 @@ router.post('/admin/approve/:orderId', auth, async (req, res) => {
     order.approvedAt = new Date();
     if (adminNotes) order.adminNotes = adminNotes;
     
+    // Calculate delivery end time based on duration
+    const deliveryEndsAt = new Date();
+    deliveryEndsAt.setMinutes(deliveryEndsAt.getMinutes() + order.duration);
+    order.deliveryEndsAt = deliveryEndsAt;
+    
     await order.save();
 
     // Notify via socket
     try {
       socket.emitHyperSpaceOrderStatusChange(order.orderId, 'delivering', {
-        message: 'Your listeners are being delivered!'
+        message: 'Your listeners are being delivered!',
+        deliveryEndsAt: order.deliveryEndsAt,
+        duration: order.duration,
+        listenerCount: order.listenerCount
       });
-      socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'delivering' });
+      socket.emitHyperSpaceOrderUpdate({ 
+        orderId: order.orderId, 
+        status: 'delivering',
+        deliveryEndsAt: order.deliveryEndsAt
+      });
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
     }
@@ -488,7 +514,9 @@ router.post('/admin/approve/:orderId', auth, async (req, res) => {
       order: {
         orderId: order.orderId,
         status: order.status,
-        socialplugOrderId: order.socialplugOrderId
+        socialplugOrderId: order.socialplugOrderId,
+        deliveryEndsAt: order.deliveryEndsAt,
+        duration: order.duration
       }
     });
   } catch (error) {

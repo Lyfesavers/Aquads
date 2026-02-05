@@ -138,9 +138,19 @@ const hyperSpaceOrderSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // Delivery timer - when the package boost ends
+  deliveryEndsAt: {
+    type: Date,
+    default: null
+  },
   completedAt: {
     type: Date,
     default: null
+  },
+  // Track if auto-completed by timer
+  autoCompleted: {
+    type: Boolean,
+    default: false
   },
   
   // Discount code support
@@ -161,11 +171,30 @@ hyperSpaceOrderSchema.index({ username: 1 });
 hyperSpaceOrderSchema.index({ status: 1 });
 hyperSpaceOrderSchema.index({ socialplugOrderId: 1 });
 hyperSpaceOrderSchema.index({ createdAt: -1 });
+// Index for auto-completion queries - find delivering orders with expired timers
+hyperSpaceOrderSchema.index({ status: 1, deliveryEndsAt: 1 });
 
 // Virtual for duration label
 hyperSpaceOrderSchema.virtual('durationLabel').get(function() {
   const labels = { 30: '30 Minutes', 60: '1 Hour', 120: '2 Hours' };
   return labels[this.duration] || `${this.duration} Minutes`;
+});
+
+// Virtual for time remaining (in milliseconds)
+hyperSpaceOrderSchema.virtual('timeRemaining').get(function() {
+  if (!this.deliveryEndsAt || this.status !== 'delivering') {
+    return null;
+  }
+  const remaining = new Date(this.deliveryEndsAt).getTime() - Date.now();
+  return remaining > 0 ? remaining : 0;
+});
+
+// Virtual to check if delivery has expired
+hyperSpaceOrderSchema.virtual('isExpired').get(function() {
+  if (!this.deliveryEndsAt || this.status !== 'delivering') {
+    return false;
+  }
+  return new Date(this.deliveryEndsAt).getTime() <= Date.now();
 });
 
 // Method to check if order can be retried

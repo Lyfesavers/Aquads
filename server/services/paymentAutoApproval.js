@@ -471,6 +471,12 @@ const paymentAutoApproval = {
         order.socialplugOrderedAt = new Date();
         order.status = 'delivering';
         order.errorMessage = null;
+        
+        // Calculate delivery end time based on duration
+        const deliveryEndsAt = new Date();
+        deliveryEndsAt.setMinutes(deliveryEndsAt.getMinutes() + order.duration);
+        order.deliveryEndsAt = deliveryEndsAt;
+        
         await order.save();
 
         console.log(`HyperSpace order ${hyperspaceOrderId} payment received and order placed with Socialplug: ${placeResult.orderId}`);
@@ -543,9 +549,16 @@ const paymentAutoApproval = {
             socialplugOrderId: order.socialplugOrderId
           });
           socket.emitHyperSpaceOrderStatusChange(order.orderId, 'delivering', {
-            message: 'Your listeners are being delivered!'
+            message: 'Your listeners are being delivered!',
+            deliveryEndsAt: order.deliveryEndsAt,
+            duration: order.duration,
+            listenerCount: order.listenerCount
           });
-          socket.emitHyperSpaceOrderUpdate({ orderId: order.orderId, status: 'delivering' });
+          socket.emitHyperSpaceOrderUpdate({ 
+            orderId: order.orderId, 
+            status: 'delivering',
+            deliveryEndsAt: order.deliveryEndsAt 
+          });
         } catch (socketError) {
           console.error('Socket emit error:', socketError);
         }

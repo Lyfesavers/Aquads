@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft } from 'react-icons/fa';
+import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch } from 'react-icons/fa';
 import axios from 'axios';
 import { socket } from '../services/api';
 import Footer from './Footer';
@@ -25,6 +25,79 @@ const DURATIONS = [
 
 // Listener options
 const LISTENER_OPTIONS = [100, 200, 500, 1000, 2500, 5000];
+
+// Countdown Timer Component for active deliveries
+const CountdownTimer = ({ endsAt, onComplete, compact = false }) => {
+  const [timeLeft, setTimeLeft] = React.useState(null);
+  
+  React.useEffect(() => {
+    if (!endsAt) return;
+    
+    const calculateTimeLeft = () => {
+      const now = Date.now();
+      const endTime = new Date(endsAt).getTime();
+      const diff = endTime - now;
+      
+      if (diff <= 0) {
+        onComplete?.();
+        return { hours: 0, minutes: 0, seconds: 0, expired: true };
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      return { hours, minutes, seconds, expired: false };
+    };
+    
+    setTimeLeft(calculateTimeLeft());
+    
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [endsAt, onComplete]);
+  
+  if (!timeLeft || timeLeft.expired) {
+    return (
+      <span className="text-green-400 text-xs font-medium flex items-center gap-1">
+        <FaCheck className="text-[10px]" />
+        Complete
+      </span>
+    );
+  }
+  
+  const { hours, minutes, seconds } = timeLeft;
+  const isLowTime = hours === 0 && minutes < 5;
+  
+  if (compact) {
+    return (
+      <div className={`flex items-center gap-1 text-xs font-mono ${isLowTime ? 'text-red-400' : 'text-cyan-400'}`}>
+        <FaStopwatch className={`text-[10px] ${isLowTime ? 'animate-pulse' : ''}`} />
+        <span>
+          {hours > 0 && `${hours}:`}
+          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        </span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg ${
+      isLowTime 
+        ? 'bg-red-500/20 border border-red-500/30' 
+        : 'bg-cyan-500/20 border border-cyan-500/30'
+    }`}>
+      <FaStopwatch className={`text-xs ${isLowTime ? 'text-red-400 animate-pulse' : 'text-cyan-400'}`} />
+      <span className={`text-xs font-mono font-bold ${isLowTime ? 'text-red-400' : 'text-cyan-400'}`}>
+        {hours > 0 && `${hours}:`}
+        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      </span>
+      <span className={`text-[10px] ${isLowTime ? 'text-red-400/70' : 'text-cyan-400/70'}`}>left</span>
+    </div>
+  );
+};
 
 const STORAGE_KEY_PAYPAL_RETURN = 'hyperspacePaypalReturnOrder';
 const PAYPAL_RETURN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -120,7 +193,8 @@ const HyperSpace = ({ currentUser }) => {
           orderId: order.orderId,
           status: order.status,
           listenerCount: order.listenerCount ?? order.listeners,
-          duration: order.duration
+          duration: order.duration,
+          deliveryEndsAt: order.deliveryEndsAt
         });
         setShowConfirmation(true);
         setShowPayment(false);
@@ -166,7 +240,9 @@ const HyperSpace = ({ currentUser }) => {
             status: data.status,
             message: data.message,
             listenerCount: data.listenerCount,
-            duration: data.duration
+            duration: data.duration,
+            deliveryEndsAt: data.deliveryEndsAt,
+            autoCompleted: data.autoCompleted
           });
           setShowConfirmation(true);
           setSpaceUrl('');
@@ -939,10 +1015,33 @@ const HyperSpace = ({ currentUser }) => {
                             </div>
                             <span className="text-white font-bold">{order.price} USDC</span>
                           </div>
-                          <div className="flex justify-between text-xs text-gray-400">
+                          <div className="flex justify-between items-center text-xs text-gray-400">
                             <span>{formatDuration(order.duration)}</span>
-                            <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                            {/* Show countdown timer for delivering orders */}
+                            {order.status === 'delivering' && order.deliveryEndsAt ? (
+                              <CountdownTimer 
+                                endsAt={order.deliveryEndsAt} 
+                                onComplete={() => fetchMyOrders()}
+                                compact={true}
+                              />
+                            ) : (
+                              <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                            )}
                           </div>
+                          {/* Show timer bar for active deliveries */}
+                          {order.status === 'delivering' && order.deliveryEndsAt && (
+                            <div className="pt-2">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] text-cyan-400 font-medium">🔴 LIVE - Package Active</span>
+                              </div>
+                              <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-pulse"
+                                  style={{ width: '100%' }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -957,12 +1056,15 @@ const HyperSpace = ({ currentUser }) => {
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Duration</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Price</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Timer</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
                           {myOrders.map((order) => (
-                            <tr key={order.orderId} className="hover:bg-gray-700/30 transition-colors">
+                            <tr key={order.orderId} className={`hover:bg-gray-700/30 transition-colors ${
+                              order.status === 'delivering' ? 'bg-cyan-500/5' : ''
+                            }`}>
                               <td className="px-4 py-3 text-sm text-white font-mono">{order.orderId}</td>
                               <td className="px-4 py-3 text-sm text-white">{order.listeners.toLocaleString()}</td>
                               <td className="px-4 py-3 text-sm text-white">
@@ -974,6 +1076,25 @@ const HyperSpace = ({ currentUser }) => {
                                   {getStatusIcon(order.status)}
                                   {order.status.replace(/_/g, ' ')}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                {/* Countdown timer for active deliveries */}
+                                {order.status === 'delivering' && order.deliveryEndsAt ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Live"></span>
+                                    <CountdownTimer 
+                                      endsAt={order.deliveryEndsAt} 
+                                      onComplete={() => fetchMyOrders()}
+                                    />
+                                  </div>
+                                ) : order.status === 'completed' ? (
+                                  <span className="text-green-400 text-xs flex items-center gap-1">
+                                    <FaCheck className="text-[10px]" />
+                                    {order.autoCompleted ? 'Auto-completed' : 'Completed'}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">—</span>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-400">
                                 {new Date(order.createdAt).toLocaleDateString()}
@@ -1224,11 +1345,28 @@ const HyperSpace = ({ currentUser }) => {
               </div>
             </div>
 
-            {/* Live indicator for delivering status */}
+            {/* Live indicator and countdown timer for delivering status */}
             {confirmedOrder.status === 'delivering' && (
-              <div className="flex items-center justify-center gap-2 mb-6 text-blue-400">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
-                <span className="text-sm">Listeners are joining your Space in real-time</span>
+              <div className="mb-6">
+                <div className="flex items-center justify-center gap-2 text-blue-400 mb-3">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+                  <span className="text-sm">Listeners are joining your Space in real-time</span>
+                </div>
+                {confirmedOrder.deliveryEndsAt && (
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-xs text-cyan-400/80 font-medium">Package Timer</span>
+                      <CountdownTimer 
+                        endsAt={confirmedOrder.deliveryEndsAt} 
+                        onComplete={() => {
+                          setConfirmedOrder(prev => ({ ...prev, status: 'completed' }));
+                          fetchMyOrders();
+                        }}
+                      />
+                      <span className="text-[10px] text-gray-400">Auto-completes when timer ends</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
