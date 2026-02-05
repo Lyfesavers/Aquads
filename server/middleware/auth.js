@@ -82,7 +82,55 @@ const auth = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    res.status(401).json({ error: 'Please authenticate' });
+    
+    // Provide specific error messages based on error type
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        error: 'Session expired',
+        code: 'TOKEN_EXPIRED',
+        message: 'Your session has expired. Please log in again.',
+        expiredAt: error.expiredAt
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        error: 'Invalid session',
+        code: 'INVALID_TOKEN',
+        message: 'Your session is invalid. Please log in again.'
+      });
+    }
+    
+    if (error.name === 'NotBeforeError') {
+      return res.status(401).json({ 
+        error: 'Session not active',
+        code: 'TOKEN_NOT_ACTIVE',
+        message: 'Your session is not yet active. Please try again.'
+      });
+    }
+    
+    if (error.message === 'No authentication token provided') {
+      return res.status(401).json({ 
+        error: 'Not logged in',
+        code: 'NO_TOKEN',
+        message: 'Please log in to continue.'
+      });
+    }
+    
+    if (error.message === 'User not found') {
+      return res.status(401).json({ 
+        error: 'Account not found',
+        code: 'USER_NOT_FOUND',
+        message: 'Your account could not be found. Please log in again.'
+      });
+    }
+    
+    // Generic fallback
+    res.status(401).json({ 
+      error: 'Authentication failed',
+      code: 'AUTH_FAILED',
+      message: 'Please log in to continue.'
+    });
   }
 };
 

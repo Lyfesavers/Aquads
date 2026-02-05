@@ -181,11 +181,11 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
     // Signup bonus points will be awarded after email verification
 
 
-    // Generate access token (15 minutes)
+    // Generate access token (24 hours)
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     // Generate refresh token (7 days)
@@ -541,11 +541,11 @@ router.post('/refresh-token', async (req, res) => {
       });
     }
 
-    // Generate new access token
+    // Generate new access token (24 hours)
     const newToken = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     // Rotate refresh token (more secure)
