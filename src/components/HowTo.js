@@ -20,6 +20,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingBlogId, setDeletingBlogId] = useState(null);
   const [videoError, setVideoError] = useState(false);
   // Initialize activeTab from sessionStorage or default to 'videos'
   const [activeTab, setActiveTab] = useState(() => {
@@ -98,7 +100,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   };
 
   const handleCreateBlog = async (blogData) => {
+    // Prevent multiple simultaneous submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
       
       if (!currentUser) {
         setError('You must be logged in to create a blog post');
@@ -145,17 +153,26 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         return;
       }
 
-             const data = await response.json();
-       setShowCreateBlogModal(false);
-       setError(null);
-       fetchBlogs();
+      const data = await response.json();
+      setShowCreateBlogModal(false);
+      setError(null);
+      fetchBlogs();
     } catch (error) {
       setError('Failed to create blog post. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditBlog = async (blogData) => {
+    // Prevent multiple simultaneous submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
+      
       const token = currentUser?.token || localStorage.getItem('token');
       
       if (!token) {
@@ -187,17 +204,26 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         throw new Error('Failed to update blog');
       }
 
-             await fetchBlogs();
-       setEditingBlog(null);
-       setShowCreateBlogModal(false);
-       setError(null);
+      await fetchBlogs();
+      setEditingBlog(null);
+      setShowCreateBlogModal(false);
+      setError(null);
     } catch (error) {
       setError('Failed to update blog. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteBlog = async (blogId) => {
+    // Prevent multiple simultaneous delete calls
+    if (deletingBlogId) {
+      return;
+    }
+    
     try {
+      setDeletingBlogId(blogId);
+      
       // Get token from both possible sources
       const token = currentUser?.token || localStorage.getItem('token');
       
@@ -229,6 +255,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       setError(null);
     } catch (error) {
       setError(error.message || 'Failed to delete blog. Please try again.');
+    } finally {
+      setDeletingBlogId(null);
     }
   };
 
@@ -695,6 +723,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 currentUser={currentUser}
                 onEditBlog={handleBlogEdit}
                 onDeleteBlog={handleDeleteBlog}
+                deletingBlogId={deletingBlogId}
               />
             )}
           </div>
@@ -710,11 +739,15 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {showCreateBlogModal && (
           <CreateBlogModal
             onClose={() => {
-              setShowCreateBlogModal(false);
-              setEditingBlog(null);
+              // Prevent closing while submitting
+              if (!isSubmitting) {
+                setShowCreateBlogModal(false);
+                setEditingBlog(null);
+              }
             }}
             onSubmit={editingBlog ? handleEditBlog : handleCreateBlog}
             initialData={editingBlog}
+            isSubmitting={isSubmitting}
           />
         )}
 

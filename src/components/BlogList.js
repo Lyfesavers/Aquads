@@ -102,7 +102,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
+const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId = null }) => {
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -222,21 +222,39 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
                   <>
                     <button
                       onClick={() => onEditBlog(blog)}
-                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                      disabled={deletingBlogId === blog._id}
+                      className={`text-blue-400 transition-colors ${
+                        deletingBlogId === blog._id ? 'opacity-50 cursor-not-allowed' : 'hover:text-blue-300'
+                      }`}
                       title="Edit"
                     >
                       <FaEdit size={18} />
                     </button>
                     <button
                       onClick={() => {
+                        if (deletingBlogId) return; // Prevent if already deleting
                         if (window.confirm('Are you sure you want to delete this blog post?')) {
                           onDeleteBlog(blog._id);
                         }
                       }}
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                      title="Delete"
+                      disabled={deletingBlogId !== null}
+                      className={`transition-colors ${
+                        deletingBlogId === blog._id 
+                          ? 'text-yellow-400 cursor-wait' 
+                          : deletingBlogId !== null 
+                            ? 'text-red-400 opacity-50 cursor-not-allowed'
+                            : 'text-red-400 hover:text-red-300'
+                      }`}
+                      title={deletingBlogId === blog._id ? 'Deleting...' : 'Delete'}
                     >
-                      <FaTrash size={18} />
+                      {deletingBlogId === blog._id ? (
+                        <svg className="animate-spin h-[18px] w-[18px]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <FaTrash size={18} />
+                      )}
                     </button>
                   </>
                 )}
