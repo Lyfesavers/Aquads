@@ -1898,6 +1898,357 @@ const skillTests = [
         explanation: "Starting with core members allows refinement based on feedback before committing to broader launch."
       }
     ]
+  },
+  {
+    title: "AI & Generative AI Proficiency Assessment",
+    description: "Comprehensive evaluation of artificial intelligence fundamentals, prompt engineering, generative AI applications, AI ethics and safety, and human-AI collaboration. This assessment covers the practical skills needed to work effectively with modern AI tools and deliver professional-grade results.",
+    category: "technical",
+    difficulty: "advanced",
+    timeLimit: 30,
+    passingScore: 85,
+    badge: {
+      name: "AI & Generative AI Expert",
+      description: "Demonstrates advanced proficiency in AI fundamentals, prompt engineering, and responsible AI usage",
+      icon: "🤖",
+      color: "#8B5CF6"
+    },
+    questions: [
+      // ===== AI FUNDAMENTALS (6 questions) =====
+      {
+        question: "A freelancer needs to build a system that categorizes incoming client emails as 'urgent', 'routine', or 'spam'. Which type of machine learning is most appropriate?",
+        options: [
+          "Unsupervised learning, since the system must discover categories on its own",
+          "Supervised learning, since the categories are predefined and labeled examples can be provided",
+          "Reinforcement learning, since the system must learn through trial and error with rewards",
+          "Generative AI, since the system needs to understand natural language content"
+        ],
+        correctAnswer: 1,
+        explanation: "Supervised learning is ideal when categories are known in advance and labeled training data can be provided for the model to learn classification patterns."
+      },
+      {
+        question: "What is the primary difference between a large language model (LLM) and a traditional rule-based chatbot?",
+        options: [
+          "LLMs are always more accurate because they use more data than rule-based systems",
+          "Rule-based chatbots can handle any conversation while LLMs are limited to trained topics",
+          "LLMs generate responses by predicting probable token sequences based on learned patterns, while rule-based chatbots follow predetermined scripts",
+          "LLMs require internet access to function whereas rule-based chatbots work entirely offline"
+        ],
+        correctAnswer: 2,
+        explanation: "LLMs generate responses by predicting the most likely next tokens based on patterns learned during training, unlike rule-based systems that follow fixed decision trees."
+      },
+      {
+        question: "A client asks why the AI model you deployed performs well on test data but poorly on real-world inputs. What is the most likely explanation?",
+        options: [
+          "The model's hardware is insufficient for real-world processing speeds",
+          "The training and test data did not represent the diversity and distribution of real-world inputs",
+          "The model needs more parameters to handle complex real-world scenarios",
+          "Real-world data is inherently unpredictable and no model can perform well on it"
+        ],
+        correctAnswer: 1,
+        explanation: "Poor real-world performance despite good test results typically indicates a distribution mismatch — the training data didn't capture the variety and edge cases present in production data."
+      },
+      {
+        question: "Which statement most accurately describes how neural networks learn during training?",
+        options: [
+          "They memorize exact input-output pairs from the training dataset for later retrieval",
+          "They adjust internal weights through backpropagation to minimize the difference between predicted and actual outputs",
+          "They build a searchable database of training examples and match new inputs to similar entries",
+          "They develop conscious understanding of concepts by processing data repeatedly"
+        ],
+        correctAnswer: 1,
+        explanation: "Neural networks learn by iteratively adjusting weights through backpropagation, minimizing loss between predictions and ground truth — they learn patterns, not memorize examples."
+      },
+      {
+        question: "What does 'fine-tuning' a foundation model mean in practice?",
+        options: [
+          "Adjusting the model's temperature and token limit settings for a specific task",
+          "Training the model from scratch on a new, smaller dataset for a specialized domain",
+          "Further training a pre-trained model on a domain-specific dataset to adapt its behavior for specialized tasks",
+          "Manually editing the model's internal weights to correct known errors in outputs"
+        ],
+        correctAnswer: 2,
+        explanation: "Fine-tuning takes a pre-trained foundation model and continues training it on a smaller, domain-specific dataset, adapting its general capabilities to perform better on specialized tasks."
+      },
+      {
+        question: "What is Retrieval-Augmented Generation (RAG) and why is it valuable?",
+        options: [
+          "A technique that generates training data automatically to augment small datasets",
+          "A method that combines an LLM with external knowledge retrieval so responses are grounded in up-to-date, specific information",
+          "A process that retrieves previously generated responses and reuses them for similar questions",
+          "An approach that augments model size by retrieving additional neural network layers during inference"
+        ],
+        correctAnswer: 1,
+        explanation: "RAG combines generative AI with information retrieval, allowing LLMs to access external knowledge bases at query time. This grounds responses in current, specific data rather than relying solely on training data."
+      },
+      // ===== PROMPT ENGINEERING (6 questions) =====
+      {
+        question: "A marketing freelancer asks an LLM to 'write something about our product' and receives a vague, generic response. What is the most effective improvement?",
+        options: [
+          "Regenerate the response several times until a satisfactory version appears",
+          "Switch to a different AI model that specializes in marketing content",
+          "Provide specific context including the product name, target audience, desired tone, format, and length",
+          "Add 'please be more creative and detailed' to the end of the prompt"
+        ],
+        correctAnswer: 2,
+        explanation: "Effective prompts provide specific context, constraints, and requirements. Vague inputs produce vague outputs — specificity about audience, tone, format, and details dramatically improves results."
+      },
+      {
+        question: "What is 'chain-of-thought' prompting and when should it be used?",
+        options: [
+          "Sending multiple sequential prompts that build on each previous response to create a conversation chain",
+          "Instructing the model to work through a problem step-by-step before providing a final answer, improving reasoning accuracy",
+          "Linking multiple AI models together in a pipeline where each model handles one step of the task",
+          "Prompting the model to cite its sources in a chain of references for every claim it makes"
+        ],
+        correctAnswer: 1,
+        explanation: "Chain-of-thought prompting asks the model to reason step-by-step before answering. This significantly improves accuracy on complex reasoning, math, and logic tasks by making the reasoning process explicit."
+      },
+      {
+        question: "Which approach most effectively reduces hallucinations when using an LLM for factual research tasks?",
+        options: [
+          "Increase the temperature setting so the model explores more diverse and potentially accurate responses",
+          "Use a longer system prompt that repeatedly emphasizes the importance of accuracy",
+          "Instruct the model to say 'I don't know' when uncertain, provide source context via RAG, and independently verify key claims",
+          "Use the largest available model since bigger models always produce fewer hallucinations"
+        ],
+        correctAnswer: 2,
+        explanation: "Reducing hallucinations requires a multi-layered approach: giving the model permission to express uncertainty, providing source material for grounding, and verifying outputs against reliable sources."
+      },
+      {
+        question: "A developer sets an LLM's temperature to 0.0 for one task and 1.0 for another. What is the practical difference?",
+        options: [
+          "Temperature 0.0 produces faster responses while 1.0 produces slower, more thorough responses",
+          "Temperature 0.0 produces the most deterministic and consistent output while 1.0 produces more varied and creative output",
+          "Temperature 0.0 uses less computing resources while 1.0 uses maximum processing power",
+          "Temperature 0.0 generates shorter responses while 1.0 generates longer, more detailed responses"
+        ],
+        correctAnswer: 1,
+        explanation: "Temperature controls output randomness. At 0.0, the model consistently picks the most probable tokens (ideal for factual tasks). At 1.0, sampling is more random, producing creative variation (useful for brainstorming)."
+      },
+      {
+        question: "What is 'few-shot prompting' and why is it effective?",
+        options: [
+          "Using very short prompts with minimal words to get concise responses from the model",
+          "Providing a small number of input-output examples in the prompt so the model learns the desired pattern and format",
+          "Sending the same prompt multiple times and selecting the best response from the batch",
+          "Limiting the model to generate only a few sentences to reduce the chance of errors"
+        ],
+        correctAnswer: 1,
+        explanation: "Few-shot prompting includes example input-output pairs directly in the prompt. This teaches the model the desired format, style, and reasoning pattern without any fine-tuning, dramatically improving output consistency."
+      },
+      {
+        question: "A freelancer needs an LLM to output data in a strict JSON format for an API integration. What prompting strategy is most reliable?",
+        options: [
+          "Ask the model politely to format the response as JSON and hope it complies consistently",
+          "Provide an exact JSON schema example in the prompt, specify that no additional text should be included, and use low temperature",
+          "Generate the response in plain text first, then ask the model to convert it to JSON in a follow-up prompt",
+          "Use the highest-capability model available since only advanced models can produce structured output"
+        ],
+        correctAnswer: 1,
+        explanation: "Providing explicit schema examples, clear formatting constraints, and using low temperature maximizes structured output reliability. This gives the model an unambiguous target format to follow."
+      },
+      // ===== AI TOOLS & APPLICATIONS (6 questions) =====
+      {
+        question: "A client wants to build a customer support system that answers questions using their internal knowledge base. Which AI architecture is most appropriate?",
+        options: [
+          "A standalone LLM with a very large context window that can hold all company documents at once",
+          "A fine-tuned model trained exclusively on the company's support tickets from the past year",
+          "A RAG system that retrieves relevant documents from the knowledge base and feeds them to an LLM for response generation",
+          "A rule-based chatbot with predefined answers for every possible customer question"
+        ],
+        correctAnswer: 2,
+        explanation: "RAG is ideal for knowledge-base Q&A because it dynamically retrieves relevant documents at query time, keeping responses current and grounded in actual company information without retraining."
+      },
+      {
+        question: "When using AI code assistants like GitHub Copilot, what is the most professional approach to integrating AI-generated code into a production project?",
+        options: [
+          "Accept all suggestions that compile successfully since the AI has been trained on quality code",
+          "Review each suggestion for correctness, security vulnerabilities, and alignment with project conventions before accepting",
+          "Only use AI code suggestions for boilerplate and never for business logic or algorithms",
+          "Run the AI-generated code in production first and fix issues as they are reported by users"
+        ],
+        correctAnswer: 1,
+        explanation: "AI code suggestions must be reviewed for correctness, security, and project standards before acceptance. AI can generate plausible but flawed code, and the developer remains responsible for all committed code."
+      },
+      {
+        question: "A designer wants to use AI image generation for a client project. Which consideration is most critical before delivery?",
+        options: [
+          "Ensuring the generated images have the highest possible pixel resolution",
+          "Verifying the licensing terms of the AI tool permit commercial use and understanding potential intellectual property implications",
+          "Using the most expensive AI image tool since higher cost guarantees better quality",
+          "Generating at least 50 variations to ensure the client has plenty of options to choose from"
+        ],
+        correctAnswer: 1,
+        explanation: "Commercial use rights and IP implications are the most critical consideration. Many AI image tools have specific licensing restrictions, and the evolving legal landscape around AI-generated content requires careful attention."
+      },
+      {
+        question: "What is an 'AI agent' and how does it differ from a standard chatbot interaction?",
+        options: [
+          "An AI agent is simply a chatbot with a more advanced language model providing higher-quality responses",
+          "An AI agent can autonomously plan, use tools, take actions, and iterate toward a goal, while a chatbot responds to individual prompts",
+          "An AI agent is a physical robot powered by AI, while a chatbot is a software-only application",
+          "An AI agent requires human approval for every action, while a chatbot operates fully autonomously"
+        ],
+        correctAnswer: 1,
+        explanation: "AI agents go beyond single-turn responses — they can break down goals into steps, use external tools (search, code execution, APIs), take actions, and iterate autonomously toward completing complex tasks."
+      },
+      {
+        question: "A freelancer is choosing between using a general-purpose LLM API and a specialized AI SaaS tool for a transcription project. What factor should most influence the decision?",
+        options: [
+          "Always choose the general-purpose LLM since it can handle any task regardless of domain",
+          "Always choose the specialized tool since it will be cheaper by default",
+          "Evaluate accuracy on domain-specific content, total cost, integration complexity, and data privacy requirements",
+          "Choose whichever tool the client has heard of, since familiarity builds confidence"
+        ],
+        correctAnswer: 2,
+        explanation: "Tool selection should be driven by objective evaluation of accuracy for the specific domain, total cost of ownership, ease of integration, and compliance with data privacy requirements — not assumptions or familiarity."
+      },
+      {
+        question: "When should a professional choose to fine-tune a model rather than using prompt engineering alone?",
+        options: [
+          "Always fine-tune first, since it produces better results than prompt engineering in every case",
+          "When prompt engineering has been optimized but the model still doesn't consistently match the required style, format, or domain expertise",
+          "Only when the client specifically requests fine-tuning as part of the project scope",
+          "Fine-tuning is outdated and has been fully replaced by RAG and prompt engineering techniques"
+        ],
+        correctAnswer: 1,
+        explanation: "Fine-tuning is appropriate when prompt engineering reaches its limits — typically for consistent style adherence, domain-specific terminology, or specialized behavior patterns that few-shot prompting cannot reliably achieve."
+      },
+      // ===== AI ETHICS & SAFETY (6 questions) =====
+      {
+        question: "A client asks you to use AI to screen job applicants' resumes. What is the most important risk to address before implementation?",
+        options: [
+          "The risk that the AI might process resumes too slowly during peak application periods",
+          "The risk that the AI could perpetuate or amplify biases present in historical hiring data, leading to discriminatory outcomes",
+          "The risk that applicants might not appreciate their resumes being processed by technology",
+          "The risk that the AI might select overqualified candidates that the company cannot afford"
+        ],
+        correctAnswer: 1,
+        explanation: "AI trained on historical hiring data can perpetuate existing biases related to gender, ethnicity, age, and other protected characteristics. Bias auditing and fairness testing are essential before deploying AI in hiring decisions."
+      },
+      {
+        question: "A client wants to feed their entire customer database into a public AI chatbot for analysis. What should you advise?",
+        options: [
+          "Proceed as long as the AI tool has a good reputation and positive reviews",
+          "Advise against it, explaining that data sent to public AI tools may be stored, used for training, or breach customer privacy regulations",
+          "Suggest doing it in small batches to avoid overwhelming the AI system",
+          "Recommend encrypting the data first, which fully resolves all privacy concerns"
+        ],
+        correctAnswer: 1,
+        explanation: "Public AI tools may retain, log, or use input data for model training. Sending personal customer data to such tools can violate GDPR, CCPA, and other privacy regulations, and breach customer trust."
+      },
+      {
+        question: "You discover that an AI tool you recommended to a client occasionally generates content that closely mirrors copyrighted material. What is the most responsible course of action?",
+        options: [
+          "Ignore it since AI-generated content is not subject to copyright law",
+          "Inform the client of the risk, implement output screening, and recommend human review of all generated content before publication",
+          "Switch to a different AI tool, which will eliminate the issue entirely",
+          "Add a disclaimer that all content is AI-generated, which provides full legal protection"
+        ],
+        correctAnswer: 1,
+        explanation: "The responsible approach combines transparency with practical safeguards: informing stakeholders, screening outputs, and ensuring human review. Copyright law around AI content is evolving and proactive risk management is essential."
+      },
+      {
+        question: "What does 'explainability' mean in the context of AI, and why does it matter professionally?",
+        options: [
+          "It means writing documentation that explains how to use the AI tool to non-technical users",
+          "It means the AI can explain jokes, idioms, and cultural references in its responses",
+          "It refers to the ability to understand and communicate why an AI system made a specific decision or recommendation",
+          "It means the AI provides longer, more detailed responses so users can understand the topic better"
+        ],
+        correctAnswer: 2,
+        explanation: "Explainability (or interpretability) is the ability to understand why an AI made a particular decision. This is critical in regulated industries, client trust, debugging errors, and meeting compliance requirements."
+      },
+      {
+        question: "When delivering AI-assisted work to a client, what is the most ethical approach regarding disclosure?",
+        options: [
+          "Never disclose AI usage since clients are paying for results regardless of the method used",
+          "Only disclose if the client specifically asks whether AI was used in the process",
+          "Be transparent about AI usage as part of your workflow, explaining how it enhances quality while maintaining your professional accountability",
+          "Disclose AI usage only if required by law in your jurisdiction and not otherwise"
+        ],
+        correctAnswer: 2,
+        explanation: "Professional transparency about AI usage builds trust, sets appropriate expectations, and demonstrates expertise. Framing AI as a tool that enhances your professional judgment — not replaces it — is the ethical standard."
+      },
+      {
+        question: "An AI model you are testing shows significantly different accuracy rates across demographic groups. What does this indicate and what should be done?",
+        options: [
+          "This is normal behavior and nothing needs to be done since no model is perfect",
+          "This indicates potential algorithmic bias that requires investigation, root cause analysis, and mitigation before the model is deployed",
+          "This means the model needs more training data overall to improve general accuracy",
+          "This should be reported to the AI provider but is not the responsibility of the person deploying it"
+        ],
+        correctAnswer: 1,
+        explanation: "Disparate performance across demographic groups is a strong indicator of algorithmic bias. Responsible deployment requires investigating the cause, testing mitigation strategies, and ensuring equitable performance before launch."
+      },
+      // ===== HUMAN-AI COLLABORATION (6 questions) =====
+      {
+        question: "A client asks you to fully automate their content creation pipeline using AI with no human involvement. What is the best professional advice?",
+        options: [
+          "Agree and implement full automation since modern AI is capable of producing publication-ready content",
+          "Refuse entirely since AI should never be used for content creation in professional contexts",
+          "Recommend AI-assisted workflows with human oversight for quality control, brand voice consistency, and factual accuracy",
+          "Suggest they hire more writers instead since AI content is always detectable and penalized"
+        ],
+        correctAnswer: 2,
+        explanation: "The optimal approach is AI-augmented workflows with human oversight. AI excels at drafting and ideation, but human review ensures brand consistency, factual accuracy, and the nuanced judgment that professional content requires."
+      },
+      {
+        question: "When is it most appropriate to NOT use AI assistance for a professional task?",
+        options: [
+          "When the task involves writing of any kind since AI writing is always lower quality",
+          "When the task requires original critical judgment, sensitive ethical reasoning, or accountability that cannot be delegated to a machine",
+          "When the client is not tech-savvy and might not understand AI involvement",
+          "When the task is too simple, since AI should only be used for complex problems"
+        ],
+        correctAnswer: 1,
+        explanation: "AI should not be the primary driver for tasks requiring original critical judgment, sensitive ethical decisions, or personal accountability. These require human reasoning, empathy, and professional responsibility that AI cannot replicate."
+      },
+      {
+        question: "A freelancer uses AI to generate a first draft, then substantially rewrites and improves it with their expertise. How should they position this workflow to clients?",
+        options: [
+          "Present the work as entirely their own since they significantly modified the AI output",
+          "Explain that AI assists with initial drafting to accelerate delivery while their expertise ensures quality, accuracy, and customization",
+          "Avoid mentioning AI since it might make the client think they are overpaying for the work",
+          "Charge less for the work since AI did part of the job and the client deserves a discount"
+        ],
+        correctAnswer: 1,
+        explanation: "Framing AI as an efficiency tool in your professional workflow is honest and positions your expertise as the differentiator. Clients value the speed and the assurance that a skilled professional shaped the final output."
+      },
+      {
+        question: "How should a professional validate an AI-generated data analysis before presenting findings to a client?",
+        options: [
+          "If the AI's narrative explanation sounds logical and coherent, the analysis can be trusted",
+          "Cross-check key figures against source data, test edge cases, verify statistical methodology, and confirm conclusions are supported by the data",
+          "Run the same analysis through a second AI model and if both agree, the results are valid",
+          "Present the findings with a caveat that they were AI-generated so the client can decide whether to trust them"
+        ],
+        correctAnswer: 1,
+        explanation: "Professional validation requires checking AI outputs against source data, testing edge cases, and confirming that conclusions logically follow from the evidence. AI can make subtle errors that sound plausible but are factually wrong."
+      },
+      {
+        question: "A team is debating whether to use AI to handle sensitive customer complaint responses. What is the best implementation approach?",
+        options: [
+          "Deploy AI for all complaint responses since consistent tone is more important than personalization",
+          "Never use AI for complaints since customers deserve exclusively human interaction",
+          "Use AI to draft empathetic responses with relevant context, but require human review and personalization before sending",
+          "Use AI only for low-severity complaints and route all others directly to human agents"
+        ],
+        correctAnswer: 2,
+        explanation: "AI-drafted responses with human review combines efficiency with empathy. AI ensures consistent structure and tone while human reviewers add personalization, judgment, and emotional intelligence that sensitive situations demand."
+      },
+      {
+        question: "What is the most important skill for professionals to develop as AI tools become more capable?",
+        options: [
+          "Learning to code so they can build their own AI models from scratch",
+          "Developing the ability to critically evaluate AI outputs, ask better questions, and integrate AI into strategic decision-making",
+          "Memorizing the features and pricing of every major AI platform on the market",
+          "Specializing in tasks that AI currently cannot perform, avoiding all AI-automatable work"
+        ],
+        correctAnswer: 1,
+        explanation: "The highest-value skill is the ability to critically evaluate AI outputs, formulate effective queries, and strategically integrate AI into workflows. This meta-skill compounds in value as AI tools evolve and multiply."
+      }
+    ]
   }
 ];
 
