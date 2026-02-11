@@ -1788,7 +1788,7 @@ const CarouselCard = ({ feature, index }) => {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-teal">AquaSwap</span>
                   <br />
-                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain DEX & Trading</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain BEX & Trading</span>
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
@@ -1868,7 +1868,7 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div>
                         <div className="text-white font-bold">Token Swap</div>
-                        <div className="text-gray-400 text-sm">Cross-Chain DEX</div>
+                        <div className="text-gray-400 text-sm">Cross-Chain BEX</div>
                       </div>
                     </div>
                     
