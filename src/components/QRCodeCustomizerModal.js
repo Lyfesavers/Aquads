@@ -123,85 +123,79 @@ const QRCodeCustomizerModal = ({ isOpen, onClose, referralUrl, username }) => {
       ctx.stroke();
     }
 
-    // 3. Corner circuit lines (tech aesthetic)
+    // 3. Corner circuit lines (triangular tech aesthetic - matches logo)
     ctx.strokeStyle = colors.primary + '60';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const circuitPaths = [
-      { start: [30, 30], path: [[80, 30], [80, 50], [30, 50]] },
-      { start: [size - 30, 30], path: [[size - 80, 30], [size - 80, 50], [size - 30, 50]] },
-      { start: [30, size - 30], path: [[80, size - 30], [80, size - 50], [30, size - 50]] },
-      { start: [size - 30, size - 30], path: [[size - 80, size - 30], [size - 80, size - 50], [size - 30, size - 50]] }
+    const triSize = 35;
+    const circuitTriangles = [
+      [[30, 30], [30 + triSize, 30], [30 + triSize / 2, 30 + triSize * 0.866]],                           // top-left
+      [[size - 30, 30], [size - 30 - triSize, 30], [size - 30 - triSize / 2, 30 + triSize * 0.866]],     // top-right
+      [[30, size - 30], [30 + triSize, size - 30], [30 + triSize / 2, size - 30 - triSize * 0.866]],     // bottom-left
+      [[size - 30, size - 30], [size - 30 - triSize, size - 30], [size - 30 - triSize / 2, size - 30 - triSize * 0.866]]  // bottom-right
     ];
 
-    circuitPaths.forEach(({ start, path }) => {
+    circuitTriangles.forEach((points) => {
       ctx.beginPath();
-      ctx.moveTo(...start);
-      path.forEach(p => ctx.lineTo(...p));
+      ctx.moveTo(points[0][0], points[0][1]);
+      ctx.lineTo(points[1][0], points[1][1]);
+      ctx.lineTo(points[2][0], points[2][1]);
+      ctx.closePath();
       ctx.stroke();
     });
 
-    // 4. Hexagonal frame around QR (with glow)
-    const hexRadius = qrSize / 2 + 24;
-    const hexPoints = [];
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i - Math.PI / 6;
-      hexPoints.push([
-        centerX + hexRadius * Math.cos(angle),
-        centerY + hexRadius * Math.sin(angle)
-      ]);
-    }
+    // 4. Triangular frame around QR (matches Aquads logo) - point up
+    const triRadius = qrSize / 2 + 55;
+    const triPoints = [
+      [centerX, centerY - triRadius],                    // top
+      [centerX - triRadius * Math.sqrt(3) / 2, centerY + triRadius / 2],  // bottom-left
+      [centerX + triRadius * Math.sqrt(3) / 2, centerY + triRadius / 2]   // bottom-right
+    ];
 
-    // Hex fill (semi-transparent)
+    // Triangle fill (semi-transparent)
     ctx.fillStyle = colors.primary + '08';
     ctx.beginPath();
-    ctx.moveTo(hexPoints[0][0], hexPoints[0][1]);
-    for (let i = 1; i < hexPoints.length; i++) {
-      ctx.lineTo(hexPoints[i][0], hexPoints[i][1]);
-    }
+    ctx.moveTo(triPoints[0][0], triPoints[0][1]);
+    ctx.lineTo(triPoints[1][0], triPoints[1][1]);
+    ctx.lineTo(triPoints[2][0], triPoints[2][1]);
     ctx.closePath();
     ctx.fill();
 
-    // Hex stroke with neon glow
+    // Triangle stroke with neon glow
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 25;
     ctx.strokeStyle = colors.primary;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(hexPoints[0][0], hexPoints[0][1]);
-    for (let i = 1; i < hexPoints.length; i++) {
-      ctx.lineTo(hexPoints[i][0], hexPoints[i][1]);
-    }
+    ctx.moveTo(triPoints[0][0], triPoints[0][1]);
+    ctx.lineTo(triPoints[1][0], triPoints[1][1]);
+    ctx.lineTo(triPoints[2][0], triPoints[2][1]);
     ctx.closePath();
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // 5. Inner hex (closer to QR) - accent color
-    const innerHexRadius = qrSize / 2 + 8;
-    const innerHexPoints = [];
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i - Math.PI / 6;
-      innerHexPoints.push([
-        centerX + innerHexRadius * Math.cos(angle),
-        centerY + innerHexRadius * Math.sin(angle)
-      ]);
-    }
+    // 5. Inner triangle (closer to QR) - accent color
+    const innerTriRadius = qrSize / 2 + 12;
+    const innerTriPoints = [
+      [centerX, centerY - innerTriRadius],
+      [centerX - innerTriRadius * Math.sqrt(3) / 2, centerY + innerTriRadius / 2],
+      [centerX + innerTriRadius * Math.sqrt(3) / 2, centerY + innerTriRadius / 2]
+    ];
     ctx.strokeStyle = colors.accent + 'aa';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(innerHexPoints[0][0], innerHexPoints[0][1]);
-    for (let i = 1; i < innerHexPoints.length; i++) {
-      ctx.lineTo(innerHexPoints[i][0], innerHexPoints[i][1]);
-    }
+    ctx.moveTo(innerTriPoints[0][0], innerTriPoints[0][1]);
+    ctx.lineTo(innerTriPoints[1][0], innerTriPoints[1][1]);
+    ctx.lineTo(innerTriPoints[2][0], innerTriPoints[2][1]);
     ctx.closePath();
     ctx.stroke();
 
-    // 6. Corner nodes (glowing dots at hex corners)
+    // 6. Corner nodes (glowing dots at triangle corners)
     ctx.shadowColor = colors.glow;
     ctx.shadowBlur = 12;
-    hexPoints.forEach(([x, y]) => {
+    triPoints.forEach(([x, y]) => {
       ctx.fillStyle = colors.accent;
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, Math.PI * 2);
