@@ -689,42 +689,32 @@ const AquaPayPage = ({ currentUser }) => {
         tokenPurchaseId: tokenPurchaseId || null, // Include tokenPurchaseId if provided in URL
         hyperspaceOrderId: hyperspaceOrderId || null // Include hyperspaceOrderId if provided in URL
       });
-      
-      // Send email notification to recipient if they have an email
+
+      // Fire emails in background (don't await) - won't block close or bog down UX
       if (response.data.recipientEmail) {
-        try {
-          await emailService.sendAquaPayPaymentNotification(response.data.recipientEmail, {
-            recipientName: response.data.recipientName,
-            amount: parseFloat(amount),
-            token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
-            chain: selectedChain,
-            senderAddress: walletAddress,
-            txHash: hash,
-            message: message || null
-          });
-        } catch (emailError) {
-          // Don't fail the payment if email fails
-        }
+        emailService.sendAquaPayPaymentNotification(response.data.recipientEmail, {
+          recipientName: response.data.recipientName,
+          amount: parseFloat(amount),
+          token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
+          chain: selectedChain,
+          senderAddress: walletAddress,
+          txHash: hash,
+          message: message || null
+        }).catch(() => {});
       }
-
-      // Send receipt email to payer if they provided an email
       if (payerEmail && payerEmail.trim()) {
-        try {
-          await emailService.sendAquaPayReceipt(payerEmail.trim(), {
-            recipientName: response.data.recipientName,
-            amount: parseFloat(amount),
-            token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
-            chain: selectedChain,
-            senderAddress: walletAddress,
-            txHash: hash,
-            message: message || null
-          });
-        } catch (emailError) {
-          // Don't fail the payment if email fails
-        }
+        emailService.sendAquaPayReceipt(payerEmail.trim(), {
+          recipientName: response.data.recipientName,
+          amount: parseFloat(amount),
+          token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
+          chain: selectedChain,
+          senderAddress: walletAddress,
+          txHash: hash,
+          message: message || null
+        }).catch(() => {});
       }
 
-      // If this payment was for a banner ad, bump, token purchase, or hyperspace order, close the window after successful payment
+      // Close window immediately for banner/bump/token/hyperspace; don't wait for emails
       if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId) && response.data.approvedItem) {
         if (window.opener) {
           window.close();

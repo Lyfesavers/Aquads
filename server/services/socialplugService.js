@@ -41,7 +41,7 @@ const SELLING_PRICES = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.25 // TEST: 100 listeners / 30 min = $0.25 USDC (Socialplug orders still live at $11)
+  price: 0 // DISABLED - Using normal pricing ($25 for 100 listeners / 30 min)
 };
 
 /**
