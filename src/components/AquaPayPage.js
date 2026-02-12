@@ -726,13 +726,9 @@ const AquaPayPage = ({ currentUser }) => {
 
       // If this payment was for a banner ad, bump, token purchase, or hyperspace order, close the window after successful payment
       if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId) && response.data.approvedItem) {
-        // Small delay to show success message, then close quickly
-        setTimeout(() => {
-          if (window.opener) {
-            // This window was opened by another window, close it
-            window.close();
-          }
-        }, 500); // 0.5 seconds - very fast close
+        if (window.opener) {
+          window.close();
+        }
       }
     } catch (e) { /* Silent fail - payment already succeeded on chain */ }
   };

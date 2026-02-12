@@ -254,6 +254,12 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
           errorMessage: order.errorMessage,
           paymentMethod: order.paymentMethod
         });
+        // Notify user instantly via socket so they don't wait for polling
+        socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
+          message: 'Payment received! Your order is being processed.',
+          listenerCount: order.listenerCount,
+          duration: order.duration
+        });
       }
     } catch (socketError) {
       console.error('Socket emit error:', socketError);

@@ -548,12 +548,15 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add caching middleware for API responses
 app.use('/api', (req, res, next) => {
-  // Set cache headers for GET requests
   if (req.method === 'GET') {
-    // Cache for 5 minutes for most API responses
-    res.set('Cache-Control', 'public, max-age=300');
+    // Order status during payment must be fresh; no cache for hyperspace order/:id
+    const isOrderStatus = /^\/hyperspace\/order\/[^/]+$/.test(req.path) && !req.path.includes('/admin');
+    if (isOrderStatus) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else {
+      res.set('Cache-Control', 'public, max-age=300');
+    }
   } else {
-    // No cache for POST, PUT, DELETE requests
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
   next();
