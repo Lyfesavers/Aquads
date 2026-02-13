@@ -79,9 +79,13 @@ function buildCrossword(words, gridSize) {
 }
 
 function CrosswordPuzzle({ currentUser }) {
+  const [searchParams] = useSearchParams();
+  const urlSeed = parseInt(searchParams.get('seed'), 10);
+  const urlDiff = searchParams.get('diff');
+
   const [words, setWords] = useState(CROSSWORD_WORDS);
   const [loading, setLoading] = useState(true);
-  const [difficulty, setDifficulty] = useState(urlDiff && DIFFICULTY[urlDiff] ? urlDiff : 'medium');
+  const [difficulty, setDifficulty] = useState(() => (urlDiff && DIFFICULTY[urlDiff] ? urlDiff : 'medium'));
   const [puzzle, setPuzzle] = useState(null);
   const [userGrid, setUserGrid] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -89,10 +93,7 @@ function CrosswordPuzzle({ currentUser }) {
   const [hints, setHints] = useState(3);
   const [solved, setSolved] = useState(new Set());
   const solvedRef = useRef(new Set());
-  const [searchParams] = useSearchParams();
-  const urlSeed = parseInt(searchParams.get('seed'), 10);
-  const urlDiff = searchParams.get('diff');
-  const [seed, setSeed] = useState(() => !isNaN(urlSeed) ? urlSeed : Math.floor(Math.random() * 1e9));
+  const [seed, setSeed] = useState(() => (!isNaN(urlSeed) ? urlSeed : Math.floor(Math.random() * 1e9)));
   const [showClues, setShowClues] = useState(true);
 
   useEffect(() => {
