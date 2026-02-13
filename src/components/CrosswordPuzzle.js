@@ -1,14 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 import { CROSSWORD_WORDS } from '../data/crosswordWords';
 
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const DIFFICULTY = {
-  medium: { gridSize: 9, wordCount: 12, minLen: 3, maxLen: 6 },
-  hard: { gridSize: 11, wordCount: 18, minLen: 4, maxLen: 7 },
-  expert: { gridSize: 13, wordCount: 24, minLen: 4, maxLen: 8 },
+  medium: { gridSize: 10, wordCount: 10, minLen: 3, maxLen: 6 },
+  hard: { gridSize: 12, wordCount: 14, minLen: 4, maxLen: 7 },
+  expert: { gridSize: 14, wordCount: 18, minLen: 4, maxLen: 8 },
 };
+
+const DIRECTIONS = [
+  { dr: 0, dc: 1 },
+  { dr: 1, dc: 0 },
+  { dr: 1, dc: 1 },
+  { dr: 1, dc: -1 },
+  { dr: 0, dc: -1 },
+  { dr: -1, dc: 0 },
+  { dr: -1, dc: -1 },
+  { dr: -1, dc: 1 },
+];
 
 function shuffle(arr, seed) {
   const a = [...arr];
@@ -24,90 +37,68 @@ function shuffle(arr, seed) {
 function getWordsForDifficulty(words, difficulty, seed) {
   const { minLen, maxLen } = difficulty;
   const filtered = words.filter(w => w.length >= minLen && w.length <= maxLen && /^[a-z]+$/.test(w));
-  return shuffle(filtered, seed).slice(0, 200);
+  return shuffle(filtered, seed).slice(0, 100);
 }
 
-function buildCrossword(words, gridSize) {
+function buildWordSearch(words, gridSize, seed) {
   const grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
   const placed = [];
-  const dirs = [{ dr: 0, dc: 1 }, { dr: 1, dc: 0 }];
+  let rng = seed;
 
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i].toUpperCase();
+  for (const w of words) {
+    const word = w.toUpperCase();
+    if (word.length > gridSize) continue;
+    const dirs = shuffle([...DIRECTIONS], rng++);
     let placed_ = false;
-
-    if (placed.length === 0) {
-      const r = Math.floor(gridSize / 2);
-      const c = Math.max(0, Math.floor((gridSize - word.length) / 2));
-      for (let k = 0; k < word.length; k++) grid[r][c + k] = word[k];
-      placed.push({ word, r, c, dir: 0 });
-      placed_ = true;
-    } else {
-      const crossList = shuffle(placed.map((_, i) => i), i);
-      for (const pi of crossList) {
-        if (placed_) break;
-        const cross = placed[pi];
-        const crossWord = cross.word;
-        const crossDr = dirs[cross.dir].dr;
-        const crossDc = dirs[cross.dir].dc;
-        for (let ci = 0; ci < crossWord.length && !placed_; ci++) {
-          const letter = crossWord[ci];
-          const idx = word.indexOf(letter);
-          if (idx === -1) continue;
-          const dir = 1 - cross.dir;
-          const { dr, dc } = dirs[dir];
-          const r = cross.r + ci * crossDr - idx * dr;
-          const c = cross.c + ci * crossDc - idx * dc;
-          if (r < 0 || c < 0 || r + word.length * dr > gridSize || c + word.length * dc > gridSize) continue;
-          let ok = true;
+    for (const { dr, dc } of dirs) {
+      if (placed_) break;
+      const minR = dr >= 0 ? 0 : word.length - 1;
+      const maxR = dr >= 0 ? gridSize - word.length : gridSize - 1;
+      const minC = dc >= 0 ? 0 : word.length - 1;
+      const maxC = dc >= 0 ? gridSize - word.length : gridSize - 1;
+      if (minR > maxR || minC > maxC) continue;
+      for (let attempt = 0; attempt < 50 && !placed_; attempt++) {
+        const startR = minR + Math.floor(Math.random() * (maxR - minR + 1));
+        const startC = minC + Math.floor(Math.random() * (maxC - minC + 1));
+        let ok = true;
+        for (let k = 0; k < word.length; k++) {
+          const nr = startR + k * dr, nc = startC + k * dc;
+          if (nr < 0 || nr >= gridSize || nc < 0 || nc >= gridSize) { ok = false; break; }
+          const cur = grid[nr][nc];
+          if (cur && cur !== word[k]) { ok = false; break; }
+        }
+        if (ok) {
           for (let k = 0; k < word.length; k++) {
-            const nr = r + k * dr, nc = c + k * dc;
-            const cur = grid[nr][nc];
-            if (cur && cur !== word[k]) { ok = false; break; }
+            grid[startR + k * dr][startC + k * dc] = word[k];
           }
-          if (ok) {
-            for (let k = 0; k < word.length; k++) grid[r + k * dr][c + k * dc] = word[k];
-            placed.push({ word, r, c, dir });
-            placed_ = true;
-          }
+          placed.push({ word, r: startR, c: startC, dr, dc });
+          placed_ = true;
         }
       }
     }
   }
 
-  const starts = new Map();
-  let num = 1;
-  const sortedStarts = [...new Set(placed.map(p => `${p.r},${p.c}`))]
-    .map(s => s.split(',').map(Number))
-    .sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
-  sortedStarts.forEach(([r, c]) => { starts.set(`${r},${c}`, num++); });
-  return { grid, placed, cellNumbers: starts };
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      if (!grid[r][c]) {
+        grid[r][c] = LETTERS[Math.floor(Math.random() * 26)];
+      }
+    }
+  }
+
+  return { grid, placed };
 }
 
 function CrosswordPuzzle({ currentUser }) {
-  const [searchParams] = useSearchParams();
-  const urlSeed = parseInt(searchParams.get('seed'), 10);
-  const urlDiff = searchParams.get('diff');
-
   const [words, setWords] = useState(CROSSWORD_WORDS);
   const [loading, setLoading] = useState(true);
-  const [difficulty, setDifficulty] = useState(() => (urlDiff && DIFFICULTY[urlDiff] ? urlDiff : 'medium'));
+  const [difficulty, setDifficulty] = useState('medium');
   const [puzzle, setPuzzle] = useState(null);
-  const [userGrid, setUserGrid] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [streak, setStreak] = useState(0);
-  const [hints, setHints] = useState(3);
   const [solved, setSolved] = useState(new Set());
-  const solvedRef = useRef(new Set());
-  const [seed, setSeed] = useState(() => (!isNaN(urlSeed) ? urlSeed : Math.floor(Math.random() * 1e9)));
-  const [showClues, setShowClues] = useState(true);
-
-  useEffect(() => {
-    if (!isNaN(urlSeed)) setSeed(s => (s !== urlSeed ? urlSeed : s));
-    if (urlDiff && DIFFICULTY[urlDiff]) setDifficulty(d => (d !== urlDiff ? urlDiff : d));
-  }, [urlSeed, urlDiff]);
-
-  useEffect(() => { solvedRef.current = solved; }, [solved]);
+  const [selected, setSelected] = useState([]);
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e9));
+  const [showWordList, setShowWordList] = useState(true);
+  const isSelecting = useRef(false);
 
   useEffect(() => {
     fetch(WORD_LIST_URL)
@@ -124,86 +115,104 @@ function CrosswordPuzzle({ currentUser }) {
   const generatePuzzle = useCallback(() => {
     const diff = DIFFICULTY[difficulty];
     const pool = getWordsForDifficulty(words, diff, seed);
-    const { grid, placed } = buildCrossword(pool, diff.gridSize);
+    const { grid, placed } = buildWordSearch(pool, diff.gridSize, seed);
     setPuzzle({ grid, placed });
-    setUserGrid(grid.map(row => row.map(c => c ? '' : null)));
     setSolved(new Set());
-    setStreak(0);
-    setHints(3);
-    setSelected(null);
+    setSelected([]);
   }, [words, difficulty, seed]);
 
   useEffect(() => {
     if (!loading && words.length > 0) generatePuzzle();
   }, [loading, difficulty, seed]);
 
-  const handleCellChange = (r, c, key) => {
-    if (!puzzle || !puzzle.grid[r][c]) return;
-    const letter = key.toUpperCase();
-    if (letter.length === 1 && /[A-Z]/.test(letter)) {
-      setUserGrid(prev => {
-        const next = prev.map(row => [...row]);
-        next[r][c] = letter;
-        return next;
-      });
-    } else if (key === 'Backspace') {
-      setUserGrid(prev => {
-        const next = prev.map(row => [...row]);
-        next[r][c] = '';
-        return next;
-      });
+  const isCellInWord = (r, c, wordInfo) => {
+    const { word, r: sr, c: sc, dr, dc } = wordInfo;
+    for (let k = 0; k < word.length; k++) {
+      if (sr + k * dr === r && sc + k * dc === c) return true;
     }
+    return false;
+  };
+
+  const isCellSelected = (r, c) => selected.some(([sr, sc]) => sr === r && sc === c);
+
+  const isCellSolved = (r, c) => {
+    return puzzle?.placed.some(p => solved.has(p.word) && isCellInWord(r, c, p));
+  };
+
+  const getSelectionWord = () => {
+    if (selected.length < 2) return null;
+    const sorted = [...selected].sort((a, b) => (a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]));
+    const dr = sorted[1][0] - sorted[0][0];
+    const dc = sorted[1][1] - sorted[0][1];
+    if (dr === 0 && dc === 0) return null;
+    const step = dr === 0 ? 1 : Math.abs(dr);
+    const stepC = dc === 0 ? 1 : Math.abs(dc);
+    if (dc !== 0 && step !== stepC) return null;
+    const ndr = dr === 0 ? 0 : dr / step;
+    const ndc = dc === 0 ? 0 : dc / step;
+    let word = '';
+    const [r0, c0] = sorted[0];
+    for (let k = 0; k < selected.length; k++) {
+      const nr = r0 + k * ndr, nc = c0 + k * ndc;
+      if (!selected.some(([r, c]) => r === nr && c === nc)) return null;
+      word += puzzle.grid[nr][nc];
+    }
+    return word;
+  };
+
+  const handleCellDown = (r, c) => {
+    if (!puzzle || !puzzle.grid[r][c]) return;
+    isSelecting.current = true;
+    setSelected([[r, c]]);
+  };
+
+  const handleCellEnter = (r, c) => {
+    if (!isSelecting.current || !puzzle) return;
+    setSelected(prev => {
+      const last = prev[prev.length - 1];
+      if (!last) return [[r, c]];
+      const [lr, lc] = last;
+      const dr = r - lr, dc = c - lc;
+      if (dr === 0 && dc === 0) return prev;
+      const sameLine = dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc);
+      if (!sameLine) return prev;
+      const step = Math.max(Math.abs(dr), Math.abs(dc), 1);
+      const ndr = dr === 0 ? 0 : dr / step;
+      const ndc = dc === 0 ? 0 : dc / step;
+      const [r0, c0] = prev[0];
+      const newSel = [];
+      const len = Math.max(Math.abs(r - r0), Math.abs(c - c0)) + 1;
+      for (let k = 0; k < len; k++) {
+        const nr = r0 + k * ndr, nc = c0 + k * ndc;
+        if (nr >= 0 && nr < puzzle.grid.length && nc >= 0 && nc < puzzle.grid[0].length) {
+          newSel.push([nr, nc]);
+        }
+      }
+      return newSel;
+    });
+  };
+
+  const handleCellUp = () => {
+    if (!isSelecting.current) return;
+    isSelecting.current = false;
+    const word = getSelectionWord();
+    if (word && puzzle.placed.some(p => p.word === word) && !solved.has(word)) {
+      setSolved(prev => new Set([...prev, word]));
+    }
+    setSelected([]);
   };
 
   useEffect(() => {
-    if (!puzzle || !userGrid.length) return;
-    const { placed } = puzzle;
-    const toAdd = [];
-    placed.forEach(({ word, r: pr, c: pc, dir }) => {
-      if (solvedRef.current.has(word)) return;
-      const dr = dir === 0 ? 0 : 1, dc = dir === 0 ? 1 : 0;
-      let match = true;
-      for (let k = 0; k < word.length; k++) {
-        const nr = pr + k * dr, nc = pc + k * dc;
-        if ((userGrid[nr]?.[nc] || '').toUpperCase() !== word[k]) { match = false; break; }
-      }
-      if (match) toAdd.push(word);
-    });
-    if (toAdd.length > 0) {
-      setSolved(prev => {
-        const next = new Set(prev);
-        toAdd.forEach(w => next.add(w));
-        return next;
-      });
-      setStreak(s => s + toAdd.length);
-    }
-  }, [userGrid, puzzle]);
+    const up = () => handleCellUp();
+    window.addEventListener('mouseup', up);
+    window.addEventListener('touchend', up);
+    return () => {
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('touchend', up);
+    };
+  }, [puzzle, solved]);
 
-  const revealLetter = () => {
-    if (hints <= 0 || !puzzle) return;
-    const empty = [];
-    puzzle.placed.forEach(({ word, r, c, dir }) => {
-      const dr = dir === 0 ? 0 : 1, dc = dir === 0 ? 1 : 0;
-      for (let k = 0; k < word.length; k++) {
-        const nr = r + k * dr, nc = c + k * dc;
-        if (!userGrid[nr] || !userGrid[nr][nc]) empty.push({ r: nr, c: nc, letter: word[k] });
-      }
-    });
-    if (empty.length === 0) return;
-    const { r, c, letter } = empty[Math.floor(Math.random() * empty.length)];
-    setUserGrid(prev => {
-      const next = prev.map(row => [...row]);
-      next[r][c] = letter;
-      return next;
-    });
-    setHints(h => h - 1);
-  };
-
-  const newPuzzle = () => {
-    setSeed(Math.floor(Math.random() * 1e9));
-  };
-
-  const getClueNumber = (r, c) => puzzle?.cellNumbers?.get(`${r},${c}`);
+  const newPuzzle = () => setSeed(Math.floor(Math.random() * 1e9));
 
   if (loading) {
     return (
@@ -218,11 +227,8 @@ function CrosswordPuzzle({ currentUser }) {
       <nav className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur border-b border-amber-500/20">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/games" className="text-amber-400 hover:text-amber-300 font-semibold">← Game Hub</Link>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Word Grid</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-amber-500/80">🔥 {streak}</span>
-            <span className="text-cyan-400/80">💡 {hints}</span>
-          </div>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Word Search</h1>
+          <span className="text-amber-500/80">Found: {solved.size} / {puzzle?.placed?.length || 0}</span>
         </div>
       </nav>
 
@@ -239,123 +245,65 @@ function CrosswordPuzzle({ currentUser }) {
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <button onClick={newPuzzle} className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium">New Puzzle</button>
-            <button onClick={revealLetter} disabled={hints <= 0} className={`px-4 py-2 rounded-lg font-medium ${hints > 0 ? 'bg-cyan-600 hover:bg-cyan-500 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>Reveal Letter</button>
-            <button onClick={() => setShowClues(c => !c)} className="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-amber-200">{showClues ? 'Hide' : 'Show'} Clues</button>
-          </div>
+          <button onClick={newPuzzle} className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium">New Puzzle</button>
+          <button onClick={() => setShowWordList(w => !w)} className="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-amber-200">{showWordList ? 'Hide' : 'Show'} Word List</button>
         </div>
 
         {puzzle && (
           <div className="w-full flex flex-col items-center gap-8">
             <div
-              className="aspect-square p-2 sm:p-3 rounded-xl bg-slate-800/80 border border-amber-500/30 shadow-xl"
+              className="aspect-square p-2 sm:p-3 rounded-xl bg-slate-800/80 border border-amber-500/30 shadow-xl select-none"
               style={{
                 width: 'min(92vw, 85vmin, 680px)',
                 display: 'grid',
                 gridTemplateColumns: `repeat(${puzzle.grid.length}, 1fr)`,
                 gridTemplateRows: `repeat(${puzzle.grid.length}, 1fr)`,
-                gap: 0,
+                gap: 2,
               }}
             >
-                {puzzle.grid.map((row, r) =>
-                  row.map((cell, c) => {
-                    const clueNum = getClueNumber(r, c);
-                    const userLetter = (userGrid[r]?.[c] || '').toUpperCase();
-                    const correctLetter = cell || '';
-                    const isCorrect = userLetter && userLetter === correctLetter;
-                    const isWrong = userLetter && userLetter !== correctLetter;
-                    const letterColor = isCorrect ? 'text-emerald-400' : isWrong ? 'text-red-400' : 'text-amber-100';
-                    return (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`min-w-0 min-h-0 flex items-center justify-center border border-slate-600/50 rounded transition relative aspect-square ${cell ? 'bg-slate-700/80 hover:bg-slate-600/80 cursor-pointer' : 'bg-black/80'}`}
-                        onClick={() => cell && setSelected({ r, c })}
-                      >
-                        {clueNum && (
-                          <span className="absolute top-0.5 left-0.5 min-w-[14px] h-[14px] sm:min-w-[16px] sm:h-[16px] flex items-center justify-center text-[9px] sm:text-[11px] font-bold bg-amber-400 text-slate-900 rounded-sm shadow-sm z-10">
-                            {clueNum}
-                          </span>
-                        )}
-                        {cell ? (
-                          <input
-                            type="text"
-                            maxLength={1}
-                            value={userGrid[r]?.[c] || ''}
-                            onChange={e => handleCellChange(r, c, e.target.value.slice(-1))}
-                            onKeyDown={e => {
-                              if (e.key === 'Backspace') {
-                                setUserGrid(prev => { const n = prev.map(row => [...row]); n[r][c] = ''; return n; });
-                              } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
-                                e.preventDefault();
-                                for (let nc = c + 1; nc < puzzle.grid[r].length; nc++) if (puzzle.grid[r][nc]) { setSelected({ r, c: nc }); return; }
-                                for (let nr = r + 1; nr < puzzle.grid.length; nr++) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
-                              } else if (e.key === 'ArrowLeft') {
-                                e.preventDefault();
-                                for (let nc = c - 1; nc >= 0; nc--) if (puzzle.grid[r][nc]) { setSelected({ r, c: nc }); return; }
-                                for (let nr = r - 1; nr >= 0; nr--) for (let nc = puzzle.grid[nr].length - 1; nc >= 0; nc--) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
-                              } else if (e.key === 'ArrowDown') {
-                                e.preventDefault();
-                                for (let nr = r + 1; nr < puzzle.grid.length; nr++) if (puzzle.grid[nr][c]) { setSelected({ r: nr, c }); return; }
-                                for (let nr = r + 1; nr < puzzle.grid.length; nr++) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
-                              } else if (e.key === 'ArrowUp') {
-                                e.preventDefault();
-                                for (let nr = r - 1; nr >= 0; nr--) if (puzzle.grid[nr][c]) { setSelected({ r: nr, c }); return; }
-                                for (let nr = r - 1; nr >= 0; nr--) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
-                              } else if (e.key.length === 1) handleCellChange(r, c, e.key);
-                            }}
-                            className={`w-full h-full text-center bg-transparent border-none font-bold text-base sm:text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-amber-500 rounded ${letterColor} ${selected?.r === r && selected?.c === c ? 'ring-2 ring-amber-500' : ''}`}
-                            autoFocus={selected?.r === r && selected?.c === c}
-                          />
-                        ) : null}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              {puzzle.grid.map((row, r) =>
+                row.map((cell, c) => {
+                  const isSel = isCellSelected(r, c);
+                  const isSol = isCellSolved(r, c);
+                  return (
+                    <div
+                      key={`${r}-${c}`}
+                      className={`min-w-0 min-h-0 flex items-center justify-center border rounded transition relative aspect-square text-base sm:text-lg md:text-xl font-bold cursor-pointer touch-none
+                        ${isSol ? 'bg-emerald-600/80 text-white' : isSel ? 'bg-amber-500/80 text-slate-900' : 'bg-slate-700/80 hover:bg-slate-600/80 text-amber-100 border-slate-600/50'}`}
+                      onMouseDown={() => handleCellDown(r, c)}
+                      onMouseEnter={() => handleCellEnter(r, c)}
+                      onTouchStart={(e) => { e.preventDefault(); handleCellDown(r, c); }}
+                      onTouchMove={(e) => {
+                        if (e.touches.length === 0) return;
+                        const touch = e.touches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        const elCell = el?.closest('[data-row]');
+                        if (elCell?.dataset?.row !== undefined) handleCellEnter(parseInt(elCell.dataset.row, 10), parseInt(elCell.dataset.col, 10));
+                      }}
+                      data-row={r}
+                      data-col={c}
+                    >
+                      {cell}
+                    </div>
+                  );
+                })
+              )}
             </div>
 
-            {showClues && (
-              <div className="w-full max-w-2xl mx-auto space-y-6">
-                <h3 className="text-xl font-semibold text-amber-400 text-center">Clues</h3>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="bg-slate-800/80 rounded-xl p-4 border border-amber-500/20">
-                    <h4 className="text-sm font-semibold text-amber-500/90 mb-3">Across</h4>
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {puzzle.placed
-                        .filter(p => p.dir === 0)
-                        .sort((a, b) => (puzzle.cellNumbers?.get(`${a.r},${a.c}`) ?? 0) - (puzzle.cellNumbers?.get(`${b.r},${b.c}`) ?? 0))
-                        .map((p) => {
-                          const num = puzzle.cellNumbers?.get(`${p.r},${p.c}`);
-                          return (
-                            <div key={`a-${p.r}-${p.c}`} className={`flex items-center gap-2 ${solved.has(p.word) ? 'text-emerald-400 line-through' : 'text-amber-200/90'}`}>
-                              <span className="text-amber-500/70 font-mono text-sm w-5">{num}.</span>
-                              <span>{p.word.length} letters</span>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                  <div className="bg-slate-800/80 rounded-xl p-4 border border-amber-500/20">
-                    <h4 className="text-sm font-semibold text-amber-500/90 mb-3">Down</h4>
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {puzzle.placed
-                        .filter(p => p.dir === 1)
-                        .sort((a, b) => (puzzle.cellNumbers?.get(`${a.r},${a.c}`) ?? 0) - (puzzle.cellNumbers?.get(`${b.r},${b.c}`) ?? 0))
-                        .map((p) => {
-                          const num = puzzle.cellNumbers?.get(`${p.r},${p.c}`);
-                          return (
-                            <div key={`d-${p.r}-${p.c}`} className={`flex items-center gap-2 ${solved.has(p.word) ? 'text-emerald-400 line-through' : 'text-amber-200/90'}`}>
-                              <span className="text-amber-500/70 font-mono text-sm w-5">{num}.</span>
-                              <span>{p.word.length} letters</span>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
+            {showWordList && (
+              <div className="w-full max-w-2xl mx-auto">
+                <h3 className="text-xl font-semibold text-amber-400 text-center mb-4">Find these words</h3>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {puzzle.placed.map((p, i) => (
+                    <span
+                      key={i}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium ${solved.has(p.word) ? 'bg-emerald-600/80 text-white line-through' : 'bg-slate-700/50 text-amber-200'}`}
+                    >
+                      {p.word}
+                    </span>
+                  ))}
                 </div>
-                <p className="text-sm text-amber-300/70 text-center">Fill in the grid by finding words that intersect. Use Reveal Letter for a hint.</p>
-                <p className="text-xs text-slate-400 text-center"><span className="text-emerald-400">Green</span> = correct • <span className="text-red-400">Red</span> = wrong</p>
+                <p className="text-sm text-amber-300/70 text-center mt-4">Drag or tap across letters to find words. Words can be horizontal, vertical, or diagonal.</p>
               </div>
             )}
           </div>
@@ -363,7 +311,6 @@ function CrosswordPuzzle({ currentUser }) {
 
         <p className="mt-8 text-sm text-slate-400 text-center px-2">
           Words from {words.length.toLocaleString()}+ word bank • Procedurally generated • No two puzzles alike
-          <span className="block mt-1 text-xs"><span className="text-emerald-400">Green</span> = correct letter • <span className="text-red-400">Red</span> = wrong letter</span>
         </p>
       </main>
     </div>
