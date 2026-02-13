@@ -69,6 +69,7 @@ import './App.css';
 import FilterControls from './components/FilterControls';
 import DotsAndBoxes from './components/DotsAndBoxes';
 import HorseRacing from './components/HorseRacing';
+import CrosswordPuzzle from './components/CrosswordPuzzle';
 
 import ServicePage from './components/ServicePage';
 import ExtensionAuth from './components/ExtensionAuth';
@@ -2495,6 +2496,7 @@ function App() {
           <Route path="/booking-conversation/:bookingId" element={<BookingConversationPage />} />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
+          <Route path="/games/crossword" element={<CrosswordPuzzle currentUser={currentUser} />} />
 
           <Route path="/games" element={
             <GameHub 
