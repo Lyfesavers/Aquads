@@ -99,6 +99,9 @@ function CrosswordPuzzle({ currentUser }) {
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e9));
   const [showWordList, setShowWordList] = useState(true);
   const isSelecting = useRef(false);
+  const selectedRef = useRef([]);
+  const puzzleRef = useRef(null);
+  const solvedRef = useRef(new Set());
 
   useEffect(() => {
     fetch(WORD_LIST_URL)
@@ -125,6 +128,12 @@ function CrosswordPuzzle({ currentUser }) {
     if (!loading && words.length > 0) generatePuzzle();
   }, [loading, difficulty, seed]);
 
+  useEffect(() => {
+    selectedRef.current = selected;
+    puzzleRef.current = puzzle;
+    solvedRef.current = solved;
+  }, [selected, puzzle, solved]);
+
   const isCellInWord = (r, c, wordInfo) => {
     const { word, r: sr, c: sc, dr, dc } = wordInfo;
     for (let k = 0; k < word.length; k++) {
@@ -139,9 +148,9 @@ function CrosswordPuzzle({ currentUser }) {
     return puzzle?.placed.some(p => solved.has(p.word) && isCellInWord(r, c, p));
   };
 
-  const getSelectionWord = () => {
-    if (selected.length < 2) return null;
-    const sorted = [...selected].sort((a, b) => (a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]));
+  const getSelectionWord = (sel, puz) => {
+    if (!puz || !sel || sel.length < 2) return null;
+    const sorted = [...sel].sort((a, b) => (a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]));
     const dr = sorted[1][0] - sorted[0][0];
     const dc = sorted[1][1] - sorted[0][1];
     if (dr === 0 && dc === 0) return null;
@@ -152,10 +161,10 @@ function CrosswordPuzzle({ currentUser }) {
     const ndc = dc === 0 ? 0 : dc / step;
     let word = '';
     const [r0, c0] = sorted[0];
-    for (let k = 0; k < selected.length; k++) {
+    for (let k = 0; k < sel.length; k++) {
       const nr = r0 + k * ndr, nc = c0 + k * ndc;
-      if (!selected.some(([r, c]) => r === nr && c === nc)) return null;
-      word += puzzle.grid[nr][nc];
+      if (!sel.some(([r, c]) => r === nr && c === nc)) return null;
+      word += puz.grid[nr][nc];
     }
     return word;
   };
@@ -169,19 +178,19 @@ function CrosswordPuzzle({ currentUser }) {
   const handleCellEnter = (r, c) => {
     if (!isSelecting.current || !puzzle) return;
     setSelected(prev => {
-      const last = prev[prev.length - 1];
-      if (!last) return [[r, c]];
-      const [lr, lc] = last;
-      const dr = r - lr, dc = c - lc;
+      const [r0, c0] = prev[0];
+      if (r0 === r && c0 === c) return prev;
+      const dr = r - r0, dc = c - c0;
       if (dr === 0 && dc === 0) return prev;
-      const sameLine = dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc);
-      if (!sameLine) return prev;
-      const step = Math.max(Math.abs(dr), Math.abs(dc), 1);
+      const isHorizontal = dr === 0;
+      const isVertical = dc === 0;
+      const isDiagonal = Math.abs(dr) === Math.abs(dc);
+      if (!isHorizontal && !isVertical && !isDiagonal) return prev;
+      const step = isDiagonal ? Math.abs(dr) : Math.max(Math.abs(dr), Math.abs(dc), 1);
       const ndr = dr === 0 ? 0 : dr / step;
       const ndc = dc === 0 ? 0 : dc / step;
-      const [r0, c0] = prev[0];
       const newSel = [];
-      const len = Math.max(Math.abs(r - r0), Math.abs(c - c0)) + 1;
+      const len = Math.max(Math.abs(dr), Math.abs(dc)) + 1;
       for (let k = 0; k < len; k++) {
         const nr = r0 + k * ndr, nc = c0 + k * ndc;
         if (nr >= 0 && nr < puzzle.grid.length && nc >= 0 && nc < puzzle.grid[0].length) {
@@ -192,25 +201,35 @@ function CrosswordPuzzle({ currentUser }) {
     });
   };
 
-  const handleCellUp = () => {
+  const handleCellUp = useCallback(() => {
     if (!isSelecting.current) return;
     isSelecting.current = false;
-    const word = getSelectionWord();
-    if (word && puzzle.placed.some(p => p.word === word) && !solved.has(word)) {
-      setSolved(prev => new Set([...prev, word]));
-    }
+    const sel = selectedRef.current;
+    const puz = puzzleRef.current;
+    const sol = solvedRef.current;
     setSelected([]);
-  };
+    if (!puz || !puz.placed) return;
+    const word = getSelectionWord(sel, puz);
+    if (!word) return;
+    const foundWord = puz.placed.find(p => p.word === word || p.word === word.split('').reverse().join(''));
+    if (foundWord && !sol.has(foundWord.word)) {
+      setSolved(prev => new Set([...prev, foundWord.word]));
+    }
+  }, []);
 
   useEffect(() => {
-    const up = () => handleCellUp();
+    const up = () => {
+      if (isSelecting.current) handleCellUp();
+    };
     window.addEventListener('mouseup', up);
     window.addEventListener('touchend', up);
+    window.addEventListener('touchcancel', up);
     return () => {
       window.removeEventListener('mouseup', up);
       window.removeEventListener('touchend', up);
+      window.removeEventListener('touchcancel', up);
     };
-  }, [puzzle, solved]);
+  }, [handleCellUp]);
 
   const newPuzzle = () => setSeed(Math.floor(Math.random() * 1e9));
 
