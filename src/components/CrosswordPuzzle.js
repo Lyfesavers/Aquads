@@ -75,7 +75,13 @@ function buildCrossword(words, gridSize) {
     }
   }
 
-  return { grid, placed };
+  const starts = new Map();
+  let num = 1;
+  const sortedStarts = [...new Set(placed.map(p => `${p.r},${p.c}`))]
+    .map(s => s.split(',').map(Number))
+    .sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
+  sortedStarts.forEach(([r, c]) => { starts.set(`${r},${c}`, num++); });
+  return { grid, placed, cellNumbers: starts };
 }
 
 function CrosswordPuzzle({ currentUser }) {
@@ -197,7 +203,7 @@ function CrosswordPuzzle({ currentUser }) {
     setSeed(Math.floor(Math.random() * 1e9));
   };
 
-  const shareUrl = `${window.location.origin}/games/crossword?seed=${seed}&diff=${difficulty}`;
+  const getClueNumber = (r, c) => puzzle?.cellNumbers?.get(`${r},${c}`);
 
   if (loading) {
     return (
@@ -248,29 +254,53 @@ function CrosswordPuzzle({ currentUser }) {
                 style={{ gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(32px, 1fr))`, gridTemplateRows: `repeat(${puzzle.grid.length}, minmax(32px, 1fr))` }}
               >
                 {puzzle.grid.map((row, r) =>
-                  row.map((cell, c) => (
-                    <div
-                      key={`${r}-${c}`}
-                      className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border border-slate-600/50 rounded transition ${cell ? 'bg-slate-700/80 hover:bg-slate-600/80 cursor-pointer' : 'bg-slate-900/60'}`}
-                      onClick={() => cell && setSelected({ r, c })}
-                    >
-                      {cell ? (
-                        <input
-                          type="text"
-                          maxLength={1}
-                          value={userGrid[r]?.[c] || ''}
-                          onChange={e => handleCellChange(r, c, e.target.value.slice(-1))}
+                  row.map((cell, c) => {
+                    const clueNum = getClueNumber(r, c);
+                    return (
+                      <div
+                        key={`${r}-${c}`}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center border border-slate-600/50 rounded transition relative ${cell ? 'bg-slate-700/80 hover:bg-slate-600/80 cursor-pointer' : 'bg-black/80'}`}
+                        onClick={() => cell && setSelected({ r, c })}
+                      >
+                        {clueNum && (
+                          <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-amber-400/90 leading-none">
+                            {clueNum}
+                          </span>
+                        )}
+                        {cell ? (
+                          <input
+                            type="text"
+                            maxLength={1}
+                            value={userGrid[r]?.[c] || ''}
+                            onChange={e => handleCellChange(r, c, e.target.value.slice(-1))}
                           onKeyDown={e => {
                             if (e.key === 'Backspace') {
                               setUserGrid(prev => { const n = prev.map(row => [...row]); n[r][c] = ''; return n; });
+                            } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+                              e.preventDefault();
+                              for (let nc = c + 1; nc < puzzle.grid[r].length; nc++) if (puzzle.grid[r][nc]) { setSelected({ r, c: nc }); return; }
+                              for (let nr = r + 1; nr < puzzle.grid.length; nr++) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
+                            } else if (e.key === 'ArrowLeft') {
+                              e.preventDefault();
+                              for (let nc = c - 1; nc >= 0; nc--) if (puzzle.grid[r][nc]) { setSelected({ r, c: nc }); return; }
+                              for (let nr = r - 1; nr >= 0; nr--) for (let nc = puzzle.grid[nr].length - 1; nc >= 0; nc--) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
+                            } else if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              for (let nr = r + 1; nr < puzzle.grid.length; nr++) if (puzzle.grid[nr][c]) { setSelected({ r: nr, c }); return; }
+                              for (let nr = r + 1; nr < puzzle.grid.length; nr++) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              for (let nr = r - 1; nr >= 0; nr--) if (puzzle.grid[nr][c]) { setSelected({ r: nr, c }); return; }
+                              for (let nr = r - 1; nr >= 0; nr--) for (let nc = 0; nc < puzzle.grid[nr].length; nc++) if (puzzle.grid[nr][nc]) { setSelected({ r: nr, c: nc }); return; }
                             } else if (e.key.length === 1) handleCellChange(r, c, e.key);
                           }}
-                          className={`w-full h-full text-center bg-transparent border-none text-amber-100 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-amber-500 rounded ${selected?.r === r && selected?.c === c ? 'ring-2 ring-amber-500' : ''}`}
-                          autoFocus={selected?.r === r && selected?.c === c}
-                        />
-                      ) : null}
-                    </div>
-                  ))
+                            className={`w-full h-full text-center bg-transparent border-none text-amber-100 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-amber-500 rounded ${selected?.r === r && selected?.c === c ? 'ring-2 ring-amber-500' : ''}`}
+                            autoFocus={selected?.r === r && selected?.c === c}
+                          />
+                        ) : null}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -278,21 +308,43 @@ function CrosswordPuzzle({ currentUser }) {
             {showClues && (
               <div className="flex-1 space-y-4">
                 <h3 className="text-lg font-semibold text-amber-400">Clues</h3>
-                <div className="grid sm:grid-cols-2 gap-2">
-                  {puzzle.placed.map((p, i) => (
-                    <div key={i} className={`flex items-center gap-2 ${solved.has(p.word) ? 'text-emerald-400 line-through' : 'text-amber-200/90'}`}>
-                      <span className="text-amber-500/70 font-mono text-sm">{i + 1}.</span>
-                      <span>{p.word.length} letters</span>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-500/90 mb-2">Across</h4>
+                    <div className="space-y-1">
+                      {puzzle.placed
+                        .filter(p => p.dir === 0)
+                        .sort((a, b) => (puzzle.cellNumbers?.get(`${a.r},${a.c}`) ?? 0) - (puzzle.cellNumbers?.get(`${b.r},${b.c}`) ?? 0))
+                        .map((p, i) => {
+                          const num = puzzle.cellNumbers?.get(`${p.r},${p.c}`);
+                          return (
+                            <div key={`a-${p.r}-${p.c}`} className={`flex items-center gap-2 ${solved.has(p.word) ? 'text-emerald-400 line-through' : 'text-amber-200/90'}`}>
+                              <span className="text-amber-500/70 font-mono text-sm w-5">{num}.</span>
+                              <span>{p.word.length} letters</span>
+                            </div>
+                          );
+                        })}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4 p-3 rounded-lg bg-slate-800/50 border border-amber-500/20">
-                  <p className="text-sm text-amber-300/80">Fill in the grid by finding words that intersect. Use Reveal Letter for a hint. Share this puzzle with friends:</p>
-                  <div className="flex gap-2 mt-2 items-center">
-                    <code className="flex-1 text-xs text-cyan-400 break-all">{shareUrl}</code>
-                    <button onClick={() => navigator.clipboard?.writeText(shareUrl)} className="px-2 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs whitespace-nowrap">Copy</button>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-500/90 mb-2">Down</h4>
+                    <div className="space-y-1">
+                      {puzzle.placed
+                        .filter(p => p.dir === 1)
+                        .sort((a, b) => (puzzle.cellNumbers?.get(`${a.r},${a.c}`) ?? 0) - (puzzle.cellNumbers?.get(`${b.r},${b.c}`) ?? 0))
+                        .map((p) => {
+                          const num = puzzle.cellNumbers?.get(`${p.r},${p.c}`);
+                          return (
+                            <div key={`d-${p.r}-${p.c}`} className={`flex items-center gap-2 ${solved.has(p.word) ? 'text-emerald-400 line-through' : 'text-amber-200/90'}`}>
+                              <span className="text-amber-500/70 font-mono text-sm w-5">{num}.</span>
+                              <span>{p.word.length} letters</span>
+                            </div>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
+                <p className="text-sm text-amber-300/70 mt-4">Fill in the grid by finding words that intersect. Use Reveal Letter for a hint.</p>
               </div>
             )}
           </div>
