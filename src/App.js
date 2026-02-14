@@ -1213,9 +1213,14 @@ function App() {
       setShowCreateModal(false);
       
       // Show partnership popup after successful submission for all users
+      const hasTokenData = adData.pairAddress && adData.blockchain;
+      const aquaSwapTokenUrl = hasTokenData
+        ? `https://aquads.xyz/share/aquaswap?token=${encodeURIComponent(adData.pairAddress)}&blockchain=${encodeURIComponent(adData.blockchain)}`
+        : 'https://aquads.xyz';
       setPartnershipPopup({
         projectName: adData.title,
-        projectId: createdAd.id
+        projectId: createdAd.id,
+        aquaSwapUrl: aquaSwapTokenUrl
       });
       
       // Auto dismiss after 30 seconds
@@ -3424,7 +3429,9 @@ function App() {
                             Boost Your Visibility!
                           </h2>
                           <p className="text-lg text-gray-200 mb-4">
-                            Want to increase your project's reach? Add us as a partner on your website!
+                            {partnershipPopup.aquaSwapUrl?.includes('/share/aquaswap')
+                              ? "Add this link to your website — it directs users to your token's chart on AquaSwap!"
+                              : "Want to increase your project's reach? Add us as a partner on your website!"}
                           </p>
                           <p className="text-md text-gray-300">
                             Adding our backlink helps boost both your domain authority and ours.
@@ -3435,7 +3442,7 @@ function App() {
                         <div className="bg-gray-800 p-3 rounded-md w-full mb-4 text-sm overflow-x-auto flex items-center">
                           <input 
                             type="text" 
-                            value="https://aquads.xyz" 
+                            value={partnershipPopup.aquaSwapUrl || 'https://aquads.xyz'} 
                             readOnly
                             className="bg-transparent text-green-300 w-full outline-none p-1"
                           />
@@ -3445,7 +3452,7 @@ function App() {
                         <div className="flex gap-3">
                           <button 
                             onClick={() => {
-                              navigator.clipboard.writeText('https://aquads.xyz');
+                              navigator.clipboard.writeText(partnershipPopup.aquaSwapUrl || 'https://aquads.xyz');
                               showNotification('Link copied to clipboard!', 'success');
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full transition duration-300"
