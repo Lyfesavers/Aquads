@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -100,6 +101,8 @@ function CrosswordPuzzle({ currentUser }) {
   const selectedRef = useRef([]);
   const puzzleRef = useRef(null);
   const solvedRef = useRef(new Set());
+  const [lastSolvedWord, setLastSolvedWord] = useState(null);
+  const [showCompleteCelebration, setShowCompleteCelebration] = useState(false);
 
   useEffect(() => {
     fetch(WORD_LIST_URL)
@@ -120,6 +123,8 @@ function CrosswordPuzzle({ currentUser }) {
     setPuzzle({ grid, placed });
     setSolved(new Set());
     setSelected([]);
+    setLastSolvedWord(null);
+    setShowCompleteCelebration(false);
   }, [words, difficulty, seed]);
 
   useEffect(() => {
@@ -144,6 +149,10 @@ function CrosswordPuzzle({ currentUser }) {
 
   const isCellSolved = (r, c) => {
     return puzzle?.placed.some(p => solved.has(p.word) && isCellInWord(r, c, p));
+  };
+
+  const isCellJustSolved = (r, c) => {
+    return lastSolvedWord && puzzle?.placed.some(p => p.word === lastSolvedWord && isCellInWord(r, c, p));
   };
 
   const getSelectionWord = (sel, puz) => {
@@ -211,6 +220,10 @@ function CrosswordPuzzle({ currentUser }) {
     if (!word) return;
     const foundWord = puz.placed.find(p => p.word === word || p.word === word.split('').reverse().join(''));
     if (foundWord && !sol.has(foundWord.word)) {
+      const nextSize = sol.size + 1;
+      setLastSolvedWord(foundWord.word);
+      setTimeout(() => setLastSolvedWord(null), 800);
+      if (nextSize === puz.placed.length) setShowCompleteCelebration(true);
       setSolved(prev => new Set([...prev, foundWord.word]));
     }
   }, []);
@@ -282,10 +295,11 @@ function CrosswordPuzzle({ currentUser }) {
                 row.map((cell, c) => {
                   const isSel = isCellSelected(r, c);
                   const isSol = isCellSolved(r, c);
+                  const justSolved = isCellJustSolved(r, c);
                   return (
-                    <div
+                    <motion.div
                       key={`${r}-${c}`}
-                      className={`min-w-0 min-h-0 flex items-center justify-center border rounded transition relative aspect-square text-base sm:text-lg md:text-xl font-bold cursor-pointer touch-none
+                      className={`min-w-0 min-h-0 flex items-center justify-center border rounded relative aspect-square text-base sm:text-lg md:text-xl font-bold cursor-pointer touch-none overflow-hidden
                         ${isSol ? 'bg-emerald-600/80 text-white' : isSel ? 'bg-amber-500/80 text-slate-900' : 'bg-slate-700/80 hover:bg-slate-600/80 text-amber-100 border-slate-600/50'}`}
                       onMouseDown={() => handleCellDown(r, c)}
                       onMouseEnter={() => handleCellEnter(r, c)}
@@ -299,9 +313,24 @@ function CrosswordPuzzle({ currentUser }) {
                       }}
                       data-row={r}
                       data-col={c}
+                      animate={justSolved ? {
+                        scale: [1, 1.2, 1],
+                        boxShadow: ['0 0 0 0 rgba(16, 185, 129, 0)', '0 0 20px 4px rgba(16, 185, 129, 0.8)', '0 0 0 0 rgba(16, 185, 129, 0)'],
+                        transition: { duration: 0.5, ease: 'easeOut' }
+                      } : {}}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
+                      {justSolved && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent"
+                          initial={{ x: '-100%' }}
+                          animate={{ x: '100%' }}
+                          transition={{ duration: 0.4, ease: 'easeOut' }}
+                          style={{ pointerEvents: 'none' }}
+                        />
+                      )}
                       {cell}
-                    </div>
+                    </motion.div>
                   );
                 })
               )}
@@ -312,12 +341,18 @@ function CrosswordPuzzle({ currentUser }) {
                 <h3 className="text-xl font-semibold text-amber-400 text-center mb-4">Find these words</h3>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {puzzle.placed.map((p, i) => (
-                    <span
+                    <motion.span
                       key={i}
                       className={`px-3 py-1 rounded-lg text-sm font-medium ${solved.has(p.word) ? 'bg-emerald-600/80 text-white line-through' : 'bg-slate-700/50 text-amber-200'}`}
+                      animate={solved.has(p.word) && lastSolvedWord === p.word ? {
+                        scale: [1, 1.15, 1],
+                        rotate: [0, 3, -2, 0],
+                        transition: { duration: 0.5, ease: 'easeOut' }
+                      } : {}}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                     >
                       {p.word}
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
                 <p className="text-sm text-amber-300/70 text-center mt-4">Drag or tap across letters to find words. Words can be horizontal, vertical, or diagonal.</p>
@@ -330,6 +365,96 @@ function CrosswordPuzzle({ currentUser }) {
           Words from {words.length.toLocaleString()}+ word bank • Procedurally generated • No two puzzles alike
         </p>
       </main>
+
+      <AnimatePresence>
+        {showCompleteCelebration && (
+          <motion.div
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {[...Array(60)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-3 h-3 rounded-sm"
+                    style={{
+                      left: '50%',
+                      top: '50%',
+                      marginLeft: '-6px',
+                      marginTop: '-6px',
+                      backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'][i % 5],
+                    }}
+                  initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+                  animate={{
+                    scale: [0, 1, 1],
+                    opacity: [1, 1, 0],
+                    x: (Math.random() - 0.5) * 1200,
+                    y: (Math.random() - 0.5) * 1200,
+                    rotate: (Math.random() - 0.5) * 720,
+                  }}
+                  transition={{
+                    duration: 1.2 + Math.random() * 0.5,
+                    ease: 'easeOut',
+                    delay: Math.random() * 0.2,
+                  }}
+                />
+              ))}
+            </div>
+
+            <motion.div
+              className="relative z-10 flex flex-col items-center gap-8 p-12 rounded-3xl bg-slate-900/95 border-2 border-amber-500/50 shadow-2xl max-w-md mx-4"
+              initial={{ scale: 0.5, opacity: 0, rotateY: -90 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
+            >
+              <motion.div
+                className="text-7xl mb-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.4 }}
+              >
+                🏆
+              </motion.div>
+              <div className="flex flex-wrap justify-center gap-1">
+                {'PUZZLE COMPLETE!'.split('').map((char, i) => (
+                  <motion.span
+                    key={i}
+                    className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.05, type: 'spring', stiffness: 300 }}
+                  >
+                    {char === ' ' ? '\u00A0' : char}
+                  </motion.span>
+                ))}
+              </div>
+              <motion.p
+                className="text-amber-200/90 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+              >
+                You found all {puzzle?.placed?.length || 0} words!
+              </motion.p>
+              <motion.button
+                onClick={() => { setShowCompleteCelebration(false); newPuzzle(); }}
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 font-bold text-lg shadow-lg hover:shadow-amber-500/30 hover:scale-105 transition-shadow"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                New Puzzle
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
