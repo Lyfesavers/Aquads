@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-import { CROSSWORD_WORDS } from '../data/crosswordWords';
-
 const WORD_LIST_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -90,7 +88,7 @@ function buildWordSearch(words, gridSize, seed) {
 }
 
 function CrosswordPuzzle({ currentUser }) {
-  const [words, setWords] = useState(CROSSWORD_WORDS);
+  const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [difficulty, setDifficulty] = useState('medium');
   const [puzzle, setPuzzle] = useState(null);
