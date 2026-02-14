@@ -3415,7 +3415,7 @@ function App() {
 
                 {/* Partnership & Growth popup — shown after project listing */}
                 {partnershipPopup && (
-                  <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md overflow-y-auto">
+                  <div className="fixed inset-0 z-[300000] bg-black/80 backdrop-blur-md overflow-y-auto">
                     <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
                       <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all animate-fadeIn">
 
