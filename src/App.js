@@ -3413,135 +3413,6 @@ function App() {
                   </div>
                 )}
 
-                {/* Partnership & Growth popup — shown after project listing */}
-                {partnershipPopup && (
-                  <div className="fixed inset-0 z-[300000] bg-black/80 backdrop-blur-md overflow-y-auto">
-                    <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
-                      <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all animate-fadeIn">
-
-                        {/* Header */}
-                        <div className="relative bg-gradient-to-r from-purple-600/20 via-cyan-600/20 to-blue-600/20 rounded-t-2xl px-6 pt-6 pb-4 text-center border-b border-gray-700/40">
-                          <button
-                            onClick={() => setPartnershipPopup(null)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none transition-colors"
-                            title="Close"
-                          >
-                            ✕
-                          </button>
-                          <div className="text-5xl mb-3">🎉</div>
-                          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                            {partnershipPopup.projectName ? `${partnershipPopup.projectName} is Listed!` : 'Project Listed!'}
-                          </h2>
-                          <p className="text-gray-300 text-sm sm:text-base">
-                            Maximize your project's reach with these two quick steps
-                          </p>
-                        </div>
-
-                        {/* Content */}
-                        <div className="px-6 py-5 space-y-5">
-
-                          {/* --- Section 1: AquaSwap Chart Link --- */}
-                          <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/20 border border-blue-500/20 rounded-xl p-5">
-                            <div className="flex items-center gap-3 mb-3">
-                              <span className="text-3xl">📊</span>
-                              <div>
-                                <h3 className="text-lg font-bold text-white">Add Your Chart Link</h3>
-                                <p className="text-sm text-gray-400">Link your website to your live AquaSwap token chart</p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-300 mb-3">
-                              {partnershipPopup.tokenChartUrl
-                                ? "Add this link as a button on your website — visitors go directly to your token's live chart, price data, and swap widget on AquaSwap."
-                                : "Add this link to your website as a partner button to boost your domain authority and visibility."}
-                            </p>
-
-                            {/* URL box */}
-                            <div className="bg-black/40 border border-gray-600/40 rounded-lg p-2.5 flex items-center gap-2 mb-3">
-                              <input
-                                type="text"
-                                value={partnershipPopup.tokenChartUrl || 'https://aquads.xyz'}
-                                readOnly
-                                className="bg-transparent text-cyan-300 text-sm w-full outline-none font-mono truncate"
-                              />
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(partnershipPopup.tokenChartUrl || 'https://aquads.xyz');
-                                  showNotification('Chart link copied!', 'success');
-                                }}
-                                className="shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
-                              >
-                                Copy
-                              </button>
-                            </div>
-
-                            {/* Benefits pills */}
-                            <div className="flex flex-wrap gap-2">
-                              {['Live DEX Chart', 'Swap Widget', 'Price & Volume', 'Boosts SEO'].map(b => (
-                                <span key={b} className="inline-flex items-center gap-1 text-xs bg-blue-500/15 text-blue-300 border border-blue-500/20 rounded-full px-2.5 py-1">
-                                  ✓ {b}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* --- Section 2: Telegram Bot --- */}
-                          <div className="bg-gradient-to-br from-purple-900/30 to-violet-900/20 border border-purple-500/20 rounded-xl p-5">
-                            <div className="flex items-center gap-3 mb-3">
-                              <span className="text-3xl">🤖</span>
-                              <div>
-                                <h3 className="text-lg font-bold text-white">Supercharge with Our Telegram Bot</h3>
-                                <p className="text-sm text-gray-400">@aquadsbumpbot — Free marketing tools for your project</p>
-                              </div>
-                            </div>
-
-                            {/* Feature grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                              {[
-                                { icon: '🐦', title: 'Twitter & Facebook Raids', desc: '20 FREE raids daily for lifetime bumps' },
-                                { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BEX & 5K+ channel' },
-                                { icon: '🗳️', title: 'Voting & Boosts', desc: 'Get bullish votes + real TG members' },
-                                { icon: '🎨', title: 'Custom Branding', desc: 'Your logo in vote notifications to 5K+ degens' },
-                                { icon: '🌐', title: 'Cross-Community Raids', desc: 'Share raids across all opted-in groups' },
-                                { icon: '💰', title: 'Points → Cash', desc: '$100 per 10K points — paid to your community' }
-                              ].map(f => (
-                                <div key={f.title} className="flex items-start gap-2.5 bg-black/20 rounded-lg p-2.5">
-                                  <span className="text-xl shrink-0 mt-0.5">{f.icon}</span>
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-white leading-tight">{f.title}</p>
-                                    <p className="text-xs text-gray-400 leading-snug">{f.desc}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Bot CTA */}
-                            <a
-                              href="https://t.me/aquadsbumpbot"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30"
-                            >
-                              <span className="text-xl">✈️</span>
-                              Start @aquadsbumpbot on Telegram
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 pb-5 pt-1 flex justify-center">
-                          <button
-                            onClick={() => setPartnershipPopup(null)}
-                            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                          >
-                            I'll do this later — Close
-                          </button>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Regular notifications - keep these for non-vote notifications */}
                 <div className="fixed bottom-4 right-4 space-y-2" style={{ zIndex: 999999999 }}>
                   {notifications.map(({ id, message, type }) => (
@@ -3575,6 +3446,135 @@ function App() {
                 <Footer />
               </div>
               </div>
+
+              {/* Partnership & Growth popup — rendered outside scroll area so z-index works above header */}
+              {partnershipPopup && (
+                <div className="fixed inset-0 z-[300000] bg-black/80 backdrop-blur-md overflow-y-auto">
+                  <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
+                    <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all animate-fadeIn">
+
+                      {/* Header */}
+                      <div className="relative bg-gradient-to-r from-purple-600/20 via-cyan-600/20 to-blue-600/20 rounded-t-2xl px-6 pt-6 pb-4 text-center border-b border-gray-700/40">
+                        <button
+                          onClick={() => setPartnershipPopup(null)}
+                          className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none transition-colors"
+                          title="Close"
+                        >
+                          ✕
+                        </button>
+                        <div className="text-5xl mb-3">🎉</div>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                          {partnershipPopup.projectName ? `${partnershipPopup.projectName} is Listed!` : 'Project Listed!'}
+                        </h2>
+                        <p className="text-gray-300 text-sm sm:text-base">
+                          Maximize your project's reach with these two quick steps
+                        </p>
+                      </div>
+
+                      {/* Content */}
+                      <div className="px-6 py-5 space-y-5">
+
+                        {/* --- Section 1: AquaSwap Chart Link --- */}
+                        <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/20 border border-blue-500/20 rounded-xl p-5">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-3xl">📊</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Add Your Chart Link</h3>
+                              <p className="text-sm text-gray-400">Link your website to your live AquaSwap token chart</p>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-300 mb-3">
+                            {partnershipPopup.tokenChartUrl
+                              ? "Add this link as a button on your website — visitors go directly to your token's live chart, price data, and swap widget on AquaSwap."
+                              : "Add this link to your website as a partner button to boost your domain authority and visibility."}
+                          </p>
+
+                          {/* URL box */}
+                          <div className="bg-black/40 border border-gray-600/40 rounded-lg p-2.5 flex items-center gap-2 mb-3">
+                            <input
+                              type="text"
+                              value={partnershipPopup.tokenChartUrl || 'https://aquads.xyz'}
+                              readOnly
+                              className="bg-transparent text-cyan-300 text-sm w-full outline-none font-mono truncate"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(partnershipPopup.tokenChartUrl || 'https://aquads.xyz');
+                                showNotification('Chart link copied!', 'success');
+                              }}
+                              className="shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
+                            >
+                              Copy
+                            </button>
+                          </div>
+
+                          {/* Benefits pills */}
+                          <div className="flex flex-wrap gap-2">
+                            {['Live DEX Chart', 'Swap Widget', 'Price & Volume', 'Boosts SEO'].map(b => (
+                              <span key={b} className="inline-flex items-center gap-1 text-xs bg-blue-500/15 text-blue-300 border border-blue-500/20 rounded-full px-2.5 py-1">
+                                ✓ {b}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* --- Section 2: Telegram Bot --- */}
+                        <div className="bg-gradient-to-br from-purple-900/30 to-violet-900/20 border border-purple-500/20 rounded-xl p-5">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-3xl">🤖</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Supercharge with Our Telegram Bot</h3>
+                              <p className="text-sm text-gray-400">@aquadsbumpbot — Free marketing tools for your project</p>
+                            </div>
+                          </div>
+
+                          {/* Feature grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                            {[
+                              { icon: '🐦', title: 'Twitter & Facebook Raids', desc: '20 FREE raids daily for lifetime bumps' },
+                              { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BEX & 5K+ channel' },
+                              { icon: '🗳️', title: 'Voting & Boosts', desc: 'Get bullish votes + real TG members' },
+                              { icon: '🎨', title: 'Custom Branding', desc: 'Your logo in vote notifications to 5K+ degens' },
+                              { icon: '🌐', title: 'Cross-Community Raids', desc: 'Share raids across all opted-in groups' },
+                              { icon: '💰', title: 'Points → Cash', desc: '$100 per 10K points — paid to your community' }
+                            ].map(f => (
+                              <div key={f.title} className="flex items-start gap-2.5 bg-black/20 rounded-lg p-2.5">
+                                <span className="text-xl shrink-0 mt-0.5">{f.icon}</span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-white leading-tight">{f.title}</p>
+                                  <p className="text-xs text-gray-400 leading-snug">{f.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Bot CTA */}
+                          <a
+                            href="https://t.me/aquadsbumpbot"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30"
+                          >
+                            <span className="text-xl">✈️</span>
+                            Start @aquadsbumpbot on Telegram
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="px-6 pb-5 pt-1 flex justify-center">
+                        <button
+                          onClick={() => setPartnershipPopup(null)}
+                          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                        >
+                          I'll do this later — Close
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Dashboard: rendered outside scroll area so it can sit below header with correct z-order */}
               {showDashboard && currentUser && (
