@@ -244,13 +244,12 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       const topPair = data.pairs[0];
       
       // These 3 fields are 100% guaranteed in every DexScreener response
-      const tokenName = topPair.baseToken?.name || '';
       const tokenSymbol = topPair.baseToken?.symbol || '';
       const chainId = topPair.chainId || 'ethereum';
       const pairAddr = topPair.pairAddress || '';
 
-      // Build title: "Name (SYMBOL)" format
-      const title = tokenSymbol ? `${tokenName} (${tokenSymbol})` : tokenName;
+      // Use ticker symbol as the title
+      const title = tokenSymbol;
 
       setFormData(prev => ({
         ...prev,
