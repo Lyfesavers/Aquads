@@ -3318,17 +3318,6 @@ function App() {
                   />
                 )}
 
-                {showEditModal && adToEdit && currentUser && (
-                  <EditAdModal
-                    ad={adToEdit}
-                    onEditAd={handleEditAd}
-                    onClose={() => {
-                      setShowEditModal(false);
-                      setAdToEdit(null);
-                    }}
-                  />
-                )}
-
                 {showWelcomeModal && (
                   <WelcomeModal
                     username={currentUser.username}
@@ -3592,6 +3581,18 @@ function App() {
                   onApproveBump={handleApproveBump}
                   initialBookingId={activeBookingId}
                   initialActiveTab={dashboardActiveTab}
+                />
+              )}
+
+              {/* EditAdModal: rendered outside scroll area, AFTER Dashboard, so it appears on top */}
+              {showEditModal && adToEdit && currentUser && (
+                <EditAdModal
+                  ad={adToEdit}
+                  onEditAd={handleEditAd}
+                  onClose={() => {
+                    setShowEditModal(false);
+                    setAdToEdit(null);
+                  }}
                 />
               )}
             </div>
