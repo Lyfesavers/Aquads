@@ -372,6 +372,7 @@ const getPublicResume = async (slugOrUsername) => {
       title: user.cv.title,
       summary: user.cv.summary,
       skills: user.cv.skills || [],
+      linkedinProfileUrl: user.cv.linkedinProfileUrl || null,
       experience: (user.cv.experience || []).map(exp => ({
         company: exp.company,
         position: exp.position,

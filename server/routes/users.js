@@ -701,7 +701,7 @@ router.get('/cv/:userId', async (req, res) => {
 // Update user CV
 router.put('/cv', auth, async (req, res) => {
   try {
-    const { fullName, summary, education, experience, skills } = req.body;
+    const { fullName, summary, education, experience, skills, linkedinProfileUrl } = req.body;
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -719,6 +719,13 @@ router.put('/cv', auth, async (req, res) => {
     if (education) user.cv.education = education;
     if (experience) user.cv.experience = experience;
     if (skills) user.cv.skills = skills;
+    if (linkedinProfileUrl !== undefined) {
+      // Validate LinkedIn URL format if provided
+      if (linkedinProfileUrl && !linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i)) {
+        return res.status(400).json({ error: 'Invalid LinkedIn profile URL. It should look like: https://www.linkedin.com/in/your-name' });
+      }
+      user.cv.linkedinProfileUrl = linkedinProfileUrl;
+    }
     
     user.cv.lastUpdated = new Date();
 

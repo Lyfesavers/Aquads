@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { getUserCV } from '../services/api';
-import { FaGraduationCap, FaBriefcase, FaTools, FaSpinner, FaExclamationCircle } from 'react-icons/fa';
+import { FaGraduationCap, FaBriefcase, FaTools, FaSpinner, FaExclamationCircle, FaLinkedin, FaExternalLinkAlt } from 'react-icons/fa';
 
 const CVPreview = ({ userId, username, onClose }) => {
   const [cvData, setCvData] = useState(null);
@@ -101,6 +101,18 @@ const CVPreview = ({ userId, username, onClose }) => {
             {/* Header */}
             <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
               <h1 className="text-4xl font-bold mb-4 text-gray-800">{cvData.fullName || username}</h1>
+              {cvData.linkedinProfileUrl && (
+                <a
+                  href={cvData.linkedinProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#0A66C2] text-white text-sm rounded-full mb-4 hover:bg-[#004182] transition-colors"
+                >
+                  <FaLinkedin />
+                  View LinkedIn Profile
+                  <FaExternalLinkAlt className="text-xs" />
+                </a>
+              )}
               {cvData.summary && (
                 <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   {cvData.summary}

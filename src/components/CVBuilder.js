@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateCV, getUserCV } from '../services/api';
-import { FaPlus, FaTrash, FaGraduationCap, FaBriefcase, FaTools, FaSave, FaEye, FaCalendar } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaGraduationCap, FaBriefcase, FaTools, FaSave, FaEye, FaCalendar, FaLinkedin, FaCheckCircle, FaExternalLinkAlt } from 'react-icons/fa';
 
 const CVBuilder = ({ currentUser, onClose, showNotification }) => {
   const [cvData, setCvData] = useState({
@@ -8,7 +8,8 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
     summary: '',
     education: [],
     experience: [],
-    skills: []
+    skills: [],
+    linkedinProfileUrl: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +30,8 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           summary: response.cv.summary || '',
           education: response.cv.education || [],
           experience: response.cv.experience || [],
-          skills: response.cv.skills || []
+          skills: response.cv.skills || [],
+          linkedinProfileUrl: response.cv.linkedinProfileUrl || ''
         });
       }
     } catch (error) {
@@ -243,6 +245,18 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           <div className="bg-white text-black p-8 rounded-lg">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">{cvData.fullName || currentUser.username}</h1>
+              {cvData.linkedinProfileUrl && cvData.linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i) && (
+                <a
+                  href={cvData.linkedinProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-[#0A66C2] text-white text-sm rounded-full mb-3 hover:bg-[#004182] transition-colors"
+                >
+                  <FaLinkedin />
+                  LinkedIn Verified Profile
+                  <FaExternalLinkAlt className="text-xs" />
+                </a>
+              )}
               {cvData.summary && (
                 <p className="text-gray-600 max-w-2xl mx-auto">{cvData.summary}</p>
               )}
@@ -353,6 +367,57 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
         <p className="text-gray-400 text-sm mt-2">
           This will be displayed on your CV instead of your username. Use your real professional name.
         </p>
+      </div>
+
+      {/* LinkedIn Profile Section */}
+      <div className={`rounded-xl p-6 backdrop-blur-sm border ${
+        cvData.linkedinProfileUrl && cvData.linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i)
+          ? 'bg-blue-900/20 border-blue-500/30'
+          : 'bg-gray-800/50 border-gray-700/50'
+      }`}>
+        <h4 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <FaLinkedin className="text-[#0A66C2]" />
+          LinkedIn Profile
+          <span className="text-xs font-normal px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full">Recommended</span>
+        </h4>
+        <p className="text-gray-400 text-sm mb-4">
+          Link your LinkedIn profile so employers and clients can cross-verify your credentials. 
+          This will appear as a verification badge on your public resume and on-chain attestation.
+        </p>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <FaLinkedin className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0A66C2] text-lg" />
+            <input
+              type="url"
+              value={cvData.linkedinProfileUrl}
+              onChange={(e) => setCvData(prev => ({ ...prev, linkedinProfileUrl: e.target.value }))}
+              placeholder="https://www.linkedin.com/in/your-name"
+              className="w-full pl-10 pr-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+            />
+          </div>
+          {cvData.linkedinProfileUrl && cvData.linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i) && (
+            <a
+              href={cvData.linkedinProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-3 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <FaExternalLinkAlt className="text-sm" />
+              View
+            </a>
+          )}
+        </div>
+        {cvData.linkedinProfileUrl && !cvData.linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i) && cvData.linkedinProfileUrl.length > 0 && (
+          <p className="text-red-400 text-xs mt-2">
+            Please enter a valid LinkedIn profile URL (e.g., https://www.linkedin.com/in/your-name)
+          </p>
+        )}
+        {cvData.linkedinProfileUrl && cvData.linkedinProfileUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i) && (
+          <div className="flex items-center gap-2 mt-3 text-green-400 text-sm">
+            <FaCheckCircle />
+            <span>LinkedIn profile linked - this will show as a verification badge on your resume</span>
+          </div>
+        )}
       </div>
 
       {/* Summary Section */}

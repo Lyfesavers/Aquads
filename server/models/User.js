@@ -495,6 +495,11 @@ const userSchema = new Schema({
       }
     }],
     skills: [String],
+    // LinkedIn profile URL for cross-reference verification
+    linkedinProfileUrl: {
+      type: String,
+      default: ''
+    },
     lastUpdated: {
       type: Date,
       default: Date.now

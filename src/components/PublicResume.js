@@ -18,7 +18,8 @@ import {
   FaIdCard,
   FaAward,
   FaSync,
-  FaDownload
+  FaDownload,
+  FaLinkedin
 } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 import ResumeBadge from './ResumeBadge';
@@ -250,7 +251,21 @@ const PublicResume = () => {
                 <p className="text-xl text-blue-300 mb-2">{resumeData.cv.title}</p>
               )}
               
-              <p className="text-gray-400 mb-4">@{resumeData.username}</p>
+              <p className="text-gray-400 mb-3">@{resumeData.username}</p>
+
+              {/* LinkedIn Verification Badge */}
+              {resumeData.cv?.linkedinProfileUrl && (
+                <a
+                  href={resumeData.cv.linkedinProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-sm rounded-full mb-4 transition-colors shadow-lg shadow-blue-500/20"
+                >
+                  <FaLinkedin className="text-lg" />
+                  <span className="font-medium">LinkedIn Verified</span>
+                  <FaExternalLinkAlt className="text-xs" />
+                </a>
+              )}
               
               {resumeData.bio && (
                 <p className="text-gray-300 max-w-2xl">{resumeData.bio}</p>
@@ -411,12 +426,18 @@ const PublicResume = () => {
                       </p>
                       <div className="flex justify-between text-gray-400">
                         <span>CV Status:</span>
-                        <span className={current.breakdown.profileScore >= 5 ? 'text-green-400' : 'text-yellow-400'}>
-                          {current.breakdown.profileScore >= 5 ? 'Complete' : 'Incomplete'}
+                        <span className={current.breakdown.profileScore >= 3 ? 'text-green-400' : 'text-yellow-400'}>
+                          {current.breakdown.profileScore >= 3 ? 'Complete' : 'Incomplete'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>LinkedIn Linked:</span>
+                        <span className={current.breakdown.profileScore >= 5 ? 'text-green-400' : 'text-gray-500'}>
+                          {current.breakdown.profileScore >= 5 ? '✓ Yes (+2pts)' : '✗ No'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 A complete CV with name, summary, experience, education, and skills = 5 points.
+                        💡 Complete CV = 3 points. Adding LinkedIn profile = full 5/5 points.
                       </p>
                     </div>
                   </div>
@@ -459,8 +480,14 @@ const PublicResume = () => {
                           {current.breakdown.verificationScore >= 20 ? '✓ Verified' : '✗ Not verified'}
                         </span>
                       </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>LinkedIn Profile:</span>
+                        <span className={resumeData.cv?.linkedinProfileUrl ? 'text-green-400' : 'text-gray-500'}>
+                          {resumeData.cv?.linkedinProfileUrl ? '✓ Linked' : '✗ Not linked'}
+                        </span>
+                      </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 Freelancer account = 10pts. Premium service (requires KYC & vetting) = additional 10pts for full 20/20.
+                        💡 Freelancer account = 10pts. Premium service (requires KYC & vetting) = additional 10pts for full 20/20. LinkedIn adds profile credibility.
                       </p>
                     </div>
                   </div>
@@ -633,6 +660,34 @@ const PublicResume = () => {
                   <span className="text-xs text-yellow-400/80">{badge.score}%</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* LinkedIn Cross-Reference Notice */}
+        {resumeData.cv?.linkedinProfileUrl && (
+          <div className="bg-gradient-to-r from-[#0A66C2]/10 to-blue-900/20 rounded-2xl p-5 border border-[#0A66C2]/30 mb-8">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center flex-shrink-0">
+                  <FaLinkedin className="text-white text-lg" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm">LinkedIn Cross-Referenced</h3>
+                  <p className="text-gray-400 text-xs">
+                    This freelancer has linked their LinkedIn profile. You can verify their credentials by viewing their LinkedIn.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={resumeData.cv.linkedinProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+              >
+                <FaLinkedin /> View LinkedIn
+                <FaExternalLinkAlt className="text-xs" />
+              </a>
             </div>
           </div>
         )}
