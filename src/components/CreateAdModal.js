@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot } from 'react-icons/fa';
+import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot, FaSearch } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 import { createAd as apiCreateAd } from '../services/api';
 
@@ -212,6 +212,62 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const [expandedPackages, setExpandedPackages] = useState(new Set()); // Track expanded packages
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingToken, setIsFetchingToken] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState(''); // '', 'success', 'error'
+  const [searchAddress, setSearchAddress] = useState(''); // The address user types to search
+
+  // Fetch token data from DexScreener using contract or pair address
+  const fetchTokenData = async () => {
+    const address = searchAddress.trim();
+    if (!address) {
+      setError('Please enter a contract or pair address');
+      return;
+    }
+
+    setIsFetchingToken(true);
+    setFetchStatus('');
+    setError('');
+
+    try {
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${address}`);
+      if (!response.ok) throw new Error('Failed to fetch token data');
+      
+      const data = await response.json();
+      
+      if (!data.pairs || data.pairs.length === 0) {
+        setFetchStatus('error');
+        setError('No token found for this address. Please check and try again.');
+        return;
+      }
+
+      // Get the top pair (highest liquidity/volume is returned first by DexScreener)
+      const topPair = data.pairs[0];
+      
+      // These 3 fields are 100% guaranteed in every DexScreener response
+      const tokenName = topPair.baseToken?.name || '';
+      const tokenSymbol = topPair.baseToken?.symbol || '';
+      const chainId = topPair.chainId || 'ethereum';
+      const pairAddr = topPair.pairAddress || '';
+
+      // Build title: "Name (SYMBOL)" format
+      const title = tokenSymbol ? `${tokenName} (${tokenSymbol})` : tokenName;
+
+      setFormData(prev => ({
+        ...prev,
+        title: title,
+        blockchain: chainId,
+        pairAddress: pairAddr
+      }));
+
+      setFetchStatus('success');
+    } catch (err) {
+      console.error('Error fetching token data:', err);
+      setFetchStatus('error');
+      setError('Failed to fetch token data. You can fill in the fields manually.');
+    } finally {
+      setIsFetchingToken(false);
+    }
+  };
 
   const validateImageUrl = async (url) => {
     try {
@@ -246,6 +302,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const handleLogoChange = async (e) => {
     const url = e.target.value;
     setFormData(prev => ({ ...prev, logo: url }));
+    setFetchStatus(''); // Clear fetch status when user starts filling logo
     
     if (url) {
       const isValid = await validateImageUrl(url);
@@ -631,19 +688,73 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
               </div>
             )}
 
+            {/* Step 1: Enter address to auto-fetch token data */}
+            <div className="p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-xl">
+              <label className="block mb-2 text-lg font-medium">
+                Contract or Pair Address
+              </label>
+              <p className="text-gray-400 text-sm mb-3">
+                Paste your token's contract address or pair address to auto-fill project details
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={searchAddress}
+                  onChange={(e) => setSearchAddress(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fetchTokenData(); } }}
+                  placeholder="Enter contract or pair address..."
+                  className="flex-1 px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                />
+                <button
+                  type="button"
+                  onClick={fetchTokenData}
+                  disabled={isFetchingToken || !searchAddress.trim()}
+                  className={`px-5 py-3 rounded-lg font-medium flex items-center gap-2 transition-all ${
+                    isFetchingToken || !searchAddress.trim()
+                      ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  {isFetchingToken ? (
+                    <><FaSpinner className="animate-spin" /> Fetching...</>
+                  ) : (
+                    <><FaSearch /> Fetch</>
+                  )}
+                </button>
+              </div>
+              {fetchStatus === 'success' && (
+                <p className="text-green-400 text-sm mt-2 flex items-center gap-1">
+                  <FaCheck /> Token data found! Fields have been auto-filled below.
+                </p>
+              )}
+              {fetchStatus === 'error' && error && (
+                <p className="text-yellow-400 text-sm mt-2">
+                  {error} You can still fill in the fields manually below.
+                </p>
+              )}
+            </div>
+
+            {/* Auto-filled fields (editable) */}
             <div>
-              <label className="block mb-2 text-lg font-medium">Title</label>
+              <label className="block mb-2 text-lg font-medium">
+                Title
+                {fetchStatus === 'success' && <span className="text-green-400 text-sm ml-2">(auto-filled)</span>}
+              </label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
+                placeholder="Token name e.g. Pepe (PEPE)"
                 required
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
             </div>
             <div>
-              <label className="block mb-2 text-lg font-medium">Pair Address</label>
+              <label className="block mb-2 text-lg font-medium">
+                Pair Address
+                {fetchStatus === 'success' && <span className="text-green-400 text-sm ml-2">(auto-filled)</span>}
+              </label>
               <input
                 type="text"
                 name="pairAddress"
@@ -655,7 +766,10 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
               />
             </div>
             <div>
-              <label className="block mb-2 text-lg font-medium">Blockchain</label>
+              <label className="block mb-2 text-lg font-medium">
+                Blockchain
+                {fetchStatus === 'success' && <span className="text-green-400 text-sm ml-2">(auto-filled)</span>}
+              </label>
               <select
                 name="blockchain"
                 value={formData.blockchain}
@@ -699,6 +813,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <option value="kaspa">Kaspa</option>
               </select>
             </div>
+
+            {/* Manual fields - user always fills these */}
             <div>
               <label className="block mb-2 text-lg font-medium">Logo URL (GIF or PNG)</label>
               <input
@@ -710,7 +826,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 required
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              {error && fetchStatus !== 'error' && <p className="text-red-500 text-sm mt-1">{error}</p>}
               {previewUrl && (
                 <div className="mt-4 p-4 bg-gray-700 rounded-lg">
                   <p className="text-sm text-gray-300 mb-2">Preview:</p>
