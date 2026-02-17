@@ -449,10 +449,10 @@ const AquaPayInfo = () => {
             </Link>
             
             <Link
-              to="/whitepaper"
+              to="/docs#wp-aquapay"
               className="inline-flex items-center justify-center px-8 py-4 font-semibold text-gray-300 rounded-xl border border-gray-600 hover:border-gray-500 hover:text-white transition-all duration-300 bg-gray-800/50"
             >
-              Read Whitepaper
+              Read Business Plan
             </Link>
           </div>
         </div>

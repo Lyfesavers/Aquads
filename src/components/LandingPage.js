@@ -4112,10 +4112,10 @@ const LandingPage = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             <Link 
-              to="/whitepaper"
+              to="/docs#wp-executive-summary"
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
-              Whitepaper
+              Business Plan
             </Link>
             <Link 
               to="/learn"
@@ -4202,12 +4202,12 @@ const LandingPage = () => {
                     </Link>
                     <div className="h-px bg-white/10 my-2" />
                     <Link 
-                      to="/whitepaper"
+                      to="/docs#wp-executive-summary"
                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <span className="text-lg">📄</span>
-                      <span className="font-medium">Whitepaper</span>
+                      <span className="font-medium">Business Plan</span>
                     </Link>
                     <Link 
                       to="/learn"
@@ -4479,8 +4479,8 @@ const LandingPage = () => {
               <Link to="/privacy-policy" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
                 Privacy
               </Link>
-              <Link to="/whitepaper" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
-                Whitepaper
+              <Link to="/docs#wp-executive-summary" className="text-gray-500 hover:text-white text-xs md:text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
+                Business Plan
               </Link>
             </div>
             

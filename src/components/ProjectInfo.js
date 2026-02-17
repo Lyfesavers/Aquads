@@ -330,10 +330,10 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                  <FaArrowRight className="ml-2" />
                </button>
               <Link
-                to="/whitepaper"
+                to="/docs#wp-executive-summary"
                 className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 border border-gray-600"
               >
-                Read Our Whitepaper
+                Read Our Business Plan
               </Link>
             </div>
 

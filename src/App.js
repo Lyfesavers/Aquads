@@ -38,7 +38,6 @@ import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import OnboardingSection from './components/OnboardingSection';
-import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import BlogPage from './components/BlogPage';
 import Affiliate from './components/Affiliate';
@@ -57,7 +56,7 @@ import useUserPresence from './hooks/useUserPresence';
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
 import BookingConversationPage from './components/BookingConversationPage';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
@@ -3597,7 +3596,7 @@ function App() {
               )}
             </div>
           } />
-                      <Route path="/whitepaper" element={<Whitepaper />} />
+                      <Route path="/whitepaper" element={<Navigate to="/docs#wp-executive-summary" replace />} />
             <Route path="/learn" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />
                                  <Route path="/learn/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />
             <Route path="/share/blog/:id" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />

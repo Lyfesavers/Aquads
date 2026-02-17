@@ -154,6 +154,23 @@ const documentationStructure = [
       { id: 'premium-features', title: 'Premium Features', content: 'premiumFeatures' },
     ]
   },
+  {
+    id: 'whitepaper',
+    title: 'Business Plan',
+    icon: FaBook,
+    children: [
+      { id: 'wp-executive-summary', title: 'Executive Summary', content: 'wpExecutiveSummary' },
+      { id: 'wp-business-description', title: 'Business Description', content: 'wpBusinessDescription' },
+      { id: 'wp-market-opportunity', title: 'Market Opportunity', content: 'wpMarketOpportunity' },
+      { id: 'wp-products-services', title: 'Products & Services', content: 'wpProductsServices' },
+      { id: 'wp-trust-score', title: 'Trust Score & Risk Gauge', content: 'wpTrustScore' },
+      { id: 'wp-onchain-resume', title: 'On-Chain Resume', content: 'wpOnchainResume' },
+      { id: 'wp-aquapay', title: 'AquaPay System', content: 'wpAquapay' },
+      { id: 'wp-revenue-model', title: 'Revenue Model', content: 'wpRevenueModel' },
+      { id: 'wp-growth-strategy', title: 'Growth & Strategy', content: 'wpGrowthStrategy' },
+      { id: 'wp-conclusion', title: 'Conclusion & Contact', content: 'wpConclusion' },
+    ]
+  },
 ];
 
 // Content for each documentation page
@@ -356,7 +373,7 @@ Aquads is fully responsive with:
 
 The footer provides organized access to:
 - **Social**: Twitter, Telegram, Discord, Medium, Instagram, Facebook
-- **Resources**: Documentation, Whitepaper, Learn, Affiliate, Verify User
+- **Resources**: Documentation, Business Plan, Learn, Affiliate, Verify User
 - **Platform**: AquaFi, AquaSwap, Freelancer Hub, GameHub, Partner Rewards, Telegram Bot, AquaPay, HyperSpace
 - **Legal**: Terms & Conditions, Privacy Policy
 - **Mobile Apps**: PWA install, coming soon to app stores
@@ -4218,6 +4235,533 @@ Contact: enterprise@aquads.xyz
 > 💡 **Tip**: The annual plan saves you 33% compared to monthly.
     `,
     prevPage: { id: 'api-integration', title: 'API Integration' },
+    nextPage: { id: 'wp-executive-summary', title: 'Executive Summary' },
+  },
+
+  // ===== BUSINESS PLAN (WHITEPAPER) =====
+  wpExecutiveSummary: {
+    title: 'Executive Summary',
+    description: 'Aquads Business Plan - Executive Summary of the all-in-one Web3 platform.',
+    content: `
+## Aquads Business Plan
+
+### All-in-One Web3 Crypto Hub, Freelancer Marketplace, and Game Hub
+
+> **Note:** This is not a token project – no crypto tokens will ever be created.
+
+---
+
+## 1. Executive Summary
+
+Aquads is an innovative platform built to serve the rapidly growing Web3 ecosystem by integrating three core components:
+
+- A **Dynamic Advertising System** tailored for crypto projects
+- A specialized **Freelancer Marketplace** connecting Web3 professionals with crypto projects
+- A **Token Information Hub** offering real-time cryptocurrency insights
+
+In addition, Aquads has expanded its offerings with new features:
+
+- A dedicated **Game Hub** for crypto and blockchain gaming projects
+- An extensive **How-To & Blog Page** with valuable articles and tutorials
+- A robust **Booking System** complete with watermarking for sent images, enhancing security and professionalism
+- An upgraded **Internal Messaging System** with payment functionality (coming soon)
+- A new **Twitter Raid Feature** that rewards users with points for engaging with Twitter posts
+- **Industry-First Trust Score & Risk Gauge System** - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills
+- **World's First On-Chain Freelancer Resume** - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation
+- **AquaPay - Multi-Chain Payment Link System** - A non-custodial payment solution with competitive 0.5% transaction fees enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks
+- **HyperSpace - Twitter Spaces Listener Boost** - A service enabling projects to boost their Twitter Spaces with real listeners (100-5,000) for durations of 30 minutes to 2 hours, enhancing trending potential and audience reach
+
+Our mission is to bridge the gap between crypto projects, service providers, and the broader Web3 community while providing an integrated suite of tools designed to drive growth, foster transparency, and empower all users within the ecosystem.
+    `,
+    prevPage: { id: 'premium-features', title: 'Premium Features' },
+    nextPage: { id: 'wp-business-description', title: 'Business Description' },
+  },
+
+  wpBusinessDescription: {
+    title: 'Business Description',
+    description: 'The problems Aquads solves and the comprehensive solution it provides.',
+    content: `
+## 2. Business Description
+
+### 2.1. Problem Statement
+
+The Web3 space is expanding rapidly, yet the ecosystem lacks a unified platform that:
+
+- Provides specialized services in areas such as smart contract development, security audits, marketing, and community management.
+- Integrates dynamic advertising solutions specifically designed for crypto projects.
+- Offers real-time token data and market insights in a centralized, community-driven resource.
+- Caters to the growing demand in blockchain gaming, empowering game developers and enthusiasts.
+- Enables seamless, low-cost cryptocurrency payments without custodial risks or high transaction fees.
+- Supports multi-chain payment processing, allowing users to receive payments across different blockchain networks through a single interface.
+
+### 2.2. The Aquads Solution
+
+Aquads combines a suite of interrelated features into one platform:
+
+**Dynamic Advertising System:**
+- Interactive ad displays, premium bump mechanisms, and real-time ad management that increase project visibility.
+
+**Freelancer Marketplace:**
+- A dedicated space for freelancers with verification, integrated reviews, and streamlined service matching.
+
+**Token Information Hub:**
+- Real-time tracking of crypto prices, community-driven token reviews, and market analytics.
+
+**New Game Hub:**
+- A dedicated section for crypto gaming projects where developers and gamers can connect, share experiences, and collaborate on blockchain-based games.
+
+**How-To & Blog Page:**
+- A resource center offering detailed guides, tutorials, and industry insights to help users maximize platform potential.
+
+**Enhanced Booking System & Messaging:**
+- Our complete booking system now features watermarking for sent images, ensuring secure and professional communication. The internal messaging system is upgraded—with a payment integration coming soon—to streamline project discussions and transactions.
+
+**Twitter Raid Feature:**
+- Users earn points for engaging with Twitter posts, further boosting community participation and platform engagement.
+
+**HyperSpace - Twitter Spaces Listener Boost:**
+- A powerful service that enables crypto projects to boost their Twitter Spaces with real listeners. Choose from packages of 100 to 5,000 listeners for durations of 30 minutes, 1 hour, or 2 hours. Listeners appear in the overflow section, significantly boosting trending potential and discoverability.
+
+**AquaPay Payment Link System:**
+- A revolutionary non-custodial payment solution that enables users to create personalized payment pages and receive cryptocurrency payments directly to their wallets across multiple blockchain networks, with competitive 0.5% transaction fees and real-time notifications.
+    `,
+    prevPage: { id: 'wp-executive-summary', title: 'Executive Summary' },
+    nextPage: { id: 'wp-market-opportunity', title: 'Market Opportunity' },
+  },
+
+  wpMarketOpportunity: {
+    title: 'Market Opportunity',
+    description: 'Market analysis, trends, and target audience for Aquads.',
+    content: `
+## 3. Market Opportunity & Analysis
+
+### 3.1. Market Trends
+
+- **Web3 Growth:** Blockchain, cryptocurrency, and decentralized platforms are reshaping how business is done. The increasing demand for specialized freelance talent in this space is driving rapid market expansion.
+- **Gaming and Blockchain Integration:** The blockchain gaming sector is booming, with a growing number of projects seeking skilled developers and marketers who understand decentralized economies.
+- **Service Fragmentation:** Currently, crypto projects and Web3 freelancers operate on disparate platforms. Aquads' integrated approach meets the demand for a unified, efficient marketplace.
+- **Advertising Gaps:** Traditional advertising channels often fail to address the unique needs of crypto projects, creating a niche for dynamic, blockchain-based ad solutions.
+
+### 3.2. Target Audience
+
+- **Crypto Projects & Gaming Startups:** Seeking reliable advertising and specialized freelance talent.
+- **Web3 Freelancers & Agencies:** Offering niche services tailored to the blockchain, crypto, and gaming industries.
+- **Investors & Analysts:** Looking for up-to-date token information and market insights.
+    `,
+    prevPage: { id: 'wp-business-description', title: 'Business Description' },
+    nextPage: { id: 'wp-products-services', title: 'Products & Services' },
+  },
+
+  wpProductsServices: {
+    title: 'Products & Services',
+    description: 'Overview of all core products and services offered by Aquads.',
+    content: `
+## 4. Products & Services
+
+### 4.1. Core Components
+
+**Dynamic Advertising System:**
+- **Features:** Dynamic bubble ad sizing, premium bump system, real-time performance analytics, and premium ad banners.
+- **Benefits:** Boost project visibility with targeted, performance-based advertising.
+
+**Freelancer Marketplace:**
+- **Features:** Verified service provider profiles, categorized services, integrated reviews, integrated booking system, Trust Score & Risk Gauge vetting system, On-Chain Resume with EAS attestations.
+- **Benefits:** Streamline the process of finding specialized talent in the Web3 space with unprecedented transparency and verifiable credentials.
+
+**Token Information Hub:**
+- **Features:** Real-time crypto tracking, community token reviews, market trend analysis.
+- **Benefits:** Empower users with data to make informed decisions.
+
+**Game Hub:**
+- **Features:** Dedicated gaming project listings, forums for gamers, voting and developers, NFT asset showcases.
+- **Benefits:** Foster collaboration and innovation in blockchain gaming.
+
+**How-To & Blog Page:**
+- **Features:** Comprehensive guides, industry insights, and actionable tips.
+- **Benefits:** Educate users and build a community of informed, engaged professionals.
+
+**Booking System & Messaging:**
+- **Features:** Robust project scheduling, secure watermarking for images, and an internal messaging system.
+- **Benefits:** Enhance communication, security, and workflow efficiency.
+
+**Twitter Raid Feature:**
+- **Features:** Earn points for engaging with targeted Twitter posts.
+- **Benefits:** Drive community engagement and reward active participation.
+
+**AquaPay Payment Link System:**
+- **Features:** Multi-chain payment pages, wallet integration, payment history tracking, real-time notifications, QR code generation, customizable themes, and competitive 0.5% transaction fees.
+- **Benefits:** Enable seamless cryptocurrency payments for freelancers, creators, and businesses without intermediaries, fees, or custody risks.
+    `,
+    prevPage: { id: 'wp-market-opportunity', title: 'Market Opportunity' },
+    nextPage: { id: 'wp-trust-score', title: 'Trust Score & Risk Gauge' },
+  },
+
+  wpTrustScore: {
+    title: 'Trust Score & Risk Gauge',
+    description: 'Industry-first comprehensive freelancer vetting system with Trust Score algorithm and Risk Gauge.',
+    content: `
+## 4.2. Trust Score & Risk Gauge System
+
+> **Industry Innovation:** Aquads has developed a sophisticated Trust Score Algorithm and Risk Gauge system that provides clients with transparent, data-driven insights into freelancer reliability.
+
+Our proprietary Trust Score algorithm aggregates multiple performance indicators to generate a comprehensive reliability score (0-100) for every freelancer on the platform. This score is displayed via our intuitive Risk Gauge component, helping clients make informed hiring decisions.
+
+### Trust Score Components (100 Points Total)
+
+**Service Rating (50 Points - 50% Weight)**
+The most heavily weighted factor, reflecting client satisfaction from completed jobs.
+
+| Rating | Points | Level |
+|--------|--------|-------|
+| 4.8-5.0 stars | 50 points | Exceptional |
+| 4.5-4.7 stars | 40 points | Excellent |
+| 4.0-4.4 stars | 30 points | Good |
+| 3.5-3.9 stars | 15 points | Fair |
+| Below 3.5 stars | 5 points | Needs Improvement |
+| No reviews | 0 points | Unproven |
+
+**Job Completion Rate (20 Points - 20% Weight)**
+Measures reliability by tracking the percentage of accepted jobs completed successfully.
+
+| Completion Rate | Points |
+|----------------|--------|
+| 95%+ | 20 points |
+| 85-94% | 16 points |
+| 75-84% | 12 points |
+| 65-74% | 6 points |
+| Below 65% | 2 points |
+| No history | 4 points (neutral) |
+
+**Identity Verification & KYC (20 Points - 20% Weight)**
+Confirms freelancer identity and professional status through our vetting process.
+
+- Registered Freelancer Account = 10 points
+- Premium Service (requires KYC verification) = additional 10 points
+- Premium listing requires identity verification, ensuring real professionals
+
+**Profile Completeness (5 Points - 5% Weight)**
+Rewards freelancers who maintain comprehensive professional profiles.
+
+- Complete CV with name, summary, experience, education, and skills = 5 points
+- Incomplete profile = 0 points
+
+**Skill Badges (5 Points - 5% Weight)**
+Recognizes verified skills through our assessment system.
+
+- 3+ skill badges = 5 points
+- 1-2 skill badges = 2.5 points
+- No badges = 0 points
+
+### Risk Gauge Visualization
+
+The Trust Score is displayed through an intuitive gauge that categorizes freelancers:
+
+| Score | Color | Label |
+|-------|-------|-------|
+| 85-100 | Green | Safe to Book |
+| 70-84 | Yellow | Almost Proven |
+| 50-69 | Orange | Unproven |
+| 0-49 | Red | Risky |
+    `,
+    prevPage: { id: 'wp-products-services', title: 'Products & Services' },
+    nextPage: { id: 'wp-onchain-resume', title: 'On-Chain Resume' },
+  },
+
+  wpOnchainResume: {
+    title: 'On-Chain Resume',
+    description: 'World\'s first on-chain freelancer resume system using blockchain-verified credentials.',
+    content: `
+## 4.3. On-Chain Resume System
+
+> **World's First:** Aquads proudly introduces the world's first on-chain freelancer resume system, allowing professionals to mint their verified credentials as permanent, tamper-proof attestations on the blockchain.
+
+This groundbreaking feature bridges traditional freelancing with Web3 technology, creating portable, verifiable proof of professional reputation.
+
+### The Problem with Traditional Reputation
+
+- **Platform Lock-in:** Freelancer reputation is trapped within individual platforms and cannot be transferred.
+- **No Verification:** Clients have no way to verify if credentials are authentic or manipulated.
+- **Centralized Risk:** Platform shutdowns or account issues can erase years of built reputation.
+- **Trust Gaps:** When moving between platforms, freelancers start from zero despite years of proven work.
+
+### The Aquads Solution: Blockchain-Verified Credentials
+
+Our On-Chain Resume system leverages the **Ethereum Attestation Service (EAS)** on **Base** (Coinbase's Layer 2) to create permanent, verifiable attestations of freelancer credentials. This is not an NFT or token—it's a signed attestation that can be independently verified by anyone, anywhere.
+
+### Technology Overview
+
+- **Layer 2 Blockchain:** Near-zero transaction costs (~$0.01) with instant finality
+- **Attestation Protocol:** Industry-standard cryptographic verification system
+- **Proprietary Schema:** Custom-designed data structure capturing comprehensive freelancer metrics
+- **Hybrid Architecture:** On-chain immutability combined with real-time platform data
+
+### How It Works
+
+**Step 1: Build Your Reputation**
+Complete jobs, earn ratings, pass skill assessments, and verify your identity on Aquads.
+
+**Step 2: Connect Your Wallet**
+Link any EVM-compatible wallet (MetaMask, Coinbase Wallet, WalletConnect, etc.).
+
+**Step 3: Mint Your Resume**
+One-click minting creates an EAS attestation with your current Trust Score and credentials. Cost: ~$0.01 in ETH gas.
+
+**Step 4: Share & Verify**
+Get a public resume URL, EAS Explorer link, and Basescan transaction proof. Anyone can verify your credentials independently.
+
+### Public Resume Page
+
+Each minted resume generates a public, shareable page at \`aquads.xyz/resume/[username]\` featuring:
+
+- **Live Trust Score:** Real-time data from Aquads platform
+- **On-Chain Verified Score:** Immutable record from blockchain
+- **Score Breakdown:** Expandable details explaining each metric
+- **Skill Badges:** Verified competencies with assessment scores
+- **Work Experience:** Professional history from CV
+- **Education:** Academic credentials
+- **Active Services:** Current offerings on Aquads
+- **Verification Links:** Direct links to EAS Explorer and Basescan
+
+### Benefits
+
+**For Freelancers:**
+- Portable reputation across platforms
+- Tamper-proof credential verification
+- Stand out with blockchain-verified trust
+- Own your professional data forever
+- No platform can revoke your credentials
+
+**For Employers:**
+- Independently verify credentials
+- No reliance on centralized platforms
+- Cryptographic proof of reputation
+- Historical attestation tracking
+- Reduced hiring risk with verified data
+
+### Why This Matters
+
+The On-Chain Resume represents a fundamental shift in how professional reputation works. By combining Aquads' comprehensive Trust Score system with blockchain immutability, we've created the first truly portable, verifiable freelancer credential system. This innovation:
+
+- Eliminates the "cold start" problem when joining new platforms
+- Creates accountability through permanent, public records
+- Bridges Web2 freelancing with Web3 verification standards
+- Establishes a new paradigm for professional reputation
+    `,
+    prevPage: { id: 'wp-trust-score', title: 'Trust Score & Risk Gauge' },
+    nextPage: { id: 'wp-aquapay', title: 'AquaPay System' },
+  },
+
+  wpAquapay: {
+    title: 'AquaPay System',
+    description: 'Revolutionary non-custodial multi-chain payment infrastructure with 0.5% fees.',
+    content: `
+## 4.4. AquaPay Payment Link System
+
+> **Revolutionary Payment Infrastructure:** AquaPay represents a paradigm shift in cryptocurrency payment processing, offering a non-custodial payment link system with competitive 0.5% transaction fees that enables direct wallet-to-wallet transactions across multiple blockchain networks.
+
+### The Problem with Traditional Crypto Payments
+
+- **Custodial Risk:** Most payment processors hold user funds in centralized wallets, creating single points of failure.
+- **High Fees:** Traditional payment processors charge 2-5% or more, reducing profitability.
+- **Limited Chain Support:** Most solutions support only one or two blockchain networks.
+- **Complex Integration:** Businesses face technical barriers when implementing crypto payments.
+- **Poor User Experience:** Payment flows are often clunky, requiring multiple steps and manual address copying.
+- **Lack of Transparency:** Users cannot easily track payment history or receive notifications.
+
+### The AquaPay Solution: Direct, Non-Custodial Payments
+
+AquaPay eliminates intermediaries by enabling direct wallet-to-wallet transactions. Users create personalized payment pages accessible via simple links (e.g., \`aquads.xyz/pay/username\`), allowing anyone to send cryptocurrency payments directly to the recipient's wallet.
+
+### Multi-Chain Support (8+ Networks)
+
+| Chain Type | Networks |
+|-----------|----------|
+| **EVM-Compatible** | Ethereum (ETH, USDC), Base (ETH, USDC), Polygon (MATIC, USDC), Arbitrum (ETH, USDC), BNB Smart Chain (BNB, USDC) |
+| **Non-EVM** | Solana (SOL, USDC), Bitcoin (BTC) - Manual transfer, TRON (TRX) - Manual transfer |
+
+### Non-Custodial Architecture
+
+- All payments go directly to the recipient's wallet address
+- Aquads never holds, controls, or has access to user funds
+- Users maintain complete control over their private keys and assets
+- No risk of platform insolvency, hacks, or fund freezes affecting user assets
+
+### Competitive Transaction Fees
+
+- **0.5% Transaction Fee:** Applied to all successful payments, deducted from the payment amount
+- **No Setup Fees:** No monthly subscriptions or account setup costs
+- **No Withdrawal Fees:** Payments go directly to recipient wallets
+- **Gas Fees:** Users pay standard blockchain network fees (unavoidable, paid to the network)
+- **Transparent Pricing:** Significantly lower than traditional payment processors (2-5%)
+
+### Personalized Payment Links
+
+- **Custom Payment Slug:** e.g., \`aquads.xyz/pay/mybusiness\`
+- **Display Name & Bio:** Customizable branding for the payment page
+- **Theme Customization:** Choose from multiple visual themes (default, dark, light, gradient, neon)
+- **Preferred Chain & Accepted Tokens:** Configure which chains and tokens you accept
+
+### Payment Tracking & Analytics
+
+- **Payment History:** Complete transaction log with last 100 payments
+- **Real-Time Statistics:** Track total received (USD value), total transactions, and timestamps
+- **Transaction Explorer Links:** Direct links to blockchain explorers for verification
+- **Payment & Email Notifications:** Real-time WebSocket and optional email alerts
+
+### Wallet Integration
+
+| EVM Wallets | Solana Wallets |
+|------------|---------------|
+| MetaMask | Phantom |
+| WalletConnect (300+ wallets) | Solflare |
+| Coinbase Wallet | Backpack |
+| Rabby | Any Solana wallet adapter |
+| Any EIP-1193 compatible wallet | |
+
+For Bitcoin and TRON, users can copy addresses or scan QR codes for manual transfers.
+
+### Competitive Advantages
+
+**vs. Traditional Payment Processors (PayPal, Stripe):**
+- Supports cryptocurrency, Low 0.5% fee (they charge 2-5%), Non-custodial, Multi-chain support, Direct wallet transfers
+
+**vs. Crypto Payment Services (Coinbase Commerce, BitPay):**
+- Competitive 0.5% fee (they charge 1-2%), Non-custodial architecture, 8+ blockchain networks, Personalized payment pages, Integrated with freelancer marketplace
+
+**vs. Payment Link Services (Request Network, BTCPay):**
+- Simpler setup and UX, Multi-chain in one interface, Modern intuitive UI, Integrated wallet connection
+
+### Future Enhancements
+
+- **Recurring Payments:** Subscription and recurring payment support
+- **Payment Requests:** Send payment requests with specific amounts and due dates
+- **Invoice Generation:** Automatic invoice creation for business payments
+- **Additional Chains:** Support for more blockchain networks (Avalanche, Optimism, etc.)
+- **Token Swaps:** Automatic token conversion for cross-token payments
+- **Payment Analytics Dashboard:** Advanced analytics and reporting tools
+    `,
+    prevPage: { id: 'wp-onchain-resume', title: 'On-Chain Resume' },
+    nextPage: { id: 'wp-revenue-model', title: 'Revenue Model' },
+  },
+
+  wpRevenueModel: {
+    title: 'Revenue Model',
+    description: 'How Aquads generates revenue through multiple sustainable streams.',
+    content: `
+## 5. Revenue Model
+
+### 5.1. Token-Based Lead Unlocking System
+
+- Users purchase tokens at $1 USDC each to unlock premium leads and client contact information.
+- 2 tokens are required to unlock each client's contact details, creating a pay-per-lead model.
+- This system eliminates traditional subscription fees and allows freelancers to invest only in leads they want to pursue.
+- With average project values of $3,200 and 35% conversion rates, the ROI is typically 560%.
+
+### 5.2. AquaSwap Trading Fees
+
+- 0.5% fee on all token swaps and trading activities within the AquaSwap platform.
+- Revenue generated from DeFi trading activities and cross-chain token exchanges.
+
+### 5.3. AquaPay Transaction Fees
+
+- 0.5% transaction fee on all successful payments processed through AquaPay.
+- Fee is deducted from the payment amount before it reaches the recipient's wallet.
+- Revenue generated from payment processing across all supported blockchain networks (Ethereum, Base, Polygon, Arbitrum, BNB, Solana, Bitcoin, TRON).
+- Competitive fee structure significantly lower than traditional payment processors (2-5%) while maintaining sustainable revenue.
+
+### 5.4. AquaFi Savings Platform Fees
+
+- 0% fee on deposits to encourage user adoption and remove barriers to entry.
+- 2.5% fee on withdrawals, optimizing revenue while maintaining user-friendly deposit experience.
+- Strategic fee structure designed to balance user experience with sustainable revenue generation.
+
+### 5.5. Advertising Revenue
+
+- Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.
+- VIP ad banners, AMAs, and additional monetized features are planned for future phases.
+- Paid twitter raid posts.
+
+### 5.6. On-Chain Resume Services (Planned)
+
+- Optional minting fee for On-Chain Resume attestations (in addition to minimal blockchain gas fees).
+- Premium resume features such as enhanced public profiles and priority verification badges.
+- Enterprise verification services for bulk credential validation.
+    `,
+    prevPage: { id: 'wp-aquapay', title: 'AquaPay System' },
+    nextPage: { id: 'wp-growth-strategy', title: 'Growth & Strategy' },
+  },
+
+  wpGrowthStrategy: {
+    title: 'Growth & Strategy',
+    description: 'Marketing plan, affiliate program, community engagement, and team overview.',
+    content: `
+## 6. Marketing & Growth Strategy
+
+### 6.1. Go-to-Market Plan
+
+- **Community Building:** Focus on engaging early adopters through social media channels, AMAs, and interactive content.
+- **Partnerships:** Collaborate with industry influencers, crypto projects, and gaming communities.
+- **Digital Marketing:** Leverage SEO, content marketing, and targeted online ads to drive traffic and engagement.
+
+### 6.2. Affiliate Program
+
+- A tiered commission structure rewards affiliates based on the volume of referred sales.
+- Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.
+- Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.
+- Affiliates earn commission on: project listings, lifetime bumps, banner ads, and HyperSpace (Twitter Space Listeners) orders.
+- HyperSpace commissions are calculated on profit margin, ensuring sustainable affiliate rewards.
+- This program serves as a key user acquisition and retention strategy rather than a primary revenue source.
+
+### 6.3. Community Engagement
+
+- **User Reviews & Ratings:** Foster trust with a transparent feedback system.
+- **Social Integration:** Enable seamless social sharing and community interaction.
+- **Regular Updates:** Keep users informed with fresh content on the How-To page and blog.
+
+---
+
+## 7. Management & Team
+
+### 7.1. Leadership
+
+Our team comprises experienced professionals in blockchain, software development, digital marketing, and community management. Our leadership is committed to fostering innovation and growth in the Web3 ecosystem.
+
+### 7.2. Talent Acquisition
+
+We focus on hiring specialists in blockchain technology, cybersecurity, and UI/UX design to ensure a secure, scalable, and user-friendly platform.
+    `,
+    prevPage: { id: 'wp-revenue-model', title: 'Revenue Model' },
+    nextPage: { id: 'wp-conclusion', title: 'Conclusion & Contact' },
+  },
+
+  wpConclusion: {
+    title: 'Conclusion & Contact',
+    description: 'Summary of Aquads\' vision and how to get in touch.',
+    content: `
+## 8. Conclusion
+
+Aquads.xyz represents the future of Web3 work, gaming, and crypto projects by uniting advertising, freelance services, and cutting-edge blockchain features in one platform. With dynamic features such as our Game Hub, comprehensive How-To page, robust booking system with watermarking, upgraded messaging, an engaging Twitter Raid feature, and our revolutionary **AquaPay payment link system**, Aquads.xyz is poised to lead the decentralized marketplace revolution.
+
+Our groundbreaking innovations in freelancer vetting—the **Trust Score & Risk Gauge system**—combined with the **world's first On-Chain Freelancer Resume**, set a new standard for professional reputation in the gig economy. By leveraging blockchain technology through Ethereum Attestation Service on Base, we've created a paradigm where freelancer credentials are portable, verifiable, and truly owned by the professional.
+
+**AquaPay** further revolutionizes the platform by enabling seamless, non-custodial cryptocurrency payments with competitive 0.5% transaction fees across 8+ blockchain networks. This eliminates the traditional barriers of payment processing—custodial risk, high fees, and limited chain support—empowering freelancers, creators, and businesses to receive payments directly to their wallets without intermediaries.
+
+These innovations solve longstanding problems in freelancing: platform lock-in, unverifiable credentials, the "cold start" reputation problem, and payment processing friction. Aquads is not just building a marketplace—we're building the complete infrastructure for the future of decentralized work, combining professional reputation systems, blockchain verification, and seamless payment processing in one integrated platform.
+
+Join us as we build a vibrant community where innovation meets opportunity. Let's transform the world of digital freelancing and crypto projects together!
+
+**— The Aquads Team**
+
+---
+
+## Contact Information
+
+- **Twitter:** [@_Aquads_](https://twitter.com/_Aquads_)
+- **Telegram:** [Join our Telegram](https://t.co/TE6WbzWh9K)
+- **Email:** [aquads.info@gmail.com](mailto:aquads.info@gmail.com)
+- **Website:** [aquads.xyz](https://aquads.xyz)
+    `,
+    prevPage: { id: 'wp-growth-strategy', title: 'Growth & Strategy' },
   },
 };
 
