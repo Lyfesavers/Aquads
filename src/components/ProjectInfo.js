@@ -333,7 +333,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 to="/docs#wp-executive-summary"
                 className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 border border-gray-600"
               >
-                Read Our Business Plan
+                Read Our Documentation
               </Link>
             </div>
 

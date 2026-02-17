@@ -116,13 +116,6 @@ const Footer = () => {
                   <span>Documentation</span>
                 </Link>
                 <Link
-                  to="/docs#wp-executive-summary"
-                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
-                >
-                  <FaFileAlt className="mr-2" />
-                  <span>Business Plan</span>
-                </Link>
-                <Link
                   to="/learn"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
