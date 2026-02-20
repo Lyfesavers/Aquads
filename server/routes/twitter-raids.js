@@ -719,6 +719,19 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
       });
       
       await notification.save();
+
+      // Send Telegram DM if user has linked their account
+      const user = await User.findById(userId);
+      if (user?.telegramId) {
+        try {
+          await telegramService.sendBotMessage(
+            user.telegramId,
+            `❌ Your Twitter raid submission for "${raid.title}" was rejected.\n\nReason: ${reason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
+          );
+        } catch (tgError) {
+          // Don't block the flow if Telegram fails
+        }
+      }
   
     } catch (notificationError) {
       // Continue execution even if notification fails

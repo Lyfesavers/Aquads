@@ -565,6 +565,19 @@ router.post('/:raidId/reject/:completionId', auth, requireEmailVerification, asy
     });
     await notification.save();
 
+    // Send Telegram DM if user has linked their account
+    const user = await User.findById(completion.userId);
+    if (user?.telegramId) {
+      try {
+        await telegramService.sendBotMessage(
+          user.telegramId,
+          `❌ Your Facebook raid submission for "${raid.title}" was rejected.\n\nReason: ${completion.rejectionReason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
+        );
+      } catch (tgError) {
+        // Don't block the flow if Telegram fails
+      }
+    }
+
     await raid.save();
 
     res.json({
