@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
@@ -1611,6 +1612,22 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
+      <Helmet>
+        <title>AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX</title>
+        <meta name="description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees. Trade on Ethereum, Solana, BSC, Base, Arbitrum, and more on AquaSwap." />
+        <link rel="canonical" href="https://www.aquads.xyz/aquaswap" />
+
+        <meta property="og:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
+        <meta property="og:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:url" content="https://www.aquads.xyz/aquaswap" />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
+        <meta name="twitter:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+      </Helmet>
       {/* Header Section */}
       <div className="header-section">
         {/* Desktop Navigation (hidden on mobile via CSS) */}

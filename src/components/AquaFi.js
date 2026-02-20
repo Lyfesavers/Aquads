@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate, Link } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
@@ -120,6 +121,23 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white">
+      <Helmet>
+        <title>AquaFi - DeFi Savings Pools & Crypto Yields | Aquads</title>
+        <meta name="description" content="Earn passive crypto income with AquaFi savings pools. Stake your tokens, earn competitive DeFi yields, and track your portfolio analytics on Aquads." />
+        <link rel="canonical" href="https://www.aquads.xyz/aquafi" />
+
+        <meta property="og:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
+        <meta property="og:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:url" content="https://www.aquads.xyz/aquafi" />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
+        <meta name="twitter:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+      </Helmet>
+
       {/* Enhanced Fixed Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-purple-900/5 to-black"></div>

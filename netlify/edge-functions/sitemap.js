@@ -91,8 +91,44 @@ export default async (request, context) => {
       console.log(`Sitemap Edge: Failed to fetch blogs - ${response.status}`);
     }
   } catch (error) {
-    // If API fails, continue with static pages only
     console.log(`Sitemap Edge: Error fetching blogs - ${error.message}`);
+  }
+
+  // Fetch marketplace services and add them to sitemap
+  try {
+    const response = await fetch('https://aquads.onrender.com/api/services?limit=100', {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Aquads-Sitemap-Edge/1.0'
+      }
+    });
+
+    if (response.ok) {
+      const services = await response.json();
+      const serviceList = Array.isArray(services) ? services : (services.services || []);
+
+      if (serviceList.length > 0) {
+        const serviceEntries = serviceList.map(service => {
+          const slug = createSlug(service.title || 'untitled');
+          const serviceUrl = `https://www.aquads.xyz/service/${slug}-${service._id}`;
+          const lastmod = formatDate(service.updatedAt || service.createdAt);
+
+          return `  <url>
+    <loc>${serviceUrl}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+        }).join('\n');
+
+        urlEntries += '\n' + serviceEntries;
+        console.log(`Sitemap Edge: Added ${serviceList.length} marketplace services`);
+      }
+    } else {
+      console.log(`Sitemap Edge: Failed to fetch services - ${response.status}`);
+    }
+  } catch (error) {
+    console.log(`Sitemap Edge: Error fetching services - ${error.message}`);
   }
 
   const sitemapXML = `<?xml version="1.0" encoding="UTF-8"?>

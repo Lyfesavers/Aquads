@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
@@ -968,6 +969,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
+      <Helmet>
+        <title>Web3 Freelancer Marketplace - Hire Crypto & Blockchain Experts | Aquads</title>
+        <meta name="description" content="Find and hire top Web3 freelancers for blockchain development, smart contracts, DeFi, NFTs, and crypto marketing. Pay with crypto on the Aquads marketplace." />
+        <link rel="canonical" href="https://www.aquads.xyz/marketplace" />
+      </Helmet>
+
       {/* Fixed Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>

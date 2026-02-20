@@ -816,7 +816,7 @@ const AquaPayPage = ({ currentUser }) => {
         </button>
         
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
-          <img src="/Aquadsnewlogo.png" alt="" className="h-4 w-auto opacity-60" />
+          <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by AquaPay</span>
         </div>
       </div>
@@ -854,7 +854,7 @@ const AquaPayPage = ({ currentUser }) => {
               <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-4">Paying to</p>
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <img src={paymentPage?.image || 'https://i.imgur.com/6VBx3io.png'} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-slate-700" />
+                  <img src={paymentPage?.image || 'https://i.imgur.com/6VBx3io.png'} alt="Payment recipient" className="w-14 h-14 rounded-xl object-cover border-2 border-slate-700" />
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
                     <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1174,7 +1174,7 @@ const AquaPayPage = ({ currentUser }) => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img src="/Aquadsnewlogo.png" alt="" className="h-5 w-auto opacity-50" />
+              <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-5 w-auto opacity-50" />
               <div className="flex items-center gap-3 text-xs text-slate-600">
                 <a href="https://aquads.xyz" className="hover:text-cyan-400 transition-colors">Aquads.xyz</a>
                 <span>•</span>

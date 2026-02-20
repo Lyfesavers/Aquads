@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { fetchGames, fetchGameCategories, deleteGame } from '../services/api';
 import GameListing from './GameListing';
 import CreateGameModal from './CreateGameModal';
@@ -233,6 +234,23 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
   
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-yellow-400">
+      <Helmet>
+        <title>Web3 Games Hub - Play Crypto Games & Earn | Aquads</title>
+        <meta name="description" content="Play exciting Web3 games on Aquads - horse racing, dots and boxes, crossword puzzles and more. Discover community-built crypto games and earn while you play." />
+        <link rel="canonical" href="https://www.aquads.xyz/games" />
+
+        <meta property="og:title" content="Web3 Games Hub - Play Crypto Games & Earn | Aquads" />
+        <meta property="og:description" content="Play exciting Web3 games on Aquads. Discover community-built crypto games and earn while you play." />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:url" content="https://www.aquads.xyz/games" />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Web3 Games Hub - Play Crypto Games & Earn | Aquads" />
+        <meta name="twitter:description" content="Play exciting Web3 games on Aquads. Discover community-built crypto games and earn while you play." />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+      </Helmet>
+
       {/* Navigation - Same as main page */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

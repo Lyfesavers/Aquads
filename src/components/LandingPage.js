@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import './LandingPage.css';
@@ -3926,6 +3927,58 @@ const LandingPage = () => {
       className="relative w-full h-screen overflow-y-auto overflow-x-hidden bg-slate-950 landing-page-container"
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
+      <Helmet>
+        <title>Aquads - Web3 Crypto Hub & Freelancer Marketplace | Trade, Earn & Build</title>
+        <meta name="description" content="Aquads is the all-in-one Web3 platform: hire crypto freelancers, swap tokens on our DEX, earn with DeFi savings pools, play games, and grow your project with on-chain tools." />
+        <link rel="canonical" href="https://www.aquads.xyz/" />
+
+        <meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace" />
+        <meta property="og:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:url" content="https://www.aquads.xyz/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Aquads" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace" />
+        <meta name="twitter:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Aquads",
+            "url": "https://www.aquads.xyz",
+            "logo": "https://www.aquads.xyz/logo192.png",
+            "description": "Aquads is the all-in-one Web3 platform for crypto freelancers, token swaps, DeFi savings, and project growth tools.",
+            "sameAs": [
+              "https://twitter.com/_Aquads"
+            ],
+            "foundingDate": "2024",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "url": "https://www.aquads.xyz"
+            }
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Aquads",
+            "url": "https://www.aquads.xyz",
+            "description": "Web3 Crypto Hub & Freelancer Marketplace",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+      </Helmet>
+
       {/* Global styles */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
