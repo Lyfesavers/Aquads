@@ -2826,6 +2826,30 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (tab.onSelect) tab.onSelect();
   };
 
+  const adminSubSections = [
+    { id: 'bumps', label: 'Bump Approvals', icon: '📈', badge: pendingBumpAds.length },
+    { id: 'voteboosts', label: 'Vote Boosts', icon: '🗳️', badge: pendingVoteBoosts.length },
+    { id: 'banners', label: 'Banner Mgmt', icon: '🎯', badge: bannerAds.filter(b => b.status === 'pending').length },
+    { id: 'giftcards', label: 'Redemptions', icon: '🎁', badge: pendingRedemptions.length },
+    { id: 'listings', label: 'Bubble Listings', icon: '🫧', badge: pendingListings.length },
+    { id: 'allads', label: 'All Ads', icon: '📱', badge: 0 },
+    { id: 'premium', label: 'Premium Requests', icon: '💎', badge: premiumRequests.length },
+    { id: 'tokens', label: 'Token Purchases', icon: '🪙', badge: pendingTokenPurchases.length },
+    { id: 'discountcodes', label: 'Discount Codes', icon: '🏷️', badge: 0 },
+    { id: 'services', label: 'Service Approvals', icon: '💼', badge: pendingServices.length },
+    { id: 'addonorders', label: 'PR/Add-on Orders', icon: '📰', badge: pendingAddonOrders.length, onSelect: () => { if (pendingAddonOrders.length === 0) fetchPendingAddonOrders(); } },
+    { id: 'affiliates', label: 'Affiliates', icon: '👥', badge: 0, onSelect: () => { if (topAffiliates.length === 0) fetchTopAffiliates(); if (suspiciousUsers.length === 0) fetchSuspiciousUsers(); } },
+    { id: 'clickAnalytics', label: 'Click Analytics', icon: '📊', badge: 0, onSelect: () => { if (!clickStats) fetchClickAnalytics(); } },
+    { id: 'hyperspace', label: 'HyperSpace', icon: '🎧', badge: pendingHyperSpaceOrders.length, onSelect: () => { if (pendingHyperSpaceOrders.length === 0) fetchPendingHyperSpaceOrders(); } },
+    { id: 'escrowDisputes', label: 'Escrow Disputes', icon: '🛡️', badge: escrowDisputes?.filter(e => e.status === 'disputed').length || 0, onSelect: () => { if (!escrowDisputes || escrowDisputes.length === 0) fetchEscrowDisputes(); } },
+  ];
+
+  const handleAdminSubSelect = (sub) => {
+    setActiveTab('admin');
+    setActiveAdminSection(sub.id);
+    if (sub.onSelect) sub.onSelect();
+  };
+
   const tabDescriptions = {
     ads: 'Manage your projects, affiliate program, and earnings',
     bookings: 'View and manage your service bookings',
@@ -2862,6 +2886,31 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             ))}
           </div>
         </div>
+        {activeTab === 'admin' && (
+          <div className="overflow-x-auto scrollbar-hide border-t border-gray-700/30 bg-gray-850/50">
+            <div className="flex items-center gap-1 px-3 py-2 min-w-max">
+              {adminSubSections.map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => handleAdminSubSelect(sub)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 relative ${
+                    activeAdminSection === sub.id
+                      ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30'
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{sub.icon}</span>
+                  <span>{sub.label}</span>
+                  {sub.badge > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1 rounded-full ml-1">
+                      {sub.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
@@ -2873,18 +2922,47 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Navigation</p>
         </div>
         {sidebarTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabSelect(tab)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left group ${
-              activeTab === tab.id
-                ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-400'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
-            }`}
-          >
-            <span className={`text-lg w-6 text-center flex-shrink-0 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
-            <span className="truncate">{tab.label}</span>
-          </button>
+          <React.Fragment key={tab.id}>
+            <button
+              onClick={() => handleTabSelect(tab)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left group ${
+                activeTab === tab.id
+                  ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-400'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
+              }`}
+            >
+              <span className={`text-lg w-6 text-center flex-shrink-0 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
+              <span className="truncate">{tab.label}</span>
+              {tab.id === 'admin' && (
+                <svg className={`w-3.5 h-3.5 ml-auto text-gray-500 transition-transform duration-200 ${activeTab === 'admin' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </button>
+            {tab.id === 'admin' && activeTab === 'admin' && (
+              <div className="ml-5 mt-0.5 mb-1 space-y-px border-l border-gray-600/40 pl-1.5">
+                {adminSubSections.map(sub => (
+                  <button
+                    key={sub.id}
+                    onClick={() => handleAdminSubSelect(sub)}
+                    className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 text-left relative ${
+                      activeAdminSection === sub.id
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-sm flex-shrink-0">{sub.icon}</span>
+                    <span className="truncate">{sub.label}</span>
+                    {sub.badge > 0 && (
+                      <span className="ml-auto flex-shrink-0 bg-red-500/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {sub.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </nav>
     </aside>
@@ -2944,10 +3022,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             {isFullPage && (
               <div className="mb-6 pb-4 border-b border-gray-700/40">
                 <h1 className="text-2xl font-bold text-white">
-                  {sidebarTabs.find(t => t.id === activeTab)?.icon}{' '}
-                  {sidebarTabs.find(t => t.id === activeTab)?.label || 'Dashboard'}
+                  {activeTab === 'admin'
+                    ? <>{adminSubSections.find(s => s.id === activeAdminSection)?.icon || '🛡️'}{' '}{adminSubSections.find(s => s.id === activeAdminSection)?.label || 'Admin Panel'}</>
+                    : <>{sidebarTabs.find(t => t.id === activeTab)?.icon}{' '}{sidebarTabs.find(t => t.id === activeTab)?.label || 'Dashboard'}</>
+                  }
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">{tabDescriptions[activeTab] || ''}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {activeTab === 'admin' ? 'Admin Panel' : tabDescriptions[activeTab] || ''}
+                </p>
               </div>
             )}
             <div className={isFullPage ? "" : "overflow-y-auto"}>
@@ -3999,260 +4081,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           )}
 
           {activeTab === 'admin' && currentUser.isAdmin && (
-            <div className="flex h-full">
-              {/* Left Sidebar Navigation */}
-              <div className="w-64 bg-gray-800 rounded-l-lg p-4 border-r border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">Admin Sections</h3>
-                <nav className="space-y-2">
-                  <button
-                    onClick={() => setActiveAdminSection('bumps')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'bumps' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingBumpAds.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-red-900/30 border-l-4 border-red-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    📈 Bump Approvals
-                    {pendingBumpAds.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingBumpAds.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('voteboosts')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'voteboosts' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingVoteBoosts.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🗳️ Vote Boosts
-                    {pendingVoteBoosts.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingVoteBoosts.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('banners')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'banners' 
-                        ? 'bg-blue-600 text-white' 
-                        : bannerAds.filter(banner => banner.status === 'pending').length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-orange-900/30 border-l-4 border-orange-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🎯 Banner Management
-                    {bannerAds.filter(banner => banner.status === 'pending').length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {bannerAds.filter(banner => banner.status === 'pending').length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('giftcards')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'giftcards' 
-                        ? 'bg-blue-600 text-white' 
-                        : (pendingRedemptions.length > 0)
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-yellow-900/30 border-l-4 border-yellow-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🎁 Redemptions & Claims
-                    {(pendingRedemptions.length > 0) && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingRedemptions.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('listings')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'listings' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingListings.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-green-900/30 border-l-4 border-green-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🫧 Bubble Listings
-                    {pendingListings.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingListings.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('allads')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                      activeAdminSection === 'allads' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    📱 All Ads Management
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('premium')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'premium' 
-                        ? 'bg-blue-600 text-white' 
-                        : premiumRequests.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    💎 Premium Requests
-                    {premiumRequests.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {premiumRequests.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('tokens')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'tokens' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingTokenPurchases.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-pink-900/30 border-l-4 border-pink-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🪙 Token Purchases
-                    {pendingTokenPurchases.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingTokenPurchases.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('discountcodes')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                      activeAdminSection === 'discountcodes' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🏷️ Discount Codes
-                  </button>
-                  <button
-                    onClick={() => setActiveAdminSection('services')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'services' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingServices.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-cyan-900/30 border-l-4 border-cyan-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    💼 Service Approvals
-                    {pendingServices.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyan-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingServices.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveAdminSection('addonorders');
-                      if (pendingAddonOrders.length === 0) fetchPendingAddonOrders();
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'addonorders' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingAddonOrders.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-orange-900/30 border-l-4 border-orange-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    📰 PR/Add-on Orders
-                    {pendingAddonOrders.length > 0 && (
-                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingAddonOrders.length}
-                      </span>
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setActiveAdminSection('affiliates');
-                      if (topAffiliates.length === 0) fetchTopAffiliates();
-                      if (suspiciousUsers.length === 0) fetchSuspiciousUsers();
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                      activeAdminSection === 'affiliates' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    👥 Affiliate Management
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveAdminSection('clickAnalytics');
-                      if (!clickStats) fetchClickAnalytics();
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                      activeAdminSection === 'clickAnalytics' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    📊 Click Analytics
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveAdminSection('hyperspace');
-                      if (pendingHyperSpaceOrders.length === 0) fetchPendingHyperSpaceOrders();
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'hyperspace' 
-                        ? 'bg-blue-600 text-white' 
-                        : pendingHyperSpaceOrders.length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🎧 HyperSpace Orders
-                    {pendingHyperSpaceOrders.length > 0 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {pendingHyperSpaceOrders.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveAdminSection('escrowDisputes');
-                      if (!escrowDisputes || escrowDisputes.length === 0) fetchEscrowDisputes();
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
-                      activeAdminSection === 'escrowDisputes' 
-                        ? 'bg-blue-600 text-white' 
-                        : escrowDisputes?.filter(e => e.status === 'disputed').length > 0
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-red-900/30 border-l-4 border-red-500'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    🛡️ Escrow Disputes
-                    {escrowDisputes?.filter(e => e.status === 'disputed').length > 0 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {escrowDisputes.filter(e => e.status === 'disputed').length}
-                      </span>
-                    )}
-                  </button>
-                </nav>
-              </div>
-
-              {/* Main Content Area */}
-              <div className="flex-1 bg-gray-900 rounded-r-lg p-6">
+            <div>
                 {activeAdminSection === 'bumps' && (
                   <div>
                     <h3 className="text-2xl font-semibold text-white mb-6">Pending Bump Approvals</h3>
@@ -6344,7 +6173,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                   </div>
                 )}
-              </div>
             </div>
           )}
 
