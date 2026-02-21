@@ -186,7 +186,9 @@ const SOLANA_RPCS_MAINNET = [
 ];
 
 const SOLANA_RPCS_DEVNET = [
-  'https://api.devnet.solana.com'
+  'https://api.devnet.solana.com',
+  'https://rpc.ankr.com/solana_devnet',
+  'https://devnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff'
 ];
 
 router.post('/solana-rpc', async (req, res) => {
@@ -229,7 +231,7 @@ router.post('/solana-rpc', async (req, res) => {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          timeout: 15000
+          timeout: useDevnet ? 25000 : 15000
         });
         
         // Check for RPC-level errors
@@ -241,12 +243,13 @@ router.post('/solana-rpc', async (req, res) => {
         return res.json(response.data);
       } catch (rpcError) {
         lastError = rpcError.response?.data?.error?.message || rpcError.message;
+        if (useDevnet && i < rpcList.length - 1) await new Promise(r => setTimeout(r, 1000));
         continue;
       }
     }
     
     // All RPCs failed
-    console.error('All Solana RPCs failed. Last error:', lastError);
+    console.error(`All Solana RPCs failed (${useDevnet ? 'devnet' : 'mainnet'}). Last error:`, lastError);
     res.status(503).json({ 
       error: 'Solana network temporarily unavailable. Please try again.',
       details: lastError 
