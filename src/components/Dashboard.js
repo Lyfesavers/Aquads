@@ -308,16 +308,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       });
 
       const handleBookingUpdate = (data) => {
-        if (data.type === 'created') {
-          // Add new booking to the list
+        if (!data) return;
+        if (data.type === 'created' && data.booking) {
           setBookings(prevBookings => [data.booking, ...prevBookings]);
-        } else {
-          // Update existing booking
+        } else if (data.booking && data.booking._id) {
           setBookings(prevBookings => 
             prevBookings.map(booking => 
               booking._id === data.booking._id ? data.booking : booking
             )
           );
+        } else {
+          // Event without full booking payload (e.g. work_approved) — refetch
+          fetchBookings();
         }
       };
 

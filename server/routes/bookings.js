@@ -453,6 +453,19 @@ router.post('/:id/approve-work', auth, async (req, res) => {
     booking.buyerWorkApprovedAt = new Date();
     await booking.save();
 
+    // Re-fetch with populated fields so socket/response have full data
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate('serviceId')
+      .populate('sellerId', 'username email cv aquaPay')
+      .populate('buyerId', 'username email cv')
+      .populate('escrowId');
+
+    const bookingObj = populatedBooking.toObject();
+    if (bookingObj.escrowId && typeof bookingObj.escrowId === 'object') {
+      bookingObj.escrowStatus = bookingObj.escrowId.status;
+      bookingObj.escrowId = bookingObj.escrowId._id;
+    }
+
     // Notify seller that buyer approved
     const { createNotification: createNotif } = require('./notifications');
     await createNotif(
@@ -463,17 +476,17 @@ router.post('/:id/approve-work', auth, async (req, res) => {
       { relatedId: booking._id, relatedModel: 'Booking' }
     );
 
-    // Socket notification
+    // Socket notification with full booking data
     try {
       const { getIO } = require('../socket');
       const io = getIO();
       if (io) {
-        io.to(`user_${booking.sellerId}`).emit('bookingUpdated', { type: 'work_approved', bookingId: booking._id });
-        io.to(`user_${booking.buyerId}`).emit('bookingUpdated', { type: 'work_approved', bookingId: booking._id });
+        io.to(`user_${booking.sellerId}`).emit('bookingUpdated', { type: 'work_approved', booking: bookingObj });
+        io.to(`user_${booking.buyerId}`).emit('bookingUpdated', { type: 'work_approved', booking: bookingObj });
       }
     } catch (socketErr) { console.error('Socket emit error:', socketErr); }
 
-    res.json({ success: true, message: 'Work approved', booking });
+    res.json({ success: true, message: 'Work approved', booking: bookingObj });
   } catch (error) {
     console.error('Error approving work:', error);
     res.status(500).json({ error: error.message });
