@@ -143,6 +143,86 @@ router.get('/:escrowId', auth, async (req, res) => {
   }
 });
 
+// Helper: update booking + invoice + emit sockets after escrow is funded
+async function finalizeEscrowFunded(escrow) {
+  const booking = await Booking.findById(escrow.bookingId);
+  if (booking) {
+    booking.escrowId = escrow._id;
+    if (booking.status === 'pending' || booking.status === 'accepted_by_seller') {
+      booking.status = booking.status === 'accepted_by_seller' ? 'confirmed' : 'accepted_by_buyer';
+    }
+    await booking.save();
+  }
+
+  try {
+    const { getIO } = require('../socket');
+    const io = getIO();
+    if (io) {
+      const freshEscrow = await FreelancerEscrow.findById(escrow._id);
+      const escrowObj = freshEscrow ? freshEscrow.toObject() : escrow.toObject();
+
+      io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', {
+        type: 'funded',
+        escrow: escrowObj,
+        bookingId: escrow.bookingId
+      });
+      io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', {
+        type: 'funded',
+        escrow: escrowObj,
+        bookingId: escrow.bookingId
+      });
+
+      const populatedBooking = await Booking.findById(escrow.bookingId)
+        .populate('serviceId')
+        .populate('sellerId', 'username email cv aquaPay')
+        .populate('buyerId', 'username email cv')
+        .populate('escrowId');
+      if (populatedBooking) {
+        const bObj = populatedBooking.toObject();
+        if (bObj.escrowId && typeof bObj.escrowId === 'object') {
+          bObj.escrowStatus = bObj.escrowId.status;
+          bObj.escrowId = bObj.escrowId._id;
+        }
+        io.to(`user_${escrow.sellerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
+        io.to(`user_${escrow.buyerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
+      }
+    }
+  } catch (socketErr) {
+    console.error('Socket emit error:', socketErr);
+  }
+}
+
+// Background verification retry for deposit_pending escrows
+function scheduleBackgroundVerification(escrowId, attempt = 0) {
+  const maxAttempts = 10;
+  const delay = Math.min(10000 * Math.pow(1.5, attempt), 60000);
+
+  setTimeout(async () => {
+    try {
+      const escrow = await FreelancerEscrow.findById(escrowId);
+      if (!escrow || escrow.status !== 'deposit_pending') return;
+
+      console.log(`Background verification attempt ${attempt + 1}/${maxAttempts} for escrow ${escrowId}`);
+      const verification = await escrowService.verifyDeposit(escrowId);
+
+      if (verification.verified) {
+        console.log(`Background verification succeeded for escrow ${escrowId}`);
+        const updatedEscrow = await FreelancerEscrow.findById(escrowId);
+        await finalizeEscrowFunded(updatedEscrow);
+      } else if (attempt < maxAttempts - 1) {
+        scheduleBackgroundVerification(escrowId, attempt + 1);
+      } else {
+        console.error(`Background verification exhausted for escrow ${escrowId}`);
+      }
+    } catch (err) {
+      console.error(`Background verification error for escrow ${escrowId}:`, err.message);
+      if (attempt < maxAttempts - 1) {
+        scheduleBackgroundVerification(escrowId, attempt + 1);
+      }
+    }
+  }, delay);
+}
+
 // Record deposit (called after buyer completes on-chain transaction)
 router.post('/deposit', auth, async (req, res) => {
   try {
@@ -173,84 +253,69 @@ router.post('/deposit', auth, async (req, res) => {
     escrow.status = 'deposit_pending';
     await escrow.save();
 
-    // Verify the deposit on-chain
+    console.log(`Deposit recorded for escrow ${escrowId}, txHash: ${txHash}, starting verification...`);
+
+    // Verify the deposit on-chain (with retries built into verifyDeposit)
+    let verified = false;
     try {
       const verification = await escrowService.verifyDeposit(escrow._id);
-      if (verification.verified) {
-        // Update booking to reflect escrow is funded
-        const booking = await Booking.findById(escrow.bookingId);
-        if (booking) {
-          booking.escrowId = escrow._id;
-
-          // If buyer is depositing, count as buyer accepting
-          if (booking.status === 'pending' || booking.status === 'accepted_by_seller') {
-            if (booking.status === 'accepted_by_seller') {
-              booking.status = 'confirmed';
-            } else {
-              booking.status = 'accepted_by_buyer';
-            }
-          }
-          await booking.save();
-        }
-
-        // Emit socket events for real-time UI updates
-        try {
-          const { getIO } = require('../socket');
-          const io = getIO();
-          if (io) {
-            io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', {
-              type: 'funded',
-              escrow: escrow.toObject(),
-              bookingId: escrow.bookingId
-            });
-            io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', {
-              type: 'funded',
-              escrow: escrow.toObject(),
-              bookingId: escrow.bookingId
-            });
-
-            // Also emit bookingUpdated with populated data for instant booking list refresh
-            const populatedBooking = await Booking.findById(escrow.bookingId)
-              .populate('serviceId')
-              .populate('sellerId', 'username email cv aquaPay')
-              .populate('buyerId', 'username email cv')
-              .populate('escrowId');
-            if (populatedBooking) {
-              const bObj = populatedBooking.toObject();
-              if (bObj.escrowId && typeof bObj.escrowId === 'object') {
-                bObj.escrowStatus = bObj.escrowId.status;
-                bObj.escrowId = bObj.escrowId._id;
-              }
-              io.to(`user_${escrow.sellerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
-              io.to(`user_${escrow.buyerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
-            }
-          }
-        } catch (socketErr) {
-          console.error('Socket emit error:', socketErr);
-        }
-
-        return res.json({
-          success: true,
-          message: 'Deposit verified and escrow funded',
-          escrow
-        });
+      verified = verification.verified;
+      if (verified) {
+        console.log(`Deposit verified inline for escrow ${escrowId}`);
       } else {
-        return res.json({
-          success: true,
-          message: 'Deposit recorded, verification pending',
-          escrow,
-          verificationPending: true
-        });
+        console.log(`Inline verification not confirmed for escrow ${escrowId}: ${verification.reason}`);
       }
     } catch (verifyErr) {
-      console.error('Deposit verification error:', verifyErr);
+      console.error('Deposit verification error:', verifyErr.message);
+    }
+
+    if (verified) {
+      const freshEscrow = await FreelancerEscrow.findById(escrow._id);
+      await finalizeEscrowFunded(freshEscrow);
       return res.json({
         success: true,
-        message: 'Deposit recorded, verification will retry',
-        escrow,
-        verificationPending: true
+        message: 'Deposit verified and escrow funded',
+        escrow: freshEscrow
       });
     }
+
+    // Verification didn't confirm yet — schedule background retries
+    scheduleBackgroundVerification(escrow._id, 0);
+
+    // Still update booking to reflect deposit was made (buyer committed funds)
+    const booking = await Booking.findById(escrow.bookingId);
+    if (booking) {
+      booking.escrowId = escrow._id;
+      await booking.save();
+    }
+
+    // Emit events so the frontend knows deposit was made (even if not fully verified yet)
+    try {
+      const { getIO } = require('../socket');
+      const io = getIO();
+      if (io) {
+        const escrowObj = escrow.toObject();
+        io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', {
+          type: 'deposit_pending',
+          escrow: escrowObj,
+          bookingId: escrow.bookingId
+        });
+        io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', {
+          type: 'deposit_pending',
+          escrow: escrowObj,
+          bookingId: escrow.bookingId
+        });
+      }
+    } catch (socketErr) {
+      console.error('Socket emit error:', socketErr);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Deposit recorded, verification in progress',
+      escrow,
+      verificationPending: true
+    });
   } catch (error) {
     console.error('Error recording deposit:', error);
     res.status(500).json({ error: 'Failed to record deposit' });
@@ -270,6 +335,12 @@ router.post('/:escrowId/verify', auth, async (req, res) => {
     }
 
     const verification = await escrowService.verifyDeposit(escrow._id);
+
+    if (verification.verified) {
+      const updatedEscrow = await FreelancerEscrow.findById(req.params.escrowId);
+      await finalizeEscrowFunded(updatedEscrow);
+    }
+
     res.json({ success: true, verification });
   } catch (error) {
     console.error('Error verifying deposit:', error);

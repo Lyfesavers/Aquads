@@ -48,7 +48,8 @@ const SOLANA_RPCS_MAINNET = [
 ];
 
 const SOLANA_RPCS_TESTNET = [
-  'https://api.devnet.solana.com'
+  'https://api.devnet.solana.com',
+  'https://rpc.ankr.com/solana_devnet'
 ];
 
 const EVM_RPCS = {
@@ -110,6 +111,7 @@ function getSolanaUsdcMint() {
 
 async function solanaRpcCall(method, params) {
   const rpcs = getSolanaRpcs();
+  const timeout = ESCROW_MODE === 'mainnet' ? 15000 : 30000;
   let lastError = null;
   
   for (const rpcUrl of rpcs) {
@@ -119,7 +121,7 @@ async function solanaRpcCall(method, params) {
         id: Date.now(),
         method,
         params: params || []
-      }, { headers: { 'Content-Type': 'application/json' }, timeout: 15000 });
+      }, { headers: { 'Content-Type': 'application/json' }, timeout });
       
       if (response.data?.error) {
         lastError = response.data.error.message;
@@ -140,6 +142,10 @@ async function verifyDeposit(escrowId) {
     throw new Error('Escrow or deposit tx hash not found');
   }
 
+  if (escrow.status === 'funded' || escrow.status === 'pending_release' || escrow.status === 'released') {
+    return { verified: true };
+  }
+
   if (escrow.chain === 'solana') {
     return await verifySolanaDeposit(escrow);
   } else {
@@ -148,65 +154,93 @@ async function verifyDeposit(escrowId) {
 }
 
 async function verifySolanaDeposit(escrow) {
-  try {
-    const result = await solanaRpcCall('getTransaction', [
-      escrow.depositTxHash,
-      { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }
-    ]);
+  const maxAttempts = 8;
+  const delays = [2000, 3000, 4000, 5000, 5000, 5000, 5000, 5000];
 
-    if (!result) {
-      return { verified: false, reason: 'Transaction not found' };
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`Solana deposit verification attempt ${attempt + 1}/${maxAttempts} for ${escrow.depositTxHash}`);
+        await new Promise(r => setTimeout(r, delays[attempt - 1]));
+      }
+
+      const result = await solanaRpcCall('getTransaction', [
+        escrow.depositTxHash,
+        { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }
+      ]);
+
+      if (!result) {
+        if (attempt < maxAttempts - 1) continue;
+        return { verified: false, reason: 'Transaction not found after retries' };
+      }
+
+      if (result.meta?.err) {
+        return { verified: false, reason: 'Transaction failed on-chain' };
+      }
+
+      escrow.depositVerified = true;
+      escrow.status = 'funded';
+      escrow.fundedAt = new Date();
+      await escrow.save();
+
+      await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
+      await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
+
+      console.log(`Solana deposit verified on attempt ${attempt + 1} for escrow ${escrow._id}`);
+      return { verified: true };
+    } catch (err) {
+      if (attempt < maxAttempts - 1) continue;
+      return { verified: false, reason: err.message };
     }
-
-    if (result.meta?.err) {
-      return { verified: false, reason: 'Transaction failed on-chain' };
-    }
-
-    escrow.depositVerified = true;
-    escrow.status = 'funded';
-    escrow.fundedAt = new Date();
-    await escrow.save();
-
-    await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
-    await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
-
-    return { verified: true };
-  } catch (err) {
-    return { verified: false, reason: err.message };
   }
+  return { verified: false, reason: 'Verification exhausted all attempts' };
 }
 
 async function verifyEvmDeposit(escrow) {
-  try {
-    const rpcUrl = getEvmRpc(escrow.chain);
-    const response = await axios.post(rpcUrl, {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'eth_getTransactionReceipt',
-      params: [escrow.depositTxHash]
-    }, { timeout: 15000 });
+  const maxAttempts = 8;
+  const delays = [2000, 3000, 4000, 5000, 5000, 5000, 5000, 5000];
 
-    const receipt = response.data?.result;
-    if (!receipt) {
-      return { verified: false, reason: 'Transaction not found' };
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`EVM deposit verification attempt ${attempt + 1}/${maxAttempts} for ${escrow.depositTxHash}`);
+        await new Promise(r => setTimeout(r, delays[attempt - 1]));
+      }
+
+      const rpcUrl = getEvmRpc(escrow.chain);
+      const response = await axios.post(rpcUrl, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getTransactionReceipt',
+        params: [escrow.depositTxHash]
+      }, { timeout: 15000 });
+
+      const receipt = response.data?.result;
+      if (!receipt) {
+        if (attempt < maxAttempts - 1) continue;
+        return { verified: false, reason: 'Transaction receipt not found after retries' };
+      }
+
+      if (receipt.status !== '0x1') {
+        return { verified: false, reason: 'Transaction failed on-chain' };
+      }
+
+      escrow.depositVerified = true;
+      escrow.status = 'funded';
+      escrow.fundedAt = new Date();
+      await escrow.save();
+
+      await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
+      await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
+
+      console.log(`EVM deposit verified on attempt ${attempt + 1} for escrow ${escrow._id}`);
+      return { verified: true };
+    } catch (err) {
+      if (attempt < maxAttempts - 1) continue;
+      return { verified: false, reason: err.message };
     }
-
-    if (receipt.status !== '0x1') {
-      return { verified: false, reason: 'Transaction failed on-chain' };
-    }
-
-    escrow.depositVerified = true;
-    escrow.status = 'funded';
-    escrow.fundedAt = new Date();
-    await escrow.save();
-
-    await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
-    await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
-
-    return { verified: true };
-  } catch (err) {
-    return { verified: false, reason: err.message };
   }
+  return { verified: false, reason: 'Verification exhausted all attempts' };
 }
 
 async function releaseToSeller(escrowId) {

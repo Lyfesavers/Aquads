@@ -106,6 +106,46 @@ const CHAINS = {
 function getEvmChains() { return ESCROW_MODE === 'mainnet' ? EVM_CHAINS : EVM_CHAINS_TESTNET; }
 function getUsdcAddress(chain) { return (ESCROW_MODE === 'mainnet' ? USDC_ADDRESSES.mainnet : USDC_ADDRESSES.testnet)[chain]; }
 
+const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain, navigate }) => {
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(prev => prev - 1);
+    }, 1000);
+    const timer = setTimeout(() => {
+      navigate('/home?openDashboard=bookings');
+    }, 5000);
+    return () => { clearTimeout(timer); clearInterval(interval); };
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+      <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/20 text-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-2">Escrow Funded</h1>
+        <p className="text-slate-400 mb-6">Your payment is securely held in escrow until the work is completed.</p>
+        <div className="bg-slate-800/50 rounded-xl p-4 mb-6 text-left space-y-3">
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">Amount</span><span className="text-white font-semibold">{escrow?.amount} USDC</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">Escrow Fee ({feeDetails?.feePercentageDisplay}%)</span><span className="text-amber-400">{feeDetails?.feeAmount?.toFixed(6)} USDC</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">Total Paid</span><span className="text-cyan-400 font-semibold">{feeDetails?.totalAmount?.toFixed(6)} USDC</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">Network</span><span className="text-white">{chainConfig?.name}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">Seller</span><span className="text-white">{escrow?.sellerId?.username}</span></div>
+        </div>
+        {txHash && <a href={`${chainConfig?.explorerUrl}${txHash}${selectedChain === 'solana' && ESCROW_MODE === 'testnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm mb-6">View on Explorer <span>↗</span></a>}
+        <button onClick={() => navigate('/home?openDashboard=bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
+        <p className="text-slate-500 text-xs mt-3">Redirecting in {countdown}s...</p>
+        <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
+          <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
+          <span className="text-slate-600 text-xs">Secured by Aquads Escrow</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CustodialPayment = ({ currentUser, showNotification }) => {
   const { escrowId } = useParams();
   const navigate = useNavigate();
