@@ -334,15 +334,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         setBookings([]);
       };
 
+      const handleEscrowUpdate = () => {
+        fetchBookings();
+      };
+
       // Listen for socket events
       socket.on('bookingUpdated', handleBookingUpdate);
       socket.on('userBookingsLoaded', handleUserBookingsLoaded);
       socket.on('userBookingsError', handleUserBookingsError);
+      socket.on('escrowUpdated', handleEscrowUpdate);
 
       return () => {
         socket.off('bookingUpdated', handleBookingUpdate);
         socket.off('userBookingsLoaded', handleUserBookingsLoaded);
         socket.off('userBookingsError', handleUserBookingsError);
+        socket.off('escrowUpdated', handleEscrowUpdate);
       };
     }
   }, [socket, currentUser]);

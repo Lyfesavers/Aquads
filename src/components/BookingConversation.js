@@ -1568,7 +1568,7 @@ ${currentUser.username}`;
             </div>
           )}
 
-          {isSeller && booking && (booking.status === 'confirmed' || (booking.isUnlocked && ['accepted_by_seller', 'accepted_by_buyer'].includes(booking.status))) && (
+          {isSeller && booking && (booking.status === 'confirmed' || (booking.isUnlocked && ['pending', 'accepted_by_seller', 'accepted_by_buyer'].includes(booking.status))) && (
             <div className="mt-4 flex gap-3">
               <button
                 onClick={handleCreateInvoice}

@@ -193,7 +193,7 @@ router.post('/deposit', auth, async (req, res) => {
           await booking.save();
         }
 
-        // Emit socket event
+        // Emit socket events for real-time UI updates
         try {
           const { getIO } = require('../socket');
           const io = getIO();
@@ -208,6 +208,22 @@ router.post('/deposit', auth, async (req, res) => {
               escrow: escrow.toObject(),
               bookingId: escrow.bookingId
             });
+
+            // Also emit bookingUpdated with populated data for instant booking list refresh
+            const populatedBooking = await Booking.findById(escrow.bookingId)
+              .populate('serviceId')
+              .populate('sellerId', 'username email cv aquaPay')
+              .populate('buyerId', 'username email cv')
+              .populate('escrowId');
+            if (populatedBooking) {
+              const bObj = populatedBooking.toObject();
+              if (bObj.escrowId && typeof bObj.escrowId === 'object') {
+                bObj.escrowStatus = bObj.escrowId.status;
+                bObj.escrowId = bObj.escrowId._id;
+              }
+              io.to(`user_${escrow.sellerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
+              io.to(`user_${escrow.buyerId}`).emit('bookingUpdated', { type: 'escrow_funded', booking: bObj });
+            }
           }
         } catch (socketErr) {
           console.error('Socket emit error:', socketErr);
