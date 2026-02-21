@@ -263,14 +263,27 @@ function init(server) {
             ]
           })
           .populate('serviceId')
-          .populate('sellerId', 'username email')
-          .populate('buyerId', 'username email')
+          .populate('sellerId', 'username email cv aquaPay')
+          .populate('buyerId', 'username email cv')
+          .populate('escrowId')
           .sort({ createdAt: -1 });
 
-          // Send bookings data to the user
+          // Flatten escrow data to match HTTP route format
+          const processed = bookings.map(b => {
+            const obj = b.toObject();
+            if (obj.escrowId && typeof obj.escrowId === 'object') {
+              obj.escrowStatus = obj.escrowId.status;
+              obj.depositTxHash = obj.escrowId.depositTxHash;
+              obj.releaseTxHash = obj.escrowId.releaseTxHash;
+              obj.disputeReason = obj.escrowId.disputeReason;
+              obj.escrowId = obj.escrowId._id;
+            }
+            return obj;
+          });
+
           socket.emit('userBookingsLoaded', {
-            bookings,
-            total: bookings.length
+            bookings: processed,
+            total: processed.length
           });
           
         } catch (error) {
