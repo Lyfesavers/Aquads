@@ -320,7 +320,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
 
   const recordDeposit = async (hash, token) => {
     try {
-      await axios.post(`${API_URL}/api/freelancer-escrow/deposit`, {
+      const res = await axios.post(`${API_URL}/api/freelancer-escrow/deposit`, {
         escrowId: escrow._id,
         txHash: hash,
         chain: selectedChain,
@@ -328,7 +328,14 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         amount: feeDetails.totalAmount,
         senderAddress: walletAddress
       }, { headers: { Authorization: `Bearer ${currentUser.token}` } });
-    } catch { /* deposit recorded on-chain regardless */ }
+
+      if (res.data?.verification && !res.data.verification.verified) {
+        setTxStatus('success');
+        setTxError('Deposit sent! Verification is pending — it may take a moment to confirm on-chain. You can retry from this page.');
+      }
+    } catch {
+      setTxError('Deposit sent on-chain but server recording failed. The escrow will be verified when you proceed.');
+    }
   };
 
   const availableChains = Object.entries(CHAINS).map(([id, c]) => ({ id, ...c }));

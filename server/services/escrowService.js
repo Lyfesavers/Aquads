@@ -176,14 +176,36 @@ async function verifyEvmDeposit(escrow) {
 }
 
 async function releaseToSeller(escrowId) {
-  const escrow = await FreelancerEscrow.findOneAndUpdate(
+  let escrow = await FreelancerEscrow.findOneAndUpdate(
     { _id: escrowId, status: 'funded' },
     { status: 'pending_release' },
     { new: true }
   );
 
+  // If not funded yet, re-attempt verification for deposit_pending escrows
   if (!escrow) {
-    throw new Error('Escrow not found or not in funded status');
+    const pendingEscrow = await FreelancerEscrow.findOne({ _id: escrowId, status: 'deposit_pending' });
+    if (pendingEscrow && pendingEscrow.depositTxHash) {
+      console.log('Escrow in deposit_pending — re-attempting verification before release...');
+      try {
+        const verification = await verifyDeposit(escrowId);
+        if (verification.verified) {
+          escrow = await FreelancerEscrow.findOneAndUpdate(
+            { _id: escrowId, status: 'funded' },
+            { status: 'pending_release' },
+            { new: true }
+          );
+        }
+      } catch (verifyErr) {
+        console.error('Re-verification failed:', verifyErr.message);
+      }
+    }
+  }
+
+  if (!escrow) {
+    const actual = await FreelancerEscrow.findById(escrowId);
+    const actualStatus = actual ? actual.status : 'not found';
+    throw new Error(`Escrow cannot be released (current status: ${actualStatus})`);
   }
 
   const seller = await User.findById(escrow.sellerId).select('aquaPay');

@@ -307,6 +307,7 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
         if (booking.escrowId) {
           try {
             const escrowService = require('../services/escrowService');
+            console.log('Attempting escrow release for booking:', booking._id, 'escrowId:', booking.escrowId);
             const releaseResult = await escrowService.releaseToSeller(booking.escrowId);
             console.log('Escrow released:', releaseResult);
 
