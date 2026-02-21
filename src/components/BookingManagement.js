@@ -11,6 +11,9 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeBooking, setDisputeBooking] = useState(null);
   const [disputeReason, setDisputeReason] = useState('');
+  const [completingBooking, setCompletingBooking] = useState(null);
+  const [showReleaseSuccess, setShowReleaseSuccess] = useState(false);
+  const [releaseSuccessData, setReleaseSuccessData] = useState(null);
 
   const handleApproveWork = async (bookingId) => {
     try {
@@ -116,6 +119,28 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
       showNotification('Booking status updated successfully', 'success');
     } catch (error) {
       showNotification(error.message || 'Failed to update booking status', 'error');
+    }
+  };
+
+  const handleMarkCompleted = async (booking) => {
+    setCompletingBooking(booking._id);
+    try {
+      await onStatusUpdate(booking._id, 'completed');
+      if (booking.escrowId) {
+        setReleaseSuccessData({
+          serviceTitle: booking.serviceId?.title || 'Service',
+          price: booking.price,
+          currency: booking.currency || 'USDC',
+        });
+        setShowReleaseSuccess(true);
+      } else {
+        showNotification('Booking marked as completed!', 'success');
+      }
+      if (refreshBookings) refreshBookings();
+    } catch (error) {
+      showNotification(error.message || 'Failed to complete booking', 'error');
+    } finally {
+      setCompletingBooking(null);
     }
   };
 
@@ -258,20 +283,36 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
           booking.escrowId ? (
             booking.buyerWorkApproved ? (
               <button
-                onClick={() => handleStatusUpdate(booking._id, 'completed')}
-                className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30"
+                onClick={() => handleMarkCompleted(booking)}
+                disabled={completingBooking === booking._id}
+                className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                Mark Completed
+                {completingBooking === booking._id ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                    Releasing Funds...
+                  </>
+                ) : (
+                  'Mark Completed'
+                )}
               </button>
             ) : (
               <span className="px-3 py-1 text-xs text-gray-500 italic">Awaiting buyer approval</span>
             )
           ) : (
             <button
-              onClick={() => handleStatusUpdate(booking._id, 'completed')}
-              className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30"
+              onClick={() => handleMarkCompleted(booking)}
+              disabled={completingBooking === booking._id}
+              className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
-              Mark Completed
+              {completingBooking === booking._id ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                'Mark Completed'
+              )}
             </button>
           )
         )}
@@ -448,6 +489,39 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                 Accept Lead
               </button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Escrow Release Success Modal */}
+      {showReleaseSuccess && releaseSuccessData && (
+        <Modal onClose={() => { setShowReleaseSuccess(false); setReleaseSuccessData(null); }}>
+          <div className="text-center py-2 sm:py-4 px-1 sm:px-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Payment Released!</h2>
+            <p className="text-gray-300 text-sm sm:text-base mb-3 sm:mb-4 break-words">
+              The escrow funds for <span className="text-emerald-400 font-semibold">{releaseSuccessData.serviceTitle}</span> have been released to your wallet.
+            </p>
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 mx-auto max-w-xs">
+              <p className="text-emerald-400 text-xs sm:text-sm font-medium mb-1">Amount Released</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">
+                {releaseSuccessData.price} <span className="text-base sm:text-lg text-emerald-400">{releaseSuccessData.currency}</span>
+              </p>
+              <p className="text-emerald-400/60 text-xs mt-1">1.25% platform fee deducted</p>
+            </div>
+            <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
+              Funds have been sent to your AquaPay wallet. The transaction may take a moment to appear.
+            </p>
+            <button
+              onClick={() => { setShowReleaseSuccess(false); setReleaseSuccessData(null); }}
+              className="w-full sm:w-auto px-8 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/20"
+            >
+              Done
+            </button>
           </div>
         </Modal>
       )}
