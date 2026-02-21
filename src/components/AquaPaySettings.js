@@ -173,7 +173,8 @@ const AquaPaySettings = ({ currentUser, showNotification, onClose }) => {
       socket.off('aquaPayPaymentReceived', handlePaymentReceived);
       socket.off('aquaPayStatsUpdated', handleStatsUpdated);
     };
-  }, [socket, currentUser, showNotification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, currentUser]);
 
   // Debounced slug availability check using socket
   const checkSlugAvailability = useCallback((slug) => {

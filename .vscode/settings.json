@@ -1,0 +1,5 @@
+{
+    "cursor.composer.shouldAutoSaveNonAgent": false,
+    "git.promptToSaveFilesBeforeCommit": "never",
+    "git.promptToSaveFilesBeforeStash": "never"
+}
