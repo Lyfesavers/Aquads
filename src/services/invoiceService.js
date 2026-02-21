@@ -55,7 +55,7 @@ const createInvoice = async (invoiceData) => {
       throw new Error('dueDate is required');
     }
     
-    if (!processedData.paymentLink) {
+    if (!processedData.paymentLink && processedData.paymentMethod !== 'crypto_escrow') {
       throw new Error('paymentLink is required');
     }
     
