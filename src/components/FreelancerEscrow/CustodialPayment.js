@@ -55,10 +55,10 @@ const SOLANA_USDC_MINT = ESCROW_MODE === 'mainnet'
 const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)', 'function decimals() view returns (uint8)'];
 
 class ProxiedConnection {
-  constructor(apiUrl) { this.apiUrl = apiUrl; this.network = ESCROW_MODE === 'testnet' ? 'devnet' : 'mainnet'; }
+  constructor(apiUrl) { this.apiUrl = apiUrl; }
   async _call(method, params) {
     try {
-      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, { method, params, network: this.network }, { timeout: 30000 });
+      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, { method, params }, { timeout: 30000 });
       if (res.data.error) throw new Error(res.data.error.message || res.data.error);
       return res.data.result;
     } catch (err) {
@@ -84,6 +84,14 @@ class ProxiedConnection {
     throw new Error('Transaction confirmation timeout - check explorer');
   }
   async getAccountInfo(pubkey) { return await this._call('getAccountInfo', [pubkey.toString(), { encoding: 'base64' }]); }
+}
+
+async function getEscrowSolanaConnection() {
+  if (ESCROW_MODE === 'testnet') {
+    const { Connection, clusterApiUrl } = await import('@solana/web3.js');
+    return new Connection(clusterApiUrl('devnet'), 'confirmed');
+  }
+  return new ProxiedConnection(API_URL);
 }
 
 const CHAINS = {
@@ -262,8 +270,8 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         }
       } else if (selectedChain === 'solana') {
         const solana = window.phantom?.solana || window.solflare || window.solana;
-        const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
-        const connection = new ProxiedConnection(API_URL);
+        const { PublicKey, Transaction } = await import('@solana/web3.js');
+        const connection = await getEscrowSolanaConnection();
         const { blockhash } = await connection.getLatestBlockhash();
         const fromPubkey = new PublicKey(walletAddress);
         const toPubkey = new PublicKey(escrowWalletAddress);
@@ -277,7 +285,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
 
         try {
           const acctInfo = await connection.getAccountInfo(toATA);
-          if (!acctInfo?.value) {
+          if (!acctInfo) {
             transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint));
           }
         } catch { transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, toATA, toPubkey, mint)); }
@@ -288,7 +296,13 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
         const signed = await solana.signTransaction(transaction);
-        const sig = await connection.sendRawTransaction(signed.serialize());
+
+        let sig;
+        if (connection.sendRawTransaction) {
+          sig = await connection.sendRawTransaction(signed.serialize());
+        } else {
+          sig = await connection.sendTransaction(signed, { skipPreflight: false, preflightCommitment: 'confirmed' });
+        }
         setTxHash(sig);
         setTxStatus('Confirming on blockchain...');
         await connection.confirmTransaction(sig);
