@@ -192,6 +192,39 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     const isSeller = booking.sellerId?._id === currentUser.userId;
     const isBuyer = booking.buyerId?._id === currentUser.userId;
 
+    // Dispute resolved — show resolution info, no actions
+    if (['resolved_seller', 'resolved_buyer'].includes(booking.escrowStatus)) {
+      const resolvedForSeller = booking.escrowStatus === 'resolved_seller';
+      return (
+        <div className="mt-2">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${
+            resolvedForSeller ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+          }`}>
+            {resolvedForSeller ? '✅ Dispute resolved — funds released to seller' : '↩️ Dispute resolved — funds refunded to buyer'}
+          </span>
+          {isBuyer && !booking.isReviewed && resolvedForSeller && (
+            <button
+              onClick={() => { if (booking.serviceId) onShowReviews(booking.serviceId, booking, false); }}
+              className="ml-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 text-xs"
+            >
+              Leave Review
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // Active dispute — freeze all actions
+    if (booking.escrowStatus === 'disputed') {
+      return (
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-400 border border-red-500/30">
+            ⚠️ Dispute in progress — awaiting admin review
+          </span>
+        </div>
+      );
+    }
+
     // For completed bookings, show review button only to buyers
     if (booking.status === 'completed') {
       if (isBuyer && !booking.isReviewed) {

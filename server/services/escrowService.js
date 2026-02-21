@@ -545,15 +545,21 @@ async function releaseToSellerWithAdmin(escrowId, adminUserId, notes) {
     throw new Error('Escrow cannot be released in current status: ' + escrow.status);
   }
 
+  // Transition disputed → funded so releaseToSeller can process it
+  if (escrow.status === 'disputed') {
+    escrow.status = 'funded';
+    await escrow.save();
+  }
+
   const result = await releaseToSeller(escrowId);
 
-  escrow.disputeResolvedBy = adminUserId;
-  escrow.disputeNotes = notes || 'Admin resolved in favor of seller';
-  escrow.disputeResolvedAt = new Date();
-  if (escrow.status === 'released') {
-    escrow.status = 'resolved_seller';
-  }
-  await escrow.save();
+  // Re-fetch from DB since releaseToSeller modified the document
+  const updatedEscrow = await FreelancerEscrow.findById(escrowId);
+  updatedEscrow.status = 'resolved_seller';
+  updatedEscrow.disputeResolvedBy = adminUserId;
+  updatedEscrow.disputeNotes = notes || 'Admin resolved in favor of seller';
+  updatedEscrow.disputeResolvedAt = new Date();
+  await updatedEscrow.save();
 
   return result;
 }

@@ -71,12 +71,35 @@ router.post('/admin/:escrowId/release', auth, async (req, res) => {
 
     const escrow = await FreelancerEscrow.findById(req.params.escrowId);
     if (escrow) {
+      // Close the booking as completed (dispute resolved in seller's favor)
+      const booking = await Booking.findById(escrow.bookingId);
+      if (booking && !['completed', 'cancelled'].includes(booking.status)) {
+        booking.status = 'completed';
+        booking.completedAt = new Date();
+        await booking.save();
+      }
+
       try {
         const { getIO } = require('../socket');
         const io = getIO();
         if (io) {
-          io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'released', escrow: escrow.toObject(), bookingId: escrow.bookingId });
-          io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'released', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'resolved_seller', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'resolved_seller', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+
+          const populatedBooking = await Booking.findById(escrow.bookingId)
+            .populate('serviceId')
+            .populate('sellerId', 'username email cv aquaPay')
+            .populate('buyerId', 'username email cv')
+            .populate('escrowId');
+          if (populatedBooking) {
+            const bObj = populatedBooking.toObject();
+            if (bObj.escrowId && typeof bObj.escrowId === 'object') {
+              bObj.escrowStatus = bObj.escrowId.status;
+              bObj.escrowId = bObj.escrowId._id;
+            }
+            io.to(`user_${escrow.sellerId}`).emit('bookingUpdated', { type: 'dispute_resolved', booking: bObj });
+            io.to(`user_${escrow.buyerId}`).emit('bookingUpdated', { type: 'dispute_resolved', booking: bObj });
+          }
         }
       } catch (socketErr) { console.error('Socket emit error:', socketErr); }
     }
@@ -100,12 +123,39 @@ router.post('/admin/:escrowId/refund', auth, async (req, res) => {
 
     const escrow = await FreelancerEscrow.findById(req.params.escrowId);
     if (escrow) {
+      // Close the booking as cancelled (dispute resolved in buyer's favor)
+      const booking = await Booking.findById(escrow.bookingId);
+      if (booking && !['completed', 'cancelled'].includes(booking.status)) {
+        booking.status = 'cancelled';
+        await booking.save();
+      }
+
+      // Also mark the invoice as cancelled
+      if (escrow.invoiceId) {
+        await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'cancelled' });
+      }
+
       try {
         const { getIO } = require('../socket');
         const io = getIO();
         if (io) {
-          io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'refunded', escrow: escrow.toObject(), bookingId: escrow.bookingId });
-          io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'refunded', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'resolved_buyer', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'resolved_buyer', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+
+          const populatedBooking = await Booking.findById(escrow.bookingId)
+            .populate('serviceId')
+            .populate('sellerId', 'username email cv aquaPay')
+            .populate('buyerId', 'username email cv')
+            .populate('escrowId');
+          if (populatedBooking) {
+            const bObj = populatedBooking.toObject();
+            if (bObj.escrowId && typeof bObj.escrowId === 'object') {
+              bObj.escrowStatus = bObj.escrowId.status;
+              bObj.escrowId = bObj.escrowId._id;
+            }
+            io.to(`user_${escrow.sellerId}`).emit('bookingUpdated', { type: 'dispute_resolved', booking: bObj });
+            io.to(`user_${escrow.buyerId}`).emit('bookingUpdated', { type: 'dispute_resolved', booking: bObj });
+          }
         }
       } catch (socketErr) { console.error('Socket emit error:', socketErr); }
     }
