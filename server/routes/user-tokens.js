@@ -401,8 +401,9 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
     // Get the updated booking with populated data for socket emission
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
-      .populate('sellerId', 'username email')
-      .populate('buyerId', 'username email');
+      .populate('sellerId', 'username email cv aquaPay')
+      .populate('buyerId', 'username email cv')
+      .populate('escrowId');
 
     // Emit socket event for real-time updates
     const { getIO } = require('../socket');

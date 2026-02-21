@@ -373,8 +373,9 @@ router.post('/login', validateLogin, async (req, res) => {
       isAdmin: user.isAdmin,
       emailVerified: user.emailVerified,
       userType: user.userType,
-      referredBy: user.referredBy, // Include referredBy for affiliate detection
-      cv: user.cv, // Include CV data for display name functionality
+      referredBy: user.referredBy,
+      cv: user.cv,
+      aquaPay: user.aquaPay,
       token,
       refreshToken
     });
@@ -482,6 +483,7 @@ router.post('/login/google', async (req, res) => {
       userType: user.userType,
       referredBy: user.referredBy,
       cv: user.cv,
+      aquaPay: user.aquaPay,
       token,
       refreshToken
     });
