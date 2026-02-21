@@ -4,6 +4,40 @@ const Invoice = require('../models/Invoice');
 const User = require('../models/User');
 const axios = require('axios');
 
+function decodeBase58(str) {
+  try {
+    const bs58 = require('bs58');
+    if (typeof bs58.decode === 'function') return bs58.decode(str);
+    if (bs58.default && typeof bs58.default.decode === 'function') return bs58.default.decode(str);
+  } catch {}
+  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  const bytes = [0];
+  for (const char of str) {
+    const idx = ALPHABET.indexOf(char);
+    if (idx === -1) throw new Error('Invalid base58 character');
+    let carry = idx;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) { bytes.push(carry & 0xff); carry >>= 8; }
+  }
+  for (const char of str) { if (char === '1') bytes.push(0); else break; }
+  return new Uint8Array(bytes.reverse());
+}
+
+function loadSolanaKeypair(privateKeyStr) {
+  const { Keypair } = require('@solana/web3.js');
+  try {
+    const decoded = decodeBase58(privateKeyStr);
+    return Keypair.fromSecretKey(decoded);
+  } catch {
+    const keyArray = JSON.parse(privateKeyStr);
+    return Keypair.fromSecretKey(new Uint8Array(keyArray));
+  }
+}
+
 const ESCROW_MODE = process.env.ESCROW_MODE || 'testnet';
 
 const SOLANA_RPCS_MAINNET = [
@@ -255,14 +289,7 @@ async function releaseSolana(escrow, seller, releaseAmount, feeAmount) {
   const sellerWallet = seller.aquaPay.wallets.solana;
   if (!sellerWallet) throw new Error('Seller has no Solana wallet');
 
-  let escrowKeypair;
-  try {
-    const decoded = require('bs58').decode(privateKeyStr);
-    escrowKeypair = Keypair.fromSecretKey(decoded);
-  } catch {
-    const keyArray = JSON.parse(privateKeyStr);
-    escrowKeypair = Keypair.fromSecretKey(new Uint8Array(keyArray));
-  }
+  const escrowKeypair = loadSolanaKeypair(privateKeyStr);
 
   const sellerPubkey = new PublicKey(sellerWallet);
   const { blockhash } = await solanaRpcCall('getLatestBlockhash', [{ commitment: 'confirmed' }])
@@ -389,14 +416,7 @@ async function refundSolana(escrow, refundAmount) {
   if (!privateKeyStr) throw new Error('Escrow Solana private key not configured');
   if (!escrow.buyerWalletAddress) throw new Error('Buyer wallet address not stored');
 
-  let escrowKeypair;
-  try {
-    const decoded = require('bs58').decode(privateKeyStr);
-    escrowKeypair = Keypair.fromSecretKey(decoded);
-  } catch {
-    const keyArray = JSON.parse(privateKeyStr);
-    escrowKeypair = Keypair.fromSecretKey(new Uint8Array(keyArray));
-  }
+  const escrowKeypair = loadSolanaKeypair(privateKeyStr);
 
   const buyerPubkey = new PublicKey(escrow.buyerWalletAddress);
   const { blockhash } = await solanaRpcCall('getLatestBlockhash', [{ commitment: 'confirmed' }])
