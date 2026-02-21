@@ -187,8 +187,7 @@ const SOLANA_RPCS_MAINNET = [
 
 const SOLANA_RPCS_DEVNET = [
   'https://api.devnet.solana.com',
-  'https://rpc.ankr.com/solana_devnet',
-  'https://devnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff'
+  'https://rpc.ankr.com/solana_devnet'
 ];
 
 router.post('/solana-rpc', async (req, res) => {
@@ -217,39 +216,43 @@ router.post('/solana-rpc', async (req, res) => {
     let lastError = null;
     const axios = require('axios');
     
-    // Try each RPC until one works
-    for (let i = 0; i < rpcList.length; i++) {
-      const rpcUrl = rpcList[i];
-      try {
-        const response = await axios.post(rpcUrl, {
-          jsonrpc: '2.0',
-          id: Date.now(),
-          method,
-          params: params || []
-        }, {
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          timeout: useDevnet ? 25000 : 15000
-        });
-        
-        // Check for RPC-level errors
-        if (response.data?.error) {
-          lastError = response.data.error.message || JSON.stringify(response.data.error);
+    // For devnet, retry the full list up to 3 times since rate limits are transient
+    const maxRounds = useDevnet ? 3 : 1;
+    
+    for (let round = 0; round < maxRounds; round++) {
+      if (round > 0) await new Promise(r => setTimeout(r, 1500 * round));
+      
+      for (let i = 0; i < rpcList.length; i++) {
+        const rpcUrl = rpcList[i];
+        try {
+          const response = await axios.post(rpcUrl, {
+            jsonrpc: '2.0',
+            id: Date.now(),
+            method,
+            params: params || []
+          }, {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: useDevnet ? 25000 : 15000
+          });
+          
+          if (response.data?.error) {
+            lastError = response.data.error.message || JSON.stringify(response.data.error);
+            continue;
+          }
+          
+          return res.json(response.data);
+        } catch (rpcError) {
+          lastError = rpcError.response?.data?.error?.message || rpcError.message;
           continue;
         }
-        
-        return res.json(response.data);
-      } catch (rpcError) {
-        lastError = rpcError.response?.data?.error?.message || rpcError.message;
-        if (useDevnet && i < rpcList.length - 1) await new Promise(r => setTimeout(r, 1000));
-        continue;
       }
     }
     
-    // All RPCs failed
-    console.error(`All Solana RPCs failed (${useDevnet ? 'devnet' : 'mainnet'}). Last error:`, lastError);
+    // All RPCs and retries failed
+    console.error(`All Solana RPCs failed (${useDevnet ? 'devnet' : 'mainnet'}) after ${maxRounds} rounds. Last error:`, lastError);
     res.status(503).json({ 
       error: 'Solana network temporarily unavailable. Please try again.',
       details: lastError 
