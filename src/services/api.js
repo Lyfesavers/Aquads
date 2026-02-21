@@ -123,12 +123,16 @@ window.fetch = async function(url, options = {}) {
     // Ignore errors
   }
 
-  // Merge headers
+  // Merge headers - skip Content-Type for FormData so the browser
+  // can auto-set multipart/form-data with the correct boundary
+  const isFormData = options.body instanceof FormData;
   const headers = {
     ...authHeader,
     ...(options.headers || {}),
-    'Content-Type': options.headers?.['Content-Type'] || 'application/json'
   };
+  if (!isFormData) {
+    headers['Content-Type'] = options.headers?.['Content-Type'] || 'application/json';
+  }
 
   // Make the request
   let response = await originalFetch(url, { ...options, headers });
