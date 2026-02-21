@@ -272,12 +272,28 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification, 
       }
     };
 
+    const handleEscrowUpdate = (data) => {
+      if (data && data.bookingId && data.bookingId.toString() === booking._id.toString()) {
+        fetchInvoices();
+      }
+    };
+
+    const handleBookingUpdate = (data) => {
+      if (data?.booking && data.booking._id === booking._id) {
+        fetchInvoices();
+      }
+    };
+
     on('newBookingMessage', handleNewMessage);
     on('bookingMessagesRead', handleMessageRead);
+    on('escrowUpdated', handleEscrowUpdate);
+    on('bookingUpdated', handleBookingUpdate);
 
     return () => {
       off('newBookingMessage', handleNewMessage);
       off('bookingMessagesRead', handleMessageRead);
+      off('escrowUpdated', handleEscrowUpdate);
+      off('bookingUpdated', handleBookingUpdate);
       if (isConnected) {
         emit('leaveBookingRoom', { bookingId: booking._id });
       }

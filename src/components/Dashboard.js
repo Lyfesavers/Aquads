@@ -317,20 +317,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               booking._id === data.booking._id ? data.booking : booking
             )
           );
+          // Keep active conversation in sync
+          setActiveBookingConversation(prev => 
+            prev && prev._id === data.booking._id ? data.booking : prev
+          );
         } else {
-          // Event without full booking payload (e.g. work_approved) — refetch
           fetchBookings();
         }
       };
 
       const handleUserBookingsLoaded = (data) => {
-        // Set initial bookings data from socket
         setBookings(data.bookings);
       };
 
       const handleUserBookingsError = (error) => {
         console.error('Error loading bookings via socket:', error);
-        // Fallback to empty array on error
         setBookings([]);
       };
 
@@ -1289,9 +1290,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (!response.ok) throw new Error('Failed to fetch bookings');
       const data = await response.json();
       setBookings(data);
+      // Keep active conversation in sync with latest data
+      setActiveBookingConversation(prev => {
+        if (!prev) return prev;
+        const updated = data.find(b => b._id === prev._id);
+        return updated || prev;
+      });
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      // Error fetching bookings
     }
   };
 
@@ -1321,6 +1327,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         prevBookings.map(booking => 
           booking._id === updatedBooking._id ? updatedBooking : booking
         )
+      );
+      setActiveBookingConversation(prev =>
+        prev && prev._id === updatedBooking._id ? updatedBooking : prev
       );
       
       return updatedBooking;
