@@ -111,10 +111,9 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       }
     );
     
-    // Populate the saved booking with service and user details
     const populatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
-      .populate('sellerId', 'username email cv')
+      .populate('sellerId', 'username email cv aquaPay')
       .populate('buyerId', 'username email cv');
 
     // Emit socket event for real-time updates
@@ -402,7 +401,7 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
 
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
-      .populate('sellerId', 'username email cv')
+      .populate('sellerId', 'username email cv aquaPay')
       .populate('buyerId', 'username email cv');
 
     // Emit socket event for real-time updates

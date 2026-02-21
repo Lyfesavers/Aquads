@@ -30,8 +30,9 @@ const InvoiceModal = ({
     paymentMethod: 'external'
   });
 
-  const sellerHasWallets = currentUser?.aquaPay?.wallets && (
-    currentUser.aquaPay.wallets.solana || currentUser.aquaPay.wallets.ethereum
+  const sellerAquaPay = currentUser?.aquaPay || booking?.sellerId?.aquaPay;
+  const sellerHasWallets = sellerAquaPay?.wallets && (
+    sellerAquaPay.wallets.solana || sellerAquaPay.wallets.ethereum
   );
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState(!!existingInvoice);
