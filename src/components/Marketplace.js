@@ -15,7 +15,6 @@ import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
 import { FaCrown, FaCheck, FaFileAlt } from 'react-icons/fa';
 import BookingButton from './BookingButton';
-import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
 import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
@@ -157,7 +156,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [showEditModal, setShowEditModal] = useState(false);
   const [serviceToEdit, setServiceToEdit] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const [showPremiumPaymentModal, setShowPremiumPaymentModal] = useState(false);
   const [serviceToUpgrade, setServiceToUpgrade] = useState(null);
@@ -1067,15 +1065,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                     {showUserDropdown && (
                       <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                         <div className="py-2">
-                          <button
-                            onClick={() => {
-                              setShowDashboard(true);
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          <Link
+                            to="/dashboard"
+                            onClick={() => setShowUserDropdown(false)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
                             📊 Dashboard
-                          </button>
+                          </Link>
                           <button
                             onClick={() => {
                               setShowCreateModal(true);
@@ -1186,15 +1182,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                     <NotificationBell currentUser={currentUser} />
                   </div>
                   <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                  <button
-                    onClick={() => {
-                      setShowDashboard(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center"
                   >
                     Dashboard
-                  </button>
+                  </Link>
                   <button
                     onClick={() => {
                       setShowCreateModal(true);
@@ -1922,15 +1916,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             setServiceToEdit(null);
           }}
           onEditService={handleEditService}
-        />
-      )}
-
-      {/* Add Dashboard component */}
-      {showDashboard && (
-        <Dashboard
-          currentUser={currentUser}
-          onClose={() => setShowDashboard(false)}
-          ads={[]}  // Pass empty array since marketplace doesn't handle ads
         />
       )}
 

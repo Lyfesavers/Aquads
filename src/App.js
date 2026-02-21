@@ -25,7 +25,6 @@ import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
 import EmailVerificationModal from './components/EmailVerificationModal';
-import Dashboard from './components/Dashboard';
 import EditAdModal from './components/EditAdModal';
 import CreateBannerModal from './components/CreateBannerModal';
 import TokenBanner from './components/TokenBanner';
@@ -80,6 +79,7 @@ import CustodialPayment from './components/FreelancerEscrow/CustodialPayment';
 import AquaPayInfo from './components/AquaPayInfo';
 import HyperSpace from './components/HyperSpace';
 import Documentation from './components/Documentation/Documentation';
+import DashboardPage from './components/DashboardPage';
 
 window.Buffer = Buffer;
 
@@ -311,7 +311,7 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
 };
 
 // Handle URL parameters for opening dashboard with specific tab
-const DashboardTabHandler = ({ currentUser, setShowDashboard, setDashboardActiveTab }) => {
+const DashboardTabHandler = ({ currentUser }) => {
   const location = useLocation();
   
   useEffect(() => {
@@ -320,21 +320,14 @@ const DashboardTabHandler = ({ currentUser, setShowDashboard, setDashboardActive
     
     if (openDashboardTab) {
       if (currentUser) {
-        // User is logged in, open dashboard immediately
-        setDashboardActiveTab(openDashboardTab);
-        setShowDashboard(true);
-        // Clean up the URL
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        window.history.replaceState({}, '', window.location.pathname);
+        window.location.href = `/dashboard/${openDashboardTab}`;
       } else {
-        // User not logged in, store the tab to open after login
         localStorage.setItem('aquads_pending_dashboard_tab', openDashboardTab);
-        // Clean up the URL
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [location.search, currentUser, setShowDashboard, setDashboardActiveTab]);
+  }, [location.search, currentUser]);
   
   return null;
 };
@@ -432,7 +425,6 @@ function App() {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [showBumpStore, setShowBumpStore] = useState(false);
   const [selectedAdId, setSelectedAdId] = useState(null);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [adToEdit, setAdToEdit] = useState(null);
@@ -452,7 +444,6 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
-  const [dashboardActiveTab, setDashboardActiveTab] = useState('ads');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   
   // New state for blockchain filter and pagination
@@ -1944,9 +1935,8 @@ function App() {
     if (currentUser) {
       const pendingTab = localStorage.getItem('aquads_pending_dashboard_tab');
       if (pendingTab) {
-        setDashboardActiveTab(pendingTab);
-        setShowDashboard(true);
         localStorage.removeItem('aquads_pending_dashboard_tab');
+        window.location.href = `/dashboard/${pendingTab}`;
       }
       
       // Effect to open profile modal after login if there was a pending tab
@@ -1964,15 +1954,13 @@ function App() {
     const handleOpenDashboardWithBooking = (event) => {
       logger.log('Opening dashboard with booking:', event.detail.bookingId);
       setActiveBookingId(event.detail.bookingId);
-      setDashboardActiveTab('ads');
-      setShowDashboard(true);
+      window.location.href = '/dashboard/ads';
     };
     
     // Define handler for opening dashboard without specific booking
     const handleOpenDashboard = () => {
       logger.log('Opening dashboard');
-      setDashboardActiveTab('ads');
-      setShowDashboard(true);
+      window.location.href = '/dashboard';
     };
     
     // Add event listeners
@@ -1985,12 +1973,7 @@ function App() {
       if (bookingId) {
         setActiveBookingId(bookingId);
       }
-      if (tab) {
-        setDashboardActiveTab(tab);
-      } else {
-        setDashboardActiveTab('ads'); // Default to ads tab if not specified
-      }
-      setShowDashboard(true);
+      window.location.href = `/dashboard/${tab || 'ads'}`;
     };
     
     // Check localStorage for dashboard open flag (fallback method)
@@ -2009,13 +1992,12 @@ function App() {
           setActiveBookingId(bookingId);
         }
         
-        setDashboardActiveTab('ads');
-        setShowDashboard(true);
-        
         // Clear the flags
         localStorage.removeItem('aquads_open_dashboard');
         localStorage.removeItem('aquads_open_booking');
         localStorage.removeItem('aquads_notification_timestamp');
+        
+        window.location.href = '/dashboard/ads';
       }
     };
     
@@ -2463,12 +2445,26 @@ function App() {
         />
         <DashboardTabHandler 
           currentUser={currentUser}
-          setShowDashboard={setShowDashboard}
-          setDashboardActiveTab={setDashboardActiveTab}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <Routes>
           <Route path="/extension-auth" element={<ExtensionAuth />} />
+          <Route path="/dashboard/:tab?" element={
+            <DashboardPage
+              ads={ads}
+              currentUser={currentUser}
+              onDeleteAd={handleDeleteAd}
+              onBumpAd={handleBumpPurchase}
+              onEditAd={handleEditAd}
+              onRejectBump={handleRejectBump}
+              onApproveBump={handleApproveBump}
+              activeBookingId={activeBookingId}
+              setActiveBookingId={setActiveBookingId}
+              onLogin={() => setShowLoginModal(true)}
+              onLogout={handleLogout}
+              onCreateAccount={() => setShowCreateAccountModal(true)}
+            />
+          } />
           <Route path="/marketplace" element={
             <Marketplace 
               currentUser={currentUser}
@@ -2621,16 +2617,13 @@ function App() {
                               {showUserDropdown && (
                                 <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-[200002]">
                                   <div className="py-2">
-                                    <button
-                                      onClick={() => {
-                                        setDashboardActiveTab('ads');
-                                        setShowDashboard(true);
-                                        setShowUserDropdown(false);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                                    <Link
+                                      to="/dashboard"
+                                      onClick={() => setShowUserDropdown(false)}
+                                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                                     >
                                       📊 Dashboard
-                                    </button>
+                                    </Link>
                                     <button
                                       onClick={() => {
                                         setShowCreateModal(true);
@@ -2792,13 +2785,14 @@ function App() {
                                       <NotificationBell currentUser={currentUser} />
                                     </div>
                                     <span className="block px-4 py-2 text-blue-300 text-sm">Welcome, {getDisplayName(currentUser)}!</span>
-                                    <button
-                                      onClick={() => { setDashboardActiveTab('ads'); setShowDashboard(true); setIsMobileMenuOpen(false); }}
-                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all w-full text-left"
+                                    <Link
+                                      to="/dashboard"
+                                      onClick={() => setIsMobileMenuOpen(false)}
+                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all w-full"
                                     >
                                       <span className="text-lg">📊</span>
                                       <span className="font-medium">Dashboard</span>
-                                    </button>
+                                    </Link>
                                     <button
                                       onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
                                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
@@ -3565,26 +3559,7 @@ function App() {
                 </div>
               )}
 
-              {/* Dashboard: rendered outside scroll area so it can sit below header with correct z-order */}
-              {showDashboard && currentUser && (
-                <Dashboard
-                  ads={ads}
-                  currentUser={currentUser}
-                  onClose={() => {
-                    setShowDashboard(false);
-                    setActiveBookingId(null);
-                  }}
-                  onDeleteAd={handleDeleteAd}
-                  onBumpAd={handleBumpPurchase}
-                  onEditAd={handleEditAd}
-                  onRejectBump={handleRejectBump}
-                  onApproveBump={handleApproveBump}
-                  initialBookingId={activeBookingId}
-                  initialActiveTab={dashboardActiveTab}
-                />
-              )}
-
-              {/* EditAdModal: rendered outside scroll area, AFTER Dashboard, so it appears on top */}
+              {/* EditAdModal: rendered outside scroll area so it appears on top */}
               {showEditModal && adToEdit && currentUser && (
                 <EditAdModal
                   ad={adToEdit}

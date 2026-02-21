@@ -6,7 +6,6 @@ import BannerDisplay from './BannerDisplay';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
-import Dashboard from './Dashboard';
 import CreateBannerModal from './CreateBannerModal';
 import NotificationBell from './NotificationBell';
 import { socket } from '../services/api';
@@ -30,7 +29,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -346,25 +344,21 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                     {showUserDropdown && (
                       <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                         <div className="py-2">
-                          <button
-                            onClick={() => {
-                              setShowDashboard(true);
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          <Link
+                            to="/dashboard"
+                            onClick={() => setShowUserDropdown(false)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
                             📊 Dashboard
-                          </button>
+                          </Link>
                           {currentUser.userType === 'project' && (
-                            <button
-                              onClick={() => {
-                                setShowDashboard(true);
-                                setShowUserDropdown(false);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-green-600/50 transition-colors"
+                            <Link
+                              to="/dashboard/partnerStore"
+                              onClick={() => setShowUserDropdown(false)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-green-600/50 transition-colors"
                             >
                               🎁 List Reward
-                            </button>
+                            </Link>
                           )}
                           <button
                             onClick={() => {
@@ -455,19 +449,21 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
               {currentUser ? (
                 <>
                   <div className="px-3 py-2 text-blue-400 font-medium">{userPoints} points</div>
-                  <button
-                    onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
                   >
                     📊 Dashboard
-                  </button>
+                  </Link>
                   {currentUser.userType === 'project' && (
-                    <button
-                      onClick={() => { setShowDashboard(true); setIsMobileMenuOpen(false); }}
+                    <Link
+                      to="/dashboard/partnerStore"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full text-left px-3 py-2 text-green-400 hover:text-green-300"
                     >
                       🎁 List Reward
-                    </button>
+                    </Link>
                   )}
                   <button
                     onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
@@ -888,19 +884,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           currentUser={currentUser}
           onClose={() => setShowProfileModal(false)}
           onLogout={onLogout}
-        />
-      )}
-
-      {showDashboard && (
-        <Dashboard
-          ads={[]} // Pass empty array since PartnerMarketplace doesn't handle ads
-          currentUser={currentUser}
-          onClose={() => setShowDashboard(false)}
-          onDeleteAd={() => {}} // Empty handlers since not used in this context
-          onBumpAd={() => {}}
-          onEditAd={() => {}}
-          onRejectBump={() => {}}
-          onApproveBump={() => {}}
         />
       )}
 

@@ -20,7 +20,7 @@ import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
@@ -2808,113 +2808,149 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  /* Panel starts below nav (4rem) + token banner (3rem) = 7rem; z above scroll so content is visible */
-  return (
-    <div className="fixed left-0 right-0 bottom-0 bg-gray-900 z-[200002] overflow-y-auto" style={{ top: '7rem' }}>
-      {/* Single sticky bar: title + tabs + Close — no gap, fits all screens */}
-      <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-4 min-h-0">
-            <h2 className="text-base sm:text-xl font-bold text-white flex-shrink-0">Dashboard</h2>
-            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide scroll-smooth flex items-center gap-0 relative">
-              {/* Fade indicators for mobile */}
-              <div className="md:hidden absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-gray-800 to-transparent z-10 pointer-events-none" />
-              <div className="md:hidden absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-gray-800 to-transparent z-10 pointer-events-none" />
-              <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'ads' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('ads')}
-              >
-                Main
-              </button>
-            <button
-              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'bookings' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('bookings')}
-            >
-              Bookings
-            </button>
-            <button
-              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'aquapay' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('aquapay')}
-            >
-              💸 AquaPay
-            </button>
-            <button
-              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => {
-                setActiveTab('affiliateAnalytics');
-                if (!affiliateAnalytics) {
-                  fetchAffiliateAnalytics();
-                }
-              }}
-            >
-              Affiliate Analytics
-            </button>
-            {currentUser.isAdmin && (
-              <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('admin')}
-              >
-                Admin
-              </button>
-            )}
+  const sidebarTabs = [
+    { id: 'ads', label: 'Main', icon: '📊', show: true },
+    { id: 'bookings', label: 'Bookings', icon: '📋', show: true },
+    { id: 'aquapay', label: 'AquaPay', icon: '💸', show: true },
+    { id: 'affiliateAnalytics', label: 'Affiliate Analytics', icon: '📈', show: true, onSelect: () => { if (!affiliateAnalytics) fetchAffiliateAnalytics(); } },
+    { id: 'membership', label: 'My Membership', icon: '👑', show: true },
+    { id: 'partnerStore', label: 'My Partner Store', icon: '🎁', show: currentUser.userType === 'project' },
+    { id: 'admin', label: 'Admin Panel', icon: '🛡️', show: currentUser.isAdmin },
+    { id: 'twitterRaids', label: 'Twitter Raids', icon: '🐦', show: currentUser.isAdmin },
+    { id: 'facebookRaids', label: 'Facebook Raids', icon: '📘', show: currentUser.isAdmin },
+    { id: 'partnerAdmin', label: 'Partner Stores', icon: '🎯', show: currentUser.isAdmin },
+  ].filter(t => t.show);
 
-            {currentUser.isAdmin && (
-              <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('twitterRaids')}
-              >
-                Twitter Raids
-              </button>
-            )}
+  const handleTabSelect = (tab) => {
+    setActiveTab(tab.id);
+    if (tab.onSelect) tab.onSelect();
+  };
 
-            {currentUser.isAdmin && (
-              <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('facebookRaids')}
-              >
-                Facebook Raids
-              </button>
-            )}
-            
-            {currentUser.userType === 'project' && (
-              <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'partnerStore' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('partnerStore')}
-              >
-                🎁 My Partner Store
-              </button>
-            )}
+  const tabDescriptions = {
+    ads: 'Manage your projects, affiliate program, and earnings',
+    bookings: 'View and manage your service bookings',
+    aquapay: 'Payment settings and transaction history',
+    affiliateAnalytics: 'Track your referral performance and earnings',
+    membership: 'Your membership plan and benefits',
+    partnerStore: 'Manage your partner rewards store',
+    admin: 'Platform administration and moderation',
+    twitterRaids: 'Review and manage Twitter raid requests',
+    facebookRaids: 'Review and manage Facebook raid requests',
+    partnerAdmin: 'Manage partner store listings',
+  };
 
-            <button
-              className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'membership' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('membership')}
-            >
-              👑 My Membership
-            </button>
-
-            {currentUser.isAdmin && (
+  /* --- Full-page layout: sidebar on desktop, horizontal tabs on mobile --- */
+  const renderFullPageNav = () => (
+    <>
+      {/* Mobile/Tablet: horizontal scrollable pill tabs */}
+      <div className="lg:hidden sticky top-14 z-20 bg-gray-800/95 backdrop-blur-sm border-b border-gray-700/50 shadow-sm">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-1.5 px-3 py-2.5 min-w-max">
+            {sidebarTabs.map(tab => (
               <button
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === 'partnerAdmin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('partnerAdmin')}
+                key={tab.id}
+                onClick={() => handleTabSelect(tab)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-150 ${
+                  activeTab === tab.id
+                    ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                }`}
               >
-                🎯 Partner Stores
+                <span className="text-base">{tab.icon}</span>
+                <span>{tab.label}</span>
               </button>
-            )}
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close dashboard"
-              className="flex-shrink-0 ml-2 bg-red-500/80 hover:bg-red-600/80 px-3 sm:px-4 py-2 rounded text-sm font-medium text-white shadow"
-            >
-              Close
-            </button>
+            ))}
           </div>
         </div>
       </div>
+    </>
+  );
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto p-3 sm:p-4">
-        <div className="overflow-y-auto">
+  const renderSidebar = () => (
+    <aside className="hidden lg:flex flex-col w-56 xl:w-64 flex-shrink-0 bg-gray-800/30 border-r border-gray-700/30">
+      <nav className="sticky top-14 flex flex-col py-5 px-3 gap-0.5 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+        <div className="px-3 mb-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Navigation</p>
+        </div>
+        {sidebarTabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => handleTabSelect(tab)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left group ${
+              activeTab === tab.id
+                ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-400'
+                : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
+            }`}
+          >
+            <span className={`text-lg w-6 text-center flex-shrink-0 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
+            <span className="truncate">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+    </aside>
+  );
+
+  /* --- Overlay mode: original compact tab bar --- */
+  const renderOverlayHeader = () => (
+    <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-700 shadow-lg">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-4 min-h-0">
+          <h2 className="text-base sm:text-xl font-bold text-white flex-shrink-0">Dashboard</h2>
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide scroll-smooth flex items-center gap-0 relative">
+            <div className="md:hidden absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-gray-800 to-transparent z-10 pointer-events-none" />
+            <div className="md:hidden absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-gray-800 to-transparent z-10 pointer-events-none" />
+            {sidebarTabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === tab.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => handleTabSelect(tab)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close dashboard"
+            className="flex-shrink-0 ml-2 bg-red-500/80 hover:bg-red-600/80 px-3 sm:px-4 py-2 rounded text-sm font-medium text-white shadow"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* --- Main return --- */
+  return (
+    <div className={isFullPage 
+      ? "min-h-[calc(100vh-3.5rem)] flex flex-col text-white" 
+      : "fixed left-0 right-0 bottom-0 bg-gray-900 z-[200002] overflow-y-auto"
+    } style={isFullPage ? {} : { top: '7rem' }}>
+
+      {isFullPage ? renderFullPageNav() : renderOverlayHeader()}
+
+      <div className={isFullPage ? "flex flex-1 min-h-0" : ""}>
+        {isFullPage && renderSidebar()}
+
+        <div className={isFullPage 
+          ? "flex-1 min-w-0 overflow-y-auto" 
+          : ""
+        }>
+          <div className={isFullPage 
+            ? "px-4 sm:px-6 lg:px-10 py-6" 
+            : "max-w-7xl mx-auto p-3 sm:p-4"
+          }>
+            {isFullPage && (
+              <div className="mb-6 pb-4 border-b border-gray-700/40">
+                <h1 className="text-2xl font-bold text-white">
+                  {sidebarTabs.find(t => t.id === activeTab)?.icon}{' '}
+                  {sidebarTabs.find(t => t.id === activeTab)?.label || 'Dashboard'}
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">{tabDescriptions[activeTab] || ''}</p>
+              </div>
+            )}
+            <div className={isFullPage ? "" : "overflow-y-auto"}>
           {activeTab === 'ads' && (
             <div className="space-y-6">
               {isLoadingMainTab ? (
@@ -6411,6 +6447,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             </div>
           )}
         </div>
+      </div>
+      </div>
       </div>
 
       {showReviews && selectedService && (

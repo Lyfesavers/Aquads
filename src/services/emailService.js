@@ -181,7 +181,7 @@ const emailService = {
         tx_hash: paymentDetails.txHash,
         explorer_url: explorerUrl,
         message: paymentDetails.message || 'No message',
-        dashboard_link: 'https://aquads.xyz/home?openDashboard=aquapay'
+        dashboard_link: 'https://aquads.xyz/dashboard/aquapay'
       };
 
       logger.log('Sending AquaPay payment email with data:', templateParams);

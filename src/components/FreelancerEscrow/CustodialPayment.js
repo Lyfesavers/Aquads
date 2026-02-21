@@ -114,7 +114,7 @@ const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain,
       setCountdown(prev => prev - 1);
     }, 1000);
     const timer = setTimeout(() => {
-      navigate('/home?openDashboard=bookings');
+      navigate('/dashboard/bookings');
     }, 5000);
     return () => { clearTimeout(timer); clearInterval(interval); };
   }, [navigate]);
@@ -135,7 +135,7 @@ const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain,
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Seller</span><span className="text-white">{escrow?.sellerId?.username}</span></div>
         </div>
         {txHash && <a href={`${chainConfig?.explorerUrl}${txHash}${selectedChain === 'solana' && ESCROW_MODE === 'testnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm mb-6">View on Explorer <span>↗</span></a>}
-        <button onClick={() => navigate('/home?openDashboard=bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
+        <button onClick={() => navigate('/dashboard/bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
         <p className="text-slate-500 text-xs mt-3">Redirecting in {countdown}s...</p>
         <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
           <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
@@ -417,7 +417,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Seller</span><span className="text-white">{escrow.sellerId?.username}</span></div>
         </div>
         {txHash && <a href={`${chainConfig?.explorerUrl}${txHash}${selectedChain === 'solana' && ESCROW_MODE === 'testnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm mb-6">View on Explorer <span>↗</span></a>}
-        <button onClick={() => navigate('/home?openDashboard=bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
+        <button onClick={() => navigate('/dashboard/bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
           <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by Aquads Escrow</span>

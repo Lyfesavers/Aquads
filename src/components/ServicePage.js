@@ -12,7 +12,6 @@ import NotificationBell from './NotificationBell';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
-import Dashboard from './Dashboard';
 import CreateServiceModal from './CreateServiceModal';
 import CreateBannerModal from './CreateBannerModal';
 import PremiumPaymentModal from './PremiumPaymentModal';
@@ -54,7 +53,6 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showPremiumPaymentModal, setShowPremiumPaymentModal] = useState(false);
@@ -405,15 +403,13 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                       {showUserDropdown && (
                         <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                           <div className="py-2">
-                            <button
-                              onClick={() => {
-                                setShowDashboard(true);
-                                setShowUserDropdown(false);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                            <Link
+                              to="/dashboard"
+                              onClick={() => setShowUserDropdown(false)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                             >
                               📊 Dashboard
-                            </button>
+                            </Link>
                             <button
                               onClick={() => {
                                 setShowCreateModal(true);
@@ -514,15 +510,13 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                       <NotificationBell currentUser={currentUser} />
                     </div>
                     <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                    <button
-                      onClick={() => {
-                        setShowDashboard(true);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center"
                     >
                       Dashboard
-                    </button>
+                    </Link>
                     <button
                       onClick={() => {
                         setShowCreateModal(true);
@@ -1133,15 +1127,6 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
               setShowProfileModal(false);
               // Handle profile update if needed
             }}
-          />
-        )}
-
-        {/* Dashboard Modal */}
-        {showDashboard && (
-          <Dashboard
-            currentUser={currentUser}
-            onClose={() => setShowDashboard(false)}
-            ads={[]}  // Pass empty array since service page doesn't handle ads
           />
         )}
 

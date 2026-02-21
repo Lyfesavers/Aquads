@@ -3862,7 +3862,7 @@ const LandingPage = () => {
       title: 'AquaPay',
       description: 'Create a single payment link to receive crypto on any chain. Share it with anyone, anywhere. Funds go directly to your wallet - no middleman, no fees from us. Accept payments on Solana, Ethereum, Base, Polygon, BNB Chain & more. Non-custodial & instant.',
       gradient: 'from-blue-900/40 to-cyan-900/80',
-      link: '/home?openDashboard=aquapay'
+      link: '/dashboard/aquapay'
     },
     {
       icon: '🔮',

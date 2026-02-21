@@ -11,7 +11,6 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
-import Dashboard from './Dashboard';
 import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
 import { showToast } from './Toast';
@@ -73,7 +72,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
   const [gameToEdit, setGameToEdit] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [popularCategories, setPopularCategories] = useState([]);
@@ -336,15 +334,13 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                      {showUserDropdown && (
                        <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                          <div className="py-2">
-                           <button
-                             onClick={() => {
-                               setShowDashboard(true);
-                               setShowUserDropdown(false);
-                             }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                           <Link
+                             to="/dashboard"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              📊 Dashboard
-                           </button>
+                           </Link>
                            <button
                              onClick={() => {
                                setShowProjectModal(true);
@@ -442,15 +438,13 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
               
                              {currentUser ? (
                  <div className="flex flex-col space-y-2">
-                   <button
-                     onClick={() => {
-                       setShowDashboard(true);
-                       setFilterOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
+                   <Link
+                     to="/dashboard"
+                     onClick={() => setFilterOpen(false)}
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400 block"
                    >
                      Dashboard
-                   </button>
+                   </Link>
                    <button
                      onClick={() => {
                        setShowProjectModal(true);
@@ -751,15 +745,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
          <CreateAccountModal 
            onClose={() => setShowCreateAccountModal(false)} 
            onCreateAccount={handleCreateAccountSubmit}
-         />
-       )}
-
-       {/* Dashboard Modal */}
-       {showDashboard && (
-         <Dashboard
-           currentUser={currentUser}
-           onClose={() => setShowDashboard(false)}
-           ads={[]}  // Pass empty array since GameHub doesn't handle ads
          />
        )}
 

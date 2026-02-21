@@ -10,7 +10,6 @@ import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
-import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 
@@ -29,7 +28,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -395,15 +393,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                           >
                             🏠 Back to Main
                            </button>
-                           <button
-                             onClick={() => {
-                               setShowDashboard(true);
-                               setShowUserDropdown(false);
-                             }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
+                           <Link
+                             to="/dashboard"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-purple-600/50 transition-colors"
                            >
                              📊 Dashboard
-                           </button>
+                           </Link>
                            <button
                              onClick={() => {
                                setShowCreateModal(true);
@@ -510,15 +506,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   >
                     Back to Main
                    </button>
-                   <button
-                     onClick={() => {
-                       setShowDashboard(true);
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400"
+                   <Link
+                     to="/dashboard"
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-sm font-medium text-yellow-400 block text-center"
                    >
                      📊 Dashboard
-                   </button>
+                   </Link>
                    <button
                      onClick={() => {
                        setShowCreateModal(true);
@@ -751,14 +745,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           />
         )}
 
-        {/* Dashboard Modal */}
-        {showDashboard && (
-          <Dashboard
-            currentUser={currentUser}
-            onClose={() => setShowDashboard(false)}
-            ads={[]}  // Pass empty array since how-to page doesn't handle ads
-          />
-        )}
 
         {/* Login Modal */}
         {showLoginModal && (
