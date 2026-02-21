@@ -53,7 +53,7 @@ const USDC_ADDRESSES = {
 
 const SOLANA_USDC_MINT = {
   mainnet: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  testnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+  testnet: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'
 };
 
 function getSolanaRpcs() {
