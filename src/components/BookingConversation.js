@@ -5,6 +5,7 @@ import InvoiceModal from './InvoiceModal';
 import invoiceService from '../services/invoiceService';
 import useSocket from '../hooks/useSocket';
 import { getDisplayName } from '../utils/nameUtils';
+import EscrowStatusWidget from './FreelancerEscrow/EscrowStatus';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -1553,7 +1554,21 @@ ${currentUser.username}`;
           </form>
           
           {/* Add invoice and email buttons for sellers when booking is confirmed */}
-          {isSeller && booking && booking.status === 'confirmed' && (
+          {/* Escrow Status Widget */}
+          {booking?.escrowId && (
+            <div className="mt-4">
+              <EscrowStatusWidget escrow={{
+                status: booking.escrowStatus || 'awaiting_deposit',
+                amount: booking.price,
+                currency: booking.currency || 'USDC',
+                depositTxHash: booking.depositTxHash,
+                releaseTxHash: booking.releaseTxHash,
+                disputeReason: booking.disputeReason
+              }} />
+            </div>
+          )}
+
+          {isSeller && booking && (booking.status === 'confirmed' || (booking.isUnlocked && ['accepted_by_seller', 'accepted_by_buyer'].includes(booking.status))) && (
             <div className="mt-4 flex gap-3">
               <button
                 onClick={handleCreateInvoice}

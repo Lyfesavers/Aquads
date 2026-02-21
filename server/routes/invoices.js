@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Invoice = require('../models/Invoice');
 const Booking = require('../models/Booking');
+const FreelancerEscrow = require('../models/FreelancerEscrow');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const Notification = require('../models/Notification');
@@ -45,6 +46,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       notes, 
       templateId,
       paymentLink,
+      paymentMethod,
       amount,
       currency
     } = req.body;
@@ -61,14 +63,22 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Invalid bookingId format' });
     }
 
-    // Check if payment link is provided
-    if (!paymentLink) {
-      return res.status(400).json({ error: 'Payment link is required' });
+    // For external payments, validate payment link
+    if (paymentMethod !== 'crypto_escrow') {
+      if (!paymentLink) {
+        return res.status(400).json({ error: 'Payment link is required' });
+      }
+      if (!paymentLink.startsWith('http://') && !paymentLink.startsWith('https://')) {
+        return res.status(400).json({ error: 'Payment link must be a valid URL starting with http:// or https://' });
+      }
     }
 
-    // Validate payment link format (simple validation)
-    if (!paymentLink.startsWith('http://') && !paymentLink.startsWith('https://')) {
-      return res.status(400).json({ error: 'Payment link must be a valid URL starting with http:// or https://' });
+    // For crypto escrow, check one escrow per booking limit
+    if (paymentMethod === 'crypto_escrow') {
+      const existingEscrow = await FreelancerEscrow.findOne({ bookingId, status: { $nin: ['cancelled'] } });
+      if (existingEscrow) {
+        return res.status(400).json({ error: 'An escrow already exists for this booking' });
+      }
     }
 
     // Find the booking
@@ -132,16 +142,37 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       currency: currency || booking.currency || 'USD',
       dueDate: new Date(dueDate),
       description: description || `Invoice for service`,
-      paymentLink,
+      paymentLink: paymentMethod === 'crypto_escrow' ? '' : paymentLink,
+      paymentMethod: paymentMethod || 'external',
       items: processedItems,
       notes: notes || '',
       templateId: templateId || 'default',
     };
 
-  
-
     // Create and save the new invoice
     const newInvoice = new Invoice(invoiceData);
+
+    // If crypto escrow, create escrow record and set the payment link
+    if (paymentMethod === 'crypto_escrow') {
+      const escrow = new FreelancerEscrow({
+        bookingId,
+        invoiceId: newInvoice._id,
+        buyerId: booking.buyerId,
+        sellerId: booking.sellerId,
+        amount: totalAmount,
+        currency: currency || booking.currency || 'USDC',
+        feePercentage: 0.0125,
+        status: 'awaiting_deposit'
+      });
+      await escrow.save();
+
+      const baseUrl = process.env.FRONTEND_URL || 'https://aquads.xyz';
+      newInvoice.paymentLink = `${baseUrl}/custodial-pay/${escrow._id}`;
+      newInvoice.escrowId = escrow._id;
+
+      booking.escrowId = escrow._id;
+      await booking.save();
+    }
   
 
     await newInvoice.save();

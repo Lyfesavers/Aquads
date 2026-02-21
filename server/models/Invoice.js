@@ -42,7 +42,17 @@ const invoiceSchema = new Schema({
   description: String,
   paymentLink: {
     type: String,
-    required: true
+    required: false
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['external', 'crypto_escrow'],
+    default: 'external'
+  },
+  escrowId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FreelancerEscrow',
+    default: null
   },
   items: [{
     description: String,

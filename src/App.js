@@ -76,6 +76,7 @@ import TelegramBot from './components/TelegramBot';
 import PublicResume from './components/PublicResume';
 import LandingPage from './components/LandingPage';
 import AquaPayPage from './components/AquaPayPage';
+import CustodialPayment from './components/FreelancerEscrow/CustodialPayment';
 import AquaPayInfo from './components/AquaPayInfo';
 import HyperSpace from './components/HyperSpace';
 import Documentation from './components/Documentation/Documentation';
@@ -3607,6 +3608,7 @@ function App() {
             <Route path="/verify-member/:memberId" element={<MemberVerification />} />
             <Route path="/resume/:username" element={<PublicResume />} />
             <Route path="/pay/:slug" element={<AquaPayPage currentUser={currentUser} />} />
+            <Route path="/custodial-pay/:escrowId" element={<CustodialPayment currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquafi" element={
               <AquaFi 
                 currentUser={currentUser} 

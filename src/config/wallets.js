@@ -1,6 +1,17 @@
 // Centralized wallet configuration for Aquads platform
 // Used by both AquaSwap and BexFi for fee collection
 
+export const ESCROW_WALLETS = {
+  SOLANA: process.env.REACT_APP_ESCROW_SOLANA_WALLET,
+  ETHEREUM: process.env.REACT_APP_ESCROW_EVM_WALLET,
+  POLYGON: process.env.REACT_APP_ESCROW_EVM_WALLET,
+  ARBITRUM: process.env.REACT_APP_ESCROW_EVM_WALLET,
+  BASE: process.env.REACT_APP_ESCROW_EVM_WALLET,
+  BSC: process.env.REACT_APP_ESCROW_EVM_WALLET,
+};
+
+export const ESCROW_MODE = process.env.REACT_APP_ESCROW_MODE || 'testnet';
+
 export const AQUADS_WALLETS = {
   // Main fee collection wallets (from environment variables only)
   ETHEREUM: process.env.REACT_APP_FEE_WALLET,
@@ -23,6 +34,9 @@ export const FEE_CONFIG = {
   
   // AquaPay fees (0.5% transaction fee - Solana only for now)
   AQUAPAY_FEE_PERCENTAGE: 0.005, // 0.5%
+  
+  // Freelancer Escrow fees (1.25% - custodial escrow for bookings)
+  ESCROW_FEE_PERCENTAGE: 0.0125, // 1.25%
   
   // AquaFi fees (strategic structure - 0% deposit, 2.5% withdrawal)
   SAVINGS_MANAGEMENT_FEE: 0.0, // 0% fee on deposit (no barrier to entry)
@@ -153,6 +167,8 @@ export const isChainSupported = (chainId) => {
 
 export default {
   AQUADS_WALLETS,
+  ESCROW_WALLETS,
+  ESCROW_MODE,
   FEE_CONFIG,
   SUPPORTED_CHAINS,
   PROTOCOL_CONTRACTS,

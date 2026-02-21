@@ -1554,8 +1554,18 @@ function emitNewHyperSpaceOrder(orderData) {
 
 function emitHyperSpaceOrderStatusChange(orderId, status, additionalData = {}) {
   if (io) {
-    // Emit to everyone so the user who placed the order gets the update
     io.emit('hyperSpaceOrderStatusChanged', { orderId, status, ...additionalData });
+  }
+}
+
+function emitEscrowUpdated(data) {
+  if (io) {
+    if (data.buyerId) {
+      io.to(`user_${data.buyerId}`).emit('escrowUpdated', data);
+    }
+    if (data.sellerId) {
+      io.to(`user_${data.sellerId}`).emit('escrowUpdated', data);
+    }
   }
 }
 
@@ -1599,5 +1609,6 @@ module.exports = {
   emitUserTokenBalanceUpdate,
   emitHyperSpaceOrderUpdate,
   emitNewHyperSpaceOrder,
-  emitHyperSpaceOrderStatusChange
+  emitHyperSpaceOrderStatusChange,
+  emitEscrowUpdated
 }; 

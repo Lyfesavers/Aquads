@@ -57,6 +57,20 @@ const bookingSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Escrow system
+  escrowId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FreelancerEscrow',
+    default: null
+  },
+  buyerWorkApproved: {
+    type: Boolean,
+    default: false
+  },
+  buyerWorkApprovedAt: {
+    type: Date,
+    default: null
+  },
   // Token system for lead unlocking
   isUnlocked: {
     type: Boolean,

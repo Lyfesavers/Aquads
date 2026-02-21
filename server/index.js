@@ -687,6 +687,7 @@ app.use('/api/workshop', require('./routes/workshop'));
 app.use('/api/click-tracking', require('./routes/clickTracking'));
 app.use('/api/on-chain-resume', require('./routes/onChainResume'));
 app.use('/api/aquapay', aquapayRoutes);
+app.use('/api/freelancer-escrow', require('./routes/freelancerEscrow'));
 app.use('/api/wallet-analyzer', walletAnalyzerRoutes);
 app.use('/api/hyperspace', require('./routes/hyperspace'));
 

@@ -2,11 +2,52 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Modal from './Modal';
 import emailService from '../services/emailService';
+import { EscrowStatusBadge } from './FreelancerEscrow/EscrowStatus';
 
 const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation, refreshBookings }) => {
   const [unlockingBooking, setUnlockingBooking] = useState(null);
   const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
   const [bookingToAccept, setBookingToAccept] = useState(null);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeBooking, setDisputeBooking] = useState(null);
+  const [disputeReason, setDisputeReason] = useState('');
+
+  const handleApproveWork = async (bookingId) => {
+    try {
+      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
+      if (!token) { showNotification('Please log in again.', 'error'); return; }
+
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/bookings/${bookingId}/approve-work`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showNotification('Work approved! Seller can now complete the booking.', 'success');
+      if (refreshBookings) refreshBookings();
+    } catch (err) {
+      showNotification(err.response?.data?.error || 'Failed to approve work', 'error');
+    }
+  };
+
+  const handleOpenDispute = (booking) => {
+    setDisputeBooking(booking);
+    setDisputeReason('');
+    setShowDisputeModal(true);
+  };
+
+  const submitDispute = async () => {
+    if (!disputeReason.trim()) { showNotification('Please provide a reason', 'error'); return; }
+    try {
+      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/freelancer-escrow/${disputeBooking.escrowId}/dispute`, 
+        { reason: disputeReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showNotification('Dispute opened. An admin will review.', 'success');
+      setShowDisputeModal(false);
+      if (refreshBookings) refreshBookings();
+    } catch (err) {
+      showNotification(err.response?.data?.error || 'Failed to open dispute', 'error');
+    }
+  };
 
   const unlockLead = async (bookingId) => {
     try {
@@ -198,12 +239,50 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
           </button>
         )}
 
-        {isSeller && booking.status === 'confirmed' && (
+        {/* Buyer: Approve Work button (only for escrow bookings when funded) */}
+        {isBuyer && booking.escrowId && booking.status === 'confirmed' && !booking.buyerWorkApproved && (
           <button
-            onClick={() => handleStatusUpdate(booking._id, 'completed')}
-            className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30"
+            onClick={() => handleApproveWork(booking._id)}
+            className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/30 flex items-center gap-1"
           >
-            Mark Completed
+            <span>✓</span> Approve Work
+          </button>
+        )}
+
+        {isBuyer && booking.buyerWorkApproved && (
+          <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">Work Approved ✓</span>
+        )}
+
+        {/* Seller: Mark Completed (gated by buyer approval for escrow bookings) */}
+        {isSeller && booking.status === 'confirmed' && (
+          booking.escrowId ? (
+            booking.buyerWorkApproved ? (
+              <button
+                onClick={() => handleStatusUpdate(booking._id, 'completed')}
+                className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30"
+              >
+                Mark Completed
+              </button>
+            ) : (
+              <span className="px-3 py-1 text-xs text-gray-500 italic">Awaiting buyer approval</span>
+            )
+          ) : (
+            <button
+              onClick={() => handleStatusUpdate(booking._id, 'completed')}
+              className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30"
+            >
+              Mark Completed
+            </button>
+          )
+        )}
+
+        {/* Dispute button for escrow bookings */}
+        {(isBuyer || isSeller) && booking.escrowId && booking.status === 'confirmed' && (
+          <button
+            onClick={() => handleOpenDispute(booking)}
+            className="px-3 py-1 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 text-xs"
+          >
+            Dispute
           </button>
         )}
       </div>
@@ -289,9 +368,14 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                   )}
                 </div>
                 <div className="text-right">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusBadgeClass(booking.status)}`}>
-                    {getStatusText(booking.status)}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusBadgeClass(booking.status)}`}>
+                      {getStatusText(booking.status)}
+                    </span>
+                    {booking.escrowId && (
+                      <EscrowStatusBadge status={booking.escrowStatus || (booking.buyerWorkApproved ? 'funded' : 'awaiting_deposit')} />
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(booking.createdAt).toLocaleDateString()}
                   </p>
@@ -362,6 +446,35 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                 className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
                 Accept Lead
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Dispute Modal */}
+      {showDisputeModal && disputeBooking && (
+        <Modal onClose={() => setShowDisputeModal(false)}>
+          <div>
+            <h2 className="text-xl font-bold text-white mb-4">Open Dispute</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Opening a dispute will freeze the escrow funds. An admin will review and make a decision.
+            </p>
+            <textarea
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="Describe the reason for your dispute..."
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm resize-none"
+              rows={4}
+              maxLength={1000}
+            />
+            <p className="text-gray-500 text-xs mt-1 text-right">{disputeReason.length}/1000</p>
+            <div className="flex gap-3 justify-end mt-4">
+              <button onClick={() => setShowDisputeModal(false)} className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm">
+                Cancel
+              </button>
+              <button onClick={submitDispute} disabled={!disputeReason.trim()} className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm">
+                Submit Dispute
               </button>
             </div>
           </div>

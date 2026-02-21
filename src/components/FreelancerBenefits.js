@@ -133,7 +133,7 @@ const FreelancerBenefits = ({ currentUser }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Secure Payments</h3>
             </div>
             <p className="text-gray-300">
-              Get paid securely with Stripe and PayPal for invoicing, plus NowPayments for crypto payments. Our booking system ensures safe transactions for both parties through our approval-based invoicing process.
+              Get paid securely with Stripe and PayPal for invoicing, plus escrow-protected crypto payments via AquaPay. Our booking system ensures safe transactions for both parties through our approval-based invoicing and on-chain escrow process.
             </p>
           </div>
 

@@ -105,6 +105,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // HyperSpace order approval states
   const [pendingHyperSpaceOrders, setPendingHyperSpaceOrders] = useState([]);
   const [isLoadingHyperSpaceOrders, setIsLoadingHyperSpaceOrders] = useState(false);
+  const [escrowDisputes, setEscrowDisputes] = useState([]);
+  const [escrowDisputeNotes, setEscrowDisputeNotes] = useState({});
   const [processingHyperSpaceOrderId, setProcessingHyperSpaceOrderId] = useState(null);
   // Referral QR code states
   const [showReferralQRModal, setShowReferralQRModal] = useState(false);
@@ -2637,6 +2639,39 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     });
   };
 
+  const fetchEscrowDisputes = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      const token = currentUser?.token || localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/freelancer-escrow/admin/all`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) setEscrowDisputes(data.escrows || []);
+    } catch (err) { console.error('Error fetching escrow disputes:', err); }
+  };
+
+  const handleEscrowAdminAction = async (escrowId, action) => {
+    try {
+      const token = currentUser?.token || localStorage.getItem('token');
+      const notes = escrowDisputeNotes[escrowId] || '';
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/freelancer-escrow/admin/${escrowId}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes })
+      });
+      const data = await response.json();
+      if (data.success) {
+        showNotification(`Escrow ${action === 'release' ? 'released to seller' : 'refunded to buyer'} successfully`, 'success');
+        fetchEscrowDisputes();
+      } else {
+        showNotification(data.error || `Failed to ${action} escrow`, 'error');
+      }
+    } catch (err) {
+      showNotification(`Error: ${err.message}`, 'error');
+    }
+  };
+
   // Socket listeners for HyperSpace orders
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
@@ -4137,6 +4172,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     {pendingHyperSpaceOrders.length > 0 && (
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
                         {pendingHyperSpaceOrders.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveAdminSection('escrowDisputes');
+                      if (!escrowDisputes || escrowDisputes.length === 0) fetchEscrowDisputes();
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'escrowDisputes' 
+                        ? 'bg-blue-600 text-white' 
+                        : escrowDisputes?.filter(e => e.status === 'disputed').length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-red-900/30 border-l-4 border-red-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🛡️ Escrow Disputes
+                    {escrowDisputes?.filter(e => e.status === 'disputed').length > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {escrowDisputes.filter(e => e.status === 'disputed').length}
                       </span>
                     )}
                   </button>
@@ -6138,6 +6193,98 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 )}
                               </div>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeAdminSection === 'escrowDisputes' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-semibold text-white">🛡️ Escrow Disputes</h3>
+                      <button onClick={fetchEscrowDisputes} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm">Refresh</button>
+                    </div>
+                    {(!escrowDisputes || escrowDisputes.length === 0) ? (
+                      <p className="text-gray-400 text-center py-8">No escrow records found.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {escrowDisputes.map(escrow => (
+                          <div key={escrow._id} className={`bg-gray-700 rounded-lg p-4 border-l-4 ${
+                            escrow.status === 'disputed' ? 'border-red-500' : 
+                            escrow.status === 'funded' ? 'border-green-500' : 
+                            escrow.status === 'released' || escrow.status === 'resolved_seller' ? 'border-emerald-500' :
+                            escrow.status === 'resolved_buyer' ? 'border-blue-500' : 'border-gray-600'
+                          }`}>
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    escrow.status === 'disputed' ? 'bg-red-500/20 text-red-400' :
+                                    escrow.status === 'funded' ? 'bg-green-500/20 text-green-400' :
+                                    escrow.status === 'released' ? 'bg-emerald-500/20 text-emerald-400' :
+                                    escrow.status === 'resolved_seller' ? 'bg-emerald-500/20 text-emerald-400' :
+                                    escrow.status === 'resolved_buyer' ? 'bg-blue-500/20 text-blue-400' :
+                                    'bg-gray-500/20 text-gray-400'
+                                  }`}>{escrow.status?.toUpperCase()}</span>
+                                  <span className="text-gray-500 text-xs">ID: {escrow._id.slice(-8)}</span>
+                                </div>
+                                <p className="text-white font-semibold">{escrow.amount} {escrow.currency || 'USDC'} on {escrow.chain || 'pending'}</p>
+                              </div>
+                              <span className="text-gray-500 text-xs">{new Date(escrow.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                              <div><span className="text-gray-500">Buyer:</span> <span className="text-white">{escrow.buyerId?.username || 'N/A'}</span></div>
+                              <div><span className="text-gray-500">Seller:</span> <span className="text-white">{escrow.sellerId?.username || 'N/A'}</span></div>
+                              <div><span className="text-gray-500">Invoice:</span> <span className="text-white">{escrow.invoiceId?.invoiceNumber || 'N/A'}</span></div>
+                              <div><span className="text-gray-500">Booking:</span> <span className="text-white">{escrow.bookingId?.status || 'N/A'}</span></div>
+                            </div>
+                            
+                            {escrow.depositTxHash && (
+                              <p className="text-xs text-gray-400 mb-2">Deposit TX: <span className="font-mono text-cyan-400">{escrow.depositTxHash.slice(0, 12)}...{escrow.depositTxHash.slice(-8)}</span></p>
+                            )}
+                            
+                            {escrow.disputeReason && (
+                              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-3">
+                                <p className="text-red-400 text-sm font-medium">Dispute Reason:</p>
+                                <p className="text-red-300 text-sm">{escrow.disputeReason}</p>
+                                {escrow.disputeOpenedBy && <p className="text-red-400/60 text-xs mt-1">Opened by: {escrow.disputeOpenedBy.username || escrow.disputeOpenedBy}</p>}
+                              </div>
+                            )}
+                            
+                            {escrow.disputeNotes && (
+                              <div className="bg-gray-600/30 rounded-lg p-2 mb-3">
+                                <p className="text-gray-400 text-xs">Admin Notes: {escrow.disputeNotes}</p>
+                              </div>
+                            )}
+                            
+                            {['funded', 'disputed'].includes(escrow.status) && (
+                              <div className="mt-3 pt-3 border-t border-gray-600">
+                                <input
+                                  type="text"
+                                  placeholder="Admin notes (optional)"
+                                  value={escrowDisputeNotes[escrow._id] || ''}
+                                  onChange={(e) => setEscrowDisputeNotes(prev => ({ ...prev, [escrow._id]: e.target.value }))}
+                                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm mb-3"
+                                />
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={() => handleEscrowAdminAction(escrow._id, 'release')}
+                                    className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium"
+                                  >
+                                    Release to Seller
+                                  </button>
+                                  <button 
+                                    onClick={() => handleEscrowAdminAction(escrow._id, 'refund')}
+                                    className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                                  >
+                                    Refund to Buyer
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

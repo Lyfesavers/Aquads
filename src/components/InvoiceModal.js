@@ -26,8 +26,13 @@ const InvoiceModal = ({
     description: `Invoice for ${booking?.serviceId?.title || 'service'}`,
     notes: 'Thank you for your business!',
     templateId: 'default',
-    paymentLink: ''
+    paymentLink: '',
+    paymentMethod: 'external'
   });
+
+  const sellerHasWallets = currentUser?.aquaPay?.wallets && (
+    currentUser.aquaPay.wallets.solana || currentUser.aquaPay.wallets.ethereum
+  );
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState(!!existingInvoice);
   const [invoice, setInvoice] = useState(existingInvoice);
@@ -102,6 +107,10 @@ const InvoiceModal = ({
   };
 
   const validateForm = () => {
+    if (formData.paymentMethod === 'crypto_escrow') {
+      return true;
+    }
+    
     if (!formData.paymentLink) {
       setErrorMessage('Payment link is required');
       return false;
@@ -141,7 +150,6 @@ const InvoiceModal = ({
       // Calculate total amount
       const totalAmount = itemsWithAmount.reduce((sum, item) => sum + (item.amount || 0), 0);
 
-      // Create payload with all required fields
       const invoiceData = {
         bookingId: booking._id,
         dueDate: formData.dueDate,
@@ -149,11 +157,10 @@ const InvoiceModal = ({
         items: itemsWithAmount,
         notes: formData.notes || '',
         templateId: formData.templateId || 'default',
-        paymentLink: formData.paymentLink,
-        // Include calculated amount
+        paymentLink: formData.paymentMethod === 'crypto_escrow' ? '' : formData.paymentLink,
+        paymentMethod: formData.paymentMethod || 'external',
         amount: totalAmount,
-        // Include currency if available from booking
-        currency: booking.currency || 'USD',
+        currency: formData.paymentMethod === 'crypto_escrow' ? 'USDC' : (booking.currency || 'USD'),
       };
 
       const response = await invoiceService.createInvoice(invoiceData);
@@ -280,53 +287,105 @@ const InvoiceModal = ({
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">Payment Link (required)</label>
-        <input
-          type="url"
-          name="paymentLink"
-          value={formData.paymentLink}
-          onChange={handleInputChange}
-          placeholder="https://paypal.me/yourusername or other payment link"
-          className={`w-full px-3 py-2 bg-gray-700 border ${
-            errorMessage ? 'border-red-500' : 'border-gray-600'
-          } rounded text-white`}
-          required
-        />
-        {errorMessage && (
-          <p className="mt-1 text-sm text-red-500">{errorMessage}</p>
-        )}
-        
-        {/* Payment Provider Helper Buttons */}
-        <div className="mt-2">
-          <p className="text-xs text-gray-400 mb-2">Create payment links:</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => window.open('https://www.paypal.com/paypalme/', '_blank')}
-              className="px-3 py-1 text-xs rounded-full border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
-            >
-              💳 PayPal.me
-            </button>
-            <button
-              type="button"
-              onClick={() => window.open('https://dashboard.stripe.com/payment-links', '_blank')}
-              className="px-3 py-1 text-xs rounded-full border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
-            >
-              💰 Stripe Links
-            </button>
-            <button
-              type="button"
-              onClick={() => window.open('https://nowpayments.io/', '_blank')}
-              className="px-3 py-1 text-xs rounded-full border border-green-500 text-green-400 hover:bg-green-500 hover:text-white transition-colors"
-            >
-              ₿ NOWPayments
-            </button>
-          </div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Payment Method</label>
+        <div className="flex gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, paymentMethod: 'external' })}
+            className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+              formData.paymentMethod === 'external'
+                ? 'bg-blue-600/20 border-blue-500 text-blue-400'
+                : 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+            }`}
+          >
+            💳 External Link
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (sellerHasWallets) {
+                setFormData({ ...formData, paymentMethod: 'crypto_escrow', paymentLink: '' });
+              }
+            }}
+            disabled={!sellerHasWallets}
+            className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+              formData.paymentMethod === 'crypto_escrow'
+                ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400'
+                : sellerHasWallets
+                  ? 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                  : 'bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
+            }`}
+          >
+            🛡️ Crypto (Escrow)
+          </button>
         </div>
-        
-        <p className="mt-1 text-xs text-gray-400">
-          Enter the link where the buyer can make payment (PayPal, Stripe, etc.)
-        </p>
+
+        {formData.paymentMethod === 'crypto_escrow' ? (
+          <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-400 text-sm mt-0.5">🛡️</span>
+              <div>
+                <p className="text-emerald-300 text-sm font-medium">Escrow Protected Payment</p>
+                <p className="text-emerald-400/70 text-xs mt-1">
+                  A secure escrow payment link will be auto-generated. Buyer deposits USDC which is held until they approve the work. 1.25% platform fee applies.
+                </p>
+              </div>
+            </div>
+            {booking?.escrowId && (
+              <div className="mt-2 pt-2 border-t border-emerald-700/30">
+                <p className="text-amber-400 text-xs">This booking already has an active escrow.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Payment Link (required)</label>
+            <input
+              type="url"
+              name="paymentLink"
+              value={formData.paymentLink}
+              onChange={handleInputChange}
+              placeholder="https://paypal.me/yourusername or other payment link"
+              className={`w-full px-3 py-2 bg-gray-700 border ${
+                errorMessage ? 'border-red-500' : 'border-gray-600'
+              } rounded text-white`}
+              required
+            />
+            {errorMessage && (
+              <p className="mt-1 text-sm text-red-500">{errorMessage}</p>
+            )}
+            
+            <div className="mt-2">
+              <p className="text-xs text-gray-400 mb-2">Create payment links:</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.open('https://www.paypal.com/paypalme/', '_blank')}
+                  className="px-3 py-1 text-xs rounded-full border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+                >
+                  💳 PayPal.me
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.open('https://dashboard.stripe.com/payment-links', '_blank')}
+                  className="px-3 py-1 text-xs rounded-full border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
+                >
+                  💰 Stripe Links
+                </button>
+              </div>
+            </div>
+            
+            <p className="mt-1 text-xs text-gray-400">
+              Enter the link where the buyer can make payment (PayPal, Stripe, etc.)
+            </p>
+          </>
+        )}
+
+        {!sellerHasWallets && formData.paymentMethod !== 'crypto_escrow' && (
+          <p className="mt-2 text-xs text-amber-400/70">
+            Set up AquaPay wallets in your profile to enable escrow-protected crypto payments.
+          </p>
+        )}
       </div>
 
       <div className="mt-4">

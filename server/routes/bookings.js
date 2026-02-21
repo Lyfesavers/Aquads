@@ -3,6 +3,7 @@ const router = express.Router();
 const Booking = require('../models/Booking');
 const BookingMessage = require('../models/BookingMessage');
 const Service = require('../models/Service');
+const FreelancerEscrow = require('../models/FreelancerEscrow');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const multer = require('multer');
@@ -149,11 +150,25 @@ router.get('/my-bookings', auth, async (req, res) => {
       ]
     })
     .populate('serviceId')
-    .populate('sellerId', 'username email cv')
+    .populate('sellerId', 'username email cv aquaPay')
     .populate('buyerId', 'username email cv')
+    .populate('escrowId')
     .sort({ createdAt: -1 });
 
-    res.json(bookings);
+    // Attach escrow status to booking objects for frontend use
+    const bookingsWithEscrow = bookings.map(b => {
+      const obj = b.toObject();
+      if (obj.escrowId && typeof obj.escrowId === 'object') {
+        obj.escrowStatus = obj.escrowId.status;
+        obj.depositTxHash = obj.escrowId.depositTxHash;
+        obj.releaseTxHash = obj.escrowId.releaseTxHash;
+        obj.disputeReason = obj.escrowId.disputeReason;
+        obj.escrowId = obj.escrowId._id;
+      }
+      return obj;
+    });
+
+    res.json(bookingsWithEscrow);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -171,11 +186,22 @@ router.get('/:bookingId', auth, async (req, res) => {
     
     const booking = await Booking.findById(bookingId)
       .populate('serviceId')
-      .populate('sellerId', 'username email cv')
-      .populate('buyerId', 'username email cv');
+      .populate('sellerId', 'username email cv aquaPay')
+      .populate('buyerId', 'username email cv')
+      .populate('escrowId');
     
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Attach escrow status for frontend use
+    if (booking.escrowId && typeof booking.escrowId === 'object') {
+      const bookingObj = booking.toObject();
+      bookingObj.escrowStatus = bookingObj.escrowId.status;
+      bookingObj.depositTxHash = bookingObj.escrowId.depositTxHash;
+      bookingObj.releaseTxHash = bookingObj.escrowId.releaseTxHash;
+      bookingObj.disputeReason = bookingObj.escrowId.disputeReason;
+      bookingObj.escrowId = bookingObj.escrowId._id;
     }
     
     // Verify user is either buyer or seller
@@ -270,9 +296,35 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
         if (booking.status !== 'confirmed') {
           return res.status(400).json({ error: 'Booking must be confirmed before completion' });
         }
+
+        // Gate: if escrow is active, buyer must have approved work first
+        if (booking.escrowId && !booking.buyerWorkApproved) {
+          return res.status(400).json({ error: 'Buyer must approve work before marking as completed' });
+        }
+
         booking.completedAt = new Date();
+
+        // If escrow is active, release funds to seller
+        if (booking.escrowId) {
+          try {
+            const escrowService = require('../services/escrowService');
+            const releaseResult = await escrowService.releaseToSeller(booking.escrowId);
+            console.log('Escrow released:', releaseResult);
+
+            try {
+              const { getIO } = require('../socket');
+              const io = getIO();
+              if (io) {
+                io.to(`user_${booking.sellerId}`).emit('escrowUpdated', { type: 'released', bookingId: booking._id });
+                io.to(`user_${booking.buyerId}`).emit('escrowUpdated', { type: 'released', bookingId: booking._id });
+              }
+            } catch (socketErr) { console.error('Socket emit error:', socketErr); }
+          } catch (escrowErr) {
+            console.error('Error releasing escrow:', escrowErr);
+            return res.status(500).json({ error: 'Failed to release escrow payment: ' + escrowErr.message });
+          }
+        }
         
-        // Update all watermarked messages to remove watermark flag when booking is completed
         try {
           const BookingMessage = require('../models/BookingMessage');
           await BookingMessage.updateMany(
@@ -284,10 +336,8 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
               $set: { isWatermarked: false } 
             }
           );
-          // Watermark flags updated
         } catch (watermarkUpdateError) {
           console.error('Error updating watermark flags:', watermarkUpdateError);
-          // Don't fail the booking completion if watermark update fails
         }
         break;
 
@@ -374,6 +424,59 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Buyer approves work (escrow gate for Mark Completed)
+router.post('/:id/approve-work', auth, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    if (booking.buyerId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the buyer can approve work' });
+    }
+
+    if (booking.status !== 'confirmed') {
+      return res.status(400).json({ error: 'Booking must be in confirmed status' });
+    }
+
+    if (!booking.escrowId) {
+      return res.status(400).json({ error: 'This booking does not have an active escrow' });
+    }
+
+    if (booking.buyerWorkApproved) {
+      return res.status(400).json({ error: 'Work already approved' });
+    }
+
+    booking.buyerWorkApproved = true;
+    booking.buyerWorkApprovedAt = new Date();
+    await booking.save();
+
+    // Notify seller that buyer approved
+    const { createNotification: createNotif } = require('./notifications');
+    await createNotif(
+      booking.sellerId,
+      'booking',
+      `Buyer approved work for booking #${booking._id.toString().substring(0, 6)}! You can now mark it as completed.`,
+      `/dashboard?tab=bookings`,
+      { relatedId: booking._id, relatedModel: 'Booking' }
+    );
+
+    // Socket notification
+    try {
+      const { getIO } = require('../socket');
+      const io = getIO();
+      if (io) {
+        io.to(`user_${booking.sellerId}`).emit('bookingUpdated', { type: 'work_approved', bookingId: booking._id });
+        io.to(`user_${booking.buyerId}`).emit('bookingUpdated', { type: 'work_approved', bookingId: booking._id });
+      }
+    } catch (socketErr) { console.error('Socket emit error:', socketErr); }
+
+    res.json({ success: true, message: 'Work approved', booking });
+  } catch (error) {
+    console.error('Error approving work:', error);
     res.status(500).json({ error: error.message });
   }
 });
