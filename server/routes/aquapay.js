@@ -177,7 +177,7 @@ router.post('/payment', async (req, res) => {
 });
 
 // Solana RPC Proxy (avoids CORS/rate-limit issues from browser)
-const SOLANA_RPCS = [
+const SOLANA_RPCS_MAINNET = [
   'https://solana-rpc.publicnode.com',
   'https://solana-mainnet.rpc.extrnode.com', 
   'https://api.mainnet-beta.solana.com',
@@ -185,9 +185,13 @@ const SOLANA_RPCS = [
   'https://rpc.ankr.com/solana'
 ];
 
+const SOLANA_RPCS_DEVNET = [
+  'https://api.devnet.solana.com'
+];
+
 router.post('/solana-rpc', async (req, res) => {
   try {
-    const { method, params } = req.body;
+    const { method, params, network } = req.body;
     
     // Only allow specific safe methods
     const allowedMethods = [
@@ -204,12 +208,16 @@ router.post('/solana-rpc', async (req, res) => {
       return res.status(400).json({ error: 'Method not allowed' });
     }
 
+    // Use devnet RPCs if requested or if ESCROW_MODE is testnet
+    const useDevnet = network === 'devnet' || (network === 'testnet');
+    const rpcList = useDevnet ? SOLANA_RPCS_DEVNET : SOLANA_RPCS_MAINNET;
+
     let lastError = null;
     const axios = require('axios');
     
     // Try each RPC until one works
-    for (let i = 0; i < SOLANA_RPCS.length; i++) {
-      const rpcUrl = SOLANA_RPCS[i];
+    for (let i = 0; i < rpcList.length; i++) {
+      const rpcUrl = rpcList[i];
       try {
         const response = await axios.post(rpcUrl, {
           jsonrpc: '2.0',

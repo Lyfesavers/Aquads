@@ -55,10 +55,10 @@ const SOLANA_USDC_MINT = ESCROW_MODE === 'mainnet'
 const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)', 'function decimals() view returns (uint8)'];
 
 class ProxiedConnection {
-  constructor(apiUrl) { this.apiUrl = apiUrl; }
+  constructor(apiUrl) { this.apiUrl = apiUrl; this.network = ESCROW_MODE === 'testnet' ? 'devnet' : 'mainnet'; }
   async _call(method, params) {
     try {
-      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, { method, params }, { timeout: 30000 });
+      const res = await axios.post(`${this.apiUrl}/api/aquapay/solana-rpc`, { method, params, network: this.network }, { timeout: 30000 });
       if (res.data.error) throw new Error(res.data.error.message || res.data.error);
       return res.data.result;
     } catch (err) {
