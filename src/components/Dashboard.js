@@ -339,17 +339,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         fetchBookings();
       };
 
+      const handleAdminEscrowUpdate = () => {
+        if (currentUser?.isAdmin) {
+          fetchEscrowDisputes();
+        }
+      };
+
       // Listen for socket events
       socket.on('bookingUpdated', handleBookingUpdate);
       socket.on('userBookingsLoaded', handleUserBookingsLoaded);
       socket.on('userBookingsError', handleUserBookingsError);
       socket.on('escrowUpdated', handleEscrowUpdate);
+      socket.on('adminEscrowUpdate', handleAdminEscrowUpdate);
 
       return () => {
         socket.off('bookingUpdated', handleBookingUpdate);
         socket.off('userBookingsLoaded', handleUserBookingsLoaded);
         socket.off('userBookingsError', handleUserBookingsError);
         socket.off('escrowUpdated', handleEscrowUpdate);
+        socket.off('adminEscrowUpdate', handleAdminEscrowUpdate);
       };
     }
   }, [socket, currentUser]);
@@ -2660,7 +2668,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!currentUser?.isAdmin) return;
     try {
       const token = currentUser?.token || localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/freelancer-escrow/admin/all`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/freelancer-escrow/admin/all?disputesOnly=true`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -6089,7 +6097,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <button onClick={fetchEscrowDisputes} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm">Refresh</button>
                     </div>
                     {(!escrowDisputes || escrowDisputes.length === 0) ? (
-                      <p className="text-gray-400 text-center py-8">No escrow records found.</p>
+                      <p className="text-gray-400 text-center py-8">No escrow disputes found.</p>
                     ) : (
                       <div className="space-y-4">
                         {escrowDisputes.map(escrow => (

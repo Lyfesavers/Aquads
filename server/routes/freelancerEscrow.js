@@ -40,9 +40,13 @@ router.get('/admin/all', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const { status } = req.query;
+    const { status, disputesOnly } = req.query;
     const filter = {};
-    if (status) filter.status = status;
+    if (disputesOnly === 'true') {
+      filter.status = { $in: ['disputed', 'resolved_seller', 'resolved_buyer'] };
+    } else if (status) {
+      filter.status = status;
+    }
 
     const escrows = await FreelancerEscrow.find(filter)
       .populate('buyerId', 'username email')
@@ -85,6 +89,7 @@ router.post('/admin/:escrowId/release', auth, async (req, res) => {
         if (io) {
           io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'resolved_seller', escrow: escrow.toObject(), bookingId: escrow.bookingId });
           io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'resolved_seller', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.emit('adminEscrowUpdate', { type: 'resolved_seller', escrowId: escrow._id });
 
           const populatedBooking = await Booking.findById(escrow.bookingId)
             .populate('serviceId')
@@ -141,6 +146,7 @@ router.post('/admin/:escrowId/refund', auth, async (req, res) => {
         if (io) {
           io.to(`user_${escrow.sellerId}`).emit('escrowUpdated', { type: 'resolved_buyer', escrow: escrow.toObject(), bookingId: escrow.bookingId });
           io.to(`user_${escrow.buyerId}`).emit('escrowUpdated', { type: 'resolved_buyer', escrow: escrow.toObject(), bookingId: escrow.bookingId });
+          io.emit('adminEscrowUpdate', { type: 'resolved_buyer', escrowId: escrow._id });
 
           const populatedBooking = await Booking.findById(escrow.bookingId)
             .populate('serviceId')
@@ -438,6 +444,7 @@ router.post('/:escrowId/dispute', auth, async (req, res) => {
           escrow: escrow.toObject(),
           bookingId: escrow.bookingId
         });
+        io.emit('adminEscrowUpdate', { type: 'disputed', escrowId: escrow._id });
       }
     } catch (socketErr) {
       console.error('Socket emit error:', socketErr);
