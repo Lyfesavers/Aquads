@@ -79,6 +79,34 @@ async function calculateUserTrustScore(userId) {
   }
 }
 
+// Admin: Check webhook status
+router.get('/telegram-webhook-status', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    const status = await telegramService.getWebhookStatus();
+    res.json(status);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: Force reset webhook
+router.post('/telegram-webhook-reset', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    console.log('🔄 Admin triggered webhook reset');
+    const success = await telegramService.setupWebhook();
+    const status = await telegramService.getWebhookStatus();
+    res.json({ reset: success, ...status });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Webhook endpoint for receiving Telegram bot updates
 router.post('/telegram-webhook', async (req, res) => {
   try {
@@ -87,36 +115,54 @@ router.post('/telegram-webhook', async (req, res) => {
     // Always respond 200 OK quickly to Telegram
     res.json({ ok: true });
     
-    // Process updates asynchronously
+    // Process updates asynchronously with isolated error handling
     if (update.message) {
       // Handle photo uploads (for branding)
       if (update.message.photo) {
-        const chatId = update.message.chat.id;
-        const userId = update.message.from.id;
-        const handled = await telegramService.handleBrandingImageUpload(chatId, userId, update.message.photo);
-        // If not handled by branding, continue to command handler
-        if (!handled && update.message.caption) {
-          // Handle caption as command if photo wasn't for branding
-          update.message.text = update.message.caption;
-          await telegramService.handleCommand(update.message);
+        try {
+          const chatId = update.message.chat.id;
+          const userId = update.message.from.id;
+          const handled = await telegramService.handleBrandingImageUpload(chatId, userId, update.message.photo);
+          if (!handled && update.message.caption) {
+            update.message.text = update.message.caption;
+            await telegramService.handleCommand(update.message);
+          }
+        } catch (cmdError) {
+          console.error('Command handler error (photo):', cmdError.message);
         }
       }
       // Handle text messages
       else if (update.message.text) {
-        await telegramService.handleCommand(update.message);
+        try {
+          await telegramService.handleCommand(update.message);
+        } catch (cmdError) {
+          console.error('Command handler error:', cmdError.message);
+        }
       }
       
-      // Track engagement in private group (messages)
-      await telegramService.handleEngagementMessage(update.message);
+      // Track engagement independently - never let command errors block this
+      try {
+        await telegramService.handleEngagementMessage(update.message);
+      } catch (engError) {
+        console.error('Engagement handler error:', engError.message);
+      }
     }
     
     if (update.callback_query) {
-      await telegramService.handleCallbackQuery(update.callback_query);
+      try {
+        await telegramService.handleCallbackQuery(update.callback_query);
+      } catch (cbError) {
+        console.error('Callback query handler error:', cbError.message);
+      }
     }
     
     // Handle reactions for daily engagement points
     if (update.message_reaction) {
-      await telegramService.handleEngagementReaction(update.message_reaction);
+      try {
+        await telegramService.handleEngagementReaction(update.message_reaction);
+      } catch (reactError) {
+        console.error('Reaction handler error:', reactError.message);
+      }
     }
     
   } catch (error) {

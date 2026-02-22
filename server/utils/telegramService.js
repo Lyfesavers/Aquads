@@ -416,56 +416,138 @@ const telegramService = {
     }
   },
 
+  webhookHealthy: false,
+
+  setupWebhook: async (retryCount = 0) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 5000;
+
+    try {
+      await axios.post(`https://api.telegram.org/bot${botToken}/deleteWebhook`, {
+        drop_pending_updates: false
+      });
+      
+      const webhookUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+      
+      const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        url: webhookUrl,
+        drop_pending_updates: false,
+        allowed_updates: ['message', 'callback_query', 'message_reaction']
+      });
+      
+      if (setWebhookResult.data.ok) {
+        console.log('✅ Telegram bot webhook configured successfully at:', webhookUrl);
+        telegramService.webhookHealthy = true;
+        return true;
+      } else {
+        console.error('❌ Failed to set webhook:', setWebhookResult.data.description);
+        telegramService.webhookHealthy = false;
+      }
+    } catch (error) {
+      console.error(`❌ Webhook setup attempt ${retryCount + 1} failed:`, error.message);
+      telegramService.webhookHealthy = false;
+    }
+
+    if (retryCount < MAX_RETRIES) {
+      console.log(`🔄 Retrying webhook setup in ${RETRY_DELAY_MS / 1000}s... (attempt ${retryCount + 2}/${MAX_RETRIES + 1})`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+      return telegramService.setupWebhook(retryCount + 1);
+    }
+
+    console.error('❌ All webhook setup attempts failed. Will retry via health check.');
+    return false;
+  },
+
+  checkWebhookHealth: async () => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken || process.env.TELEGRAM_BOT_DISABLED === 'true') return;
+
+    try {
+      const response = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const info = response.data.result;
+      const expectedUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+
+      if (!info.url || info.url !== expectedUrl) {
+        console.error(`⚠️ Webhook URL mismatch! Expected: ${expectedUrl}, Got: ${info.url || '(none)'}`);
+        console.log('🔄 Re-establishing webhook...');
+        await telegramService.setupWebhook();
+        return;
+      }
+
+      if (info.last_error_date) {
+        const errorAge = Date.now() / 1000 - info.last_error_date;
+        if (errorAge < 300) {
+          console.error(`⚠️ Webhook has recent error (${Math.round(errorAge)}s ago): ${info.last_error_message}`);
+        }
+      }
+
+      telegramService.webhookHealthy = true;
+    } catch (error) {
+      console.error('❌ Webhook health check failed:', error.message);
+      telegramService.webhookHealthy = false;
+      await telegramService.setupWebhook();
+    }
+  },
+
+  getWebhookStatus: async () => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return { configured: false, reason: 'No bot token' };
+
+    try {
+      const response = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      const info = response.data.result;
+      const expectedUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+
+      return {
+        configured: true,
+        healthy: telegramService.webhookHealthy,
+        currentUrl: info.url,
+        expectedUrl: expectedUrl,
+        urlMatch: info.url === expectedUrl,
+        pendingUpdateCount: info.pending_update_count,
+        lastErrorDate: info.last_error_date ? new Date(info.last_error_date * 1000).toISOString() : null,
+        lastErrorMessage: info.last_error_message || null,
+        maxConnections: info.max_connections,
+        allowedUpdates: info.allowed_updates
+      };
+    } catch (error) {
+      return { configured: false, reason: error.message };
+    }
+  },
+
   startBot: async () => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const botDisabled = process.env.TELEGRAM_BOT_DISABLED === 'true';
     
     if (!botToken || botDisabled) {
+      console.log('⚠️ Telegram bot disabled or no token set');
       return false;
     }
 
-    // Load active groups from database
     await telegramService.loadActiveGroups();
-    
-    // Load opted-in groups for community raids from database
     await telegramService.loadRaidCrossPostingGroups();
 
-    // Test bot configuration
     try {
       const response = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
       if (!response.data.ok) {
-        console.error('Bot configuration error:', response.data);
+        console.error('❌ Bot configuration error:', response.data);
         return false;
       }
+      console.log(`✅ Telegram bot authenticated: @${response.data.result.username}`);
     } catch (error) {
-      console.error('Bot test failed:', error.message);
+      console.error('❌ Bot test failed:', error.message);
       return false;
     }
 
-    // Clear any existing webhook and set up new one
-    try {
-      await axios.post(`https://api.telegram.org/bot${botToken}/deleteWebhook`, {
-        drop_pending_updates: true
+    await telegramService.setupWebhook();
+
+    // Periodic webhook health check every 5 minutes
+    setInterval(() => {
+      telegramService.checkWebhookHealth().catch(err => {
+        console.error('Webhook health check error:', err.message);
       });
-      
-      // Set up webhook
-      const webhookUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
-      
-      const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
-        url: webhookUrl,
-        drop_pending_updates: true,
-        allowed_updates: ['message', 'callback_query', 'message_reaction']
-      });
-      
-      if (setWebhookResult.data.ok) {
-        console.log('Telegram bot webhook configured successfully');
-      } else {
-        console.error('Failed to set webhook:', setWebhookResult.data.description);
-      }
-      
-    } catch (error) {
-      console.error('Failed to configure webhook:', error.message);
-    }
+    }, 5 * 60 * 1000);
     
     return true;
   },
