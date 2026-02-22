@@ -428,7 +428,7 @@ const telegramService = {
         drop_pending_updates: false
       });
       
-      const webhookUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+      const webhookUrl = `${process.env.BACKEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
       
       const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         url: webhookUrl,
@@ -466,7 +466,7 @@ const telegramService = {
     try {
       const response = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
       const info = response.data.result;
-      const expectedUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+      const expectedUrl = `${process.env.BACKEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
 
       if (!info.url || info.url !== expectedUrl) {
         console.error(`⚠️ Webhook URL mismatch! Expected: ${expectedUrl}, Got: ${info.url || '(none)'}`);
@@ -497,7 +497,7 @@ const telegramService = {
     try {
       const response = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
       const info = response.data.result;
-      const expectedUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
+      const expectedUrl = `${process.env.BACKEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
 
       return {
         configured: true,
