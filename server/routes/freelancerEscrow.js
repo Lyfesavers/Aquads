@@ -204,8 +204,8 @@ async function finalizeEscrowFunded(escrow) {
   const booking = await Booking.findById(escrow.bookingId);
   if (booking) {
     booking.escrowId = escrow._id;
-    if (booking.status === 'pending' || booking.status === 'accepted_by_seller') {
-      booking.status = booking.status === 'accepted_by_seller' ? 'confirmed' : 'accepted_by_buyer';
+    if (!['completed', 'cancelled'].includes(booking.status)) {
+      booking.status = 'confirmed';
     }
     await booking.save();
   }
