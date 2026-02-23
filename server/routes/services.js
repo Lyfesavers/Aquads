@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
       .sort(sortOptions)
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Get service IDs for batch review query
     const serviceIds = services.map(service => service._id);
@@ -146,7 +146,7 @@ router.get('/search', async (req, res) => {
       { score: { $meta: 'textScore' } }
     )
     .sort({ score: { $meta: 'textScore' } })
-    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     res.json(services);
   } catch (error) {
@@ -162,7 +162,7 @@ router.get('/category/:categoryId', async (req, res) => {
       status: 'active' // Only show active services in category view
     })
       .sort({ rating: -1 })
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
     res.json(services);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching services by category', error: error.message });
@@ -215,7 +215,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       // Don't fail the service creation if points awarding fails
     }
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Emit real-time socket update for new service pending approval
     try {
@@ -265,7 +265,7 @@ router.put('/:id', auth, requireEmailVerification, upload.single('image'), async
     });
 
     await service.save();
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     res.json(service);
   } catch (error) {
@@ -590,7 +590,7 @@ router.get('/pending', auth, async (req, res) => {
 
     const services = await Service.find({ status: 'pending' })
       .sort({ createdAt: -1 })
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     res.json(services);
   } catch (error) {
@@ -619,7 +619,7 @@ router.post('/:id/approve', auth, async (req, res) => {
     service.status = 'active';
     await service.save();
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Create notification for the seller
     try {
@@ -683,7 +683,7 @@ router.post('/:id/reject', auth, async (req, res) => {
     service.status = 'inactive';
     await service.save();
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Create notification for the seller
     try {
@@ -827,7 +827,7 @@ router.get('/featured-random', async (req, res) => {
       status: 'active',
       rating: { $gte: 4.0 }
     })
-    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     if (!services || services.length === 0) {
       return res.json({ services: [] });
