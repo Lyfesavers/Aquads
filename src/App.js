@@ -1011,6 +1011,7 @@ function App() {
       } else {
         showNotification(error.message || 'Login failed', 'error');
       }
+      throw error;
     }
   };
 

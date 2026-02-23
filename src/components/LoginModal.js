@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Modal } from 'react-bootstrap';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
@@ -10,6 +10,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const googleButtonRef = useRef(null);
@@ -61,7 +62,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
     };
   }, [clientId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -70,7 +71,14 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
       return;
     }
 
-    onLogin(formData);
+    setIsLoading(true);
+    try {
+      await onLogin(formData);
+    } catch {
+      // Error already handled by parent via showNotification
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -123,8 +131,9 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
                 value={formData.identifier}
                 onChange={handleChange}
                 required
+                disabled={isLoading}
                 placeholder="Enter username or email"
-                className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 autoComplete="username"
               />
             </div>
@@ -137,7 +146,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-3 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isLoading}
+                  className="w-full px-3 py-3 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   autoComplete="current-password"
                 />
                 <button
@@ -173,9 +183,15 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount, onGoogleLogin }) => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 text-white px-6 py-2 rounded transition-colors ${
+                    isLoading
+                      ? 'bg-blue-400 cursor-not-allowed opacity-75'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
                 >
-                  Login
+                  {isLoading && <FaSpinner className="animate-spin" size={14} />}
+                  {isLoading ? 'Logging in...' : 'Login'}
                 </button>
               </div>
 
