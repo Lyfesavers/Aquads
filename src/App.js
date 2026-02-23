@@ -55,7 +55,7 @@ import useUserPresence from './hooks/useUserPresence';
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
 import BookingConversationPage from './components/BookingConversationPage';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
@@ -281,6 +281,17 @@ const NavigationListener = ({ onNavigate }) => {
   return null;
 };
 
+// Ref to hold React Router navigate function for use outside Router children
+const navigateRef = { current: null };
+
+const NavigateHelper = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
+  return null;
+};
+
 // Handle URL parameters for opening profile modal with specific tab
 const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalInitialTab }) => {
   const location = useLocation();
@@ -313,6 +324,7 @@ const ProfileTabHandler = ({ currentUser, setShowProfileModal, setProfileModalIn
 // Handle URL parameters for opening dashboard with specific tab
 const DashboardTabHandler = ({ currentUser }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -321,13 +333,13 @@ const DashboardTabHandler = ({ currentUser }) => {
     if (openDashboardTab) {
       if (currentUser) {
         window.history.replaceState({}, '', window.location.pathname);
-        window.location.href = `/dashboard/${openDashboardTab}`;
+        navigate(`/dashboard/${openDashboardTab}`, { replace: true });
       } else {
         localStorage.setItem('aquads_pending_dashboard_tab', openDashboardTab);
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [location.search, currentUser]);
+  }, [location.search, currentUser, navigate]);
   
   return null;
 };
@@ -1936,7 +1948,7 @@ function App() {
       const pendingTab = localStorage.getItem('aquads_pending_dashboard_tab');
       if (pendingTab) {
         localStorage.removeItem('aquads_pending_dashboard_tab');
-        window.location.href = `/dashboard/${pendingTab}`;
+        if (navigateRef.current) navigateRef.current(`/dashboard/${pendingTab}`);
       }
       
       // Effect to open profile modal after login if there was a pending tab
@@ -1954,13 +1966,13 @@ function App() {
     const handleOpenDashboardWithBooking = (event) => {
       logger.log('Opening dashboard with booking:', event.detail.bookingId);
       setActiveBookingId(event.detail.bookingId);
-      window.location.href = '/dashboard/ads';
+      if (navigateRef.current) navigateRef.current('/dashboard/bookings');
     };
     
     // Define handler for opening dashboard without specific booking
     const handleOpenDashboard = () => {
       logger.log('Opening dashboard');
-      window.location.href = '/dashboard';
+      if (navigateRef.current) navigateRef.current('/dashboard');
     };
     
     // Add event listeners
@@ -1973,7 +1985,7 @@ function App() {
       if (bookingId) {
         setActiveBookingId(bookingId);
       }
-      window.location.href = `/dashboard/${tab || 'ads'}`;
+      if (navigateRef.current) navigateRef.current(`/dashboard/${tab || 'ads'}`);
     };
     
     // Check localStorage for dashboard open flag (fallback method)
@@ -1997,7 +2009,7 @@ function App() {
         localStorage.removeItem('aquads_open_booking');
         localStorage.removeItem('aquads_notification_timestamp');
         
-        window.location.href = '/dashboard/ads';
+        if (navigateRef.current) navigateRef.current('/dashboard/ads');
       }
     };
     
@@ -2438,6 +2450,7 @@ function App() {
             }
           }}
         />
+        <NavigateHelper />
         <ProfileTabHandler 
           currentUser={currentUser}
           setShowProfileModal={setShowProfileModal}
