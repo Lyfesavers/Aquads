@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { ESCROW_WALLETS, ESCROW_MODE, FEE_CONFIG } from '../../config/wallets';
+import emailService from '../../services/emailService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
 
@@ -164,6 +165,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showSolanaWalletModal, setShowSolanaWalletModal] = useState(false);
   const [wcProvider, setWcProvider] = useState(null);
+  const [payerEmail, setPayerEmail] = useState('');
 
   const feePercentage = FEE_CONFIG.ESCROW_FEE_PERCENTAGE;
 
@@ -369,6 +371,24 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         senderAddress: walletAddress
       }, { headers: { Authorization: `Bearer ${currentUser.token}` } });
 
+      // Fire receipt emails in background — never block payment flow
+      const emailPayload = {
+        recipientName: escrow?.sellerId?.username || 'Seller',
+        amount: escrow?.amount,
+        token: 'USDC',
+        chain: selectedChain,
+        senderAddress: walletAddress,
+        txHash: hash,
+        message: `Escrow payment for Invoice #${escrow?.invoiceId?.invoiceNumber || ''}`
+      };
+
+      if (escrow?.sellerId?.email) {
+        emailService.sendAquaPayPaymentNotification(escrow.sellerId.email, emailPayload).catch(() => {});
+      }
+      if (payerEmail && payerEmail.trim()) {
+        emailService.sendAquaPayReceipt(payerEmail.trim(), emailPayload).catch(() => {});
+      }
+
       if (res.data?.verification && !res.data.verification.verified) {
         setTxStatus('success');
         setTxError('Deposit sent! Verification is pending — it may take a moment to confirm on-chain. You can retry from this page.');
@@ -544,6 +564,12 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
                           <div className="flex justify-between text-sm"><span className="text-slate-500">Platform Fee ({feeDetails.feePercentageDisplay}%)</span><span className="text-amber-400">{feeDetails.feeAmount.toFixed(6)} USDC</span></div>
                           <div className="flex justify-between text-sm font-semibold"><span className="text-slate-400">You Pay</span><span className="text-cyan-400">{feeDetails.totalAmount.toFixed(6)} USDC</span></div>
                         </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-slate-400 text-sm mb-2">Email for receipt (optional)</label>
+                        <input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="your@email.com"
+                          className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 focus:border-cyan-500 rounded-xl text-white text-sm focus:outline-none transition-colors" />
                       </div>
 
                       <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-4">

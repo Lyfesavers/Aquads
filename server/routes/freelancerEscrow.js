@@ -13,8 +13,8 @@ const FEE_PERCENTAGE = 0.0125;
 router.get('/booking/:bookingId', auth, async (req, res) => {
   try {
     const escrow = await FreelancerEscrow.findOne({ bookingId: req.params.bookingId })
-      .populate('buyerId', 'username')
-      .populate('sellerId', 'username');
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email');
 
     if (!escrow) {
       return res.status(404).json({ error: 'No escrow found for this booking' });
@@ -178,7 +178,7 @@ router.get('/:escrowId', auth, async (req, res) => {
   try {
     const escrow = await FreelancerEscrow.findById(req.params.escrowId)
       .populate('buyerId', 'username image')
-      .populate('sellerId', 'username image aquaPay')
+      .populate('sellerId', 'username image aquaPay email')
       .populate('bookingId', 'serviceId status')
       .populate('invoiceId', 'invoiceNumber amount currency');
 
