@@ -8,7 +8,7 @@ const requireEmailVerification = async (req, res, next) => {
     }
 
     // Get user from database to check verification status
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.userId).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

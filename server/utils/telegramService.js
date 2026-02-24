@@ -1310,14 +1310,14 @@ https://aquads.xyz`;
       }
 
       // Try to find the raid in both Twitter and Facebook raids
-      let raid = await TwitterRaid.findById(raidId);
+      let raid = await TwitterRaid.findById(raidId).lean();
       let platform = 'Twitter';
       let usernameField = 'twitterUsername';
       let postUrlField = 'tweetUrl';
       let postIdField = 'tweetId';
       
       if (!raid) {
-        raid = await FacebookRaid.findById(raidId);
+        raid = await FacebookRaid.findById(raidId).lean();
         platform = 'Facebook';
         usernameField = 'facebookUsername';
         postUrlField = 'postUrl';
@@ -1891,7 +1891,7 @@ https://aquads.xyz`;
       }
 
       // Get user info
-      const user = await User.findById(completionData.userId).select('username telegramUsername');
+      const user = await User.findById(completionData.userId).select('username telegramUsername').lean();
       const username = user?.username || 'User';
       const telegramUsername = user?.telegramUsername ? `@${user.telegramUsername}` : '';
 
@@ -2841,7 +2841,7 @@ Tap to update:`;
         }
 
         case 'onboard_back_step2': {
-          const user = await User.findById(state.userId);
+          const user = await User.findById(state.userId).lean();
           if (user) {
             telegramService.setConversationState(userId, {
               ...stateWithMessageId,
@@ -3023,14 +3023,14 @@ Tap to update:`;
       const privateChatId = telegramUserId; // User's private chat ID is their user ID
       
       // Try to find the raid in both Twitter and Facebook raids
-      let raid = await TwitterRaid.findById(raidId);
+      let raid = await TwitterRaid.findById(raidId).lean();
       let platform = 'Twitter';
       let usernameField = 'twitterUsername';
       let postUrlField = 'tweetUrl';
       let storedUsername = user.twitterUsername;
       
       if (!raid) {
-        raid = await FacebookRaid.findById(raidId);
+        raid = await FacebookRaid.findById(raidId).lean();
         if (raid) {
           platform = 'Facebook';
           usernameField = 'facebookUsername';
@@ -3104,7 +3104,7 @@ Tap to update:`;
       }
 
       // Try to find the raid in both Twitter and Facebook raids
-      let raid = await TwitterRaid.findById(raidId);
+      let raid = await TwitterRaid.findById(raidId).lean();
       let platform = 'Twitter';
       let usernameField = 'twitterUsername';
       let postUrlField = 'tweetUrl';
@@ -3114,7 +3114,7 @@ Tap to update:`;
       let usernameCommand = '/twitter';
       
       if (!raid) {
-        raid = await FacebookRaid.findById(raidId);
+        raid = await FacebookRaid.findById(raidId).lean();
         if (raid) {
           platform = 'Facebook';
           usernameField = 'facebookUsername';

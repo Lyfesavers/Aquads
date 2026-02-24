@@ -368,7 +368,8 @@ router.get('/history', auth, async (req, res) => {
     const history = await HorseRaceResult.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
       .limit(Math.min(Number(limit), 50))
-      .skip(skip);
+      .skip(skip)
+      .lean();
     
     const totalCount = await HorseRaceResult.countDocuments({ userId: req.user.userId });
     
@@ -413,7 +414,8 @@ router.get('/leaderboard', async (req, res) => {
     })
       .sort({ payout: -1 })
       .limit(Math.min(Number(limit), 50))
-      .select('username horseName betAmount odds payout createdAt');
+      .select('username horseName betAmount odds payout createdAt')
+      .lean();
     
     res.json({ leaderboard });
     

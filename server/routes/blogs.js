@@ -14,7 +14,8 @@ router.get('/', async (req, res) => {
     
     const blogs = await Blog.find()
       .sort({ createdAt: -1 })
-      .populate('author', 'username image');
+      .populate('author', 'username image')
+      .lean();
       
     // Update authorImage field with the populated author image
     const updatedBlogs = blogs.map(blog => {
@@ -39,7 +40,8 @@ router.get('/:id', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     
     const blog = await Blog.findById(req.params.id)
-      .populate('author', 'username image');
+      .populate('author', 'username image')
+      .lean();
       
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found' });
@@ -167,7 +169,8 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
 router.get('/share/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
-      .populate('author', 'username image');
+      .populate('author', 'username image')
+      .lean();
       
     if (!blog) {
       return res.status(404).send('Blog not found');

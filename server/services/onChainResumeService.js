@@ -23,7 +23,7 @@ const calculateTrustScore = async (userId) => {
   if (!user) throw new Error('User not found');
 
   // Get user's services for rating calculation
-  const services = await Service.find({ seller: userId });
+  const services = await Service.find({ seller: userId }).lean();
   
   // Calculate aggregate rating
   let totalRating = 0;
@@ -42,7 +42,7 @@ const calculateTrustScore = async (userId) => {
   const allBookings = await Booking.find({
     sellerId: userId,
     status: { $in: ['completed', 'cancelled', 'declined'] }
-  });
+  }).lean();
   
   const completedBookings = await Booking.countDocuments({
     sellerId: userId,
@@ -330,13 +330,13 @@ const getPublicResume = async (slugOrUsername) => {
   // Try to find by slug first, then by username
   let user = await User.findOne({
     'onChainResume.publicResumeSlug': slugOrUsername
-  });
+  }).lean();
 
   // If not found by slug, try username (case-insensitive)
   if (!user) {
     user = await User.findOne({
       username: { $regex: new RegExp(`^${slugOrUsername}$`, 'i') }
-    });
+    }).lean();
   }
 
   if (!user || !user.onChainResume?.trustScoreAttestation?.uid) {

@@ -53,7 +53,7 @@ affiliateEarningSchema.statics.calculateCommission = function(amount, rate) {
 // Calculate commission rate based on COMBINED volume from all sources
 // Includes: AffiliateEarning (ads/bumps/banners) + HyperSpaceAffiliateEarning (hyperspace orders)
 affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliateId) {
-  const user = await mongoose.model('User').findById(affiliateId);
+  const user = await mongoose.model('User').findById(affiliateId).lean();
   console.log('Calculating commission rate for user:', user?.username);
   
   if (user?.isVipAffiliate) {

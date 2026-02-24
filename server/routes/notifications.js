@@ -77,7 +77,8 @@ router.get('/', auth, async (req, res) => {
     
     const notifications = await NotificationModel.find({ userId })
       .sort({ createdAt: -1 })
-      .limit(50); // Limit to latest 50 notifications
+      .limit(50)
+      .lean();
     
     res.json(notifications);
   } catch (error) {

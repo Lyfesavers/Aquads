@@ -183,7 +183,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     const existingService = await Service.findOne({
       seller: req.user.userId,
       category: category
-    });
+    }).lean();
 
     if (existingService) {
       return res.status(400).json({ 
@@ -461,7 +461,7 @@ router.post('/:id/portfolio', auth, async (req, res) => {
       const review = await ServiceReview.findOne({
         _id: reviewId,
         serviceId: req.params.id
-      });
+      }).lean();
       
       if (!review) {
         return res.status(400).json({ error: 'Invalid review ID' });
@@ -483,7 +483,8 @@ router.post('/:id/portfolio', auth, async (req, res) => {
       .populate({
         path: 'portfolio.reviewId',
         select: 'rating comment username createdAt'
-      });
+      })
+      .lean();
 
     res.json(populatedService);
   } catch (error) {
@@ -520,7 +521,7 @@ router.put('/:id/portfolio/:portfolioId', auth, async (req, res) => {
       const review = await ServiceReview.findOne({
         _id: reviewId,
         serviceId: req.params.id
-      });
+      }).lean();
       
       if (!review) {
         return res.status(400).json({ error: 'Invalid review ID' });

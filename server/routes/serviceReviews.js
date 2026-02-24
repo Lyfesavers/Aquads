@@ -14,7 +14,7 @@ router.get('/:serviceId', async (req, res) => {
 
     const reviews = await ServiceReview.find({ 
       serviceId: req.params.serviceId 
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
 
     res.json(reviews);

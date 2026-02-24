@@ -206,7 +206,7 @@ const paymentAutoApproval = {
 
       // Record affiliate commission if applicable (same logic as manual approve endpoint)
       try {
-        const adOwner = await User.findOne({ username: ad.owner });
+        const adOwner = await User.findOne({ username: ad.owner }).lean();
         if (adOwner && adOwner.referredBy) {
           // Calculate USDC amount based on bump duration
           let adAmount;
@@ -488,7 +488,7 @@ const paymentAutoApproval = {
             // Check if commission already recorded for this order
             const existingCommission = await HyperSpaceAffiliateEarning.findOne({ 
               hyperspaceOrderId: order._id 
-            });
+            }).lean();
             
             if (!existingCommission) {
               // Calculate commission based on PROFIT, not gross amount

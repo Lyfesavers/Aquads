@@ -15,7 +15,8 @@ router.get('/my-points', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId)
       .select('points pointsHistory giftCardRedemptions powerUps')
-      .populate('pointsHistory.referredUser', 'username');
+      .populate('pointsHistory.referredUser', 'username')
+      .lean();
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -215,7 +216,7 @@ router.get('/redemptions/pending', auth, async (req, res) => {
       'giftCardRedemptions': {
         $elemMatch: { status: 'pending' }
       }
-    }).select('username giftCardRedemptions');
+    }).select('username giftCardRedemptions').lean();
 
     const pendingUsers = users.filter(user => 
       user.giftCardRedemptions.some(redemption => redemption.status === 'pending')

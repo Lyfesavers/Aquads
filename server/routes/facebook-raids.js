@@ -73,7 +73,8 @@ router.get('/', async (req, res) => {
   try {
     const raids = await FacebookRaid.find({ active: true })
       .sort({ createdAt: -1 })
-      .populate('createdBy', 'username');
+      .populate('createdBy', 'username')
+      .lean();
     
     res.json(raids);
   } catch (error) {
@@ -84,7 +85,7 @@ router.get('/', async (req, res) => {
 // Check free raid eligibility
 router.get('/free-eligibility', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).lean();
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -566,7 +567,7 @@ router.post('/:raidId/reject/:completionId', auth, requireEmailVerification, asy
     await notification.save();
 
     // Send Telegram DM if user has linked their account
-    const user = await User.findById(completion.userId);
+    const user = await User.findById(completion.userId).lean();
     if (user?.telegramId) {
       try {
         await telegramService.sendBotMessage(
@@ -701,7 +702,8 @@ router.get('/completions/pending', auth, async (req, res) => {
     })
     .populate('completions.userId', 'username email')
     .populate('createdBy', 'username')
-    .sort({ 'completions.completedAt': -1 });
+    .sort({ 'completions.completedAt': -1 })
+    .lean();
 
     // Extract pending completions with raid info
     const pendingCompletions = [];

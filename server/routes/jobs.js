@@ -103,9 +103,10 @@ router.get('/', async (req, res) => {
     // Sort by source first (user jobs first), then by createdAt (newest first)
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
-      .sort({ source: 1, createdAt: -1 }) // User jobs first, then by date
+      .sort({ source: 1, createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
     
     res.json({
       jobs,

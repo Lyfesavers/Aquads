@@ -10,7 +10,7 @@ router.get('/:symbol', async (req, res) => {
 
     const reviews = await Review.find({ 
       tokenSymbol: req.params.symbol.toLowerCase() 
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
 
     res.json(reviews);

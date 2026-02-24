@@ -41,7 +41,8 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
         path: 'affiliates',
         select: 'username email createdAt points tokens ipAddress country deviceFingerprint emailVerified affiliateCount lastSeen lastActivity isOnline',
         options: { sort: { createdAt: -1 } }
-      });
+      })
+      .lean();
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -59,7 +60,8 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
             path: 'affiliates',
             select: 'username createdAt',
             options: { sort: { createdAt: -1 } }
-          });
+          })
+          .lean();
 
         // Calculate activity and login metrics for each affiliate
         const activityAnalysis = await calculateActivityDiversityScore(affiliate._id);
@@ -169,7 +171,8 @@ router.post('/bulk-affiliate-lookup', auth, isAdmin, adminRateLimit, async (req,
               path: 'affiliates',
               select: 'username email createdAt points ipAddress country deviceFingerprint emailVerified',
               options: { sort: { createdAt: -1 } }
-            });
+            })
+            .lean();
 
           if (!user) {
             return { userId, error: 'User not found' };
@@ -302,7 +305,8 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
       options: { sort: { createdAt: -1 } }
     })
     .sort({ affiliateCount: -1 })
-    .limit(100);
+    .limit(100)
+    .lean();
 
     const flaggedUsers = await Promise.all(suspiciousUsers.map(async user => {
       // Use enhanced fraud detection
@@ -705,7 +709,8 @@ router.get('/suspended-users', auth, isAdmin, async (req, res) => {
       .select('username email suspended suspendedReason suspendedAt createdAt')
       .populate('suspendedBy', 'username')
       .sort({ suspendedAt: -1 })
-      .limit(100);
+      .limit(100)
+      .lean();
 
     res.json({
       suspendedUsers: suspendedUsers.map(user => ({

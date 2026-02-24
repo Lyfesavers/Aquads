@@ -10,12 +10,14 @@ router.get('/page/:slug', async (req, res) => {
 
     // First try to find by payment slug
     let user = await User.findOne({ 'aquaPay.paymentSlug': slug })
-      .select('username image aquaPay');
+      .select('username image aquaPay')
+      .lean();
 
     // If not found by slug, try username
     if (!user) {
       user = await User.findOne({ username: { $regex: new RegExp(`^${slug}$`, 'i') } })
-        .select('username image aquaPay');
+        .select('username image aquaPay')
+        .lean();
     }
 
     if (!user) {

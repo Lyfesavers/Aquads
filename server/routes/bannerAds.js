@@ -11,7 +11,7 @@ router.get('/active', async (req, res) => {
     const activeBanners = await BannerAd.find({
       status: 'active',
       expiresAt: { $gt: new Date() }
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
     res.json(activeBanners);
   } catch (error) {
@@ -27,8 +27,9 @@ router.get('/', auth, async (req, res) => {
     const { status } = req.query;
     const query = status ? { status } : {};
     const banners = await BannerAd.find(query)
-      .populate('owner', 'username email') // Populate owner with username and email
-      .sort({ createdAt: -1 });
+      .populate('owner', 'username email')
+      .sort({ createdAt: -1 })
+      .lean();
   
     res.json(banners);
   } catch (error) {
@@ -72,7 +73,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 
     // Get user with referral info
     const User = require('../models/User');
-    const user = await User.findById(req.user.userId).populate('referredBy');
+    const user = await User.findById(req.user.userId).populate('referredBy').lean();
 
     const banner = new BannerAd({
       title,

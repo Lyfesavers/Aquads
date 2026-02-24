@@ -20,7 +20,7 @@ const generateInvoiceNumber = async () => {
     { invoiceNumber: new RegExp(`^${prefix}`) },
     {},
     { sort: { invoiceNumber: -1 } }
-  );
+  ).lean();
   
   let nextNumber = 1;
   if (latestInvoice) {
@@ -260,7 +260,8 @@ router.get('/', auth, async (req, res) => {
       ]
     })
     .populate('bookingId')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
     res.json(invoices);
   } catch (error) {
@@ -275,7 +276,8 @@ router.get('/:id', auth, async (req, res) => {
       .populate({
         path: 'bookingId',
         populate: { path: 'serviceId' }
-      });
+      })
+      .lean();
 
     if (!invoice) {
       return res.status(404).json({ error: 'Invoice not found' });
@@ -364,7 +366,8 @@ router.get('/booking/:bookingId', auth, async (req, res) => {
     }
 
     const invoices = await Invoice.find({ bookingId: req.params.bookingId })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(invoices);
   } catch (error) {

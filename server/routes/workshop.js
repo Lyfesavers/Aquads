@@ -88,7 +88,7 @@ router.post('/complete-section', auth, requireEmailVerification, async (req, res
 // Get user's workshop progress
 router.get('/progress', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.userId).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

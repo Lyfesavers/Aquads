@@ -252,7 +252,7 @@ async function releaseToSeller(escrowId) {
 
   // If not funded yet, re-attempt verification for deposit_pending escrows
   if (!escrow) {
-    const pendingEscrow = await FreelancerEscrow.findOne({ _id: escrowId, status: 'deposit_pending' });
+    const pendingEscrow = await FreelancerEscrow.findOne({ _id: escrowId, status: 'deposit_pending' }).lean();
     if (pendingEscrow && pendingEscrow.depositTxHash) {
       console.log('Escrow in deposit_pending — re-attempting verification before release...');
       try {
@@ -271,12 +271,12 @@ async function releaseToSeller(escrowId) {
   }
 
   if (!escrow) {
-    const actual = await FreelancerEscrow.findById(escrowId);
+    const actual = await FreelancerEscrow.findById(escrowId).lean();
     const actualStatus = actual ? actual.status : 'not found';
     throw new Error(`Escrow cannot be released (current status: ${actualStatus})`);
   }
 
-  const seller = await User.findById(escrow.sellerId).select('aquaPay');
+  const seller = await User.findById(escrow.sellerId).select('aquaPay').lean();
   if (!seller?.aquaPay?.wallets) {
     escrow.status = 'funded';
     await escrow.save();
@@ -420,7 +420,7 @@ async function adminRefund(escrowId, adminUserId, notes) {
     throw new Error('Escrow cannot be refunded in current status: ' + escrow.status);
   }
 
-  const buyer = await User.findById(escrow.buyerId).select('username');
+  const buyer = await User.findById(escrow.buyerId).select('username').lean();
   const feeAmount = escrow.depositAmount * escrow.feePercentage;
   const refundAmount = escrow.depositAmount - feeAmount;
 

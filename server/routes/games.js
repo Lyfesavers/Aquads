@@ -77,7 +77,8 @@ router.get('/', async (req, res) => {
 
     const games = await Game.find(query)
       .populate('owner', 'username image')
-      .sort(sort);
+      .sort(sort)
+      .lean();
       
     res.json(games);
   } catch (error) {
@@ -90,7 +91,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id)
-      .populate('owner', 'username image');
+      .populate('owner', 'username image')
+      .lean();
       
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
@@ -106,7 +108,7 @@ router.get('/:id', async (req, res) => {
 // Create a new game listing
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.userId).lean();
     
     const game = new Game({
       ...req.body,
@@ -153,7 +155,7 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
 router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // First find the game by ID
-    const game = await Game.findById(req.params.id);
+    const game = await Game.findById(req.params.id).lean();
     
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
@@ -244,7 +246,7 @@ router.get('/:id/voted', auth, async (req, res) => {
     const gameId = req.params.id;
     const userId = req.user.userId;
     
-    const vote = await GameVote.findOne({ gameId, userId });
+    const vote = await GameVote.findOne({ gameId, userId }).lean();
     
     res.json({ voted: !!vote });
   } catch (error) {

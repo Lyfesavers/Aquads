@@ -21,7 +21,7 @@ router.get('/balance', auth, async (req, res) => {
     const pendingPurchases = await TokenPurchase.find({ 
       userId: req.user.userId, 
       status: 'pending' 
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
     // Add pending purchases to history with special formatting
     const combinedHistory = [...user.tokenHistory];
@@ -110,7 +110,7 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
 
     // Create notification for admins
     try {
-      const admins = await User.find({ isAdmin: true });
+      const admins = await User.find({ isAdmin: true }).lean();
       
       for (const admin of admins) {
         const notification = new Notification({
@@ -334,7 +334,8 @@ router.get('/admin/pending', auth, async (req, res) => {
 
     const pendingPurchases = await TokenPurchase.find({ status: 'pending' })
       .populate('userId', 'username email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(pendingPurchases);
   } catch (error) {

@@ -794,7 +794,7 @@ router.get('/pending', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const pendingAds = await Ad.find({ status: 'pending' }).sort({ createdAt: -1 });
+    const pendingAds = await Ad.find({ status: 'pending' }).sort({ createdAt: -1 }).lean();
     res.json(pendingAds);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch pending ads' });

@@ -359,7 +359,8 @@ router.get('/my-orders', auth, async (req, res) => {
     const orders = await HyperSpaceOrder.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .lean();
     
     const total = await HyperSpaceOrder.countDocuments({ userId: req.user.userId });
 
@@ -408,7 +409,8 @@ router.get('/admin/orders', auth, async (req, res) => {
     const orders = await HyperSpaceOrder.find(query)
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .lean();
     
     const total = await HyperSpaceOrder.countDocuments(query);
 
@@ -572,7 +574,7 @@ router.post('/admin/complete/:orderId', auth, async (req, res) => {
         // Check if commission already recorded for this order
         const existingCommission = await HyperSpaceAffiliateEarning.findOne({ 
           hyperspaceOrderId: order._id 
-        });
+        }).lean();
         
         if (!existingCommission) {
           // Calculate commission based on PROFIT, not gross amount

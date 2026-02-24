@@ -58,7 +58,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     // Check if code already exists
-    const existingCode = await DiscountCode.findOne({ code: code.toUpperCase() });
+    const existingCode = await DiscountCode.findOne({ code: code.toUpperCase() }).lean();
     if (existingCode) {
       return res.status(400).json({ error: 'Discount code already exists' });
     }
@@ -117,7 +117,7 @@ router.put('/:id', auth, async (req, res) => {
       const existingCode = await DiscountCode.findOne({ 
         code: updates.code,
         _id: { $ne: id }
-      });
+      }).lean();
       if (existingCode) {
         return res.status(400).json({ error: 'Discount code already exists' });
       }

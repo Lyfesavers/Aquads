@@ -200,7 +200,7 @@ function init(server) {
           const BumpRequest = require('./models/BumpRequest');
           
           // Get all pending bump requests
-          const bumpRequests = await BumpRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
+          const bumpRequests = await BumpRequest.find({ status: 'pending' }).sort({ createdAt: -1 }).lean();
           
           // Send all pending bump requests to this admin
           socket.emit('pendingBumpRequestsLoaded', {
@@ -304,7 +304,7 @@ function init(server) {
             'giftCardRedemptions': {
               $elemMatch: { status: 'pending' }
             }
-          }).select('username giftCardRedemptions');
+          }).select('username giftCardRedemptions').lean();
 
           const pendingUsers = users.filter(user => 
             user.giftCardRedemptions.some(redemption => redemption.status === 'pending')
@@ -694,7 +694,7 @@ function init(server) {
         const pendingPurchases = await TokenPurchase.find({ 
           userId: userData.userId, 
           status: 'pending' 
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1 }).lean();
 
         // Add pending purchases to history with special formatting
         const combinedHistory = [...user.tokenHistory];
@@ -793,7 +793,7 @@ function init(server) {
         const User = require('./models/User');
         
         // Fetch user's membership info
-        const user = await User.findById(userData.userId).select('membership points');
+        const user = await User.findById(userData.userId).select('membership points').lean();
         
         if (!user) {
           socket.emit('membershipInfoError', { error: 'User not found' });
@@ -1032,7 +1032,7 @@ function init(server) {
 
       try {
         const User = require('./models/User');
-        const user = await User.findById(userData.userId).select('username image aquaPay');
+        const user = await User.findById(userData.userId).select('username image aquaPay').lean();
         
         if (!user) {
           socket.emit('aquaPaySettingsError', { error: 'User not found' });
@@ -1144,7 +1144,7 @@ function init(server) {
           const existingUser = await User.findOne({
             'aquaPay.paymentSlug': normalizedSlug,
             _id: { $ne: userId }
-          });
+          }).lean();
 
           if (existingUser) {
             socket.emit('aquaPaySettingsError', { error: 'This payment link is already taken' });
@@ -1256,7 +1256,7 @@ function init(server) {
         const existingUser = await User.findOne({
           'aquaPay.paymentSlug': slug,
           _id: { $ne: data.userId }
-        });
+        }).lean();
 
         socket.emit('aquaPaySlugCheckResult', {
           available: !existingUser,

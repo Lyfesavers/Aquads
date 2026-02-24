@@ -57,7 +57,7 @@ router.get('/pending', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const pendingBoosts = await VoteBoost.find({ status: 'pending' }).sort({ createdAt: -1 });
+    const pendingBoosts = await VoteBoost.find({ status: 'pending' }).sort({ createdAt: -1 }).lean();
     res.json(pendingBoosts);
   } catch (error) {
     console.error('Error fetching pending vote boosts:', error);
@@ -71,7 +71,7 @@ router.get('/active', async (req, res) => {
     const activeBoosts = await VoteBoost.find({ 
       status: 'active',
       $expr: { $lt: ['$votesAdded', '$votesToAdd'] }
-    });
+    }).lean();
     res.json(activeBoosts);
   } catch (error) {
     console.error('Error fetching active vote boosts:', error);
@@ -82,7 +82,7 @@ router.get('/active', async (req, res) => {
 // Get user's vote boosts
 router.get('/my-boosts', auth, async (req, res) => {
   try {
-    const boosts = await VoteBoost.find({ owner: req.user.username }).sort({ createdAt: -1 });
+    const boosts = await VoteBoost.find({ owner: req.user.username }).sort({ createdAt: -1 }).lean();
     res.json(boosts);
   } catch (error) {
     console.error('Error fetching user vote boosts:', error);

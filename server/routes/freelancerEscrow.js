@@ -14,7 +14,8 @@ router.get('/booking/:bookingId', auth, async (req, res) => {
   try {
     const escrow = await FreelancerEscrow.findOne({ bookingId: req.params.bookingId })
       .populate('buyerId', 'username email')
-      .populate('sellerId', 'username email');
+      .populate('sellerId', 'username email')
+      .lean();
 
     if (!escrow) {
       return res.status(404).json({ error: 'No escrow found for this booking' });
@@ -54,7 +55,8 @@ router.get('/admin/all', auth, async (req, res) => {
       .populate('bookingId', 'status serviceId')
       .populate('invoiceId', 'invoiceNumber amount')
       .sort({ createdAt: -1 })
-      .limit(100);
+      .limit(100)
+      .lean();
 
     res.json({ success: true, escrows });
   } catch (error) {
@@ -180,7 +182,8 @@ router.get('/:escrowId', auth, async (req, res) => {
       .populate('buyerId', 'username image')
       .populate('sellerId', 'username image aquaPay email')
       .populate('bookingId', 'serviceId status')
-      .populate('invoiceId', 'invoiceNumber amount currency');
+      .populate('invoiceId', 'invoiceNumber amount currency')
+      .lean();
 
     if (!escrow) {
       return res.status(404).json({ error: 'Escrow not found' });

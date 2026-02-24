@@ -165,13 +165,13 @@ router.get('/verify/:uid', async (req, res) => {
     
     const user = await User.findOne({
       'onChainResume.trustScoreAttestation.uid': uid
-    });
+    }).lean();
 
     if (!user) {
       // Check history too
       const userFromHistory = await User.findOne({
         'onChainResume.attestationHistory.uid': uid
-      });
+      }).lean();
       
       if (!userFromHistory) {
         return res.json({ 

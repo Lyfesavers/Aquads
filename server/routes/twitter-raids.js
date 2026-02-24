@@ -962,7 +962,7 @@ router.get('/user/completed', auth, async (req, res) => {
     
     const raids = await TwitterRaid.find({
       'completions.userId': userId
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
     res.json(raids);
   } catch (error) {
@@ -981,7 +981,7 @@ router.get('/suspicious', auth, async (req, res) => {
     // Get all raids with completions
     const raids = await TwitterRaid.find({
       'completions.0': { $exists: true }
-    }).populate('completions.userId', 'username email');
+    }).populate('completions.userId', 'username email').lean();
     
     // Map to store completions by IP address
     const ipMap = {};

@@ -71,7 +71,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
     const sanitizedUsername = sanitizeForRegex(username);
     const existingUsername = await User.findOne({ 
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    });
+    }).lean();
     if (existingUsername) {
       return res.status(400).json({ error: 'Username already exists' });
     }
@@ -80,7 +80,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingEmail = await User.findOne({ email: email.toLowerCase() }).lean();
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already exists' });
     }
@@ -122,7 +122,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
       const sanitizedReferralCode = sanitizeForRegex(referralCode);
       const referringUser = await User.findOne({ 
         username: { $regex: new RegExp(`^${sanitizedReferralCode}$`, 'i') }
-      });
+      }).lean();
       if (referringUser) {
         userData.referredBy = referringUser._id;
       }
@@ -606,7 +606,7 @@ router.put('/profile', auth, async (req, res) => {
 
     // If updating email, check if it's already in use
     if (email && email !== user.email) {
-      const existingEmail = await User.findOne({ email: email.toLowerCase() });
+      const existingEmail = await User.findOne({ email: email.toLowerCase() }).lean();
       if (existingEmail) {
         return res.status(400).json({ error: 'Email already in use' });
       }
@@ -615,7 +615,7 @@ router.put('/profile', auth, async (req, res) => {
 
     // If updating username, check if it's already in use
     if (username && username !== user.username) {
-      const existingUsername = await User.findOne({ username });
+      const existingUsername = await User.findOne({ username }).lean();
       if (existingUsername) {
         return res.status(400).json({ error: 'Username already in use' });
       }
@@ -854,7 +854,7 @@ router.post('/verify-referral', auth, async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({ 
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    });
+    }).lean();
 
     if (!user) {
       return res.status(400).json({ error: 'User not found' });
@@ -927,8 +927,8 @@ router.get('/by-username/:username', auth, async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(cleanUsername);
 
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }  // Case-insensitive match
-    });
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
+    }).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -954,7 +954,8 @@ router.get('/ip/:ipAddress', auth, async (req, res) => {
     const users = await User.find({ ipAddress })
       .select('username email createdAt image userType referredBy')
       .populate('referredBy', 'username')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     
     res.json({
       ipAddress,
@@ -1006,7 +1007,8 @@ router.get('/device/:fingerprint', auth, async (req, res) => {
     const users = await User.find({ deviceFingerprint: fingerprint })
       .select('username email createdAt image userType referredBy ipAddress')
       .populate('referredBy', 'username')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     
     res.json({
       deviceFingerprint: fingerprint,
@@ -1054,7 +1056,7 @@ router.get('/verify/:username', async (req, res) => {
     // Find user by username (case-insensitive)
     const user = await User.findOne({ 
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image createdAt isVipAffiliate isAdmin userType');
+    }).select('username image createdAt isVipAffiliate isAdmin userType').lean();
     
     if (!user) {
       return res.status(404).json({
@@ -1529,7 +1531,8 @@ router.get('/admin/all-partners', auth, async (req, res) => {
     const partners = await User.find(query)
       .select('username email partnerStore createdAt')
       .populate('partnerStore.approvedBy', 'username')
-      .sort({ 'partnerStore.partnerSince': -1, createdAt: -1 });
+      .sort({ 'partnerStore.partnerSince': -1, createdAt: -1 })
+      .lean();
     
     res.json(partners);
   } catch (error) {
@@ -1794,7 +1797,7 @@ router.post('/membership/verify', async (req, res) => {
       return res.status(400).json({ error: 'Member ID is required' });
     }
     
-    const user = await User.findOne({ 'membership.memberId': memberId });
+    const user = await User.findOne({ 'membership.memberId': memberId }).lean();
     
     if (!user) {
       return res.status(404).json({ 

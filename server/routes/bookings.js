@@ -516,7 +516,8 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
     // Get messages, sorted by creation time
     const messages = await BookingMessage.find({ bookingId })
       .sort({ createdAt: 1 })
-      .populate('senderId', 'username image');
+      .populate('senderId', 'username image')
+      .lean();
 
     // Mark messages as read if the current user is the recipient
     const unreadMessages = messages.filter(msg => 
@@ -865,7 +866,7 @@ router.get('/uploads/:filename', async (req, res) => {
       const message = await BookingMessage.findOne({ 
         attachment: `/uploads/bookings/${filename}`,
         isWatermarked: true 
-      });
+      }).lean();
       
       if (message) {
         const booking = await Booking.findById(message.bookingId);
@@ -1212,7 +1213,8 @@ router.get('/user-notifications', auth, async (req, res) => {
     
     const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean();
     
   
     res.json(notifications);

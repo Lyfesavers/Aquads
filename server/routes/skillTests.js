@@ -10,7 +10,8 @@ router.get('/', async (req, res) => {
   try {
     const tests = await SkillTest.find({ isActive: true })
       .select('title description category difficulty timeLimit passingScore badge')
-      .sort({ category: 1, difficulty: 1 });
+      .sort({ category: 1, difficulty: 1 })
+      .lean();
     
     res.json(tests);
   } catch (error) {
@@ -232,7 +233,8 @@ router.get('/user/completions', auth, async (req, res) => {
   try {
     const completions = await UserSkillTest.find({ userId: req.user.userId })
       .populate('testId', 'title category badge')
-      .sort({ completedAt: -1 });
+      .sort({ completedAt: -1 })
+      .lean();
     
     res.json(completions);
   } catch (error) {
@@ -243,7 +245,7 @@ router.get('/user/completions', auth, async (req, res) => {
 // Get user's badges
 router.get('/user/badges', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('skillBadges');
+    const user = await User.findById(req.user.userId).select('skillBadges').lean();
     res.json(user.skillBadges || []);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch badges' });
