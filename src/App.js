@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { 
@@ -30,31 +30,31 @@ import CreateBannerModal from './components/CreateBannerModal';
 import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
-import Marketplace from './components/Marketplace';
-import PartnerMarketplace from './components/PartnerMarketplace';
-import GameHub from './components/GameHub';
+const Marketplace = lazy(() => import('./components/Marketplace'));
+const PartnerMarketplace = lazy(() => import('./components/PartnerMarketplace'));
+const GameHub = lazy(() => import('./components/GameHub'));
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import OnboardingSection from './components/OnboardingSection';
-import HowTo from './components/HowTo';
-import BlogPage from './components/BlogPage';
-import Affiliate from './components/Affiliate';
-import Terms from './components/Terms';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import AquaFi from './components/AquaFi';
-import AquaSwap from './components/AquaSwap';
-import AquaSwapEmbed from './components/AquaSwapEmbed';
-import WalletAnalyzer from './components/WalletAnalyzer';
-import VerifyUser from './components/VerifyUser';
-import MemberVerification from './components/MemberVerification';
+const HowTo = lazy(() => import('./components/HowTo'));
+const BlogPage = lazy(() => import('./components/BlogPage'));
+const Affiliate = lazy(() => import('./components/Affiliate'));
+const Terms = lazy(() => import('./components/Terms'));
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const AquaFi = lazy(() => import('./components/AquaFi'));
+const AquaSwap = lazy(() => import('./components/AquaSwap'));
+const AquaSwapEmbed = lazy(() => import('./components/AquaSwapEmbed'));
+const WalletAnalyzer = lazy(() => import('./components/WalletAnalyzer'));
+const VerifyUser = lazy(() => import('./components/VerifyUser'));
+const MemberVerification = lazy(() => import('./components/MemberVerification'));
 import BannerDisplay from './components/BannerDisplay';
 import RotatingBanner from './components/RotatingBanner';
 import useUserPresence from './hooks/useUserPresence';
 
-import ProjectInfo from './components/ProjectInfo';
-import FreelancerBenefits from './components/FreelancerBenefits';
-import BookingConversationPage from './components/BookingConversationPage';
+const ProjectInfo = lazy(() => import('./components/ProjectInfo'));
+const FreelancerBenefits = lazy(() => import('./components/FreelancerBenefits'));
+const BookingConversationPage = lazy(() => import('./components/BookingConversationPage'));
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
@@ -65,21 +65,21 @@ import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
-import DotsAndBoxes from './components/DotsAndBoxes';
-import HorseRacing from './components/HorseRacing';
-import CrosswordPuzzle from './components/CrosswordPuzzle';
+const DotsAndBoxes = lazy(() => import('./components/DotsAndBoxes'));
+const HorseRacing = lazy(() => import('./components/HorseRacing'));
+const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
 
-import ServicePage from './components/ServicePage';
-import ExtensionAuth from './components/ExtensionAuth';
-import TelegramBot from './components/TelegramBot';
-import PublicResume from './components/PublicResume';
+const ServicePage = lazy(() => import('./components/ServicePage'));
+const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
+const TelegramBot = lazy(() => import('./components/TelegramBot'));
+const PublicResume = lazy(() => import('./components/PublicResume'));
 import LandingPage from './components/LandingPage';
-import AquaPayPage from './components/AquaPayPage';
-import CustodialPayment from './components/FreelancerEscrow/CustodialPayment';
-import AquaPayInfo from './components/AquaPayInfo';
-import HyperSpace from './components/HyperSpace';
-import Documentation from './components/Documentation/Documentation';
-import DashboardPage from './components/DashboardPage';
+const AquaPayPage = lazy(() => import('./components/AquaPayPage'));
+const CustodialPayment = lazy(() => import('./components/FreelancerEscrow/CustodialPayment'));
+const AquaPayInfo = lazy(() => import('./components/AquaPayInfo'));
+const HyperSpace = lazy(() => import('./components/HyperSpace'));
+const Documentation = lazy(() => import('./components/Documentation/Documentation'));
+const DashboardPage = lazy(() => import('./components/DashboardPage'));
 
 window.Buffer = Buffer;
 
@@ -2461,6 +2461,14 @@ function App() {
           currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
+        <Suspense fallback={
+          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #111827, #000000)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 40, height: 40, border: '3px solid rgba(59,130,246,0.3)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            </div>
+          </div>
+        }>
         <Routes>
           <Route path="/extension-auth" element={<ExtensionAuth />} />
           <Route path="/dashboard/:tab?" element={
@@ -3620,6 +3628,7 @@ function App() {
             <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />
             <Route path="/docs" element={<Documentation />} />
         </Routes>
+        </Suspense>
       </Router>
     </AuthContext.Provider>
   );

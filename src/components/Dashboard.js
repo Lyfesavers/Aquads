@@ -165,13 +165,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Individual sections show loading skeletons while their data loads
   // This provides instant UI feedback instead of blocking the entire tab
 
-  // Fetch banner ads when dashboard opens
+  // Fetch banner ads only when admin tab is active
   useEffect(() => {
-    if (currentUser?.isAdmin) {
-      // Fetch banner ads
+    if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchBannerAds();
     }
-  }, [currentUser]);
+  }, [currentUser, activeTab]);
 
   // STAGGERED LOADING: Load data sequentially to avoid overwhelming the server
   // This prevents all API/socket calls from firing at once
@@ -192,14 +191,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
     }, 300));
     
-    // STEP 3: Admin data loads after 600ms (if admin)
-    if (currentUser?.isAdmin) {
-      timers.push(setTimeout(() => {
-        if (socket) {
-          socket.emit('requestPendingRedemptions', { isAdmin: currentUser.isAdmin });
-        }
-      }, 600));
-    }
+    // Admin data (redemptions, completions, bumps, etc.) now loads when admin tab is clicked
     
     // Cleanup timers on unmount
     return () => timers.forEach(t => clearTimeout(t));
@@ -366,10 +358,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // ... existing fetch calls ...
-
-        // Fetch premium requests if user is admin
-        if (currentUser?.isAdmin) {
+        // Fetch premium requests only when admin tab is active
+        if (currentUser?.isAdmin && activeTab === 'admin') {
           const response = await fetch(`${API_URL}/services/premium-requests`, {
             headers: {
               'Authorization': `Bearer ${currentUser.token}`
@@ -386,7 +376,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
 
     fetchData();
-  }, [currentUser]);
+  }, [currentUser, activeTab]);
 
   useEffect(() => {
     const fetchUserJobs = async () => {
@@ -411,14 +401,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [currentUser]);
 
-  // STAGGERED ADMIN LOADING: Load admin data sequentially (starting at 800ms after main data)
+  // DEFERRED ADMIN LOADING: Only load when admin tab is active (completions + bumps)
+  // Ads, tokens, vote boosts, services are loaded by the admin tab useEffect below
   useEffect(() => {
-    if (!currentUser?.isAdmin || !socket) return;
+    if (!currentUser?.isAdmin || !socket || activeTab !== 'admin') return;
     
     const userId = currentUser.userId || currentUser.id;
     const timers = [];
     
-    // Admin Step 1: Pending completions (800ms after dashboard opens)
+    // Pending completions (800ms after admin tab opens)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingCompletions', {
@@ -428,7 +419,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
     }, 800));
     
-    // Admin Step 2: Bump requests (1000ms)
+    // Bump requests (1000ms)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingBumpRequests', {
@@ -438,23 +429,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
     }, 1000));
     
-    // Admin Step 3: Pending ads (1200ms)
-    timers.push(setTimeout(() => {
-      if (socket) {
-        socket.emit('requestPendingAds', {
-          isAdmin: currentUser.isAdmin,
-          userId
-        });
-      }
-    }, 1200));
-    
-    // Admin Step 4: Facebook raids (1400ms)
-    timers.push(setTimeout(() => {
-      fetchPendingFacebookRaids();
-    }, 1400));
-    
     return () => timers.forEach(t => clearTimeout(t));
-  }, [currentUser, socket]);
+  }, [currentUser, socket, activeTab]);
 
   // Add Socket.io listeners for affiliate data (ALL USERS)
   useEffect(() => {
@@ -929,7 +905,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
   }, [socket, currentUser]);
 
-  // STAGGERED: When admin clicks Admin tab, load additional data sequentially
+  // STAGGERED: When admin clicks Admin tab, load all admin data sequentially
   useEffect(() => {
     if (!currentUser?.isAdmin || activeTab !== 'admin') return;
     
@@ -948,7 +924,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
     }, 200));
     
-    // Step 3: Vote boosts (400ms)
+    // Step 3: Redemptions (300ms) - deferred from mount to admin tab
+    timers.push(setTimeout(() => {
+      if (socket) {
+        socket.emit('requestPendingRedemptions', { isAdmin: currentUser.isAdmin });
+      }
+    }, 300));
+    
+    // Step 4: Vote boosts (400ms)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingVoteBoosts', {
@@ -958,7 +941,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
     }, 400));
     
-    // Step 4: Services (600ms)
+    // Step 5: Services (600ms)
     timers.push(setTimeout(() => {
       requestPendingServicesViaSocket();
     }, 600));
@@ -4121,7 +4104,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                               {/* Left side - Ad Info */}
                               <div className="flex items-start space-x-4">
-                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" />
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" loading="lazy" />
                                 <div className="flex-1 min-w-0">
                                   <h4 className="text-white font-semibold text-base sm:text-lg mb-1">{ad.title}</h4>
                                   <p className="text-gray-400 text-sm mb-1">
@@ -4267,7 +4250,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               {/* Left side - Bubble Info */}
                               <div className="flex items-start space-x-4">
                                 {boost.ad?.logo && (
-                                  <img src={boost.ad.logo} alt={boost.ad?.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" />
+                                  <img src={boost.ad.logo} alt={boost.ad?.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" loading="lazy" />
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <h4 className="text-white font-semibold text-base sm:text-lg mb-1">{boost.ad?.title || 'Unknown Bubble'}</h4>
@@ -4609,7 +4592,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           </div>
                           <div className="mt-4">
                             <p className="text-gray-400 text-sm mb-2">Banner Preview:</p>
-                            <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800 border border-gray-600" />
+                            <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800 border border-gray-600" loading="lazy" />
                           </div>
                           {currentUser?.isAdmin && banner.status === 'active' && (
                             <div className="mt-4 flex space-x-2 pt-3 border-t border-gray-600">
@@ -4671,7 +4654,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             <label className="block text-sm font-medium text-gray-400 mb-2">
                               Preview:
                             </label>
-                            <img src={bannerEditData.gif} alt="Banner preview" className="max-h-32 rounded object-contain bg-gray-800" />
+                            <img src={bannerEditData.gif} alt="Banner preview" className="max-h-32 rounded object-contain bg-gray-800" loading="lazy" />
                           </div>
                         )}
                       </div>
@@ -4786,7 +4769,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 <tr key={listing.id} className="border-b border-gray-600">
                                   <td className="px-4 py-3">
                                     <div className="flex items-center">
-                                      <img src={listing.logo} alt={listing.title} className="w-8 h-8 rounded-full mr-3" onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }} />
+                                      <img src={listing.logo} alt={listing.title} className="w-8 h-8 rounded-full mr-3" loading="lazy" onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }} />
                                       <div>
                                         <div className="font-medium text-white">{listing.title}</div>
                                         <div className="text-sm text-gray-400">
@@ -4851,7 +4834,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           return (
                             <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
                               <div className="flex items-center space-x-4">
-                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" loading="lazy" />
                                 <div>
                                   <h3 className="text-white font-semibold">{ad.title}</h3>
                                   <p className="text-gray-400 text-sm">{ad.url}</p>
@@ -5044,6 +5027,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                    src={service.image} 
                                    alt={service.title} 
                                    className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-600"
+                                   loading="lazy"
                                    onError={(e) => {
                                      e.target.src = '/api/placeholder/400/200';
                                    }}
@@ -5176,6 +5160,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                     src={order.projectLogo} 
                                     alt={order.projectTitle} 
                                     className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                    loading="lazy"
                                     onError={(e) => { e.target.style.display = 'none'; }}
                                   />
                                 )}

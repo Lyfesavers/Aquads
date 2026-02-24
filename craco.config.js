@@ -58,6 +58,40 @@ module.exports = {
         "tls": false,
       };
 
+      // Optimize bundle splitting for better caching and smaller initial load
+      webpackConfig.optimization = {
+        ...webpackConfig.optimization,
+        splitChunks: {
+          chunks: 'all',
+          maxInitialRequests: 25,
+          minSize: 20000,
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name(module) {
+                if (!module.context) return 'vendors';
+                const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
+                if (!packageName) return 'vendors';
+                if (packageName.startsWith('@solana') || packageName === 'bs58') return 'vendor-solana';
+                if (packageName.startsWith('@mysten')) return 'vendor-sui';
+                if (packageName === 'framer-motion') return 'vendor-framer';
+                if (packageName === 'recharts' || packageName === 'd3-shape' || packageName === 'd3-scale') return 'vendor-charts';
+                if (packageName.startsWith('@mui')) return 'vendor-mui';
+                if (packageName === 'ethers' || packageName.startsWith('@ethersproject')) return 'vendor-ethers';
+                return 'vendors';
+              },
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            common: {
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      };
+
       return webpackConfig;
     },
   },
