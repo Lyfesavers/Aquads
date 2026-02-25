@@ -11,7 +11,8 @@ const SOLANA_ESCROW_WALLET = ESCROW_WALLETS.SOLANA;
 const EVM_ESCROW_WALLET = ESCROW_WALLETS.ETHEREUM;
 
 const EVM_WALLET_OPTIONS = [
-  { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', description: 'Mobile & 300+ wallets', recommended: true },
+  { id: 'phantom', name: 'Phantom', icon: '👻', description: 'Multi-chain wallet', recommended: true },
+  { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', description: 'Mobile & 300+ wallets' },
   { id: 'injected', name: 'Browser Wallet', icon: '🦊', description: 'MetaMask, Rabby, etc.' }
 ];
 const SOLANA_WALLET_OPTIONS = [
@@ -165,6 +166,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showSolanaWalletModal, setShowSolanaWalletModal] = useState(false);
   const [wcProvider, setWcProvider] = useState(null);
+  const [evmProviderRef, setEvmProviderRef] = useState(null);
   const [payerEmail, setPayerEmail] = useState('');
 
   const feePercentage = FEE_CONFIG.ESCROW_FEE_PERCENTAGE;
@@ -206,6 +208,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
   useEffect(() => {
     if (walletConnected) {
       if (wcProvider) { wcProvider.disconnect().catch(() => {}); setWcProvider(null); }
+      setEvmProviderRef(null);
       setWalletConnected(false); setWalletAddress(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,13 +234,23 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         });
         await provider.connect();
         accounts = provider.accounts; setWcProvider(provider);
-        provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); });
+        provider.on('disconnect', () => { setWalletConnected(false); setWalletAddress(null); setWcProvider(null); setEvmProviderRef(null); });
+      } else if (walletId === 'phantom') {
+        const phantomEvm = window.phantom?.ethereum;
+        if (!phantomEvm) throw new Error('Phantom wallet not found. Please install Phantom or enable EVM support.');
+        accounts = await phantomEvm.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) throw new Error('No accounts found in Phantom.');
+        setEvmProviderRef(phantomEvm);
+        try { await phantomEvm.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: evmConfig.chainId }] }); }
+        catch (e) { if (e.code === 4902) await phantomEvm.request({ method: 'wallet_addEthereumChain', params: [evmConfig] }); }
       } else {
-        if (!window.ethereum) throw new Error('No browser wallet detected. Please install MetaMask or another Web3 wallet.');
-        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const injected = window.ethereum;
+        if (!injected) throw new Error('No browser wallet detected. Please install MetaMask or another Web3 wallet.');
+        accounts = await injected.request({ method: 'eth_requestAccounts' });
         if (!accounts || accounts.length === 0) throw new Error('No accounts found.');
-        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: evmConfig.chainId }] }); }
-        catch (e) { if (e.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [evmConfig] }); }
+        setEvmProviderRef(injected);
+        try { await injected.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: evmConfig.chainId }] }); }
+        catch (e) { if (e.code === 4902) await injected.request({ method: 'wallet_addEthereumChain', params: [evmConfig] }); }
       }
       if (accounts.length > 0) { setWalletAddress(accounts[0]); setWalletConnected(true); }
     } catch (err) {
@@ -276,7 +289,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
     try {
       if (CHAINS[selectedChain]?.isEVM) {
         const evmConfig = getEvmChains()[selectedChain];
-        const ethProvider = wcProvider || window.ethereum;
+        const ethProvider = wcProvider || evmProviderRef || window.phantom?.ethereum || window.ethereum;
 
         if (ethProvider && evmConfig) {
           try {
