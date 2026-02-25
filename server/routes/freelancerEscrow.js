@@ -261,11 +261,9 @@ function scheduleBackgroundVerification(escrowId, attempt = 0) {
       const escrow = await FreelancerEscrow.findById(escrowId);
       if (!escrow || escrow.status !== 'deposit_pending') return;
 
-      console.log(`Background verification attempt ${attempt + 1}/${maxAttempts} for escrow ${escrowId}`);
       const verification = await escrowService.verifyDeposit(escrowId);
 
       if (verification.verified) {
-        console.log(`Background verification succeeded for escrow ${escrowId}`);
         const updatedEscrow = await FreelancerEscrow.findById(escrowId);
         await finalizeEscrowFunded(updatedEscrow);
       } else if (attempt < maxAttempts - 1) {
@@ -312,17 +310,13 @@ router.post('/deposit', auth, async (req, res) => {
     escrow.status = 'deposit_pending';
     await escrow.save();
 
-    console.log(`Deposit recorded for escrow ${escrowId}, txHash: ${txHash}, starting verification...`);
-
     // Verify the deposit on-chain (with retries built into verifyDeposit)
     let verified = false;
     try {
       const verification = await escrowService.verifyDeposit(escrow._id);
       verified = verification.verified;
-      if (verified) {
-        console.log(`Deposit verified inline for escrow ${escrowId}`);
-      } else {
-        console.log(`Inline verification not confirmed for escrow ${escrowId}: ${verification.reason}`);
+      if (!verified) {
+        // not confirmed yet — background retries will handle it
       }
     } catch (verifyErr) {
       console.error('Deposit verification error:', verifyErr.message);

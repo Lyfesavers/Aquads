@@ -160,7 +160,6 @@ async function verifySolanaDeposit(escrow) {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       if (attempt > 0) {
-        console.log(`Solana deposit verification attempt ${attempt + 1}/${maxAttempts} for ${escrow.depositTxHash}`);
         await new Promise(r => setTimeout(r, delays[attempt - 1]));
       }
 
@@ -186,7 +185,6 @@ async function verifySolanaDeposit(escrow) {
       await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
       await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
 
-      console.log(`Solana deposit verified on attempt ${attempt + 1} for escrow ${escrow._id}`);
       return { verified: true };
     } catch (err) {
       if (attempt < maxAttempts - 1) continue;
@@ -203,7 +201,6 @@ async function verifyEvmDeposit(escrow) {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       if (attempt > 0) {
-        console.log(`EVM deposit verification attempt ${attempt + 1}/${maxAttempts} for ${escrow.depositTxHash}`);
         await new Promise(r => setTimeout(r, delays[attempt - 1]));
       }
 
@@ -233,7 +230,6 @@ async function verifyEvmDeposit(escrow) {
       await Booking.findByIdAndUpdate(escrow.bookingId, { escrowId: escrow._id });
       await Invoice.findByIdAndUpdate(escrow.invoiceId, { status: 'paid' });
 
-      console.log(`EVM deposit verified on attempt ${attempt + 1} for escrow ${escrow._id}`);
       return { verified: true };
     } catch (err) {
       if (attempt < maxAttempts - 1) continue;
@@ -254,7 +250,6 @@ async function releaseToSeller(escrowId) {
   if (!escrow) {
     const pendingEscrow = await FreelancerEscrow.findOne({ _id: escrowId, status: 'deposit_pending' }).lean();
     if (pendingEscrow && pendingEscrow.depositTxHash) {
-      console.log('Escrow in deposit_pending — re-attempting verification before release...');
       try {
         const verification = await verifyDeposit(escrowId);
         if (verification.verified) {

@@ -775,18 +775,7 @@ ${currentUser.username}`;
     // Create mailto link (exactly like the working console test)
     const mailtoLink = `mailto:${booking.buyerId.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
     
-    // Debug: Log everything
-    console.log('=== EMAIL DEBUG ===');
-    console.log('Buyer email:', booking.buyerId.email);
-    console.log('Subject:', subject);
-    console.log('Body length:', emailBody.length);
-    console.log('Mailto link length:', mailtoLink.length);
-    console.log('Full mailto link:', mailtoLink);
-    console.log('==================');
-    
-    // Use the exact same method as the working console test
     window.location.href = mailtoLink;
-    console.log('✅ Set window.location.href successfully');
     
     showNotification('Opening email client...', 'success');
   };
