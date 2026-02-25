@@ -85,7 +85,7 @@ class ProxiedConnection {
     }
     throw new Error('Transaction confirmation timeout - check explorer');
   }
-  async getAccountInfo(pubkey) { return await this._call('getAccountInfo', [pubkey.toString(), { encoding: 'base64' }]); }
+  async getAccountInfo(pubkey) { const r = await this._call('getAccountInfo', [pubkey.toString(), { encoding: 'base64' }]); return r?.value || null; }
 }
 
 async function getEscrowSolanaConnection() {
