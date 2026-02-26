@@ -170,6 +170,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification, 
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showReplyTemplates, setShowReplyTemplates] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -600,8 +601,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification, 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
+    if (isSendingMessage) return;
     if (!newMessage.trim() && !attachment && !voiceRecording) return;
     
+    setIsSendingMessage(true);
     try {
       // Create form data to send files
       const formData = new FormData();
@@ -684,6 +687,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification, 
         setError(err.message || 'Failed to send message. Please try again.');
         showNotification(err.message || 'Failed to send message. Please try again.', 'error');
       }
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -1542,17 +1547,21 @@ ${currentUser.username}`;
                 
                 <button
                   type="submit"
-                  disabled={(!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording}
+                  disabled={isSendingMessage || (!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording}
                   className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
-                    (!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording
+                    isSendingMessage || (!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording
                       ? 'bg-gray-600/50 cursor-not-allowed text-gray-400'
                       : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/25'
                   }`}
                   title="Send message"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
+                  {isSendingMessage ? (
+                    <span className="w-4 h-4 border-2 border-gray-300/40 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
