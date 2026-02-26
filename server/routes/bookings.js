@@ -454,6 +454,22 @@ router.post('/:id/approve-work', auth, async (req, res) => {
     booking.buyerWorkApprovedAt = new Date();
     await booking.save();
 
+    // Remove watermark flags as soon as buyer approves delivered work.
+    // Keep completion-time unwatermarking as a fallback safety net.
+    try {
+      await BookingMessage.updateMany(
+        {
+          bookingId: booking._id,
+          isWatermarked: true
+        },
+        {
+          $set: { isWatermarked: false }
+        }
+      );
+    } catch (watermarkUpdateError) {
+      console.error('Error updating watermark flags on approve-work:', watermarkUpdateError);
+    }
+
     // Re-fetch with populated fields so socket/response have full data
     const populatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
@@ -724,8 +740,8 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
       attachment = `/uploads/bookings/${filename}`;
       originalFilePath = path.join(__dirname, '../uploads/bookings', filename);
       
-      // Mark as watermarked if seller sends image and booking not completed
-      if (isImage && isSeller && booking.status !== 'completed') {
+      // Mark as watermarked only before buyer approval/completion.
+      if (isImage && isSeller && booking.status !== 'completed' && !booking.buyerWorkApproved) {
         isWatermarked = true;
       } else {
         isWatermarked = false;
