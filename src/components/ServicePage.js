@@ -121,9 +121,22 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
     }
   }, [slug, navigate]);
 
-  const handleBookingCreate = (booking) => {
-    // Handle booking creation success
-    logger.log('Booking created:', booking);
+  const handleBookingCreate = async (serviceId, requirements) => {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentUser.token}`
+      },
+      body: JSON.stringify({ serviceId, requirements })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create booking');
+    }
+
+    return await response.json();
   };
 
   const handleShowCV = (userId, username) => {
