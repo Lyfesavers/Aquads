@@ -20,6 +20,7 @@ import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
+import EditAdModal from './EditAdModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -65,6 +66,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
   const [showProjectDeepDiveModal, setShowProjectDeepDiveModal] = useState(false);
   const [selectedProjectForDeepDive, setSelectedProjectForDeepDive] = useState(null);
+  const [showEditAdModal, setShowEditAdModal] = useState(false);
+  const [selectedAdForEdit, setSelectedAdForEdit] = useState(null);
   const [pendingTwitterRaids, setPendingTwitterRaids] = useState([]);
   const [loadingTwitterRaids, setLoadingTwitterRaids] = useState(false);
   const [pendingFacebookRaids, setPendingFacebookRaids] = useState([]);
@@ -1972,6 +1975,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     await onEditAd(adId, { projectProfile });
   };
 
+  const handleOpenEditAdModal = (ad) => {
+    setSelectedAdForEdit(ad);
+    setShowEditAdModal(true);
+  };
+
+  const handleSaveEditedAd = async (adId, editedData) => {
+    await onEditAd(adId, editedData);
+    setShowEditAdModal(false);
+    setSelectedAdForEdit(null);
+  };
+
   const handleApproveDeepDiveSubmission = async (ad) => {
     try {
       const profile = ad.projectProfile || {};
@@ -3431,7 +3445,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               </span>
                             )}
                             <button
-                              onClick={() => onEditAd(ad)}
+                              onClick={() => handleOpenEditAdModal(ad)}
                               className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                             >
                               Edit
@@ -4958,7 +4972,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                     Bump Pending
                                   </span>
                                 )}
-                                <button onClick={() => onEditAd(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
+                                <button onClick={() => handleOpenEditAdModal(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
                                   Edit
                                 </button>
                                 <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
@@ -6434,6 +6448,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           onClose={() => {
             setShowProjectDeepDiveModal(false);
             setSelectedProjectForDeepDive(null);
+          }}
+        />
+      )}
+
+      {showEditAdModal && selectedAdForEdit && (
+        <EditAdModal
+          ad={selectedAdForEdit}
+          onEditAd={handleSaveEditedAd}
+          onClose={() => {
+            setShowEditAdModal(false);
+            setSelectedAdForEdit(null);
           }}
         />
       )}
