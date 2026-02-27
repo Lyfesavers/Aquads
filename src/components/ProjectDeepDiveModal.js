@@ -122,8 +122,8 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
   };
 
   return (
-    <Modal onClose={onClose}>
-      <div className="text-white">
+    <Modal onClose={onClose} fullScreen={true}>
+      <div className="text-white max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-2">
         <h2 className="text-2xl font-bold mb-2">Project Deep Dive</h2>
         <p className="text-sm text-gray-400 mb-5">
           Update the data shown on AquaSwap charts for <span className="text-cyan-300">{ad?.title}</span>.
@@ -132,7 +132,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
           Quality note: after you save changes, verification moves to <strong>Pending Review</strong> until admin QA approves it.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 pb-8">
           <div>
             <label className="block text-sm font-semibold mb-2">About Project (Vision + Purpose)</label>
             <textarea
