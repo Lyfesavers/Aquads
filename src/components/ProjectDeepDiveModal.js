@@ -37,6 +37,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
   const [formData, setFormData] = useState(() => getInitialProfile(ad));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [imageValidationErrors, setImageValidationErrors] = useState({});
 
   const aboutLength = useMemo(() => formData.about.trim().length, [formData.about]);
 
@@ -50,6 +51,37 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
       list[index] = { ...list[index], [key]: value };
       return { ...prev, [field]: list };
     });
+  };
+
+  const validateImageUrl = async (url) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return false;
+      const contentType = response.headers.get('content-type') || '';
+      return contentType.startsWith('image/');
+    } catch (validationError) {
+      return false;
+    }
+  };
+
+  const getImageErrorKey = (field, index, key) => `${field}-${index}-${key}`;
+
+  const handleImageFieldBlur = async (field, index, key) => {
+    const imageUrl = (formData?.[field]?.[index]?.[key] || '').trim();
+    const errorKey = getImageErrorKey(field, index, key);
+    if (!imageUrl) {
+      setImageValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[errorKey];
+        return next;
+      });
+      return;
+    }
+    const isValid = await validateImageUrl(imageUrl);
+    setImageValidationErrors((prev) => ({
+      ...prev,
+      [errorKey]: isValid ? '' : 'Please enter a valid image URL'
+    }));
   };
 
   const addArrayItem = (field) => {
@@ -90,6 +122,10 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
 
     if (aboutLength < 80) {
       setError('About Project should be at least 80 characters to show real project context.');
+      return;
+    }
+    if (Object.values(imageValidationErrors).some(Boolean)) {
+      setError('Fix invalid image URLs before saving.');
       return;
     }
 
@@ -175,9 +211,24 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input value={member.name} onChange={(e) => updateArrayItem('team', index, 'name', e.target.value)} placeholder="Name" maxLength={MAX_NAME} className="px-3 py-2 bg-gray-800 rounded" />
                     <input value={member.role} onChange={(e) => updateArrayItem('team', index, 'role', e.target.value)} placeholder="Role" maxLength={MAX_ROLE} className="px-3 py-2 bg-gray-800 rounded" />
-                    <input value={member.image} onChange={(e) => updateArrayItem('team', index, 'image', e.target.value)} placeholder="Image URL (optional)" className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded" />
+                    <input
+                      value={member.image}
+                      onChange={(e) => updateArrayItem('team', index, 'image', e.target.value)}
+                      onBlur={() => handleImageFieldBlur('team', index, 'image')}
+                      placeholder="Image URL (optional)"
+                      className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded"
+                    />
                     <textarea rows={2} value={member.bio} onChange={(e) => updateArrayItem('team', index, 'bio', e.target.value)} placeholder="Short bio" maxLength={MAX_BIO} className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded" />
                   </div>
+                  {imageValidationErrors[getImageErrorKey('team', index, 'image')] && (
+                    <p className="text-[11px] text-red-400 mt-1">{imageValidationErrors[getImageErrorKey('team', index, 'image')]}</p>
+                  )}
+                  {member.image && !imageValidationErrors[getImageErrorKey('team', index, 'image')] && (
+                    <div className="mt-2 p-2 bg-gray-800 rounded inline-flex items-center gap-2">
+                      <img src={member.image} alt={`${member.name || 'Team'} preview`} className="w-10 h-10 rounded-full object-cover border border-cyan-500/40" />
+                      <span className="text-xs text-gray-300">Image preview</span>
+                    </div>
+                  )}
                   <p className="text-[11px] text-gray-400 mt-1">{(member.bio || '').length}/{MAX_BIO} bio chars</p>
                   <button type="button" onClick={() => removeArrayItem('team', index)} className="text-xs text-red-300 mt-2 hover:text-red-200">
                     Remove
@@ -233,10 +284,25 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
                       <option value="active">Active</option>
                       <option value="completed">Completed</option>
                     </select>
-                    <input value={partnership.logo || ''} onChange={(e) => updateArrayItem('partnerships', index, 'logo', e.target.value)} placeholder="Partner logo URL (optional)" className="sm:col-span-3 px-3 py-2 bg-gray-800 rounded" />
+                    <input
+                      value={partnership.logo || ''}
+                      onChange={(e) => updateArrayItem('partnerships', index, 'logo', e.target.value)}
+                      onBlur={() => handleImageFieldBlur('partnerships', index, 'logo')}
+                      placeholder="Partner logo URL (optional)"
+                      className="sm:col-span-3 px-3 py-2 bg-gray-800 rounded"
+                    />
                     <input value={partnership.sourceUrl} onChange={(e) => updateArrayItem('partnerships', index, 'sourceUrl', e.target.value)} placeholder="Source URL" className="sm:col-span-3 px-3 py-2 bg-gray-800 rounded" />
                     <textarea rows={2} value={partnership.summary} onChange={(e) => updateArrayItem('partnerships', index, 'summary', e.target.value)} placeholder="Partnership summary" maxLength={MAX_PARTNER_SUMMARY} className="sm:col-span-3 px-3 py-2 bg-gray-800 rounded" />
                   </div>
+                  {imageValidationErrors[getImageErrorKey('partnerships', index, 'logo')] && (
+                    <p className="text-[11px] text-red-400 mt-1">{imageValidationErrors[getImageErrorKey('partnerships', index, 'logo')]}</p>
+                  )}
+                  {partnership.logo && !imageValidationErrors[getImageErrorKey('partnerships', index, 'logo')] && (
+                    <div className="mt-2 p-2 bg-gray-800 rounded inline-flex items-center gap-2">
+                      <img src={partnership.logo} alt={`${partnership.name || 'Partner'} logo preview`} className="w-10 h-10 rounded-md object-cover border border-cyan-500/40" />
+                      <span className="text-xs text-gray-300">Logo preview</span>
+                    </div>
+                  )}
                   <p className="text-[11px] text-gray-400 mt-1">{(partnership.summary || '').length}/{MAX_PARTNER_SUMMARY} summary chars</p>
                   <button type="button" onClick={() => removeArrayItem('partnerships', index)} className="text-xs text-red-300 mt-2 hover:text-red-200">
                     Remove
