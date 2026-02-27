@@ -727,7 +727,20 @@ function App() {
           // If ad exists in the list, update it
           if (existingAdIndex !== -1) {
             const oldAd = prevAds[existingAdIndex];
-            const updatedAd = {...oldAd, ...data.ad};
+            let updatedAd = {...oldAd, ...data.ad};
+            // Race-condition guard: socket/API can overwrite each other. Never let a stale
+            // pending_review overwrite a verified deep dive (e.g. from updateAdSize emit).
+            const oldVerif = oldAd?.projectProfile?.verification?.status;
+            const newVerif = data.ad?.projectProfile?.verification?.status;
+            if (oldVerif === 'verified' && newVerif === 'pending_review') {
+              updatedAd = {
+                ...updatedAd,
+                projectProfile: {
+                  ...updatedAd.projectProfile,
+                  verification: oldAd.projectProfile.verification
+                }
+              };
+            }
             
             // Check if this is a banner ad that was just approved (status changed from pending to active)
             if (oldAd.status === 'pending' && updatedAd.status === 'active' && currentUser && updatedAd.owner === currentUser.username) {
@@ -783,11 +796,24 @@ function App() {
     });
     
     // Keep these for backward compatibility if they're still being used elsewhere
-    socket.on('adUpdated', (updatedAd) => {
+    socket.on('adUpdated', (incomingAd) => {
       setAds(prevAds => {
-        const newAds = prevAds.map(ad => 
-          ad.id === updatedAd.id ? updatedAd : ad
-        );
+        const oldAd = prevAds.find(ad => ad.id === incomingAd.id);
+        if (!oldAd) return prevAds;
+        // Race-condition guard: don't let stale pending_review overwrite verified deep dive
+        const oldVerif = oldAd?.projectProfile?.verification?.status;
+        const newVerif = incomingAd?.projectProfile?.verification?.status;
+        let finalAd = incomingAd;
+        if (oldVerif === 'verified' && newVerif === 'pending_review') {
+          finalAd = {
+            ...incomingAd,
+            projectProfile: {
+              ...incomingAd.projectProfile,
+              verification: oldAd.projectProfile.verification
+            }
+          };
+        }
+        const newAds = prevAds.map(ad => ad.id === incomingAd.id ? finalAd : ad);
         localStorage.setItem('cachedAds', JSON.stringify(newAds));
         return newAds;
       });
