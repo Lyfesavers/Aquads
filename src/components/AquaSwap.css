@@ -2869,6 +2869,33 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
+.project-about-markdown .ProseMirror {
+  margin: 0 0 10px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: normal;
+  outline: none;
+}
+
+.project-about-markdown .ProseMirror p {
+  margin: 0 0 10px;
+}
+
+.project-about-markdown .ProseMirror ul,
+.project-about-markdown .ProseMirror ol {
+  margin: 0 0 10px 20px;
+  padding-left: 14px;
+}
+
+.project-about-markdown .ProseMirror li {
+  margin-bottom: 4px;
+}
+
+.project-about-markdown .ProseMirror a {
+  color: #22d3ee;
+  text-decoration: underline;
+}
+
 .project-mission-text span,
 .project-update-text span {
   color: #67e8f9;

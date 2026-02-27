@@ -4,6 +4,10 @@ import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
 import { FaShareAlt } from 'react-icons/fa';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import LinkExtension from '@tiptap/extension-link';
+import { Markdown } from 'tiptap-markdown';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
@@ -25,6 +29,44 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Fallback popular token examples if ads can't be loaded
 const FALLBACK_TOKEN_EXAMPLES = [];
+
+const AboutMarkdown = ({ content }) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      LinkExtension.configure({
+        openOnClick: true,
+        autolink: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        },
+        validate: (href) => /^https?:\/\//i.test(href)
+      }),
+      Markdown.configure({
+        html: false,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true
+      })
+    ],
+    content: content || '',
+    editable: false,
+    injectCSS: false
+  }, [content]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.commands.setContent(content || '');
+    }
+  }, [editor, content]);
+
+  if (!editor) {
+    return <p className="project-about-text">{content}</p>;
+  }
+
+  return <EditorContent editor={editor} className="project-about-markdown" />;
+};
 
 const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'ether': 'ethereum',
@@ -2439,7 +2481,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     </a>
                   </div>
                 </div>
-                <p className="project-about-text">{projectProfile.about}</p>
+                <AboutMarkdown content={projectProfile.about} />
                 {projectProfile.mission && (
                   <p className="project-mission-text">
                     <span>Mission:</span> {projectProfile.mission}
