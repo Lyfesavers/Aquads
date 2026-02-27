@@ -2717,6 +2717,357 @@
 }
 
 /* ============================================
+   PROJECT DEEP DIVE SECTION
+   ============================================ */
+
+.project-deep-dive-section {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(9, 12, 23, 0.95) 0%, rgba(15, 15, 15, 0.98) 100%);
+  border-top: 1px solid rgba(0, 212, 255, 0.12);
+  padding: 38px 20px 46px;
+}
+
+.project-deep-dive-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.project-deep-dive-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.project-deep-dive-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.project-deep-dive-title {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #f8fafc;
+}
+
+.project-deep-dive-subtitle {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.95rem;
+}
+
+.project-meta-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.project-qa-badge,
+.project-freshness-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.project-freshness-badge {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.qa-verified {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.qa-pending_review {
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.qa-unverified {
+  color: #cbd5e1;
+  background: rgba(100, 116, 139, 0.2);
+  border-color: rgba(100, 116, 139, 0.4);
+}
+
+.qa-rejected {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.project-deep-dive-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.project-insight-card {
+  background: rgba(22, 28, 40, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.project-about-card {
+  grid-column: 1 / -1;
+}
+
+.project-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.project-card-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.project-card-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.project-card-top h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.project-card-top a {
+  color: #22d3ee;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.project-about-text,
+.project-mission-text,
+.project-update-text {
+  margin: 0 0 10px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.project-mission-text span,
+.project-update-text span {
+  color: #67e8f9;
+  font-weight: 600;
+}
+
+.project-qa-note {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.84rem;
+}
+
+.project-qa-note span {
+  color: #67e8f9;
+  font-weight: 600;
+}
+
+.project-insight-card h4 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  color: #e2e8f0;
+}
+
+.project-team-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.project-team-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.project-team-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(0, 212, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.project-team-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.project-team-meta strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 0.92rem;
+}
+
+.project-team-meta span {
+  display: block;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.8rem;
+  margin-top: 1px;
+}
+
+.project-team-meta p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.project-list {
+  display: grid;
+  gap: 10px;
+}
+
+.project-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.project-partner-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.project-partner-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.project-list-item strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.project-list-item span {
+  display: block;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+  margin-top: 2px;
+}
+
+.project-list-item p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.project-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: capitalize;
+  height: 22px;
+  min-width: 78px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.status-planned {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
+.status-in-progress {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+.status-completed,
+.status-active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.status-announced {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c4b5fd;
+}
+
+.project-source-link {
+  display: inline-block;
+  margin-top: 6px;
+  color: #22d3ee;
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.project-empty-state {
+  border: 1px dashed rgba(0, 212, 255, 0.35);
+  background: rgba(9, 14, 24, 0.6);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.project-empty-state h3 {
+  margin: 0 0 8px;
+  color: #f8fafc;
+}
+
+.project-empty-state p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .project-deep-dive-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .project-deep-dive-section {
+    padding: 30px 12px 36px;
+  }
+
+  .project-deep-dive-title {
+    font-size: 1.45rem;
+  }
+}
+
+/* ============================================
    HIRE EXPERT SECTION - Professional Design
    ============================================ */
 

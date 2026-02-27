@@ -19,6 +19,7 @@ import QRCode from 'qrcode';
 import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
+import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -62,6 +63,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
   const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
+  const [showProjectDeepDiveModal, setShowProjectDeepDiveModal] = useState(false);
+  const [selectedProjectForDeepDive, setSelectedProjectForDeepDive] = useState(null);
   const [pendingTwitterRaids, setPendingTwitterRaids] = useState([]);
   const [loadingTwitterRaids, setLoadingTwitterRaids] = useState(false);
   const [pendingFacebookRaids, setPendingFacebookRaids] = useState([]);
@@ -1245,6 +1248,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     : [];
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
+  const pendingDeepDiveSubmissions = currentUser?.isAdmin
+    ? ads.filter((ad) => {
+        const profile = ad.projectProfile;
+        return Boolean(
+          profile &&
+          (profile.about || '').trim().length > 0 &&
+          profile.verification?.status === 'pending_review'
+        );
+      })
+    : [];
 
   const handleProcessRedemption = async (userId, status) => {
     try {
@@ -1948,6 +1961,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const handleCloseBumpStore = () => {
     setShowBumpStoreModal(false);
     setSelectedAdForBump(null);
+  };
+
+  const handleOpenProjectDeepDive = (ad) => {
+    setSelectedProjectForDeepDive(ad);
+    setShowProjectDeepDiveModal(true);
+  };
+
+  const handleSaveProjectDeepDive = async (adId, projectProfile) => {
+    await onEditAd(adId, { projectProfile });
+  };
+
+  const handleApproveDeepDiveSubmission = async (ad) => {
+    try {
+      const profile = ad.projectProfile || {};
+      await onEditAd(ad.id, {
+        projectProfile: {
+          ...profile,
+          verification: {
+            ...(profile.verification || {}),
+            status: 'verified',
+            verifiedBy: currentUser?.username || '',
+            verifiedAt: new Date().toISOString()
+          }
+        }
+      });
+      showNotification('Deep dive submission approved', 'success');
+    } catch (error) {
+      showNotification('Failed to approve deep dive submission', 'error');
+    }
+  };
+
+  const handleRejectDeepDiveSubmission = async (ad) => {
+    const reason = window.prompt('Enter a rejection note for the project team (optional):', '') || '';
+    try {
+      const profile = ad.projectProfile || {};
+      await onEditAd(ad.id, {
+        projectProfile: {
+          ...profile,
+          verification: {
+            ...(profile.verification || {}),
+            status: 'rejected',
+            qaNotes: reason.trim(),
+            verifiedBy: currentUser?.username || '',
+            verifiedAt: new Date().toISOString()
+          }
+        }
+      });
+      showNotification('Deep dive submission rejected', 'success');
+    } catch (error) {
+      showNotification('Failed to reject deep dive submission', 'error');
+    }
   };
 
 
@@ -2828,6 +2892,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     { id: 'tokens', label: 'Token Purchases', icon: '🪙', badge: pendingTokenPurchases.length },
     { id: 'discountcodes', label: 'Discount Codes', icon: '🏷️', badge: 0 },
     { id: 'services', label: 'Service Approvals', icon: '💼', badge: pendingServices.length },
+    { id: 'deepdive', label: 'Deep Dive QA', icon: '🧾', badge: pendingDeepDiveSubmissions.length },
     { id: 'addonorders', label: 'PR/Add-on Orders', icon: '📰', badge: pendingAddonOrders.length, onSelect: () => { if (pendingAddonOrders.length === 0) fetchPendingAddonOrders(); } },
     { id: 'affiliates', label: 'Affiliates', icon: '👥', badge: 0, onSelect: () => { if (topAffiliates.length === 0) fetchTopAffiliates(); if (suspiciousUsers.length === 0) fetchSuspiciousUsers(); } },
     { id: 'clickAnalytics', label: 'Click Analytics', icon: '📊', badge: 0, onSelect: () => { if (!clickStats) fetchClickAnalytics(); } },
@@ -3370,6 +3435,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                             >
                               Edit
+                            </button>
+                            <button
+                              onClick={() => handleOpenProjectDeepDive(ad)}
+                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded"
+                              title="Update chart deep dive details"
+                            >
+                              Deep Dive Form
                             </button>
                             <button
                               onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
@@ -5127,6 +5199,61 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
 
+                {activeAdminSection === 'deepdive' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Project Deep Dive QA</h3>
+                    {pendingDeepDiveSubmissions.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending deep dive submissions.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingDeepDiveSubmissions.map((ad) => (
+                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4 sm:p-6">
+                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                              <div className="flex items-start gap-4">
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded flex-shrink-0" loading="lazy" />
+                                <div>
+                                  <h4 className="text-white font-semibold text-lg">{ad.title}</h4>
+                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                                  <p className="text-gray-400 text-xs mt-1">
+                                    Submitted: {ad.projectProfile?.updatedAt ? new Date(ad.projectProfile.updatedAt).toLocaleString() : 'Unknown'}
+                                  </p>
+                                  <p className="text-gray-300 text-sm mt-3">
+                                    {(ad.projectProfile?.about || '').slice(0, 280)}
+                                    {(ad.projectProfile?.about || '').length > 280 ? '...' : ''}
+                                  </p>
+                                  <p className="text-xs text-cyan-300 mt-2">
+                                    Team: {ad.projectProfile?.team?.length || 0} | Milestones: {ad.projectProfile?.milestones?.length || 0} | Partnerships: {ad.projectProfile?.partnerships?.length || 0}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => handleOpenProjectDeepDive(ad)}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                                >
+                                  Review Details
+                                </button>
+                                <button
+                                  onClick={() => handleApproveDeepDiveSubmission(ad)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectDeepDiveSubmission(ad)}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {activeAdminSection === 'addonorders' && (
                   <div>
                     <div className="flex justify-between items-center mb-6">
@@ -6297,6 +6424,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           ad={selectedAdForBump}
           onSubmitPayment={handleSubmitBump}
           onClose={handleCloseBumpStore}
+        />
+      )}
+
+      {showProjectDeepDiveModal && selectedProjectForDeepDive && (
+        <ProjectDeepDiveModal
+          ad={selectedProjectForDeepDive}
+          onSave={handleSaveProjectDeepDive}
+          onClose={() => {
+            setShowProjectDeepDiveModal(false);
+            setSelectedProjectForDeepDive(null);
+          }}
         />
       )}
 

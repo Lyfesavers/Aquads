@@ -168,6 +168,47 @@ const adSchema = new mongoose.Schema({
   customBrandingUploadedAt: {
     type: Date,
     default: null
+  },
+  // Rich project details shown in AquaSwap chart deep-dive section
+  projectProfile: {
+    about: { type: String, default: '' },
+    mission: { type: String, default: '' },
+    recentUpdate: { type: String, default: '' },
+    verification: {
+      status: { type: String, default: 'unverified' },
+      qaNotes: { type: String, default: '' },
+      verifiedBy: { type: String, default: '' },
+      verifiedAt: { type: Date, default: null }
+    },
+    team: {
+      type: [{
+        name: { type: String, default: '' },
+        role: { type: String, default: '' },
+        bio: { type: String, default: '' },
+        image: { type: String, default: '' }
+      }],
+      default: []
+    },
+    milestones: {
+      type: [{
+        title: { type: String, default: '' },
+        status: { type: String, default: 'planned' },
+        date: { type: String, default: '' },
+        summary: { type: String, default: '' }
+      }],
+      default: []
+    },
+    partnerships: {
+      type: [{
+        name: { type: String, default: '' },
+        status: { type: String, default: 'announced' },
+        logo: { type: String, default: '' },
+        sourceUrl: { type: String, default: '' },
+        summary: { type: String, default: '' }
+      }],
+      default: []
+    },
+    updatedAt: { type: Date, default: null }
   }
 });
 

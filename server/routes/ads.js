@@ -461,7 +461,7 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
     
     // Extract only allowed fields to update
     const updateData = {};
-    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain', 'logo', 'pairAddress'];
+    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain', 'logo', 'pairAddress', 'projectProfile'];
     
     allowedUpdates.forEach(field => {
       if (updates[field] !== undefined) {

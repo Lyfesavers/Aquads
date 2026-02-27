@@ -539,6 +539,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [chartProjects, setChartProjects] = useState([]);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -729,12 +730,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
           (ad.pairAddress || ad.contractAddress) && 
-          (ad.pairAddress || ad.contractAddress).trim() !== '' &&
-          ad.isBumped === true  // Only include bumped tokens in trending
+          (ad.pairAddress || ad.contractAddress).trim() !== ''
         );
+        setChartProjects(validAds);
+
+        const bumpedAds = validAds.filter(ad => ad.isBumped === true);
         
         // Sort bumped tokens by bullish votes (highest first)
-        const sortedAds = validAds.sort((a, b) => {
+        const sortedAds = bumpedAds.sort((a, b) => {
           return (b.bullishVotes || 0) - (a.bullishVotes || 0);
         });
         
@@ -760,6 +763,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         logger.error('Error fetching bubble tokens:', error);
         // Keep existing popular tokens or empty array on error
         setPopularTokens([]);
+        setChartProjects([]);
       }
     };
 
@@ -1609,6 +1613,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
   };
 
+  const normalizeAddress = (value) => (value || '').trim().toLowerCase();
+  const getFreshnessText = (timestamp) => {
+    if (!timestamp) return 'Never updated';
+    const parsed = new Date(timestamp);
+    if (Number.isNaN(parsed.getTime())) return 'Last update unavailable';
+    const diffMs = Date.now() - parsed.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Updated just now';
+    if (mins < 60) return `Updated ${mins} minute${mins === 1 ? '' : 's'} ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `Updated ${hours} hour${hours === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hours / 24);
+    return `Updated ${days} day${days === 1 ? '' : 's'} ago`;
+  };
+  const selectedTokenAddress = normalizeAddress(tokenSearch);
+  const selectedProject = chartProjects.find((ad) =>
+    normalizeAddress(ad.pairAddress || ad.contractAddress) === selectedTokenAddress
+  );
+  const fallbackProject = chartProjects.find((ad) => (ad.projectProfile?.about || '').trim().length > 0);
+  const projectForInsights = selectedProject || fallbackProject || null;
+  const projectProfile = projectForInsights?.projectProfile || null;
+  const qaStatus = projectProfile?.verification?.status || 'unverified';
+  const hasProjectDeepDive = Boolean(
+    projectProfile &&
+    projectProfile.about &&
+    projectProfile.about.trim().length > 0 &&
+    qaStatus === 'verified'
+  );
+  const teamMembers = hasProjectDeepDive ? (projectProfile.team || []).filter((member) => member.name) : [];
+  const milestones = hasProjectDeepDive ? (projectProfile.milestones || []).filter((item) => item.title) : [];
+  const partnerships = hasProjectDeepDive ? (projectProfile.partnerships || []).filter((item) => item.name) : [];
+  const qaNotes = projectProfile?.verification?.qaNotes || '';
+  const freshnessText = getFreshnessText(projectProfile?.updatedAt);
+
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
@@ -2363,6 +2401,152 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <div className="currency-converter-wrapper">
         <CurrencyConverter />
       </div>
+
+      {/* Project Deep Dive Section */}
+      <section className="project-deep-dive-section">
+        <div className="project-deep-dive-container">
+          <div className="project-deep-dive-header">
+            <div className="project-deep-dive-icon">🧭</div>
+            <div>
+              <h2 className="project-deep-dive-title">Project Deep Dive</h2>
+              <p className="project-deep-dive-subtitle">
+                Vision, milestones, partnerships, and team context beyond on-chain data.
+              </p>
+              {hasProjectDeepDive && (
+                <div className="project-meta-badges">
+                  <span className={`project-qa-badge qa-${qaStatus}`}>QA: {qaStatus.replace(/_/g, ' ')}</span>
+                  <span className="project-freshness-badge">{freshnessText}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {hasProjectDeepDive && projectForInsights ? (
+            <div className="project-deep-dive-grid">
+              <article className="project-insight-card project-about-card">
+                <div className="project-card-top">
+                  {projectForInsights.logo ? (
+                    <img src={projectForInsights.logo} alt={projectForInsights.title} className="project-card-logo" />
+                  ) : (
+                    <div className="project-card-logo project-card-logo-fallback">
+                      {(projectForInsights.title || '?').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h3>{projectForInsights.title}</h3>
+                    <a href={projectForInsights.url} target="_blank" rel="noopener noreferrer">
+                      Visit project
+                    </a>
+                  </div>
+                </div>
+                <p className="project-about-text">{projectProfile.about}</p>
+                {projectProfile.mission && (
+                  <p className="project-mission-text">
+                    <span>Mission:</span> {projectProfile.mission}
+                  </p>
+                )}
+                {projectProfile.recentUpdate && (
+                  <p className="project-update-text">
+                    <span>Latest Update:</span> {projectProfile.recentUpdate}
+                  </p>
+                )}
+                {qaNotes && (
+                  <p className="project-qa-note">
+                    <span>QA Note:</span> {qaNotes}
+                  </p>
+                )}
+              </article>
+
+              {teamMembers.length > 0 && (
+                <article className="project-insight-card">
+                  <h4>Team</h4>
+                  <div className="project-team-grid">
+                    {teamMembers.map((member, index) => (
+                      <div key={`${member.name}-${index}`} className="project-team-item">
+                        {member.image ? (
+                          <img src={member.image} alt={member.name} className="project-team-avatar" />
+                        ) : (
+                          <div className="project-team-avatar project-team-avatar-fallback">
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="project-team-meta">
+                          <strong>{member.name}</strong>
+                          {member.role && <span>{member.role}</span>}
+                          {member.bio && <p>{member.bio}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )}
+
+              {milestones.length > 0 && (
+                <article className="project-insight-card">
+                  <h4>Milestones</h4>
+                  <div className="project-list">
+                    {milestones.map((milestone, index) => (
+                      <div key={`${milestone.title}-${index}`} className="project-list-item">
+                        <div className={`project-status-badge status-${milestone.status || 'planned'}`}>
+                          {milestone.status || 'planned'}
+                        </div>
+                        <div>
+                          <strong>{milestone.title}</strong>
+                          {milestone.date && <span>{milestone.date}</span>}
+                          {milestone.summary && <p>{milestone.summary}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )}
+
+              {partnerships.length > 0 && (
+                <article className="project-insight-card">
+                  <h4>Partnerships</h4>
+                  <div className="project-list">
+                    {partnerships.map((partnership, index) => (
+                      <div key={`${partnership.name}-${index}`} className="project-list-item">
+                        <div className={`project-status-badge status-${partnership.status || 'announced'}`}>
+                          {partnership.status || 'announced'}
+                        </div>
+                        {partnership.logo ? (
+                          <img
+                            src={partnership.logo}
+                            alt={`${partnership.name} logo`}
+                            className="project-partner-logo"
+                          />
+                        ) : (
+                          <div className="project-partner-logo project-partner-logo-fallback">
+                            {partnership.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <strong>{partnership.name}</strong>
+                          {partnership.summary && <p>{partnership.summary}</p>}
+                          {partnership.sourceUrl && (
+                            <a href={partnership.sourceUrl} target="_blank" rel="noopener noreferrer" className="project-source-link">
+                              Source
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )}
+            </div>
+          ) : (
+            <div className="project-empty-state">
+              <h3>No deep-dive profile submitted yet</h3>
+              <p>
+                Project owners can add team, milestones, partnerships, and mission details from
+                Dashboard > Main > Deep Dive Form.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Hire Expert Section */}
       {featuredServices.length > 0 && (
