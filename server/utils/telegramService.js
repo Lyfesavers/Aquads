@@ -168,6 +168,29 @@ const telegramService = {
     }
   },
 
+  // Unpin a specific message in a chat (if it's pinned)
+  unpinMessage: async (chatId, messageId = null) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return false;
+
+    try {
+      const payload = { chat_id: chatId };
+      if (messageId) {
+        payload.message_id = messageId;
+      }
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/unpinChatMessage`,
+        payload
+      );
+
+      return response.data?.ok === true;
+    } catch (error) {
+      // Safe to ignore when message isn't pinned or permissions are limited
+      return false;
+    }
+  },
+
   sendRaidNotification: async (raidData) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -2030,6 +2053,9 @@ ${platformEmoji} ${platformName} Raid
       if (messageIds.length > 0) {
         for (const messageId of messageIds) {
           try {
+            // Unpin first to avoid Telegram "pinned deleted message" service clutter
+            await telegramService.unpinMessage(chatId, messageId);
+
             await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
               chat_id: chatId,
               message_id: messageId
@@ -4584,6 +4610,8 @@ Tap to update:`;
 
       // Delete old messages first
       for (const messageId of telegramService.lastTrendingMessages) {
+        // Unpin first to avoid Telegram "pinned deleted message" service clutter
+        await telegramService.unpinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
         await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
       }
       telegramService.lastTrendingMessages = [];
