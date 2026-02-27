@@ -2869,6 +2869,10 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
+.project-about-text-fallback {
+  white-space: pre-line;
+}
+
 .project-about-markdown .ProseMirror {
   margin: 0 0 10px;
   line-height: 1.65;

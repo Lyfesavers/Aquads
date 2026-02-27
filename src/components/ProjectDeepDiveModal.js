@@ -183,6 +183,9 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
             <p className="text-xs text-gray-400 mt-1">
               {aboutLength}/{MAX_ABOUT} characters. Target: 120-500 chars, clear mission and user value.
             </p>
+            <p className="text-xs text-cyan-300/80 mt-1">
+              Tip: Use new lines for paragraphs. For bullets, start a new line with <code className="bg-gray-800 px-1 rounded">-</code> or <code className="bg-gray-800 px-1 rounded">•</code>.
+            </p>
           </div>
 
           <div>

@@ -30,7 +30,18 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Fallback popular token examples if ads can't be loaded
 const FALLBACK_TOKEN_EXAMPLES = [];
 
+// Normalize user-typed content so Markdown renders bullets and line breaks correctly.
+// Converts Unicode bullet • to Markdown -, and inline " • item" to proper list lines.
+const normalizeAboutMarkdown = (text) => {
+  if (!text || typeof text !== 'string') return text || '';
+  return text
+    .replace(/\s•\s/g, '\n- ')   // " • item" in middle of line → new line + bullet
+    .replace(/\n•\s/g, '\n- ')  // "• item" at start of line → Markdown bullet
+    .replace(/^•\s/gm, '- ');   // "• item" at start of string or after newline
+};
+
 const AboutMarkdown = ({ content }) => {
+  const normalized = normalizeAboutMarkdown(content);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -50,19 +61,19 @@ const AboutMarkdown = ({ content }) => {
         linkify: true
       })
     ],
-    content: content || '',
+    content: normalized,
     editable: false,
     injectCSS: false
-  }, [content]);
+  }, [normalized]);
 
   useEffect(() => {
     if (editor) {
-      editor.commands.setContent(content || '');
+      editor.commands.setContent(normalized);
     }
-  }, [editor, content]);
+  }, [editor, normalized]);
 
   if (!editor) {
-    return <p className="project-about-text">{content}</p>;
+    return <p className="project-about-text project-about-text-fallback">{content}</p>;
   }
 
   return <EditorContent editor={editor} className="project-about-markdown" />;
