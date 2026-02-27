@@ -2888,11 +2888,21 @@
 .project-about-markdown .ProseMirror ul,
 .project-about-markdown .ProseMirror ol {
   margin: 0 0 10px 20px;
-  padding-left: 14px;
+  padding-left: 20px;
+  list-style-position: outside;
+}
+
+.project-about-markdown .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.project-about-markdown .ProseMirror ol {
+  list-style-type: decimal;
 }
 
 .project-about-markdown .ProseMirror li {
   margin-bottom: 4px;
+  display: list-item;
 }
 
 .project-about-markdown .ProseMirror a {
