@@ -3720,6 +3720,12 @@ Tap to update:`;
         message += `💡 Share this message to get votes on your project!\n\n`;
         message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
+        // Build View on Aquads URL - link to AquaSwap with token in charts
+        const tokenAddress = project.pairAddress || project.contractAddress;
+        const viewOnAquadsUrl = (tokenAddress && project.blockchain)
+          ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&name=${encodeURIComponent(project.title || '')}&token=${encodeURIComponent(tokenAddress.trim())}`
+          : 'https://www.aquads.xyz/aquaswap';
+
         // Create voting keyboard (simplified)
         const keyboard = {
           inline_keyboard: [
@@ -3728,7 +3734,7 @@ Tap to update:`;
               { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
             ],
             [
-              { text: "🔗 View on Aquads", url: "https://aquads.xyz" }
+              { text: "🔗 View on Aquads", url: viewOnAquadsUrl }
             ]
           ]
         };
@@ -4405,6 +4411,12 @@ Tap to update:`;
       message += `🏆 Rank: ${rankEmoji} #${projectRank}\n\n`;
       message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
+      // Build View on Aquads URL - link to AquaSwap with token in charts
+      const tokenAddress = project.pairAddress || project.contractAddress;
+      const viewOnAquadsUrl = (tokenAddress && project.blockchain)
+        ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&name=${encodeURIComponent(project.title || '')}&token=${encodeURIComponent(tokenAddress.trim())}`
+        : 'https://www.aquads.xyz/aquaswap';
+
       // Create voting keyboard
       const keyboard = {
         inline_keyboard: [
@@ -4413,7 +4425,7 @@ Tap to update:`;
             { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
           ],
           [
-            { text: "🔗 View on Aquads", url: "https://aquads.xyz" }
+            { text: "🔗 View on Aquads", url: viewOnAquadsUrl }
           ]
         ]
       };
