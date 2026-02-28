@@ -724,8 +724,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         setActiveTokenSymbol(nameParam); // Use name as symbol for bubbles
       }
       
-      // Keep URL parameters for shareability - do not clean up
-      // window.history.replaceState({}, document.title, '/aquaswap');
+      // Update URL to /share/aquaswap so when users copy and share, metadata displays correctly
+      const sharePath = `/share/aquaswap?token=${encodeURIComponent(tokenParam)}&blockchain=${encodeURIComponent(blockchainParam)}`;
+      if (!window.location.pathname.startsWith('/share/aquaswap')) {
+        window.history.replaceState({}, document.title, sharePath);
+      }
     }
 
     // Fetch featured services on mount

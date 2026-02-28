@@ -3644,6 +3644,7 @@ function App() {
             } />
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/share/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/wallet-analyzer" element={<WalletAnalyzer currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
