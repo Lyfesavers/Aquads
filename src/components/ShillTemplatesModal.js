@@ -155,12 +155,12 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
     
     // Fire-and-forget: Award shill points in background (don't block UI)
     if (currentUser) {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
       fetch(`${API_URL}/api/points/shill-completed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token && { 'Authorization': `Bearer ${token}` })
         }
       })
         .then(res => res.json())
