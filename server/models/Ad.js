@@ -185,7 +185,9 @@ const adSchema = new mongoose.Schema({
         name: { type: String, default: '' },
         role: { type: String, default: '' },
         bio: { type: String, default: '' },
-        image: { type: String, default: '' }
+        image: { type: String, default: '' },
+        xUrl: { type: String, default: '' },
+        telegramUrl: { type: String, default: '' }
       }],
       default: []
     },

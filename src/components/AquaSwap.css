@@ -2982,6 +2982,27 @@
   line-height: 1.45;
 }
 
+.project-team-socials {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.project-team-social-link {
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s;
+}
+
+.project-team-social-link:hover {
+  color: #22d3ee;
+}
+
+.project-team-social-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .project-list {
   display: grid;
   gap: 10px;

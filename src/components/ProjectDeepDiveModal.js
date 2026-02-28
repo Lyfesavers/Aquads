@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Modal from './Modal';
 
-const EMPTY_TEAM_MEMBER = { name: '', role: '', bio: '', image: '' };
+const EMPTY_TEAM_MEMBER = { name: '', role: '', bio: '', image: '', xUrl: '', telegramUrl: '' };
 const EMPTY_MILESTONE = { title: '', status: 'planned', date: '', summary: '' };
 const EMPTY_PARTNERSHIP = { name: '', status: 'announced', sourceUrl: '', summary: '', logo: '' };
 const MAX_ABOUT = 1400;
@@ -219,6 +219,18 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
                       onChange={(e) => updateArrayItem('team', index, 'image', e.target.value)}
                       onBlur={() => handleImageFieldBlur('team', index, 'image')}
                       placeholder="Image URL (optional)"
+                      className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded"
+                    />
+                    <input
+                      value={member.xUrl || ''}
+                      onChange={(e) => updateArrayItem('team', index, 'xUrl', e.target.value)}
+                      placeholder="X / Twitter profile URL (optional)"
+                      className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded"
+                    />
+                    <input
+                      value={member.telegramUrl || ''}
+                      onChange={(e) => updateArrayItem('team', index, 'telegramUrl', e.target.value)}
+                      placeholder="Telegram profile URL (optional)"
                       className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded"
                     />
                     <textarea rows={2} value={member.bio} onChange={(e) => updateArrayItem('team', index, 'bio', e.target.value)} placeholder="Short bio" maxLength={MAX_BIO} className="sm:col-span-2 px-3 py-2 bg-gray-800 rounded" />

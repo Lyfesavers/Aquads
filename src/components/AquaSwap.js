@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
-import { FaShareAlt } from 'react-icons/fa';
+import { FaShareAlt, FaTwitter, FaTelegram } from 'react-icons/fa';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
@@ -2530,6 +2530,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                           <strong>{member.name}</strong>
                           {member.role && <span>{member.role}</span>}
                           {member.bio && <p>{member.bio}</p>}
+                          {(member.xUrl || member.telegramUrl) && (
+                            <div className="project-team-socials">
+                              {member.xUrl && (
+                                <a href={member.xUrl} target="_blank" rel="noopener noreferrer" className="project-team-social-link" title="X / Twitter" aria-label={`${member.name} on X`}>
+                                  <FaTwitter className="project-team-social-icon" />
+                                </a>
+                              )}
+                              {member.telegramUrl && (
+                                <a href={member.telegramUrl} target="_blank" rel="noopener noreferrer" className="project-team-social-link" title="Telegram" aria-label={`${member.name} on Telegram`}>
+                                  <FaTelegram className="project-team-social-icon" />
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
