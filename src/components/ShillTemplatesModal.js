@@ -169,16 +169,16 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
             setAlreadyShilledToday(true);
           }
           setShowPointsMessage(true);
+          // Close after user has time to read the confirmation (1.5s)
+          setTimeout(handleClose, 1500);
         })
         .catch(error => {
           console.error('Failed to award shill points:', error);
+          setTimeout(handleClose, 1000);
         });
-    }
-    
-    // Close modal after brief delay
-    setTimeout(() => {
+    } else {
       handleClose();
-    }, currentUser ? 1200 : 0);
+    }
   };
 
   const handleCopyContract = async () => {
