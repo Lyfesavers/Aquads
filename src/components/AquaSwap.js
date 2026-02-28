@@ -1697,6 +1697,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     projectProfile.about.trim().length > 0 &&
     qaStatus === 'verified'
   );
+  const hasPendingUpdate = Boolean(
+    projectProfile &&
+    projectProfile.about &&
+    projectProfile.about.trim().length > 0 &&
+    qaStatus === 'pending_review'
+  );
   const teamMembers = hasProjectDeepDive ? (projectProfile.team || []).filter((member) => member.name) : [];
   const milestones = hasProjectDeepDive ? (projectProfile.milestones || []).filter((item) => item.title) : [];
   const partnerships = hasProjectDeepDive ? (projectProfile.partnerships || []).filter((item) => item.name) : [];
@@ -2605,6 +2611,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   </div>
                 </article>
               )}
+            </div>
+          ) : hasPendingUpdate ? (
+            <div className="project-empty-state project-pending-state">
+              <h3>Pending update from dev team</h3>
+              <p>
+                The project team has submitted updates. Content will appear here once approved by our admin team.
+              </p>
             </div>
           ) : (
             <div className="project-empty-state">
