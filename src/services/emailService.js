@@ -13,6 +13,7 @@ const emailService = {
 
       const templateParams = {
         to_email: email,
+        contact_name: username,
         username: username,
         referralCode: referralCode
       };
@@ -45,6 +46,7 @@ const emailService = {
 
       const templateParams = {
         to_email: sellerEmail,
+        contact_name: bookingDetails.sellerUsername,
         sellerUsername: bookingDetails.sellerUsername,
         serviceTitle: bookingDetails.serviceTitle,
         bookingId: bookingDetails.bookingId,
@@ -84,6 +86,7 @@ const emailService = {
 
       const templateParams = {
         to_email: email,
+        contact_name: username,
         username: username,
         verification_code: verificationCode,
         site_name: 'Aquads'
@@ -119,6 +122,7 @@ const emailService = {
 
       const templateParams = {
         to_email: buyerEmail,
+        contact_name: bookingDetails.buyerUsername,
         buyerUsername: bookingDetails.buyerUsername,
         serviceTitle: bookingDetails.serviceTitle,
         bookingId: bookingDetails.bookingId,
@@ -173,6 +177,7 @@ const emailService = {
 
       const templateParams = {
         to_email: recipientEmail,
+        contact_name: paymentDetails.recipientName,
         recipient_name: paymentDetails.recipientName,
         amount: paymentDetails.amount,
         token: paymentDetails.token,
@@ -228,6 +233,7 @@ const emailService = {
 
       const templateParams = {
         to_email: payerEmail,
+        contact_name: paymentDetails.recipientName || 'AquaPay User',
         recipient_name: paymentDetails.recipientName,
         amount: paymentDetails.amount,
         token: paymentDetails.token,
