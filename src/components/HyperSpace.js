@@ -607,14 +607,33 @@ const HyperSpace = ({ currentUser }) => {
       </div>
 
       <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 pb-32 lg:pb-12">
-        {/* Back to Home Button */}
-        <button
-          onClick={() => navigate('/home')}
-          className="mb-6 sm:mb-8 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all duration-200 group text-sm"
-        >
-          <FaArrowLeft className="text-xs group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Home</span>
-        </button>
+        {/* Top bar: Back to Home (left) + My Orders (right) */}
+        <div className="mb-6 sm:mb-8 flex items-center justify-between gap-3">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all duration-200 group text-sm"
+          >
+            <FaArrowLeft className="text-xs group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Home</span>
+          </button>
+          {currentUser && (
+            <button
+              onClick={() => {
+                setShowOrderHistory(true);
+                if (myOrders.length === 0) fetchMyOrders();
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all duration-200 text-sm font-medium"
+            >
+              <FaHistory className="text-sm" />
+              <span>My Orders</span>
+              {myOrders.length > 0 && (
+                <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">
+                  {myOrders.length}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
 
         {/* Header - Immersive hero */}
         <div className="text-center mb-10 sm:mb-14">
@@ -941,150 +960,153 @@ const HyperSpace = ({ currentUser }) => {
           </div>
         </div>
 
-        {/* Order History Section */}
-        {currentUser && (
-          <div className="max-w-6xl mx-auto mt-8 sm:mt-12">
-            <button
-              onClick={() => setShowOrderHistory(!showOrderHistory)}
-              className="flex items-center gap-2 text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 hover:text-purple-400 transition-colors"
-            >
-              <FaHistory />
-              Order History
-              {myOrders.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">
-                  {myOrders.length}
-                </span>
-              )}
-              {showOrderHistory ? <FaChevronUp className="ml-auto" /> : <FaChevronDown className="ml-auto" />}
-            </button>
+      </div>
 
-            {showOrderHistory && (
-              <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-purple-500/20 overflow-hidden">
-                {loadingOrders ? (
-                  <div className="p-6 sm:p-8 text-center">
-                    <FaSpinner className="animate-spin text-xl sm:text-2xl text-purple-400 mx-auto" />
-                  </div>
-                ) : myOrders.length === 0 ? (
-                  <div className="p-6 sm:p-8 text-center text-gray-400">
-                    <FaHistory className="text-3xl sm:text-4xl mx-auto mb-2 opacity-50" />
-                    <p className="text-sm sm:text-base">No orders yet</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Mobile: Card View */}
-                    <div className="sm:hidden divide-y divide-gray-700">
-                      {myOrders.map((order) => (
-                        <div key={order.orderId} className="p-4 space-y-2">
-                          <div className="flex justify-between items-start">
-                            <span className="text-xs font-mono text-gray-400">{order.orderId}</span>
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                              {getStatusIcon(order.status)}
-                              {order.status.replace(/_/g, ' ')}
-                            </span>
+      {/* Order History - Slide-out panel (desktop) / Full-width drawer (mobile) */}
+      {currentUser && showOrderHistory && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowOrderHistory(false)}
+            aria-hidden="true"
+          />
+          {/* Panel: desktop = 420px from right, mobile = full width drawer */}
+          <div
+            className="relative flex flex-col w-full sm:max-w-[420px] bg-gray-900 border-l border-gray-700/80 shadow-2xl animate-slide-in-right"
+            style={{ maxHeight: '100vh' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-700/80 flex-shrink-0">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <FaHistory className="text-purple-400" />
+                My Orders
+                {myOrders.length > 0 && (
+                  <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">
+                    {myOrders.length}
+                  </span>
+                )}
+              </h2>
+              <button
+                onClick={() => setShowOrderHistory(false)}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+                aria-label="Close"
+              >
+                <FaTimes className="text-lg" />
+              </button>
+            </div>
+            {/* Content - scrollable */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {loadingOrders ? (
+                <div className="p-6 sm:p-8 text-center">
+                  <FaSpinner className="animate-spin text-xl sm:text-2xl text-purple-400 mx-auto" />
+                </div>
+              ) : myOrders.length === 0 ? (
+                <div className="p-6 sm:p-8 text-center text-gray-400">
+                  <FaHistory className="text-3xl sm:text-4xl mx-auto mb-2 opacity-50" />
+                  <p className="text-sm sm:text-base">No orders yet</p>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile: Card View */}
+                  <div className="sm:hidden divide-y divide-gray-700">
+                    {myOrders.map((order) => (
+                      <div key={order.orderId} className="p-4 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs font-mono text-gray-400">{order.orderId}</span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                            {getStatusIcon(order.status)}
+                            {order.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-white">
+                            <span className="font-bold">{order.listeners.toLocaleString()}</span>
+                            <span className="text-gray-400"> listeners</span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <div className="text-sm text-white">
-                              <span className="font-bold">{order.listeners.toLocaleString()}</span>
-                              <span className="text-gray-400"> listeners</span>
-                            </div>
-                            <span className="text-white font-bold">{order.price} USDC</span>
-                          </div>
-                          <div className="flex justify-between items-center text-xs text-gray-400">
-                            <span>{formatDuration(order.duration)}</span>
-                            {/* Show countdown timer for delivering orders */}
-                            {order.status === 'delivering' && order.deliveryEndsAt ? (
-                              <CountdownTimer 
-                                endsAt={order.deliveryEndsAt} 
-                                onComplete={() => fetchMyOrders()}
-                                compact={true}
-                              />
-                            ) : (
-                              <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-                            )}
-                          </div>
-                          {/* Show timer bar for active deliveries */}
-                          {order.status === 'delivering' && order.deliveryEndsAt && (
-                            <div className="pt-2">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] text-cyan-400 font-medium">🔴 LIVE - Package Active</span>
-                              </div>
-                              <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-pulse"
-                                  style={{ width: '100%' }}
-                                />
-                              </div>
-                            </div>
+                          <span className="text-white font-bold">{order.price} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs text-gray-400">
+                          <span>{formatDuration(order.duration)}</span>
+                          {order.status === 'delivering' && order.deliveryEndsAt ? (
+                            <CountdownTimer 
+                              endsAt={order.deliveryEndsAt} 
+                              onComplete={() => fetchMyOrders()}
+                              compact={true}
+                            />
+                          ) : (
+                            <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                           )}
                         </div>
-                      ))}
-                    </div>
-                    
-                    {/* Desktop: Table View */}
-                    <div className="hidden sm:block overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-700/50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Order ID</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Listeners</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Duration</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Price</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Timer</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700">
-                          {myOrders.map((order) => (
-                            <tr key={order.orderId} className={`hover:bg-gray-700/30 transition-colors ${
-                              order.status === 'delivering' ? 'bg-cyan-500/5' : ''
-                            }`}>
-                              <td className="px-4 py-3 text-sm text-white font-mono">{order.orderId}</td>
-                              <td className="px-4 py-3 text-sm text-white">{order.listeners.toLocaleString()}</td>
-                              <td className="px-4 py-3 text-sm text-white">
-                                {order.duration >= 60 ? `${order.duration / 60} Hour${order.duration > 60 ? 's' : ''}` : `${order.duration} Min`}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-white font-bold">{order.price} USDC</td>
-                              <td className="px-4 py-3">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                                  {getStatusIcon(order.status)}
-                                  {order.status.replace(/_/g, ' ')}
+                        {order.status === 'delivering' && order.deliveryEndsAt && (
+                          <div className="pt-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] text-cyan-400 font-medium">🔴 LIVE - Package Active</span>
+                            </div>
+                            <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-pulse" style={{ width: '100%' }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop: Table View */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-700/50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Order ID</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Listeners</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Duration</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Price</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Timer</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {myOrders.map((order) => (
+                          <tr key={order.orderId} className={`hover:bg-gray-700/30 transition-colors ${order.status === 'delivering' ? 'bg-cyan-500/5' : ''}`}>
+                            <td className="px-4 py-3 text-sm text-white font-mono">{order.orderId}</td>
+                            <td className="px-4 py-3 text-sm text-white">{order.listeners.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-sm text-white">
+                              {order.duration >= 60 ? `${order.duration / 60} Hour${order.duration > 60 ? 's' : ''}` : `${order.duration} Min`}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-white font-bold">{order.price} USDC</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                                {getStatusIcon(order.status)}
+                                {order.status.replace(/_/g, ' ')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {order.status === 'delivering' && order.deliveryEndsAt ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Live"></span>
+                                  <CountdownTimer endsAt={order.deliveryEndsAt} onComplete={() => fetchMyOrders()} />
+                                </div>
+                              ) : order.status === 'completed' ? (
+                                <span className="text-green-400 text-xs flex items-center gap-1">
+                                  <FaCheck className="text-[10px]" />
+                                  {order.autoCompleted ? 'Auto-completed' : 'Completed'}
                                 </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                {/* Countdown timer for active deliveries */}
-                                {order.status === 'delivering' && order.deliveryEndsAt ? (
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Live"></span>
-                                    <CountdownTimer 
-                                      endsAt={order.deliveryEndsAt} 
-                                      onComplete={() => fetchMyOrders()}
-                                    />
-                                  </div>
-                                ) : order.status === 'completed' ? (
-                                  <span className="text-green-400 text-xs flex items-center gap-1">
-                                    <FaCheck className="text-[10px]" />
-                                    {order.autoCompleted ? 'Auto-completed' : 'Completed'}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-500 text-xs">—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-400">
-                                {new Date(order.createdAt).toLocaleDateString()}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                              ) : (
+                                <span className="text-gray-500 text-xs">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Mobile Fixed Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-700/80 p-3 sm:p-4 z-40">
@@ -1364,6 +1386,7 @@ const HyperSpace = ({ currentUser }) => {
                   setShowConfirmation(false);
                   setConfirmedOrder(null);
                   setShowOrderHistory(true);
+                  fetchMyOrders();
                 }}
                 className="flex-1 py-3 bg-gray-700/50 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors"
               >
@@ -1395,6 +1418,13 @@ const HyperSpace = ({ currentUser }) => {
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
+        }
+        @keyframes slide-in-right {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.25s ease-out;
         }
       `}</style>
     </div>
