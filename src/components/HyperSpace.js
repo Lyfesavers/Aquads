@@ -584,16 +584,18 @@ const HyperSpace = ({ currentUser }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-      {/* Animated background - reduced on mobile for performance */}
+      {/* Immersive background - nebula + subtle grid */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 sm:-top-40 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-20 sm:-left-40 w-48 h-48 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="hidden sm:block absolute bottom-20 right-1/3 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        {/* Stars - fewer on mobile */}
+        <div className="absolute -top-20 -right-20 sm:-top-40 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-purple-500/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -left-20 sm:-left-40 w-48 h-48 sm:w-96 sm:h-96 bg-blue-500/8 rounded-full blur-3xl" />
+        <div className="hidden sm:block absolute bottom-20 right-1/3 w-64 h-64 bg-pink-500/8 rounded-full blur-3xl" />
+        {/* Subtle radial vignette for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+        {/* Stars */}
         {stars.map((star) => (
           <div
             key={star.id}
-            className="absolute w-0.5 h-0.5 sm:w-1 sm:h-1 bg-white rounded-full animate-pulse"
+            className="absolute w-0.5 h-0.5 sm:w-1 sm:h-1 bg-white/60 rounded-full"
             style={{
               left: star.left,
               top: star.top,
@@ -608,48 +610,50 @@ const HyperSpace = ({ currentUser }) => {
         {/* Back to Home Button */}
         <button
           onClick={() => navigate('/home')}
-          className="mb-6 sm:mb-8 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700 hover:border-purple-500/50 text-gray-300 hover:text-white transition-all duration-200 group"
+          className="mb-6 sm:mb-8 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all duration-200 group text-sm"
         >
-          <FaArrowLeft className="text-sm group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Back to Home</span>
+          <FaArrowLeft className="text-xs group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Home</span>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 mb-4 sm:mb-6 shadow-lg shadow-purple-500/30">
-            <FaHeadphones className="text-2xl sm:text-4xl text-white" />
+        {/* Header - Immersive hero */}
+        <div className="text-center mb-10 sm:mb-14">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 mb-5 sm:mb-6 shadow-xl shadow-purple-500/25 ring-2 ring-white/10">
+            <FaHeadphones className="text-2xl sm:text-4xl text-white drop-shadow-sm" />
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-3 sm:mb-4">
-            HyperSpace
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+              HyperSpace
+            </span>
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto px-2">
-            Boost your listener count to help your Twitter Space trend
+          <p className="text-base sm:text-lg text-gray-400 max-w-xl mx-auto mt-3 px-2 leading-relaxed">
+            Boost your Twitter Space to trend. Choose your package, add your Space URL, and launch.
           </p>
-          
-          {/* Feature badges - horizontal scroll on mobile */}
-          <div className="flex items-center justify-center gap-3 sm:gap-6 mt-4 sm:mt-6 text-xs sm:text-sm overflow-x-auto pb-2 px-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 text-green-400 whitespace-nowrap">
-              <FaShieldAlt className="text-sm sm:text-base" />
-              <span>Safe & Secure</span>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 text-blue-400 whitespace-nowrap">
-              <FaClock className="text-sm sm:text-base" />
-              <span>Timely Delivery</span>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 text-purple-400 whitespace-nowrap">
-              <FaUsers className="text-sm sm:text-base" />
-              <span>Boost Trending</span>
-            </div>
+          {/* Compact trust badges */}
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 mt-5 text-xs sm:text-sm text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              Safe & Secure
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              Timely Delivery
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              Boost Trending
+            </span>
           </div>
         </div>
 
         {/* Main Content Grid */}
         <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Package Selection */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Duration Selection */}
-            <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-500/20">
-              <h2 className="text-base sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+            {/* Step 1: Duration Selection */}
+            <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700/80 hover:border-purple-500/30 transition-colors">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-500/30 text-purple-300 text-xs sm:text-sm font-bold">1</span>
                 <FaClock className="text-purple-400" />
                 Select Duration
               </h2>
@@ -693,9 +697,10 @@ const HyperSpace = ({ currentUser }) => {
               </div>
             </div>
 
-            {/* Listeners Selection */}
-            <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-500/20">
-              <h2 className="text-base sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+            {/* Step 2: Listeners Selection */}
+            <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700/80 hover:border-purple-500/30 transition-colors">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-500/30 text-purple-300 text-xs sm:text-sm font-bold">2</span>
                 <FaUsers className="text-pink-400" />
                 Number of Listeners
               </h2>
@@ -723,69 +728,10 @@ const HyperSpace = ({ currentUser }) => {
               </p>
             </div>
 
-            {/* Important Notice - Crypto vs Card */}
-            <div className="bg-gradient-to-r from-red-500/10 to-pink-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-red-500/30">
-              <h3 className="text-sm sm:text-base font-semibold text-red-400 mb-2 flex items-center gap-2">
-                <FaClock />
-                ⚠️ Important: Payment & Timing
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-300">
-                <strong className="text-white">Crypto payments:</strong> delivery starts right away—just place your order.{' '}
-                <strong className="text-white">Paying with card?</strong> Place your order at least 24 hours before your Space starts.
-              </p>
-            </div>
-
-            {/* How It Works Info Box */}
-            <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-amber-500/30">
-              <h3 className="text-sm sm:text-base font-semibold text-amber-400 mb-2 flex items-center gap-2">
-                <FaInfoCircle />
-                How It Works
-              </h3>
-              <ul className="text-xs sm:text-sm text-gray-300 space-y-1.5 sm:space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 mt-0.5">•</span>
-                  <span>Listeners appear in the <strong className="text-white">overflow section</strong> (not in the visible listener circle)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 mt-0.5">•</span>
-                  <span>High listener count helps your Space <strong className="text-white">trend on Twitter</strong> and get discovered</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-amber-400 mt-0.5">•</span>
-                  <span><strong className="text-white">Important:</strong> Have real profiles with PFPs as speakers/co-hosts to keep your Space looking authentic</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Safe & Compliant Info Box */}
-            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-green-500/30">
-              <h3 className="text-sm sm:text-base font-semibold text-green-400 mb-2 flex items-center gap-2">
-                <FaShieldAlt />
-                100% Safe & Compliant
-              </h3>
-              <ul className="text-xs sm:text-sm text-gray-300 space-y-1.5 sm:space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-0.5">✓</span>
-                  <span><strong className="text-white">No risk to your account</strong> — listeners join naturally and leave organically</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-0.5">✓</span>
-                  <span><strong className="text-white">Undetectable</strong> — mimics real listener behavior, no automated patterns</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-0.5">✓</span>
-                  <span><strong className="text-white">Trusted by thousands</strong> — brands, influencers & projects use this daily</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-0.5">✓</span>
-                  <span><strong className="text-white">Your Space, your growth</strong> — we just help you get the visibility you deserve</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Space URL Input */}
-            <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-500/20">
-              <h2 className="text-base sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+            {/* Step 3: Space URL Input - right after listeners for logical flow */}
+            <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700/80 hover:border-purple-500/30 transition-colors">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-500/30 text-purple-300 text-xs sm:text-sm font-bold">3</span>
                 <FaTwitter className="text-cyan-400" />
                 Twitter Space URL
               </h2>
@@ -816,6 +762,43 @@ const HyperSpace = ({ currentUser }) => {
               )}
             </div>
 
+            {/* Info section - consolidated, cleaner cards */}
+            <div className="space-y-3 sm:space-y-4">
+              <div className="bg-gray-800/40 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-gray-700/60">
+                <h3 className="text-xs sm:text-sm font-semibold text-amber-400/90 mb-1.5 flex items-center gap-2">
+                  <FaClock className="text-[10px] sm:text-xs" />
+                  Payment & Timing
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                  <span className="text-white">Crypto</span> — delivery starts right away. <span className="text-white">Card</span> — place order at least 24 hours before your Space.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="bg-gray-800/40 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-gray-700/60">
+                  <h3 className="text-xs sm:text-sm font-semibold text-amber-400/90 mb-1.5 flex items-center gap-2">
+                    <FaInfoCircle className="text-[10px] sm:text-xs" />
+                    How It Works
+                  </h3>
+                  <ul className="text-xs text-gray-400 space-y-1">
+                    <li>• Listeners in overflow section</li>
+                    <li>• Helps your Space trend</li>
+                    <li>• Add real speakers for authenticity</li>
+                  </ul>
+                </div>
+                <div className="bg-gray-800/40 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-gray-700/60">
+                  <h3 className="text-xs sm:text-sm font-semibold text-green-400/90 mb-1.5 flex items-center gap-2">
+                    <FaShieldAlt className="text-[10px] sm:text-xs" />
+                    Safe & Compliant
+                  </h3>
+                  <ul className="text-xs text-gray-400 space-y-1">
+                    <li>✓ No risk to your account</li>
+                    <li>✓ Undetectable, organic behavior</li>
+                    <li>✓ Trusted by thousands</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {/* Error/Success Messages - Mobile */}
             {(error || success) && (
               <div className={`p-3 sm:p-4 rounded-lg sm:rounded-xl text-sm ${
@@ -830,8 +813,8 @@ const HyperSpace = ({ currentUser }) => {
 
           {/* Right Column - Order Summary (Desktop) */}
           <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30 sticky top-8">
-              <h2 className="text-xl font-semibold text-white mb-6">Order Summary</h2>
+            <div className="bg-gray-800/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/80 sticky top-8 shadow-xl shadow-black/20">
+              <h2 className="text-lg font-semibold text-white mb-5">Order Summary</h2>
               
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between items-center py-3 border-b border-gray-700">
@@ -906,7 +889,7 @@ const HyperSpace = ({ currentUser }) => {
                   className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 ${
                     submitting || !isValidOrder
                       ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-xl hover:shadow-purple-500/25 hover:scale-[1.01] active:scale-[0.99] ring-2 ring-purple-400/20'
                   }`}
                 >
                   {submitting ? (
@@ -950,19 +933,10 @@ const HyperSpace = ({ currentUser }) => {
                 </div>
               </div>
 
-              {/* Important Notice */}
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-xs text-red-300">
-                  <strong>⚠️ Important:</strong> Crypto = delivery starts right away. Card = place order at least 24 hours before your Space.
-                </p>
-              </div>
-
-              {/* Pro Tip */}
-              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <p className="text-xs text-blue-300">
-                  <strong>💡 Pro Tip:</strong> Invite real friends as speakers/co-hosts so their PFPs show in the main circle while our listeners boost your count!
-                </p>
-              </div>
+              {/* Pro tip */}
+              <p className="mt-4 text-[11px] text-blue-300/80">
+                💡 Invite real speakers so their PFPs show in the main circle.
+              </p>
             </div>
           </div>
         </div>
@@ -1113,7 +1087,7 @@ const HyperSpace = ({ currentUser }) => {
       </div>
 
       {/* Mobile Fixed Bottom Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-purple-500/30 p-3 sm:p-4 z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-700/80 p-3 sm:p-4 z-40">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1">
             <div className="text-xs text-gray-400">
