@@ -835,7 +835,7 @@ const HyperSpace = ({ currentUser }) => {
                   </h3>
                   <ul className="text-xs text-gray-400 space-y-1">
                     <li>✓ No risk to your account</li>
-                    <li>✓ Undetectable, organic behavior</li>
+                    <li>✓ Engagement stays human</li>
                     <li>✓ Trusted by thousands</li>
                   </ul>
                 </div>
@@ -1034,7 +1034,7 @@ const HyperSpace = ({ currentUser }) => {
                   </span>
                   <span className="text-lg sm:text-xl font-bold text-white">Get discovered</span>
                 </div>
-                <p className="text-sm text-gray-400 leading-relaxed">Trending = more real users see your Space. Benefit: more listens, more followers, and more reach from people already on X and browsing.</p>
+                <p className="text-sm text-gray-400 leading-relaxed">Trending = more people on X see your Space. More listens, more followers, and more reach from everyone already browsing.</p>
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
@@ -1057,7 +1057,7 @@ const HyperSpace = ({ currentUser }) => {
           {/* How it works – What we do with icons and product-accurate copy */}
           <p className="text-xs font-semibold uppercase tracking-widest text-purple-400 mb-6">How it works</p>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">What we do</h2>
-          <p className="text-sm text-gray-500 mb-8">You pick listeners and duration. We deliver them into your Space&apos;s overflow—no main circle, no fake look. X only sees a healthy count.</p>
+          <p className="text-sm text-gray-500 mb-8">You pick listeners and duration. We put your Space in front of the algorithm so it can trend; engagement stays human and your show brings the entertainment. X sees a healthy count.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="group flex gap-4 p-5 sm:p-6 rounded-2xl bg-gray-800/50 border border-gray-700/60 hover:border-purple-500/40 transition-all duration-300">
               <span className="flex-shrink-0 w-11 h-11 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:bg-purple-500/30">
@@ -1065,7 +1065,7 @@ const HyperSpace = ({ currentUser }) => {
               </span>
               <div>
                 <h3 className="text-base font-semibold text-white mb-1.5">Overflow listeners</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">We add listeners to the overflow section—not the main circle. They join and leave with natural timing so X&apos;s systems see organic behavior. Your count goes up; the algorithm treats you as trending-worthy.</p>
+                <p className="text-sm text-gray-400 leading-relaxed">We add listeners to the overflow section so your Space can trend. Engagement stays human—we simply put your Space in front of X&apos;s algorithm; your audience and your show bring the entertainment. Your count rises and the algorithm surfaces you.</p>
               </div>
             </div>
             <div className="group flex gap-4 p-5 sm:p-6 rounded-2xl bg-gray-800/50 border border-gray-700/60 hover:border-pink-500/40 transition-all duration-300">
@@ -1074,7 +1074,7 @@ const HyperSpace = ({ currentUser }) => {
               </span>
               <div>
                 <h3 className="text-base font-semibold text-white mb-1.5">Maximise outreach and visibility on X</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">Our tech gets your Space in front of more people. Listeners in overflow + X&apos;s algorithm = trending placement and real discovery. You focus on the content; we handle the reach.</p>
+                <p className="text-sm text-gray-400 leading-relaxed">We put your Space in trending via X&apos;s algorithm so more people see it. Engagement stays human—you and your show bring the content; we handle the visibility. More reach, more discovery.</p>
               </div>
             </div>
             <div className="group flex gap-4 p-5 sm:p-6 rounded-2xl bg-gray-800/50 border border-gray-700/60 hover:border-cyan-500/40 transition-all duration-300">
