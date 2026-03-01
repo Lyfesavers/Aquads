@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch } from 'react-icons/fa';
 import axios from 'axios';
@@ -138,6 +138,12 @@ const HyperSpace = ({ currentUser }) => {
   const [orderStatus, setOrderStatus] = useState(null);
   const [pollingOrder, setPollingOrder] = useState(false);
   const [confirmingPayPal, setConfirmingPayPal] = useState(false);
+
+  // Refs for sticky horizontal scrollbar sync
+  const tableScrollRef = useRef(null);
+  const bottomScrollRef = useRef(null);
+  const tableWidthRef = useRef(null);
+  const scrollSyncRef = useRef(false);
 
   // Memoized star positions for background
   const stars = useMemo(() => 
@@ -364,38 +370,16 @@ const HyperSpace = ({ currentUser }) => {
     };
   }, [socket]);
 
-  // Fetch orders via socket (faster) with API fallback
+  // Fetch orders via socket (faster) with API fallback - uses limit 100 to get all orders
   const fetchMyOrders = useCallback(() => {
     if (!currentUser) return;
     
     setLoadingOrders(true);
     
-    // Try socket first
-    if (socket) {
-      socket.emit('requestUserHyperSpaceOrders', { 
-        userId: currentUser.userId || currentUser.id 
-      });
-      
-      // Set a short timeout - if socket doesn't respond, use API
-      setTimeout(async () => {
-        if (loadingOrders && currentUser?.token) {
-          try {
-            const response = await axios.get(`${API_URL}/api/hyperspace/my-orders`, {
-              headers: { Authorization: `Bearer ${currentUser.token}` }
-            });
-            if (response.data.success) {
-              setMyOrders(response.data.orders);
-            }
-          } catch (err) {
-            console.error('Error fetching orders:', err);
-          } finally {
-            setLoadingOrders(false);
-          }
-        }
-      }, 1500);
-    } else if (currentUser?.token) {
-      // No socket, use API directly
+    const fetchViaApi = () => {
+      if (!currentUser?.token) return;
       axios.get(`${API_URL}/api/hyperspace/my-orders`, {
+        params: { limit: 100 },
         headers: { Authorization: `Bearer ${currentUser.token}` }
       }).then(res => {
         if (res.data.success) setMyOrders(res.data.orders);
@@ -404,8 +388,17 @@ const HyperSpace = ({ currentUser }) => {
       }).finally(() => {
         setLoadingOrders(false);
       });
+    };
+
+    if (socket) {
+      socket.emit('requestUserHyperSpaceOrders', { 
+        userId: currentUser.userId || currentUser.id 
+      });
+      setTimeout(fetchViaApi, 1500);
+    } else {
+      fetchViaApi();
     }
-  }, [currentUser, socket, loadingOrders]);
+  }, [currentUser, socket]);
 
   // Socket listener for user's order history
   useEffect(() => {
@@ -430,6 +423,37 @@ const HyperSpace = ({ currentUser }) => {
       socket.off('userHyperSpaceOrdersError', handleOrdersError);
     };
   }, [socket, currentUser]);
+
+  // Sync table width for sticky horizontal scrollbar
+  useEffect(() => {
+    if (!showOrderHistory || !myOrders.length || loadingOrders) return;
+    const syncWidth = () => {
+      if (tableScrollRef.current && tableWidthRef.current) {
+        tableWidthRef.current.style.width = `${tableScrollRef.current.scrollWidth}px`;
+      }
+    };
+    syncWidth();
+    const t = setTimeout(syncWidth, 50);
+    return () => clearTimeout(t);
+  }, [showOrderHistory, myOrders.length, loadingOrders]);
+
+  // Sticky horizontal scrollbar - sync table and bottom scrollbar (avoid mutual trigger loop)
+  const handleTableScroll = useCallback(() => {
+    if (scrollSyncRef.current) return;
+    scrollSyncRef.current = true;
+    if (bottomScrollRef.current && tableScrollRef.current) {
+      bottomScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { scrollSyncRef.current = false; });
+  }, []);
+  const handleBottomScroll = useCallback(() => {
+    if (scrollSyncRef.current) return;
+    scrollSyncRef.current = true;
+    if (tableScrollRef.current && bottomScrollRef.current) {
+      tableScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => { scrollSyncRef.current = false; });
+  }, []);
 
   // Get current package price
   const getCurrentPrice = useCallback(() => {
@@ -620,7 +644,7 @@ const HyperSpace = ({ currentUser }) => {
             <button
               onClick={() => {
                 setShowOrderHistory(true);
-                if (myOrders.length === 0) fetchMyOrders();
+                fetchMyOrders();
               }}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all duration-200 text-sm font-medium"
             >
@@ -977,16 +1001,25 @@ const HyperSpace = ({ currentUser }) => {
             style={{ maxHeight: '100vh' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-700/80 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <FaHistory className="text-purple-400" />
-                My Orders
-                {myOrders.length > 0 && (
-                  <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">
-                    {myOrders.length}
+            <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-gray-700/80 flex-shrink-0 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <FaHistory className="text-purple-400" />
+                  My Orders
+                  {myOrders.length > 0 && (
+                    <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">
+                      {myOrders.length}
+                    </span>
+                  )}
+                </h2>
+                {!loadingOrders && myOrders.length > 0 && (
+                  <span className="text-sm text-gray-400 whitespace-nowrap">
+                    · <span className="text-white font-medium">
+                      {myOrders.reduce((sum, o) => sum + (parseFloat(o.price) || 0), 0).toFixed(2)} USDC
+                    </span> total
                   </span>
                 )}
-              </h2>
+              </div>
               <button
                 onClick={() => setShowOrderHistory(false)}
                 className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
@@ -995,21 +1028,23 @@ const HyperSpace = ({ currentUser }) => {
                 <FaTimes className="text-lg" />
               </button>
             </div>
-            {/* Content - scrollable */}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            {/* Content - flex column so sticky scrollbar stays at bottom on desktop */}
+            <div className="flex-1 min-h-0 flex flex-col">
               {loadingOrders ? (
-                <div className="p-6 sm:p-8 text-center">
-                  <FaSpinner className="animate-spin text-xl sm:text-2xl text-purple-400 mx-auto" />
+                <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
+                  <FaSpinner className="animate-spin text-xl sm:text-2xl text-purple-400" />
                 </div>
               ) : myOrders.length === 0 ? (
-                <div className="p-6 sm:p-8 text-center text-gray-400">
-                  <FaHistory className="text-3xl sm:text-4xl mx-auto mb-2 opacity-50" />
-                  <p className="text-sm sm:text-base">No orders yet</p>
+                <div className="flex-1 flex items-center justify-center p-6 sm:p-8 text-center text-gray-400">
+                  <div>
+                    <FaHistory className="text-3xl sm:text-4xl mx-auto mb-2 opacity-50" />
+                    <p className="text-sm sm:text-base">No orders yet</p>
+                  </div>
                 </div>
               ) : (
                 <>
                   {/* Mobile: Card View */}
-                  <div className="sm:hidden divide-y divide-gray-700">
+                  <div className="sm:hidden flex-1 overflow-y-auto divide-y divide-gray-700">
                     {myOrders.map((order) => (
                       <div key={order.orderId} className="p-4 space-y-2">
                         <div className="flex justify-between items-start">
@@ -1051,55 +1086,68 @@ const HyperSpace = ({ currentUser }) => {
                       </div>
                     ))}
                   </div>
-                  {/* Desktop: Table View */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-700/50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Order ID</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Listeners</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Duration</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Price</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Timer</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-700">
-                        {myOrders.map((order) => (
-                          <tr key={order.orderId} className={`hover:bg-gray-700/30 transition-colors ${order.status === 'delivering' ? 'bg-cyan-500/5' : ''}`}>
-                            <td className="px-4 py-3 text-sm text-white font-mono">{order.orderId}</td>
-                            <td className="px-4 py-3 text-sm text-white">{order.listeners.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-sm text-white">
-                              {order.duration >= 60 ? `${order.duration / 60} Hour${order.duration > 60 ? 's' : ''}` : `${order.duration} Min`}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-white font-bold">{order.price} USDC</td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
-                                {getStatusIcon(order.status)}
-                                {order.status.replace(/_/g, ' ')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">
-                              {order.status === 'delivering' && order.deliveryEndsAt ? (
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Live"></span>
-                                  <CountdownTimer endsAt={order.deliveryEndsAt} onComplete={() => fetchMyOrders()} />
-                                </div>
-                              ) : order.status === 'completed' ? (
-                                <span className="text-green-400 text-xs flex items-center gap-1">
-                                  <FaCheck className="text-[10px]" />
-                                  {order.autoCompleted ? 'Auto-completed' : 'Completed'}
-                                </span>
-                              ) : (
-                                <span className="text-gray-500 text-xs">—</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* Desktop: Table View - table scrolls vertically, sticky horizontal scrollbar at bottom */}
+                  <div className="hidden sm:flex flex-1 min-h-0 flex-col">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+                      <div ref={tableScrollRef} className="overflow-x-auto" onScroll={handleTableScroll}>
+                        <table className="w-full min-w-[600px]">
+                          <thead className="bg-gray-700/50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Order ID</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Listeners</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Duration</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Price</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Status</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Timer</th>
+                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-700">
+                            {myOrders.map((order) => (
+                              <tr key={order.orderId} className={`hover:bg-gray-700/30 transition-colors ${order.status === 'delivering' ? 'bg-cyan-500/5' : ''}`}>
+                                <td className="px-4 py-3 text-sm text-white font-mono">{order.orderId}</td>
+                                <td className="px-4 py-3 text-sm text-white">{order.listeners.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-white">
+                                  {order.duration >= 60 ? `${order.duration / 60} Hour${order.duration > 60 ? 's' : ''}` : `${order.duration} Min`}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-white font-bold">{order.price} USDC</td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                                    {getStatusIcon(order.status)}
+                                    {order.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  {order.status === 'delivering' && order.deliveryEndsAt ? (
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Live"></span>
+                                      <CountdownTimer endsAt={order.deliveryEndsAt} onComplete={() => fetchMyOrders()} />
+                                    </div>
+                                  ) : order.status === 'completed' ? (
+                                    <span className="text-green-400 text-xs flex items-center gap-1">
+                                      <FaCheck className="text-[10px]" />
+                                      {order.autoCompleted ? 'Auto-completed' : 'Completed'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-500 text-xs">—</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    {/* Sticky horizontal scrollbar at bottom of panel - syncs with table */}
+                    <div
+                      ref={bottomScrollRef}
+                      className="flex-shrink-0 overflow-x-auto overflow-y-hidden bg-gray-800/80 border-t border-gray-700/50"
+                      style={{ height: 14 }}
+                      onScroll={handleBottomScroll}
+                    >
+                      <div ref={tableWidthRef} style={{ height: 1, minWidth: 1 }} />
+                    </div>
                   </div>
                 </>
               )}

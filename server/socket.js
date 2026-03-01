@@ -620,7 +620,7 @@ function init(server) {
         const HyperSpaceOrder = require('./models/HyperSpaceOrder');
         const orders = await HyperSpaceOrder.find({ userId: data.userId })
           .sort({ createdAt: -1 })
-          .limit(20)
+          .limit(100)
           .lean();
 
         socket.emit('userHyperSpaceOrdersLoaded', {
