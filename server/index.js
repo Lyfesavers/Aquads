@@ -477,7 +477,9 @@ const corsOptions = {
     const allowedOrigins = [
       'https://www.aquads.xyz',
       'https://aquads.xyz',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      'https://aquads.onrender.com',
+      'https://www.aquads.onrender.com'
     ];
     
     // Allow chrome extension origins
@@ -518,7 +520,9 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'https://www.aquads.xyz',
     'https://aquads.xyz',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://aquads.onrender.com',
+    'https://www.aquads.onrender.com'
   ];
   
   // Allow Netlify or other frontend origins via env to support Google sign-in callbacks
