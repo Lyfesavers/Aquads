@@ -36,6 +36,7 @@ const GameHub = lazy(() => import('./components/GameHub'));
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
+import DesktopInstallPrompt from './components/DesktopInstallPrompt';
 import OnboardingSection from './components/OnboardingSection';
 const HowTo = lazy(() => import('./components/HowTo'));
 const BlogPage = lazy(() => import('./components/BlogPage'));
@@ -2487,6 +2488,7 @@ function App() {
           currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
+        <DesktopInstallPrompt />
         <Suspense fallback={
           <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #111827, #000000)' }}>
             <div style={{ textAlign: 'center' }}>

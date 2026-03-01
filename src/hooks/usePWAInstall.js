@@ -8,11 +8,16 @@ const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     // Check if running on iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(iOS);
+
+    // Check if desktop (not mobile/tablet) - for desktop PWA install prompt
+    const isDesktopDevice = !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsDesktop(isDesktopDevice);
 
     // Check if already installed (standalone mode)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
@@ -81,6 +86,7 @@ const usePWAInstall = () => {
   return {
     isInstallable,
     isIOS,
+    isDesktop,
     handleInstallClick
   };
 };

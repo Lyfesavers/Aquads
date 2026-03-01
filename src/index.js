@@ -29,3 +29,10 @@ const reportWebVitalsWithDelay = () => {
 };
 
 reportWebVitalsWithDelay();
+
+// Register service worker for PWA installability (desktop Chrome/Edge)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
