@@ -3104,7 +3104,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             )}
             <div className={isFullPage ? "" : "overflow-y-auto"}>
           {activeTab === 'ads' && (
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0 overflow-x-hidden">
               {isLoadingMainTab ? (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
@@ -3383,17 +3383,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       return (
                         <div
                           key={ad.id}
-                          className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
+                          className="bg-gray-700 rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                         >
-                          <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-4 min-w-0 flex-shrink-0">
                             <img
                               src={ad.logo}
                               alt={ad.title}
-                              className="w-12 h-12 object-contain rounded"
+                              className="w-12 h-12 object-contain rounded flex-shrink-0"
                             />
-                            <div>
-                              <h3 className="text-white font-semibold">{ad.title}</h3>
-                              <p className="text-gray-400 text-sm">{ad.url}</p>
+                            <div className="min-w-0">
+                              <h3 className="text-white font-semibold truncate">{ad.title}</h3>
+                              <p className="text-gray-400 text-sm truncate">{ad.url}</p>
                               {ad.status === 'pending' && (
                                 <p className="text-yellow-500 text-sm">Bump Pending</p>
                               )}
@@ -3401,7 +3401,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           </div>
                           
                           {/* Vote Counts Display */}
-                          <div className="flex items-center space-x-6 mr-4">
+                          <div className="flex items-center space-x-6 sm:mr-0 flex-shrink-0">
                             <div className="text-center">
                               <div className="text-xs text-gray-400 mb-1">Community Votes</div>
                               <div className="flex items-center space-x-3">
@@ -3420,12 +3420,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </div>
                           </div>
                           
-                          <div className="flex space-x-2">
+                          <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 sm:gap-0">
                             {!ad.status || ad.status !== 'pending' ? (
                               <>
                                 <button
                                   onClick={() => handleBumpClick(ad.id)}
-                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
                                 >
                                   Bump
                                 </button>
@@ -3433,33 +3433,33 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   href="https://t.me/+6rJbDLqdMxA3ZTUx"
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded inline-flex items-center"
+                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded inline-flex items-center text-sm whitespace-nowrap"
                                   title="Book a free AMA session"
                                 >
                                   Book Free AMA
                                 </a>
                               </>
                             ) : (
-                              <span className="text-yellow-500 px-3 py-1">
+                              <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">
                                 Bump Pending
                               </span>
                             )}
                             <button
                               onClick={() => handleOpenEditAdModal(ad)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleOpenProjectDeepDive(ad)}
-                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded"
+                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
                               title="Update chart deep dive details"
                             >
                               Deep Dive Form
                             </button>
                             <button
                               onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
                               title="Delete this ad"
                             >
                               Delete
