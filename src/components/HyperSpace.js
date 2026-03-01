@@ -1070,11 +1070,11 @@ const HyperSpace = ({ currentUser }) => {
             </div>
             <div className="group flex gap-4 p-5 sm:p-6 rounded-2xl bg-gray-800/50 border border-gray-700/60 hover:border-pink-500/40 transition-all duration-300">
               <span className="flex-shrink-0 w-11 h-11 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover:bg-pink-500/30">
-                <FaBolt className="text-xl" />
+                <FaChartLine className="text-xl" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-white mb-1.5">Crypto = instant. Card = scheduled.</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">Pay with USDC and we start delivery right away—listeners flow in before your Space begins. Pay with card and we deliver in time for your scheduled start; order at least 24 hours ahead so we can queue you.</p>
+                <h3 className="text-base font-semibold text-white mb-1.5">Maximise outreach and visibility on X</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">Our tech gets your Space in front of more people. Listeners in overflow + X&apos;s algorithm = trending placement and real discovery. You focus on the content; we handle the reach.</p>
               </div>
             </div>
             <div className="group flex gap-4 p-5 sm:p-6 rounded-2xl bg-gray-800/50 border border-gray-700/60 hover:border-cyan-500/40 transition-all duration-300">
