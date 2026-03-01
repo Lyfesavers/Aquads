@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch, FaChartLine, FaFingerprint, FaCrown } from 'react-icons/fa';
+import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch } from 'react-icons/fa';
 import axios from 'axios';
 import { socket } from '../services/api';
 import Footer from './Footer';
@@ -690,7 +690,7 @@ const HyperSpace = ({ currentUser }) => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div id="hyperspace-order" className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Package Selection */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-5">
             {/* Step 1: Duration Selection */}
@@ -984,46 +984,85 @@ const HyperSpace = ({ currentUser }) => {
           </div>
         </div>
 
-        {/* Benefits & Perks Section - Card layout with infographics */}
-        <section className="max-w-6xl mx-auto mt-16 sm:mt-24 mb-12 sm:mb-16">
-          <div className="text-center mb-10 sm:mb-14">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
-              Why HyperSpace?
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
-              Built for creators who want their Spaces to trend.
-            </p>
+        {/* Benefits & Selling Section - XTrends-inspired: Stats, Case Study, What We Do */}
+        <section className="max-w-6xl mx-auto mt-20 sm:mt-28 mb-16 sm:mb-24">
+          {/* Stats bar - proof points */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-20">
+            <div className="text-center p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-purple-500/10 to-transparent border border-purple-500/20">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">10K+</div>
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">Spaces Amplified</div>
+            </div>
+            <div className="text-center p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-green-500/10 to-transparent border border-green-500/20">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-400">0</div>
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">Account Bans</div>
+            </div>
+            <div className="text-center p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-cyan-500/10 to-transparent border border-cyan-500/20">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-cyan-400">24/7</div>
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">Delivery Window</div>
+            </div>
+            <div className="text-center p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-amber-400">∞</div>
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">Spaces per Order</div>
+            </div>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {[
-              { icon: FaChartLine, title: 'Trend Amplification', desc: 'High listener counts signal popularity to X\'s algorithm. Get your Space featured in trending and discovered by thousands.', stat: '↑ Trending', statColor: 'text-emerald-400' },
-              { icon: FaFingerprint, title: 'Undetectable & Organic', desc: 'Listeners join in the overflow section with real-profile behavior. Mimics genuine engagement that algorithms love.', stat: 'Organic', statColor: 'text-violet-400' },
-              { icon: FaShieldAlt, title: 'Zero Account Risk', desc: 'Listeners join and leave naturally. No bans, no flags. Trusted by brands, influencers, and crypto projects daily.', stat: '100% Safe', statColor: 'text-green-400' },
-              { icon: FaBolt, title: 'Instant Crypto Delivery', desc: 'Pay with USDC, delivery starts right away. No waiting—listeners flow in before your Space even begins.', stat: 'Instant', statColor: 'text-amber-400' },
-              { icon: FaRocket, title: 'No Limits—Run Anywhere', desc: 'As many Spaces as you want, anytime, anywhere. Run multiple Spaces in parallel with no caps.', stat: '∞ Unlimited', statColor: 'text-pink-400' },
-              { icon: FaCrown, title: 'Creator-First', desc: 'We built this for the same creators we serve. Simple pricing, real support, and delivery you can count on.', stat: '24/7', statColor: 'text-cyan-400' }
-            ].map((b, i) => {
-              const Icon = b.icon;
-              return (
-                <article
-                  key={i}
-                  className="relative overflow-hidden p-5 sm:p-6 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/60 hover:border-purple-500/40 transition-all duration-300"
-                >
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500/30" />
-                  <span className="absolute top-4 right-4 text-xs font-bold text-gray-500 tabular-nums">0{i + 1}</span>
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-700/60 flex items-center justify-center border border-gray-600/50">
-                      <Icon className={`text-xl ${b.statColor}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-white mb-1.5">{b.title}</h3>
-                      <p className="text-sm text-gray-400 leading-relaxed mb-3">{b.desc}</p>
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold ${b.statColor} bg-white/5`}>{b.stat}</span>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+
+          {/* Case Study - results narrative */}
+          <div className="mb-16 sm:mb-20">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Case Study</h2>
+            <p className="text-sm text-gray-500 mb-6">What a single Space activation delivers</p>
+            <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-6 sm:p-8 lg:p-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div className="relative grid sm:grid-cols-3 gap-6 sm:gap-8 mb-6">
+                <div>
+                  <div className="text-3xl sm:text-4xl font-bold text-white mb-1">Trending</div>
+                  <div className="text-sm text-gray-400">High listener count pushes your Space into X&apos;s trending algorithm within the first 30 mins.</div>
+                </div>
+                <div>
+                  <div className="text-3xl sm:text-4xl font-bold text-white mb-1">Discovery</div>
+                  <div className="text-sm text-gray-400">Thousands of real users see your Space. More listens, more followers, more reach—organically.</div>
+                </div>
+                <div>
+                  <div className="text-3xl sm:text-4xl font-bold text-white mb-1">Authority</div>
+                  <div className="text-sm text-gray-400">Makes your Space 100% discoverable and attractive across the entire X platform.</div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 leading-relaxed border-t border-gray-700/60 pt-6">
+                <span className="text-white font-medium">The formula:</span> 1 Space + listeners in overflow + real speakers on stage = trending potential. We handle the listeners. You bring the content. X&apos;s algorithm does the rest.
+              </p>
+            </div>
+          </div>
+
+          {/* What We Do - capability breakdown */}
+          <div className="mb-16 sm:mb-20">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">What We Do</h2>
+            <p className="text-sm text-gray-500 mb-8">Simple. Fast. Built for creators.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="border-l-2 border-purple-500 pl-6 py-2">
+                <h3 className="text-lg font-semibold text-white mb-2">Listener Boost</h3>
+                <p className="text-sm text-gray-400">We add real-looking listeners to your Space&apos;s overflow section. They join naturally, leave organically—undetectable by X. Your count rises, the algorithm notices.</p>
+              </div>
+              <div className="border-l-2 border-pink-500 pl-6 py-2">
+                <h3 className="text-lg font-semibold text-white mb-2">Instant Delivery</h3>
+                <p className="text-sm text-gray-400">Pay with crypto, listeners flow in before your Space starts. No 24h wait. No middlemen. You order, we deliver.</p>
+              </div>
+              <div className="border-l-2 border-cyan-500 pl-6 py-2">
+                <h3 className="text-lg font-semibold text-white mb-2">No Caps, No Limits</h3>
+                <p className="text-sm text-gray-400">Run 3 Spaces this week? 10? We don&apos;t cap you. Order for each Space, stack them, run them anywhere—anytime.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA - sell it */}
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Ready to trend?</h2>
+            <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto mb-6">Pick your package above, drop your Space URL, and launch. Your next Space could be the one that blows up.</p>
+            <button
+              onClick={() => document.getElementById('hyperspace-order')?.scrollIntoView({ behavior: 'smooth' })}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg shadow-purple-500/25"
+            >
+              <FaRocket className="text-lg" />
+              Configure Your Package
+            </button>
           </div>
         </section>
 
