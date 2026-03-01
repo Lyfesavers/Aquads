@@ -139,6 +139,9 @@ const HyperSpace = ({ currentUser }) => {
   const [pollingOrder, setPollingOrder] = useState(false);
   const [confirmingPayPal, setConfirmingPayPal] = useState(false);
 
+  // Solar system: active planet for tooltip (hover on desktop, tap on mobile)
+  const [activePlanetIndex, setActivePlanetIndex] = useState(null);
+
   // Refs for sticky horizontal scrollbar sync
   const tableScrollRef = useRef(null);
   const bottomScrollRef = useRef(null);
@@ -984,6 +987,166 @@ const HyperSpace = ({ currentUser }) => {
           </div>
         </div>
 
+        {/* Benefits & Perks Section - Solar System */}
+        <section className="relative max-w-6xl mx-auto mt-16 sm:mt-24 mb-12 sm:mb-16 overflow-hidden">
+          {/* Shooting stars */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="absolute w-1 h-1 bg-white rounded-full animate-shooting-star"
+                style={{
+                  left: `${5 + (i % 3) * 30}%`,
+                  top: `${5 + Math.floor(i / 2) * 25}%`,
+                  animationDelay: `${i * 5}s`,
+                  animationDuration: '8s'
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
+              Why HyperSpace?
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
+              Built for creators who want their Spaces to trend. <span className="hidden sm:inline">Hover a planet to explore.</span>
+            </p>
+          </div>
+
+          {(() => {
+            const benefits = [
+              { planet: 'Mercury', title: 'Trend Amplification', description: 'High listener counts signal popularity to X\'s algorithm. Get your Space featured in trending and discovered by thousands of real users.', color: '#8c7853', size: 10 },
+              { planet: 'Venus', title: 'Undetectable & Organic', description: 'Listeners join in the overflow section with real-profile behavior. No automated patterns—mimics genuine engagement that algorithms love.', color: '#e6d5b8', size: 12 },
+              { planet: 'Earth', title: 'Zero Account Risk', description: 'Listeners join and leave naturally. No bans, no flags. Trusted by brands, influencers, and crypto projects who rely on their accounts daily.', color: '#4a90d9', size: 14 },
+              { planet: 'Mars', title: 'Instant Crypto Delivery', description: 'Pay with USDC, delivery starts right away. No waiting—listeners flow in before your Space even begins.', color: '#c1440e', size: 11 },
+              { planet: 'Jupiter', title: 'No Limits—Run Anywhere', description: 'As many Spaces as you want, anytime, anywhere. Unlike others that restrict you to one at a time, run multiple Spaces in parallel with no caps.', color: '#c88b3a', size: 22 },
+              { planet: 'Saturn', title: 'Creator-First', description: 'We built this for the same creators we serve. Simple pricing, real support, and delivery you can count on.', color: '#d4a574', size: 18 }
+            ];
+            // Orbital positions (angle in deg): 0, 60, 120, 180, 240, 300 - x,y as % from center
+            const orbit = (angle, rx, ry) => ({
+              left: 50 + rx * Math.cos((angle * Math.PI) / 180),
+              top: 50 + ry * Math.sin((angle * Math.PI) / 180)
+            });
+            const positions = [0, 60, 120, 180, 240, 300].map((a) => orbit(a, 42, 28));
+
+            return (
+              <>
+                {/* Mobile: Vertical stack - planet + benefit always visible */}
+                <div className="sm:hidden space-y-4">
+                  {benefits.map((b, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-4 p-4 rounded-xl bg-gray-800/50 border border-gray-700/60"
+                    >
+                      <div
+                        className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center ring-2 ring-white/20"
+                        style={{ backgroundColor: b.color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-white mb-1">{b.title}</h3>
+                        <p className="text-sm text-gray-400 leading-relaxed">{b.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Solar system with orbital layout */}
+                <div
+                  className="hidden sm:block relative w-full"
+                  style={{ minHeight: 360 }}
+                  onClick={() => activePlanetIndex !== null && setActivePlanetIndex(null)}
+                >
+                  {/* Orbit path (subtle) */}
+                  <div
+                    className="absolute rounded-full border border-gray-600/30"
+                    style={{
+                      left: '8%',
+                      top: '22%',
+                      width: '84%',
+                      height: '56%'
+                    }}
+                  />
+                  {/* Sun */}
+                  <div
+                    className="absolute left-1/2 top-1/2 w-16 h-16 -ml-8 -mt-8 rounded-full bg-gradient-to-br from-yellow-300 via-orange-400 to-amber-600 shadow-[0_0_40px_rgba(251,191,36,0.6)]"
+                    aria-hidden
+                  />
+                  {/* Planets */}
+                  {benefits.map((b, i) => {
+                    const pos = positions[i];
+                    const isActive = activePlanetIndex === i;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute cursor-pointer transition-transform duration-200 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-full"
+                        style={{
+                          left: `${pos.left}%`,
+                          top: `${pos.top}%`,
+                          width: Math.max(b.size, 16),
+                          height: Math.max(b.size, 16),
+                          marginLeft: -Math.max(b.size, 16) / 2,
+                          marginTop: -Math.max(b.size, 16) / 2
+                        }}
+                        onMouseEnter={() => setActivePlanetIndex(i)}
+                        onMouseLeave={() => setActivePlanetIndex(null)}
+                        onClick={(e) => { e.stopPropagation(); setActivePlanetIndex(isActive ? null : i); }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActivePlanetIndex(isActive ? null : i); } }}
+                        aria-label={`${b.planet}: ${b.title}. ${b.description}`}
+                      >
+                        {b.planet === 'Saturn' && (
+                          <div
+                            className="absolute border border-amber-600/40 rounded-full"
+                            style={{
+                              width: '280%',
+                              height: '100%',
+                              left: '-90%',
+                              top: '-0%'
+                            }}
+                            aria-hidden
+                          />
+                        )}
+                        <div
+                          className="relative rounded-full ring-1 ring-white/10 transition-shadow duration-200"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: b.color,
+                            boxShadow: isActive ? `0 0 20px ${b.color}` : 'none'
+                          }}
+                        />
+                        {/* Tooltip popover - below for top planets, above for bottom */}
+                        {isActive && (
+                          <div
+                            className={`absolute z-20 left-1/2 -translate-x-1/2 w-64 sm:w-72 p-4 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-gray-600/80 shadow-xl ${
+                              pos.top > 55 ? 'bottom-full mb-2' : 'top-full mt-2'
+                            }`}
+                            style={{ left: '50%', transform: 'translateX(-50%)' }}
+                          >
+                            <div className="text-xs text-gray-500 mb-1 font-medium">{b.planet}</div>
+                            <h3 className="font-semibold text-white mb-2">{b.title}</h3>
+                            <p className="text-sm text-gray-400 leading-relaxed">{b.description}</p>
+                            {/* Arrow pointing to planet */}
+                            <div
+                              className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-[6px] border-solid border-l-transparent border-r-transparent ${
+                                pos.top > 55
+                                  ? 'bottom-0 translate-y-full border-t-gray-900 border-b-transparent'
+                                  : 'top-0 -translate-y-full border-b-gray-900 border-t-transparent'
+                              }`}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
+        </section>
+
       </div>
 
       {/* Order History - Slide-out panel (desktop) / Full-width drawer (mobile) */}
@@ -1473,6 +1636,16 @@ const HyperSpace = ({ currentUser }) => {
         }
         .animate-slide-in-right {
           animation: slide-in-right 0.25s ease-out;
+        }
+        @keyframes shooting-star {
+          0%, 5% { transform: translate(0, 0); opacity: 0; }
+          6% { opacity: 1; }
+          18% { transform: translate(150px, 100px); opacity: 0; }
+          100% { transform: translate(150px, 100px); opacity: 0; }
+        }
+        .animate-shooting-star {
+          animation: shooting-star 8s ease-in-out infinite;
+          box-shadow: 0 0 8px 2px rgba(255,255,255,0.9);
         }
       `}</style>
     </div>
