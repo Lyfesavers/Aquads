@@ -150,7 +150,6 @@ const documentationStructure = [
     children: [
       { id: 'browser-extension', title: 'Browser Extension', content: 'browserExtension' },
       { id: 'embed-widgets', title: 'Embed Widgets', content: 'embedWidgets' },
-      { id: 'premium-features', title: 'Premium Features', content: 'premiumFeatures' },
     ]
   },
   {
@@ -4023,101 +4022,6 @@ For widget issues:
 > 💡 **Tip**: Use the AquaSwap widget to add swap functionality without building your own.
     `,
     prevPage: { id: 'browser-extension', title: 'Browser Extension' },
-    nextPage: { id: 'premium-features', title: 'Premium Features' },
-  },
-  
-  premiumFeatures: {
-    title: 'Premium Features',
-    description: 'Unlock advanced features with Premium membership.',
-    content: `
-## Premium Features
-
-Unlock the full power of Aquads with Premium membership.
-
-### What's Included
-
-**Profile Enhancements**
-- ✅ Verified badge
-- ✅ Priority in search
-- ✅ Custom profile URL
-- ✅ Enhanced analytics
-
-**Token Features**
-- ✅ Larger default bubble
-- ✅ Priority placement
-- ✅ Bump discounts
-- ✅ Advanced analytics
-
-**Freelancer Benefits**
-- ✅ Featured listings
-- ✅ Lower platform fees
-- ✅ Premium badge
-- ✅ Priority support
-
-**Additional Perks**
-- ✅ Early access to features
-- ✅ Exclusive Discord channel
-- ✅ Partner discounts
-- ✅ Monthly rewards
-
-### Pricing
-
-| Plan | Duration | Price |
-|------|----------|-------|
-| Monthly | 1 month | 0.05 SOL |
-| Quarterly | 3 months | 0.12 SOL |
-| Annual | 12 months | 0.4 SOL |
-
-### How to Upgrade
-
-**Step 1: Navigate**
-Go to Dashboard > Premium
-
-**Step 2: Choose Plan**
-Select your preferred duration.
-
-**Step 3: Payment**
-Connect wallet and pay.
-
-**Step 4: Activate**
-Premium features instant!
-
-### Premium Badge
-
-Display your verified status:
-- Shown on profile
-- Visible in search
-- On all listings
-- In conversations
-
-### ROI Analysis
-
-Premium pays for itself through:
-- Increased visibility
-- More bookings
-- Lower fees
-- Better conversion
-
-### Cancellation
-
-- Cancel anytime
-- No refunds for partial periods
-- Features until expiry
-- Reactivate anytime
-
-### Enterprise
-
-For teams and businesses:
-- Multiple accounts
-- Custom features
-- Dedicated support
-- Volume discounts
-
-Contact: enterprise@aquads.xyz
-
-> 💡 **Tip**: The annual plan saves you 33% compared to monthly.
-    `,
-    prevPage: { id: 'embed-widgets', title: 'Embed Widgets' },
     nextPage: { id: 'wp-executive-summary', title: 'Executive Summary' },
   },
 
@@ -4156,7 +4060,7 @@ In addition, Aquads has expanded its offerings with new features:
 
 Our mission is to bridge the gap between crypto projects, service providers, and the broader Web3 community while providing an integrated suite of tools designed to drive growth, foster transparency, and empower all users within the ecosystem.
     `,
-    prevPage: { id: 'premium-features', title: 'Premium Features' },
+    prevPage: { id: 'embed-widgets', title: 'Embed Widgets' },
     nextPage: { id: 'wp-business-description', title: 'Business Description' },
   },
 
