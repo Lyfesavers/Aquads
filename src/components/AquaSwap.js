@@ -1687,8 +1687,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const selectedProject = chartProjects.find((ad) =>
     normalizeAddress(ad.pairAddress || ad.contractAddress) === selectedTokenAddress
   );
-  const fallbackProject = chartProjects.find((ad) => (ad.projectProfile?.about || '').trim().length > 0);
-  const projectForInsights = selectedProject || fallbackProject || null;
+  const projectForInsights = selectedProject || null;
   const projectProfile = projectForInsights?.projectProfile || null;
   const qaStatus = projectProfile?.verification?.status || 'unverified';
   const hasProjectDeepDive = Boolean(
