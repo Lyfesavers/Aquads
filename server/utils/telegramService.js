@@ -666,6 +666,13 @@ const telegramService = {
       await telegramService.handleCreateRaidCommand(chatId, userId, text, chatType);
     } else if (text.startsWith('/cancelraid')) {
       await telegramService.handleCancelRaidCommand(chatId, userId, text);
+    } else if (!text.startsWith('/')) {
+      // Auto-create raid when a Twitter/X URL is posted (group or private chat, no command needed)
+      const tweetUrlMatch = text.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
+      if (tweetUrlMatch && tweetUrlMatch[1]) {
+        await telegramService.handleCreateRaidCommand(chatId, userId, '/createraid ' + tweetUrlMatch[1].trim(), chatType);
+        return;
+      }
     } else if (text.startsWith('/setbranding')) {
       await telegramService.handleSetBrandingCommand(chatId, userId);
     } else if (text.startsWith('/removebranding')) {
