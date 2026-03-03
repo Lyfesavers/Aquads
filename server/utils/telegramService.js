@@ -212,24 +212,14 @@ const telegramService = {
           groupsToNotify.add(groupId);
         });
       } else if (sourceChatId) {
-        // User-created raid from a specific group
-        // Always send to source group
+        // User-created raid: always send to source group (creator's group) and all raidin groups
         groupsToNotify.add(sourceChatId);
-        
-        // Check if source group is opted-in to community raids
-        const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
-        
-        if (isOptedIn) {
-          // Source group is opted-in: send to all opted-in groups
-          telegramService.raidCrossPostingGroups.forEach(groupId => {
-            groupsToNotify.add(groupId);
-          });
-        }
-        // If not opted-in, only source group gets the raid (already added above)
+        telegramService.raidCrossPostingGroups.forEach(groupId => {
+          groupsToNotify.add(groupId);
+        });
       } else {
-        // No source group specified (shouldn't happen for user-created raids, but handle gracefully)
-        // Default: send to all active groups (fallback behavior)
-        telegramService.activeGroups.forEach(groupId => {
+        // No source group (e.g. created from private chat): send to all raidin groups
+        telegramService.raidCrossPostingGroups.forEach(groupId => {
           groupsToNotify.add(groupId);
         });
       }
@@ -3928,14 +3918,15 @@ Tap to update:`;
 
         await raid.save();
 
-        // Send Telegram notification about the new raid
+        // Send Telegram notification: use source group when from group, else user's linked group so raidin broadcast works
+        const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
         await telegramService.sendRaidNotification({
           raidId: raid._id.toString(),
           tweetUrl: raid.tweetUrl,
           points: raid.points,
           title: raid.title,
           description: raid.description,
-          sourceChatId: sourceChatId,
+          sourceChatId: notifySourceChatId,
           isAdmin: false
         });
 
@@ -4019,14 +4010,15 @@ Tap to update:`;
         user.save()
       ]);
 
-      // Send Telegram notification about the new raid
+      // Send Telegram notification: use source group when from group, else user's linked group so raidin broadcast works
+      const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
       await telegramService.sendRaidNotification({
         raidId: raid._id.toString(),
         tweetUrl: raid.tweetUrl,
         points: raid.points,
         title: raid.title,
         description: raid.description,
-        sourceChatId: sourceChatId,
+        sourceChatId: notifySourceChatId,
         isAdmin: false
       });
 
