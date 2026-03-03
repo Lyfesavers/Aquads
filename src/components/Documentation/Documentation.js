@@ -150,7 +150,6 @@ const documentationStructure = [
     children: [
       { id: 'browser-extension', title: 'Browser Extension', content: 'browserExtension' },
       { id: 'embed-widgets', title: 'Embed Widgets', content: 'embedWidgets' },
-      { id: 'api-integration', title: 'API Integration', content: 'apiIntegration' },
       { id: 'premium-features', title: 'Premium Features', content: 'premiumFeatures' },
     ]
   },
@@ -4024,122 +4023,6 @@ For widget issues:
 > 💡 **Tip**: Use the AquaSwap widget to add swap functionality without building your own.
     `,
     prevPage: { id: 'browser-extension', title: 'Browser Extension' },
-    nextPage: { id: 'api-integration', title: 'API Integration' },
-  },
-  
-  apiIntegration: {
-    title: 'API Integration',
-    description: 'Integrate with Aquads programmatically.',
-    content: `
-## API Integration
-
-Access Aquads data and features programmatically.
-
-### API Overview
-
-The Aquads API allows you to:
-- Fetch token data
-- Access market information
-- Integrate with your applications
-- Automate workflows
-
-### Authentication
-
-Some endpoints require authentication:
-
-\`\`\`javascript
-const headers = {
-  'Authorization': 'Bearer YOUR_API_TOKEN',
-  'Content-Type': 'application/json'
-};
-\`\`\`
-
-Get your API token from Dashboard > Settings > API.
-
-### Public Endpoints
-
-**Get Token List**
-\`\`\`
-GET /api/tokens
-\`\`\`
-
-**Get Token Details**
-\`\`\`
-GET /api/tokens/:id
-\`\`\`
-
-**Get Trending**
-\`\`\`
-GET /api/tokens/trending
-\`\`\`
-
-### Authenticated Endpoints
-
-**User Profile**
-\`\`\`
-GET /api/user/profile
-\`\`\`
-
-**User Services**
-\`\`\`
-GET /api/user/services
-\`\`\`
-
-### Rate Limits
-
-| Plan | Requests/Hour |
-|------|---------------|
-| Free | 100 |
-| Basic | 1,000 |
-| Pro | 10,000 |
-| Enterprise | Unlimited |
-
-### Response Format
-
-All responses are JSON:
-
-\`\`\`json
-{
-  "success": true,
-  "data": { ... },
-  "timestamp": "2024-01-01T00:00:00Z"
-}
-\`\`\`
-
-### Error Handling
-
-Error responses include:
-- Error code
-- Message
-- Details (if applicable)
-
-\`\`\`json
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Invalid API token"
-  }
-}
-\`\`\`
-
-### SDKs
-
-Coming soon:
-- JavaScript SDK
-- Python SDK
-- More languages
-
-### Support
-
-For API questions:
-- Read full documentation
-- Check status page
-- Contact developer support
-
-> 💡 **Tip**: Start with public endpoints to test integration before adding authentication.
-    `,
-    prevPage: { id: 'embed-widgets', title: 'Embed Widgets' },
     nextPage: { id: 'premium-features', title: 'Premium Features' },
   },
   
@@ -4234,7 +4117,7 @@ Contact: enterprise@aquads.xyz
 
 > 💡 **Tip**: The annual plan saves you 33% compared to monthly.
     `,
-    prevPage: { id: 'api-integration', title: 'API Integration' },
+    prevPage: { id: 'embed-widgets', title: 'Embed Widgets' },
     nextPage: { id: 'wp-executive-summary', title: 'Executive Summary' },
   },
 
