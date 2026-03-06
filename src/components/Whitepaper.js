@@ -34,7 +34,7 @@ const Whitepaper = () => {
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads Business Plan</h1>
 
-          <h2 className="text-2xl mb-8">All-in-One Web3 Crypto Hub, Freelancer Marketplace, and Game Hub</h2>
+          <h2 className="text-2xl mb-8">All-in-One Web3 Crypto SuperHub, Freelancer Marketplace, and Game Hub</h2>
           <p className="text-yellow-400 italic mb-8">(Note: This is not a token project – no crypto tokens will ever be created.)</p>
 
           <section className="mb-8">

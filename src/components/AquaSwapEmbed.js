@@ -233,7 +233,7 @@ const AquaSwapEmbed = () => {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         metadata: {
           name: "Aquads",
-          description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
+          description: "Aquads - Web3 Crypto SuperHub & Freelancer Marketplace",
           url: "https://www.aquads.xyz",
           icons: ["https://www.aquads.xyz/logo192.png"],
         },

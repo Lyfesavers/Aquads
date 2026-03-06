@@ -4032,7 +4032,7 @@ For widget issues:
     content: `
 ## Aquads Business Plan
 
-### All-in-One Web3 Crypto Hub, Freelancer Marketplace, and Game Hub
+### All-in-One Web3 Crypto SuperHub, Freelancer Marketplace, and Game Hub
 
 > **Note:** This is not a token project – no crypto tokens will ever be created.
 

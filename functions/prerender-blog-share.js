@@ -207,24 +207,24 @@ function getDefaultHtml() {
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@_Aquads">
-  <meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">
-  <meta name="twitter:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">
+  <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
+  <meta name="twitter:description" content="Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!">
   <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
   
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aquads">
   <meta property="og:url" content="https://www.aquads.xyz">
-  <meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">
-  <meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">
+  <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
+  <meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!">
   <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
   
   <title>Aquads - World's First BEX - Bicentralized Exchange Hub</title>
   <script>window.location.href='/learn';</script>
 </head>
 <body>
-  <h1>Aquads - Web3 Crypto Hub & Freelancer Marketplace</h1>
-  <p>Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!</p>
+  <h1>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace</h1>
+  <p>Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!</p>
   <script>
     setTimeout(function() {
       window.location.href = '/learn';

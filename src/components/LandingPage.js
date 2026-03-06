@@ -3928,11 +3928,11 @@ const LandingPage = () => {
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       <Helmet>
-        <title>Aquads - Web3 Crypto Hub & Freelancer Marketplace | Trade, Earn & Build</title>
+        <title>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace | Trade, Earn & Build</title>
         <meta name="description" content="Aquads is the all-in-one Web3 platform: hire crypto freelancers, swap tokens on our DEX, earn with DeFi savings pools, play games, and grow your project with on-chain tools." />
         <link rel="canonical" href="https://www.aquads.xyz/" />
 
-        <meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace" />
+        <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
         <meta property="og:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
         <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
         <meta property="og:url" content="https://www.aquads.xyz/" />
@@ -3940,7 +3940,7 @@ const LandingPage = () => {
         <meta property="og:site_name" content="Aquads" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace" />
+        <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
         <meta name="twitter:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
         <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
 
@@ -3969,7 +3969,7 @@ const LandingPage = () => {
             "@type": "WebSite",
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
-            "description": "Web3 Crypto Hub & Freelancer Marketplace",
+            "description": "Web3 Crypto SuperHub & Freelancer Marketplace",
             "potentialAction": {
               "@type": "SearchAction",
               "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
