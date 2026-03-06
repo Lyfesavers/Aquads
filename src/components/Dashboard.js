@@ -16,7 +16,7 @@ import MembershipManager from './MembershipManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 import QRCode from 'qrcode';
-import { FaQrcode, FaCopy, FaCheck, FaSpinner } from 'react-icons/fa';
+import { FaQrcode, FaCopy, FaCheck, FaSpinner, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
@@ -39,6 +39,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [showRedemptionModal, setShowRedemptionModal] = useState(false);
+  const [showPointsHistoryDropdown, setShowPointsHistoryDropdown] = useState(false);
+  const [showRedemptionHistoryDropdown, setShowRedemptionHistoryDropdown] = useState(false);
   const [aquaPayLink, setAquaPayLink] = useState('');
 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
@@ -3258,6 +3260,94 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p className="text-red-500 text-sm mt-2">{redeemError}</p>
                     )}
 
+                    {/* Redemption History Dropdown */}
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowRedemptionHistoryDropdown(prev => !prev)}
+                        className="flex items-center justify-between w-full text-left px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                      >
+                        <span>Redemption History</span>
+                        <span className="text-gray-400 text-sm">
+                          {pointsInfo.giftCardRedemptions?.length ? `${pointsInfo.giftCardRedemptions.length} redemptions` : 'No redemptions'}
+                        </span>
+                        {showRedemptionHistoryDropdown ? (
+                          <FaChevronUp className="text-gray-400 ml-2" />
+                        ) : (
+                          <FaChevronDown className="text-gray-400 ml-2" />
+                        )}
+                      </button>
+                      {showRedemptionHistoryDropdown && (
+                        <div className="mt-2 rounded border border-gray-600 bg-gray-700/50 max-h-64 overflow-y-auto">
+                          {(!pointsInfo.giftCardRedemptions || pointsInfo.giftCardRedemptions.length === 0) ? (
+                            <p className="text-gray-400 text-sm p-4 text-center">No redemptions yet.</p>
+                          ) : (
+                            <div className="space-y-2 p-2">
+                              {pointsInfo.giftCardRedemptions?.map((redemption, index) => (
+                                <div key={`gift-${index}`} className="flex justify-between items-center bg-gray-700 p-2 rounded">
+                                  <span className="text-gray-300">${redemption.amount} Canadian Dollars</span>
+                                  <span className={`px-2 py-1 rounded text-sm ${
+                                    redemption.status === 'approved' ? 'bg-green-500' :
+                                    redemption.status === 'rejected' ? 'bg-red-500' :
+                                    'bg-yellow-500'
+                                  }`}>
+                                    {redemption.status}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Points History Dropdown */}
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowPointsHistoryDropdown(prev => !prev)}
+                        className="flex items-center justify-between w-full text-left px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                      >
+                        <span>Points History</span>
+                        <span className="text-gray-400 text-sm">
+                          {pointsInfo.pointsHistory?.length ? `${pointsInfo.pointsHistory.length} entries` : 'No history'}
+                        </span>
+                        {showPointsHistoryDropdown ? (
+                          <FaChevronUp className="text-gray-400 ml-2" />
+                        ) : (
+                          <FaChevronDown className="text-gray-400 ml-2" />
+                        )}
+                      </button>
+                      {showPointsHistoryDropdown && (
+                        <div className="mt-2 rounded border border-gray-600 bg-gray-700/50 max-h-64 overflow-y-auto">
+                          {(!pointsInfo.pointsHistory || pointsInfo.pointsHistory.length === 0) ? (
+                            <p className="text-gray-400 text-sm p-4 text-center">No points history yet.</p>
+                          ) : (
+                            <ul className="divide-y divide-gray-600 p-2">
+                              {[...(pointsInfo.pointsHistory || [])]
+                                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                                .map((entry, index) => (
+                                  <li key={entry.createdAt ? `${entry.createdAt}-${index}` : index} className="flex justify-between items-start gap-2 py-2 px-2 text-sm">
+                                    <span className="text-gray-300 flex-1 min-w-0">
+                                      {entry.reason || '—'}
+                                      {entry.referredUser?.username && (
+                                        <span className="text-blue-400 ml-1">(@{entry.referredUser.username})</span>
+                                      )}
+                                    </span>
+                                    <span className={`shrink-0 font-medium ${(entry.amount || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      {(entry.amount || 0) >= 0 ? '+' : ''}{entry.amount}
+                                    </span>
+                                    <span className="text-gray-500 text-xs shrink-0">
+                                      {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                    </span>
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     
                     {/* Points Rules */}
                     <div className="text-sm text-gray-400 mt-4">
@@ -3277,28 +3367,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                       <p>• Redeem 10,000 points for $100 Canadian Dollars</p>
                     </div>
-                    
-                    {/* Redemption History */}
-                    {(pointsInfo.giftCardRedemptions?.length > 0) && (
-                      <div className="mt-4">
-                        <h4 className="text-lg font-medium text-white mb-2">Redemption History</h4>
-                        <div className="space-y-2">
-                          {pointsInfo.giftCardRedemptions?.map((redemption, index) => (
-                            <div key={`gift-${index}`} className="flex justify-between items-center bg-gray-700 p-2 rounded">
-                              <span className="text-gray-300">${redemption.amount} Canadian Dollars</span>
-                              <span className={`px-2 py-1 rounded text-sm ${
-                                redemption.status === 'approved' ? 'bg-green-500' :
-                                redemption.status === 'rejected' ? 'bg-red-500' :
-                                'bg-yellow-500'
-                              }`}>
-                                {redemption.status}
-                              </span>
-                            </div>
-                          ))}
-
-                        </div>
-                      </div>
-                    )}
                     
 
                   </div>
