@@ -3273,6 +3273,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 20 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>
                       <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
+                      <p>• Earn <strong>5 points</strong> whenever a referred user earns points anywhere (raids, swaps, votes, workshop, etc.) — referrer bonus</p>
                       <p>• Earn 20 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
 

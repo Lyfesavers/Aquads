@@ -2911,6 +2911,8 @@ Earn points through platform activities and unlock rewards.
 | Profile Completion | 20 |
 | Skill Test Passed | 30 |
 
+**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, workshop, etc.), you get **5 bonus points** each time. See **Affiliate Program** in the docs for full details.
+
 ### Points Dashboard
 
 View your points in Dashboard:
@@ -3410,10 +3412,23 @@ You can customize:
 
 | Action | Reward |
 |--------|--------|
-| New user signup | 10 points |
-| Verified referral | Bonus points |
-| Active referrals | Additional rewards |
-| Network building | Multiplier bonuses |
+| New user signup (email verified) | 20 points |
+| Referred user lists a service or ad | 20 points |
+| **Referrer bonus** — whenever a referred user earns points | **+5 points to you** |
+
+### Referrer Bonus (Share Points)
+
+Whenever someone who signed up with your referral code **earns points** anywhere on Aquads, you automatically get **5 bonus points** added to your account. Their points stay the same—you get 5 on top.
+
+**When you earn the bonus:**
+- They complete a raid (Twitter/Facebook)
+- They complete a swap, vote on a bubble, or earn workshop/achievement points
+- They vote on a game, leave a service review, or earn daily Telegram engagement points
+- They win in horse racing, or earn any other positive points in the ecosystem
+
+**When you don’t:** If they *lose* points (e.g. betting, spending points), you don’t get the bonus—only when they *earn* points.
+
+You’ll see these as **"Affiliate bonus: referred user earned points (…)"** in your points history. The more active your referrals, the more you earn.
 
 ### Commission Earnings
 
