@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
+const { creditReferrerBonus } = require('./points');
 
 // Helper function to award workshop points using existing points system
 const awardWorkshopPoints = async (userId, amount, reason, workshopSection = null) => {
@@ -22,7 +23,8 @@ const awardWorkshopPoints = async (userId, amount, reason, workshopSection = nul
       },
       { new: true }
     );
-    
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    if (updatedUser && amount > 0) await creditReferrerBonus(userId, reason);
     return updatedUser;
   } catch (error) {
     console.error('Error awarding workshop points:', error);

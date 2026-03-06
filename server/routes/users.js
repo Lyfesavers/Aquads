@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
-const { awardAffiliatePoints, awardPendingAffiliatePoints } = require('./points');
+const { awardAffiliatePoints, awardPendingAffiliatePoints, creditReferrerBonus } = require('./points');
 const { createNotification } = require('./notifications');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
@@ -1216,6 +1216,8 @@ router.post('/verify-email', async (req, res) => {
         },
         { new: true }
       );
+      // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+      await creditReferrerBonus(user._id, 'Signup bonus with affiliate code (email verified)');
     }
 
     // Update last activity for email verification

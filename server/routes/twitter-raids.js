@@ -693,6 +693,8 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
           newTotalPoints: user.points,
           reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`
         });
+        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+        await pointsModule.creditReferrerBonus(completion.userId, `Twitter raid approved: ${raid.title}`);
          }
 
     await raid.save({ validateBeforeSave: false });

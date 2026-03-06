@@ -391,6 +391,45 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
   }
 }
 
+/**
+ * Rule: when a user (earner) receives positive points, their referrer gets 5 bonus points.
+ * Only call this after awarding positive points to the earner. Do not call when awarding
+ * to the referrer (e.g. signup/listing) or on deductions. Exclude admin-award and refunds.
+ */
+async function creditReferrerBonus(referredUserId, sourceReason) {
+  try {
+    const earner = await User.findById(referredUserId).select('referredBy').lean();
+    if (!earner?.referredBy) return;
+    const referrerId = earner.referredBy;
+    const updatedReferrer = await User.findByIdAndUpdate(
+      referrerId,
+      {
+        $inc: { points: 5 },
+        $push: {
+          pointsHistory: {
+            amount: 5,
+            reason: `Affiliate bonus: referred user earned points (${sourceReason})`,
+            referredUser: referredUserId,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    if (updatedReferrer) {
+      emitAffiliateEarningUpdate({
+        affiliateId: referrerId.toString(),
+        type: 'referrer_bonus',
+        pointsAwarded: 5,
+        newTotalPoints: updatedReferrer.points,
+        reason: `Affiliate bonus: referred user earned points (${sourceReason})`
+      });
+    }
+  } catch (err) {
+    console.error('creditReferrerBonus error:', err);
+  }
+}
+
 // Route to complete a social media raid
 router.post('/social-raids/complete', auth, requireEmailVerification, async (req, res) => {
   try {
@@ -420,6 +459,8 @@ router.post('/social-raids/complete', auth, requireEmailVerification, async (req
     // For now, we'll just award the points
     
     const updatedUser = await awardSocialMediaPoints(req.user.userId, platform, raidId);
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    await creditReferrerBonus(req.user.userId, 'social raid completion');
     
     res.json({
       success: true,
@@ -465,6 +506,8 @@ router.post('/swap-completed', auth, async (req, res) => {
       newTotalPoints: updatedUser.points,
       reason: 'Completed AquaSwap transaction'
     });
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    await creditReferrerBonus(req.user.userId, 'Completed AquaSwap transaction');
     
     res.json({
       success: true,
@@ -525,6 +568,8 @@ router.post('/shill-completed', auth, async (req, res) => {
       newTotalPoints: updatedUser.points,
       reason: 'Shared token on social media'
     });
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    await creditReferrerBonus(req.user.userId, 'Shared token on social media (daily shill)');
     
     res.json({
       success: true,
@@ -584,7 +629,8 @@ const awardAffiliateReviewPoints = async (userId) => {
     if (!updatedUser) {
       return null;
     }
-    
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    await creditReferrerBonus(userId, 'Left a service review');
     return updatedUser;
   } catch (error) {
     return null;
@@ -639,7 +685,8 @@ const awardGameVotePoints = async (userId, gameId) => {
       },
       { new: true }
     );
-    
+    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    if (updatedUser) await creditReferrerBonus(userId, reason);
     return updatedUser;
   } catch (error) {
     return null;
@@ -699,4 +746,5 @@ module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints;
 module.exports.awardGameVotePoints = awardGameVotePoints;
 module.exports.revokeGameVotePoints = revokeGameVotePoints;
 module.exports.awardSocialMediaPoints = awardSocialMediaPoints;
-module.exports.awardPendingAffiliatePoints = awardPendingAffiliatePoints; 
+module.exports.awardPendingAffiliatePoints = awardPendingAffiliatePoints;
+module.exports.creditReferrerBonus = creditReferrerBonus; 

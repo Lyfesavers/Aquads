@@ -7,6 +7,7 @@ const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
+const { creditReferrerBonus } = require('../routes/points');
 
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
@@ -4847,6 +4848,8 @@ Tap to update:`;
             }
           }
         });
+        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+        await creditReferrerBonus(user._id, `Voted on project: ${project.title}`);
 
         // Only send confirmation message in private chats, not in channels/groups
         if (chatId > 0) {
@@ -5532,6 +5535,8 @@ Let's make today amazing! 🚀`;
         createdAt: new Date()
       });
       await user.save();
+      // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+      await creditReferrerBonus(user._id, 'Daily message in Aquads group');
 
       // Create or update engagement record
       if (!engagement) {
@@ -5613,6 +5618,8 @@ Let's make today amazing! 🚀`;
         createdAt: new Date()
       });
       await user.save();
+      // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+      await creditReferrerBonus(user._id, 'Daily reaction in Aquads group');
 
       // Create or update engagement record
       if (!engagement) {

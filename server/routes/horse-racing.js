@@ -5,6 +5,7 @@ const HorseRaceResult = require('../models/HorseRaceResult');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { getIO } = require('../socket');
+const { creditReferrerBonus } = require('./points');
 
 // Horse data with base odds and speeds (balanced for fair gameplay)
 const HORSE_DATA = [
@@ -302,6 +303,8 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       });
       
       await user.save();
+      // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+      await creditReferrerBonus(req.user.userId, 'horse racing win');
     }
     
     // Save race result to database with psychology data

@@ -514,6 +514,8 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
           relatedModel: 'FacebookRaid'
         });
         await notification.save();
+        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+        await pointsModule.creditReferrerBonus(completion.userId, `Facebook raid approved: ${raid.title}`);
       }
     }
 

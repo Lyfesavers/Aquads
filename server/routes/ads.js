@@ -4,7 +4,7 @@ const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { emitAdEvent } = require('../middleware/socketEmitter');
-const { awardListingPoints } = require('./points');
+const { awardListingPoints, creditReferrerBonus } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
@@ -665,6 +665,8 @@ router.post('/:id/vote', auth, async (req, res) => {
             }
           }
         );
+        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
       
       // Emit socket event for real-time updates
@@ -723,6 +725,8 @@ router.post('/:id/vote', auth, async (req, res) => {
             }
           }
         );
+        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
       
       // Emit socket event for real-time updates
