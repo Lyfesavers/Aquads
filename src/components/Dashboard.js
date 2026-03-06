@@ -3260,6 +3260,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p className="text-red-500 text-sm mt-2">{redeemError}</p>
                     )}
 
+                    {/* Points Rules */}
+                    <div className="text-sm text-gray-400 mt-4">
+                      <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
+                      <p>• Earn 5 points for sending a message in our Telegram group (once per day)</p>
+                      <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
+                      <p>• Earn 5 points for every swap completed on AquaSwap</p>
+                      <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
+                      <p>• Earn 20 points for voting on a project bubble</p>
+                      <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
+                      <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
+                      <p>• Earn 20 points for each new affiliate</p>
+                      <p>• Earn 20 points for each game vote in the gamehub</p>
+                      <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
+                      <p>• Earn 20 points when you leave a review in the freelancer hub</p>
+                      <p>• Earn 1000 points when you sign up with a referral link</p>
+
+                      <p>• Redeem 10,000 points for $100 Canadian Dollars</p>
+                    </div>
+
                     {/* Redemption History Dropdown */}
                     <div className="mt-4">
                       <button
@@ -3347,27 +3366,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </div>
                       )}
                     </div>
-
-                    
-                    {/* Points Rules */}
-                    <div className="text-sm text-gray-400 mt-4">
-                      <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
-                      <p>• Earn 5 points for sending a message in our Telegram group (once per day)</p>
-                      <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
-                      <p>• Earn 5 points for every swap completed on AquaSwap</p>
-                      <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
-                      <p>• Earn 20 points for voting on a project bubble</p>
-                      <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
-                      <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
-                      <p>• Earn 20 points for each new affiliate</p>
-                      <p>• Earn 20 points for each game vote in the gamehub</p>
-                      <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
-                      <p>• Earn 20 points when you leave a review in the freelancer hub</p>
-                      <p>• Earn 1000 points when you sign up with a referral link</p>
-
-                      <p>• Redeem 10,000 points for $100 Canadian Dollars</p>
-                    </div>
-                    
 
                   </div>
                 )}
