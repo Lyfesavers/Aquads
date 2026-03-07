@@ -139,6 +139,9 @@ const HyperSpace = ({ currentUser }) => {
   const [pollingOrder, setPollingOrder] = useState(false);
   const [confirmingPayPal, setConfirmingPayPal] = useState(false);
 
+  // Free reward: 1 free 200 listeners / 2 hours per 10 completed orders
+  const [freeRewardAvailable, setFreeRewardAvailable] = useState(0);
+
   // Refs for sticky horizontal scrollbar sync
   const tableScrollRef = useRef(null);
   const bottomScrollRef = useRef(null);
@@ -161,10 +164,19 @@ const HyperSpace = ({ currentUser }) => {
     fetchPackages();
   }, []);
 
-  // Fetch user's orders
+  // Fetch user's orders and reward status when logged in
   useEffect(() => {
     if (currentUser) {
       fetchMyOrders();
+      axios.get(`${API_URL}/api/hyperspace/reward-status`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
+      }).then(res => {
+        if (res.data.success && res.data.freeRewardAvailable !== undefined) {
+          setFreeRewardAvailable(res.data.freeRewardAvailable);
+        }
+      }).catch(() => {});
+    } else {
+      setFreeRewardAvailable(0);
     }
   }, [currentUser]);
 
@@ -510,6 +522,60 @@ const HyperSpace = ({ currentUser }) => {
       setConfirmingPayPal(false);
     }
   }, [currentOrderId, currentUser, getPayPalLink, selectedListeners, selectedDuration]);
+
+  // Claim free reward (500 listeners, 2 hours) - uses current spaceUrl, goes to admin approval
+  const handleClaimFree = useCallback(async () => {
+    if (!currentUser || !spaceUrl || !validateSpaceUrl(spaceUrl)) {
+      setError('Please enter a valid Twitter Space URL to claim your free reward.');
+      return;
+    }
+    if (freeRewardAvailable < 1) {
+      setError('No free reward available.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/hyperspace/order`,
+        {
+          spaceUrl,
+          listeners: 500,
+          duration: 120,
+          paymentMethod: 'free_reward'
+        },
+        { headers: { Authorization: `Bearer ${currentUser.token}` } }
+      );
+      if (response.data.success && response.data.isFreeReward) {
+        setSuccess('Free reward claimed! Your order is pending approval and will be processed shortly.');
+        setCurrentOrderId(response.data.order.orderId);
+        setShowPayment(false);
+        setConfirmedOrder({
+          orderId: response.data.order.orderId,
+          status: 'pending_approval',
+          listenerCount: 500,
+          duration: 120
+        });
+        setShowConfirmation(true);
+        setSpaceUrl('');
+        fetchMyOrders();
+        axios.get(`${API_URL}/api/hyperspace/reward-status`, {
+          headers: { Authorization: `Bearer ${currentUser.token}` }
+        }).then(res => {
+          if (res.data.success && res.data.freeRewardAvailable !== undefined) {
+            setFreeRewardAvailable(res.data.freeRewardAvailable);
+          }
+        }).catch(() => {});
+      } else {
+        setError(response.data?.error || 'Failed to claim free reward.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to claim free reward. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [currentUser, spaceUrl, freeRewardAvailable, fetchMyOrders]);
 
   // Get current package details including savings
   const getCurrentPackage = useCallback(() => {
@@ -875,6 +941,33 @@ const HyperSpace = ({ currentUser }) => {
                   <span className="text-purple-400 font-medium">Before Space</span>
                 </div>
               </div>
+
+              {/* Free reward: 200 listeners / 2 hours per 10 completed orders */}
+              {currentUser && freeRewardAvailable > 0 && (
+                <div className="mb-6 p-4 rounded-xl border-2 border-green-500/50 bg-green-500/10">
+                  <p className="text-sm text-green-300 font-medium mb-1">
+                    You have {freeRewardAvailable} free reward{freeRewardAvailable > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs text-gray-400 mb-3">
+                    500 listeners, 2 hours. Enter your Space URL in the form and click below.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClaimFree}
+                    disabled={submitting || !spaceUrl || !validateSpaceUrl(spaceUrl)}
+                    className="w-full py-3 rounded-xl font-bold text-sm bg-green-600 hover:bg-green-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <FaSpinner className="animate-spin" />
+                    ) : (
+                      <>
+                        <FaCheck />
+                        Claim free
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center">
@@ -1278,7 +1371,7 @@ const HyperSpace = ({ currentUser }) => {
       {/* Mobile Fixed Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-700/80 p-3 sm:p-4 z-40">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="text-xs text-gray-400">
               {formatListeners(selectedListeners)} listeners • {DURATIONS.find(d => d.value === selectedDuration)?.label}
             </div>
@@ -1288,24 +1381,40 @@ const HyperSpace = ({ currentUser }) => {
           </div>
           
           {currentUser ? (
-            <button
-              onClick={handleOrder}
-              disabled={submitting || !isValidOrder}
-              className={`px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all whitespace-nowrap ${
-                submitting || !isValidOrder
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white active:scale-95'
-              }`}
-            >
-              {submitting ? (
-                <FaSpinner className="animate-spin" />
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <FaRocket />
-                  <span>Launch</span>
-                </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {freeRewardAvailable > 0 && (
+                <button
+                  onClick={handleClaimFree}
+                  disabled={submitting || !spaceUrl || !validateSpaceUrl(spaceUrl)}
+                  className="px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm bg-green-600 text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {submitting ? <FaSpinner className="animate-spin" /> : (
+                    <span className="flex items-center gap-1">
+                      <FaCheck className="text-[10px]" />
+                      Claim free
+                    </span>
+                  )}
+                </button>
               )}
-            </button>
+              <button
+                onClick={handleOrder}
+                disabled={submitting || !isValidOrder}
+                className={`px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all whitespace-nowrap ${
+                  submitting || !isValidOrder
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white active:scale-95'
+                }`}
+              >
+                {submitting ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <FaRocket />
+                    <span>Launch</span>
+                  </span>
+                )}
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => navigate('/home')}

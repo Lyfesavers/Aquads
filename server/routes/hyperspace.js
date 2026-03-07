@@ -89,6 +89,35 @@ router.get('/balance', auth, async (req, res) => {
   }
 });
 
+// GET /api/hyperspace/reward-status - Free reward eligibility (1 free 200/2h per 10 completed orders)
+router.get('/reward-status', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const completedOrders = await HyperSpaceOrder.countDocuments({
+      userId,
+      status: 'completed',
+      isFreeReward: { $ne: true }
+    });
+    const rewardsUsed = await HyperSpaceOrder.countDocuments({
+      userId,
+      isFreeReward: true
+    });
+    const rewardsEarned = Math.floor(completedOrders / 10);
+    const freeRewardAvailable = Math.max(0, rewardsEarned - rewardsUsed);
+
+    res.json({
+      success: true,
+      freeRewardAvailable,
+      completedOrders,
+      rewardsUsed,
+      rewardsEarned
+    });
+  } catch (error) {
+    console.error('Error fetching reward status:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch reward status' });
+  }
+});
+
 // POST /api/hyperspace/order - Create a new order
 router.post('/order', auth, requireEmailVerification, async (req, res) => {
   try {
@@ -112,13 +141,120 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Validate package
     const listenersNum = parseInt(listeners);
     const durationNum = parseInt(duration);
-    
+
+    // --- Free reward path: 500 listeners / 2 hours, goes straight to admin approval ---
+    if (paymentMethod === 'free_reward') {
+      if (listenersNum !== 500 || durationNum !== 120) {
+        return res.status(400).json({
+          success: false,
+          error: 'Free reward is only valid for 500 listeners for 2 hours'
+        });
+      }
+      if (!spaceUrl.includes('twitter.com') && !spaceUrl.includes('x.com')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Twitter Space URL. Must be from twitter.com or x.com'
+        });
+      }
+
+      const userId = req.user.userId;
+      const completedOrders = await HyperSpaceOrder.countDocuments({
+        userId,
+        status: 'completed',
+        isFreeReward: { $ne: true }
+      });
+      const rewardsUsed = await HyperSpaceOrder.countDocuments({
+        userId,
+        isFreeReward: true
+      });
+      const rewardsEarned = Math.floor(completedOrders / 10);
+      const freeRewardAvailable = Math.max(0, rewardsEarned - rewardsUsed);
+
+      if (freeRewardAvailable < 1) {
+        return res.status(400).json({
+          success: false,
+          error: 'No free reward available. Complete 10 delivered orders to earn one.'
+        });
+      }
+
+      const cost = socialplugService.getSocialplugCost(500, 120);
+      if (cost === null) {
+        return res.status(500).json({
+          success: false,
+          error: 'Invalid package configuration'
+        });
+      }
+
+      const orderId = HyperSpaceOrder.generateOrderId();
+      const order = new HyperSpaceOrder({
+        orderId,
+        userId: req.user.userId,
+        username: req.user.username,
+        spaceUrl,
+        listenerCount: 500,
+        duration: 120,
+        socialplugCost: cost,
+        customerPrice: 0,
+        profit: -cost,
+        paymentMethod: 'free_reward',
+        isFreeReward: true,
+        paymentStatus: 'completed',
+        paymentReceivedAt: new Date(),
+        discountCode: null,
+        discountAmount: 0,
+        status: 'pending_approval'
+      });
+
+      await order.save();
+
+      try {
+        const io = socket.getIO();
+        if (io) {
+          io.emit('newHyperSpaceOrderPending', {
+            orderId: order.orderId,
+            username: order.username,
+            listenerCount: order.listenerCount,
+            duration: order.duration,
+            spaceUrl: order.spaceUrl,
+            customerPrice: order.customerPrice,
+            socialplugCost: order.socialplugCost,
+            createdAt: order.createdAt,
+            status: order.status,
+            errorMessage: order.errorMessage,
+            paymentMethod: order.paymentMethod,
+            isFreeReward: true
+          });
+          socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
+            message: 'Your free reward order is being processed.',
+            listenerCount: order.listenerCount,
+            duration: order.duration
+          });
+        }
+      } catch (socketError) {
+        console.error('Socket emit error:', socketError);
+      }
+
+      return res.status(201).json({
+        success: true,
+        isFreeReward: true,
+        order: {
+          orderId: order.orderId,
+          spaceUrl: order.spaceUrl,
+          listeners: order.listenerCount,
+          duration: order.duration,
+          price: order.customerPrice,
+          status: order.status,
+          createdAt: order.createdAt
+        }
+      });
+    }
+
+    // --- Paid order path (crypto / paypal) ---
     const cost = socialplugService.getSocialplugCost(listenersNum, durationNum);
     const price = socialplugService.getCustomerPrice(listenersNum, durationNum);
-    
+
     if (cost === null || price === null) {
       return res.status(400).json({
         success: false,
@@ -126,7 +262,6 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Validate Space URL
     if (!spaceUrl.includes('twitter.com') && !spaceUrl.includes('x.com')) {
       return res.status(400).json({
         success: false,
@@ -134,15 +269,14 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Apply discount if provided
     let discountAmount = 0;
     let appliedDiscountCode = null;
-    
+
     if (discountCode) {
       try {
         const DiscountCode = require('../models/DiscountCode');
         const validDiscountCode = await DiscountCode.findValidCode(discountCode, 'hyperspace');
-        
+
         if (validDiscountCode) {
           discountAmount = validDiscountCode.calculateDiscount(price);
           appliedDiscountCode = validDiscountCode.code;
@@ -155,10 +289,8 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
 
     const finalPrice = price - discountAmount;
 
-    // Generate unique order ID
     const orderId = HyperSpaceOrder.generateOrderId();
 
-    // Create the order
     const order = new HyperSpaceOrder({
       orderId,
       userId: req.user.userId,

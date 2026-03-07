@@ -54,8 +54,12 @@ const hyperSpaceOrderSchema = new mongoose.Schema({
   // Payment details
   paymentMethod: {
     type: String,
-    enum: ['crypto', 'paypal'],
+    enum: ['crypto', 'paypal', 'free_reward'],
     required: true
+  },
+  isFreeReward: {
+    type: Boolean,
+    default: false
   },
   paymentStatus: {
     type: String,
@@ -209,9 +213,9 @@ hyperSpaceOrderSchema.statics.generateOrderId = function() {
   return `HS-${timestamp}-${random}`.toUpperCase();
 };
 
-// Pre-save hook to set profit
+// Pre-save hook to set profit (allow negative for free-reward orders)
 hyperSpaceOrderSchema.pre('save', function(next) {
-  if (this.customerPrice && this.socialplugCost) {
+  if (this.customerPrice !== undefined && this.socialplugCost !== undefined) {
     this.profit = this.customerPrice - this.socialplugCost - (this.discountAmount || 0);
   }
   next();
