@@ -548,6 +548,7 @@ const HyperSpace = ({ currentUser }) => {
         { headers: { Authorization: `Bearer ${currentUser.token}` } }
       );
       if (response.data.success && response.data.isFreeReward) {
+        setFreeRewardAvailable(0);
         setSuccess('Free reward claimed! Your order is pending approval and will be processed shortly.');
         setCurrentOrderId(response.data.order.orderId);
         setShowPayment(false);
@@ -560,13 +561,14 @@ const HyperSpace = ({ currentUser }) => {
         setShowConfirmation(true);
         setSpaceUrl('');
         fetchMyOrders();
-        axios.get(`${API_URL}/api/hyperspace/reward-status`, {
-          headers: { Authorization: `Bearer ${currentUser.token}` }
-        }).then(res => {
+        try {
+          const res = await axios.get(`${API_URL}/api/hyperspace/reward-status`, {
+            headers: { Authorization: `Bearer ${currentUser.token}` }
+          });
           if (res.data.success && res.data.freeRewardAvailable !== undefined) {
             setFreeRewardAvailable(res.data.freeRewardAvailable);
           }
-        }).catch(() => {});
+        } catch (_) {}
       } else {
         setError(response.data?.error || 'Failed to claim free reward.');
       }
@@ -725,23 +727,6 @@ const HyperSpace = ({ currentUser }) => {
           )}
         </div>
 
-        {/* Perk announcement banner */}
-        <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl border border-green-500/40 bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 backdrop-blur-sm overflow-hidden">
-          <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5">
-            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-500/30 flex items-center justify-center">
-              <FaGift className="text-green-400 text-lg sm:text-xl" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm sm:text-base font-semibold text-white">
-                Loyalty perk: 1 free boost every 10 delivered orders
-              </p>
-              <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
-                Complete 10 HyperSpace deliveries to earn <span className="text-green-400 font-medium">500 listeners for 2 hours</span> — free. Claim it when you qualify.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Header - Immersive hero */}
         <div className="text-center mb-10 sm:mb-14">
           <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 mb-5 sm:mb-6 shadow-xl shadow-purple-500/25 ring-2 ring-white/10">
@@ -769,6 +754,22 @@ const HyperSpace = ({ currentUser }) => {
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
               Boost Trending
             </span>
+          </div>
+          {/* Perk announcement banner */}
+          <div className="mt-6 max-w-2xl mx-auto rounded-xl sm:rounded-2xl border border-green-500/40 bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 backdrop-blur-sm overflow-hidden">
+            <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5">
+              <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-500/30 flex items-center justify-center">
+                <FaGift className="text-green-400 text-lg sm:text-xl" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm sm:text-base font-semibold text-white">
+                  Loyalty perk: 1 free boost every 10 delivered orders
+                </p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+                  Complete 10 HyperSpace deliveries to earn <span className="text-green-400 font-medium">500 listeners for 2 hours</span> — free. Claim it when you qualify.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
