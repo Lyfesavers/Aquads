@@ -4022,6 +4022,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           <span className="text-yellow-400 font-bold">{affiliateAnalytics.summary.totalAffiliateTokens}</span>
                         </div>
                         <div className="flex justify-between">
+                          <span className="text-gray-300">Referrer bonus (total)</span>
+                          <span className="text-green-400 font-bold">{affiliateAnalytics.summary.totalReferrerBonusPoints ?? 0} pts</span>
+                        </div>
+                        <div className="flex justify-between">
                           <span className="text-gray-300">This Month</span>
                           <span className="text-green-400 font-bold">+{affiliateAnalytics.summary.thisMonthSignups}</span>
                         </div>
@@ -4199,6 +4203,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             <div className="text-right">
                               <div className="text-sm text-gray-300">
                                 {affiliate.points} pts • {affiliate.tokens} tokens
+                                {(affiliate.referrerBonusPoints ?? 0) > 0 && (
+                                  <span className="text-green-400 ml-1">• you earned {affiliate.referrerBonusPoints} pts</span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-400">
                                 {affiliate.daysSinceJoin} days • {affiliate.affiliateCount} affiliates

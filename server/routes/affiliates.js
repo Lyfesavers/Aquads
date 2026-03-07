@@ -316,22 +316,40 @@ router.get('/analytics', auth, async (req, res) => {
     // Calculate fraud analysis for the user
     const fraudAnalysis = await calculateAdvancedFraudScore(currentUser, affiliates);
 
+    // Referrer bonus: total points you earned from each affiliate (5 pts per time they earned)
+    const referrer = await User.findById(req.user.userId).select('pointsHistory').lean();
+    const referrerBonusByAffiliate = {};
+    if (referrer?.pointsHistory?.length) {
+      referrer.pointsHistory.forEach(entry => {
+        if (entry.referredUser && entry.amount > 0) {
+          const id = entry.referredUser.toString();
+          referrerBonusByAffiliate[id] = (referrerBonusByAffiliate[id] || 0) + entry.amount;
+        }
+      });
+    }
+    const totalReferrerBonusPoints = Object.values(referrerBonusByAffiliate).reduce((s, n) => s + n, 0);
+
     // Prepare affiliate list for display (no personal info)
-    const affiliateList = affiliates.map(affiliate => ({
-      username: affiliate.username,
-      joinDate: affiliate.createdAt,
-      points: affiliate.points || 0,
-      tokens: affiliate.tokens || 0,
-      isOnline: affiliate.isOnline || false,
-      lastSeen: affiliate.lastSeen,
-      affiliateCount: affiliate.affiliateCount || 0,
-      emailVerified: affiliate.emailVerified || false,
-      daysSinceJoin: Math.floor((now - new Date(affiliate.createdAt)) / (1000 * 60 * 60 * 24))
-    }));
+    const affiliateList = affiliates.map(affiliate => {
+      const affiliateIdStr = affiliate._id.toString();
+      return {
+        username: affiliate.username,
+        joinDate: affiliate.createdAt,
+        points: affiliate.points || 0,
+        tokens: affiliate.tokens || 0,
+        isOnline: affiliate.isOnline || false,
+        lastSeen: affiliate.lastSeen,
+        affiliateCount: affiliate.affiliateCount || 0,
+        emailVerified: affiliate.emailVerified || false,
+        daysSinceJoin: Math.floor((now - new Date(affiliate.createdAt)) / (1000 * 60 * 60 * 24)),
+        referrerBonusPoints: referrerBonusByAffiliate[affiliateIdStr] || 0
+      };
+    });
 
     res.json({
       summary: {
         totalAffiliates: affiliates.length,
+        totalReferrerBonusPoints,
         thisWeekSignups,
         thisMonthSignups,
         activeThisWeek,
