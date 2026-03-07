@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch, FaChartLine } from 'react-icons/fa';
+import { FaTwitter, FaRocket, FaUsers, FaClock, FaCheck, FaSpinner, FaHistory, FaTimes, FaChevronDown, FaChevronUp, FaBolt, FaFire, FaGem, FaShieldAlt, FaHeadphones, FaInfoCircle, FaExternalLinkAlt, FaHome, FaArrowLeft, FaStopwatch, FaChartLine, FaGift } from 'react-icons/fa';
 import axios from 'axios';
 import { socket } from '../services/api';
 import Footer from './Footer';
@@ -723,6 +723,23 @@ const HyperSpace = ({ currentUser }) => {
               )}
             </button>
           )}
+        </div>
+
+        {/* Perk announcement banner */}
+        <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl border border-green-500/40 bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 backdrop-blur-sm overflow-hidden">
+          <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5">
+            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-500/30 flex items-center justify-center">
+              <FaGift className="text-green-400 text-lg sm:text-xl" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm sm:text-base font-semibold text-white">
+                Loyalty perk: 1 free boost every 10 delivered orders
+              </p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+                Complete 10 HyperSpace deliveries to earn <span className="text-green-400 font-medium">500 listeners for 2 hours</span> — free. Claim it when you qualify.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Header - Immersive hero */}
