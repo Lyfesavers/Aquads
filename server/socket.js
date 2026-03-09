@@ -865,9 +865,8 @@ function init(server) {
           $push: {
             pointsHistory: {
               amount: -1000,
-              type: 'membership_subscription',
-              description: 'Monthly membership subscription',
-              timestamp: new Date()
+              reason: 'Monthly membership subscription',
+              createdAt: new Date()
             }
           }
         });
