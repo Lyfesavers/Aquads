@@ -608,6 +608,9 @@ async function handleCancelRaid(interaction) {
     const telegramService = require('./telegramService');
     await telegramService.deleteRaidMessagesByRaidId(raid._id.toString());
   } catch (_) {}
+  try {
+    await deleteDiscordRaidMessagesByRaidId(raid._id.toString());
+  } catch (_) {}
   if (platform === 'twitter') {
     raid.active = false;
     await raid.save();
@@ -1332,17 +1335,64 @@ const VIDEO_VOTE = path.join(PUBLIC_DIR, 'New_vote.mp4');
 const VIDEO_TOP_BUBBLES = path.join(PUBLIC_DIR, 'TRENDINGLIST.mp4');
 const VIDEO_MYBUBBLE = path.join(PUBLIC_DIR, 'vote now .mp4');
 
+/** Send payload to channel. Returns sent Message or null on failure (for storing message ID). */
 async function sendToChannel(channelId, payload) {
-  if (!channelId || !discordClient?.isReady()) return false;
+  if (!channelId || !discordClient?.isReady()) return null;
+  try {
+    const channel = await discordClient.channels.fetch(channelId).catch(() => null);
+    if (!channel) return null;
+    const message = await channel.send(payload);
+    return message;
+  } catch (e) {
+    console.error('Discord sendToChannel error:', e.message);
+    return null;
+  }
+}
+
+/** Delete a message in a channel (for cleaning up old notifications). */
+async function deleteDiscordMessage(channelId, messageId) {
+  if (!channelId || !messageId || !discordClient?.isReady()) return false;
   try {
     const channel = await discordClient.channels.fetch(channelId).catch(() => null);
     if (!channel) return false;
-    await channel.send(payload);
+    await channel.messages.delete(messageId);
     return true;
   } catch (e) {
-    console.error('Discord sendToChannel error:', e.message);
     return false;
   }
+}
+
+const DISCORD_RAID_MSG_KEY = 'discordRaidMessageIds';
+const DISCORD_RAID_BY_RAID_KEY = 'discordRaidMessagesByRaidId';
+const DISCORD_COMPLETION_MSG_KEY = 'discordRaidCompletionMessageIds';
+const DISCORD_VOTE_MSG_KEY = 'discordVoteMessageIds';
+const DISCORD_BUBBLES_MSG_KEY = 'discordBubblesMessageIds';
+
+async function getStoredDiscordMessages(key) {
+  const settings = await BotSettings.findOne({ key }).lean();
+  const value = settings?.value;
+  return value && typeof value === 'object' ? value : {};
+}
+
+async function setStoredDiscordMessages(key, value) {
+  await BotSettings.findOneAndUpdate(
+    { key },
+    { value: value || {}, updatedAt: new Date() },
+    { upsert: true }
+  );
+}
+
+/** Delete all Discord raid messages for a given raid (e.g. on cancel). */
+async function deleteDiscordRaidMessagesByRaidId(raidId) {
+  if (!raidId) return;
+  const byRaidId = await getStoredDiscordMessages(DISCORD_RAID_BY_RAID_KEY);
+  const entries = byRaidId[raidId];
+  if (!Array.isArray(entries)) return;
+  for (const { channelId, messageId } of entries) {
+    await deleteDiscordMessage(channelId, messageId);
+  }
+  delete byRaidId[raidId];
+  await setStoredDiscordMessages(DISCORD_RAID_BY_RAID_KEY, byRaidId);
 }
 
 /** All servers that have the bot (get completion pings and admin raids). */
@@ -1379,6 +1429,17 @@ async function sendRaidNotificationToChannel(raidData) {
     channelIds = Array.from(ids);
   }
   if (channelIds.length === 0) return false;
+
+  const raidMessageIds = await getStoredDiscordMessages(DISCORD_RAID_MSG_KEY);
+  for (const channelId of channelIds) {
+    const oldId = raidMessageIds[channelId];
+    if (oldId) {
+      await deleteDiscordMessage(channelId, oldId);
+      delete raidMessageIds[channelId];
+    }
+  }
+  await setStoredDiscordMessages(DISCORD_RAID_MSG_KEY, raidMessageIds);
+
   const isFacebook = raidData.platform === 'Facebook';
   const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
   const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
@@ -1405,9 +1466,20 @@ async function sendRaidNotificationToChannel(raidData) {
   }
   const payload = { embeds: [embed], components: [row], files };
   let sent = 0;
+  const raidId = raidData.raidId || null;
+  const byRaidId = raidId ? await getStoredDiscordMessages(DISCORD_RAID_BY_RAID_KEY) : {};
+  if (raidId) byRaidId[raidId] = [];
+
   for (const channelId of channelIds) {
-    if (await sendToChannel(channelId, payload)) sent++;
+    const message = await sendToChannel(channelId, payload);
+    if (message) {
+      sent++;
+      raidMessageIds[channelId] = message.id;
+      if (raidId) byRaidId[raidId].push({ channelId, messageId: message.id });
+    }
   }
+  await setStoredDiscordMessages(DISCORD_RAID_MSG_KEY, raidMessageIds);
+  if (raidId) await setStoredDiscordMessages(DISCORD_RAID_BY_RAID_KEY, byRaidId);
   return sent > 0;
 }
 
@@ -1416,6 +1488,13 @@ async function sendRaidCompletionToChannel(completionData) {
   const fallbackId = process.env.DISCORD_RAID_COMPLETION_CHANNEL_ID || process.env.DISCORD_RAID_CHANNEL_ID;
   if (channelIds.length === 0 && !fallbackId) return false;
   const ids = channelIds.length > 0 ? channelIds : (fallbackId ? [fallbackId] : []);
+
+  const completionMsgIds = await getStoredDiscordMessages(DISCORD_COMPLETION_MSG_KEY);
+  for (const [channelId, messageId] of Object.entries(completionMsgIds)) {
+    await deleteDiscordMessage(channelId, messageId);
+  }
+  await setStoredDiscordMessages(DISCORD_COMPLETION_MSG_KEY, {});
+
   const user = await User.findById(completionData.userId).select('username').lean();
   const username = user?.username || 'User';
   const isFacebook = completionData.platform === 'Facebook';
@@ -1441,15 +1520,30 @@ async function sendRaidCompletionToChannel(completionData) {
   }
   const payload = { embeds: [embed], components: [row], files };
   let sent = 0;
+  const newCompletionIds = {};
   for (const channelId of ids) {
-    if (await sendToChannel(channelId, payload)) sent++;
+    const message = await sendToChannel(channelId, payload);
+    if (message) {
+      sent++;
+      newCompletionIds[channelId] = message.id;
+    }
   }
+  await setStoredDiscordMessages(DISCORD_COMPLETION_MSG_KEY, newCompletionIds);
   return sent > 0;
 }
 
 async function sendVoteNotificationToChannel(project) {
   const channelId = process.env.DISCORD_VOTE_CHANNEL_ID;
   if (!channelId) return false;
+
+  const voteMsgIds = await getStoredDiscordMessages(DISCORD_VOTE_MSG_KEY);
+  const oldId = voteMsgIds[channelId];
+  if (oldId) {
+    await deleteDiscordMessage(channelId, oldId);
+    delete voteMsgIds[channelId];
+    await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
+  }
+
   const allBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .sort({ bullishVotes: -1 })
     .select('_id bullishVotes')
@@ -1488,12 +1582,27 @@ async function sendVoteNotificationToChannel(project) {
   if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) {
     files = [VIDEO_VOTE];
   }
-  return sendToChannel(channelId, { embeds: [embed], components: [row], files });
+  const message = await sendToChannel(channelId, { embeds: [embed], components: [row], files });
+  if (message) {
+    voteMsgIds[channelId] = message.id;
+    await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
+    return true;
+  }
+  return false;
 }
 
 async function sendTopBubblesToChannel() {
   const channelId = process.env.DISCORD_BUBBLES_CHANNEL_ID;
   if (!channelId) return false;
+
+  const bubblesMsgIds = await getStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY);
+  const oldId = bubblesMsgIds[channelId];
+  if (oldId) {
+    await deleteDiscordMessage(channelId, oldId);
+    delete bubblesMsgIds[channelId];
+    await setStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY, bubblesMsgIds);
+  }
+
   const bumpedBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .select('title bullishVotes bearishVotes pairAddress contractAddress blockchain')
     .sort({ bullishVotes: -1 })
@@ -1513,7 +1622,13 @@ async function sendTopBubblesToChannel() {
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
   const files = fs.existsSync(VIDEO_TOP_BUBBLES) ? [VIDEO_TOP_BUBBLES] : [];
-  return sendToChannel(channelId, { embeds: [embed], files });
+  const message = await sendToChannel(channelId, { embeds: [embed], files });
+  if (message) {
+    bubblesMsgIds[channelId] = message.id;
+    await setStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY, bubblesMsgIds);
+    return true;
+  }
+  return false;
 }
 
 module.exports = {
