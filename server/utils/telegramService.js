@@ -31,6 +31,34 @@ async function checkUserHasLifetimeBumpedAd(username) {
   }
 }
 
+// Get raid creator's custom branding (for white-label: raid + completion use creator's image when set)
+async function getCreatorBrandingFromRaidId(raidId, platform = null) {
+  try {
+    let raid = null;
+    if (platform === 'Facebook') {
+      raid = await FacebookRaid.findById(raidId).select('createdBy').lean();
+    } else {
+      raid = await TwitterRaid.findById(raidId).select('createdBy').lean();
+      if (!raid) raid = await FacebookRaid.findById(raidId).select('createdBy').lean();
+    }
+    if (!raid || !raid.createdBy) return null;
+    const user = await User.findById(raid.createdBy).select('username').lean();
+    if (!user) return null;
+    const ad = await Ad.findOne({
+      owner: user.username,
+      isBumped: true,
+      status: { $in: ['active', 'approved'] },
+      customBrandingImage: { $exists: true, $ne: null }
+    }).select('customBrandingImage').lean();
+    if (!ad?.customBrandingImage) return null;
+    const base64Data = ad.customBrandingImage.split(',')[1];
+    if (!base64Data) return null;
+    return { buffer: Buffer.from(base64Data, 'base64') };
+  } catch (e) {
+    return null;
+  }
+}
+
 // HyperSpace promo: X Space Trender – shown on bot messages via inline button
 const HYPERSPACE_BUTTON_ROW = [
   { text: '🚀 X Space Trender', url: 'https://aquads.xyz/hyperspace' }
@@ -279,7 +307,13 @@ const telegramService = {
 
 ⏰ Available for 48 hours!`;
 
-      // Get the video file path
+      // Creator branding (white-label): use raid creator's custom branding when set
+      if (!isAdmin && raidData.raidId) {
+        const creatorBranding = await getCreatorBrandingFromRaidId(raidData.raidId);
+        if (creatorBranding) raidData.creatorBrandingBuffer = creatorBranding.buffer;
+      }
+
+      // Get the video file path (fallback when no creator branding)
       const videoPath = path.join(__dirname, '../../public/timeraid.mp4');
       const videoExists = fs.existsSync(videoPath);
       
@@ -304,9 +338,32 @@ const telegramService = {
       
       // Send to all groups
       let successCount = 0;
+      const useCreatorBranding = !!raidData.creatorBrandingBuffer;
       for (const chatId of groupsToNotify) {
         try {
-          if (videoExists || telegramService.cachedVideoFileIds.raid) {
+          if (useCreatorBranding) {
+            // White-label: send creator's custom branding image
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', raidData.creatorBrandingBuffer, { filename: 'branding.jpg' });
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
+            const response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendPhoto`,
+              formData,
+              { headers: formData.getHeaders(), timeout: 30000 }
+            );
+            if (response.data.ok) {
+              successCount++;
+              const messageId = response.data.result.message_id;
+              const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
+              await telegramService.storeRaidMessageId(chatId, messageId, creatorGroupId);
+              if (raidData.raidId) {
+                await telegramService.storeRaidMessageByRaidId(raidData.raidId, chatId, messageId);
+              }
+              await telegramService.pinMessage(chatId, messageId);
+            }
+          } else if (videoExists || telegramService.cachedVideoFileIds.raid) {
             // Send video with caption (use cached file_id if available)
             let response;
             
@@ -391,6 +448,12 @@ const telegramService = {
           }
         }
       }
+
+      // Mirror to Discord if channel configured
+      try {
+        const discordService = require('./discordService');
+        await discordService.sendRaidNotificationToChannel(raidData).catch(() => {});
+      } catch (_) {}
 
       return successCount > 0;
 
@@ -1939,9 +2002,16 @@ ${platformEmoji} ${platformName} Raid
 🌐 Track all raids: [@aquadsbumpbot](https://t.me/aquadsbumpbot)
 💡 Complete more raids to earn points!`;
 
-      // Get the video file path
+      // Creator branding (white-label): use raid creator's custom branding when set
+      if (completionData.raidId) {
+        const creatorBranding = await getCreatorBrandingFromRaidId(completionData.raidId, completionData.platform === 'Facebook' ? 'Facebook' : null);
+        if (creatorBranding) completionData.creatorBrandingBuffer = creatorBranding.buffer;
+      }
+
+      // Get the video file path (fallback when no creator branding)
       const videoPath = path.join(__dirname, '../../public/Just Raided.mp4');
       const videoExists = fs.existsSync(videoPath);
+      const useCreatorBrandingCompletion = !!completionData.creatorBrandingBuffer;
 
       const keyboard = addHyperSpaceToKeyboard({
         inline_keyboard: [[{ text: '🚀 Join Raids', url: 'https://t.me/aquadsbumpbot' }]]
@@ -1951,7 +2021,23 @@ ${platformEmoji} ${platformName} Raid
       let successCount = 0;
       for (const chatId of groupsToNotify) {
         try {
-          if (videoExists || telegramService.cachedVideoFileIds.raidCompletion) {
+          if (useCreatorBrandingCompletion) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', completionData.creatorBrandingBuffer, { filename: 'branding.jpg' });
+            formData.append('caption', message);
+            formData.append('parse_mode', 'Markdown');
+            formData.append('reply_markup', JSON.stringify(keyboard));
+            const response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendPhoto`,
+              formData,
+              { headers: formData.getHeaders(), timeout: 30000 }
+            );
+            if (response.data.ok) {
+              successCount++;
+              await telegramService.storeRaidCompletionMessageId(chatId, response.data.result.message_id);
+            }
+          } else if (videoExists || telegramService.cachedVideoFileIds.raidCompletion) {
             // Send video with caption (use cached file_id if available)
             let response;
             
@@ -2023,6 +2109,12 @@ ${platformEmoji} ${platformName} Raid
           }
         }
       }
+
+      // Mirror to Discord if channel configured
+      try {
+        const discordService = require('./discordService');
+        await discordService.sendRaidCompletionToChannel(completionData).catch(() => {});
+      } catch (_) {}
 
       console.log(`📨 Raid completion notification sent to ${successCount}/${groupsToNotify.size} groups`);
       return successCount > 0;
@@ -3623,6 +3715,11 @@ Tap to update:`;
       }
       
       if (result) {
+        // Mirror to Discord if channel configured
+        try {
+          const discordService = require('./discordService');
+          await discordService.sendTopBubblesToChannel().catch(() => {});
+        } catch (_) {}
         console.log(`Top bubbles notification sent to chat ${chatId}`);
         return true;
       } else {
@@ -4581,6 +4678,12 @@ Tap to update:`;
         telegramService.lastVoteMessages.push(trendingMessageId);
       }
 
+      // Mirror to Discord if channel configured
+      try {
+        const discordService = require('./discordService');
+        await discordService.sendVoteNotificationToChannel(project).catch(() => {});
+      } catch (_) {}
+
     } catch (error) {
       console.error('Error sending vote notification to group:', error);
     }
@@ -4729,108 +4832,82 @@ Tap to update:`;
     }
   },
 
-  // Process vote on project
-  processVote: async (chatId, telegramUserId, projectId, voteType) => {
+  // Core vote logic: takes Aquads User document, projectId, voteType. Returns { success, message }.
+  // Used by both Telegram (processVote) and Discord. Sends vote notification to group.
+  processVoteByUser: async (user, projectId, voteType) => {
     try {
-      // Check if user is linked
-      const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      
-      if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
-        return;
-      }
-
-      // Find the project
       const project = await Ad.findById(projectId);
-      
       if (!project) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Project not found.");
-        return;
+        return { success: false, message: '❌ Project not found.' };
       }
 
-      // Check if user already voted
       const existingVote = project.voterData?.find(
         vote => vote.userId && vote.userId.toString() === user._id.toString()
       );
 
       if (existingVote) {
         if (existingVote.voteType === voteType) {
-          // Only send error message in private chats
-          if (chatId > 0) {
-            await telegramService.sendBotMessage(chatId, 
-              `❌ You already voted ${voteType} on this project.`);
-          }
-        } else {
-          // Update existing vote
-          existingVote.voteType = voteType;
-          
-          // Update vote counts
-          if (voteType === 'bullish') {
-            project.bullishVotes = (project.bullishVotes || 0) + 1;
-            project.bearishVotes = Math.max(0, (project.bearishVotes || 0) - 1);
-          } else {
-            project.bearishVotes = (project.bearishVotes || 0) + 1;
-            project.bullishVotes = Math.max(0, (project.bullishVotes || 0) - 1);
-          }
-          
-          await project.save();
-
-        // Only send confirmation message in private chats, not in channels/groups
-        if (chatId > 0) {
-          await telegramService.sendBotMessage(chatId, 
-            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+          return { success: false, message: `❌ You already voted ${voteType} on this project.` };
         }
-        
-        // Send notification to registered group about vote update
-        await telegramService.sendVoteNotificationToGroup(project);
-        }
-      } else {
-        // New vote - only award points for first vote on this project
-        if (!project.voterData) project.voterData = [];
-        
-        project.voterData.push({
-          userId: user._id,
-          voteType: voteType
-        });
-
-        // Update vote counts
+        existingVote.voteType = voteType;
         if (voteType === 'bullish') {
           project.bullishVotes = (project.bullishVotes || 0) + 1;
+          project.bearishVotes = Math.max(0, (project.bearishVotes || 0) - 1);
         } else {
           project.bearishVotes = (project.bearishVotes || 0) + 1;
+          project.bullishVotes = Math.max(0, (project.bullishVotes || 0) - 1);
         }
-        
         await project.save();
-        
-        // Award points only for first vote on this project
-        await User.findByIdAndUpdate(user._id, {
-          $inc: { points: 20 },
-          $push: {
-            pointsHistory: {
-              amount: 20,
-              reason: `Voted on project: ${project.title}`,
-              createdAt: new Date()
-            }
-          }
-        });
-        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-        await creditReferrerBonus(user._id, `Voted on project: ${project.title}`);
-
-        // Only send confirmation message in private chats, not in channels/groups
-        if (chatId > 0) {
-          await telegramService.sendBotMessage(chatId, 
-            `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
-        }
-        
-        // Send notification to registered group about new vote
         await telegramService.sendVoteNotificationToGroup(project);
+        return { success: true, message: `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}` };
       }
 
+      if (!project.voterData) project.voterData = [];
+      project.voterData.push({ userId: user._id, voteType });
+      if (voteType === 'bullish') {
+        project.bullishVotes = (project.bullishVotes || 0) + 1;
+      } else {
+        project.bearishVotes = (project.bearishVotes || 0) + 1;
+      }
+      await project.save();
+
+      await User.findByIdAndUpdate(user._id, {
+        $inc: { points: 20 },
+        $push: {
+          pointsHistory: {
+            amount: 20,
+            reason: `Voted on project: ${project.title}`,
+            createdAt: new Date()
+          }
+        }
+      });
+      await creditReferrerBonus(user._id, `Voted on project: ${project.title}`);
+      await telegramService.sendVoteNotificationToGroup(project);
+      return { success: true, message: `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}` };
+    } catch (error) {
+      console.error('processVoteByUser error:', error);
+      return { success: false, message: '❌ Error processing vote. Please try again later.' };
+    }
+  },
+
+  // Process vote on project (Telegram: uses telegramUserId and sends reply to chatId)
+  processVote: async (chatId, telegramUserId, projectId, voteType) => {
+    try {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId,
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+      const result = await telegramService.processVoteByUser(user, projectId, voteType);
+      if (result.success && chatId > 0) {
+        await telegramService.sendBotMessage(chatId, result.message);
+      } else if (!result.success && chatId > 0) {
+        await telegramService.sendBotMessage(chatId, result.message);
+      }
     } catch (error) {
       console.error('Process vote error:', error);
-      await telegramService.sendBotMessage(chatId, 
+      await telegramService.sendBotMessage(chatId,
         "❌ Error processing vote. Please try again later.");
     }
   },

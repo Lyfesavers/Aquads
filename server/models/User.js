@@ -78,6 +78,10 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  discordId: {
+    type: String,
+    default: null
+  },
   twitterUsername: {
     type: String,
     default: null,
@@ -763,6 +767,7 @@ userSchema.index({ suspended: 1 }); // For suspension checks
 // Additional performance indexes
 // Note: username, email, and referralCode already have unique indexes from schema
 userSchema.index({ telegramId: 1 }); // For Telegram lookups
+userSchema.index({ discordId: 1 }); // For Discord lookups
 userSchema.index({ twitterUsername: 1 }); // For Twitter username lookups
 userSchema.index({ facebookUsername: 1 }); // For Facebook username lookups
 userSchema.index({ points: -1 }); // For points-based sorting

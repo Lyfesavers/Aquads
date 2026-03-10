@@ -39,6 +39,7 @@ const socketModule = require('./socket');
 const ipLimiter = require('./middleware/ipLimiter');
 const deviceLimiter = require('./middleware/deviceLimiter');
 const telegramService = require('./utils/telegramService');
+const discordService = require('./utils/discordService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
@@ -1045,6 +1046,10 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   // Start Telegram bot (fire-and-forget)
   telegramService.startBot();
+  // Start Discord bot (separate, fire-and-forget; only if token set)
+  if (process.env.DISCORD_BOT_TOKEN && process.env.DISCORD_BOT_DISABLED !== 'true') {
+    discordService.startBot().catch(err => console.error('Discord bot startup error:', err.message));
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
