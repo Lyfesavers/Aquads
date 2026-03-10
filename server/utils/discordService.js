@@ -962,6 +962,17 @@ async function startBot() {
     try {
       if (interaction.isChatInputCommand()) {
         const name = interaction.commandName;
+        // In server channels, only allow /bubbles, /raidin, /raidout (like Telegram). Redirect rest to DMs to keep channel clean.
+        const allowedInChannel = ['bubbles', 'raidin', 'raidout'];
+        if (interaction.guildId && !allowedInChannel.includes(name)) {
+          const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
+          return reply(interaction,
+            `💬 **Use commands in a DM with me** to keep this channel clean.\n\n` +
+            `🤖 ${dmHint}\n\n` +
+            `Then use \`/${name}\` there. Raid/vote notifications and bubbles will still post here.\n\n🌐 https://aquads.xyz`,
+            true
+          );
+        }
         if (name === 'start') return handleStart(interaction);
         if (name === 'link') return handleLink(interaction);
         if (name === 'help') return handleHelp(interaction);
