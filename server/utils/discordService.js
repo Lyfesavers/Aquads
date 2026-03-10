@@ -18,7 +18,8 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  PermissionFlagsBits
+  PermissionFlagsBits,
+  MessageFlags
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
@@ -73,7 +74,7 @@ function clearState(userId) {
 let discordClient = null;
 
 function reply(interaction, content, ephemeral = true) {
-  const opts = { ephemeral: !!ephemeral };
+  const opts = ephemeral ? { flags: MessageFlags.Ephemeral } : {};
   if (typeof content === 'string') {
     return interaction.reply({ content, ...opts }).catch(e => console.error('Discord reply error:', e.message));
   }
@@ -82,7 +83,8 @@ function reply(interaction, content, ephemeral = true) {
 
 function replyEmbed(interaction, title, description, ephemeral = true) {
   const embed = new EmbedBuilder().setTitle(title).setDescription(description).setColor(0x00bfff);
-  return interaction.reply({ embeds: [embed], ephemeral }).catch(e => console.error('Discord reply error:', e.message));
+  const opts = ephemeral ? { flags: MessageFlags.Ephemeral } : {};
+  return interaction.reply({ embeds: [embed], ...opts }).catch(e => console.error('Discord reply error:', e.message));
 }
 
 function getSlashCommands() {
@@ -132,7 +134,7 @@ async function handleStart(interaction) {
     )
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
-  return interaction.reply({ embeds: [embed], ephemeral: true });
+  return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }
 
 async function handleLink(interaction) {
@@ -187,7 +189,7 @@ async function handleHelp(interaction) {
     new ButtonBuilder().setCustomId('help_all').setLabel('All Commands').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setLabel('Visit Website').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz')
   );
-  return interaction.reply({ embeds: [embed], components: [row1, row2], ephemeral: true });
+  return interaction.reply({ embeds: [embed], components: [row1, row2], flags: MessageFlags.Ephemeral });
 }
 
 async function handleTwitter(interaction) {
@@ -271,11 +273,11 @@ async function handleRaids(interaction) {
     .setDescription(lines.join('\n\n') + `\n\n📊 ${availableRaids.length} raids available. Click a button to complete (you\'ll be asked for username & post URL).`)
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
-  return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+  return interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });
 }
 
 async function handleCompleteFromModal(interaction, raidId, username, postUrl, isModalSubmit = false) {
-  if (isModalSubmit) await interaction.deferReply({ ephemeral: true }).catch(() => {});
+  if (isModalSubmit) await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => {});
   const respond = (content) => isModalSubmit ? interaction.editReply({ content }).catch(() => {}) : reply(interaction, content, true);
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
@@ -398,7 +400,15 @@ async function handleBubbles(interaction) {
     .setDescription(lines.join('\n\n') + '\n\n🌐 https://aquads.xyz')
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
-  return interaction.reply({ embeds: [embed], ephemeral: true });
+  let files = [];
+  if (userBranding) {
+    try {
+      const base64Data = userBranding.split(',')[1];
+      if (base64Data) files = [{ attachment: Buffer.from(base64Data, 'base64'), name: 'branding.jpg' }];
+    } catch (_) {}
+  }
+  if (files.length === 0 && fs.existsSync(VIDEO_TOP_BUBBLES)) files = [VIDEO_TOP_BUBBLES];
+  return interaction.reply({ embeds: [embed], files, flags: MessageFlags.Ephemeral });
 }
 
 async function handleMyBubble(interaction) {
@@ -410,6 +420,7 @@ async function handleMyBubble(interaction) {
   const userProjects = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } })
     .sort({ createdAt: -1 })
     .limit(5)
+    .select('title url pairAddress contractAddress blockchain bullishVotes bearishVotes _id customBrandingImage')
     .lean();
   if (userProjects.length === 0) {
     return reply(interaction, `📭 No projects found for **${user.username}**.\n\nhttps://aquads.xyz`, true);
@@ -418,6 +429,16 @@ async function handleMyBubble(interaction) {
     .sort({ bullishVotes: -1 })
     .select('_id bullishVotes')
     .lean();
+  let files = [];
+  const first = userProjects[0];
+  if (first.customBrandingImage && first.customBrandingImage.length > 0) {
+    try {
+      const base64Data = first.customBrandingImage.split(',')[1];
+      if (base64Data) files = [{ attachment: Buffer.from(base64Data, 'base64'), name: 'branding.jpg' }];
+    } catch (_) {}
+  }
+  if (files.length === 0 && fs.existsSync(VIDEO_MYBUBBLE)) files = [VIDEO_MYBUBBLE];
+  else if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) files = [VIDEO_VOTE];
   const embeds = [];
   const components = [];
   for (const project of userProjects) {
@@ -451,7 +472,7 @@ async function handleMyBubble(interaction) {
       new ButtonBuilder().setLabel('View on Aquads').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/aquaswap')
     )
   );
-  return interaction.reply({ embeds, components, ephemeral: true });
+  return interaction.reply({ embeds, components, files, flags: MessageFlags.Ephemeral });
 }
 
 /** Shared raid creation from tweet URL. Returns { success, message }. Used by /createraid and by admin pasting tweet URL. */
@@ -702,16 +723,16 @@ const BOOST_PACKAGES = {
 async function handleBoostPackageSelect(interaction, packageId) {
   const pkg = BOOST_PACKAGES[packageId];
   if (!pkg) {
-    return interaction.reply({ content: '❌ Invalid package.', ephemeral: true }).catch(() => {});
+    return interaction.reply({ content: '❌ Invalid package.', flags: MessageFlags.Ephemeral }).catch(() => {});
   }
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return interaction.reply({ content: '❌ Link your account first: `/link your_username`', ephemeral: true }).catch(() => {});
+    return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
   }
   const userBubbles = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } }).select('id title _id').limit(10).lean();
   if (userBubbles.length === 0) {
-    return interaction.reply({ content: "❌ You don't have any bubbles to boost.", ephemeral: true }).catch(() => {});
+    return interaction.reply({ content: "❌ You don't have any bubbles to boost.", flags: MessageFlags.Ephemeral }).catch(() => {});
   }
   if (userBubbles.length === 1) {
     return handleBoostBubbleSelected(interaction, packageId, userBubbles[0].id);
@@ -729,7 +750,7 @@ async function handleBoostPackageSelect(interaction, packageId) {
     );
   }
   rows.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('boost_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary)));
-  return interaction.update({ embeds: [embed], components: rows }).catch(() => interaction.reply({ embeds: [embed], components: rows, ephemeral: true }));
+  return interaction.update({ embeds: [embed], components: rows }).catch(() => interaction.reply({ embeds: [embed], components: rows, flags: MessageFlags.Ephemeral }));
 }
 
 async function handleBoostBubbleSelected(interaction, packageId, bubbleId) {
@@ -759,7 +780,7 @@ async function handleBoostBubbleSelected(interaction, packageId, bubbleId) {
     new ButtonBuilder().setCustomId('boost_enter_invite').setLabel('Enter community link').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('boost_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary)
   );
-  const opts = { embeds: [embed], components: [row], ephemeral: true };
+  const opts = { embeds: [embed], components: [row], flags: MessageFlags.Ephemeral };
   if (interaction.update) {
     return interaction.update(opts).catch(() => interaction.reply(opts));
   }
@@ -794,7 +815,7 @@ async function handleBoostVote(interaction) {
     new ButtonBuilder().setCustomId('boost_pkg_growth').setLabel('🚀 500 Votes - $80').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('boost_pkg_pro').setLabel('💎 1000 Votes - $150').setStyle(ButtonStyle.Primary)
   );
-  return interaction.reply({ embeds: [embed], components: [row1, row2], ephemeral: true });
+  return interaction.reply({ embeds: [embed], components: [row1, row2], flags: MessageFlags.Ephemeral });
 }
 
 async function handleCancel(interaction) {
@@ -962,8 +983,8 @@ async function startBot() {
     try {
       if (interaction.isChatInputCommand()) {
         const name = interaction.commandName;
-        // In server channels, only allow /bubbles, /raidin, /raidout (like Telegram). Redirect rest to DMs to keep channel clean.
-        const allowedInChannel = ['bubbles', 'raidin', 'raidout'];
+        // In server channels, allow /bubbles, /mybubble, /raidin, /raidout. Redirect rest to DMs to keep channel clean.
+        const allowedInChannel = ['bubbles', 'mybubble', 'raidin', 'raidout'];
         if (interaction.guildId && !allowedInChannel.includes(name)) {
           const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
           return reply(interaction,
@@ -1141,16 +1162,16 @@ async function startBot() {
           const discordUserId = interaction.user.id;
           const user = await User.findOne({ discordId: discordUserId });
           if (!user) {
-            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const telegramService = require('./telegramService');
           const result = await telegramService.processVoteByUser(user, projectId, voteType);
-          return interaction.reply({ content: result.message, ephemeral: true }).catch(() => {});
+          return interaction.reply({ content: result.message, flags: MessageFlags.Ephemeral }).catch(() => {});
         }
         if (customId === 'boost_enter_invite') {
           const state = getState(interaction.user.id);
           if (!state || state.action !== 'boost_waiting_invite') {
-            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const modal = new ModalBuilder()
             .setCustomId('boost_invite_modal')
@@ -1170,7 +1191,7 @@ async function startBot() {
         if (customId === 'boost_submit_tx') {
           const state = getState(interaction.user.id);
           if (!state || state.action !== 'boost_waiting_tx') {
-            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const modal = new ModalBuilder()
             .setCustomId('boost_tx_modal')
@@ -1199,7 +1220,7 @@ async function startBot() {
         }
         if (customId === 'boost_cancel') {
           clearState(interaction.user.id);
-          return interaction.update({ content: '❌ Vote boost cancelled. Use `/boostvote` to start again.', embeds: [], components: [] }).catch(() => interaction.reply({ content: '❌ Cancelled.', ephemeral: true }));
+          return interaction.update({ content: '❌ Vote boost cancelled. Use `/boostvote` to start again.', embeds: [], components: [] }).catch(() => interaction.reply({ content: '❌ Cancelled.', flags: MessageFlags.Ephemeral }));
         }
       }
       if (interaction.isModalSubmit()) {
@@ -1214,12 +1235,12 @@ async function startBot() {
           const discordUserId = interaction.user.id;
           const state = getState(discordUserId);
           if (!state || state.action !== 'boost_waiting_invite') {
-            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Session expired. Use `/boostvote` to start again.', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const isTg = /t\.me\/|telegram\.me\//i.test(link);
           const isDiscord = /discord\.gg\/|discord\.com\/invite\//i.test(link);
           if (!isTg && !isDiscord) {
-            return interaction.reply({ content: '❌ Send a valid Telegram group link (t.me/...) or Discord server invite (discord.gg/...).', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Send a valid Telegram group link (t.me/...) or Discord server invite (discord.gg/...).', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const packages = { starter: { name: 'Starter', votes: 100, price: 20 }, basic: { name: 'Basic', votes: 250, price: 40 }, growth: { name: 'Growth', votes: 500, price: 80 }, pro: { name: 'Pro', votes: 1000, price: 150 } };
           const pkg = packages[state.packageId];
@@ -1242,19 +1263,19 @@ async function startBot() {
             new ButtonBuilder().setCustomId('boost_submit_tx').setLabel("I've paid - Submit TX").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setCustomId('boost_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary)
           );
-          return interaction.reply({ embeds: [embed], components: [row], ephemeral: true }).catch(() => {});
+          return interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral }).catch(() => {});
         }
         if (interaction.customId === 'boost_tx_modal') {
           const txSignature = interaction.fields.getTextInputValue('tx').trim();
           const discordUserId = interaction.user.id;
           const state = getState(discordUserId);
           if (!state || state.action !== 'boost_waiting_tx' || txSignature.length < 20) {
-            return interaction.reply({ content: '❌ Invalid or expired. Use `/boostvote` and paste a valid TX signature (after payment).', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ Invalid or expired. Use `/boostvote` and paste a valid TX signature (after payment).', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const user = await User.findOne({ discordId: discordUserId });
           if (!user) {
             clearState(discordUserId);
-            return interaction.reply({ content: '❌ User not found.', ephemeral: true }).catch(() => {});
+            return interaction.reply({ content: '❌ User not found.', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const VoteBoost = require('../models/VoteBoost');
           const voteBoost = new VoteBoost({
@@ -1276,16 +1297,16 @@ async function startBot() {
           const { emitVoteBoostUpdate } = require('../socket');
           if (emitVoteBoostUpdate) emitVoteBoostUpdate('create', voteBoost, bubble);
           const msg = `✅ **Vote boost submitted!**\n\n📦 ${state.packageName} · ${state.votes.toLocaleString()} votes · $${state.price} USDC\n🔗 ${bubble?.title || state.bubbleId}\n\n⏳ Awaiting admin approval.`;
-          return interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+          return interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
         }
       }
     } catch (err) {
       console.error('Discord interaction error:', err);
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: '❌ Something went wrong. Try again.', ephemeral: true }).catch(() => {});
+          await interaction.followUp({ content: '❌ Something went wrong. Try again.', flags: MessageFlags.Ephemeral }).catch(() => {});
         } else {
-          await interaction.reply({ content: '❌ Something went wrong. Try again.', ephemeral: true }).catch(() => {});
+          await interaction.reply({ content: '❌ Something went wrong. Try again.', flags: MessageFlags.Ephemeral }).catch(() => {});
         }
       } catch (_) {}
     }
@@ -1309,6 +1330,7 @@ const VIDEO_RAID = path.join(PUBLIC_DIR, 'timeraid.mp4');
 const VIDEO_RAID_COMPLETION = path.join(PUBLIC_DIR, 'Just Raided.mp4');
 const VIDEO_VOTE = path.join(PUBLIC_DIR, 'New_vote.mp4');
 const VIDEO_TOP_BUBBLES = path.join(PUBLIC_DIR, 'TRENDINGLIST.mp4');
+const VIDEO_MYBUBBLE = path.join(PUBLIC_DIR, 'vote now .mp4');
 
 async function sendToChannel(channelId, payload) {
   if (!channelId || !discordClient?.isReady()) return false;
