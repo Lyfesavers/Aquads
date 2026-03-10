@@ -25,23 +25,23 @@ const SOCIALPLUG_PRICING = {
   5000: { 30: 350, 60: 450, 120: 550 }
 };
 
-// Selling prices - manually set for sequential profit increase
-// Profits increase as: more listeners = more profit, longer duration = more profit
+// Profit margins: $10, $20, $30, $50, $100. 100→$10, 200→$20, 500→$30, 1000→$50, 2500→$100, 5000→$100.
+// Price = cost + profit; none exceed original selling prices.
 // Format: { listeners: { duration_in_minutes: selling_price } }
 const SELLING_PRICES = {
-  100: { 30: 25, 60: 30, 120: 40 },      // Profits: $14, $15, $19
-  200: { 30: 40, 60: 50, 120: 60 },      // Profits: $22, $25, $29
-  500: { 30: 65, 60: 100, 120: 165 },    // Profits: $31, $40, $55
-  1000: { 30: 120, 60: 175, 120: 225 },  // Profits: $60, $75, $95
-  2500: { 30: 300, 60: 400, 120: 525 },  // Profits: $120, $150, $175
-  5000: { 30: 575, 60: 725, 120: 925 }   // Profits: $225, $275, $375
+  100: { 30: 21, 60: 25, 120: 31 },       // Cost 11,15,21 → Profit $10
+  200: { 30: 38, 60: 45, 120: 51 },       // Cost 18,25,31 → Profit $20
+  500: { 30: 64, 60: 90, 120: 140 },      // Cost 34,60,110 → Profit $30
+  1000: { 30: 110, 60: 150, 120: 180 },   // Cost 60,100,130 → Profit $50
+  2500: { 30: 280, 60: 350, 120: 450 },   // Cost 180,250,350 → Profit $100
+  5000: { 30: 450, 60: 550, 120: 650 }    // Cost 350,450,550 → Profit $100
 };
 
 // TEST PRICING: Override customer price for specific package (set price to 0 to disable)
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using normal pricing ($25 for 100 listeners / 30 min)
+  price: 0 // DISABLED - Using normal pricing ($21 for 100 listeners / 30 min)
 };
 
 /**
