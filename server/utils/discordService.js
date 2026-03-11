@@ -1140,6 +1140,33 @@ async function startBot() {
         }
         if (customId.startsWith('complete_')) {
           const raidId = customId.replace('complete_', '');
+          const discordUserId = interaction.user.id;
+          const user = await User.findOne({ discordId: discordUserId });
+          if (!user) {
+            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
+          }
+          let raid = await TwitterRaid.findById(raidId);
+          let platform = 'Twitter';
+          let postUrlField = 'tweetUrl';
+          if (!raid) {
+            raid = await FacebookRaid.findById(raidId);
+            if (raid) {
+              platform = 'Facebook';
+              postUrlField = 'postUrl';
+            }
+          }
+          if (!raid || !raid.active) {
+            return interaction.reply({ content: '❌ Raid not found or no longer active.', flags: MessageFlags.Ephemeral }).catch(() => {});
+          }
+          const alreadyDone = raid.completions?.some(c => c.userId && c.userId.toString() === user._id.toString());
+          if (alreadyDone) {
+            return interaction.reply({ content: '❌ You have already completed this raid.', flags: MessageFlags.Ephemeral }).catch(() => {});
+          }
+          const storedUsername = platform === 'Twitter' ? user.twitterUsername : user.facebookUsername;
+          if (storedUsername) {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => {});
+            return handleCompleteFromModal(interaction, raidId, storedUsername, raid[postUrlField], true);
+          }
           const modal = new ModalBuilder()
             .setCustomId(`complete_modal_${raidId}`)
             .setTitle('Complete Raid');
@@ -1147,17 +1174,9 @@ async function startBot() {
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
                 .setCustomId('username')
-                .setLabel('Twitter or Facebook username')
+                .setLabel(`Your ${platform} username (no @)`)
                 .setStyle(TextInputStyle.Short)
                 .setPlaceholder('your_username')
-                .setRequired(true)
-            ),
-            new ActionRowBuilder().addComponents(
-              new TextInputBuilder()
-                .setCustomId('post_url')
-                .setLabel('Tweet or post URL')
-                .setStyle(TextInputStyle.Short)
-                .setPlaceholder('https://twitter.com/... or https://facebook.com/...')
                 .setRequired(true)
             )
           );
@@ -1234,8 +1253,14 @@ async function startBot() {
         if (interaction.customId.startsWith('complete_modal_')) {
           const raidId = interaction.customId.replace('complete_modal_', '');
           const username = interaction.fields.getTextInputValue('username');
-          const postUrl = interaction.fields.getTextInputValue('post_url');
-          return handleCompleteFromModal(interaction, raidId, username, postUrl, true);
+          let raid = await TwitterRaid.findById(raidId);
+          let postUrl = raid?.tweetUrl;
+          if (!raid) {
+            raid = await FacebookRaid.findById(raidId);
+            postUrl = raid?.postUrl;
+          }
+          if (!raid) return interaction.reply({ content: '❌ Raid not found.', flags: MessageFlags.Ephemeral }).catch(() => {});
+          return handleCompleteFromModal(interaction, raidId, username, postUrl || raid.tweetUrl || raid.postUrl, true);
         }
         if (interaction.customId === 'boost_invite_modal') {
           const link = interaction.fields.getTextInputValue('link').trim();
