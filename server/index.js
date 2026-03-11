@@ -406,11 +406,17 @@ setTimeout(async () => {
   }
 }, 10000); // Wait 10 seconds after server start
 
-// Cron job for sending daily GM message at 8 AM EST every morning
+// Cron job for sending daily GM message at 8 AM EST every morning (Telegram + Discord)
 cron.schedule('0 8 * * *', async () => {
   try {
     console.log('[Daily GM Message] Sending scheduled GM message at 8 AM EST...');
     await telegramService.sendDailyGMMessage();
+    try {
+      const discordService = require('./utils/discordService');
+      await discordService.sendDailyGMMessage();
+    } catch (discordErr) {
+      console.error('[Daily GM Message] Discord:', discordErr.message);
+    }
   } catch (error) {
     console.error('[Daily GM Message] Error in daily GM task:', error);
   }

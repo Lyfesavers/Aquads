@@ -27,8 +27,12 @@ const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
+const DiscordDailyEngagement = require('../models/DiscordDailyEngagement');
+const { creditReferrerBonus } = require('../routes/points');
 const path = require('path');
 const fs = require('fs');
+
+const DAILY_ENGAGEMENT_POINTS = 5;
 
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
 const POINTS_REQUIRED_RAID = 2000;
@@ -859,7 +863,8 @@ async function startBot() {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.DirectMessages,
       GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessageReactions
     ]
   });
   discordClient = client;
@@ -985,6 +990,30 @@ async function startBot() {
         await message.author.send({ content: result.message }).catch(() => {});
       } else {
         await message.reply({ content: result.message, ephemeral: false }).catch(() => {});
+      }
+      return;
+    }
+
+    const engagementChannelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
+    if (engagementChannelId && message.channelId === engagementChannelId) {
+      try {
+        await awardDailyMessagePoints(discordUserId, message.channelId);
+      } catch (e) {
+        console.error('Discord daily message points error:', e.message);
+      }
+    }
+  });
+
+  client.on('messageReactionAdd', async (reaction, user) => {
+    if (user.bot) return;
+    const channelId = reaction.message.channelId || (reaction.message.partial ? null : reaction.message.channel?.id);
+    if (!channelId) return;
+    const engagementChannelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
+    if (engagementChannelId && channelId === engagementChannelId) {
+      try {
+        await awardDailyReactionPoints(user.id, channelId);
+      } catch (e) {
+        console.error('Discord daily reaction points error:', e.message);
       }
     }
   });
@@ -1685,11 +1714,124 @@ async function sendTopBubblesToChannel() {
   return false;
 }
 
+async function sendDailyGMMessage() {
+  const channelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
+  if (!channelId || !discordClient?.isReady()) return false;
+  const text = `🌅 GM GM everyone! ☀️\n\nWishing you all a blessed day from Aquads.xyz! 💙\n\nLet's make today amazing! 🚀`;
+  const message = await sendToChannel(channelId, { content: text });
+  if (message) {
+    console.log('✅ Discord daily GM message sent to engagement channel');
+    return true;
+  }
+  return false;
+}
+
+async function awardDailyMessagePoints(discordUserId, channelId) {
+  try {
+    const user = await User.findOne({ discordId: discordUserId });
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    let engagement = await DiscordDailyEngagement.findOne({
+      userId: user._id,
+      channelId,
+      date: today
+    });
+    if (engagement?.hasMessagedToday) return;
+
+    user.points += DAILY_ENGAGEMENT_POINTS;
+    user.pointsHistory = user.pointsHistory || [];
+    user.pointsHistory.push({
+      amount: DAILY_ENGAGEMENT_POINTS,
+      reason: 'Daily message in Aquads Discord',
+      createdAt: new Date()
+    });
+    await user.save();
+    await creditReferrerBonus(user._id, 'Daily message in Aquads Discord');
+
+    if (!engagement) {
+      engagement = await DiscordDailyEngagement.create({
+        userId: user._id,
+        discordUserId,
+        channelId,
+        date: today,
+        hasMessagedToday: true,
+        messagePoints: DAILY_ENGAGEMENT_POINTS,
+        firstMessageAt: new Date()
+      });
+    } else {
+      engagement.hasMessagedToday = true;
+      engagement.messagePoints = DAILY_ENGAGEMENT_POINTS;
+      engagement.firstMessageAt = new Date();
+      await engagement.save();
+    }
+
+    const reactionStatus = engagement.hasReactedToday ? '✅' : '⏳';
+    const totalToday = engagement.messagePoints + engagement.reactionPoints;
+    const msg = `✅ +${DAILY_ENGAGEMENT_POINTS} points for daily message!\n\n📊 Today's Progress:\n✅ Message: Done\n${reactionStatus} Reaction: ${engagement.hasReactedToday ? 'Done' : 'Pending'}\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`;
+    const discordUser = await discordClient.users.fetch(discordUserId).catch(() => null);
+    if (discordUser) await discordUser.send({ content: msg }).catch(() => {});
+  } catch (e) {
+    if (e.code === 11000) return;
+    throw e;
+  }
+}
+
+async function awardDailyReactionPoints(discordUserId, channelId) {
+  try {
+    const user = await User.findOne({ discordId: discordUserId });
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    let engagement = await DiscordDailyEngagement.findOne({
+      userId: user._id,
+      channelId,
+      date: today
+    });
+    if (engagement?.hasReactedToday) return;
+
+    user.points += DAILY_ENGAGEMENT_POINTS;
+    user.pointsHistory = user.pointsHistory || [];
+    user.pointsHistory.push({
+      amount: DAILY_ENGAGEMENT_POINTS,
+      reason: 'Daily reaction in Aquads Discord',
+      createdAt: new Date()
+    });
+    await user.save();
+    await creditReferrerBonus(user._id, 'Daily reaction in Aquads Discord');
+
+    if (!engagement) {
+      engagement = await DiscordDailyEngagement.create({
+        userId: user._id,
+        discordUserId,
+        channelId,
+        date: today,
+        hasReactedToday: true,
+        reactionPoints: DAILY_ENGAGEMENT_POINTS,
+        firstReactionAt: new Date()
+      });
+    } else {
+      engagement.hasReactedToday = true;
+      engagement.reactionPoints = DAILY_ENGAGEMENT_POINTS;
+      engagement.firstReactionAt = new Date();
+      await engagement.save();
+    }
+
+    const messageStatus = engagement.hasMessagedToday ? '✅' : '⏳';
+    const totalToday = engagement.messagePoints + engagement.reactionPoints;
+    const msg = `✅ +${DAILY_ENGAGEMENT_POINTS} points for daily reaction!\n\n📊 Today's Progress:\n${messageStatus} Message: ${engagement.hasMessagedToday ? 'Done' : 'Pending'}\n✅ Reaction: Done\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`;
+    const discordUser = await discordClient.users.fetch(discordUserId).catch(() => null);
+    if (discordUser) await discordUser.send({ content: msg }).catch(() => {});
+  } catch (e) {
+    if (e.code === 11000) return;
+    throw e;
+  }
+}
+
 module.exports = {
   startBot,
   getClient: () => discordClient,
   sendRaidNotificationToChannel,
   sendRaidCompletionToChannel,
   sendVoteNotificationToChannel,
-  sendTopBubblesToChannel
+  sendTopBubblesToChannel,
+  sendDailyGMMessage
 };
