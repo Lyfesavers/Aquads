@@ -978,7 +978,11 @@ async function startBot() {
       }
       const tweetUrl = tweetUrlMatch[1].trim();
       const result = await doCreateRaid(user, tweetUrl, { guildId: message.guildId || null, channelId: message.channelId || null });
-      await message.reply({ content: result.message, ephemeral: false }).catch(() => {});
+      if (result.success) {
+        await message.author.send({ content: result.message }).catch(() => {});
+      } else {
+        await message.reply({ content: result.message, ephemeral: false }).catch(() => {});
+      }
     }
   });
 
@@ -1443,30 +1447,52 @@ async function sendRaidNotificationToChannel(raidData) {
   const isFacebook = raidData.platform === 'Facebook';
   const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
   const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
+  const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
+  const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet & Comment on the tweet above';
+
   const embed = new EmbedBuilder()
     .setTitle(`🚀 New ${platformName} Available!`)
     .setDescription(
-      `💰 Reward: ${raidData.points || 20} points\n` +
-      `🎯 Task: ${isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment'}\n\n` +
-      `🔗 [${isFacebook ? 'Facebook Raid' : 'Tweet'}](${postUrl})\n\n` +
-      `🤖 Complete via Discord: \`/raids\` then \`/complete\` or use the bot in this server.\n\n` +
-      `🌐 https://aquads.xyz · Available for 48 hours!`
+      `💰 **Reward:** ${raidData.points || 20} points\n` +
+      `🎯 **Task:** ${taskDescription}\n\n` +
+      `🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}\n\n` +
+      `📋 **Requirements:**\n` +
+      `• You MUST have an Aquads account to participate\n` +
+      `• Link your account: \`/link your_aquads_username\`\n\n` +
+      `💡 **How to complete:**\n` +
+      `1. ${actionDescription}\n` +
+      `2. Click the **✅ Complete Raid** button below (or use \`/raids\` then \`/complete\` in this server)\n` +
+      `3. Enter your Twitter/Facebook username and post URL when asked\n\n` +
+      `🌐 Track points & claim rewards on: https://aquads.xyz\n\n` +
+      `⏰ Available for 48 hours!`
     )
     .setColor(0x00bfff)
     .setURL(postUrl || 'https://aquads.xyz');
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setLabel('Complete on Aquads').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz'),
-    new ButtonBuilder().setLabel('Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace')
+
+  const components = [];
+  const raidId = raidData.raidId || null;
+  if (raidId) {
+    components.push(
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`complete_${raidId}`).setLabel('✅ Complete Raid').setStyle(ButtonStyle.Success)
+      )
+    );
+  }
+  components.push(
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
+      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
+    )
   );
+
   let files = [];
   if (raidData.creatorBrandingBuffer && Buffer.isBuffer(raidData.creatorBrandingBuffer)) {
     files = [{ attachment: raidData.creatorBrandingBuffer, name: 'branding.jpg' }];
   } else if (fs.existsSync(VIDEO_RAID)) {
     files = [VIDEO_RAID];
   }
-  const payload = { embeds: [embed], components: [row], files };
+  const payload = { embeds: [embed], components, files };
   let sent = 0;
-  const raidId = raidData.raidId || null;
   const byRaidId = raidId ? await getStoredDiscordMessages(DISCORD_RAID_BY_RAID_KEY) : {};
   if (raidId) byRaidId[raidId] = [];
 
