@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
@@ -585,8 +585,9 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-center">
                 <FaTelegram className="text-blue-400 mr-3" />
+                <FaDiscord className="text-indigo-400 mr-2" />
                 <span>
-                  Free Custom Telegram Bot
+                  Free Custom Telegram & Discord Bot
                   <span className="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-xs">NEW!</span>
                 </span>
               </li>
@@ -646,7 +647,8 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-center">
                 <FaTelegram className="text-blue-400 mr-3" />
-                Free custom Telegram bot
+                <FaDiscord className="text-indigo-400 mr-2" />
+                Free custom Telegram & Discord bot
               </li>
               <li className="flex items-center">
                 <FaMicrophone className="text-purple-400 mr-3" />
