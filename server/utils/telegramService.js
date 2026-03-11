@@ -3405,6 +3405,20 @@ Tap to update:`;
         return;
       }
 
+      if (!raid.active) {
+        await telegramService.sendBotMessage(chatId, "❌ This raid is no longer active.");
+        return;
+      }
+
+      // Re-check already completed (user may have completed on Discord/website between starting and now)
+      const alreadyCompleted = raid.completions.some(
+        c => c.userId && c.userId.toString() === user._id.toString()
+      );
+      if (alreadyCompleted) {
+        await telegramService.sendBotMessage(chatId, "❌ You have already completed this raid!");
+        return;
+      }
+
       // Extract post ID based on platform
       let postId = null;
       if (platform === 'Twitter') {
