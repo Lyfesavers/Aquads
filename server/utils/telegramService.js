@@ -2316,6 +2316,94 @@ ${platformEmoji} ${platformName} Raid
           "❌ Vote boost purchase cancelled.\n\nUse /boostvote to start again.", 
           { inline_keyboard: [] });
       }
+      // Raid creation confirmation (pay with 2000 points)
+      else if (callbackQuery.data === 'raid_confirm_NO') {
+        telegramService.clearConversationState(userId);
+        await telegramService.editMessageWithKeyboard(chatId, messageId,
+          "❌ Raid creation cancelled.\n\nNo points were deducted. Paste a tweet URL again when you want to create a raid.",
+          { inline_keyboard: [] });
+      }
+      else if (callbackQuery.data === 'raid_confirm_YES') {
+        const state = telegramService.getConversationState(userId);
+        if (!state || state.action !== 'raid_confirm_pay') {
+          await telegramService.editMessageWithKeyboard(chatId, messageId,
+            "❌ This confirmation expired or was already used. Please paste the tweet URL again to create a raid.",
+            { inline_keyboard: [] });
+          return;
+        }
+        telegramService.clearConversationState(userId);
+        const { tweetUrl, tweetId, sourceChatId } = state;
+        const user = await User.findOne({ telegramId: userId.toString() });
+        if (!user) {
+          await telegramService.editMessageWithKeyboard(chatId, messageId,
+            "❌ Account link lost. Please /link your account again.",
+            { inline_keyboard: [] });
+          return;
+        }
+        const POINTS_REQUIRED_RAID = 2000;
+        if (user.points < POINTS_REQUIRED_RAID) {
+          await telegramService.editMessageWithKeyboard(chatId, messageId,
+            `❌ Not enough points anymore. You have ${user.points}; need ${POINTS_REQUIRED_RAID}. No points were deducted.`,
+            { inline_keyboard: [] });
+          return;
+        }
+        const title = `Twitter Raid by @${user.username}`;
+        const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
+        const raid = new TwitterRaid({
+          tweetId,
+          tweetUrl,
+          title,
+          description,
+          points: 20,
+          createdBy: user._id,
+          isPaid: false,
+          paymentStatus: 'approved',
+          active: true,
+          paidWithPoints: true,
+          pointsSpent: POINTS_REQUIRED_RAID
+        });
+        user.points -= POINTS_REQUIRED_RAID;
+        user.pointsHistory = user.pointsHistory || [];
+        user.pointsHistory.push({
+          amount: -POINTS_REQUIRED_RAID,
+          reason: 'Created Twitter raid via Telegram',
+          socialRaidId: raid._id.toString(),
+          createdAt: new Date()
+        });
+        await Promise.all([raid.save(), user.save()]);
+        const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
+        await telegramService.sendRaidNotification({
+          raidId: raid._id.toString(),
+          tweetUrl: raid.tweetUrl,
+          points: raid.points,
+          title: raid.title,
+          description: raid.description,
+          sourceChatId: notifySourceChatId,
+          isAdmin: false
+        });
+        let successMessage = `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED_RAID}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live!`;
+        if (sourceChatId) {
+          const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+          if (isOptedIn) successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+          else successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private to your group only.`;
+          successMessage += `\n\n✅ Raid sent to your group!`;
+        } else {
+          if (!user.telegramGroupId) {
+            successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin or /raidout to link and enable raids.`;
+          } else {
+            const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
+            if (isOptedIn) successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
+            else successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
+            successMessage += `\n\n✅ Raid sent to your linked group!`;
+          }
+        }
+        successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
+        const inPrivateChat = chatId === userId;
+        await telegramService.editMessageWithKeyboard(chatId, messageId,
+          inPrivateChat ? "✅ Raid created! Full details below." : "✅ Raid created! Full details sent to your private chat.",
+          { inline_keyboard: [] });
+        await telegramService.sendBotMessage(userId, successMessage);
+      }
       else {
         // Parse callback data for other actions (like raids)
         try {
@@ -4046,8 +4134,7 @@ Tap to update:`;
         return;
       }
 
-      // No free raids available, use points
-      // Check if user has enough points
+      // No free raids available, use points — ask for confirmation first
       if (user.points < POINTS_REQUIRED) {
         let noPointsMessage = `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`;
         
@@ -4061,79 +4148,22 @@ Tap to update:`;
         await telegramService.sendBotMessage(chatId, noPointsMessage);
         return;
       }
-      
-      const raid = new TwitterRaid({
-        tweetId,
+
+      // User has enough points — ask confirmation before deducting (avoid accidental loss)
+      telegramService.setConversationState(telegramUserId, {
+        action: 'raid_confirm_pay',
         tweetUrl,
-        title,
-        description,
-        points: 20, // Fixed points for raids
-        createdBy: user._id,
-        isPaid: false, // Not a paid raid (it's a points raid)
-        paymentStatus: 'approved', // Automatically approved since we're deducting points
-        active: true,
-        paidWithPoints: true, // Track point-based raids
-        pointsSpent: POINTS_REQUIRED // Track how many points were spent
+        tweetId,
+        sourceChatId
       });
-
-      // Deduct points from user
-      user.points -= POINTS_REQUIRED;
-      user.pointsHistory.push({
-        amount: -POINTS_REQUIRED,
-        reason: 'Created Twitter raid via Telegram',
-        socialRaidId: raid._id.toString(),
-        createdAt: new Date()
-      });
-
-      // Save both the raid and updated user
-      await Promise.all([
-        raid.save(),
-        user.save()
-      ]);
-
-      // Send Telegram notification: use source group when from group, else user's linked group so raidin broadcast works
-      const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
-      await telegramService.sendRaidNotification({
-        raidId: raid._id.toString(),
-        tweetUrl: raid.tweetUrl,
-        points: raid.points,
-        title: raid.title,
-        description: raid.description,
-        sourceChatId: notifySourceChatId,
-        isAdmin: false
-      });
-
-      // Check if group is linked and opted-in, provide helpful message
-      let successMessage = `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live!`;
-      
-      if (sourceChatId) {
-        // Group is linked (raid created from group)
-        const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
-        if (isOptedIn) {
-          successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
-        } else {
-          successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private to your group only.`;
-        }
-        successMessage += `\n\n✅ Raid sent to your group!`;
-      } else {
-        // No group linked (raid created from private chat)
-        if (!user.telegramGroupId) {
-          successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin to enable community raids\n   OR /raidout to keep raids private\n\nThis will link your group and allow raids to be sent there.`;
-        } else {
-          // Group is linked but raid wasn't created from group
-          const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
-          if (isOptedIn) {
-            successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
-          } else {
-            successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
-          }
-          successMessage += `\n\n✅ Raid sent to your linked group!`;
-        }
-      }
-      
-      successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
-
-      await telegramService.sendBotMessage(telegramUserId, successMessage);
+      const confirmMessage = `💰 Create this raid?\n\n🔗 ${tweetUrl}\n\n⚠️ This will <b>cost 2000 points</b> — they will be deducted from your balance.\n\nYour balance: ${user.points} points.\n\nConfirm below:`;
+      const confirmKeyboard = {
+        inline_keyboard: [
+          [{ text: '✅ Yes — Create raid (2000 pts)', callback_data: 'raid_confirm_YES' }],
+          [{ text: '❌ No — Cancel', callback_data: 'raid_confirm_NO' }]
+        ]
+      };
+      await telegramService.sendMessageWithKeyboard(chatId, confirmMessage, confirmKeyboard);
 
     } catch (error) {
       console.error('CreateRaid command error:', error);

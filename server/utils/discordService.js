@@ -487,7 +487,57 @@ async function handleMyBubble(interaction) {
   return interaction.reply({ embeds, components, files, flags: MessageFlags.Ephemeral });
 }
 
-/** Shared raid creation from tweet URL. Returns { success, message }. Used by /createraid and by admin pasting tweet URL. */
+/** Execute the paid (2000 pts) raid creation. Used after user confirms. Returns { success, message }. */
+async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
+  const { guildId = null, channelId = null } = opts;
+  const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+  if (!tweetIdMatch?.[1]) {
+    return { success: false, message: '❌ Invalid Twitter URL.' };
+  }
+  const tweetId = tweetIdMatch[1];
+  if (user.points < POINTS_REQUIRED_RAID) {
+    return { success: false, message: `❌ Not enough points anymore. You have ${user.points}; need ${POINTS_REQUIRED_RAID}. No points were deducted.` };
+  }
+  const title = `Twitter Raid by @${user.username}`;
+  const description = 'Help boost this tweet! Like, retweet, and comment to earn 20 points.';
+  const raid = new TwitterRaid({
+    tweetId,
+    tweetUrl,
+    title,
+    description,
+    points: 20,
+    createdBy: user._id,
+    isPaid: false,
+    paymentStatus: 'approved',
+    active: true,
+    paidWithPoints: true,
+    pointsSpent: POINTS_REQUIRED_RAID
+  });
+  user.points -= POINTS_REQUIRED_RAID;
+  user.pointsHistory = user.pointsHistory || [];
+  user.pointsHistory.push({
+    amount: -POINTS_REQUIRED_RAID,
+    reason: 'Created Twitter raid via Discord',
+    socialRaidId: raid._id.toString(),
+    createdAt: new Date()
+  });
+  await Promise.all([raid.save(), user.save()]);
+  const telegramService = require('./telegramService');
+  await telegramService.sendRaidNotification({
+    raidId: raid._id.toString(),
+    tweetUrl: raid.tweetUrl,
+    points: raid.points,
+    title: raid.title,
+    description: raid.description,
+    sourceChatId: null,
+    isAdmin: false,
+    discordSourceGuildId: guildId || null,
+    discordSourceChannelId: channelId || null
+  }).catch(() => {});
+  return { success: true, message: `✅ **Raid created!**\n\n🔗 ${tweetUrl}\n💰 ${POINTS_REQUIRED_RAID} points deducted. Remaining: ${user.points}\n\nhttps://aquads.xyz` };
+}
+
+/** Shared raid creation from tweet URL. Returns { success, message } or { needsConfirmation, message, tweetUrl, tweetId, guildId, channelId }. Used by /createraid and by admin pasting tweet URL. */
 async function doCreateRaid(user, tweetUrl, opts = {}) {
   const { guildId = null, channelId = null } = opts;
   const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
@@ -535,41 +585,15 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
     if (!hasLifetimeBumped) msg += '\n\nGet a Lifetime Bump at https://aquads.xyz for 20 free raids/day.';
     return { success: false, message: msg + '\n\nEarn points: `/raids`' };
   }
-  const raid = new TwitterRaid({
-    tweetId,
+  // User would pay 2000 points — return confirmation so caller can show Yes/No buttons
+  return {
+    needsConfirmation: true,
+    message: `💰 **Create this raid?**\n\n🔗 ${tweetUrl}\n\n⚠️ This will **cost 2000 points** — they will be deducted from your balance.\n\nYour balance: **${user.points}** points.\n\nConfirm below:`,
     tweetUrl,
-    title,
-    description,
-    points: 20,
-    createdBy: user._id,
-    isPaid: false,
-    paymentStatus: 'approved',
-    active: true,
-    paidWithPoints: true,
-    pointsSpent: POINTS_REQUIRED_RAID
-  });
-  user.points -= POINTS_REQUIRED_RAID;
-  user.pointsHistory = user.pointsHistory || [];
-  user.pointsHistory.push({
-    amount: -POINTS_REQUIRED_RAID,
-    reason: 'Created Twitter raid via Discord',
-    socialRaidId: raid._id.toString(),
-    createdAt: new Date()
-  });
-  await Promise.all([raid.save(), user.save()]);
-  const telegramService = require('./telegramService');
-  await telegramService.sendRaidNotification({
-    raidId: raid._id.toString(),
-    tweetUrl: raid.tweetUrl,
-    points: raid.points,
-    title: raid.title,
-    description: raid.description,
-    sourceChatId: null,
-    isAdmin: false,
-    discordSourceGuildId: guildId || null,
-    discordSourceChannelId: channelId || null
-  }).catch(() => {});
-  return { success: true, message: `✅ **Raid created!**\n\n🔗 ${tweetUrl}\n💰 ${POINTS_REQUIRED_RAID} points deducted. Remaining: ${user.points}\n\nhttps://aquads.xyz` };
+    tweetId,
+    guildId,
+    channelId
+  };
 }
 
 async function handleCreateRaid(interaction) {
@@ -580,6 +604,14 @@ async function handleCreateRaid(interaction) {
   }
   const tweetUrl = interaction.options.getString('tweet_url', true).trim();
   const result = await doCreateRaid(user, tweetUrl, { guildId: interaction.guildId || null, channelId: interaction.channelId || null });
+  if (result.needsConfirmation) {
+    setState(discordUserId, { tweetUrl: result.tweetUrl, tweetId: result.tweetId, guildId: result.guildId, channelId: result.channelId });
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('raid_confirm_YES').setLabel('Yes — Create raid (2000 pts)').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('raid_confirm_NO').setLabel('No — Cancel').setStyle(ButtonStyle.Secondary)
+    );
+    return interaction.reply({ content: result.message, components: [row], flags: MessageFlags.Ephemeral }).catch(e => console.error('Discord reply error:', e.message));
+  }
   return reply(interaction, result.message, true);
 }
 
@@ -992,7 +1024,14 @@ async function startBot() {
       }
       const tweetUrl = tweetUrlMatch[1].trim();
       const result = await doCreateRaid(user, tweetUrl, { guildId: message.guildId || null, channelId: message.channelId || null });
-      if (result.success) {
+      if (result.needsConfirmation) {
+        setState(discordUserId, { tweetUrl: result.tweetUrl, tweetId: result.tweetId, guildId: message.guildId || null, channelId: message.channelId || null });
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('raid_confirm_YES').setLabel('Yes — Create raid (2000 pts)').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId('raid_confirm_NO').setLabel('No — Cancel').setStyle(ButtonStyle.Secondary)
+        );
+        await message.reply({ content: result.message, components: [row] }).catch(() => {});
+      } else if (result.success) {
         await message.author.send({ content: result.message }).catch(() => {});
       } else {
         await message.reply({ content: result.message, ephemeral: false }).catch(() => {});
@@ -1156,6 +1195,37 @@ async function startBot() {
             new ButtonBuilder().setCustomId('help_menu').setLabel('◀️ Back').setStyle(ButtonStyle.Secondary)
           );
           return interaction.update({ embeds: [embed], components: [row] });
+        }
+        if (customId === 'raid_confirm_NO') {
+          const discordUserId = interaction.user.id;
+          clearState(discordUserId);
+          return interaction.update({
+            content: '❌ **Raid creation cancelled.**\n\nNo points were deducted. Use `/createraid` with a tweet URL when you want to create a raid.',
+            components: []
+          });
+        }
+        if (customId === 'raid_confirm_YES') {
+          const discordUserId = interaction.user.id;
+          const state = getState(discordUserId);
+          if (!state || !state.tweetUrl) {
+            return interaction.update({
+              content: '❌ This confirmation expired or was already used. Use `/createraid` with the tweet URL again.',
+              components: []
+            });
+          }
+          clearState(discordUserId);
+          const user = await User.findOne({ discordId: discordUserId });
+          if (!user) {
+            return interaction.update({
+              content: '❌ Account link lost. Please `/link` your account again.',
+              components: []
+            });
+          }
+          const execResult = await doExecutePointsRaid(user, state.tweetUrl, { guildId: state.guildId || null, channelId: state.channelId || null });
+          return interaction.update({
+            content: execResult.message,
+            components: []
+          });
         }
         if (customId === 'help_menu') {
           const discordUserId = interaction.user.id;
