@@ -2347,6 +2347,13 @@ ${platformEmoji} ${platformName} Raid
             { inline_keyboard: [] });
           return;
         }
+        const existingRaidForTweet = await TwitterRaid.findOne({ tweetId, active: true });
+        if (existingRaidForTweet) {
+          await telegramService.editMessageWithKeyboard(chatId, messageId,
+            `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it.`,
+            { inline_keyboard: [] });
+          return;
+        }
         const title = `Twitter Raid by @${user.username}`;
         const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
         const raid = new TwitterRaid({
@@ -4052,6 +4059,14 @@ Tap to update:`;
 
       // Create the raid using the same logic as the website
       const TwitterRaid = require('../models/TwitterRaid');
+
+      // Prevent duplicate raids for the same tweet (match by tweetId; URLs can vary e.g. twitter.com vs x.com)
+      const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+      if (existingRaid) {
+        await telegramService.sendBotMessage(chatId,
+          `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it, or wait until it expires (48h).`);
+        return;
+      }
       
       // Generate default title and description
       const title = `Twitter Raid by @${user.username}`;

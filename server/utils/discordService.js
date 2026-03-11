@@ -495,6 +495,10 @@ async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: '❌ Invalid Twitter URL.' };
   }
   const tweetId = tweetIdMatch[1];
+  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+  if (existingRaid) {
+    return { success: false, message: `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${tweetUrl}\n\n💡 Use \`/raids\` to see it.` };
+  }
   if (user.points < POINTS_REQUIRED_RAID) {
     return { success: false, message: `❌ Not enough points anymore. You have ${user.points}; need ${POINTS_REQUIRED_RAID}. No points were deducted.` };
   }
@@ -545,6 +549,10 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: '❌ Invalid Twitter URL. Use a valid tweet URL.' };
   }
   const tweetId = tweetIdMatch[1];
+  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+  if (existingRaid) {
+    return { success: false, message: `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use \`/raids\` to see it, or wait until it expires (48h).` };
+  }
   const title = `Twitter Raid by @${user.username}`;
   const description = 'Help boost this tweet! Like, retweet, and comment to earn 20 points.';
   const hasLifetimeBumped = await checkUserHasLifetimeBumpedAd(user.username);
@@ -1218,6 +1226,13 @@ async function startBot() {
           if (!user) {
             return interaction.update({
               content: '❌ Account link lost. Please `/link` your account again.',
+              components: []
+            });
+          }
+          const existingRaid = await TwitterRaid.findOne({ tweetId: state.tweetId, active: true });
+          if (existingRaid) {
+            return interaction.update({
+              content: `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${state.tweetUrl}\n\n💡 Use \`/raids\` to see it.`,
               components: []
             });
           }
