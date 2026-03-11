@@ -204,6 +204,15 @@ const Footer = () => {
                   <FaTelegram className="mr-2" />
                   <span>Telegram Bot</span>
                 </Link>
+                <a
+                  href="https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaDiscord className="mr-2" />
+                  <span>Discord Bot</span>
+                </a>
                 <Link
                   to="/aquapay"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
