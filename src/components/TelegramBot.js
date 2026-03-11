@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { FaArrowLeft, FaTelegram, FaRocket, FaUsers, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaUserPlus, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaUsers, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaUserPlus, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart } from 'react-icons/fa';
+
+const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
 import { Link } from 'react-router-dom';
 
 const TelegramBot = () => {
@@ -156,7 +158,7 @@ const TelegramBot = () => {
     {
       icon: FaUsers,
       title: 'Votes + Real Members',
-      description: 'Our boost packages deliver both bullish votes AND real Telegram members to your group. Grow your holder community.',
+      description: 'Our boost packages deliver both bullish votes AND real Telegram or Discord members to your community. Grow your holder base.',
       highlight: 'Double the value'
     },
     {
@@ -185,8 +187,8 @@ const TelegramBot = () => {
     },
     {
       icon: FaComments,
-      title: 'Direct to Your Group',
-      description: 'Add the bot to your TG group. Raid notifications land directly where your community lives.',
+      title: 'Direct to Your Group or Server',
+      description: 'Add the bot to your Telegram group or Discord server. Raid notifications land directly where your community lives.',
       highlight: 'Instant delivery'
     },
     {
@@ -247,7 +249,8 @@ const TelegramBot = () => {
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-6">
                 <FaTelegram className="text-cyan-400" />
-                <span className="text-cyan-400 text-sm font-medium">Aquads Bot — Free to Start</span>
+                <FaDiscord className="text-indigo-400" />
+                <span className="text-cyan-400 text-sm font-medium">Aquads Bot — Telegram & Discord · Free to Start</span>
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
@@ -258,12 +261,12 @@ const TelegramBot = () => {
               </h1>
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                The ultimate Telegram bot for meme coin projects. Get <span className="text-green-400 font-semibold">20 FREE raid posts daily</span> (for lifetime bumped projects), 
-                boost with <span className="text-cyan-400 font-semibold">votes + TG members</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
+                The same powerful bot on <span className="text-cyan-400 font-semibold">Telegram</span> and <span className="text-indigo-400 font-semibold">Discord</span>. Get <span className="text-green-400 font-semibold">20 FREE raid posts daily</span> (for lifetime bumped projects), 
+                boost with <span className="text-cyan-400 font-semibold">votes + community members</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center lg:justify-start">
                 <a
                   href="https://t.me/aquadsbumpbot"
                   target="_blank"
@@ -274,11 +277,21 @@ const TelegramBot = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <span className="relative flex items-center gap-2 text-white">
                     <FaTelegram className="text-xl" />
-                    Start Free Now
+                    Launch Telegram Bot
                     <FaRocket className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
                   </span>
                 </a>
-                
+                <a
+                  href={DISCORD_BOT_INVITE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20"
+                >
+                  <span className="relative flex items-center gap-2 text-indigo-200 group-hover:text-white">
+                    <FaDiscord className="text-xl" />
+                    Add Discord Bot
+                  </span>
+                </a>
                 <Link
                   to="/?modal=createAd"
                   className="inline-flex items-center justify-center px-8 py-4 font-semibold rounded-xl border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300 transition-all duration-300"
@@ -314,12 +327,17 @@ const TelegramBot = () => {
                 {/* Bot preview card */}
                 <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 border border-gray-700/50 shadow-2xl">
                   <div className="flex items-center gap-4 mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
-                      <FaTelegram className="text-2xl text-white" />
+                    <div className="flex gap-2">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
+                        <FaTelegram className="text-2xl text-white" />
+                      </div>
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                        <FaDiscord className="text-2xl text-white" />
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white">Aquads Bot</h3>
-                      <p className="text-cyan-400 text-sm">@aquadsbumpbot</p>
+                      <p className="text-cyan-400 text-sm">Telegram · Discord — same features</p>
                     </div>
                   </div>
                   
@@ -405,14 +423,24 @@ const TelegramBot = () => {
                 ))}
               </ul>
 
-              <a
-                href="https://t.me/aquadsbumpbot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full mt-6 py-3 text-center rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-semibold transition-colors"
-              >
-                Start Free
-              </a>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <a
+                  href="https://t.me/aquadsbumpbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-semibold transition-colors"
+                >
+                  <FaTelegram /> Telegram
+                </a>
+                <a
+                  href={DISCORD_BOT_INVITE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold transition-colors"
+                >
+                  <FaDiscord /> Discord
+                </a>
+              </div>
             </div>
 
             {/* Premium Tier */}
@@ -583,7 +611,7 @@ const TelegramBot = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Command Reference</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              All {commands.length} commands at your fingertips.
+              All {commands.length} commands — use in Telegram or the same slash commands in Discord.
             </p>
           </div>
 
@@ -636,7 +664,7 @@ const TelegramBot = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Boost Packages</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Pump your meme coin's ranking with guaranteed bullish votes <span className="text-cyan-400 font-semibold">AND</span> real Telegram group members delivered to your community.
+              Pump your meme coin's ranking with guaranteed bullish votes <span className="text-cyan-400 font-semibold">AND</span> real Telegram or Discord community members delivered to your group or server.
             </p>
           </div>
 
@@ -650,7 +678,7 @@ const TelegramBot = () => {
               </div>
               <div className="flex items-center gap-3 justify-center">
                 <FaUserPlus className="text-blue-500" />
-                <span className="text-gray-300 font-medium">Real TG Group Members</span>
+                <span className="text-gray-300 font-medium">Real TG / Discord Members</span>
               </div>
               <div className="flex items-center gap-3 justify-center">
                 <FaBell className="text-purple-500" />
@@ -701,15 +729,26 @@ const TelegramBot = () => {
 
           <div className="text-center mt-8">
             <p className="text-gray-400 mb-4">Use <code className="text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">/boostvote</code> in the bot to purchase</p>
-            <a
-              href="https://t.me/aquadsbumpbot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-300"
-            >
-              <FaTelegram />
-              Open Bot & Use /boostvote
-            </a>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <a
+                href="https://t.me/aquadsbumpbot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-300"
+              >
+                <FaTelegram />
+                Telegram — /boostvote
+              </a>
+              <a
+                href={DISCORD_BOT_INVITE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-300"
+              >
+                <FaDiscord />
+                Add Discord Bot
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -729,7 +768,7 @@ const TelegramBot = () => {
               {
                 step: '01',
                 title: 'Start the Bot',
-                description: 'Open @aquadsbumpbot on Telegram and hit start to begin the onboarding.',
+                description: 'Open @aquadsbumpbot on Telegram or add the Aquads bot to your Discord server — same features on both.',
                 icon: FaTelegram
               },
               {
@@ -785,8 +824,13 @@ const TelegramBot = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10"></div>
             
             <div className="relative z-10">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 mb-6 shadow-lg shadow-cyan-500/25">
-                <FaTelegram className="text-4xl text-white" />
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+                  <FaTelegram className="text-4xl text-white" />
+                </div>
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <FaDiscord className="text-4xl text-white" />
+                </div>
               </div>
               
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -794,10 +838,10 @@ const TelegramBot = () => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with 20 FREE raid posts daily (for lifetime bumped projects). Boost with votes + members, and list & bump to trend across Aquads, BEX, and bubble rankings with your custom branding.
+                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost with votes + members, and list & bump to trend across Aquads, BEX, and bubble rankings with your custom branding.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
                 <a
                   href="https://t.me/aquadsbumpbot"
                   target="_blank"
@@ -808,7 +852,15 @@ const TelegramBot = () => {
                   Launch Telegram Bot
                   <FaRocket className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
                 </a>
-                
+                <a
+                  href={DISCORD_BOT_INVITE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-300 transform hover:scale-105 border border-indigo-400/30"
+                >
+                  <FaDiscord className="mr-2 text-xl" />
+                  Add Discord Bot
+                </a>
                 <Link
                   to="/home"
                   className="inline-flex items-center justify-center px-8 py-4 font-semibold text-gray-300 rounded-xl border border-gray-600 hover:border-gray-500 hover:text-white transition-all duration-300 bg-gray-800/50"
