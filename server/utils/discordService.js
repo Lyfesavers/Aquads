@@ -352,7 +352,10 @@ async function handleCompleteFromModal(interaction, raidId, username, postUrl, i
     platform,
     points: raid.points || 20
   }).catch(() => {});
-  return respond(`✅ **${platform} Raid submitted!**\n\n📝 @${cleanUsername}\n💰 ${raid.points} points\n⏳ Pending admin approval.\n\nTrack at https://aquads.xyz`);
+
+  const successMessage = `✅ **${platform} Raid submitted!**\n\n📝 @${cleanUsername}\n💰 ${raid.points} points\n⏳ Pending admin approval.\n\nTrack at https://aquads.xyz`;
+  await interaction.user.send({ content: successMessage }).catch(() => {});
+  return respond(successMessage);
 }
 
 async function handleCompleteSlash(interaction) {
