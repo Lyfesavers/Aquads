@@ -19,7 +19,8 @@ const {
   TextInputBuilder,
   TextInputStyle,
   PermissionFlagsBits,
-  MessageFlags
+  MessageFlags,
+  Partials
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
@@ -33,6 +34,10 @@ const path = require('path');
 const fs = require('fs');
 
 const DAILY_ENGAGEMENT_POINTS = 5;
+
+function getEngagementChannelId() {
+  return process.env.DISCORD_ENGAGEMENT_CHANNEL_ID || process.env.DISCORD_RAID_CHANNEL_ID || null;
+}
 
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
 const POINTS_REQUIRED_RAID = 2000;
@@ -865,7 +870,8 @@ async function startBot() {
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.GuildMessageReactions
-    ]
+    ],
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
   });
   discordClient = client;
   client.once('ready', async () => {
@@ -994,10 +1000,11 @@ async function startBot() {
       return;
     }
 
-    const engagementChannelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
-    if (engagementChannelId && message.channelId === engagementChannelId) {
+    const engagementChannelId = getEngagementChannelId();
+    const msgChannelId = String(message.channelId || '');
+    if (engagementChannelId && msgChannelId && msgChannelId === String(engagementChannelId)) {
       try {
-        await awardDailyMessagePoints(discordUserId, message.channelId);
+        await awardDailyMessagePoints(discordUserId, msgChannelId);
       } catch (e) {
         console.error('Discord daily message points error:', e.message);
       }
@@ -1006,10 +1013,18 @@ async function startBot() {
 
   client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
-    const channelId = reaction.message.channelId || (reaction.message.partial ? null : reaction.message.channel?.id);
+    if (reaction.partial) {
+      try {
+        await reaction.fetch();
+      } catch (e) {
+        console.error('Discord reaction fetch error:', e.message);
+        return;
+      }
+    }
+    const channelId = reaction.message?.channelId ? String(reaction.message.channelId) : null;
     if (!channelId) return;
-    const engagementChannelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
-    if (engagementChannelId && channelId === engagementChannelId) {
+    const engagementChannelId = getEngagementChannelId();
+    if (engagementChannelId && channelId === String(engagementChannelId)) {
       try {
         await awardDailyReactionPoints(user.id, channelId);
       } catch (e) {
@@ -1715,7 +1730,7 @@ async function sendTopBubblesToChannel() {
 }
 
 async function sendDailyGMMessage() {
-  const channelId = process.env.DISCORD_ENGAGEMENT_CHANNEL_ID;
+  const channelId = getEngagementChannelId();
   if (!channelId || !discordClient?.isReady()) return false;
   const text = `🌅 GM GM everyone! ☀️\n\nWishing you all a blessed day from Aquads.xyz! 💙\n\nLet's make today amazing! 🚀`;
   const message = await sendToChannel(channelId, { content: text });
@@ -1729,14 +1744,28 @@ async function sendDailyGMMessage() {
 async function awardDailyMessagePoints(discordUserId, channelId) {
   try {
     const user = await User.findOne({ discordId: discordUserId });
-    if (!user) return;
+    if (!user) {
+      console.log(`[Discord engagement] No linked user for discordId ${discordUserId}, skipping message points`);
+      try {
+        const discordUser = discordClient?.users?.cache?.get(discordUserId) || await discordClient?.users?.fetch(discordUserId).catch(() => null);
+        if (discordUser) {
+          await discordUser.send({
+            content: '💡 **Earn 5 points here!** Link your Aquads account with the bot to get 5 points for your first message and 5 for your first reaction each day. In DMs with me, use `/link your_username`'
+          }).catch(() => {});
+        }
+      } catch (_) {}
+      return;
+    }
     const today = new Date().toISOString().split('T')[0];
     let engagement = await DiscordDailyEngagement.findOne({
       userId: user._id,
       channelId,
       date: today
     });
-    if (engagement?.hasMessagedToday) return;
+    if (engagement?.hasMessagedToday) {
+      console.log(`[Discord engagement] User ${user.username} already got message points today`);
+      return;
+    }
 
     user.points += DAILY_ENGAGEMENT_POINTS;
     user.pointsHistory = user.pointsHistory || [];
@@ -1765,11 +1794,14 @@ async function awardDailyMessagePoints(discordUserId, channelId) {
       await engagement.save();
     }
 
+    console.log(`[Discord engagement] Awarded ${DAILY_ENGAGEMENT_POINTS} points to ${user.username} for daily message`);
     const reactionStatus = engagement.hasReactedToday ? '✅' : '⏳';
     const totalToday = engagement.messagePoints + engagement.reactionPoints;
     const msg = `✅ +${DAILY_ENGAGEMENT_POINTS} points for daily message!\n\n📊 Today's Progress:\n✅ Message: Done\n${reactionStatus} Reaction: ${engagement.hasReactedToday ? 'Done' : 'Pending'}\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`;
     const discordUser = await discordClient.users.fetch(discordUserId).catch(() => null);
-    if (discordUser) await discordUser.send({ content: msg }).catch(() => {});
+    if (discordUser) await discordUser.send({ content: msg }).catch((dmErr) => {
+      console.log(`[Discord engagement] Could not DM user ${user.username}:`, dmErr.message);
+    });
   } catch (e) {
     if (e.code === 11000) return;
     throw e;
@@ -1779,14 +1811,28 @@ async function awardDailyMessagePoints(discordUserId, channelId) {
 async function awardDailyReactionPoints(discordUserId, channelId) {
   try {
     const user = await User.findOne({ discordId: discordUserId });
-    if (!user) return;
+    if (!user) {
+      console.log(`[Discord engagement] No linked user for discordId ${discordUserId}, skipping reaction points`);
+      try {
+        const discordUser = discordClient?.users?.cache?.get(discordUserId) || await discordClient?.users?.fetch(discordUserId).catch(() => null);
+        if (discordUser) {
+          await discordUser.send({
+            content: '💡 **Earn 5 points here!** Link your Aquads account with the bot to get 5 points for your first message and 5 for your first reaction each day. In DMs with me, use `/link your_username`'
+          }).catch(() => {});
+        }
+      } catch (_) {}
+      return;
+    }
     const today = new Date().toISOString().split('T')[0];
     let engagement = await DiscordDailyEngagement.findOne({
       userId: user._id,
       channelId,
       date: today
     });
-    if (engagement?.hasReactedToday) return;
+    if (engagement?.hasReactedToday) {
+      console.log(`[Discord engagement] User ${user.username} already got reaction points today`);
+      return;
+    }
 
     user.points += DAILY_ENGAGEMENT_POINTS;
     user.pointsHistory = user.pointsHistory || [];
@@ -1818,8 +1864,11 @@ async function awardDailyReactionPoints(discordUserId, channelId) {
     const messageStatus = engagement.hasMessagedToday ? '✅' : '⏳';
     const totalToday = engagement.messagePoints + engagement.reactionPoints;
     const msg = `✅ +${DAILY_ENGAGEMENT_POINTS} points for daily reaction!\n\n📊 Today's Progress:\n${messageStatus} Message: ${engagement.hasMessagedToday ? 'Done' : 'Pending'}\n✅ Reaction: Done\n\n💰 Earned today: ${totalToday} points\n💎 Total points: ${user.points}`;
+    console.log(`[Discord engagement] Awarded ${DAILY_ENGAGEMENT_POINTS} points to ${user.username} for daily reaction`);
     const discordUser = await discordClient.users.fetch(discordUserId).catch(() => null);
-    if (discordUser) await discordUser.send({ content: msg }).catch(() => {});
+    if (discordUser) await discordUser.send({ content: msg }).catch((dmErr) => {
+      console.log(`[Discord engagement] Could not DM user ${user.username}:`, dmErr.message);
+    });
   } catch (e) {
     if (e.code === 11000) return;
     throw e;
