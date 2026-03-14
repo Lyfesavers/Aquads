@@ -150,6 +150,7 @@ const AquaPayPage = ({ currentUser }) => {
   const [wcProvider, setWcProvider] = useState(null);
   const [tokenPrice, setTokenPrice] = useState(null);
   const solanaWcProviderRef = useRef(null);
+  const solanaWcProviderSingletonRef = useRef(null);
   const [showWcSolanaConnectModal, setShowWcSolanaConnectModal] = useState(false);
   const [wcSolanaConnectUri, setWcSolanaConnectUri] = useState(null);
 
@@ -408,17 +409,21 @@ const AquaPayPage = ({ currentUser }) => {
     setShowWcSolanaConnectModal(false); setWcSolanaConnectUri(null);
     try {
       if (walletId === 'walletconnect') {
-        const { default: UniversalProvider } = await import('@walletconnect/universal-provider');
-        const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo';
-        const provider = await UniversalProvider.init({
-          projectId,
-          metadata: {
-            name: 'AquaPay',
-            description: 'Crypto payments',
-            url: window.location.origin,
-            icons: [`${window.location.origin}/logo192.png`]
-          }
-        });
+        let provider = solanaWcProviderSingletonRef.current;
+        if (!provider) {
+          const { default: UniversalProvider } = await import('@walletconnect/universal-provider');
+          const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo';
+          provider = await UniversalProvider.init({
+            projectId,
+            metadata: {
+              name: 'AquaPay',
+              description: 'Crypto payments',
+              url: window.location.origin,
+              icons: [`${window.location.origin}/logo192.png`]
+            }
+          });
+          solanaWcProviderSingletonRef.current = provider;
+        }
         provider.on('display_uri', (uri) => {
           setWcSolanaConnectUri(uri);
           setShowWcSolanaConnectModal(true);
@@ -1312,14 +1317,21 @@ const AquaPayPage = ({ currentUser }) => {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-slate-900 rounded-2xl p-6 max-w-sm w-full border border-slate-800">
             <h3 className="text-lg font-semibold text-white mb-2">Open your wallet</h3>
-            <p className="text-slate-400 text-sm mb-4">Tap below to open Phantom, Trust Wallet, or your Solana wallet to approve the connection.</p>
+            <p className="text-slate-400 text-sm mb-4">Tap to open Phantom, Trust Wallet, or your Solana wallet to approve the connection.</p>
+            <a
+              href={wcSolanaConnectUri}
+              className="block w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl text-center transition-colors mb-2"
+            >
+              Open wallet app
+            </a>
+            <p className="text-slate-500 text-xs text-center mb-2">If that doesn&apos;t open your wallet, try:</p>
             <a
               href={`https://walletconnect.com/wc?uri=${encodeURIComponent(wcSolanaConnectUri)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl text-center transition-colors"
+              className="block w-full py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl text-center transition-colors"
             >
-              Open wallet app
+              Open via WalletConnect
             </a>
             <button onClick={() => { setShowWcSolanaConnectModal(false); setWcSolanaConnectUri(null); setConnecting(false); }} className="w-full mt-3 py-2 text-slate-400 hover:text-white text-sm">Cancel</button>
           </div>
