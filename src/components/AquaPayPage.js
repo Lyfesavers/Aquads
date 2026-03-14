@@ -823,6 +823,8 @@ const AquaPayPage = ({ currentUser }) => {
   const availableChains = getAvailableChains();
   const displaySymbol = selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol;
   const usdValue = selectedToken === 'native' && tokenPrice && amount ? (parseFloat(amount) * tokenPrice).toFixed(2) : null;
+  const isMobile = useMemo(() => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (typeof window !== 'undefined' && window.innerWidth < 768), []);
+  const solanaWalletOptions = useMemo(() => isMobile ? SOLANA_WALLET_OPTIONS : SOLANA_WALLET_OPTIONS.filter(opt => opt.id !== 'walletconnect'), [isMobile]);
 
   // Loading
   if (loading) return (
@@ -1320,18 +1322,9 @@ const AquaPayPage = ({ currentUser }) => {
             <p className="text-slate-400 text-sm mb-4">Tap to open Phantom, Trust Wallet, or your Solana wallet to approve the connection.</p>
             <a
               href={wcSolanaConnectUri}
-              className="block w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl text-center transition-colors mb-2"
+              className="block w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl text-center transition-colors"
             >
               Open wallet app
-            </a>
-            <p className="text-slate-500 text-xs text-center mb-2">If that doesn&apos;t open your wallet, try:</p>
-            <a
-              href={`https://walletconnect.com/wc?uri=${encodeURIComponent(wcSolanaConnectUri)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl text-center transition-colors"
-            >
-              Open via WalletConnect
             </a>
             <button onClick={() => { setShowWcSolanaConnectModal(false); setWcSolanaConnectUri(null); setConnecting(false); }} className="w-full mt-3 py-2 text-slate-400 hover:text-white text-sm">Cancel</button>
           </div>
@@ -1346,7 +1339,7 @@ const AquaPayPage = ({ currentUser }) => {
               <button onClick={() => setShowSolanaWalletModal(false)} className="text-slate-500 hover:text-white">✕</button>
             </div>
             <div className="space-y-2">
-              {SOLANA_WALLET_OPTIONS.map(opt => (
+              {solanaWalletOptions.map(opt => (
                 <button key={opt.id} onClick={() => connectWithSolanaWallet(opt.id)}
                   className="w-full p-4 bg-slate-800/50 hover:bg-slate-800 rounded-xl flex items-center gap-3 border border-slate-700/50 transition-colors relative">
                   {opt.recommended && <span className="absolute -top-2 right-2 px-2 py-0.5 bg-purple-500 text-white text-xs rounded-full">Popular</span>}
