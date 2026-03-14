@@ -252,6 +252,13 @@ const Footer = () => {
                   <FaFileAlt className="mr-2" />
                   <span>Privacy Policy</span>
                 </Link>
+                <Link
+                  to="/cookie-policy"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Cookie Policy</span>
+                </Link>
                 </div>
               )}
             </div>

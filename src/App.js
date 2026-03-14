@@ -43,6 +43,7 @@ const BlogPage = lazy(() => import('./components/BlogPage'));
 const Affiliate = lazy(() => import('./components/Affiliate'));
 const Terms = lazy(() => import('./components/Terms'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const CookiePolicy = lazy(() => import('./components/CookiePolicy'));
 const AquaFi = lazy(() => import('./components/AquaFi'));
 const AquaSwap = lazy(() => import('./components/AquaSwap'));
 const AquaSwapEmbed = lazy(() => import('./components/AquaSwapEmbed'));
@@ -3629,6 +3630,7 @@ function App() {
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/verify-user" element={<VerifyUser />} />
             <Route path="/verify-member/:memberId" element={<MemberVerification />} />
             <Route path="/resume/:username" element={<PublicResume />} />

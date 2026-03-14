@@ -142,7 +142,7 @@ const PrivacyPolicy = () => {
                   <li>Analyze site performance and user behavior.</li>
                   <li>Personalize content and features.</li>
                 </ul>
-                <p>You can manage cookie preferences via your browser settings or our Cookie Policy page.</p>
+                <p>You can manage cookie preferences via your browser settings or our <Link to="/cookie-policy" className="text-blue-400 hover:text-blue-300">Cookie Policy</Link> page.</p>
               </div>
             </section>
 
@@ -211,7 +211,7 @@ const PrivacyPolicy = () => {
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-2">
                 <p>If you have questions or requests regarding this Privacy Policy, please contact:</p>
                 <p>Email: <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a></p>
-                <p>Telegram: <a href="https://t.me/aquads_support" className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">https://t.me/aquads_support</a></p>
+                <p>Telegram: <a href="https://t.me/+6rJbDLqdMxA3ZTUx" className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">https://t.me/+6rJbDLqdMxA3ZTUx</a></p>
               </div>
             </section>
 
