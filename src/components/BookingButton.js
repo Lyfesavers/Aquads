@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import emailService from '../services/emailService';
 
@@ -127,6 +128,14 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
                   {isSubmitting ? 'Sending...' : 'Send Request'}
                 </button>
               </div>
+
+              <p className="mt-4 pt-3 border-t border-gray-600 text-xs text-gray-400 text-center">
+                By sending this request you agree to our{' '}
+                <Link to="/terms" className="text-gray-300 hover:text-white underline">Terms & Conditions</Link>
+                {' '}and{' '}
+                <Link to="/privacy-policy" className="text-gray-300 hover:text-white underline">Privacy Policy</Link>.
+                {' '}Crypto payments are protected by escrow.
+              </p>
             </form>
           </div>
         </Modal>
