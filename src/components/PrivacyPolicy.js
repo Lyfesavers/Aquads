@@ -210,7 +210,7 @@ const PrivacyPolicy = () => {
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">11. Contact Us</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-2">
                 <p>If you have questions or requests regarding this Privacy Policy, please contact:</p>
-                <p>Email: <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a></p>
+                <p>Email: <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a> (you may also use <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">aquads.info@gmail.com</a> for support)</p>
                 <p>Telegram: <a href="https://t.me/+6rJbDLqdMxA3ZTUx" className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">https://t.me/+6rJbDLqdMxA3ZTUx</a></p>
               </div>
             </section>

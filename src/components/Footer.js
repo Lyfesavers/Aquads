@@ -137,7 +137,7 @@ const Footer = () => {
                   <span>Verify User</span>
                 </Link>
                 <a
-                  href="mailto:aquads.info@gmail.com"
+                  href="mailto:info@aquads.xyz"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
                   <FaEnvelope className="mr-2" />

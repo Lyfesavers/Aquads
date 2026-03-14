@@ -835,7 +835,7 @@ const Whitepaper = () => {
             <ul className="list-none space-y-2">
               <li>Twitter: <a href="https://twitter.com/_Aquads_" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">@_Aquads_</a></li>
               <li>Telegram: <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">https://t.co/TE6WbzWh9K</a></li>
-              <li>Email: <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">aquads.info@gmail.com</a></li>
+              <li>Email: <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a></li>
               <li>Website: <a href="https://aquads.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">https://aquads.xyz</a></li>
             </ul>
           </section>

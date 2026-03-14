@@ -4560,7 +4560,7 @@ Join us as we build a vibrant community where innovation meets opportunity. Let'
 
 - **Twitter:** [@_Aquads_](https://twitter.com/_Aquads_)
 - **Telegram:** [Join our Telegram](https://t.co/TE6WbzWh9K)
-- **Email:** [aquads.info@gmail.com](mailto:aquads.info@gmail.com)
+- **Email:** [info@aquads.xyz](mailto:info@aquads.xyz)
 - **Website:** [aquads.xyz](https://aquads.xyz)
     `,
     prevPage: { id: 'wp-growth-strategy', title: 'Growth & Strategy' },
@@ -5159,7 +5159,7 @@ const Documentation = () => {
           <footer className="mt-16 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
             <p>© {new Date().getFullYear()} Aquads. All rights reserved.</p>
             <p className="mt-2">
-              Need help? <a href="mailto:aquads.info@gmail.com" className="text-cyan-400 hover:underline">Contact Support</a>
+              Need help? <a href="mailto:info@aquads.xyz" className="text-cyan-400 hover:underline">Contact Support</a>
             </p>
           </footer>
         </div>

@@ -1020,7 +1020,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                <FaArrowRight className="ml-2" />
              </button>
             <a
-              href="mailto:aquads.info@gmail.com"
+              href="mailto:info@aquads.xyz"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all duration-300"
             >
               Contact Our Team

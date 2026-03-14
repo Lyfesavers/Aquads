@@ -424,7 +424,7 @@ const Affiliate = () => {
                 </ul>
                 
                 <p className="mt-4">By Sharing and using your referral code, you are enrolling in this affiliate program and agreeing to the terms laid out here.</p>
-                <p>For any questions or support, simply reach out to us at <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">aquads.info@gmail.com</a> or join our <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">Telegram community</a>.</p>
+                <p>For any questions or support, simply reach out to us at <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a> or join our <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">Telegram community</a>.</p>
                 <p className="mt-8 text-center">We're excited to have you on board and can't wait to see how you help grow the Aquads community while building your own business success stories!</p>
                 <p className="text-center font-semibold text-blue-400">Happy promoting!</p>
                 <p className="text-right text-gray-400">— The Aquads Team</p>

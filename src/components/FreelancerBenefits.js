@@ -37,7 +37,7 @@ const FreelancerBenefits = ({ currentUser }) => {
                 <FaArrowRight className="ml-2" />
               </Link>
               <a
-                href="mailto:aquads.info@gmail.com"
+                href="mailto:info@aquads.xyz"
                 className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 border border-gray-600"
               >
                 Contact Support
@@ -568,7 +568,7 @@ const FreelancerBenefits = ({ currentUser }) => {
               <FaArrowRight className="ml-2" />
             </Link>
             <a
-              href="mailto:aquads.info@gmail.com"
+              href="mailto:info@aquads.xyz"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-indigo-600 transition-all duration-300"
             >
               Contact Our Team
