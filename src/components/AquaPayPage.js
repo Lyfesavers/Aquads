@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ethers } from 'ethers';
@@ -25,8 +25,10 @@ const EVM_WALLET_OPTIONS = [
 const SOLANA_WALLET_OPTIONS = [
   { id: 'phantom', name: 'Phantom', icon: '👻', description: 'Popular Solana wallet', recommended: true },
   { id: 'solflare', name: 'Solflare', icon: '🔥', description: 'Secure wallet' },
-  { id: 'backpack', name: 'Backpack', icon: '🎒', description: 'Multi-chain' }
+  { id: 'backpack', name: 'Backpack', icon: '🎒', description: 'Multi-chain' },
+  { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', description: 'Mobile & 300+ wallets (Phantom, Trust, etc.)', recommended: false }
 ];
+const SOLANA_MAINNET_CHAIN_ID = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 
 // Chain configs
 const EVM_CHAINS = {
@@ -147,6 +149,9 @@ const AquaPayPage = ({ currentUser }) => {
   const [showSolanaWalletModal, setShowSolanaWalletModal] = useState(false);
   const [wcProvider, setWcProvider] = useState(null);
   const [tokenPrice, setTokenPrice] = useState(null);
+  const solanaWcProviderRef = useRef(null);
+  const [showWcSolanaConnectModal, setShowWcSolanaConnectModal] = useState(false);
+  const [wcSolanaConnectUri, setWcSolanaConnectUri] = useState(null);
 
   // Calculate platform fee (0.5%) for Solana and EVM chains
   // Bitcoin and TRON are exempt (manual transfers)
@@ -400,16 +405,61 @@ const AquaPayPage = ({ currentUser }) => {
 
   const connectWithSolanaWallet = async (walletId) => {
     setShowSolanaWalletModal(false); setConnecting(true); setTxError(null);
+    setShowWcSolanaConnectModal(false); setWcSolanaConnectUri(null);
     try {
+      if (walletId === 'walletconnect') {
+        const { default: UniversalProvider } = await import('@walletconnect/universal-provider');
+        const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo';
+        const provider = await UniversalProvider.init({
+          projectId,
+          metadata: {
+            name: 'AquaPay',
+            description: 'Crypto payments',
+            url: window.location.origin,
+            icons: [`${window.location.origin}/logo192.png`]
+          }
+        });
+        provider.on('display_uri', (uri) => {
+          setWcSolanaConnectUri(uri);
+          setShowWcSolanaConnectModal(true);
+        });
+        await provider.connect({
+          optionalNamespaces: {
+            solana: {
+              chains: [SOLANA_MAINNET_CHAIN_ID],
+              methods: ['solana_signTransaction', 'solana_signMessage', 'solana_requestAccounts'],
+              events: []
+            }
+          }
+        });
+        setShowWcSolanaConnectModal(false);
+        setWcSolanaConnectUri(null);
+        const accounts = provider.session?.namespaces?.solana?.accounts;
+        if (!accounts || accounts.length === 0) throw new Error('No Solana account returned from wallet.');
+        const firstAccount = accounts[0];
+        const address = firstAccount.includes(':') ? firstAccount.split(':').pop() : firstAccount;
+        solanaWcProviderRef.current = provider;
+        setWalletAddress(address);
+        setWalletConnected(true);
+        provider.on('session_delete', () => {
+          solanaWcProviderRef.current = null;
+          setWalletConnected(false);
+          setWalletAddress(null);
+        });
+        return;
+      }
       let provider = walletId === 'phantom' ? (window.phantom?.solana || window.solana) :
                      walletId === 'solflare' ? window.solflare : window.backpack;
       if (!provider) throw new Error(`${walletId} wallet not found. Please install ${walletId === 'phantom' ? 'Phantom' : walletId === 'solflare' ? 'Solflare' : 'Backpack'} wallet.`);
       const response = await provider.connect();
       setWalletAddress(response.publicKey.toString()); setWalletConnected(true);
     } catch (err) {
-      // Provide user-friendly error messages for common wallet issues
+      setShowWcSolanaConnectModal(false);
+      setWcSolanaConnectUri(null);
       const errMsg = err.message || '';
-      if (errMsg.includes('not been authorized') || errMsg.includes('User rejected')) {
+      if (err.code === 5000 || errMsg.includes('User rejected') || errMsg.includes('rejected')) {
+        setTxError('Connection was cancelled. Try again when ready.');
+      } else if (errMsg.includes('not been authorized') || errMsg.includes('User rejected')) {
         setTxError(
           '⚠️ Connection was cancelled or has a pending request.\n\n' +
           '✅ How to fix:\n' +
@@ -573,7 +623,7 @@ const AquaPayPage = ({ currentUser }) => {
           throw new Error('Transaction failed: ' + (txError.message || 'Unknown error. Please ensure your wallet is on the correct network and try again.'));
         }
       } else if (selectedChain === 'solana') {
-        const solana = window.phantom?.solana || window.solflare || window.solana;
+        const solanaWc = solanaWcProviderRef.current;
         const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
         
         // Use backend proxy to avoid CORS/rate limits
@@ -643,8 +693,23 @@ const AquaPayPage = ({ currentUser }) => {
         
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
-        const signed = await solana.signTransaction(transaction);
-        const sig = await connection.sendRawTransaction(signed.serialize());
+        let signedSerialized;
+        if (solanaWc) {
+          const serialized = transaction.serialize({ requireAllSignatures: false });
+          const base64Tx = btoa(String.fromCharCode.apply(null, new Uint8Array(serialized)));
+          const result = await solanaWc.request(
+            { method: 'solana_signTransaction', params: [{ transaction: base64Tx }] },
+            SOLANA_MAINNET_CHAIN_ID
+          );
+          const signedB64 = result?.transaction || result?.signedTransaction;
+          if (!signedB64) throw new Error('Wallet did not return signed transaction.');
+          signedSerialized = Uint8Array.from(atob(signedB64), c => c.charCodeAt(0));
+        } else {
+          const solana = window.phantom?.solana || window.solflare || window.solana;
+          const signed = await solana.signTransaction(transaction);
+          signedSerialized = signed.serialize();
+        }
+        const sig = await connection.sendRawTransaction(signedSerialized);
         setTxHash(sig);
         setTxStatus('pending');
         await connection.confirmTransaction(sig);
@@ -732,7 +797,11 @@ const AquaPayPage = ({ currentUser }) => {
     setMessage(''); 
     setPayerEmail('');
     setWalletConnected(false); 
-    setWalletAddress(null); 
+    setWalletAddress(null);
+    if (solanaWcProviderRef.current) {
+      try { solanaWcProviderRef.current.disconnect?.(); } catch (_) {}
+      solanaWcProviderRef.current = null;
+    }
     // Reset token selection: USDC for EVM chains, native for Solana
     if (CHAINS[selectedChain]?.isEVM) {
       setSelectedToken('usdc');
@@ -972,7 +1041,13 @@ const AquaPayPage = ({ currentUser }) => {
                             <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                             <span className="text-slate-300 text-sm font-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
                           </div>
-                          <button onClick={() => { setWalletConnected(false); setWalletAddress(null); }} className="text-slate-500 hover:text-red-400 text-xs">Disconnect</button>
+                          <button onClick={() => {
+                            if (solanaWcProviderRef.current) {
+                              try { solanaWcProviderRef.current.disconnect?.(); } catch (_) {}
+                              solanaWcProviderRef.current = null;
+                            }
+                            setWalletConnected(false); setWalletAddress(null);
+                          }} className="text-slate-500 hover:text-red-400 text-xs">Disconnect</button>
                         </div>
 
                         {/* Token Selector */}
@@ -1229,6 +1304,24 @@ const AquaPayPage = ({ currentUser }) => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showWcSolanaConnectModal && wcSolanaConnectUri && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-slate-900 rounded-2xl p-6 max-w-sm w-full border border-slate-800">
+            <h3 className="text-lg font-semibold text-white mb-2">Open your wallet</h3>
+            <p className="text-slate-400 text-sm mb-4">Tap below to open Phantom, Trust Wallet, or your Solana wallet to approve the connection.</p>
+            <a
+              href={`https://walletconnect.com/wc?uri=${encodeURIComponent(wcSolanaConnectUri)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl text-center transition-colors"
+            >
+              Open wallet app
+            </a>
+            <button onClick={() => { setShowWcSolanaConnectModal(false); setWcSolanaConnectUri(null); setConnecting(false); }} className="w-full mt-3 py-2 text-slate-400 hover:text-white text-sm">Cancel</button>
           </div>
         </div>
       )}
