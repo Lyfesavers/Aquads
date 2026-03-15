@@ -73,6 +73,9 @@ function addHyperSpaceToKeyboard(keyboard) {
   };
 }
 
+// Serialize raid notifications (TG + Discord) so delete → send → store never interleave (avoids race conditions)
+let _raidNotifyLock = Promise.resolve();
+
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
@@ -235,14 +238,20 @@ const telegramService = {
   },
 
   sendRaidNotification: async (raidData) => {
+    const prev = _raidNotifyLock;
+    let release;
+    _raidNotifyLock = new Promise((r) => { release = r; });
+    await prev;
     try {
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      
-      if (!botToken) {
-        return false;
-      }
+      return await (async () => {
+        try {
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
-      // Determine which groups to notify based on source and opt-in status
+          if (!botToken) {
+            return false;
+          }
+
+          // Determine which groups to notify based on source and opt-in status
       const groupsToNotify = new Set();
       const sourceChatId = raidData.sourceChatId ? raidData.sourceChatId.toString() : null;
       const isAdmin = raidData.isAdmin === true;
@@ -457,9 +466,13 @@ const telegramService = {
 
       return successCount > 0;
 
-    } catch (error) {
-      console.error('Telegram notification failed:', error.message);
-      return false;
+        } catch (error) {
+          console.error('Telegram notification failed:', error.message);
+          return false;
+        }
+      })();
+    } finally {
+      release();
     }
   },
 
