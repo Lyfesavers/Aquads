@@ -104,10 +104,20 @@ class ProxiedConnection {
   }
   
   async sendRawTransaction(serializedTx) {
-    // Convert Uint8Array to base64
-    const base64Tx = typeof serializedTx === 'string' ? serializedTx : 
-      btoa(String.fromCharCode.apply(null, new Uint8Array(serializedTx)));
-    return await this._call('sendTransaction', [base64Tx, { encoding: 'base64', preflightCommitment: 'confirmed' }]);
+    let base64Tx;
+    if (typeof serializedTx === 'string') {
+      base64Tx = serializedTx;
+    } else {
+      const bytes = new Uint8Array(serializedTx);
+      const chunkSize = 8192;
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+      }
+      base64Tx = btoa(binary);
+    }
+    const sig = await this._call('sendTransaction', [base64Tx, { encoding: 'base64', preflightCommitment: 'confirmed', skipPreflight: false }]);
+    return sig;
   }
   
   async confirmTransaction(signature) {
@@ -128,7 +138,8 @@ class ProxiedConnection {
       }
       await new Promise(r => setTimeout(r, 2000)); // 2 second intervals
     }
-    throw new Error('Transaction confirmation timeout - check explorer');
+    const explorerUrl = CHAINS?.solana?.explorerUrl ? `${CHAINS.solana.explorerUrl}${signature}` : `https://solscan.io/tx/${signature}`;
+    throw new Error(`Transaction confirmation timeout. The transaction may still be processing or may have been dropped (e.g. blockhash expired). Check status: ${explorerUrl}`);
   }
   
   async getAccountInfo(pubkey) {
@@ -665,10 +676,7 @@ const AquaPayPage = ({ currentUser }) => {
         const solanaWc = solanaWcProviderRef.current;
         const { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
         
-        // Use backend proxy to avoid CORS/rate limits
         const connection = new ProxiedConnection(API_URL);
-        const { blockhash } = await connection.getLatestBlockhash();
-        
         const fromPubkey = new PublicKey(walletAddress);
         const toPubkey = new PublicKey(recipientAddress);
         
@@ -730,6 +738,7 @@ const AquaPayPage = ({ currentUser }) => {
           transaction.add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: recipientLamports }));
         }
         
+        const { blockhash } = await connection.getLatestBlockhash();
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
         // Solana: one transaction with fee + payment instructions (single signature, single broadcast)
@@ -737,7 +746,13 @@ const AquaPayPage = ({ currentUser }) => {
         if (solanaWc) {
           setTxStatus('Opening wallet to sign…');
           const serialized = transaction.serialize({ requireAllSignatures: false });
-          const base64Tx = btoa(String.fromCharCode.apply(null, new Uint8Array(serialized)));
+          const bytes = new Uint8Array(serialized);
+          const chunkSize = 8192;
+          let binary = '';
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+          }
+          const base64Tx = btoa(binary);
           const requestPayload = { method: 'solana_signTransaction', params: { transaction: base64Tx } };
           const chainId = solanaWc.session?.namespaces?.solana?.accounts?.[0]?.split(':')?.slice(0, 2)?.join(':') || SOLANA_MAINNET_CHAIN_ID;
           const resultPromise = solanaWc.request(requestPayload, chainId);
@@ -747,8 +762,24 @@ const AquaPayPage = ({ currentUser }) => {
           if (signedB64) {
             signedSerialized = Uint8Array.from(atob(signedB64), c => c.charCodeAt(0));
           } else if (result?.signature) {
-            // Many WalletConnect wallets (e.g. Trust Wallet) return only signature (base58); add it and serialize
-            const sigBytes = bs58.decode(result.signature);
+            let sigBytes;
+            const raw = result.signature;
+            if (typeof raw !== 'string') {
+              throw new Error('Wallet returned invalid signature format.');
+            }
+            if (/^[0-9a-fA-F]+$/.test(raw) && (raw.length === 128 || raw.length === 64)) {
+              const hex = raw.length === 64 ? raw : raw;
+              sigBytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+            } else {
+              try {
+                sigBytes = bs58.decode(raw);
+              } catch (_) {
+                throw new Error('Could not decode wallet signature (expected base58 or hex).');
+              }
+            }
+            if (sigBytes.length !== 64) {
+              throw new Error(`Wallet signature must be 64 bytes, got ${sigBytes.length}.`);
+            }
             transaction.addSignature(fromPubkey, sigBytes);
             signedSerialized = transaction.serialize();
           } else {
@@ -783,6 +814,8 @@ const AquaPayPage = ({ currentUser }) => {
         setTxError('Transaction cancelled. Click "Pay" again when ready to approve.');
       } else if (errMsg.includes('insufficient') || errMsg.includes('Insufficient')) {
         setTxError('Insufficient balance. Please check your wallet has enough funds (including gas fees).');
+      } else if (errMsg.includes('blockhash') || errMsg.includes('Blockhash') || errMsg.includes('expired') || errMsg.includes('simulation failed')) {
+        setTxError('Transaction could not be submitted (often due to blockhash expiry after signing). Please try the payment again — we’ll use a fresh blockhash.');
       } else {
         setTxError(errMsg);
       }
