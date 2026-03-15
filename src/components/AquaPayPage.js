@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ethers } from 'ethers';
+import bs58 from 'bs58';
 import emailService from '../services/emailService';
 import { AQUADS_WALLETS, FEE_CONFIG } from '../config/wallets';
 
@@ -29,6 +30,39 @@ const SOLANA_WALLET_OPTIONS = [
   { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', description: 'Mobile & 300+ wallets (Phantom, Trust, etc.)', recommended: false }
 ];
 const SOLANA_MAINNET_CHAIN_ID = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+// Deep links to open wallet app when requesting signature (mobile). Session peer.metadata.redirect is used when present.
+const WALLET_DEEPLINKS = {
+  'Trust Wallet': 'https://link.trustwallet.com',
+  'Phantom': 'https://phantom.app',
+  'Solflare': 'https://solflare.com',
+  'Backpack': 'https://backpack.app',
+  'MetaMask': 'https://metamask.io',
+  'Rainbow': 'https://rainbow.me',
+};
+function getWalletOpenUrl(session) {
+  const meta = session?.peer?.metadata;
+  if (!meta) return null;
+  const native = meta.redirect?.native;
+  const universal = meta.redirect?.universal;
+  if (native) return native;
+  if (universal) return universal;
+  const name = (meta.name || '').trim();
+  return WALLET_DEEPLINKS[name] || Object.entries(WALLET_DEEPLINKS).find(([k]) => name.toLowerCase().includes(k.toLowerCase()))?.[1] || null;
+}
+function openWalletForSign(session) {
+  const url = getWalletOpenUrl(session);
+  if (!url) return;
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.rel = 'noopener noreferrer';
+    a.target = '_blank';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (_) {}
+}
 
 // Chain configs
 const EVM_CHAINS = {
@@ -698,17 +732,28 @@ const AquaPayPage = ({ currentUser }) => {
         
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
+        // Solana: one transaction with fee + payment instructions (single signature, single broadcast)
         let signedSerialized;
         if (solanaWc) {
+          setTxStatus('Opening wallet to sign…');
           const serialized = transaction.serialize({ requireAllSignatures: false });
           const base64Tx = btoa(String.fromCharCode.apply(null, new Uint8Array(serialized)));
-          // WalletConnect Solana: params as object (some wallets reject array format and return "unknown method")
           const requestPayload = { method: 'solana_signTransaction', params: { transaction: base64Tx } };
           const chainId = solanaWc.session?.namespaces?.solana?.accounts?.[0]?.split(':')?.slice(0, 2)?.join(':') || SOLANA_MAINNET_CHAIN_ID;
-          const result = await solanaWc.request(requestPayload, chainId);
-          const signedB64 = result?.transaction || result?.signedTransaction;
-          if (!signedB64) throw new Error('Wallet did not return signed transaction.');
-          signedSerialized = Uint8Array.from(atob(signedB64), c => c.charCodeAt(0));
+          const resultPromise = solanaWc.request(requestPayload, chainId);
+          openWalletForSign(solanaWc.session);
+          const result = await resultPromise;
+          const signedB64 = result?.transaction ?? result?.signedTransaction;
+          if (signedB64) {
+            signedSerialized = Uint8Array.from(atob(signedB64), c => c.charCodeAt(0));
+          } else if (result?.signature) {
+            // Many WalletConnect wallets (e.g. Trust Wallet) return only signature (base58); add it and serialize
+            const sigBytes = bs58.decode(result.signature);
+            transaction.addSignature(fromPubkey, sigBytes);
+            signedSerialized = transaction.serialize();
+          } else {
+            throw new Error('Wallet did not return a signed transaction or signature.');
+          }
         } else {
           const solana = window.phantom?.solana || window.solflare || window.solana;
           const signed = await solana.signTransaction(transaction);
