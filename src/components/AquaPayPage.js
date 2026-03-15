@@ -702,10 +702,10 @@ const AquaPayPage = ({ currentUser }) => {
         if (solanaWc) {
           const serialized = transaction.serialize({ requireAllSignatures: false });
           const base64Tx = btoa(String.fromCharCode.apply(null, new Uint8Array(serialized)));
-          const result = await solanaWc.request(
-            { method: 'solana_signTransaction', params: [{ transaction: base64Tx }] },
-            SOLANA_MAINNET_CHAIN_ID
-          );
+          // WalletConnect Solana: params as object (some wallets reject array format and return "unknown method")
+          const requestPayload = { method: 'solana_signTransaction', params: { transaction: base64Tx } };
+          const chainId = solanaWc.session?.namespaces?.solana?.accounts?.[0]?.split(':')?.slice(0, 2)?.join(':') || SOLANA_MAINNET_CHAIN_ID;
+          const result = await solanaWc.request(requestPayload, chainId);
           const signedB64 = result?.transaction || result?.signedTransaction;
           if (!signedB64) throw new Error('Wallet did not return signed transaction.');
           signedSerialized = Uint8Array.from(atob(signedB64), c => c.charCodeAt(0));
