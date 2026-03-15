@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import bs58 from 'bs58';
 import emailService from '../services/emailService';
 import { AQUADS_WALLETS, FEE_CONFIG } from '../config/wallets';
+import { useConnect, useSolana, useDisconnect } from '@phantom/react-sdk';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
 
@@ -196,8 +197,12 @@ const AquaPayPage = ({ currentUser }) => {
   const [tokenPrice, setTokenPrice] = useState(null);
   const solanaWcProviderRef = useRef(null);
   const solanaWcProviderSingletonRef = useRef(null);
+  const phantomSdkConnectedRef = useRef(false);
   const [showWcSolanaConnectModal, setShowWcSolanaConnectModal] = useState(false);
   const [wcSolanaConnectUri, setWcSolanaConnectUri] = useState(null);
+  const { connect: phantomConnect } = useConnect();
+  const { solana: phantomSolana } = useSolana();
+  const { disconnect: phantomDisconnect } = useDisconnect();
 
   // Calculate platform fee (0.5%) for Solana and EVM chains
   // Bitcoin and TRON are exempt (manual transfers)
@@ -498,9 +503,29 @@ const AquaPayPage = ({ currentUser }) => {
         });
         return;
       }
-      let provider = walletId === 'phantom' ? (window.phantom?.solana || window.solana) :
-                     walletId === 'solflare' ? window.solflare : window.backpack;
-      if (!provider) throw new Error(`${walletId} wallet not found. Please install ${walletId === 'phantom' ? 'Phantom' : walletId === 'solflare' ? 'Solflare' : 'Backpack'} wallet.`);
+      if (walletId === 'phantom') {
+        const injected = window.phantom?.solana || window.solana;
+        if (injected) {
+          const response = await injected.connect();
+          setWalletAddress(response.publicKey.toString());
+          setWalletConnected(true);
+          return;
+        }
+        if (phantomConnect) {
+          const result = await phantomConnect({ provider: 'deeplink' });
+          const addresses = result?.addresses || [];
+          const solanaAddr = addresses.find((a) => a.addressType === 'solana' || a.type === 'solana');
+          const addr = solanaAddr?.address || (Array.isArray(addresses) && addresses[0]?.address) || addresses?.[0];
+          if (!addr) throw new Error('No Solana address returned from Phantom.');
+          setWalletAddress(typeof addr === 'string' ? addr : addr?.address || String(addr));
+          setWalletConnected(true);
+          phantomSdkConnectedRef.current = true;
+          return;
+        }
+        throw new Error('Phantom wallet not found. Install Phantom or use WalletConnect.');
+      }
+      let provider = walletId === 'solflare' ? window.solflare : window.backpack;
+      if (!provider) throw new Error(`${walletId} wallet not found. Please install ${walletId === 'solflare' ? 'Solflare' : 'Backpack'} wallet.`);
       const response = await provider.connect();
       setWalletAddress(response.publicKey.toString()); setWalletConnected(true);
     } catch (err) {
@@ -785,6 +810,10 @@ const AquaPayPage = ({ currentUser }) => {
           } else {
             throw new Error('Wallet did not return a signed transaction or signature.');
           }
+        } else if (phantomSdkConnectedRef.current && phantomSolana?.signTransaction) {
+          setTxStatus('Opening wallet to sign…');
+          const signed = await phantomSolana.signTransaction(transaction);
+          signedSerialized = signed.serialize();
         } else {
           const solana = window.phantom?.solana || window.solflare || window.solana;
           const signed = await solana.signTransaction(transaction);
@@ -884,6 +913,10 @@ const AquaPayPage = ({ currentUser }) => {
     if (solanaWcProviderRef.current) {
       try { solanaWcProviderRef.current.disconnect?.(); } catch (_) {}
       solanaWcProviderRef.current = null;
+    }
+    if (phantomSdkConnectedRef.current && phantomDisconnect) {
+      try { phantomDisconnect(); } catch (_) {}
+      phantomSdkConnectedRef.current = false;
     }
     // Reset token selection: USDC for EVM chains, native for Solana
     if (CHAINS[selectedChain]?.isEVM) {
@@ -1130,6 +1163,10 @@ const AquaPayPage = ({ currentUser }) => {
                             if (solanaWcProviderRef.current) {
                               try { solanaWcProviderRef.current.disconnect?.(); } catch (_) {}
                               solanaWcProviderRef.current = null;
+                            }
+                            if (phantomSdkConnectedRef.current && phantomDisconnect) {
+                              try { phantomDisconnect(); } catch (_) {}
+                              phantomSdkConnectedRef.current = false;
                             }
                             setWalletConnected(false); setWalletAddress(null);
                           }} className="text-slate-500 hover:text-red-400 text-xs">Disconnect</button>
