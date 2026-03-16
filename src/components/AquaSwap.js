@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
@@ -132,7 +132,7 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'kaspa': 'kaspa'
 };
 
-const AquaSwap = ({ currentUser, showNotification }) => {
+const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -592,7 +592,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Featured services state
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
-  const [chartProjects, setChartProjects] = useState([]);
+  const [localChartProjects, setLocalChartProjects] = useState([]);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -770,7 +770,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     updateAquaswapUrl(trimmedToken, selectedChain);
   }, [tokenSearch, selectedChain, chartProvider]);
 
-  // Fetch bubble ads and convert to popular tokens
+  // Filter for ads that can appear on the chart (same as API response filter)
+  const isValidChartAd = (ad) =>
+    ad.status !== 'pending' &&
+    ad.status !== 'rejected' &&
+    (ad.pairAddress || ad.contractAddress) &&
+    (ad.pairAddress || ad.contractAddress).trim() !== '';
+
+  // Fetch bubble ads when not provided by App (e.g. direct navigate to /aquaswap or embed)
   useEffect(() => {
     const fetchBubbleTokens = async () => {
       try {
@@ -780,46 +787,28 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         }
         
         const ads = await response.json();
-        
-        // Filter out pending and rejected ads, then sort by bumped status and bullish votes
-        const validAds = ads.filter(ad => 
-          ad.status !== 'pending' && 
-          ad.status !== 'rejected' &&
-          (ad.pairAddress || ad.contractAddress) && 
-          (ad.pairAddress || ad.contractAddress).trim() !== ''
-        );
-        setChartProjects(validAds);
+        const validAds = ads.filter(isValidChartAd);
+        setLocalChartProjects(validAds);
 
         const bumpedAds = validAds.filter(ad => ad.isBumped === true);
-        
-        // Sort bumped tokens by bullish votes (highest first)
-        const sortedAds = bumpedAds.sort((a, b) => {
-          return (b.bullishVotes || 0) - (a.bullishVotes || 0);
-        });
-        
+        const sortedAds = bumpedAds.sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0));
         const topAds = sortedAds.slice(0, 10);
-        
-        // Convert ads to popular token format
         const bubbleTokens = topAds.map(ad => ({
           name: ad.title,
-          address: ad.pairAddress || ad.contractAddress, // Handle both old and new field names
+          address: ad.pairAddress || ad.contractAddress,
           chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
           logo: ad.logo,
           blockchain: ad.blockchain,
           bullishVotes: ad.bullishVotes || 0,
           isBumped: ad.isBumped || false
         }));
-        
-        // Update popular tokens if we have any bubble tokens
         if (bubbleTokens.length > 0) {
           setPopularTokens(bubbleTokens);
         }
-        
       } catch (error) {
         logger.error('Error fetching bubble tokens:', error);
-        // Keep existing popular tokens or empty array on error
         setPopularTokens([]);
-        setChartProjects([]);
+        setLocalChartProjects([]);
       }
     };
 
@@ -918,6 +907,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     
     return mappedChain;
   };
+
+  // Use ads from App when provided so deep-dive approval is visible immediately; otherwise use local fetch
+  const chartProjects = useMemo(
+    () =>
+      adsFromApp?.length > 0
+        ? adsFromApp.filter(isValidChartAd)
+        : localChartProjects,
+    [adsFromApp, localChartProjects]
+  );
+
+  // When using App ads, derive popular tokens from chartProjects; otherwise use state from fetch
+  const derivedPopularTokens = useMemo(() => {
+    if (!chartProjects.length) return [];
+    const bumped = chartProjects.filter(ad => ad.isBumped).sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0));
+    const top = bumped.slice(0, 10);
+    return top.map(ad => ({
+      name: ad.title,
+      address: ad.pairAddress || ad.contractAddress,
+      chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
+      logo: ad.logo,
+      blockchain: ad.blockchain,
+      bullishVotes: ad.bullishVotes || 0,
+      isBumped: true
+    }));
+  }, [chartProjects]);
+
+  const displayPopularTokens = adsFromApp?.length > 0 ? derivedPopularTokens : popularTokens;
 
   const getBlockchainParamForChain = (chain) => {
     if (!chain) {
@@ -2367,16 +2383,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             )}
             
             {/* Trending tokens - show for DEXScreener */}
-            {chartProvider === 'dexscreener' && popularTokens.length > 0 && (
+            {chartProvider === 'dexscreener' && displayPopularTokens.length > 0 && (
               <div className="chart-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Trending:</span>
                   <div className="popular-tokens-container">
                     <div className="popular-tokens-scroll">
                       {/* Duplicate tokens for seamless scrolling */}
-                      {popularTokens.concat(popularTokens).map((token, index) => {
+                      {displayPopularTokens.concat(displayPopularTokens).map((token, index) => {
                         // Calculate the original rank (1-10) for display
-                        const rank = (index % popularTokens.length) + 1;
+                        const rank = (index % displayPopularTokens.length) + 1;
                         return (
                           <button
                             key={`${token.address}-${index}`}
@@ -2856,6 +2872,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 };
 
 AquaSwap.propTypes = {
+  ads: PropTypes.array,
   currentUser: PropTypes.object,
   showNotification: PropTypes.func.isRequired
 };

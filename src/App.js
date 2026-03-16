@@ -730,8 +730,7 @@ function App() {
           if (existingAdIndex !== -1) {
             const oldAd = prevAds[existingAdIndex];
             let updatedAd = {...oldAd, ...data.ad};
-            // Race-condition guard: socket/API can overwrite each other. Never let a stale
-            // pending_review overwrite a verified deep dive (e.g. from updateAdSize emit).
+            // Race-condition guard: prefer verified so approval is never overwritten by stale data
             const oldVerif = oldAd?.projectProfile?.verification?.status;
             const newVerif = data.ad?.projectProfile?.verification?.status;
             if (oldVerif === 'verified' && newVerif === 'pending_review') {
@@ -740,6 +739,14 @@ function App() {
                 projectProfile: {
                   ...updatedAd.projectProfile,
                   verification: oldAd.projectProfile.verification
+                }
+              };
+            } else if (newVerif === 'verified' && data.ad?.projectProfile?.verification) {
+              updatedAd = {
+                ...updatedAd,
+                projectProfile: {
+                  ...updatedAd.projectProfile,
+                  verification: data.ad.projectProfile.verification
                 }
               };
             }
@@ -802,7 +809,7 @@ function App() {
       setAds(prevAds => {
         const oldAd = prevAds.find(ad => ad.id === incomingAd.id);
         if (!oldAd) return prevAds;
-        // Race-condition guard: don't let stale pending_review overwrite verified deep dive
+        // Race-condition guard: prefer verified so approval is never overwritten by stale data
         const oldVerif = oldAd?.projectProfile?.verification?.status;
         const newVerif = incomingAd?.projectProfile?.verification?.status;
         let finalAd = incomingAd;
@@ -812,6 +819,14 @@ function App() {
             projectProfile: {
               ...incomingAd.projectProfile,
               verification: oldAd.projectProfile.verification
+            }
+          };
+        } else if (newVerif === 'verified' && incomingAd?.projectProfile?.verification) {
+          finalAd = {
+            ...incomingAd,
+            projectProfile: {
+              ...incomingAd.projectProfile,
+              verification: incomingAd.projectProfile.verification
             }
           };
         }
@@ -1438,7 +1453,11 @@ function App() {
       };
 
       const response = await apiUpdateAd(adId, updatedAd);
-      setAds(prevAds => prevAds.map(a => a.id === adId ? response : a));
+      setAds(prevAds => {
+        const next = prevAds.map(a => (a.id === adId ? response : a));
+        localStorage.setItem('cachedAds', JSON.stringify(next));
+        return next;
+      });
       setShowEditModal(false);
       setAdToEdit(null);
       showNotification('Ad updated successfully!', 'success');
@@ -3646,9 +3665,9 @@ function App() {
                 openMintFunnelPlatform={openMintFunnelPlatform}
               />
             } />
-            <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/share/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/swap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/share/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/wallet-analyzer" element={<WalletAnalyzer currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
