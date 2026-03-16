@@ -2261,7 +2261,20 @@ ${platformEmoji} ${platformName} Raid
     const messageId = callbackQuery.message.message_id;
 
     try {
-      // Answer the callback query
+      // For "complete" in group: don't answer callback yet — startRaidCompletionFromGroup will answer
+      // with "link your account" popup (only the clicker sees it) so the group isn't spammed
+      const isGroupChat = callbackQuery.message.chat.type === 'group' ||
+                          callbackQuery.message.chat.type === 'supergroup' ||
+                          chatId < 0;
+      try {
+        const parsed = JSON.parse(callbackQuery.data);
+        if (parsed.action === 'complete' && isGroupChat) {
+          await telegramService.startRaidCompletionFromGroup(chatId, userId, parsed.raidId, queryId);
+          return;
+        }
+      } catch (_) { /* not JSON or different action */ }
+
+      // Answer the callback query for all other cases
       await telegramService.answerCallbackQuery(queryId);
 
       // Check if it's an onboarding, action, or settings callback
@@ -2425,23 +2438,11 @@ ${platformEmoji} ${platformName} Raid
         await telegramService.sendBotMessage(userId, successMessage);
       }
       else {
-        // Parse callback data for other actions (like raids)
+        // Other actions (e.g. complete from private chat) — group "complete" handled above
         try {
           const callbackData = JSON.parse(callbackQuery.data);
-          
           if (callbackData.action === 'complete') {
-            // Check if this is from a group chat
-            const isGroupChat = callbackQuery.message.chat.type === 'group' || 
-                                callbackQuery.message.chat.type === 'supergroup' ||
-                                chatId < 0;
-            
-            if (isGroupChat) {
-              // Handle completion from group chat
-              await telegramService.startRaidCompletionFromGroup(chatId, userId, callbackData.raidId);
-            } else {
-              // Handle completion from private chat (existing behavior)
-              await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
-            }
+            await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
           }
         } catch (parseError) {
           // Not JSON, might be a simple callback - ignore
@@ -3230,17 +3231,27 @@ Tap to update:`;
   // ==========================================
 
   // Start raid completion flow from group chat
-  startRaidCompletionFromGroup: async (groupChatId, telegramUserId, raidId) => {
+  // queryId: when provided (button click in group), show "link required" only to the clicker via popup — no group message
+  startRaidCompletionFromGroup: async (groupChatId, telegramUserId, raidId, queryId) => {
     try {
-      // Check if user is linked
+      // Check if user is linked (only show message to users who haven't linked)
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        // User doesn't have account - send message to group chat
-        await telegramService.sendBotMessage(groupChatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        if (queryId) {
+          // Button click in group: show popup to clicker and send full message to their DM — no group message
+          await telegramService.answerCallbackQuery(queryId, 
+            "❌ Please link your account first: /link your_username — https://aquads.xyz");
+          await telegramService.sendBotMessage(telegramUserId, 
+            "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        } else {
+          await telegramService.sendBotMessage(groupChatId, 
+            "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        }
         return;
       }
+
+      if (queryId) await telegramService.answerCallbackQuery(queryId);
 
       // User has account - proceed with completion and send messages to private chat
       const privateChatId = telegramUserId; // User's private chat ID is their user ID
@@ -4967,8 +4978,12 @@ Tap to update:`;
     try {
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       if (!user) {
-        await telegramService.sendBotMessage(chatId,
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        if (chatId < 0) {
+          await telegramService.sendBotMessage(telegramUserId, linkMsg);
+        } else {
+          await telegramService.sendBotMessage(chatId, linkMsg);
+        }
         return;
       }
       const result = await telegramService.processVoteByUser(user, projectId, voteType);

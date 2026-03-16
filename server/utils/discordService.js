@@ -1027,7 +1027,8 @@ async function startBot() {
       if (!isAdmin) return;
       const user = await User.findOne({ discordId: discordUserId });
       if (!user) {
-        await message.reply({ content: '❌ Link your account first: `/link your_username`', ephemeral: false }).catch(() => {});
+        // DM the user so the channel isn't spammed and only they see the message
+        await message.author.send({ content: '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz' }).catch(() => {});
         return;
       }
       const tweetUrl = tweetUrlMatch[1].trim();
