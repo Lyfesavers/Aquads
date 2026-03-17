@@ -1138,6 +1138,17 @@ async function startBot() {
               '• `/raids` – List available raids\n' +
               '• `/complete raid_id username post_url` – Submit completion\n' +
               '• Or click **Complete** on a raid and fill the form\n\n' +
+              '**Raid Rules:**\n' +
+              '• Earn 50 points with a verified (blue checkmark ✓) account, or 20 points with a non-verified account\n' +
+              '• Twitter account must be at least 6 months old\n' +
+              '• Account must have at least 50 followers\n' +
+              '• Must be following @_Aquads_\n' +
+              '• Account must be public (not private)\n' +
+              '• No bot/spam accounts (reasonable posting frequency)\n' +
+              '• Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet\n' +
+              '  Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"\n' +
+              '• Twitter account must not be shadow banned or suspended\n' +
+              '• Must have the Aquads logo in your profile picture\n\n' +
               'Earn points at https://aquads.xyz'
             )
             .setColor(0x00bfff);

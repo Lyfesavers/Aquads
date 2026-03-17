@@ -1144,6 +1144,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <span className="text-yellow-400 mr-2">•</span>
                   <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>The Projects Name. Must add value to Aquads and the account posting the tweet</strong></span>
                 </div>
+                <div className="flex items-start pl-7 text-yellow-300/90 text-sm mt-1">
+                  <span>Example: &quot;Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!&quot;</span>
+                </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
                   <span>Twitter account must not be <strong>shadow banned</strong> or <strong>suspended</strong></span>

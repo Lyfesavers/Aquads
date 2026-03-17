@@ -620,6 +620,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                <span className="text-blue-400 mt-1">•</span>
                <span>Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the post</span>
              </li>
+             <li className="flex items-start gap-2 pl-6 text-gray-400 text-sm mt-1">
+               <span>Example: &quot;Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!&quot;</span>
+             </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
                <span>Facebook account must not be shadow banned or suspended</span>

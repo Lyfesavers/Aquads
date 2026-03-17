@@ -1081,6 +1081,18 @@ Earn points by completing Twitter & Facebook raids!
 
 ⏰ Raids expire after 48 hours
 
+📋 Raid Rules:
+• Earn 50 points with a verified (blue checkmark ✓) account, or 20 points with a non-verified account
+• Twitter account must be at least 6 months old
+• Account must have at least 50 followers
+• Must be following @_Aquads_
+• Account must be public (not private)
+• No bot/spam accounts (reasonable posting frequency)
+• Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet
+  Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"
+• Twitter account must not be shadow banned or suspended
+• Must have the Aquads logo in your profile picture
+
 🌐 Track points at: https://aquads.xyz`;
 
     const keyboard = {
