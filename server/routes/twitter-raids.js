@@ -699,8 +699,13 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
           newTotalPoints: user.points,
           reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`
         });
-        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-        await pointsModule.creditReferrerBonus(completion.userId, `Twitter raid approved: ${raid.title}`);
+        // Referrer bonus: run in background so approve response is fast; earner points already saved
+        const referredUserId = completion.userId;
+        const raidTitleForBonus = raid.title;
+        setImmediate(() => {
+          pointsModule.creditReferrerBonus(referredUserId, `Twitter raid approved: ${raidTitleForBonus}`)
+            .catch(err => console.error('Twitter raid approve: referrer bonus failed', err));
+        });
          }
 
     await raid.save({ validateBeforeSave: false });
@@ -757,41 +762,7 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
 
     await raid.save({ validateBeforeSave: false });
 
-    // Send notification to the user about the rejection
-    try {
-      const userId = completion.userId;
-      const reason = rejectionReason || 'No reason provided';
-      const notificationMessage = `Your Twitter raid submission for "${raid.title}" was rejected. Reason: ${reason}`;
-      
-      const notification = new Notification({
-        userId: userId,
-        type: 'status',
-        message: notificationMessage,
-        link: '/dashboard',
-        relatedId: raidId,
-        relatedModel: 'TwitterRaid'
-      });
-      
-      await notification.save();
-
-      // Send Telegram DM if user has linked their account
-      const user = await User.findById(userId);
-      if (user?.telegramId) {
-        try {
-          await telegramService.sendBotMessage(
-            user.telegramId,
-            `❌ Your Twitter raid submission for "${raid.title}" was rejected.\n\nReason: ${reason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
-          );
-        } catch (tgError) {
-          // Don't block the flow if Telegram fails
-        }
-      }
-  
-    } catch (notificationError) {
-      // Continue execution even if notification fails
-    }
-
-    // Emit real-time update to all connected clients
+    // Emit real-time update to all connected clients (before response so UI stays in sync)
     emitTwitterRaidRejected({
       completionId: completion._id,
       raidId: raid._id,
@@ -805,6 +776,36 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     res.json({
       success: true,
       message: 'Completion rejected successfully'
+    });
+
+    // In-app notification + Telegram DM run in background so reject response is fast
+    const rejectedUserId = completion.userId;
+    const rejectedRaidTitle = raid.title;
+    const reason = rejectionReason || 'No reason provided';
+    setImmediate(() => {
+      (async () => {
+        try {
+          const notificationMessage = `Your Twitter raid submission for "${rejectedRaidTitle}" was rejected. Reason: ${reason}`;
+          const notification = new Notification({
+            userId: rejectedUserId,
+            type: 'status',
+            message: notificationMessage,
+            link: '/dashboard',
+            relatedId: raidId,
+            relatedModel: 'TwitterRaid'
+          });
+          await notification.save();
+          const user = await User.findById(rejectedUserId);
+          if (user?.telegramId) {
+            await telegramService.sendBotMessage(
+              user.telegramId,
+              `❌ Your Twitter raid submission for "${rejectedRaidTitle}" was rejected.\n\nReason: ${reason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
+            );
+          }
+        } catch (notificationError) {
+          console.error('Twitter raid reject: notification/Telegram failed', notificationError);
+        }
+      })();
     });
 
   } catch (error) {
