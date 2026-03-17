@@ -430,47 +430,9 @@ async function creditReferrerBonus(referredUserId, sourceReason) {
   }
 }
 
-// Route to complete a social media raid
-router.post('/social-raids/complete', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { raidId, platform, proof } = req.body;
-    
-    if (!raidId || !platform || !proof) {
-      return res.status(400).json({ error: 'Missing required information' });
-    }
-    
-    // Check if user already completed this raid
-    const user = await User.findById(req.user.userId);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Check if user already got points for this raid
-    const alreadyCompleted = user.pointsHistory.some(
-      entry => entry.socialRaidId && entry.socialRaidId.toString() === raidId.toString()
-    );
-    
-    if (alreadyCompleted) {
-      return res.status(400).json({ error: 'You have already completed this raid' });
-    }
-    
-    // In a real implementation, you would verify the proof here
-    // For now, we'll just award the points
-    
-    const updatedUser = await awardSocialMediaPoints(req.user.userId, platform, raidId);
-    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-    await creditReferrerBonus(req.user.userId, 'social raid completion');
-    
-    res.json({
-      success: true,
-      message: `Successfully completed ${platform} raid and earned 20 points!`,
-      currentPoints: updatedUser.points
-    });
-    
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process social media raid' });
-  }
+// Route to complete a social media raid — LOCKED: unused legacy route; raid points are awarded via Twitter/Facebook completion + admin approval only
+router.post('/social-raids/complete', auth, requireEmailVerification, (req, res) => {
+  return res.status(403).json({ error: 'This endpoint is disabled. Complete raids via the raid flow and earn points after admin approval.' });
 });
 
 // Route to award points for completed AquaSwap transaction
