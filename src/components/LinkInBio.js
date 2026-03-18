@@ -437,8 +437,8 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.03)',
-                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? theme.accent : 'rgba(255, 255, 255, 0.06)'}`,
+                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? buttonTheme.accentFilled : 'rgba(255, 255, 255, 0.03)',
+                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? buttonTheme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? buttonTheme.accent : 'rgba(255, 255, 255, 0.06)'}`,
                     backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
@@ -452,7 +452,7 @@ const LinkInBio = () => {
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{
-                      background: `linear-gradient(105deg, transparent 0%, ${hasBackgroundImage ? theme.shine : buttonTheme.shine} 45%, ${hasBackgroundImage ? theme.shine : buttonTheme.shine} 55%, transparent 100%)`,
+                      background: `linear-gradient(105deg, transparent 0%, ${buttonTheme.shine} 45%, ${buttonTheme.shine} 55%, transparent 100%)`,
                       backgroundSize: '200% 100%',
                       animation: 'linkInBioShine 0.6s ease-out'
                     }}
