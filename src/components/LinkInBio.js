@@ -189,41 +189,37 @@ const getSocialIcon = (url) => {
   return FaExternalLinkAlt;
 };
 
-// Theme config: orbs (bg), accent (hover/border/badge), glow
-const THEMES = {
-  default: {
-    orb1: 'rgba(34, 211, 238, 0.06)',
-    orb2: 'rgba(59, 130, 246, 0.04)',
-    orb3: 'rgba(20, 184, 166, 0.03)',
-    accent: 'rgba(34, 211, 238, 0.9)',
-    accentHover: 'rgba(34, 211, 238, 0.15)',
-    shine: 'rgba(34, 211, 238, 0.06)',
-    avatarGlow: 'rgba(34, 211, 238, 0.12)',
-    badgeBorder: 'rgba(34, 211, 238, 0.3)',
-    badgeBg: 'rgba(34, 211, 238, 0.05)'
-  },
-  ocean: {
-    orb1: 'rgba(30, 64, 175, 0.08)',
-    orb2: 'rgba(59, 130, 246, 0.06)',
-    orb3: 'rgba(96, 165, 250, 0.04)',
-    accent: 'rgba(96, 165, 250, 0.95)',
-    accentHover: 'rgba(96, 165, 250, 0.18)',
-    shine: 'rgba(96, 165, 250, 0.07)',
-    avatarGlow: 'rgba(96, 165, 250, 0.15)',
-    badgeBorder: 'rgba(96, 165, 250, 0.35)',
-    badgeBg: 'rgba(96, 165, 250, 0.06)'
-  },
-  sunset: {
-    orb1: 'rgba(234, 88, 12, 0.05)',
-    orb2: 'rgba(249, 115, 22, 0.05)',
-    orb3: 'rgba(251, 146, 60, 0.03)',
-    accent: 'rgba(251, 146, 60, 0.95)',
-    accentHover: 'rgba(251, 146, 60, 0.18)',
-    shine: 'rgba(251, 146, 60, 0.06)',
-    avatarGlow: 'rgba(251, 146, 60, 0.12)',
-    badgeBorder: 'rgba(251, 146, 60, 0.35)',
-    badgeBg: 'rgba(251, 146, 60, 0.06)'
-  }
+// Build theme from user's accent color (hex)
+function hexToRgba(hex, alpha = 1) {
+  let h = hex.replace(/^#/, '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function buildThemeFromAccent(hex) {
+  const accent = hexToRgba(hex, 0.95);
+  const hover = hexToRgba(hex, 0.18);
+  const filledBg = hexToRgba(hex, 0.22);
+  const shine = hexToRgba(hex, 0.07);
+  const glow = hexToRgba(hex, 0.15);
+  const badgeBorder = hexToRgba(hex, 0.35);
+  const badgeBg = hexToRgba(hex, 0.06);
+  const orb1 = hexToRgba(hex, 0.07);
+  const orb2 = hexToRgba(hex, 0.05);
+  const orb3 = hexToRgba(hex, 0.03);
+  return { accent, accentHover: hover, accentFilled: filledBg, shine, avatarGlow: glow, badgeBorder, badgeBg, orb1, orb2, orb3 };
+}
+
+// Button style class names for link buttons
+const BUTTON_STYLES = {
+  rounded: 'rounded-2xl',
+  pill: 'rounded-full',
+  minimal: 'rounded-2xl border-0 bg-transparent',
+  bordered: 'rounded-2xl bg-transparent',
+  filled: 'rounded-2xl'
 };
 
 // Load distinctive fonts (Syne + DM Sans) for this page only
@@ -329,10 +325,12 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioTheme } = data;
+  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonStyle } = data;
   const hasLinks = Array.isArray(bioLinks) && bioLinks.length > 0;
-  const themeKey = THEMES[linkInBioTheme] ? linkInBioTheme : 'default';
-  const theme = THEMES[themeKey];
+  const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
+  const theme = buildThemeFromAccent(accentHex);
+  const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
+  const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
 
   return (
     <motion.div
@@ -413,11 +411,11 @@ const LinkInBio = () => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl text-left relative overflow-hidden transition-all duration-300"
+                  className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    backdropFilter: 'blur(12px)'
+                    background: buttonStyleKey === 'filled' ? theme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                    border: buttonStyleKey === 'minimal' ? `1px solid ${theme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${theme.badgeBorder}` : '1px solid rgba(255, 255, 255, 0.06)',
+                    backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
                     scale: 1.02,

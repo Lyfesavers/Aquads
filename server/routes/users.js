@@ -655,10 +655,16 @@ router.put('/profile', auth, async (req, res) => {
       user.bioLinks = sanitized;
     }
 
-    // Update link-in-bio theme if provided (verified users only)
-    if (req.body.linkInBioTheme !== undefined && user.emailVerified) {
-      const valid = ['default', 'ocean', 'sunset'].includes(req.body.linkInBioTheme);
-      user.linkInBioTheme = valid ? req.body.linkInBioTheme : 'default';
+    // Update link-in-bio style if provided (verified users only)
+    if (user.emailVerified) {
+      if (req.body.linkInBioAccentColor !== undefined) {
+        const hex = String(req.body.linkInBioAccentColor).trim();
+        user.linkInBioAccentColor = /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : '#22d3ee';
+      }
+      if (req.body.linkInBioButtonStyle !== undefined) {
+        const style = String(req.body.linkInBioButtonStyle).toLowerCase();
+        user.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+      }
     }
 
     // Update password if provided
@@ -696,7 +702,8 @@ router.put('/profile', auth, async (req, res) => {
       referralCode: user.referralCode,
       cv: user.cv,
       bioLinks: user.bioLinks || [],
-      linkInBioTheme: user.linkInBioTheme || 'default'
+      linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded'
     };
 
     res.json(userData);
@@ -1077,7 +1084,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioTheme emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonStyle emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1088,12 +1095,20 @@ router.get('/links/:username', async (req, res) => {
       .filter(l => l.url && l.title)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+    const accentColor = (user.linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioAccentColor))
+      ? user.linkInBioAccentColor
+      : '#22d3ee';
+    const buttonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(user.linkInBioButtonStyle)
+      ? user.linkInBioButtonStyle
+      : 'rounded';
+
     res.json({
       username: user.username,
       displayName,
       image: user.image || 'https://i.imgur.com/6VBx3io.png',
       bioLinks: links,
-      linkInBioTheme: user.linkInBioTheme || 'default'
+      linkInBioAccentColor: accentColor,
+      linkInBioButtonStyle: buttonStyle
     });
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);

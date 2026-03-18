@@ -98,11 +98,16 @@ const userSchema = new Schema({
     url: { type: String, required: true, trim: true },
     order: { type: Number, default: 0 }
   }],
-  // Link-in-bio theme: default | ocean | sunset (custom branding)
-  linkInBioTheme: {
+  // Link-in-bio custom style (user picks color + button style)
+  linkInBioAccentColor: {
     type: String,
-    enum: ['default', 'ocean', 'sunset'],
-    default: 'default'
+    default: '#22d3ee',
+    trim: true
+  },
+  linkInBioButtonStyle: {
+    type: String,
+    enum: ['rounded', 'pill', 'minimal', 'bordered', 'filled'],
+    default: 'rounded'
   },
   isAdmin: {
     type: Boolean,

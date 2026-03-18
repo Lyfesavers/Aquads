@@ -5,15 +5,24 @@ import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternal
 const MAX_LINKS = 12;
 const BASE_URL = 'https://www.aquads.xyz';
 
-const THEME_OPTIONS = [
-  { id: 'default', label: 'Default', sublabel: 'Cyan', color: '#22d3ee', bg: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-500/40' },
-  { id: 'ocean', label: 'Ocean', sublabel: 'Blue', color: '#60a5fa', bg: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/40' },
-  { id: 'sunset', label: 'Sunset', sublabel: 'Warm', color: '#fb923c', bg: 'from-orange-500/20 to-amber-600/10', border: 'border-orange-500/40' }
+const PRESET_COLORS = [
+  '#22d3ee', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+  '#f43f5e', '#fb923c', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#1e3a5f'
+];
+
+const BUTTON_STYLE_OPTIONS = [
+  { id: 'rounded', label: 'Rounded', desc: 'Soft corners' },
+  { id: 'pill', label: 'Pill', desc: 'Fully rounded' },
+  { id: 'minimal', label: 'Minimal', desc: 'Outline only' },
+  { id: 'bordered', label: 'Bordered', desc: 'Light border' },
+  { id: 'filled', label: 'Filled', desc: 'Accent background' }
 ];
 
 const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) => {
   const [bioLinks, setBioLinks] = useState([]);
-  const [linkInBioTheme, setLinkInBioTheme] = useState('default');
+  const [accentColor, setAccentColor] = useState('#22d3ee');
+  const [customColor, setCustomColor] = useState('');
+  const [buttonStyle, setButtonStyle] = useState('rounded');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -22,9 +31,14 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   }, [currentUser?.bioLinks]);
 
   useEffect(() => {
-    const t = currentUser?.linkInBioTheme;
-    if (t === 'default' || t === 'ocean' || t === 'sunset') setLinkInBioTheme(t);
-  }, [currentUser?.linkInBioTheme]);
+    const c = currentUser?.linkInBioAccentColor;
+    if (c && /^#[0-9A-Fa-f]{3,6}$/.test(c)) {
+      setAccentColor(c);
+      if (!PRESET_COLORS.includes(c.toLowerCase())) setCustomColor(c);
+    }
+    const s = currentUser?.linkInBioButtonStyle;
+    if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
+  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonStyle]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -65,7 +79,12 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     }
     setSaving(true);
     try {
-      const updated = await updateUserProfile({ bioLinks: sanitized, linkInBioTheme });
+      const hex = customColor.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(customColor.trim()) ? customColor.trim() : accentColor;
+      const updated = await updateUserProfile({
+        bioLinks: sanitized,
+        linkInBioAccentColor: hex,
+        linkInBioButtonStyle: buttonStyle
+      });
       onProfileUpdate?.({ ...currentUser, ...updated });
       showNotification?.('Link in bio saved.', 'success');
     } catch (err) {
@@ -130,34 +149,63 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         </div>
       </div>
 
-      {/* Theme / custom branding */}
+      {/* Color palette & button style */}
       <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
         <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
           <FaPalette className="text-cyan-400" />
-          Theme & branding
+          Color & button style
         </h3>
-        <p className="text-gray-400 text-sm mb-4">Choose a color theme for your link-in-bio page.</p>
-        <div className="flex flex-wrap gap-3">
-          {THEME_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setLinkInBioTheme(opt.id)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${linkInBioTheme === opt.id ? opt.border + ' bg-gray-700/50' : 'border-gray-600 hover:border-gray-500 bg-gray-700/30'}`}
-            >
-              <span
-                className="w-10 h-10 rounded-lg flex-shrink-0"
-                style={{ backgroundColor: opt.color + '30' }}
+        <p className="text-gray-400 text-sm mb-4">Pick your accent color and how link buttons look on your page.</p>
+
+        <div className="mb-5">
+          <p className="text-gray-300 text-sm font-medium mb-2">Accent color</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {PRESET_COLORS.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => { setAccentColor(hex); setCustomColor(''); }}
+                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${accentColor.toLowerCase() === hex ? 'border-white ring-2 ring-white/50' : 'border-gray-600 hover:border-gray-500'}`}
+                style={{ backgroundColor: hex }}
+                title={hex}
               />
-              <div>
-                <p className="font-medium text-white">{opt.label}</p>
-                <p className="text-xs text-gray-400">{opt.sublabel}</p>
-              </div>
-              {linkInBioTheme === opt.id && (
-                <span className="ml-auto text-cyan-400 text-sm font-medium">✓</span>
-              )}
-            </button>
-          ))}
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => { setAccentColor(e.target.value); setCustomColor(e.target.value); }}
+              className="w-10 h-10 rounded cursor-pointer border border-gray-600 bg-transparent"
+            />
+            <input
+              type="text"
+              placeholder="#22d3ee"
+              value={customColor}
+              onChange={(e) => {
+                setCustomColor(e.target.value);
+                if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setAccentColor(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-gray-300 text-sm font-medium mb-2">Button style</p>
+          <div className="flex flex-wrap gap-2">
+            {BUTTON_STYLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setButtonStyle(opt.id)}
+                className={`px-4 py-2.5 rounded-lg border-2 text-left transition-all ${buttonStyle === opt.id ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white bg-gray-700/30'}`}
+              >
+                <span className="font-medium block">{opt.label}</span>
+                <span className="text-xs opacity-80">{opt.desc}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
