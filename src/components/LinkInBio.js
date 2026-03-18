@@ -329,13 +329,12 @@ const LinkInBio = () => {
   const hasLinks = Array.isArray(bioLinks) && bioLinks.length > 0;
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
+  const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
   const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
   const effectiveButtonStyleKey = hasBackgroundImage ? 'filled' : buttonStyleKey;
   const buttonClass = BUTTON_STYLES[effectiveButtonStyleKey] || BUTTON_STYLES.rounded;
-
-  const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
 
   return (
     <motion.div
