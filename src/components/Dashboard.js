@@ -19,10 +19,11 @@ import QRCode from 'qrcode';
 import { FaQrcode, FaCopy, FaCheck, FaSpinner, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
+import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false }) => {
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
@@ -2882,6 +2883,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const sidebarTabs = [
     { id: 'ads', label: 'Main', icon: '📊', show: true },
     { id: 'bookings', label: 'Bookings', icon: '📋', show: true },
+    { id: 'linkinbio', label: 'Link in bio', icon: '🔗', show: true },
     { id: 'aquapay', label: 'AquaPay', icon: '💸', show: true },
     { id: 'affiliateAnalytics', label: 'Affiliate Analytics', icon: '📈', show: true, onSelect: () => { if (!affiliateAnalytics) fetchAffiliateAnalytics(); } },
     { id: 'membership', label: 'My Membership', icon: '👑', show: true },
@@ -2925,6 +2927,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const tabDescriptions = {
     ads: 'Manage your projects, affiliate program, and earnings',
     bookings: 'View and manage your service bookings',
+    linkinbio: 'One link for all your socials — powered by Aquads.xyz',
     aquapay: 'Payment settings and transaction history',
     affiliateAnalytics: 'Track your referral performance and earnings',
     membership: 'Your membership plan and benefits',
@@ -3576,6 +3579,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   refreshBookings={fetchBookings}
                 />
               )}
+            </div>
+          )}
+
+          {/* Link in bio Tab */}
+          {activeTab === 'linkinbio' && (
+            <div className="space-y-6">
+              <LinkInBioSettings
+                currentUser={currentUser}
+                onProfileUpdate={onProfileUpdate}
+                showNotification={showNotification}
+              />
             </div>
           )}
 

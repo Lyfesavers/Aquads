@@ -640,6 +640,21 @@ router.put('/profile', auth, async (req, res) => {
       user.cv.fullName = fullName.trim();
     }
 
+    // Update bioLinks if provided (verified users only; link-in-bio feature)
+    if (req.body.bioLinks !== undefined) {
+      if (!user.emailVerified) {
+        return res.status(403).json({ error: 'Verify your email to use Link in bio' });
+      }
+      const raw = Array.isArray(req.body.bioLinks) ? req.body.bioLinks : [];
+      const sanitized = raw.slice(0, 12).map((item, i) => {
+        const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
+        let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
+        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+        return { title: title || 'Link', url: url || '#', order: i };
+      }).filter(item => item.url && item.url !== '#');
+      user.bioLinks = sanitized;
+    }
+
     // Update password if provided
     if (currentPassword && newPassword) {
       let isValidPassword = false;
@@ -673,7 +688,8 @@ router.put('/profile', auth, async (req, res) => {
       image: user.image,
       country: user.country,
       referralCode: user.referralCode,
-      cv: user.cv // Include cv data so frontend gets fullName
+      cv: user.cv,
+      bioLinks: user.bioLinks || []
     };
 
     res.json(userData);
@@ -1044,6 +1060,36 @@ router.get('/multiple-device-registrations', auth, async (req, res) => {
   } catch (error) {
     console.error('Error finding multiple device registrations:', error);
     res.status(500).json({ error: 'Failed to fetch multiple device registrations' });
+  }
+});
+
+// Link-in-bio: public page data (no auth)
+router.get('/links/:username', async (req, res) => {
+  try {
+    const username = req.params.username.trim();
+    const sanitizedUsername = sanitizeForRegex(username);
+    const user = await User.findOne({
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
+    }).select('username image cv.fullName bioLinks emailVerified').lean();
+
+    if (!user) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+
+    const displayName = (user.cv && user.cv.fullName) ? user.cv.fullName.trim() : user.username;
+    const links = (user.bioLinks || [])
+      .filter(l => l.url && l.title)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    res.json({
+      username: user.username,
+      displayName,
+      image: user.image || 'https://i.imgur.com/6VBx3io.png',
+      bioLinks: links
+    });
+  } catch (err) {
+    console.error('Link-in-bio fetch error:', err);
+    res.status(500).json({ error: 'Failed to load page' });
   }
 });
 

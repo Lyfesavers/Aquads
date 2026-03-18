@@ -75,6 +75,7 @@ const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
 const TelegramBot = lazy(() => import('./components/TelegramBot'));
 const PublicResume = lazy(() => import('./components/PublicResume'));
+const LinkInBio = lazy(() => import('./components/LinkInBio'));
 import LandingPage from './components/LandingPage';
 const AquaPayWithPhantom = lazy(() => import('./components/AquaPayWithPhantom'));
 const CustodialPayment = lazy(() => import('./components/FreelancerEscrow/CustodialPayment'));
@@ -2533,6 +2534,7 @@ function App() {
               onLogin={() => setShowLoginModal(true)}
               onLogout={handleLogout}
               onCreateAccount={() => setShowCreateAccountModal(true)}
+              onProfileUpdate={handleProfileUpdate}
             />
           } />
           <Route path="/marketplace" element={
@@ -3653,6 +3655,7 @@ function App() {
             <Route path="/verify-user" element={<VerifyUser />} />
             <Route path="/verify-member/:memberId" element={<MemberVerification />} />
             <Route path="/resume/:username" element={<PublicResume />} />
+            <Route path="/links/:username" element={<LinkInBio />} />
             <Route path="/pay/:slug" element={<AquaPayWithPhantom currentUser={currentUser} />} />
             <Route path="/custodial-pay/:escrowId" element={<CustodialPayment currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquafi" element={

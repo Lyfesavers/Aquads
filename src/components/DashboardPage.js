@@ -16,7 +16,8 @@ const DashboardPage = ({
   setActiveBookingId,
   onLogin,
   onLogout,
-  onCreateAccount
+  onCreateAccount,
+  onProfileUpdate
 }) => {
   const navigate = useNavigate();
   const { tab } = useParams();
@@ -110,6 +111,7 @@ const DashboardPage = ({
         initialBookingId={activeBookingId}
         initialActiveTab={tab || 'ads'}
         isFullPage={true}
+        onProfileUpdate={onProfileUpdate}
       />
     </div>
   );

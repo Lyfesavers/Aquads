@@ -92,6 +92,12 @@ const userSchema = new Schema({
     default: null,
     trim: true
   },
+  // Link-in-bio: custom links for /links/:username page (verified users only)
+  bioLinks: [{
+    title: { type: String, required: true, trim: true, maxlength: 80 },
+    url: { type: String, required: true, trim: true },
+    order: { type: Number, default: 0 }
+  }],
   isAdmin: {
     type: Boolean,
     default: false
