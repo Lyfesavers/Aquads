@@ -437,8 +437,8 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? buttonTheme.accentFilled : 'rgba(255, 255, 255, 0.03)',
-                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? buttonTheme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? buttonTheme.accent : 'rgba(255, 255, 255, 0.06)'}`,
+                    background: buttonStyleKey === 'filled' ? (hasBackgroundImage ? theme.accentFilled : buttonTheme.accentFilled) : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.03)',
+                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? theme.accent : 'rgba(255, 255, 255, 0.06)'}`,
                     backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
@@ -460,7 +460,7 @@ const LinkInBio = () => {
                   <span className="relative flex items-center gap-3 min-w-0 flex-1 pr-3">
                     <span
                       className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 group-hover:opacity-100"
-                      style={{ color: hasBackgroundImage ? theme.accent : buttonTheme.accent, backgroundColor: hasBackgroundImage ? theme.accentHover : buttonTheme.accentHover }}
+                      style={{ color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent, backgroundColor: hasBackgroundImage ? buttonTheme.accentHover : buttonTheme.accentHover }}
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
@@ -470,7 +470,7 @@ const LinkInBio = () => {
                   </span>
                   <span
                     className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: hasBackgroundImage ? theme.accent : buttonTheme.accent }}
+                    style={{ color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent }}
                   >
                     <FaExternalLinkAlt className="w-4 h-4" />
                   </span>
