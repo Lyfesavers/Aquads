@@ -333,8 +333,7 @@ const LinkInBio = () => {
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
   const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
-  const effectiveButtonStyleKey = hasBackgroundImage ? 'filled' : buttonStyleKey;
-  const buttonClass = BUTTON_STYLES[effectiveButtonStyleKey] || BUTTON_STYLES.rounded;
+  const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
 
   return (
     <motion.div
@@ -438,9 +437,9 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: effectiveButtonStyleKey === 'filled' ? (hasBackgroundImage ? theme.accentFilled : buttonTheme.accentFilled) : effectiveButtonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
-                    border: effectiveButtonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : effectiveButtonStyleKey === 'bordered' ? `1px solid ${buttonTheme.badgeBorder}` : effectiveButtonStyleKey === 'filled' && hasBackgroundImage ? `1px solid ${theme.accent}` : '1px solid rgba(255, 255, 255, 0.06)',
-                    backdropFilter: effectiveButtonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
+                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.03)',
+                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? theme.accent : 'rgba(255, 255, 255, 0.06)'}`,
+                    backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
                     scale: 1.02,
