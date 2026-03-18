@@ -1115,6 +1115,27 @@ export const updateUserProfile = async (profileData) => {
   }
 };
 
+// Update only link-in-bio (faster than full profile update)
+export const updateLinkInBio = async (data) => {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  if (!currentUser.token) throw new Error('No authentication token found');
+  try {
+    const response = await axios.patch(`${API_URL}/users/profile/link-in-bio`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentUser.token}`
+      }
+    });
+    if (response.data) {
+      const updatedUser = { ...currentUser, ...response.data };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 // Request password reset
 export const requestPasswordReset = async (username, referralCode) => {
   try {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { updateUserProfile } from '../services/api';
+import { updateLinkInBio } from '../services/api';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
@@ -93,7 +93,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
         ? buttonColorCustom.trim()
         : (buttonColor || null);
-      const updated = await updateUserProfile({
+      const updated = await updateLinkInBio({
         bioLinks: sanitized,
         linkInBioAccentColor: hex,
         linkInBioButtonColor: btnHex || null,

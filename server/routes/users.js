@@ -594,6 +594,58 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
+// Update only link-in-bio fields (lightweight, no full document load/save)
+router.patch('/profile/link-in-bio', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('emailVerified').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.emailVerified) return res.status(403).json({ error: 'Verify your email to use Link in bio' });
+
+    const update = {};
+    if (req.body.bioLinks !== undefined) {
+      const raw = Array.isArray(req.body.bioLinks) ? req.body.bioLinks : [];
+      const sanitized = raw.slice(0, 12).map((item, i) => {
+        const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
+        let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
+        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+        return { title: title || 'Link', url: url || '#', order: i };
+      }).filter(item => item.url && item.url !== '#');
+      update.bioLinks = sanitized;
+    }
+    if (req.body.linkInBioAccentColor !== undefined) {
+      const hex = String(req.body.linkInBioAccentColor).trim();
+      update.linkInBioAccentColor = /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : '#22d3ee';
+    }
+    if (req.body.linkInBioButtonColor !== undefined) {
+      const hex = String(req.body.linkInBioButtonColor).trim();
+      update.linkInBioButtonColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
+    }
+    if (req.body.linkInBioButtonStyle !== undefined) {
+      const style = String(req.body.linkInBioButtonStyle).toLowerCase();
+      update.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+    }
+    if (Object.keys(update).length === 0) return res.status(400).json({ error: 'No link-in-bio fields to update' });
+
+    const updated = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: update },
+      { new: true }
+    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle').lean();
+
+    res.json({
+      userId: updated._id,
+      username: updated.username,
+      bioLinks: updated.bioLinks || [],
+      linkInBioAccentColor: updated.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonColor: updated.linkInBioButtonColor || null,
+      linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded'
+    });
+  } catch (err) {
+    console.error('Link-in-bio update error:', err);
+    res.status(500).json({ error: 'Failed to save' });
+  }
+});
+
 // Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
