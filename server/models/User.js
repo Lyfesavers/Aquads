@@ -114,6 +114,12 @@ const userSchema = new Schema({
     enum: ['rounded', 'pill', 'minimal', 'bordered', 'filled'],
     default: 'rounded'
   },
+  linkInBioBackgroundImageUrl: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 2048
+  },
   isAdmin: {
     type: Boolean,
     default: false

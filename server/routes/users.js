@@ -624,13 +624,29 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       const style = String(req.body.linkInBioButtonStyle).toLowerCase();
       update.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
     }
+    if (req.body.linkInBioBackgroundImageUrl !== undefined) {
+      const raw = String(req.body.linkInBioBackgroundImageUrl || '').trim();
+      if (!raw) {
+        update.linkInBioBackgroundImageUrl = null;
+      } else {
+        const url = raw.length > 2 && !/^https?:\/\//i.test(raw) ? 'https://' + raw : raw;
+        try {
+          const u = new URL(url);
+          if ((u.protocol === 'http:' || u.protocol === 'https:') && url.length <= 2048) {
+            update.linkInBioBackgroundImageUrl = url;
+          }
+        } catch (_) {
+          // invalid URL, skip
+        }
+      }
+    }
     if (Object.keys(update).length === 0) return res.status(400).json({ error: 'No link-in-bio fields to update' });
 
     const updated = await User.findByIdAndUpdate(
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle').lean();
+    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl').lean();
 
     res.json({
       userId: updated._id,
@@ -638,7 +654,8 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       bioLinks: updated.bioLinks || [],
       linkInBioAccentColor: updated.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: updated.linkInBioButtonColor || null,
-      linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded'
+      linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded',
+      linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null
     });
   } catch (err) {
     console.error('Link-in-bio update error:', err);
@@ -721,6 +738,20 @@ router.put('/profile', auth, async (req, res) => {
         const style = String(req.body.linkInBioButtonStyle).toLowerCase();
         user.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
       }
+      if (req.body.linkInBioBackgroundImageUrl !== undefined) {
+        const raw = String(req.body.linkInBioBackgroundImageUrl || '').trim();
+        if (!raw) {
+          user.linkInBioBackgroundImageUrl = null;
+        } else {
+          const url = raw.length > 2 && !/^https?:\/\//i.test(raw) ? 'https://' + raw : raw;
+          try {
+            const u = new URL(url);
+            if ((u.protocol === 'http:' || u.protocol === 'https:') && url.length <= 2048) {
+              user.linkInBioBackgroundImageUrl = url;
+            }
+          } catch (_) {}
+        }
+      }
     }
 
     // Update password if provided
@@ -760,7 +791,8 @@ router.put('/profile', auth, async (req, res) => {
       bioLinks: user.bioLinks || [],
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
-      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded'
+      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null
     };
 
     res.json(userData);
@@ -1141,7 +1173,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1162,6 +1194,10 @@ router.get('/links/:username', async (req, res) => {
       ? user.linkInBioButtonStyle
       : 'rounded';
 
+    const backgroundImageUrl = (user.linkInBioBackgroundImageUrl && typeof user.linkInBioBackgroundImageUrl === 'string' && user.linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(user.linkInBioBackgroundImageUrl.trim()))
+      ? user.linkInBioBackgroundImageUrl.trim()
+      : null;
+
     res.json({
       username: user.username,
       displayName,
@@ -1169,7 +1205,8 @@ router.get('/links/:username', async (req, res) => {
       bioLinks: links,
       linkInBioAccentColor: accentColor,
       linkInBioButtonColor: buttonColor,
-      linkInBioButtonStyle: buttonStyle
+      linkInBioButtonStyle: buttonStyle,
+      linkInBioBackgroundImageUrl: backgroundImageUrl
     });
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);

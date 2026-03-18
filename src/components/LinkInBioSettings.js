@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio } from '../services/api';
-import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
 const BASE_URL = 'https://www.aquads.xyz';
@@ -25,6 +25,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [buttonColor, setButtonColor] = useState('');
   const [buttonColorCustom, setButtonColorCustom] = useState('');
   const [buttonStyle, setButtonStyle] = useState('rounded');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -48,7 +49,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     }
     const s = currentUser?.linkInBioButtonStyle;
     if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
-  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle]);
+    const bg = currentUser?.linkInBioBackgroundImageUrl;
+    setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
+  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -97,7 +100,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         bioLinks: sanitized,
         linkInBioAccentColor: hex,
         linkInBioButtonColor: btnHex || null,
-        linkInBioButtonStyle: buttonStyle
+        linkInBioButtonStyle: buttonStyle,
+        linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null
       });
       onProfileUpdate?.({ ...currentUser, ...updated });
       showNotification?.('Link in bio saved.', 'success');
@@ -161,6 +165,23 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Background image */}
+      <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+        <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+          <FaImage className="text-cyan-400" />
+          Background image
+        </h3>
+        <p className="text-gray-400 text-sm mb-3">Full-screen image behind your link-in-bio page. Use a direct image URL (e.g. from Imgur or Cloudinary).</p>
+        <p className="text-gray-500 text-xs mb-3"><strong>Recommended dimensions:</strong> 1920×1080 or larger (16:9 works on all screens). The image will be scaled to cover the whole screen and cropped if needed. Leave empty for the default gradient.</p>
+        <input
+          type="url"
+          placeholder="https://example.com/your-image.jpg"
+          value={backgroundImageUrl}
+          onChange={(e) => setBackgroundImageUrl(e.target.value)}
+          className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        />
       </div>
 
       {/* Color palette & button style */}
