@@ -332,7 +332,8 @@ const LinkInBio = () => {
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
   const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
-  const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
+  const effectiveButtonStyleKey = hasBackgroundImage ? 'filled' : buttonStyleKey;
+  const buttonClass = BUTTON_STYLES[effectiveButtonStyleKey] || BUTTON_STYLES.rounded;
 
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
 
@@ -357,11 +358,11 @@ const LinkInBio = () => {
             className="absolute inset-0 w-full h-full object-cover object-center"
             style={{ minHeight: '100vh', minWidth: '100%' }}
           />
-          {/* Light overlay so text/buttons stay readable */}
+          {/* Stronger tint overlay so text/buttons stay readable */}
           <div
             className="absolute inset-0 w-full h-full"
             style={{
-              background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.35) 100%)'
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.55) 100%)'
             }}
           />
         </div>
@@ -438,9 +439,9 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
-                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${buttonTheme.badgeBorder}` : '1px solid rgba(255, 255, 255, 0.06)',
-                    backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
+                    background: effectiveButtonStyleKey === 'filled' ? (hasBackgroundImage ? theme.accentFilled : buttonTheme.accentFilled) : effectiveButtonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                    border: effectiveButtonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : effectiveButtonStyleKey === 'bordered' ? `1px solid ${buttonTheme.badgeBorder}` : effectiveButtonStyleKey === 'filled' && hasBackgroundImage ? `1px solid ${theme.accent}` : '1px solid rgba(255, 255, 255, 0.06)',
+                    backdropFilter: effectiveButtonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
                     scale: 1.02,
@@ -453,7 +454,7 @@ const LinkInBio = () => {
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{
-                      background: `linear-gradient(105deg, transparent 0%, ${buttonTheme.shine} 45%, ${buttonTheme.shine} 55%, transparent 100%)`,
+                      background: `linear-gradient(105deg, transparent 0%, ${hasBackgroundImage ? theme.shine : buttonTheme.shine} 45%, ${hasBackgroundImage ? theme.shine : buttonTheme.shine} 55%, transparent 100%)`,
                       backgroundSize: '200% 100%',
                       animation: 'linkInBioShine 0.6s ease-out'
                     }}
@@ -461,7 +462,7 @@ const LinkInBio = () => {
                   <span className="relative flex items-center gap-3 min-w-0 flex-1 pr-3">
                     <span
                       className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 group-hover:opacity-100"
-                      style={{ color: buttonTheme.accent, backgroundColor: buttonTheme.accentHover }}
+                      style={{ color: hasBackgroundImage ? theme.accent : buttonTheme.accent, backgroundColor: hasBackgroundImage ? theme.accentHover : buttonTheme.accentHover }}
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
@@ -471,7 +472,7 @@ const LinkInBio = () => {
                   </span>
                   <span
                     className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: buttonTheme.accent }}
+                    style={{ color: hasBackgroundImage ? theme.accent : buttonTheme.accent }}
                   >
                     <FaExternalLinkAlt className="w-4 h-4" />
                   </span>
