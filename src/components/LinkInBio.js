@@ -334,7 +334,7 @@ const LinkInBio = () => {
   const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
   const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
 
-  const hasBackgroundImage = linkInBioBackgroundImageUrl && /^https?:\/\//i.test(linkInBioBackgroundImageUrl);
+  const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
 
   return (
     <motion.div
@@ -343,30 +343,28 @@ const LinkInBio = () => {
       transition={{ duration: 0.4 }}
       className="min-h-screen flex flex-col items-center px-4 py-12 pb-20 relative overflow-hidden"
       style={{
-        background: hasBackgroundImage ? undefined : 'linear-gradient(165deg, #0c0f1a 0%, #0a0e18 40%, #060910 100%)',
+        background: hasBackgroundImage ? 'transparent' : 'linear-gradient(165deg, #0c0f1a 0%, #0a0e18 40%, #060910 100%)',
         fontFamily: "'DM Sans', sans-serif"
       }}
     >
-      {/* Full-screen background image — covers viewport, fits all screen sizes */}
+      {/* Full-screen background: image layer (absolute so it stays behind content; img tag avoids CSS url escaping issues) */}
       {hasBackgroundImage && (
-        <div
-          className="fixed inset-0 pointer-events-none z-0"
-          style={{
-            backgroundImage: `url(${linkInBioBackgroundImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-      )}
-      {/* Light overlay so image shows through but text/buttons stay readable */}
-      {hasBackgroundImage && (
-        <div
-          className="fixed inset-0 pointer-events-none z-0"
-          style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.35) 100%)'
-          }}
-        />
+        <div className="absolute inset-0 w-full min-h-full pointer-events-none" style={{ zIndex: 0 }}>
+          <img
+            src={linkInBioBackgroundImageUrl.trim()}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ minHeight: '100vh', minWidth: '100%' }}
+          />
+          {/* Light overlay so text/buttons stay readable */}
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.35) 100%)'
+            }}
+          />
+        </div>
       )}
       {/* Layered background orbs — theme colors (hidden when custom background image is set) */}
       {!hasBackgroundImage && (
