@@ -325,10 +325,12 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonStyle } = data;
+  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle } = data;
   const hasLinks = Array.isArray(bioLinks) && bioLinks.length > 0;
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
+  const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
   const theme = buildThemeFromAccent(accentHex);
+  const buttonTheme = buildThemeFromAccent(buttonHex);
   const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
   const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
 
@@ -413,8 +415,8 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
                   style={{
-                    background: buttonStyleKey === 'filled' ? theme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
-                    border: buttonStyleKey === 'minimal' ? `1px solid ${theme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${theme.badgeBorder}` : '1px solid rgba(255, 255, 255, 0.06)',
+                    background: buttonStyleKey === 'filled' ? buttonTheme.accentFilled : buttonStyleKey === 'minimal' ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${buttonTheme.badgeBorder}` : '1px solid rgba(255, 255, 255, 0.06)',
                     backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
                   }}
                   whileHover={{
@@ -424,11 +426,11 @@ const LinkInBio = () => {
                   }}
                   whileTap={{ scale: 0.99 }}
                 >
-                  {/* Hover shine sweep — theme color */}
+                  {/* Hover shine sweep — button color */}
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{
-                      background: `linear-gradient(105deg, transparent 0%, ${theme.shine} 45%, ${theme.shine} 55%, transparent 100%)`,
+                      background: `linear-gradient(105deg, transparent 0%, ${buttonTheme.shine} 45%, ${buttonTheme.shine} 55%, transparent 100%)`,
                       backgroundSize: '200% 100%',
                       animation: 'linkInBioShine 0.6s ease-out'
                     }}
@@ -436,7 +438,7 @@ const LinkInBio = () => {
                   <span className="relative flex items-center gap-3 min-w-0 flex-1 pr-3">
                     <span
                       className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 group-hover:opacity-100"
-                      style={{ color: theme.accent, backgroundColor: theme.accentHover }}
+                      style={{ color: buttonTheme.accent, backgroundColor: buttonTheme.accentHover }}
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
@@ -446,7 +448,7 @@ const LinkInBio = () => {
                   </span>
                   <span
                     className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: theme.accent }}
+                    style={{ color: buttonTheme.accent }}
                   >
                     <FaExternalLinkAlt className="w-4 h-4" />
                   </span>

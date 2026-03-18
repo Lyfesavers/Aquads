@@ -22,6 +22,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [bioLinks, setBioLinks] = useState([]);
   const [accentColor, setAccentColor] = useState('#22d3ee');
   const [customColor, setCustomColor] = useState('');
+  const [buttonColor, setButtonColor] = useState('');
+  const [buttonColorCustom, setButtonColorCustom] = useState('');
   const [buttonStyle, setButtonStyle] = useState('rounded');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -36,9 +38,17 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       setAccentColor(c);
       if (!PRESET_COLORS.includes(c.toLowerCase())) setCustomColor(c);
     }
+    const bc = currentUser?.linkInBioButtonColor;
+    if (bc && /^#[0-9A-Fa-f]{3,6}$/.test(bc)) {
+      setButtonColor(bc);
+      if (!PRESET_COLORS.includes(bc.toLowerCase())) setButtonColorCustom(bc);
+    } else {
+      setButtonColor('');
+      setButtonColorCustom('');
+    }
     const s = currentUser?.linkInBioButtonStyle;
     if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
-  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonStyle]);
+  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -80,9 +90,13 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     setSaving(true);
     try {
       const hex = customColor.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(customColor.trim()) ? customColor.trim() : accentColor;
+      const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
+        ? buttonColorCustom.trim()
+        : (buttonColor || null);
       const updated = await updateUserProfile({
         bioLinks: sanitized,
         linkInBioAccentColor: hex,
+        linkInBioButtonColor: btnHex || null,
         linkInBioButtonStyle: buttonStyle
       });
       onProfileUpdate?.({ ...currentUser, ...updated });
@@ -185,6 +199,48 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
               onChange={(e) => {
                 setCustomColor(e.target.value);
                 if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setAccentColor(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="mb-5">
+          <p className="text-gray-300 text-sm font-medium mb-2">Button color</p>
+          <p className="text-gray-500 text-xs mb-2">Optional. Leave “Same as main” to use the main color for link buttons.</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => { setButtonColor(''); setButtonColorCustom(''); }}
+              className={`px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all ${!buttonColor && !buttonColorCustom ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 text-gray-400 hover:border-gray-500'}`}
+            >
+              Same as main
+            </button>
+            {PRESET_COLORS.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => { setButtonColor(hex); setButtonColorCustom(''); }}
+                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${(buttonColor === hex || buttonColorCustom === hex) ? 'border-white ring-2 ring-white/50' : 'border-gray-600 hover:border-gray-500'}`}
+                style={{ backgroundColor: hex }}
+                title={hex}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={buttonColor || buttonColorCustom || accentColor}
+              onChange={(e) => { setButtonColor(e.target.value); setButtonColorCustom(e.target.value); }}
+              className="w-10 h-10 rounded cursor-pointer border border-gray-600 bg-transparent"
+            />
+            <input
+              type="text"
+              placeholder="Or custom hex"
+              value={buttonColorCustom}
+              onChange={(e) => {
+                setButtonColorCustom(e.target.value);
+                if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setButtonColor(e.target.value);
               }}
               className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             />

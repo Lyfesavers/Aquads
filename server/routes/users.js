@@ -661,6 +661,10 @@ router.put('/profile', auth, async (req, res) => {
         const hex = String(req.body.linkInBioAccentColor).trim();
         user.linkInBioAccentColor = /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : '#22d3ee';
       }
+      if (req.body.linkInBioButtonColor !== undefined) {
+        const hex = String(req.body.linkInBioButtonColor).trim();
+        user.linkInBioButtonColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
+      }
       if (req.body.linkInBioButtonStyle !== undefined) {
         const style = String(req.body.linkInBioButtonStyle).toLowerCase();
         user.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
@@ -703,6 +707,7 @@ router.put('/profile', auth, async (req, res) => {
       cv: user.cv,
       bioLinks: user.bioLinks || [],
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonColor: user.linkInBioButtonColor || null,
       linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded'
     };
 
@@ -1084,7 +1089,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonStyle emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1098,6 +1103,9 @@ router.get('/links/:username', async (req, res) => {
     const accentColor = (user.linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioAccentColor))
       ? user.linkInBioAccentColor
       : '#22d3ee';
+    const buttonColor = (user.linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioButtonColor))
+      ? user.linkInBioButtonColor
+      : null;
     const buttonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(user.linkInBioButtonStyle)
       ? user.linkInBioButtonStyle
       : 'rounded';
@@ -1108,6 +1116,7 @@ router.get('/links/:username', async (req, res) => {
       image: user.image || 'https://i.imgur.com/6VBx3io.png',
       bioLinks: links,
       linkInBioAccentColor: accentColor,
+      linkInBioButtonColor: buttonColor,
       linkInBioButtonStyle: buttonStyle
     });
   } catch (err) {
