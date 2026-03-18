@@ -812,8 +812,8 @@ const telegramService = {
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -863,8 +863,8 @@ const telegramService = {
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -1309,8 +1309,8 @@ https://aquads.xyz`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n💡 You need to link your Aquads account before viewing raids.\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n💡 You need to link your Aquads account before viewing raids.\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -1429,8 +1429,8 @@ https://aquads.xyz`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -3201,7 +3201,7 @@ Tap to update:`;
           if (user) {
             await telegramService.showSettingsMenu(chatId, user);
           } else {
-            await telegramService.sendBotMessage(chatId, "❌ Please link your account first: /link your_username");
+            await telegramService.sendBotMessage(chatId < 0 ? userId : chatId, "❌ Please link your account first: /link your_username");
           }
           break;
         }
@@ -3257,8 +3257,8 @@ Tap to update:`;
           await telegramService.sendBotMessage(telegramUserId, 
             "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         } else {
-          await telegramService.sendBotMessage(groupChatId, 
-            "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+          const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+          await telegramService.sendBotMessage(groupChatId < 0 ? telegramUserId : groupChatId, linkMsg);
         }
         return;
       }
@@ -3344,8 +3344,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -3887,8 +3887,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -4070,8 +4070,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -4244,8 +4244,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -4348,7 +4348,7 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
+        await telegramService.sendBotMessage(telegramUserId, 
           "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         return;
       }
@@ -4398,7 +4398,7 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
+        await telegramService.sendBotMessage(telegramUserId, 
           "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         return;
       }
@@ -5018,8 +5018,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -5059,8 +5059,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username");
+        const linkMsg = "❌ Please link your account first: /link your_username";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -5101,8 +5101,8 @@ Tap to update:`;
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       
       if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 
@@ -5158,7 +5158,8 @@ Tap to update:`;
     try {
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
       if (!user) {
-        await telegramService.sendBotMessage(chatId, "❌ Please link your account first: /link your_username");
+        const linkMsg = "❌ Please link your account first: /link your_username";
+        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
         return;
       }
 

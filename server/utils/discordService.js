@@ -90,6 +90,14 @@ function reply(interaction, content, ephemeral = true) {
   return interaction.reply({ ...content, ...opts }).catch(e => console.error('Discord reply error:', e.message));
 }
 
+// When user needs to link account: never post to channel — ephemeral reply + DM (in server) so it matches Telegram behavior
+function replyLinkRequired(interaction, content) {
+  if (interaction.guildId) {
+    interaction.user.send({ content }).catch(() => {});
+  }
+  return reply(interaction, content, true);
+}
+
 function replyEmbed(interaction, title, description, ephemeral = true) {
   const embed = new EmbedBuilder().setTitle(title).setDescription(description).setColor(0x00bfff);
   const opts = ephemeral ? { flags: MessageFlags.Ephemeral } : {};
@@ -205,7 +213,7 @@ async function handleTwitter(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const newUsername = interaction.options.getString('username');
   if (!newUsername) {
@@ -225,7 +233,7 @@ async function handleFacebook(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const newUsername = interaction.options.getString('username');
   if (!newUsername) {
@@ -245,7 +253,7 @@ async function handleRaids(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const twitterRaids = await TwitterRaid.find({ active: true }).sort({ createdAt: -1 }).limit(10).lean();
   const facebookRaids = await FacebookRaid.find({ active: true }).sort({ createdAt: -1 }).limit(10).lean();
@@ -291,7 +299,9 @@ async function handleCompleteFromModal(interaction, raidId, username, postUrl, i
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return respond('❌ Link your account first: `/link your_username`');
+    const linkMsg = '❌ Link your account first: `/link your_username`';
+    if (interaction.guildId) interaction.user.send({ content: linkMsg }).catch(() => {});
+    return respond(linkMsg);
   }
   let raid = await TwitterRaid.findById(raidId);
   let platform = 'Twitter';
@@ -427,7 +437,7 @@ async function handleMyBubble(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const userProjects = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } })
     .sort({ createdAt: -1 })
@@ -608,7 +618,7 @@ async function handleCreateRaid(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const tweetUrl = interaction.options.getString('tweet_url', true).trim();
   const result = await doCreateRaid(user, tweetUrl, { guildId: interaction.guildId || null, channelId: interaction.channelId || null });
@@ -627,7 +637,7 @@ async function handleCancelRaid(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const raidUrl = interaction.options.getString('url', true).trim();
   const isTwitter = /(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+/i.test(raidUrl);
@@ -681,7 +691,7 @@ async function handleRaidIn(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const guildId = interaction.guildId;
   const guildSettings = await BotSettings.findOne({ key: 'discordRaidInGuilds' });
@@ -706,7 +716,7 @@ async function handleRaidOut(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const guildId = interaction.guildId;
   const guildSettings = await BotSettings.findOne({ key: 'discordRaidInGuilds' });
@@ -728,7 +738,7 @@ async function handleSetBranding(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const bumped = await Ad.findOne({
     owner: user.username,
@@ -750,7 +760,7 @@ async function handleRemoveBranding(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const project = await Ad.findOne({
     owner: user.username,
@@ -783,6 +793,7 @@ async function handleBoostPackageSelect(interaction, packageId) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
+    if (interaction.guildId) interaction.user.send({ content: '❌ Link your account first: `/link your_username`' }).catch(() => {});
     return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
   }
   const userBubbles = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } }).select('id title _id').limit(10).lean();
@@ -846,7 +857,7 @@ async function handleBoostVote(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
-    return reply(interaction, '❌ Link your account first: `/link your_username`', true);
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
   const bubbles = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } }).select('id title').limit(1).lean();
   if (bubbles.length === 0) {
@@ -1287,7 +1298,9 @@ async function startBot() {
           const discordUserId = interaction.user.id;
           const user = await User.findOne({ discordId: discordUserId });
           if (!user) {
-            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
+            const linkMsg = '❌ Link your account first: `/link your_username`';
+            if (interaction.guildId) interaction.user.send({ content: linkMsg }).catch(() => {});
+            return interaction.reply({ content: linkMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           let raid = await TwitterRaid.findById(raidId);
           let platform = 'Twitter';
@@ -1332,7 +1345,9 @@ async function startBot() {
           const discordUserId = interaction.user.id;
           const user = await User.findOne({ discordId: discordUserId });
           if (!user) {
-            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
+            const linkMsg = '❌ Link your account first: `/link your_username`';
+            if (interaction.guildId) interaction.user.send({ content: linkMsg }).catch(() => {});
+            return interaction.reply({ content: linkMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const telegramService = require('./telegramService');
           const result = await telegramService.processVoteByUser(user, projectId, voteType);
