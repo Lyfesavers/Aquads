@@ -359,12 +359,12 @@ const LinkInBio = () => {
           }}
         />
       )}
-      {/* Dark overlay when using custom background so content stays readable */}
+      {/* Light overlay so image shows through but text/buttons stay readable */}
       {hasBackgroundImage && (
         <div
           className="fixed inset-0 pointer-events-none z-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.6) 100%)'
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.35) 100%)'
           }}
         />
       )}
