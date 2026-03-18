@@ -98,6 +98,12 @@ const userSchema = new Schema({
     url: { type: String, required: true, trim: true },
     order: { type: Number, default: 0 }
   }],
+  // Link-in-bio theme: default | ocean | sunset (custom branding)
+  linkInBioTheme: {
+    type: String,
+    enum: ['default', 'ocean', 'sunset'],
+    default: 'default'
+  },
   isAdmin: {
     type: Boolean,
     default: false

@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { updateUserProfile } from '../services/api';
-import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
 const BASE_URL = 'https://www.aquads.xyz';
 
+const THEME_OPTIONS = [
+  { id: 'default', label: 'Default', sublabel: 'Cyan', color: '#22d3ee', bg: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-500/40' },
+  { id: 'ocean', label: 'Ocean', sublabel: 'Blue', color: '#60a5fa', bg: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/40' },
+  { id: 'sunset', label: 'Sunset', sublabel: 'Warm', color: '#fb923c', bg: 'from-orange-500/20 to-amber-600/10', border: 'border-orange-500/40' }
+];
+
 const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) => {
   const [bioLinks, setBioLinks] = useState([]);
+  const [linkInBioTheme, setLinkInBioTheme] = useState('default');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setBioLinks(Array.isArray(currentUser?.bioLinks) ? [...currentUser.bioLinks] : []);
   }, [currentUser?.bioLinks]);
+
+  useEffect(() => {
+    const t = currentUser?.linkInBioTheme;
+    if (t === 'default' || t === 'ocean' || t === 'sunset') setLinkInBioTheme(t);
+  }, [currentUser?.linkInBioTheme]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -53,7 +65,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     }
     setSaving(true);
     try {
-      const updated = await updateUserProfile({ bioLinks: sanitized });
+      const updated = await updateUserProfile({ bioLinks: sanitized, linkInBioTheme });
       onProfileUpdate?.({ ...currentUser, ...updated });
       showNotification?.('Link in bio saved.', 'success');
     } catch (err) {
@@ -115,6 +127,37 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Theme / custom branding */}
+      <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+        <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+          <FaPalette className="text-cyan-400" />
+          Theme & branding
+        </h3>
+        <p className="text-gray-400 text-sm mb-4">Choose a color theme for your link-in-bio page.</p>
+        <div className="flex flex-wrap gap-3">
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setLinkInBioTheme(opt.id)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${linkInBioTheme === opt.id ? opt.border + ' bg-gray-700/50' : 'border-gray-600 hover:border-gray-500 bg-gray-700/30'}`}
+            >
+              <span
+                className="w-10 h-10 rounded-lg flex-shrink-0"
+                style={{ backgroundColor: opt.color + '30' }}
+              />
+              <div>
+                <p className="font-medium text-white">{opt.label}</p>
+                <p className="text-xs text-gray-400">{opt.sublabel}</p>
+              </div>
+              {linkInBioTheme === opt.id && (
+                <span className="ml-auto text-cyan-400 text-sm font-medium">✓</span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 

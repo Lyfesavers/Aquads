@@ -655,6 +655,12 @@ router.put('/profile', auth, async (req, res) => {
       user.bioLinks = sanitized;
     }
 
+    // Update link-in-bio theme if provided (verified users only)
+    if (req.body.linkInBioTheme !== undefined && user.emailVerified) {
+      const valid = ['default', 'ocean', 'sunset'].includes(req.body.linkInBioTheme);
+      user.linkInBioTheme = valid ? req.body.linkInBioTheme : 'default';
+    }
+
     // Update password if provided
     if (currentPassword && newPassword) {
       let isValidPassword = false;
@@ -689,7 +695,8 @@ router.put('/profile', auth, async (req, res) => {
       country: user.country,
       referralCode: user.referralCode,
       cv: user.cv,
-      bioLinks: user.bioLinks || []
+      bioLinks: user.bioLinks || [],
+      linkInBioTheme: user.linkInBioTheme || 'default'
     };
 
     res.json(userData);
@@ -1070,7 +1077,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioTheme emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1085,7 +1092,8 @@ router.get('/links/:username', async (req, res) => {
       username: user.username,
       displayName,
       image: user.image || 'https://i.imgur.com/6VBx3io.png',
-      bioLinks: links
+      bioLinks: links,
+      linkInBioTheme: user.linkInBioTheme || 'default'
     });
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);
