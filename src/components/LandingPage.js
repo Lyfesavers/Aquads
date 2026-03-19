@@ -218,7 +218,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen h-screen snap-center flex flex-col"
               >
-                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' && feature.title !== 'Marketing & PR' ? (
+                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' && feature.title !== 'Marketing & PR' && feature.title !== 'Link in Bio' ? (
                   <Link to={feature.link} className="block h-full flex flex-col">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -3156,6 +3156,149 @@ const CarouselCard = ({ feature, index }) => {
     );
   }
 
+  // Special design for Link in Bio
+  if (feature.title === 'Link in Bio') {
+    return (
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-yellow-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-purple-950/50 via-slate-900/90 to-amber-950/40 backdrop-blur-xl overflow-hidden flex-1 flex flex-col"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-yellow-500/40 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="text-gradient-purple">Link in Bio</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Premium Branded Social Hub</span>
+                </h2>
+
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Build a premium share page with your links, custom colors, button styles, and full-screen background image.
+                  Share one URL everywhere and keep your brand experience consistent across platforms.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: '🎨', label: 'Brand Colors', value: 'Accent + Buttons' },
+                    { icon: '🖼️', label: 'Background URL', value: 'Full-Screen Image' },
+                    { icon: '🔘', label: 'Button Styles', value: '5 Presets' },
+                    { icon: '🔗', label: 'Shareable Page', value: '/links/username' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </div>
+                      <span className="text-yellow-400 text-xs">{item.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to={feature.link}>
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold text-sm md:text-base shadow-lg shadow-purple-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(168, 85, 247, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      🔗 Open Link in Bio
+                    </motion.button>
+                  </Link>
+
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Dashboard → <span className="text-white">Link in bio</span> → Customize → Save → Share</span>
+                  </div>
+                </motion.div>
+              </div>
+
+              <motion.div
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-yellow-500/20 rounded-2xl blur-2xl scale-110" />
+
+                  <div className="relative bg-gray-900 rounded-2xl p-3 border border-white/20 shadow-2xl overflow-hidden">
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: "url('https://i.postimg.cc/8PqxmTrD/Untitled-design-(5).png')",
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-black/55" />
+
+                    <div className="relative z-10 p-2">
+                      <div className="flex flex-col items-center mb-4">
+                        <div className="w-14 h-14 rounded-full border-2 border-yellow-400/70 bg-[#2d1e59] shadow-[0_0_20px_rgba(250,204,21,0.35)] flex items-center justify-center">
+                          <span className="text-yellow-300 font-bold text-xs">A</span>
+                        </div>
+                        <div className="text-white font-semibold mt-2">Aquads</div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {['WEBSITE', 'TWITTER', 'DISCORD'].map((label) => (
+                          <div key={label} className="flex items-center justify-between rounded-full border border-purple-400/70 bg-purple-500/45 px-3 py-2.5 backdrop-blur-sm">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-6 h-6 rounded-md bg-yellow-400/20 text-yellow-300 border border-yellow-300/40 flex items-center justify-center text-[10px]">★</div>
+                              <span className="text-white text-xs font-semibold tracking-wide">{label}</span>
+                            </div>
+                            <span className="text-yellow-300 text-xs">↗</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ✨ New
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   // Special design for Marketing & PR
   if (feature.title === 'Marketing & PR') {
     return (
@@ -3863,6 +4006,13 @@ const LandingPage = () => {
       description: 'Create a single payment link to receive crypto on any chain. Share it with anyone, anywhere. Funds go directly to your wallet - no middleman, no fees from us. Accept payments on Solana, Ethereum, Base, Polygon, BNB Chain & more. Non-custodial & instant.',
       gradient: 'from-blue-900/40 to-cyan-900/80',
       link: '/dashboard/aquapay'
+    },
+    {
+      icon: '🔗',
+      title: 'Link in Bio',
+      description: 'Create a premium links page with custom colors, button styles, and a full-screen background image. Share one branded URL for all your socials and communities.',
+      gradient: 'from-purple-900/40 to-amber-900/80',
+      link: '/docs?section=getting-started&page=link-in-bio'
     },
     {
       icon: '🔮',
