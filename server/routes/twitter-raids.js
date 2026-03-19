@@ -183,7 +183,8 @@ router.get('/', async (req, res) => {
     const raids = await TwitterRaid.find({ active: true })
       .sort({ createdAt: -1 })
       .populate('createdBy', 'username')
-      .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus');
+      .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus')
+      .lean();
     
     // Process raids to add count and user completion status
     const processedRaids = raids.map(raid => {
@@ -193,7 +194,7 @@ router.get('/', async (req, res) => {
       ) : false;
       
       return {
-        ...raid.toObject(),
+        ...raid,
         completionCount: approvedCompletions.length,
         userCompleted: userCompleted
       };

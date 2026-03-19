@@ -223,6 +223,8 @@ adSchema.index({ owner: 1 }); // For user's ads
 adSchema.index({ blockchain: 1, status: 1 }); // For blockchain filtering
 adSchema.index({ isBumped: 1, bumpExpiresAt: -1 }); // For bumped ads
 adSchema.index({ status: 1, isBumped: 1 }); // For status + bump queries
+// Free-raid eligibility: findOne by owner + bumped + status (see twitter-raids checkUserHasLifetimeBumpedAd)
+adSchema.index({ owner: 1, isBumped: 1, status: 1 });
 adSchema.index({ pairAddress: 1 }); // For pair address lookups
 adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
 adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
