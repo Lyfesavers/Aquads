@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { updateUserProfile } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink } from 'react-icons/fa';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink, FaSpinner } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
 import OnChainResume from './OnChainResume';
 
@@ -272,6 +272,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const showNotification = (message, type) => {
     if (type === 'success') {
@@ -343,6 +344,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
       }
     }
 
+    setSaving(true);
     try {
       // Only include password fields if changing password
       const updateData = {
@@ -367,6 +369,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
       }, 1500);
     } catch (error) {
       setError(error.error || 'Failed to update profile');
+      setSaving(false);
     }
   };
 
@@ -694,17 +697,28 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-3 bg-gray-600/50 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center gap-2 border border-gray-600"
+                    disabled={saving}
+                    className="px-6 py-3 bg-gray-600/50 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center gap-2 border border-gray-600 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <FaTimes className="text-sm" />
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-blue-500/25"
+                    disabled={saving}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-blue-500/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:from-blue-500 disabled:hover:to-purple-600"
                   >
-                    <FaSave className="text-sm" />
-                    Save Changes
+                    {saving ? (
+                      <>
+                        <FaSpinner className="text-sm animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <FaSave className="text-sm" />
+                        Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
