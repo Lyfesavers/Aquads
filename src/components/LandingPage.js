@@ -3199,17 +3199,17 @@ const CarouselCard = ({ feature, index }) => {
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      className="min-w-0 flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-2.5 py-2"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.3 + i * 0.1 }}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="w-full flex items-center justify-center lg:justify-start gap-2 min-w-0">
                         <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
-                        <span className="font-semibold">{item.label}</span>
+                        <span className="font-semibold leading-tight text-center lg:text-left break-words">{item.label}</span>
                       </div>
-                      <span className="text-yellow-400 text-xs">{item.value}</span>
+                      <span className="text-yellow-400 text-[11px] leading-tight text-center lg:text-left break-all">{item.value}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -3231,11 +3231,11 @@ const CarouselCard = ({ feature, index }) => {
                     </motion.button>
                   </Link>
 
-                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                  <div className="flex items-start gap-2 text-gray-400 text-xs md:text-sm min-w-0">
                     <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Dashboard → <span className="text-white">Link in bio</span> → Customize → Save → Share</span>
+                    <span className="leading-tight break-words">Dashboard → <span className="text-white">Link in bio</span> → Customize → Save → Share</span>
                   </div>
                 </motion.div>
               </div>
