@@ -32,7 +32,8 @@ import {
   AffiliateMockup,
   TokenListingMockup,
   TelegramBotMockup,
-  BubbleAdsMockup
+  BubbleAdsMockup,
+  LinkInBioMockup
 } from './DocMockups';
 
 // Documentation content structure with all Aquads features
@@ -47,6 +48,7 @@ const documentationStructure = [
       { id: 'platform-overview', title: 'Platform Overview', content: 'platformOverview' },
       { id: 'dashboard', title: 'Using the Dashboard', content: 'dashboard' },
       { id: 'profile-setup', title: 'Profile Setup', content: 'profileSetup' },
+      { id: 'link-in-bio', title: 'Link in Bio Tool', content: 'linkInBioTool' },
     ]
   },
   {
@@ -428,6 +430,14 @@ Manage your payment links:
 - Configure payment settings
 - Create custom payment pages
 
+**Link in bio Tab**
+Build a premium links page for your audience:
+- Add up to 12 social or website links
+- Set accent and button colors
+- Choose button style (rounded, pill, minimal, bordered, filled)
+- Add a full-screen background image via direct URL
+- Copy and share your public page URL instantly
+
 ### User Dropdown Menu Options
 
 When clicking your username, you'll see:
@@ -469,7 +479,7 @@ A complete profile increases your credibility and helps you connect with others 
 
 ### Profile Settings Tabs
 
-The profile modal has four main tabs:
+The profile modal has five main tabs:
 
 **1. 👤 Profile Tab**
 Basic information settings:
@@ -498,6 +508,14 @@ Blockchain-verified credentials:
 - EAS (Ethereum Attestation Service) integration
 - Verifiable trust score
 - Permanent reputation record
+
+**5. 🔗 Link in bio Tab**
+Create a branded social hub page:
+- Add/reorder/remove your links
+- Set accent color and optional button color
+- Choose button style and save live preview updates
+- Add a full-screen background image URL
+- Share your public page at \`/links/yourusername\`
 
 ### Profile Picture Setup
 
@@ -542,6 +560,66 @@ Password requirements:
 - Consider minting your On-Chain Resume for verified credibility
     `,
     prevPage: { id: 'dashboard', title: 'Using the Dashboard' },
+    nextPage: { id: 'link-in-bio', title: 'Link in Bio Tool' },
+  },
+
+  linkInBioTool: {
+    title: 'Link in Bio Tool',
+    description: 'Create a premium, shareable links page with custom styles and full-screen background images.',
+    mockup: <LinkInBioMockup />,
+    content: `
+## Link in Bio Tool
+
+The Link in bio tool gives you a premium public page for all your important links at:
+\`aquads.xyz/links/yourusername\`
+
+### Where to Find It
+
+1. Open **Dashboard**
+2. Go to **Link in bio** tab
+3. Add your links and customize styling
+4. Click **Save**
+
+### What You Can Customize
+
+| Setting | Description |
+|---------|-------------|
+| **Links** | Add up to 12 links (title + URL), drag/order style controls |
+| **Accent Color** | Main brand color for page accents |
+| **Button Color** | Optional separate color for button visuals |
+| **Button Style** | Rounded, Pill, Minimal, Bordered, Filled |
+| **Background Image URL** | Full-screen image behind your links page |
+
+### Background Image Best Practices
+
+- Use a **direct image URL** (JPEG, PNG, WEBP)
+- Recommended size: **1920x1080 or larger**
+- 16:9 images work best across desktop and mobile
+- The image automatically uses **cover** mode to fill the screen
+
+### Save Behavior
+
+When you click save, Aquads stores:
+- Your links
+- Accent color
+- Button color
+- Button style
+- Background image URL
+
+All updates apply instantly to your public links page.
+
+### Public Sharing
+
+Copy your URL from the Link in bio panel and share it on:
+- X/Twitter bio
+- Telegram profile
+- Discord profile
+- Instagram bio
+- Link hubs and project pages
+
+> 💡 **Tip**: Use one strong background image and high contrast colors for the most premium look.
+    `,
+    prevPage: { id: 'profile-setup', title: 'Profile Setup' },
     nextPage: { id: 'listing-token', title: 'Listing Your Token' },
   },
   

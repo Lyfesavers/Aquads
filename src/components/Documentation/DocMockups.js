@@ -397,6 +397,87 @@ export const ProfileSettingsMockup = () => (
   </MockupContainer>
 );
 
+// Link in Bio Settings Mockup
+export const LinkInBioMockup = () => (
+  <MockupContainer title="Link in Bio Settings">
+    <div className="bg-gray-800 rounded-lg overflow-hidden">
+      <div className="bg-gray-900 px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+        <h2 className="text-white font-bold">Dashboard - Link in bio</h2>
+        <button className="text-gray-400 hover:text-white">✕</button>
+      </div>
+
+      {/* Premium preview matching live setup */}
+      <div className="p-4">
+        <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+          {/* Background image layer */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "url('https://i.postimg.cc/8PqxmTrD/Untitled-design-(5).png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          />
+          {/* Tint overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-black/55" />
+
+          {/* Link in bio page mock */}
+          <div className="relative z-10 px-4 py-5">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full border-2 border-yellow-400/70 bg-[#2d1e59] shadow-[0_0_20px_rgba(250,204,21,0.35)] flex items-center justify-center">
+                <span className="text-yellow-300 font-bold text-xs">A</span>
+              </div>
+              <div className="text-white font-semibold mt-2 mb-4">Aquads</div>
+            </div>
+
+            <div className="space-y-2.5 max-w-md mx-auto">
+              {['WEBSITE', 'TWITTER', 'FACEBOOK', 'TELEGRAM', 'DISCORD'].map((label) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between rounded-full border border-purple-400/70 bg-purple-500/45 px-4 py-2.5 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-md bg-yellow-400/20 text-yellow-300 border border-yellow-300/40 flex items-center justify-center text-[10px]">
+                      ★
+                    </div>
+                    <span className="text-white text-xs font-semibold tracking-wide">{label}</span>
+                  </div>
+                  <span className="text-yellow-300 text-xs">↗</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex items-center justify-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 border border-white/15 text-[11px]">
+                <span className="text-gray-300">Powered by</span>
+                <span className="text-yellow-300 font-semibold">Aquads.xyz</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Settings hints below preview */}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="bg-gray-700/30 rounded-lg p-2 border border-gray-600/40">
+            <div className="text-gray-400 text-[11px]">Main Color</div>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-4 h-4 rounded-full bg-purple-500 border border-purple-300" />
+              <span className="text-purple-300 text-[11px]">#A855F7</span>
+            </div>
+          </div>
+          <div className="bg-gray-700/30 rounded-lg p-2 border border-gray-600/40">
+            <div className="text-gray-400 text-[11px]">Icon Accent</div>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-4 h-4 rounded-full bg-yellow-400 border border-yellow-300" />
+              <span className="text-yellow-300 text-[11px]">#FACC15</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </MockupContainer>
+);
+
 // Token Voting Mockup
 export const TokenVotingMockup = () => (
   <MockupContainer title="Token Voting Modal">
@@ -1501,6 +1582,7 @@ export default {
   DashboardMockup,
   BubbleMapMockup,
   ProfileSettingsMockup,
+  LinkInBioMockup,
   TokenVotingMockup,
   UserDropdownMockup,
   MarketplaceMockup,
