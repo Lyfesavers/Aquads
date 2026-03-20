@@ -318,7 +318,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> Aquads</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Join the world's first BEX (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
+              Join the Aquads BEX (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
             </p>
                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
                <button

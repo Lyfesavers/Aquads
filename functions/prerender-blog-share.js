@@ -202,7 +202,7 @@ function getDefaultHtml() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Aquads - World's First BEX - Bicentralized Exchange Hub">
+  <meta name="description" content="Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!">
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
@@ -219,7 +219,7 @@ function getDefaultHtml() {
   <meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!">
   <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
   
-  <title>Aquads - World's First BEX - Bicentralized Exchange Hub</title>
+  <title>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace</title>
   <script>window.location.href='/learn';</script>
 </head>
 <body>
