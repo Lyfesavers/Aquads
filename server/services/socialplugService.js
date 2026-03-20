@@ -346,10 +346,44 @@ const placeOrder = async (spaceUrl, listeners, duration) => {
 };
 
 /**
+ * Map Socialplug GET /order status strings to HyperSpaceOrder.socialplugStatus enum values.
+ * API may return title case or labels not in our schema (e.g. "Submitted").
+ */
+const normalizeSocialplugStatus = (raw) => {
+  if (raw == null || raw === '') return null;
+  const key = String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
+  const map = {
+    submitted: 'pending',
+    pending: 'pending',
+    queued: 'pending',
+    'in progress': 'in_progress',
+    in_progress: 'in_progress',
+    progressing: 'in_progress',
+    processing: 'processing',
+    active: 'processing',
+    running: 'processing',
+    completed: 'completed',
+    complete: 'completed',
+    done: 'completed',
+    partial: 'partial',
+    canceled: 'canceled',
+    cancelled: 'canceled',
+    refund: 'refunded',
+    refunded: 'refunded',
+    failed: 'failed',
+    error: 'failed'
+  };
+  const mapped = map[key] || map[key.replace(/ /g, '_')];
+  if (mapped) return mapped;
+  console.warn(`Socialplug unknown order status "${raw}", storing as pending`);
+  return 'pending';
+};
+
+/**
  * Check order status on Socialplug
  * Endpoint: GET /order/{id}
  * @param {string} orderId - The Socialplug order ID
- * @returns {Promise<{success: boolean, status?: string, error?: string}>}
+ * @returns {Promise<{success: boolean, status?: string, rawStatus?: string, error?: string}>}
  */
 const checkOrderStatus = async (orderId) => {
   if (!SOCIALPLUG_API_KEY) {
@@ -368,9 +402,11 @@ const checkOrderStatus = async (orderId) => {
     // Status check successful
 
     if (response.data && !response.data.error) {
+      const rawStatus = response.data.status;
       return { 
         success: true, 
-        status: response.data.status,
+        status: normalizeSocialplugStatus(rawStatus),
+        rawStatus: rawStatus != null ? String(rawStatus) : undefined,
         charge: response.data.charge || response.data.cost,
         startCount: response.data.start_count || response.data.startCount,
         remains: response.data.remains,
