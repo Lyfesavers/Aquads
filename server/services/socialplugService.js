@@ -37,11 +37,12 @@ const SELLING_PRICES = {
   5000: { 30: 450, 60: 550, 120: 650 }    // Cost 350,450,550 → Profit $100
 };
 
-// TEST PRICING: Override customer price for specific package (set price to 0 to disable)
+// TEST PRICING: Override customer price for this package only (set price to 0 to disable).
+// Socialplug cost stays real; placeOrder still runs against their API — you eat margin during tests.
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0 // DISABLED - Using normal pricing ($21 for 100 listeners / 30 min)
+  price: 0.5
 };
 
 /**
@@ -101,27 +102,25 @@ const getAllPackages = () => {
   };
 
   for (const listeners of listenerOptions) {
-    // Get the base 30-min price for calculating savings
-    const base30minPrice = getCustomerPrice(listeners, 30);
-    
+    // For “vs buying multiple 30-min slots” UX, use list 30-min retail (ignores test override).
+    const base30minRetail = calculateSellingPrice(listeners, 30) ?? getCustomerPrice(listeners, 30);
+
     for (const duration of durationOptions) {
       const cost = getSocialplugCost(listeners, duration);
       const price = getCustomerPrice(listeners, duration);
       const profit = price - cost;
-      
-      // Calculate savings compared to buying multiple 30-min packages
+
+      // Calculate savings compared to buying multiple 30-min packages at normal 30-min rate
       let originalPrice = null;
       let savings = 0;
       let savingsPercent = 0;
-      
+
       if (duration === 60) {
-        // Compare 1hr to 2x 30min
-        originalPrice = base30minPrice * 2;
+        originalPrice = base30minRetail * 2;
         savings = originalPrice - price;
         savingsPercent = Math.round((savings / originalPrice) * 100);
       } else if (duration === 120) {
-        // Compare 2hr to 4x 30min
-        originalPrice = base30minPrice * 4;
+        originalPrice = base30minRetail * 4;
         savings = originalPrice - price;
         savingsPercent = Math.round((savings / originalPrice) * 100);
       }
