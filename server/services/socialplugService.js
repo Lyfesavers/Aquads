@@ -38,11 +38,10 @@ const SELLING_PRICES = {
 };
 
 // TEST PRICING: Override customer price for this package only (set price to 0 to disable).
-// Socialplug cost stays real; placeOrder still runs against their API — you eat margin during tests.
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0.5
+  price: 0
 };
 
 /**
@@ -362,6 +361,7 @@ const normalizeSocialplugStatus = (raw) => {
     processing: 'processing',
     active: 'processing',
     running: 'processing',
+    working: 'in_progress',
     completed: 'completed',
     complete: 'completed',
     done: 'completed',
