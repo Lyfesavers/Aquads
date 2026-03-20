@@ -1960,9 +1960,18 @@ function App() {
   };
 
 
-  // Add effect to check for showCreateAccount parameter
+  // Add effect to check for showCreateAccount parameter and capture referral code
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // Capture ?ref= on initial page load and persist for the entire session.
+    // This guarantees the referral is tracked even if the user navigates away
+    // from the landing URL before creating an account.
+    const refCode = params.get('ref');
+    if (refCode && !sessionStorage.getItem('pendingReferralCode')) {
+      sessionStorage.setItem('pendingReferralCode', refCode);
+    }
+
     if (params.get('showCreateAccount') === 'true') {
       setShowCreateAccountModal(true);
       

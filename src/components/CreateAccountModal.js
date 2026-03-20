@@ -285,24 +285,20 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   ];
 
   useEffect(() => {
-    // Check URL parameters first
+    // Check URL parameters first, then sessionStorage as fallback
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref');
-    
-    // Then check sessionStorage for a pending referral code
     const pendingRefCode = sessionStorage.getItem('pendingReferralCode');
     
-    // Use the ref code from URL or session storage
+    // Use the ref code from URL or session storage.
+    // Do NOT remove from sessionStorage here — keep it so it survives
+    // if the user closes and reopens the modal before registering.
+    // It is cleared after successful registration in handleSubmit.
     if (refCode || pendingRefCode) {
       setFormData(prev => ({
         ...prev,
         referralCode: refCode || pendingRefCode
       }));
-      
-      // Clear from session storage after use
-      if (pendingRefCode) {
-        sessionStorage.removeItem('pendingReferralCode');
-      }
     }
   }, []);
 
@@ -419,8 +415,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     
     try {
       await onCreateAccount(formData);
-      // Reset submitting state in case of success
-      // (though the modal will likely close in this case)
+      // Clear the persisted referral code now that the account was created successfully
+      sessionStorage.removeItem('pendingReferralCode');
       setIsSubmitting(false);
     } catch (error) {
       if (error.response?.status === 429) {
