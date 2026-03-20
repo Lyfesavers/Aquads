@@ -1,5 +1,12 @@
+const {
+  serializeHyperSpaceOrderForUser,
+  serializeHyperSpaceOrderListItemForUser
+} = require('./utils/hyperSpacePublicOrder');
+
 // Socket.io singleton instance
 let io;
+
+const HYPERSPACE_ADMIN_ROOM = 'hyperSpaceAdmin';
 
 // Store connected users
 const connectedUsers = new Map();
@@ -538,6 +545,20 @@ function init(server) {
       }
     });
 
+    // Verified admins join this room to receive HyperSpace admin socket events (not broadcast globally).
+    socket.on('joinHyperSpaceAdminRoom', async (data) => {
+      if (!data || !data.userId) return;
+      try {
+        const User = require('./models/User');
+        const user = await User.findById(data.userId).select('isAdmin').lean();
+        if (user && user.isAdmin) {
+          socket.join(HYPERSPACE_ADMIN_ROOM);
+        }
+      } catch (err) {
+        console.error('joinHyperSpaceAdminRoom error:', err.message);
+      }
+    });
+
     // Handle requesting HyperSpace packages (public - no auth needed)
     socket.on('requestHyperSpacePackages', async () => {
       try {
@@ -599,7 +620,9 @@ function init(server) {
         const order = await HyperSpaceOrder.findOne({ orderId: data.orderId }).lean();
         
         if (order) {
-          socket.emit('hyperSpaceOrderStatusLoaded', { order });
+          socket.emit('hyperSpaceOrderStatusLoaded', {
+            order: serializeHyperSpaceOrderForUser(order)
+          });
         } else {
           socket.emit('hyperSpaceOrderStatusError', { error: 'Order not found' });
         }
@@ -624,20 +647,7 @@ function init(server) {
           .lean();
 
         socket.emit('userHyperSpaceOrdersLoaded', {
-          orders: orders.map(order => ({
-            orderId: order.orderId,
-            spaceUrl: order.spaceUrl,
-            listeners: order.listenerCount,
-            duration: order.duration,
-            price: order.customerPrice,
-            status: order.status,
-            createdAt: order.createdAt,
-            completedAt: order.completedAt,
-            // Timer data
-            deliveryEndsAt: order.deliveryEndsAt,
-            socialplugOrderedAt: order.socialplugOrderedAt,
-            autoCompleted: order.autoCompleted
-          }))
+          orders: orders.map(order => serializeHyperSpaceOrderListItemForUser(order))
         });
       } catch (error) {
         console.error('Error fetching user HyperSpace orders:', error);
@@ -1552,15 +1562,13 @@ function emitUserTokenBalanceUpdate(userId, balanceData) {
 // HyperSpace order emit functions
 function emitHyperSpaceOrderUpdate(orderData) {
   if (io) {
-    // Emit to admins for dashboard updates
-    io.emit('hyperSpaceOrderUpdate', orderData);
+    io.to(HYPERSPACE_ADMIN_ROOM).emit('hyperSpaceOrderUpdate', orderData);
   }
 }
 
 function emitNewHyperSpaceOrder(orderData) {
   if (io) {
-    // Emit to admins when new order is pending
-    io.emit('newHyperSpaceOrderPending', orderData);
+    io.to(HYPERSPACE_ADMIN_ROOM).emit('newHyperSpaceOrderPending', orderData);
   }
 }
 

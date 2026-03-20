@@ -8,10 +8,14 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const socialplugService = require('../services/socialplugService');
 const socket = require('../socket');
+const {
+  serializeHyperSpaceOrderForUser,
+  serializeHyperSpaceOrderListItemForUser,
+  toPlain
+} = require('../utils/hyperSpacePublicOrder');
 
 /**
  * HyperSpace Routes - Twitter Space Listeners Service
- * Powered by Socialplug API (white-label)
  */
 
 // GET /api/hyperspace/packages - Get all available packages with pricing
@@ -210,28 +214,25 @@ router.post('/order', auth, requireEmailVerification, async (req, res) => {
       await order.save();
 
       try {
-        const io = socket.getIO();
-        if (io) {
-          io.emit('newHyperSpaceOrderPending', {
-            orderId: order.orderId,
-            username: order.username,
-            listenerCount: order.listenerCount,
-            duration: order.duration,
-            spaceUrl: order.spaceUrl,
-            customerPrice: order.customerPrice,
-            socialplugCost: order.socialplugCost,
-            createdAt: order.createdAt,
-            status: order.status,
-            errorMessage: order.errorMessage,
-            paymentMethod: order.paymentMethod,
-            isFreeReward: true
-          });
-          socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
-            message: 'Your free reward order is being processed.',
-            listenerCount: order.listenerCount,
-            duration: order.duration
-          });
-        }
+        socket.emitNewHyperSpaceOrder({
+          orderId: order.orderId,
+          username: order.username,
+          listenerCount: order.listenerCount,
+          duration: order.duration,
+          spaceUrl: order.spaceUrl,
+          customerPrice: order.customerPrice,
+          socialplugCost: order.socialplugCost,
+          createdAt: order.createdAt,
+          status: order.status,
+          errorMessage: order.errorMessage,
+          paymentMethod: order.paymentMethod,
+          isFreeReward: true
+        });
+        socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
+          message: 'Your free reward order is being processed.',
+          listenerCount: order.listenerCount,
+          duration: order.duration
+        });
       } catch (socketError) {
         console.error('Socket emit error:', socketError);
       }
@@ -371,28 +372,25 @@ router.post('/order/:orderId/confirm-payment', auth, async (req, res) => {
 
     // Notify admin via socket (same event/payload as crypto flow so Dashboard shows the order)
     try {
-      const io = socket.getIO();
-      if (io) {
-        io.emit('newHyperSpaceOrderPending', {
-          orderId: order.orderId,
-          username: order.username,
-          listenerCount: order.listenerCount,
-          duration: order.duration,
-          spaceUrl: order.spaceUrl,
-          customerPrice: order.customerPrice,
-          socialplugCost: order.socialplugCost,
-          createdAt: order.createdAt,
-          status: order.status,
-          errorMessage: order.errorMessage,
-          paymentMethod: order.paymentMethod
-        });
-        // Notify user instantly via socket so they don't wait for polling
-        socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
-          message: 'Payment received! Your order is being processed.',
-          listenerCount: order.listenerCount,
-          duration: order.duration
-        });
-      }
+      socket.emitNewHyperSpaceOrder({
+        orderId: order.orderId,
+        username: order.username,
+        listenerCount: order.listenerCount,
+        duration: order.duration,
+        spaceUrl: order.spaceUrl,
+        customerPrice: order.customerPrice,
+        socialplugCost: order.socialplugCost,
+        createdAt: order.createdAt,
+        status: order.status,
+        errorMessage: order.errorMessage,
+        paymentMethod: order.paymentMethod
+      });
+      // Notify user instantly via socket so they don't wait for polling
+      socket.emitHyperSpaceOrderStatusChange(order.orderId, 'pending_approval', {
+        message: 'Payment received! Your order is being processed.',
+        listenerCount: order.listenerCount,
+        duration: order.duration
+      });
     } catch (socketError) {
       console.error('Socket emit error:', socketError);
     }
@@ -445,7 +443,7 @@ router.get('/order/:orderId', auth, async (req, res) => {
             order.completedAt = new Date();
           } else if (statusResult.status === 'canceled' || statusResult.status === 'refunded') {
             order.status = 'failed';
-            order.errorMessage = `Socialplug order ${statusResult.status}`;
+            order.errorMessage = `Fulfillment provider: order ${statusResult.status}`;
           }
           
           await order.save();
@@ -455,27 +453,13 @@ router.get('/order/:orderId', auth, async (req, res) => {
       }
     }
 
+    const payloadOrder = req.user.isAdmin
+      ? toPlain(order)
+      : serializeHyperSpaceOrderForUser(order);
+
     res.json({
       success: true,
-      order: {
-        orderId: order.orderId,
-        spaceUrl: order.spaceUrl,
-        listeners: order.listenerCount,
-        duration: order.duration,
-        durationLabel: order.durationLabel,
-        price: order.customerPrice,
-        status: order.status,
-        socialplugStatus: order.socialplugStatus,
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-        completedAt: order.completedAt,
-        errorMessage: order.errorMessage,
-        // Timer data
-        deliveryEndsAt: order.deliveryEndsAt,
-        socialplugOrderedAt: order.socialplugOrderedAt,
-        autoCompleted: order.autoCompleted
-      }
+      order: payloadOrder
     });
   } catch (error) {
     console.error('Error fetching order:', error);
@@ -498,20 +482,7 @@ router.get('/my-orders', auth, async (req, res) => {
 
     res.json({
       success: true,
-      orders: orders.map(order => ({
-        orderId: order.orderId,
-        spaceUrl: order.spaceUrl,
-        listeners: order.listenerCount,
-        duration: order.duration,
-        price: order.customerPrice,
-        status: order.status,
-        createdAt: order.createdAt,
-        completedAt: order.completedAt,
-        // Timer data
-        deliveryEndsAt: order.deliveryEndsAt,
-        socialplugOrderedAt: order.socialplugOrderedAt,
-        autoCompleted: order.autoCompleted
-      })),
+      orders: orders.map(order => serializeHyperSpaceOrderListItemForUser(order)),
       pagination: {
         total,
         pages: Math.ceil(total / limit),

@@ -2765,6 +2765,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
 
+    socket.emit('joinHyperSpaceAdminRoom', {
+      userId: currentUser.userId || currentUser.id
+    });
+
     const handleHyperSpaceOrdersLoaded = (data) => {
       setPendingHyperSpaceOrders(data.orders || []);
       setIsLoadingHyperSpaceOrders(false);
