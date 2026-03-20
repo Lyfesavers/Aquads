@@ -188,6 +188,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     { id: 'tokenomics', name: 'Tokenomics', icon: '📊' },
     { id: 'web3', name: 'Web3', icon: '🌐' },
     { id: 'community', name: 'Community', icon: '👥' },
+    { id: 'kol', name: 'KOL', icon: '🎙️' },
     // Development Categories
     { id: 'web-developer', name: 'Web Developer', icon: '💻' },
     { id: 'mobile-developer', name: 'Mobile Developer', icon: '📱' },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaCheck, FaRocket, FaUsers, FaChartLine, FaDollarSign, 
   FaGlobe, FaShieldAlt, FaCode, FaBullhorn, FaPen, FaLightbulb,
-  FaArrowRight, FaStar, FaTrophy, FaEye, FaSearch
+  FaArrowRight, FaStar, FaTrophy, FaEye, FaSearch, FaMicrophone
 } from 'react-icons/fa';
 
 const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted, isCompletingSection }) => {
@@ -196,6 +196,15 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted, is
               skills: ['Content marketing', 'Community management', 'Social media'],
               growth: '+200%',
               color: 'from-green-500 to-teal-600'
+            },
+            {
+              name: 'KOL / Web3 Influencer',
+              icon: FaMicrophone,
+              demand: 88,
+              avgRate: '$100/hr',
+              skills: ['AMA & Spaces', 'Campaign promos', 'Partnerships', 'Launch awareness'],
+              growth: '+260%',
+              color: 'from-amber-500 to-orange-600'
             },
             {
               name: 'Content Writing',

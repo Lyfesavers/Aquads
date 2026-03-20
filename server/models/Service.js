@@ -20,6 +20,7 @@ const serviceSchema = new mongoose.Schema({
       'tokenomics',
       'web3',
       'community',
+      'kol',
       // Development Categories
       'web-developer',
       'mobile-developer',
