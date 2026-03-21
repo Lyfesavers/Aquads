@@ -203,9 +203,26 @@ setInterval(async () => {
   }
 }, SHRINK_INTERVAL);
 
+// Cache for the ads (bubbles) list — short TTL because vote counts matter.
+// Votes also emit socket events so clients see real-time updates regardless of cache age.
+let adsListCache = null;
+let adsListCacheTime = 0;
+const ADS_LIST_CACHE_TTL = 30 * 1000; // 30 seconds
+
+const invalidateAdsCache = () => {
+  adsListCache = null;
+  adsListCacheTime = 0;
+};
+
 // GET route
 router.get('/', async (req, res) => {
   try {
+    const now = Date.now();
+    if (adsListCache && now - adsListCacheTime < ADS_LIST_CACHE_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(adsListCache);
+    }
+
     // Only show active or approved ads (not pending or rejected)
     const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
     
@@ -250,6 +267,9 @@ router.get('/', async (req, res) => {
       return ad;
     });
     
+    adsListCache = processedAds;
+    adsListCacheTime = Date.now();
+    res.set('X-Cache', 'MISS');
     res.json(processedAds);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -421,6 +441,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       await affiliateEarning.save();
     }
 
+    invalidateAdsCache();
     res.status(201).json(savedAd);
   } catch (error) {
     res.status(500).json({ 
@@ -669,13 +690,14 @@ router.post('/:id/vote', auth, async (req, res) => {
         await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
       
+      invalidateAdsCache();
       // Emit socket event for real-time updates
       socket.getIO().emit('adVoteUpdated', {
         adId: updatedAd.id,
         bullishVotes: updatedAd.bullishVotes,
         bearishVotes: updatedAd.bearishVotes
       });
-      
+
       // Send notification to registered Telegram group about vote change
       telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
         console.error('Error sending telegram notification:', err);
@@ -729,13 +751,14 @@ router.post('/:id/vote', auth, async (req, res) => {
         await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
       
+      invalidateAdsCache();
       // Emit socket event for real-time updates
       socket.getIO().emit('adVoteUpdated', {
         adId: updatedAd.id,
         bullishVotes: updatedAd.bullishVotes,
         bearishVotes: updatedAd.bearishVotes
       });
-      
+
       // Send notification to registered Telegram group about new vote
       telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
         console.error('Error sending telegram notification:', err);
@@ -840,6 +863,7 @@ router.post('/:id/approve', auth, emitAdEvent('update'), async (req, res) => {
       // Don't fail the approval if socket emission fails
     }
 
+    invalidateAdsCache();
     res.json({ 
       message: 'Ad approved successfully',
       ad
@@ -870,6 +894,7 @@ router.post('/:id/reject', auth, emitAdEvent('delete'), async (req, res) => {
 
     // Instead of updating the status, delete the ad entirely
     await Ad.findByIdAndDelete(ad._id);
+    invalidateAdsCache();
 
     // Emit real-time socket update for ad rejection
     try {
@@ -895,4 +920,36 @@ router.post('/:id/reject', auth, emitAdEvent('delete'), async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Pre-warm the ads (bubbles) cache on startup.
+const warmupAdsCache = async () => {
+  try {
+    const now = Date.now();
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
+    const processedAds = ads.map(ad => {
+      if (ad.isBumped && ad.bumpExpiresAt && now <= new Date(ad.bumpExpiresAt).getTime()) {
+        return ad;
+      }
+      if (!ad.isBumped) {
+        const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+        const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+        let calculatedSize = MAX_SIZE;
+        for (let i = 0; i < shrinkIntervals; i++) calculatedSize *= SHRINK_PERCENTAGE;
+        calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
+        if (calculatedSize !== ad.size) {
+          const adObject = ad.toObject();
+          adObject.size = calculatedSize;
+          return adObject;
+        }
+      }
+      return ad;
+    });
+    adsListCache = processedAds;
+    adsListCacheTime = now;
+    console.log(`[Ads Cache] Warmed up ${processedAds.length} ads`);
+  } catch (err) {
+    console.error('[Ads Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupAdsCache = warmupAdsCache;

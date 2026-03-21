@@ -243,4 +243,35 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
+// Pre-warm the public jobs cache on startup so the first visit to the jobs page is fast.
+const warmupJobsCache = async () => {
+  try {
+    const limit = 20;
+    const totalJobs = await Job.countDocuments({ status: 'active' });
+    const jobs = await Job.find({ status: 'active' })
+      .populate('owner', 'username image')
+      .sort({ source: 1, createdAt: -1 })
+      .skip(0)
+      .limit(limit)
+      .lean();
+
+    const responseData = {
+      jobs,
+      pagination: {
+        total: totalJobs,
+        page: 1,
+        limit,
+        totalPages: Math.ceil(totalJobs / limit),
+        hasMore: jobs.length < totalJobs
+      }
+    };
+
+    jobsPublicCache.set('jobs_p1_l20', { data: responseData, timestamp: Date.now() });
+    console.log(`[Jobs Cache] Warmed up ${jobs.length} jobs (${totalJobs} total)`);
+  } catch (err) {
+    console.error('[Jobs Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
 module.exports = router;
+module.exports.warmupJobsCache = warmupJobsCache;

@@ -646,8 +646,14 @@ mongoose.connect(process.env.MONGODB_URI, {
   // Pre-warm caches so the first page load after restart is fast
   const { warmupReviewsCache } = require('./routes/reviews');
   const { warmupTokensCache } = require('./routes/tokens');
+  const { warmupGamesCache } = require('./routes/games');
+  const { warmupJobsCache } = require('./routes/jobs');
+  const { warmupAdsCache } = require('./routes/ads');
   warmupReviewsCache();
   warmupTokensCache();
+  warmupGamesCache();
+  warmupJobsCache();
+  warmupAdsCache();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry

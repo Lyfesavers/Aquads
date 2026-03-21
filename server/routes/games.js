@@ -285,6 +285,34 @@ router.get('/:id/voted', auth, async (req, res) => {
   }
 });
 
-// (moved categories route above)
+// Pre-warm the games cache on startup — runs the two most expensive queries (list + categories)
+// so the first user after a restart never waits 12-20 seconds.
+const warmupGamesCache = async () => {
+  try {
+    const now = Date.now();
 
-module.exports = router; 
+    // Main games list (default sort by votes)
+    const games = await Game.find({ status: 'active' })
+      .populate('owner', 'username image')
+      .sort({ votes: -1 })
+      .lean();
+    gamesCache.set('games___active_votes', { data: games, timestamp: now });
+
+    // Categories
+    const categories = await Game.aggregate([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    const catData = categories.map(cat => ({ name: cat._id, count: cat.count }));
+    gamesCache.set('categories', { data: catData, timestamp: now });
+    gamesCache.set('categories_popular', { data: catData.slice(0, 10), timestamp: now });
+
+    console.log(`[Games Cache] Warmed up ${games.length} games, ${catData.length} categories`);
+  } catch (err) {
+    console.error('[Games Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupGamesCache = warmupGamesCache;
