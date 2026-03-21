@@ -10,10 +10,29 @@ const { awardListingPoints } = require('./points');
 const { createNotification } = require('./notifications');
 const { emitServiceApproved, emitServiceRejected, emitNewServicePending } = require('../socket');
 
+// Cache for services list — the GET with populate + 2 aggregations is very expensive.
+// Cache keyed by query params, TTL 2 minutes. Invalidated on create/update/delete/approve.
+const servicesCache = new Map();
+const SERVICES_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+const invalidateServicesCache = () => {
+  servicesCache.clear();
+};
+
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
   try {
     const { category, sort, limit = 20, page = 1 } = req.query;
+
+    // Cache for non-filtered requests (most page loads)
+    const cacheKey = `services_${category || ''}_${sort || ''}_${limit}_${page}`;
+    const now = Date.now();
+    const cached = servicesCache.get(cacheKey);
+    if (cached && now - cached.timestamp < SERVICES_CACHE_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+
     const query = { status: 'active' }; // Only show active services to regular users
     const sortOptions = {};
 
@@ -116,14 +135,18 @@ router.get('/', async (req, res) => {
 
     const total = await Service.countDocuments(query);
 
-    res.json({
+    const responseData = {
       services: servicesWithReviews,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
         currentPage: parseInt(page)
       }
-    });
+    };
+
+    servicesCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    res.set('X-Cache', 'MISS');
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ message: 'Error fetching services', error: error.message });
@@ -206,7 +229,8 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     });
 
     await service.save();
-    
+    invalidateServicesCache();
+
     // Award points for creating a listing
     try {
       await awardListingPoints(req.user.userId);
@@ -265,6 +289,7 @@ router.put('/:id', auth, requireEmailVerification, upload.single('image'), async
     });
 
     await service.save();
+    invalidateServicesCache();
     await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     res.json(service);
@@ -619,7 +644,8 @@ router.post('/:id/approve', auth, async (req, res) => {
 
     service.status = 'active';
     await service.save();
-    
+    invalidateServicesCache();
+
     await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Create notification for the seller
@@ -683,7 +709,8 @@ router.post('/:id/reject', auth, async (req, res) => {
 
     service.status = 'inactive';
     await service.save();
-    
+    invalidateServicesCache();
+
     await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
 
     // Create notification for the seller

@@ -65,6 +65,15 @@ router.get('/matched', auth, async (req, res) => {
 let lastJobExpirySweep = 0;
 const JOB_EXPIRY_INTERVAL = 60 * 60 * 1000; // 1 hour
 
+// Cache for the PUBLIC jobs listing (no owner filter) — very expensive due to populate + count.
+// Owner-specific queries are user-unique and can't be cached globally.
+const jobsPublicCache = new Map();
+const JOBS_PUBLIC_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+const invalidateJobsPublicCache = () => {
+  jobsPublicCache.clear();
+};
+
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
@@ -96,22 +105,32 @@ router.get('/', async (req, res) => {
 
     // Pagination parameters
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20; // Default 20 jobs per page
+    const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
+
+    // Serve public job listings from cache (owner queries are too specific to cache)
+    const isPublicRequest = !req.query.owner && !req.query.includeExpired;
+    if (isPublicRequest) {
+      const cacheKey = `jobs_p${page}_l${limit}`;
+      const cached = jobsPublicCache.get(cacheKey);
+      if (cached && now - cached.timestamp < JOBS_PUBLIC_CACHE_TTL) {
+        res.set('X-Cache', 'HIT');
+        return res.json(cached.data);
+      }
+    }
 
     // Get total count for pagination info
     const totalJobs = await Job.countDocuments(query);
     
-    // Fetch jobs with pagination
-    // Sort by source first (user jobs first), then by createdAt (newest first)
+    // Fetch jobs with pagination — sort by source first (user jobs first), then newest
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
       .sort({ source: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
-    
-    res.json({
+
+    const responseData = {
       jobs,
       pagination: {
         total: totalJobs,
@@ -120,7 +139,15 @@ router.get('/', async (req, res) => {
         totalPages: Math.ceil(totalJobs / limit),
         hasMore: skip + jobs.length < totalJobs
       }
-    });
+    };
+
+    if (isPublicRequest) {
+      const cacheKey = `jobs_p${page}_l${limit}`;
+      jobsPublicCache.set(cacheKey, { data: responseData, timestamp: now });
+    }
+
+    res.set('X-Cache', 'MISS');
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
@@ -164,6 +191,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       status: 'active'
     });
     await job.save();
+    invalidateJobsPublicCache();
     res.status(201).json(job);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create job' });
@@ -184,6 +212,7 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
 
     Object.assign(job, req.body);
     await job.save();
+    invalidateJobsPublicCache();
     res.json(job);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update job' });
@@ -207,6 +236,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'Job not found' });
     }
 
+    invalidateJobsPublicCache();
     res.json({ message: 'Job deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete job' });

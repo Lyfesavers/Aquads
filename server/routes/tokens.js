@@ -301,4 +301,44 @@ router.get('/price/:coinId', async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Pre-warm the read cache on startup so the first user never triggers a cold DB query.
+// Runs once after MongoDB connects — a simple find with no external API calls.
+const warmupTokensCache = async () => {
+  try {
+    let tokens = await Token.find({})
+      .sort({ marketCapRank: 1 })
+      .limit(250)
+      .lean();
+
+    tokens = tokens.map(token => ({
+      id: token.id,
+      symbol: token.symbol,
+      name: token.name,
+      image: token.image,
+      currentPrice: Number(token.currentPrice) || 0,
+      marketCap: Number(token.marketCap) || 0,
+      marketCapRank: Number(token.marketCapRank) || 0,
+      totalVolume: Number(token.totalVolume) || 0,
+      priceChange24h: Number(token.priceChange24h) || 0,
+      priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+      high24h: Number(token.high24h) || 0,
+      low24h: Number(token.low24h) || 0,
+      circulatingSupply: Number(token.circulatingSupply) || 0,
+      totalSupply: Number(token.totalSupply) || 0,
+      maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+      ath: Number(token.ath) || 0,
+      athChangePercentage: Number(token.athChangePercentage) || 0,
+      fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
+      lastUpdated: token.lastUpdated
+    }));
+
+    tokensReadCache = tokens;
+    tokensReadCacheTime = Date.now();
+    console.log(`[Tokens Cache] Warmed up ${tokens.length} tokens`);
+  } catch (err) {
+    console.error('[Tokens Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupTokensCache = warmupTokensCache;

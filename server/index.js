@@ -643,9 +643,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 }).then(() => {
   // Initialize skill tests if they don't exist
   initializeSkillTests();
-  // Pre-warm reviews cache so the first page load after restart is fast
+  // Pre-warm caches so the first page load after restart is fast
   const { warmupReviewsCache } = require('./routes/reviews');
+  const { warmupTokensCache } = require('./routes/tokens');
   warmupReviewsCache();
+  warmupTokensCache();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry
