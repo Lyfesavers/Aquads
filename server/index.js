@@ -636,7 +636,10 @@ app.use('/api/register', limiter);
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
-  socketTimeoutMS: 45000 // Close sockets after 45s
+  socketTimeoutMS: 45000, // Close sockets after 45s
+  maxPoolSize: 25, // Limit connection pool to avoid exhausting MongoDB Atlas free-tier connections
+  minPoolSize: 2,  // Keep a few warm connections ready
+  maxIdleTimeMS: 30000 // Release idle connections after 30s to free up the pool
 }).then(() => {
   // Initialize skill tests if they don't exist
   initializeSkillTests();

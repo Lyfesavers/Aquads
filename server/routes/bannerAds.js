@@ -5,14 +5,35 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const AffiliateEarning = require('../models/AffiliateEarning');
 
+// In-memory cache for active banners — polled every 60s by every browser tab,
+// so this prevents a MongoDB query per-client per-minute.
+let activeBannersCache = null;
+let activeBannersCacheTime = 0;
+const BANNERS_CACHE_TTL = 60 * 1000; // 60 seconds
+
+const invalidateBannersCache = () => {
+  activeBannersCache = null;
+  activeBannersCacheTime = 0;
+};
+
 // Get active banner ads
 router.get('/active', async (req, res) => {
   try {
+    const now = Date.now();
+    if (activeBannersCache && now - activeBannersCacheTime < BANNERS_CACHE_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(activeBannersCache);
+    }
+
     const activeBanners = await BannerAd.find({
       status: 'active',
       expiresAt: { $gt: new Date() }
     }).sort({ createdAt: -1 }).lean();
-    
+
+    activeBannersCache = activeBanners;
+    activeBannersCacheTime = now;
+
+    res.set('X-Cache', 'MISS');
     res.json(activeBanners);
   } catch (error) {
     console.error('Error fetching active banners:', error);
@@ -129,6 +150,7 @@ router.post('/:id/approve', auth, async (req, res) => {
     banner.status = 'active';
     banner.expiresAt = new Date(Date.now() + banner.duration);
     await banner.save();
+    invalidateBannersCache();
 
     res.json(banner);
   } catch (error) {
@@ -154,6 +176,7 @@ router.post('/:id/reject', auth, async (req, res) => {
     banner.status = 'rejected';
     banner.rejectionReason = reason;
     await banner.save();
+    invalidateBannersCache();
 
     res.json(banner);
   } catch (error) {
@@ -182,6 +205,7 @@ router.put('/:id', auth, async (req, res) => {
     if (gif) banner.gif = gif;
 
     await banner.save();
+    invalidateBannersCache();
     res.json(banner);
   } catch (error) {
     console.error('Error updating banner:', error);
@@ -204,7 +228,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'Banner not found' });
     }
 
-  
+    invalidateBannersCache();
     res.json({ message: 'Banner deleted successfully', banner });
   } catch (error) {
     console.error('Error deleting banner:', error);

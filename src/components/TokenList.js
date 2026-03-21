@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
@@ -57,6 +57,9 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [fallbackInterval, setFallbackInterval] = useState(null);
+  // Prevents request stacking: if a fetch is already in-flight, don't fire another one.
+  // Without this, slow server responses cause multiple concurrent requests to pile up.
+  const isFetchingTokens = useRef(false);
 
   // Get tokens to display (paginated)
   const displayedTokens = filteredTokens.slice(0, displayCount);
@@ -91,6 +94,10 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
+    // Skip if a fetch is already in-flight to prevent request stacking when the server is slow
+    if (isFetchingTokens.current) {
+      return;
+    }
     try {
       // If we're doing a background refresh while details are open, skip to avoid UI flicker
       if (isBackgroundUpdate && showDetails) {
@@ -100,6 +107,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoading(true);
       }
 
+      isFetchingTokens.current = true;
       const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
@@ -123,6 +131,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setError('Failed to load tokens. Please try again in a few minutes.');
       }
     } finally {
+      isFetchingTokens.current = false;
       if (!isBackgroundUpdate) {
         setIsLoading(false);
       }

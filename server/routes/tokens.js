@@ -7,6 +7,12 @@ const { emitTokenUpdate } = require('../socket');
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 4.5 * 60 * 1000; // 4.5 minutes - pushing to 9,999 calls/month limit (320 calls/day)
 
+// In-memory cache for the GET /api/tokens response to prevent MongoDB connection pool exhaustion
+// Multiple browser tabs polling every 60s would otherwise hammer the DB simultaneously
+let tokensReadCache = null;
+let tokensReadCacheTime = 0;
+const TOKENS_READ_CACHE_TTL = 60 * 1000; // Serve from cache for 60 seconds
+
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
   if (!force && now - lastUpdateTime < UPDATE_INTERVAL) {
@@ -101,6 +107,10 @@ const updateTokenCache = async (force = false) => {
     await Token.bulkWrite(bulkOps, { ordered: false });
     lastUpdateTime = now;
 
+    // Invalidate the read cache so the next GET request fetches fresh data
+    tokensReadCache = null;
+    tokensReadCacheTime = 0;
+
     // Successfully updated/inserted tokens in database
 
     // Emit WebSocket event for real-time token updates
@@ -160,6 +170,17 @@ router.post('/refresh', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
+
+    // Serve from in-memory cache for non-search requests to prevent DB connection pool exhaustion.
+    // Tokens are only updated every 4.5 minutes from CoinGecko, so 60s cache is safe.
+    if (!search) {
+      const now = Date.now();
+      if (tokensReadCache && now - tokensReadCacheTime < TOKENS_READ_CACHE_TTL) {
+        res.set('X-Cache', 'HIT');
+        return res.json(tokensReadCache);
+      }
+    }
+
     let query = {};
     
     if (search) {
@@ -202,7 +223,14 @@ router.get('/', async (req, res) => {
       lastUpdated: token.lastUpdated
     }));
 
+    // Cache the result for non-search requests
+    if (!search) {
+      tokensReadCache = tokens;
+      tokensReadCacheTime = Date.now();
+    }
+
     // Always return an array, even if empty
+    res.set('X-Cache', 'MISS');
     res.json(tokens);
 
   } catch (error) {
