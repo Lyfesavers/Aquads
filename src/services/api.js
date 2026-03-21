@@ -492,34 +492,34 @@ export const verifyToken = async (token = null) => {
       throw new Error('Token verification failed');
     }
 
-    // If verifyToken returns user data from server, parse it
+    // Server returns { valid: true, user: { userId, username, bioLinks, ... } }
     const data = await response.json();
-    
-    // If the server returns user data, use it and ensure socket connection
-    if (data && data.userId) {
-      // Make sure socket is connected with current token
-      socket.auth = { token: data.token || token };
-      if (!socket.connected) {
-        socket.connect();
-      }
-      
-      // Store updated user data
-      localStorage.setItem('currentUser', JSON.stringify(data));
-      return data;
-    }
-    
-    // Otherwise, get the user data from localStorage and ensure socket connection
+
+    // Get the stored user so we can preserve the token (req.user doesn't include it)
     const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      // Make sure socket is connected with current token
-      socket.auth = { token: userData.token };
-      if (!socket.connected) {
-        socket.connect();
-      }
-      return userData;
+    const storedUser = savedUser ? JSON.parse(savedUser) : null;
+
+    // Merge fresh server data (data.user) with the stored token
+    const serverUser = data && data.user;
+    if (serverUser && serverUser.userId) {
+      const merged = {
+        ...(storedUser || {}),
+        ...serverUser,
+        token: storedUser?.token || token // always keep the JWT
+      };
+      socket.auth = { token: merged.token };
+      if (!socket.connected) socket.connect();
+      localStorage.setItem('currentUser', JSON.stringify(merged));
+      return merged;
     }
-    
+
+    // Fallback: server didn't return user object — return stored data as-is
+    if (storedUser) {
+      socket.auth = { token: storedUser.token };
+      if (!socket.connected) socket.connect();
+      return storedUser;
+    }
+
     return null;
   } catch (error) {
     logger.error('Token verification error:', error);

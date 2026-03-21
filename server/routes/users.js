@@ -376,6 +376,11 @@ router.post('/login', validateLogin, async (req, res) => {
       referredBy: user.referredBy,
       cv: user.cv,
       aquaPay: user.aquaPay,
+      bioLinks: user.bioLinks || [],
+      linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonColor: user.linkInBioButtonColor || null,
+      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
       token,
       refreshToken
     });
