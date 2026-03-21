@@ -60,6 +60,11 @@ router.get('/matched', auth, async (req, res) => {
   }
 });
 
+// Throttle the expensive expiry sweep to run at most once per hour.
+// Running it on every GET was causing 12-second response times.
+let lastJobExpirySweep = 0;
+const JOB_EXPIRY_INTERVAL = 60 * 60 * 1000; // 1 hour
+
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
@@ -74,17 +79,15 @@ router.get('/', async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    // Update status of expired user jobs (not external jobs)
-    await Job.updateMany(
-      { 
-        source: 'user',
-        createdAt: { $lt: thirtyDaysAgo },
-        status: 'active'
-      },
-      { 
-        $set: { status: 'expired' }
-      }
-    );
+    // Only expire jobs once per hour instead of on every request
+    const now = Date.now();
+    if (now - lastJobExpirySweep > JOB_EXPIRY_INTERVAL) {
+      lastJobExpirySweep = now;
+      Job.updateMany(
+        { source: 'user', createdAt: { $lt: thirtyDaysAgo }, status: 'active' },
+        { $set: { status: 'expired' } }
+      ).catch(err => console.error('Job expiry sweep error:', err));
+    }
     
     // Only return active jobs
     if (!req.query.includeExpired) {

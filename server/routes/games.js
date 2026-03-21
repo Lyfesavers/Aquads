@@ -7,15 +7,35 @@ const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
+// Cache for games list and categories — these are heavy aggregation/populate queries
+const gamesCache = new Map(); // cacheKey -> { data, timestamp }
+const GAMES_LIST_TTL = 2 * 60 * 1000;   // 2 minutes for the full games list
+const GAMES_CATS_TTL = 5 * 60 * 1000;   // 5 minutes for categories (changes rarely)
+
+const invalidateGamesCache = () => {
+  gamesCache.clear();
+};
+
 // Get all game categories (define BEFORE dynamic routes)
 router.get('/categories', async (req, res) => {
   try {
+    const cacheKey = 'categories';
+    const now = Date.now();
+    const cached = gamesCache.get(cacheKey);
+    if (cached && now - cached.timestamp < GAMES_CATS_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+
     const categories = await Game.aggregate([
       { $match: { status: 'active' } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]);
-    res.json(categories.map(cat => ({ name: cat._id, count: cat.count })));
+    const data = categories.map(cat => ({ name: cat._id, count: cat.count }));
+    gamesCache.set(cacheKey, { data, timestamp: now });
+    res.set('X-Cache', 'MISS');
+    res.json(data);
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
@@ -25,13 +45,24 @@ router.get('/categories', async (req, res) => {
 // Get popular game categories (define BEFORE dynamic routes)
 router.get('/categories/popular', async (req, res) => {
   try {
+    const cacheKey = 'categories_popular';
+    const now = Date.now();
+    const cached = gamesCache.get(cacheKey);
+    if (cached && now - cached.timestamp < GAMES_CATS_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+
     const categories = await Game.aggregate([
       { $match: { status: 'active' } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 }
     ]);
-    res.json(categories.map(cat => ({ name: cat._id, count: cat.count })));
+    const data = categories.map(cat => ({ name: cat._id, count: cat.count }));
+    gamesCache.set(cacheKey, { data, timestamp: now });
+    res.set('X-Cache', 'MISS');
+    res.json(data);
   } catch (error) {
     console.error('Error fetching popular categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
@@ -41,45 +72,40 @@ router.get('/categories/popular', async (req, res) => {
 // Get all games
 router.get('/', async (req, res) => {
   try {
-    const query = {};
-    
-    // Filter by category if provided
-    if (req.query.category) {
-      query.category = req.query.category;
-    }
-    
-    // Filter by blockchain if provided
-    if (req.query.blockchain) {
-      query.blockchain = req.query.blockchain;
-    }
-    
-    // Text search if provided
-    if (req.query.search) {
-      query.$text = { $search: req.query.search };
-    }
-    
-    // Only show active games by default
-    if (!req.query.status) {
-      query.status = 'active';
-    } else {
-      query.status = req.query.status;
+    // Only cache simple, filter-free requests (the most common page loads)
+    const { category, blockchain, search, status, sort: sortParam } = req.query;
+    const isSimpleRequest = !search; // don't cache text search results
+    const cacheKey = `games_${category || ''}_${blockchain || ''}_${status || 'active'}_${sortParam || 'votes'}`;
+    const now = Date.now();
+
+    if (isSimpleRequest) {
+      const cached = gamesCache.get(cacheKey);
+      if (cached && now - cached.timestamp < GAMES_LIST_TTL) {
+        res.set('X-Cache', 'HIT');
+        return res.json(cached.data);
+      }
     }
 
-    // Sort options
-    let sort = { votes: -1 }; // Default sort by votes
-    if (req.query.sort === 'newest') {
-      sort = { createdAt: -1 };
-    } else if (req.query.sort === 'oldest') {
-      sort = { createdAt: 1 };
-    } else if (req.query.sort === 'alphabetical') {
-      sort = { title: 1 };
-    }
+    const query = {};
+    if (category) query.category = category;
+    if (blockchain) query.blockchain = blockchain;
+    if (search) query.$text = { $search: search };
+    query.status = status || 'active';
+
+    let sort = { votes: -1 };
+    if (sortParam === 'newest') sort = { createdAt: -1 };
+    else if (sortParam === 'oldest') sort = { createdAt: 1 };
+    else if (sortParam === 'alphabetical') sort = { title: 1 };
 
     const games = await Game.find(query)
       .populate('owner', 'username image')
       .sort(sort)
       .lean();
-      
+
+    if (isSimpleRequest) {
+      gamesCache.set(cacheKey, { data: games, timestamp: now });
+    }
+    res.set('X-Cache', 'MISS');
     res.json(games);
   } catch (error) {
     console.error('Error fetching games:', error);
@@ -116,6 +142,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     });
     
     await game.save();
+    invalidateGamesCache();
     res.status(201).json(game);
   } catch (error) {
     console.error('Error creating game listing:', error);
@@ -144,6 +171,7 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
     });
     
     await game.save();
+    invalidateGamesCache();
     res.json(game);
   } catch (error) {
     console.error('Error updating game:', error);
@@ -170,7 +198,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
     
     // Also remove all votes for this game
     await GameVote.deleteMany({ gameId: req.params.id });
-    
+    invalidateGamesCache();
     res.json({ message: 'Game deleted successfully' });
   } catch (error) {
     console.error('Error deleting game:', error);
@@ -209,6 +237,7 @@ router.post('/:id/vote', auth, async (req, res) => {
         // Continue with the vote removal even if points revocation fails
       }
       
+      invalidateGamesCache();
       return res.json({ message: 'Vote removed successfully', voted: false, votes: game.votes });
     } else {
       // Add new vote
@@ -232,6 +261,7 @@ router.post('/:id/vote', auth, async (req, res) => {
         // Continue with the vote even if points award fails
       }
       
+      invalidateGamesCache();
       return res.json({ message: 'Vote added successfully', voted: true, votes: game.votes });
     }
   } catch (error) {
