@@ -15,6 +15,27 @@ const invalidateReviewsCache = (symbol) => {
   }
 };
 
+// Called once after MongoDB connects — loads all reviews in a single query so the
+// first page load after a server restart doesn't fire 19 simultaneous cold DB hits.
+const warmupReviewsCache = async () => {
+  try {
+    const allReviews = await Review.find({}).sort({ createdAt: -1 }).lean();
+    const bySymbol = {};
+    for (const review of allReviews) {
+      const sym = (review.tokenSymbol || '').toLowerCase();
+      if (!bySymbol[sym]) bySymbol[sym] = [];
+      bySymbol[sym].push(review);
+    }
+    const now = Date.now();
+    for (const [sym, reviews] of Object.entries(bySymbol)) {
+      reviewsCache.set(sym, { data: reviews, timestamp: now });
+    }
+    console.log(`[Reviews Cache] Warmed up ${Object.keys(bySymbol).length} symbols`);
+  } catch (err) {
+    console.error('[Reviews Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
 // Get reviews for a token
 router.get('/:symbol', async (req, res) => {
   try {
@@ -77,4 +98,5 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
+module.exports.warmupReviewsCache = warmupReviewsCache;

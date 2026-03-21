@@ -635,7 +635,7 @@ app.use('/api/register', limiter);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
+  serverSelectionTimeoutMS: 5000, // 5s is enough for a healthy Atlas cluster
   socketTimeoutMS: 45000, // Close sockets after 45s
   maxPoolSize: 25, // Limit connection pool to avoid exhausting MongoDB Atlas free-tier connections
   minPoolSize: 2,  // Keep a few warm connections ready
@@ -643,6 +643,9 @@ mongoose.connect(process.env.MONGODB_URI, {
 }).then(() => {
   // Initialize skill tests if they don't exist
   initializeSkillTests();
+  // Pre-warm reviews cache so the first page load after restart is fast
+  const { warmupReviewsCache } = require('./routes/reviews');
+  warmupReviewsCache();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry
