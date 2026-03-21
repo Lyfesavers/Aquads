@@ -34,7 +34,7 @@ const auth = async (req, res, next) => {
     }
     
     // Check if user is suspended - Fetch user from database
-    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv');
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl');
     
     if (!user) {
       throw new Error('User not found');
@@ -55,10 +55,16 @@ const auth = async (req, res, next) => {
       userId: userId,
       id: userId,  // Add this for compatibility
       username: user.username,
+      image: user.image,
       isAdmin: Boolean(user.isAdmin),  // Ensure boolean conversion
       emailVerified: Boolean(user.emailVerified),  // Include email verification status
       referredBy: user.referredBy,  // Include referredBy for affiliate detection
-      cv: user.cv  // Include CV data for display name functionality
+      cv: user.cv,  // Include CV data for display name functionality
+      bioLinks: user.bioLinks || [],
+      linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonColor: user.linkInBioButtonColor || null,
+      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null
     };
 
     // Update user's lastActivity (rate limited to prevent excessive DB writes)
