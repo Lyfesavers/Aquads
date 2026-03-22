@@ -1332,7 +1332,6 @@ function App() {
           const [bumpResponse, adResponse] = await Promise.all([
             approveBumpRequest(adId, currentUser.username),
             apiUpdateAd(adId, {
-              ...ad,
               size: getMaxSize(),
               isBumped: true,
               status: 'approved',
@@ -1401,7 +1400,6 @@ function App() {
       const [bumpResponse, adResponse] = await Promise.all([
         rejectBumpRequest(adId, currentUser.username, reason),
         apiUpdateAd(adId, { 
-          ...ad, 
           status: 'active',
           isBumped: false 
         })
@@ -1447,10 +1445,9 @@ function App() {
       }
 
       const updatedAd = {
-        ...ad,
         ...updatedFields,
-        size: ad.size, // Preserve the current size
-        isBumped: ad.isBumped // Preserve the bumped status
+        size: ad.size,
+        isBumped: ad.isBumped
       };
 
       const response = await apiUpdateAd(adId, updatedAd);
@@ -1494,7 +1491,6 @@ function App() {
       const [bumpResponse, adResponse] = await Promise.all([
         approveBumpRequest(adId, currentUser.username),
         apiUpdateAd(adId, {
-          ...ad,
           size: getMaxSize(),
           isBumped: true,
           status: 'approved',

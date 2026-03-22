@@ -503,9 +503,9 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
       updateOperations.$unset = $unset;
     }
     
-    // Use findOneAndUpdate which is more resilient to validation issues
-    const updatedAd = await Ad.findOneAndUpdate(
-      { id },
+    // Use the already-fetched _id (primary index) instead of re-scanning the secondary id index
+    const updatedAd = await Ad.findByIdAndUpdate(
+      ad._id,
       updateOperations,
       { new: true, runValidators: false }
     );

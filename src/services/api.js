@@ -331,9 +331,6 @@ export const updateAd = async (id, adData) => {
   if (!response.ok) throw new Error('Failed to update ad');
   const updatedAd = await response.json();
   
-  // Emit socket event for real-time updates
-  socket.emit('adUpdate', updatedAd);
-  
   return updatedAd;
 };
 
