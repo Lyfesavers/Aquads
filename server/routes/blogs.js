@@ -5,27 +5,43 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 
+// Cache for the blogs list — blogs change rarely (admin-only writes), 5-minute TTL is safe.
+let blogsListCache = null;
+let blogsListCacheTime = 0;
+const BLOGS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const invalidateBlogsCache = () => {
+  blogsListCache = null;
+  blogsListCacheTime = 0;
+};
+
 // Get all blogs
 router.get('/', async (req, res) => {
   try {
-    // Add no-index headers to prevent search engines from indexing the API endpoint
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Content-Type', 'application/json');
-    
+
+    const now = Date.now();
+    if (blogsListCache && now - blogsListCacheTime < BLOGS_CACHE_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(blogsListCache);
+    }
+
     const blogs = await Blog.find()
       .sort({ createdAt: -1 })
       .populate('author', 'username image')
       .lean();
       
-    // Update authorImage field with the populated author image
     const updatedBlogs = blogs.map(blog => {
-      // If blog has author populated with image, use it
       if (blog.author && blog.author.image) {
         blog.authorImage = blog.author.image;
       }
       return blog;
     });
-    
+
+    blogsListCache = updatedBlogs;
+    blogsListCacheTime = now;
+    res.set('X-Cache', 'MISS');
     res.json(updatedBlogs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch blogs' });
@@ -90,6 +106,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     });
 
     await blog.save();
+    invalidateBlogsCache();
     res.status(201).json(blog);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create blog' });
@@ -135,6 +152,7 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
     });
 
     await blog.save();
+    invalidateBlogsCache();
     res.json(blog);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update blog' });
@@ -158,7 +176,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
     
     // Now delete the blog
     await Blog.findByIdAndDelete(req.params.id);
-
+    invalidateBlogsCache();
     res.json({ message: 'Blog deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete blog' });
@@ -247,4 +265,24 @@ router.get('/share/:id', async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Pre-warm the blogs cache on startup so the first visit is instant.
+const warmupBlogsCache = async () => {
+  try {
+    const blogs = await Blog.find()
+      .sort({ createdAt: -1 })
+      .populate('author', 'username image')
+      .lean();
+
+    blogsListCache = blogs.map(blog => {
+      if (blog.author && blog.author.image) blog.authorImage = blog.author.image;
+      return blog;
+    });
+    blogsListCacheTime = Date.now();
+    console.log(`[Blogs Cache] Warmed up ${blogsListCache.length} blogs`);
+  } catch (err) {
+    console.error('[Blogs Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupBlogsCache = warmupBlogsCache;

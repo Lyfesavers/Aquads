@@ -649,11 +649,13 @@ mongoose.connect(process.env.MONGODB_URI, {
   const { warmupGamesCache } = require('./routes/games');
   const { warmupJobsCache } = require('./routes/jobs');
   const { warmupAdsCache } = require('./routes/ads');
+  const { warmupBlogsCache } = require('./routes/blogs');
   warmupReviewsCache();
   warmupTokensCache();
   warmupGamesCache();
   warmupJobsCache();
   warmupAdsCache();
+  warmupBlogsCache();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry
