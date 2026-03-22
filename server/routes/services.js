@@ -915,4 +915,18 @@ router.get('/featured-random', async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Pre-warm the services cache on startup so the first visit never waits 30-40 seconds.
+// Uses the default query (no filters, rating sort, page 1, limit 20) — covers the
+// most common page load. Other filter combos will cold-miss once and then be cached.
+const warmupServicesCache = async () => {
+  try {
+    const cacheKey = 'services____20_1';
+    await fetchAndCacheServices(cacheKey, undefined, undefined, 20, 1);
+    console.log('[Services Cache] Warmed up default services listing');
+  } catch (err) {
+    console.error('[Services Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupServicesCache = warmupServicesCache;
