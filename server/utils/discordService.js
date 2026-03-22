@@ -1709,13 +1709,25 @@ async function sendRaidCompletionToChannel(completionData) {
   const username = user?.username || 'User';
   const isFacebook = completionData.platform === 'Facebook';
   const platformName = isFacebook ? 'Facebook' : 'Twitter';
+
+  // Get live completion count for this raid
+  let completionCount = null;
+  if (completionData.raidId) {
+    try {
+      const RaidModel = isFacebook ? FacebookRaid : TwitterRaid;
+      const raid = await RaidModel.findById(completionData.raidId).select('completions').lean();
+      if (raid) completionCount = raid.completions.length;
+    } catch (e) { /* ignore */ }
+  }
+
   const embed = new EmbedBuilder()
     .setTitle('🎉 Someone Just Raided!')
     .setDescription(
       `${platformName} Raid\n` +
       `👤 **${username}** just completed a raid\n` +
-      `💰 Reward: ${completionData.points} points\n\n` +
-      `🌐 Complete more raids: use \`/raids\` in Discord or https://aquads.xyz`
+      `💰 Reward: ${completionData.points} points\n` +
+      (completionCount !== null ? `👥 **Total Raiders: ${completionCount}**\n` : '') +
+      `\n🌐 Complete more raids: use \`/raids\` in Discord or https://aquads.xyz`
     )
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');

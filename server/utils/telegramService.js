@@ -2017,12 +2017,22 @@ https://aquads.xyz`;
       const platformName = isFacebook ? 'Facebook' : 'Twitter';
       const platformEmoji = isFacebook ? '📘' : '🐦';
 
+      // Get live completion count for this raid
+      let completionCount = null;
+      if (completionData.raidId) {
+        try {
+          const RaidModel = isFacebook ? FacebookRaid : TwitterRaid;
+          const raid = await RaidModel.findById(completionData.raidId).select('completions').lean();
+          if (raid) completionCount = raid.completions.length;
+        } catch (e) { /* ignore */ }
+      }
+
       // Construct the message
       const message = `🎉 Someone Just Raided!
 
 ${platformEmoji} ${platformName} Raid
 👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} just completed a raid
-💰 Reward: ${completionData.points} points
+💰 Reward: ${completionData.points} points${completionCount !== null ? `\n👥 Total Raiders: ${completionCount}` : ''}
 
 🌐 Track all raids: [@aquadsbumpbot](https://t.me/aquadsbumpbot)
 💡 Complete more raids to earn points!`;
