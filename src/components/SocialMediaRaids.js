@@ -52,6 +52,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
+  const isFetchingRaids = useRef(false);
   const [userData, setUserData] = useState(currentUser);
   const [twitterUsername, setTwitterUsername] = useState('');
   // Add a dedicated state for points
@@ -183,23 +184,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return 0;
   };
 
+  // Fetch raids once on mount — public endpoint, same response for all users.
+  // Socket events (raidListUpdated) handle subsequent create/cancel updates in real-time.
   useEffect(() => {
     fetchRaids();
-    // Fetch user points from API
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-run user-specific calls only when the actual user identity changes (login/logout),
+  // NOT on every currentUser object reference change (e.g., points update).
+  const _currentUserId = currentUser?.userId || currentUser?.id || currentUser?._id;
+  useEffect(() => {
     fetchUserPoints();
-    
-    // Initialize Twitter username from user data if available
     if (currentUser?.twitterUsername) {
       setTwitterUsername(currentUser.twitterUsername);
     }
-  }, [currentUser]);
-
-  useEffect(() => {
-    // Check free raid eligibility when component mounts
-    if (currentUser && (currentUser.userId || currentUser.id || currentUser._id)) {
+    if (_currentUserId) {
       checkFreeRaidEligibility();
     }
-  }, [currentUser]);
+  }, [_currentUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Socket event listeners for real-time raid updates
   useEffect(() => {
@@ -444,6 +446,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const fetchRaids = async () => {
+    if (isFetchingRaids.current) return;
+    isFetchingRaids.current = true;
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/api/twitter-raids`);
@@ -476,6 +480,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setError('Failed to load Twitter raids. Please try again later.');
     } finally {
       setLoading(false);
+      isFetchingRaids.current = false;
     }
   };
 

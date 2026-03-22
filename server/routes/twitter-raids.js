@@ -17,6 +17,42 @@ const telegramService = require('../utils/telegramService');
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
 
+// In-memory cache for the public raids listing — same stale-while-revalidate pattern
+// used by ads, games, services etc. Invalidated on every write operation.
+let raidsListCache = null;
+let raidsListCacheTime = 0;
+let raidsListRefreshing = false;
+const RAIDS_CACHE_TTL = 30 * 1000; // 30 seconds
+
+const invalidateRaidsCache = () => {
+  raidsListCache = null;
+  raidsListCacheTime = 0;
+};
+
+// Fetches active raids from the last 2 days and populates the cache.
+// Shared by the GET handler, background refreshes, and startup warmup.
+const fetchAndCacheRaids = async () => {
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const raids = await TwitterRaid.find({ active: true, createdAt: { $gt: twoDaysAgo } })
+    .sort({ createdAt: -1 })
+    .populate('createdBy', 'username')
+    .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus')
+    .lean();
+
+  const processedRaids = raids.map(raid => {
+    const approvedCompletions = raid.completions.filter(c => c.approvalStatus === 'approved');
+    return {
+      ...raid,
+      completionCount: approvedCompletions.length,
+      userCompleted: false // No auth on this endpoint; userCompleted is computed client-side
+    };
+  });
+
+  raidsListCache = processedRaids;
+  raidsListCacheTime = Date.now();
+  return processedRaids;
+};
+
 // Helper function to check if user has a lifetime-bumped ad in the bubbles
 async function checkUserHasLifetimeBumpedAd(username) {
   try {
@@ -176,30 +212,24 @@ const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 // Get all active Twitter raids
 router.get('/', async (req, res) => {
   try {
-    // Get user ID safely (works for both authenticated and non-authenticated users)
-    const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
-    
-    // Load raids with only essential completion data for speed
-    const raids = await TwitterRaid.find({ active: true })
-      .sort({ createdAt: -1 })
-      .populate('createdBy', 'username')
-      .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus')
-      .lean();
-    
-    // Process raids to add count and user completion status
-    const processedRaids = raids.map(raid => {
-      const approvedCompletions = raid.completions.filter(c => c.approvalStatus === 'approved');
-      const userCompleted = userId ? raid.completions.some(c => 
-        c.userId && c.userId.toString() === userId.toString()
-      ) : false;
-      
-      return {
-        ...raid,
-        completionCount: approvedCompletions.length,
-        userCompleted: userCompleted
-      };
-    });
-    
+    const now = Date.now();
+
+    if (raidsListCache) {
+      res.set('X-Cache', now - raidsListCacheTime < RAIDS_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(raidsListCache);
+      // Kick off background refresh if stale
+      if (!raidsListRefreshing && now - raidsListCacheTime >= RAIDS_CACHE_TTL) {
+        raidsListRefreshing = true;
+        fetchAndCacheRaids().catch(err =>
+          console.error('[Raids Cache] Background refresh failed:', err.message)
+        ).finally(() => { raidsListRefreshing = false; });
+      }
+      return;
+    }
+
+    // No cache at all — must wait (first request after startup or invalidation)
+    const processedRaids = await fetchAndCacheRaids();
+    res.set('X-Cache', 'MISS');
     res.json(processedRaids);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch Twitter raids' });
@@ -253,7 +283,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     // Emit socket event for real-time update (populate createdBy for frontend)
     const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
     emitRaidUpdate('created', populatedRaid, 'twitter');
-    
+    invalidateRaidsCache();
     res.status(201).json(raid);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Twitter raid' });
@@ -355,7 +385,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     // Emit socket event for real-time update (populate createdBy for frontend)
     const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
     emitRaidUpdate('created', populatedRaid, 'twitter');
-    
+    invalidateRaidsCache();
     res.status(201).json({ 
       message: responseMessage,
       raid,
@@ -399,7 +429,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
     
     // Emit socket event for real-time update (convert ObjectId to string)
     emitRaidUpdate('cancelled', { _id: raid._id.toString() }, 'twitter');
-    
+    invalidateRaidsCache();
     res.json({ message: 'Twitter raid cancelled successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to cancel Twitter raid' });
@@ -630,7 +660,8 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         pointsAmount: pointsAmount,
         status: 'pending_approval'
       };
-      
+
+      invalidateRaidsCache();
       res.json(successResponse);
     } catch (error) {
       let errorMessage = 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error');
@@ -710,6 +741,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
          }
 
     await raid.save({ validateBeforeSave: false });
+    invalidateRaidsCache();
 
     // Emit real-time update to all connected clients
     emitTwitterRaidApproved({
@@ -762,6 +794,7 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     completion.pointsAwarded = false;
 
     await raid.save({ validateBeforeSave: false });
+    invalidateRaidsCache();
 
     // Emit real-time update to all connected clients (before response so UI stays in sync)
     emitTwitterRaidRejected({
@@ -1142,7 +1175,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     // Emit socket event for real-time update (populate createdBy for frontend)
     const populatedRaid = await TwitterRaid.findById(raid._id).populate('createdBy', 'username');
     emitRaidUpdate('created', populatedRaid, 'twitter');
-    
+    invalidateRaidsCache();
     res.status(201).json({
       message: responseMessage,
       raid,
@@ -1201,4 +1234,15 @@ router.get('/free/eligibility', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Pre-warm the raids cache on startup so the first visitor never waits.
+const warmupRaidsCache = async () => {
+  try {
+    const raids = await fetchAndCacheRaids();
+    console.log(`[Raids Cache] Warmed up ${raids.length} raids`);
+  } catch (err) {
+    console.error('[Raids Cache] Warmup failed (non-critical):', err.message);
+  }
+};
+
+module.exports = router;
+module.exports.warmupRaidsCache = warmupRaidsCache;
