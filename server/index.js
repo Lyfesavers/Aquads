@@ -436,6 +436,18 @@ cron.schedule('30 8 * * *', async () => {
   timezone: "America/New_York" // EST/EDT timezone
 });
 
+// Cron jobs for sending scheduled mybubble to registered groups — 9 AM and 9 PM EST
+cron.schedule('0 9,21 * * *', async () => {
+  try {
+    console.log('[Scheduled MyBubble] Running twice-daily mybubble send...');
+    await telegramService.sendScheduledMyBubbleToRegisteredGroups();
+  } catch (error) {
+    console.error('[Scheduled MyBubble] Error:', error);
+  }
+}, {
+  timezone: "America/New_York"
+});
+
 // Cron job for syncing Remotive jobs every 8 hours
 // Runs at 12:00 AM, 8:00 AM, and 4:00 PM daily
 cron.schedule('0 */8 * * *', async () => {

@@ -5964,6 +5964,67 @@ Thanks! 🙏✨`;
       console.error('[Admin Reminder] Error in daily admin reminder task:', error);
       return false;
     }
+  },
+
+  // Send mybubble messages to every registered group twice daily.
+  // A group becomes "registered" the first time any user runs /mybubble in it,
+  // which writes the group chatId to project.telegramGroupId and user.telegramGroupId.
+  sendScheduledMyBubbleToRegisteredGroups: async () => {
+    try {
+      console.log('[Scheduled MyBubble] Starting scheduled mybubble send to registered groups...');
+
+      // Find all active projects that have a registered group
+      const registeredAds = await Ad.find({
+        telegramGroupId: { $exists: true, $ne: null },
+        status: { $in: ['active', 'approved'] }
+      }).select('owner telegramGroupId').lean();
+
+      if (registeredAds.length === 0) {
+        console.log('[Scheduled MyBubble] No registered groups found, skipping.');
+        return;
+      }
+
+      // Build a map of groupId -> Set of unique owner usernames
+      const groupOwnerMap = new Map();
+      for (const ad of registeredAds) {
+        if (!ad.telegramGroupId) continue;
+        if (!groupOwnerMap.has(ad.telegramGroupId)) {
+          groupOwnerMap.set(ad.telegramGroupId, new Set());
+        }
+        groupOwnerMap.get(ad.telegramGroupId).add(ad.owner);
+      }
+
+      let successCount = 0;
+      let skipCount = 0;
+
+      for (const [groupId, owners] of groupOwnerMap) {
+        const chatId = parseInt(groupId, 10);
+        if (isNaN(chatId)) continue;
+
+        for (const ownerUsername of owners) {
+          try {
+            const user = await User.findOne({ username: ownerUsername }).select('telegramId').lean();
+            if (!user?.telegramId) {
+              console.log(`[Scheduled MyBubble] Skipping ${ownerUsername} — no telegramId linked`);
+              skipCount++;
+              continue;
+            }
+
+            await telegramService.handleMyBubbleCommand(chatId, user.telegramId);
+            successCount++;
+
+            // Brief pause between sends to avoid Telegram rate limits
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          } catch (err) {
+            console.error(`[Scheduled MyBubble] Error sending to group ${groupId} for ${ownerUsername}:`, err.message);
+          }
+        }
+      }
+
+      console.log(`[Scheduled MyBubble] Done — sent to ${successCount} group/owner pairs, skipped ${skipCount}.`);
+    } catch (error) {
+      console.error('[Scheduled MyBubble] Fatal error:', error);
+    }
   }
 
 };
