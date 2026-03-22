@@ -8,10 +8,10 @@ let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 4.5 * 60 * 1000; // 4.5 minutes - pushing to 9,999 calls/month limit (320 calls/day)
 
 // In-memory cache for the GET /api/tokens response to prevent MongoDB connection pool exhaustion
-// Multiple browser tabs polling every 60s would otherwise hammer the DB simultaneously
 let tokensReadCache = null;
 let tokensReadCacheTime = 0;
-const TOKENS_READ_CACHE_TTL = 60 * 1000; // Serve from cache for 60 seconds
+let tokensReadRefreshing = false;
+const TOKENS_READ_CACHE_TTL = 60 * 1000; // 60 seconds
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
@@ -167,78 +167,89 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
+// Fetch all tokens from DB and populate the read cache — used by the GET handler
+// and by background refreshes.
+const fetchAndCacheTokens = async () => {
+  let tokens = await Token.find({}).sort({ marketCapRank: 1 }).limit(250).lean();
+  tokens = tokens.map(token => ({
+    id: token.id,
+    symbol: token.symbol,
+    name: token.name,
+    image: token.image,
+    currentPrice: Number(token.currentPrice) || 0,
+    marketCap: Number(token.marketCap) || 0,
+    marketCapRank: Number(token.marketCapRank) || 0,
+    totalVolume: Number(token.totalVolume) || 0,
+    priceChange24h: Number(token.priceChange24h) || 0,
+    priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+    high24h: Number(token.high24h) || 0,
+    low24h: Number(token.low24h) || 0,
+    circulatingSupply: Number(token.circulatingSupply) || 0,
+    totalSupply: Number(token.totalSupply) || 0,
+    maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+    ath: Number(token.ath) || 0,
+    athChangePercentage: Number(token.athChangePercentage) || 0,
+    fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
+    lastUpdated: token.lastUpdated
+  }));
+  tokensReadCache = tokens;
+  tokensReadCacheTime = Date.now();
+  return tokens;
+};
+
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
 
-    // Serve from in-memory cache for non-search requests to prevent DB connection pool exhaustion.
-    // Tokens are only updated every 4.5 minutes from CoinGecko, so 60s cache is safe.
-    if (!search) {
-      const now = Date.now();
-      if (tokensReadCache && now - tokensReadCacheTime < TOKENS_READ_CACHE_TTL) {
-        res.set('X-Cache', 'HIT');
-        return res.json(tokensReadCache);
-      }
-    }
-
-    let query = {};
-    
+    // Search requests always bypass the cache
     if (search) {
       const searchRegex = new RegExp(search, 'i');
-      query = {
-        $or: [
-          { symbol: searchRegex },
-          { name: searchRegex },
-          { id: searchRegex }
-        ]
-      };
+      let tokens = await Token.find({
+        $or: [{ symbol: searchRegex }, { name: searchRegex }, { id: searchRegex }]
+      }).sort({ marketCapRank: 1 }).limit(250).lean();
+      tokens = tokens.map(token => ({
+        id: token.id, symbol: token.symbol, name: token.name, image: token.image,
+        currentPrice: Number(token.currentPrice) || 0,
+        marketCap: Number(token.marketCap) || 0,
+        marketCapRank: Number(token.marketCapRank) || 0,
+        totalVolume: Number(token.totalVolume) || 0,
+        priceChange24h: Number(token.priceChange24h) || 0,
+        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+        high24h: Number(token.high24h) || 0, low24h: Number(token.low24h) || 0,
+        circulatingSupply: Number(token.circulatingSupply) || 0,
+        totalSupply: Number(token.totalSupply) || 0,
+        maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+        ath: Number(token.ath) || 0, athChangePercentage: Number(token.athChangePercentage) || 0,
+        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
+        lastUpdated: token.lastUpdated
+      }));
+      return res.json(tokens);
     }
 
-    // Get tokens from database
-    let tokens = await Token.find(query)
-      .sort({ marketCapRank: 1 })
-      .limit(250)
-      .lean();
+    const now = Date.now();
 
-    // Clean numeric values to ensure they're numbers
-    tokens = tokens.map(token => ({
-      id: token.id,
-      symbol: token.symbol,
-      name: token.name,
-      image: token.image,
-      currentPrice: Number(token.currentPrice) || 0,
-      marketCap: Number(token.marketCap) || 0,
-      marketCapRank: Number(token.marketCapRank) || 0,
-      totalVolume: Number(token.totalVolume) || 0,
-      priceChange24h: Number(token.priceChange24h) || 0,
-      priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-      high24h: Number(token.high24h) || 0,
-      low24h: Number(token.low24h) || 0,
-      circulatingSupply: Number(token.circulatingSupply) || 0,
-      totalSupply: Number(token.totalSupply) || 0,
-      maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-      ath: Number(token.ath) || 0,
-      athChangePercentage: Number(token.athChangePercentage) || 0,
-      fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
-      lastUpdated: token.lastUpdated
-    }));
-
-    // Cache the result for non-search requests
-    if (!search) {
-      tokensReadCache = tokens;
-      tokensReadCacheTime = Date.now();
+    if (tokensReadCache) {
+      // Serve immediately — even if stale
+      res.set('X-Cache', now - tokensReadCacheTime < TOKENS_READ_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(tokensReadCache);
+      // Kick off background refresh if stale
+      if (!tokensReadRefreshing && now - tokensReadCacheTime >= TOKENS_READ_CACHE_TTL) {
+        tokensReadRefreshing = true;
+        fetchAndCacheTokens().catch(err =>
+          console.error('[Tokens Cache] Background refresh failed:', err.message)
+        ).finally(() => { tokensReadRefreshing = false; });
+      }
+      return;
     }
 
-    // Always return an array, even if empty
+    // No cache at all — must wait
+    const tokens = await fetchAndCacheTokens();
     res.set('X-Cache', 'MISS');
     res.json(tokens);
 
   } catch (error) {
     console.error('Error in /api/tokens:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch tokens',
-      message: 'An unexpected error occurred'
-    });
+    res.status(500).json({ error: 'Failed to fetch tokens', message: 'An unexpected error occurred' });
   }
 });
 
@@ -305,35 +316,7 @@ router.get('/price/:coinId', async (req, res) => {
 // Runs once after MongoDB connects — a simple find with no external API calls.
 const warmupTokensCache = async () => {
   try {
-    let tokens = await Token.find({})
-      .sort({ marketCapRank: 1 })
-      .limit(250)
-      .lean();
-
-    tokens = tokens.map(token => ({
-      id: token.id,
-      symbol: token.symbol,
-      name: token.name,
-      image: token.image,
-      currentPrice: Number(token.currentPrice) || 0,
-      marketCap: Number(token.marketCap) || 0,
-      marketCapRank: Number(token.marketCapRank) || 0,
-      totalVolume: Number(token.totalVolume) || 0,
-      priceChange24h: Number(token.priceChange24h) || 0,
-      priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-      high24h: Number(token.high24h) || 0,
-      low24h: Number(token.low24h) || 0,
-      circulatingSupply: Number(token.circulatingSupply) || 0,
-      totalSupply: Number(token.totalSupply) || 0,
-      maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-      ath: Number(token.ath) || 0,
-      athChangePercentage: Number(token.athChangePercentage) || 0,
-      fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
-      lastUpdated: token.lastUpdated
-    }));
-
-    tokensReadCache = tokens;
-    tokensReadCacheTime = Date.now();
+    const tokens = await fetchAndCacheTokens();
     console.log(`[Tokens Cache] Warmed up ${tokens.length} tokens`);
   } catch (err) {
     console.error('[Tokens Cache] Warmup failed (non-critical):', err.message);

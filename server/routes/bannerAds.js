@@ -9,6 +9,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 // so this prevents a MongoDB query per-client per-minute.
 let activeBannersCache = null;
 let activeBannersCacheTime = 0;
+let activeBannersRefreshing = false;
 const BANNERS_CACHE_TTL = 60 * 1000; // 60 seconds
 
 const invalidateBannersCache = () => {
@@ -16,25 +17,37 @@ const invalidateBannersCache = () => {
   activeBannersCacheTime = 0;
 };
 
+const fetchAndCacheBanners = async () => {
+  const banners = await BannerAd.find({
+    status: 'active',
+    expiresAt: { $gt: new Date() }
+  }).sort({ createdAt: -1 }).lean();
+  activeBannersCache = banners;
+  activeBannersCacheTime = Date.now();
+  return banners;
+};
+
 // Get active banner ads
 router.get('/active', async (req, res) => {
   try {
     const now = Date.now();
-    if (activeBannersCache && now - activeBannersCacheTime < BANNERS_CACHE_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(activeBannersCache);
+
+    if (activeBannersCache) {
+      res.set('X-Cache', now - activeBannersCacheTime < BANNERS_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(activeBannersCache);
+      if (!activeBannersRefreshing && now - activeBannersCacheTime >= BANNERS_CACHE_TTL) {
+        activeBannersRefreshing = true;
+        fetchAndCacheBanners().catch(err =>
+          console.error('[Banners Cache] Background refresh failed:', err.message)
+        ).finally(() => { activeBannersRefreshing = false; });
+      }
+      return;
     }
 
-    const activeBanners = await BannerAd.find({
-      status: 'active',
-      expiresAt: { $gt: new Date() }
-    }).sort({ createdAt: -1 }).lean();
-
-    activeBannersCache = activeBanners;
-    activeBannersCacheTime = now;
-
+    // No cache — must wait
+    const banners = await fetchAndCacheBanners();
     res.set('X-Cache', 'MISS');
-    res.json(activeBanners);
+    res.json(banners);
   } catch (error) {
     console.error('Error fetching active banners:', error);
     res.status(500).json({ error: 'Failed to fetch active banners' });

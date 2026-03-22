@@ -13,10 +13,70 @@ const { emitServiceApproved, emitServiceRejected, emitNewServicePending } = requ
 // Cache for services list — the GET with populate + 2 aggregations is very expensive.
 // Cache keyed by query params, TTL 2 minutes. Invalidated on create/update/delete/approve.
 const servicesCache = new Map();
-const SERVICES_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const servicesRefreshing = new Set();
+const SERVICES_CACHE_TTL = 60 * 1000; // 1 minute
 
 const invalidateServicesCache = () => {
   servicesCache.clear();
+};
+
+// Shared helper — executes the full services query and stores the result in cache.
+const fetchAndCacheServices = async (cacheKey, category, sort, limit, page) => {
+  const query = { status: 'active' };
+  const sortOptions = {};
+  if (category) query.category = category;
+  if (sort) {
+    switch (sort) {
+      case 'price-low': sortOptions.price = 1; break;
+      case 'price-high': sortOptions.price = -1; break;
+      case 'rating': sortOptions.rating = -1; break;
+      case 'newest': sortOptions.createdAt = -1; break;
+      default: sortOptions.rating = -1;
+    }
+  } else {
+    sortOptions.rating = -1;
+  }
+
+  const services = await Service.find(query)
+    .sort(sortOptions)
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit))
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
+
+  const serviceIds = services.map(s => s._id);
+
+  const [reviewAggregation, bookingAggregation, total] = await Promise.all([
+    ServiceReview.aggregate([
+      { $match: { serviceId: { $in: serviceIds } } },
+      { $group: { _id: '$serviceId', avgRating: { $avg: '$rating' }, reviewCount: { $sum: 1 } } }
+    ]),
+    Booking.aggregate([
+      { $match: { serviceId: { $in: serviceIds } } },
+      { $group: { _id: '$serviceId', totalContacts: { $sum: 1 }, completedBookings: { $sum: { $cond: [{ $in: ['$status', ['completed', 'confirmed']] }, 1, 0] } } } }
+    ]),
+    Service.countDocuments(query)
+  ]);
+
+  const reviewMap = {};
+  reviewAggregation.forEach(r => { reviewMap[r._id.toString()] = { rating: Math.round(r.avgRating * 10) / 10, reviews: r.reviewCount }; });
+  const bookingMap = {};
+  bookingAggregation.forEach(b => { bookingMap[b._id.toString()] = { totalContacts: b.totalContacts, completedBookings: b.completedBookings }; });
+
+  const servicesWithReviews = services.map(service => {
+    const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
+    const bookingData = bookingMap[service._id.toString()] || { totalContacts: 0, completedBookings: 0 };
+    const completionRate = bookingData.totalContacts > 0
+      ? Math.round((bookingData.completedBookings / bookingData.totalContacts) * 100) : 0;
+    return { ...service.toObject(), rating: reviewData.rating, reviews: reviewData.reviews, completionRate };
+  });
+
+  const responseData = {
+    services: servicesWithReviews,
+    pagination: { total, pages: Math.ceil(total / limit), currentPage: parseInt(page) }
+  };
+
+  servicesCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+  return responseData;
 };
 
 // Get all services with optional filtering
@@ -24,134 +84,32 @@ router.get('/', async (req, res) => {
   try {
     const { category, sort, limit = 20, page = 1 } = req.query;
 
-    // Cache for non-filtered requests (most page loads)
     const cacheKey = `services_${category || ''}_${sort || ''}_${limit}_${page}`;
     const now = Date.now();
     const cached = servicesCache.get(cacheKey);
-    if (cached && now - cached.timestamp < SERVICES_CACHE_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(cached.data);
+
+    if (cached) {
+      res.set('X-Cache', now - cached.timestamp < SERVICES_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(cached.data);
+      if (!servicesRefreshing.has(cacheKey) && now - cached.timestamp >= SERVICES_CACHE_TTL) {
+        servicesRefreshing.add(cacheKey);
+        fetchAndCacheServices(cacheKey, category, sort, limit, page).catch(err =>
+          console.error('[Services Cache] Background refresh failed:', err.message)
+        ).finally(() => { servicesRefreshing.delete(cacheKey); });
+      }
+      return;
     }
 
-    const query = { status: 'active' }; // Only show active services to regular users
-    const sortOptions = {};
-
-    if (category) {
-      query.category = category;
-    }
-
-    if (sort) {
-      switch (sort) {
-        case 'price-low':
-          sortOptions.price = 1;
-          break;
-        case 'price-high':
-          sortOptions.price = -1;
-          break;
-        case 'rating':
-          sortOptions.rating = -1;
-          break;
-        case 'newest':
-          sortOptions.createdAt = -1;
-          break;
-        default:
-          sortOptions.rating = -1;
-      }
-    } else {
-      // Default sort when no sort parameter is provided
-      sortOptions.rating = -1;
-    }
-
-    const services = await Service.find(query)
-      .sort(sortOptions)
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType email');
-
-    // Get service IDs for batch review query
-    const serviceIds = services.map(service => service._id);
-
-    // Fetch all reviews for these services in a single query (fixes N+1 problem)
-    const reviewAggregation = await ServiceReview.aggregate([
-      {
-        $match: { serviceId: { $in: serviceIds } }
-      },
-      {
-        $group: {
-          _id: '$serviceId',
-          avgRating: { $avg: '$rating' },
-          reviewCount: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Create a map for quick lookup
-    const reviewMap = {};
-    reviewAggregation.forEach(review => {
-      reviewMap[review._id.toString()] = {
-        rating: Math.round(review.avgRating * 10) / 10, // Round to 1 decimal
-        reviews: review.reviewCount
-      };
-    });
-
-    // Fetch all booking stats in a single query (fixes N+1 problem - was 40 queries, now 1)
-    const bookingAggregation = await Booking.aggregate([
-      { $match: { serviceId: { $in: serviceIds } } },
-      {
-        $group: {
-          _id: '$serviceId',
-          totalContacts: { $sum: 1 },
-          completedBookings: {
-            $sum: { $cond: [{ $in: ['$status', ['completed', 'confirmed']] }, 1, 0] }
-          }
-        }
-      }
-    ]);
-
-    // Create booking stats map for quick lookup
-    const bookingMap = {};
-    bookingAggregation.forEach(booking => {
-      bookingMap[booking._id.toString()] = {
-        totalContacts: booking.totalContacts,
-        completedBookings: booking.completedBookings
-      };
-    });
-
-    // Add review data and completion rate to each service
-    const servicesWithReviews = services.map(service => {
-      const reviewData = reviewMap[service._id.toString()] || { rating: 0, reviews: 0 };
-      const bookingData = bookingMap[service._id.toString()] || { totalContacts: 0, completedBookings: 0 };
-      const completionRate = bookingData.totalContacts > 0 
-        ? Math.round((bookingData.completedBookings / bookingData.totalContacts) * 100) 
-        : 0;
-
-      return {
-        ...service.toObject(),
-        rating: reviewData.rating,
-        reviews: reviewData.reviews,
-        completionRate: completionRate
-      };
-    });
-
-    const total = await Service.countDocuments(query);
-
-    const responseData = {
-      services: servicesWithReviews,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: parseInt(page)
-      }
-    };
-
-    servicesCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    // No cache — must wait
+    const responseData = await fetchAndCacheServices(cacheKey, category, sort, limit, page);
     res.set('X-Cache', 'MISS');
-    res.json(responseData);
+    return res.json(responseData);
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ message: 'Error fetching services', error: error.message });
   }
 });
+
 
 // Search services
 router.get('/search', async (req, res) => {

@@ -66,12 +66,35 @@ let lastJobExpirySweep = 0;
 const JOB_EXPIRY_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 // Cache for the PUBLIC jobs listing (no owner filter) — very expensive due to populate + count.
-// Owner-specific queries are user-unique and can't be cached globally.
 const jobsPublicCache = new Map();
-const JOBS_PUBLIC_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const jobsRefreshing = new Set(); // cache keys currently being refreshed in background
+const JOBS_PUBLIC_CACHE_TTL = 60 * 1000; // 1 minute
 
 const invalidateJobsPublicCache = () => {
   jobsPublicCache.clear();
+};
+
+// Fetch public jobs for a given page/limit and update the cache.
+const fetchAndCachePublicJobs = async (page, limit) => {
+  const skip = (page - 1) * limit;
+  const query = { status: 'active' };
+  const totalJobs = await Job.countDocuments(query);
+  const jobs = await Job.find(query)
+    .populate('owner', 'username image')
+    .sort({ source: 1, createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+  const responseData = {
+    jobs,
+    pagination: {
+      total: totalJobs, page, limit,
+      totalPages: Math.ceil(totalJobs / limit),
+      hasMore: skip + jobs.length < totalJobs
+    }
+  };
+  jobsPublicCache.set(`jobs_p${page}_l${limit}`, { data: responseData, timestamp: Date.now() });
+  return responseData;
 };
 
 // Get all jobs
@@ -113,16 +136,26 @@ router.get('/', async (req, res) => {
     if (isPublicRequest) {
       const cacheKey = `jobs_p${page}_l${limit}`;
       const cached = jobsPublicCache.get(cacheKey);
-      if (cached && now - cached.timestamp < JOBS_PUBLIC_CACHE_TTL) {
-        res.set('X-Cache', 'HIT');
-        return res.json(cached.data);
+      if (cached) {
+        res.set('X-Cache', now - cached.timestamp < JOBS_PUBLIC_CACHE_TTL ? 'HIT' : 'STALE');
+        res.json(cached.data);
+        if (!jobsRefreshing.has(cacheKey) && now - cached.timestamp >= JOBS_PUBLIC_CACHE_TTL) {
+          jobsRefreshing.add(cacheKey);
+          fetchAndCachePublicJobs(page, limit).catch(err =>
+            console.error('[Jobs Cache] Background refresh failed:', err.message)
+          ).finally(() => { jobsRefreshing.delete(cacheKey); });
+        }
+        return;
       }
+
+      // No cache — must wait
+      const responseData = await fetchAndCachePublicJobs(page, limit);
+      res.set('X-Cache', 'MISS');
+      return res.json(responseData);
     }
 
-    // Get total count for pagination info
+    // Owner-specific or includeExpired queries — always hit DB
     const totalJobs = await Job.countDocuments(query);
-    
-    // Fetch jobs with pagination — sort by source first (user jobs first), then newest
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
       .sort({ source: 1, createdAt: -1 })
@@ -133,18 +166,11 @@ router.get('/', async (req, res) => {
     const responseData = {
       jobs,
       pagination: {
-        total: totalJobs,
-        page,
-        limit,
+        total: totalJobs, page, limit,
         totalPages: Math.ceil(totalJobs / limit),
         hasMore: skip + jobs.length < totalJobs
       }
     };
-
-    if (isPublicRequest) {
-      const cacheKey = `jobs_p${page}_l${limit}`;
-      jobsPublicCache.set(cacheKey, { data: responseData, timestamp: now });
-    }
 
     res.set('X-Cache', 'MISS');
     res.json(responseData);
@@ -246,28 +272,8 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
 // Pre-warm the public jobs cache on startup so the first visit to the jobs page is fast.
 const warmupJobsCache = async () => {
   try {
-    const limit = 20;
-    const totalJobs = await Job.countDocuments({ status: 'active' });
-    const jobs = await Job.find({ status: 'active' })
-      .populate('owner', 'username image')
-      .sort({ source: 1, createdAt: -1 })
-      .skip(0)
-      .limit(limit)
-      .lean();
-
-    const responseData = {
-      jobs,
-      pagination: {
-        total: totalJobs,
-        page: 1,
-        limit,
-        totalPages: Math.ceil(totalJobs / limit),
-        hasMore: jobs.length < totalJobs
-      }
-    };
-
-    jobsPublicCache.set('jobs_p1_l20', { data: responseData, timestamp: Date.now() });
-    console.log(`[Jobs Cache] Warmed up ${jobs.length} jobs (${totalJobs} total)`);
+    const responseData = await fetchAndCachePublicJobs(1, 20);
+    console.log(`[Jobs Cache] Warmed up ${responseData.jobs.length} jobs (${responseData.pagination.total} total)`);
   } catch (err) {
     console.error('[Jobs Cache] Warmup failed (non-critical):', err.message);
   }

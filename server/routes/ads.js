@@ -207,6 +207,7 @@ setInterval(async () => {
 // Votes also emit socket events so clients see real-time updates regardless of cache age.
 let adsListCache = null;
 let adsListCacheTime = 0;
+let adsListRefreshing = false;
 const ADS_LIST_CACHE_TTL = 30 * 1000; // 30 seconds
 
 const invalidateAdsCache = () => {
@@ -214,61 +215,56 @@ const invalidateAdsCache = () => {
   adsListCacheTime = 0;
 };
 
+const fetchAndCacheAds = async () => {
+  const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
+  const currentTime = Date.now();
+  const processedAds = ads.map(ad => {
+    if (ad.isBumped && ad.bumpExpiresAt) {
+      const expiryDate = new Date(ad.bumpExpiresAt);
+      if (currentTime <= expiryDate.getTime()) {
+        return ad;
+      }
+    }
+    if (!ad.isBumped) {
+      const timeSinceCreation = currentTime - new Date(ad.createdAt).getTime();
+      const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+      let calculatedSize = MAX_SIZE;
+      for (let i = 0; i < shrinkIntervals; i++) {
+        calculatedSize *= SHRINK_PERCENTAGE;
+      }
+      calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
+      if (calculatedSize !== ad.size) {
+        const adObject = ad.toObject();
+        adObject.size = calculatedSize;
+        return adObject;
+      }
+    }
+    return ad;
+  });
+  adsListCache = processedAds;
+  adsListCacheTime = Date.now();
+  return processedAds;
+};
+
 // GET route
 router.get('/', async (req, res) => {
   try {
     const now = Date.now();
-    if (adsListCache && now - adsListCacheTime < ADS_LIST_CACHE_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(adsListCache);
+
+    if (adsListCache) {
+      res.set('X-Cache', now - adsListCacheTime < ADS_LIST_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(adsListCache);
+      if (!adsListRefreshing && now - adsListCacheTime >= ADS_LIST_CACHE_TTL) {
+        adsListRefreshing = true;
+        fetchAndCacheAds().catch(err =>
+          console.error('[Ads Cache] Background refresh failed:', err.message)
+        ).finally(() => { adsListRefreshing = false; });
+      }
+      return;
     }
 
-    // Only show active or approved ads (not pending or rejected)
-    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
-    
-    // Ensure all ad sizes are up-to-date before sending to clients
-    // This prevents the "large then small" visual bug when loading the page
-    const currentTime = Date.now();
-    const processedAds = ads.map(ad => {
-      // Don't modify the database here, just return properly sized ad objects
-      
-      // Only process non-bumped ads or expired bumped ads
-      if (ad.isBumped && ad.bumpExpiresAt) {
-        const expiryDate = new Date(ad.bumpExpiresAt);
-        if (currentTime <= expiryDate.getTime()) {
-          // Bumped ad that hasn't expired
-          return ad;
-        }
-      }
-      
-      // For non-bumped ads or expired bumped ads
-      if (!ad.isBumped) {
-        const timeSinceCreation = currentTime - new Date(ad.createdAt).getTime();
-        const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-        
-        // Start from MAX_SIZE and apply continuous shrinking
-        let calculatedSize = MAX_SIZE;
-        for (let i = 0; i < shrinkIntervals; i++) {
-          calculatedSize *= SHRINK_PERCENTAGE;
-        }
-        
-        // Ensure size doesn't go below minimum and round to 1 decimal
-        calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
-        
-        // Return adjusted ad with correct size (but don't modify DB)
-        if (calculatedSize !== ad.size) {
-          // Clone the ad object and modify the size property
-          const adObject = ad.toObject();
-          adObject.size = calculatedSize;
-          return adObject;
-        }
-      }
-      
-      return ad;
-    });
-    
-    adsListCache = processedAds;
-    adsListCacheTime = Date.now();
+    // No cache — must wait
+    const processedAds = await fetchAndCacheAds();
     res.set('X-Cache', 'MISS');
     res.json(processedAds);
   } catch (error) {
@@ -923,28 +919,7 @@ router.post('/:id/reject', auth, emitAdEvent('delete'), async (req, res) => {
 // Pre-warm the ads (bubbles) cache on startup.
 const warmupAdsCache = async () => {
   try {
-    const now = Date.now();
-    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
-    const processedAds = ads.map(ad => {
-      if (ad.isBumped && ad.bumpExpiresAt && now <= new Date(ad.bumpExpiresAt).getTime()) {
-        return ad;
-      }
-      if (!ad.isBumped) {
-        const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-        const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-        let calculatedSize = MAX_SIZE;
-        for (let i = 0; i < shrinkIntervals; i++) calculatedSize *= SHRINK_PERCENTAGE;
-        calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
-        if (calculatedSize !== ad.size) {
-          const adObject = ad.toObject();
-          adObject.size = calculatedSize;
-          return adObject;
-        }
-      }
-      return ad;
-    });
-    adsListCache = processedAds;
-    adsListCacheTime = now;
+    const processedAds = await fetchAndCacheAds();
     console.log(`[Ads Cache] Warmed up ${processedAds.length} ads`);
   } catch (err) {
     console.error('[Ads Cache] Warmup failed (non-critical):', err.message);

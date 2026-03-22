@@ -5,13 +5,25 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 
 // Per-symbol cache — prevents 19 simultaneous DB queries when the token list loads.
-// Reviews change rarely, so 2-minute cache is safe and a big DB load reducer.
 const reviewsCache = new Map(); // symbol -> { data, timestamp }
-const REVIEWS_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const reviewsRefreshing = new Set(); // symbols currently being refreshed in background
+const REVIEWS_CACHE_TTL = 60 * 1000; // 1 minute
 
 const invalidateReviewsCache = (symbol) => {
   if (symbol) {
     reviewsCache.delete(symbol.toLowerCase());
+  }
+};
+
+// Fetches fresh reviews for one symbol and updates the cache — used for background refreshes.
+const refreshReviewsForSymbol = async (symbol) => {
+  try {
+    const reviews = await Review.find({ tokenSymbol: symbol }).sort({ createdAt: -1 }).lean();
+    reviewsCache.set(symbol, { data: reviews, timestamp: Date.now() });
+  } catch (err) {
+    console.error(`[Reviews Cache] Background refresh failed for ${symbol}:`, err.message);
+  } finally {
+    reviewsRefreshing.delete(symbol);
   }
 };
 
@@ -43,15 +55,20 @@ router.get('/:symbol', async (req, res) => {
     const now = Date.now();
     const cached = reviewsCache.get(symbol);
 
-    if (cached && now - cached.timestamp < REVIEWS_CACHE_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(cached.data);
+    if (cached) {
+      // Serve immediately — even if stale, user never waits
+      res.set('X-Cache', now - cached.timestamp < REVIEWS_CACHE_TTL ? 'HIT' : 'STALE');
+      res.json(cached.data);
+      // If expired and not already refreshing, kick off background refresh
+      if (!reviewsRefreshing.has(symbol) && now - cached.timestamp >= REVIEWS_CACHE_TTL) {
+        reviewsRefreshing.add(symbol);
+        refreshReviewsForSymbol(symbol);
+      }
+      return;
     }
 
-    const reviews = await Review.find({ 
-      tokenSymbol: symbol
-    }).sort({ createdAt: -1 }).lean();
-
+    // No cache at all — must wait for first fetch
+    const reviews = await Review.find({ tokenSymbol: symbol }).sort({ createdAt: -1 }).lean();
     reviewsCache.set(symbol, { data: reviews, timestamp: now });
     res.set('X-Cache', 'MISS');
     res.json(reviews);

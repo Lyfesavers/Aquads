@@ -9,11 +9,26 @@ const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
 // Cache for games list and categories — these are heavy aggregation/populate queries
 const gamesCache = new Map(); // cacheKey -> { data, timestamp }
-const GAMES_LIST_TTL = 2 * 60 * 1000;   // 2 minutes for the full games list
-const GAMES_CATS_TTL = 5 * 60 * 1000;   // 5 minutes for categories (changes rarely)
+const gamesRefreshing = new Set(); // cache keys currently being refreshed in background
+const GAMES_LIST_TTL = 60 * 1000;        // 1 minute for the full games list
+const GAMES_CATS_TTL = 2 * 60 * 1000;   // 2 minutes for categories
 
 const invalidateGamesCache = () => {
   gamesCache.clear();
+};
+
+// Shared helper — runs the categories aggregation and populates the cache.
+const fetchAndCacheCategories = async () => {
+  const now = Date.now();
+  const all = await Game.aggregate([
+    { $match: { status: 'active' } },
+    { $group: { _id: '$category', count: { $sum: 1 } } },
+    { $sort: { count: -1 } }
+  ]);
+  const data = all.map(cat => ({ name: cat._id, count: cat.count }));
+  gamesCache.set('categories', { data, timestamp: now });
+  gamesCache.set('categories_popular', { data: data.slice(0, 10), timestamp: now });
+  return data;
 };
 
 // Get all game categories (define BEFORE dynamic routes)
@@ -22,18 +37,20 @@ router.get('/categories', async (req, res) => {
     const cacheKey = 'categories';
     const now = Date.now();
     const cached = gamesCache.get(cacheKey);
-    if (cached && now - cached.timestamp < GAMES_CATS_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(cached.data);
+
+    if (cached) {
+      res.set('X-Cache', now - cached.timestamp < GAMES_CATS_TTL ? 'HIT' : 'STALE');
+      res.json(cached.data);
+      if (!gamesRefreshing.has(cacheKey) && now - cached.timestamp >= GAMES_CATS_TTL) {
+        gamesRefreshing.add(cacheKey);
+        fetchAndCacheCategories().catch(err =>
+          console.error('[Games Cache] Background refresh (categories) failed:', err.message)
+        ).finally(() => { gamesRefreshing.delete(cacheKey); gamesRefreshing.delete('categories_popular'); });
+      }
+      return;
     }
 
-    const categories = await Game.aggregate([
-      { $match: { status: 'active' } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
-    const data = categories.map(cat => ({ name: cat._id, count: cat.count }));
-    gamesCache.set(cacheKey, { data, timestamp: now });
+    const data = await fetchAndCacheCategories();
     res.set('X-Cache', 'MISS');
     res.json(data);
   } catch (error) {
@@ -48,43 +65,42 @@ router.get('/categories/popular', async (req, res) => {
     const cacheKey = 'categories_popular';
     const now = Date.now();
     const cached = gamesCache.get(cacheKey);
-    if (cached && now - cached.timestamp < GAMES_CATS_TTL) {
-      res.set('X-Cache', 'HIT');
-      return res.json(cached.data);
+
+    if (cached) {
+      res.set('X-Cache', now - cached.timestamp < GAMES_CATS_TTL ? 'HIT' : 'STALE');
+      res.json(cached.data);
+      if (!gamesRefreshing.has(cacheKey) && now - cached.timestamp >= GAMES_CATS_TTL) {
+        gamesRefreshing.add(cacheKey);
+        fetchAndCacheCategories().catch(err =>
+          console.error('[Games Cache] Background refresh (popular cats) failed:', err.message)
+        ).finally(() => { gamesRefreshing.delete(cacheKey); gamesRefreshing.delete('categories'); });
+      }
+      return;
     }
 
-    const categories = await Game.aggregate([
-      { $match: { status: 'active' } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
-    const data = categories.map(cat => ({ name: cat._id, count: cat.count }));
-    gamesCache.set(cacheKey, { data, timestamp: now });
+    const data = await fetchAndCacheCategories();
     res.set('X-Cache', 'MISS');
-    res.json(data);
+    res.json(data.slice(0, 10));
   } catch (error) {
     console.error('Error fetching popular categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
 
+// Fetch games from DB for a given query key and update the cache.
+const fetchAndCacheGamesList = async (cacheKey, query, sort) => {
+  const games = await Game.find(query).populate('owner', 'username image').sort(sort).lean();
+  gamesCache.set(cacheKey, { data: games, timestamp: Date.now() });
+  return games;
+};
+
 // Get all games
 router.get('/', async (req, res) => {
   try {
-    // Only cache simple, filter-free requests (the most common page loads)
     const { category, blockchain, search, status, sort: sortParam } = req.query;
-    const isSimpleRequest = !search; // don't cache text search results
+    const isSimpleRequest = !search;
     const cacheKey = `games_${category || ''}_${blockchain || ''}_${status || 'active'}_${sortParam || 'votes'}`;
     const now = Date.now();
-
-    if (isSimpleRequest) {
-      const cached = gamesCache.get(cacheKey);
-      if (cached && now - cached.timestamp < GAMES_LIST_TTL) {
-        res.set('X-Cache', 'HIT');
-        return res.json(cached.data);
-      }
-    }
 
     const query = {};
     if (category) query.category = category;
@@ -97,15 +113,28 @@ router.get('/', async (req, res) => {
     else if (sortParam === 'oldest') sort = { createdAt: 1 };
     else if (sortParam === 'alphabetical') sort = { title: 1 };
 
-    const games = await Game.find(query)
-      .populate('owner', 'username image')
-      .sort(sort)
-      .lean();
-
     if (isSimpleRequest) {
-      gamesCache.set(cacheKey, { data: games, timestamp: now });
+      const cached = gamesCache.get(cacheKey);
+      if (cached) {
+        res.set('X-Cache', now - cached.timestamp < GAMES_LIST_TTL ? 'HIT' : 'STALE');
+        res.json(cached.data);
+        if (!gamesRefreshing.has(cacheKey) && now - cached.timestamp >= GAMES_LIST_TTL) {
+          gamesRefreshing.add(cacheKey);
+          fetchAndCacheGamesList(cacheKey, query, sort).catch(err =>
+            console.error('[Games Cache] Background refresh failed:', err.message)
+          ).finally(() => { gamesRefreshing.delete(cacheKey); });
+        }
+        return;
+      }
+
+      // No cache — must wait
+      const games = await fetchAndCacheGamesList(cacheKey, query, sort);
+      res.set('X-Cache', 'MISS');
+      return res.json(games);
     }
-    res.set('X-Cache', 'MISS');
+
+    // Search queries bypass cache entirely
+    const games = await Game.find(query).populate('owner', 'username image').sort(sort).lean();
     res.json(games);
   } catch (error) {
     console.error('Error fetching games:', error);
@@ -289,26 +318,11 @@ router.get('/:id/voted', auth, async (req, res) => {
 // so the first user after a restart never waits 12-20 seconds.
 const warmupGamesCache = async () => {
   try {
-    const now = Date.now();
-
-    // Main games list (default sort by votes)
-    const games = await Game.find({ status: 'active' })
-      .populate('owner', 'username image')
-      .sort({ votes: -1 })
-      .lean();
-    gamesCache.set('games___active_votes', { data: games, timestamp: now });
-
-    // Categories
-    const categories = await Game.aggregate([
-      { $match: { status: 'active' } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
+    const [games, cats] = await Promise.all([
+      fetchAndCacheGamesList('games___active_votes', { status: 'active' }, { votes: -1 }),
+      fetchAndCacheCategories()
     ]);
-    const catData = categories.map(cat => ({ name: cat._id, count: cat.count }));
-    gamesCache.set('categories', { data: catData, timestamp: now });
-    gamesCache.set('categories_popular', { data: catData.slice(0, 10), timestamp: now });
-
-    console.log(`[Games Cache] Warmed up ${games.length} games, ${catData.length} categories`);
+    console.log(`[Games Cache] Warmed up ${games.length} games, ${cats.length} categories`);
   } catch (err) {
     console.error('[Games Cache] Warmup failed (non-critical):', err.message);
   }
