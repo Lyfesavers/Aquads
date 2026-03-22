@@ -1115,6 +1115,7 @@ Vote on projects and view trending bubbles!
 
 • /mybubble
   View YOUR projects with voting buttons
+  📌 Run once in your group — we'll auto-post your bubble there twice daily!
 
 • /boostvote
   🚀 Boost your bubble with votes + members!
