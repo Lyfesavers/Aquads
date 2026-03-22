@@ -418,7 +418,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     const userId = currentUser.userId || currentUser.id;
     const timers = [];
     
-    // Pending completions (800ms after admin tab opens)
+    // Pending completions (250ms after admin tab opens)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingCompletions', {
@@ -426,9 +426,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           userId
         });
       }
-    }, 800));
+    }, 250));
     
-    // Bump requests (1000ms)
+    // Bump requests (300ms)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingBumpRequests', {
@@ -436,7 +436,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           userId
         });
       }
-    }, 1000));
+    }, 300));
     
     return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, socket, activeTab]);
@@ -923,7 +923,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     // Step 1: Ads (immediate)
     requestPendingAdsViaSocket();
     
-    // Step 2: Token purchases (200ms)
+    // Step 2: Token purchases (50ms)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingTokenPurchases', {
@@ -931,16 +931,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           isAdmin: currentUser.isAdmin
         });
       }
-    }, 200));
+    }, 50));
     
-    // Step 3: Redemptions (300ms) - deferred from mount to admin tab
+    // Step 3: Redemptions (100ms) - deferred from mount to admin tab
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingRedemptions', { isAdmin: currentUser.isAdmin });
       }
-    }, 300));
+    }, 100));
     
-    // Step 4: Vote boosts (400ms)
+    // Step 4: Vote boosts (150ms)
     timers.push(setTimeout(() => {
       if (socket) {
         socket.emit('requestPendingVoteBoosts', {
@@ -948,12 +948,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           isAdmin: currentUser.isAdmin
         });
       }
-    }, 400));
+    }, 150));
     
-    // Step 5: Services (600ms)
+    // Step 5: Services (200ms)
     timers.push(setTimeout(() => {
       requestPendingServicesViaSocket();
-    }, 600));
+    }, 200));
     
     return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, activeTab, socket]);

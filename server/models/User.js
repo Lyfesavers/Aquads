@@ -804,4 +804,11 @@ userSchema.index({ createdAt: -1 }); // For registration date sorting
 userSchema.index({ lastActivity: -1 }); // For activity-based sorting
 // Note: aquaPay.paymentSlug index is created automatically via "unique: true" in schema
 
+// Admin dashboard performance indexes
+userSchema.index({ affiliateCount: -1 }); // /suspicious-users and /top-affiliates sort
+userSchema.index({ ipAddress: 1 }); // Registration IP limiter + admin IP lookup
+userSchema.index({ deviceFingerprint: 1 }); // Registration device limiter
+userSchema.index({ 'membership.isActive': 1, 'membership.nextBillingDate': 1 }); // Hourly membership renewal cron
+userSchema.index({ 'partnerStore.partnerStatus': 1, 'partnerStore.isPartner': 1 }); // Partner admin route
+
 module.exports = mongoose.model('User', userSchema); 

@@ -45,6 +45,8 @@ const tokenSchema = new mongoose.Schema({
   }
 });
 
-
+// Performance indexes — previously had none beyond _id
+tokenSchema.index({ marketCapRank: 1 }); // Token list sorts by rank on every cache miss
+tokenSchema.index({ symbol: 1 });        // Symbol-based lookups
 
 module.exports = mongoose.model('Token', tokenSchema); 

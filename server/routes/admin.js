@@ -17,17 +17,18 @@ const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calcul
 const { validateSearchQuery } = require('../utils/security');
 const { validateSearchQuery: validateSearchQueryMiddleware } = require('../middleware/inputValidation');
 
+// Cache for suspicious users — expires every 5 minutes
+let suspiciousUsersCache = null;
+let suspiciousUsersCacheExpiry = 0;
+const SUSPICIOUS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // Middleware to check if user is admin
-const isAdmin = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-    next();
-  } catch (error) {
-    res.status(500).json({ error: 'Error checking admin status' });
+// auth.js already fetches the user from DB and sets req.user.isAdmin — no second DB lookup needed
+const isAdmin = (req, res, next) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
   }
+  next();
 };
 
 // Get detailed affiliate information for a specific user
@@ -289,8 +290,14 @@ router.get('/search-users', auth, isAdmin, validateSearchQueryMiddleware, async 
 // Get users with suspicious patterns
 router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) => {
   try {
-    const { minAffiliates = 10, daysBack = 30 } = req.query;
-    
+    const { minAffiliates = 10, daysBack = 30, refresh } = req.query;
+
+    // Serve cached result if still fresh and no forced refresh requested
+    const now = Date.now();
+    if (!refresh && suspiciousUsersCache && now < suspiciousUsersCacheExpiry) {
+      return res.json(suspiciousUsersCache);
+    }
+
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack));
 
@@ -339,7 +346,7 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
     // Sort by risk score
     flaggedUsers.sort((a, b) => b.riskScore - a.riskScore);
 
-    res.json({
+    const result = {
       suspiciousUsers: flaggedUsers,
       summary: {
         totalUsers: flaggedUsers.length,
@@ -347,7 +354,13 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
         mediumRisk: flaggedUsers.filter(u => u.riskScore >= 50 && u.riskScore < 75).length,
         lowRisk: flaggedUsers.filter(u => u.riskScore < 50).length
       }
-    });
+    };
+
+    // Store in cache
+    suspiciousUsersCache = result;
+    suspiciousUsersCacheExpiry = Date.now() + SUSPICIOUS_CACHE_TTL;
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch suspicious users' });
   }
