@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare, FaEye } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
@@ -203,10 +203,9 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
             {game.title}
           </Link>
           
-          <div className="flex items-center">
-            {/* Owner/Admin Buttons - Moved here for better visibility */}
+          <div className="flex items-center gap-1.5">
             {isOwnerOrAdmin && (
-              <div className="flex space-x-2 mr-2">
+              <>
                 <button
                   onClick={handleEdit}
                   className="bg-yellow-600 hover:bg-yellow-700 text-white p-1.5 rounded-full flex items-center justify-center"
@@ -221,9 +220,20 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
                 >
                   <FaTrash size={14} />
                 </button>
-              </div>
+              </>
             )}
-            
+
+            {/* Share icon — visible to everyone */}
+            <button
+              onClick={handleShare}
+              className={`p-1.5 rounded-full flex items-center justify-center transition-colors ${
+                copied ? 'bg-green-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
+              }`}
+              title={copied ? 'Link copied!' : 'Copy share link'}
+            >
+              <FaShare size={14} />
+            </button>
+
             <div className="flex items-center bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm">
               <FaThumbsUp className="mr-1" />
               <span>{voteCount}</span>
@@ -282,16 +292,13 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
               {loading ? 'Processing...' : voted ? 'Voted' : 'Vote'}
             </button>
 
-            <button
-              onClick={handleShare}
-              className={`flex items-center px-3 py-2 rounded text-sm transition-colors ${
-                copied ? 'bg-green-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-              title="Copy share link"
+            <Link
+              to={`/games/${game._id}`}
+              className="flex items-center px-3 py-2 rounded text-sm bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
             >
-              <FaShare className="mr-1" />
-              {copied ? 'Copied!' : 'Share'}
-            </button>
+              <FaEye className="mr-1" />
+              View Page
+            </Link>
           </div>
 
           <button
