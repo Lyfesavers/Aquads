@@ -273,7 +273,7 @@ const Affiliate = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Hosting/Pitching on live streams & spaces (see details below)</span>
-                          <span className="text-green-400 font-bold">100 pts/day max</span>
+                          <span className="text-green-400 font-bold">500 pts/day max</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Affiliate lists service/ad</span>
@@ -297,7 +297,7 @@ const Affiliate = () => {
 
                     {/* Streaming/Spaces Details */}
                     <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-600/50 rounded-lg">
-                      <h4 className="text-lg font-semibold mb-3 text-blue-400">📺 Live Streaming & Spaces - Earn 100 Points Per Day</h4>
+                      <h4 className="text-lg font-semibold mb-3 text-blue-400">📺 Live Streaming & Spaces - Earn 100 Points Per Stream/Space (500 pts/day max)</h4>
                       <p className="text-gray-300 mb-3">
                         Host or pitch on live streams and spaces across multiple platforms including X (Twitter), Facebook, Instagram, YouTube, Twitch, Kick, and any other streaming platform!
                       </p>
@@ -339,12 +339,12 @@ const Affiliate = () => {
                             <li>Must display Aquads logo in your profile picture OR use QR code generated from your dashboard</li>
                             <li>Stream/space must be recorded</li>
                             <li>Must send us the link to the recorded stream/space for verification</li>
-                            <li>Maximum 100 points per day (multiple streams/spaces earn 100 points total but greatly increase approval chances)</li>
+                            <li>Earn 100 points per stream/space, maximum 500 points per day</li>
                           </ul>
                         </div>
 
                         <p className="text-blue-300 italic mt-2">
-                          💡 <strong>Pro Tip:</strong> Hosting multiple streams or participating in multiple spaces per day doesn't earn extra points beyond 100, but it significantly increases your chances of approval and shows your dedication to the Aquads community!
+                          💡 <strong>Pro Tip:</strong> Each stream or space earns 100 points — do up to 5 per day to hit the 500 point daily max. More streams/spaces also significantly increases your chances of approval and shows your dedication to the Aquads community!
                         </p>
                       </div>
                     </div>
@@ -355,11 +355,13 @@ const Affiliate = () => {
                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Point Redemption Options:</h3>
                   <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-600/50 rounded-lg p-6">
                     <div className="space-y-3">
-
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-2">
-                          <span className="text-green-400">💳</span>
-                          <span className="text-gray-300">$100 CAD Gift Card</span>
+                          <span className="text-green-400">💵</span>
+                          <div>
+                            <span className="text-gray-300">$100 CAD</span>
+                            <p className="text-xs text-gray-400 mt-0.5">Paid out in any crypto desired</p>
+                          </div>
                         </div>
                         <span className="text-green-400 font-bold">10,000 pts</span>
                       </div>
