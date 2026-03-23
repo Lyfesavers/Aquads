@@ -33,6 +33,7 @@ import TokenRating from './components/TokenRating';
 const Marketplace = lazy(() => import('./components/Marketplace'));
 const PartnerMarketplace = lazy(() => import('./components/PartnerMarketplace'));
 const GameHub = lazy(() => import('./components/GameHub'));
+const GamePage = lazy(() => import('./components/GamePage'));
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
@@ -2575,6 +2576,23 @@ function App() {
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
           <Route path="/games/crossword" element={<CrosswordPuzzle currentUser={currentUser} />} />
+
+          <Route path="/games/:id" element={
+            <GamePage
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+            />
+          } />
+          <Route path="/share/game/:id" element={
+            <GamePage
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+            />
+          } />
 
           <Route path="/games" element={
             <GameHub 

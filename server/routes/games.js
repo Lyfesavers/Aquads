@@ -314,6 +314,116 @@ router.get('/:id/voted', auth, async (req, res) => {
   }
 });
 
+// ─── Game Comments ────────────────────────────────────────────────────────────
+
+const GameComment = require('../models/GameComment');
+
+// Short-lived in-memory cache for comment lists (30 seconds per game)
+// Keeps MongoDB free tier from being hammered on popular game pages.
+// Real-time adds/deletes are still instant via Socket.IO — cache only affects
+// the initial page load fetch.
+const commentsCache = new Map(); // gameId -> { data, timestamp }
+const COMMENTS_TTL = 30 * 1000; // 30 seconds
+
+const invalidateCommentsCache = (gameId) => commentsCache.delete(gameId);
+
+// Get comments for a game (newest first, limit 100)
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const gameId = req.params.id;
+    const now = Date.now();
+    const cached = commentsCache.get(gameId);
+
+    if (cached && now - cached.timestamp < COMMENTS_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached.data);
+    }
+
+    const comments = await GameComment.find({ gameId })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    commentsCache.set(gameId, { data: comments, timestamp: now });
+    res.set('X-Cache', 'MISS');
+    res.json(comments);
+  } catch (error) {
+    console.error('Error fetching game comments:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+// Post a comment on a game
+router.post('/:id/comments', auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    // auth middleware already fetched the user and populated req.user.username + req.user.image
+    // — no extra DB call needed here
+    const comment = new GameComment({
+      gameId: req.params.id,
+      userId: req.user.userId,
+      username: req.user.username,
+      userImage: req.user.image || null,
+      text: text.trim()
+    });
+
+    await comment.save();
+
+    // Bust the comments cache for this game so the next GET is fresh
+    invalidateCommentsCache(req.params.id);
+
+    // Broadcast to all clients in the game room via Socket.IO
+    try {
+      const { getIO } = require('../socket');
+      getIO().to('game:' + req.params.id).emit('gameComment', { type: 'new', comment: comment.toObject() });
+    } catch (socketError) {
+      // Non-critical — comment is still saved
+    }
+
+    res.status(201).json(comment);
+  } catch (error) {
+    console.error('Error creating game comment:', error);
+    res.status(500).json({ error: 'Failed to post comment' });
+  }
+});
+
+// Delete a comment (owner or admin only)
+router.delete('/:id/comments/:commentId', auth, async (req, res) => {
+  try {
+    const comment = await GameComment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    const isOwner = comment.userId.toString() === req.user.userId;
+    const isAdmin = req.user.isAdmin || req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to delete this comment' });
+    }
+
+    await GameComment.findByIdAndDelete(req.params.commentId);
+    invalidateCommentsCache(req.params.id);
+
+    try {
+      const { getIO } = require('../socket');
+      getIO().to('game:' + req.params.id).emit('gameComment', { type: 'delete', commentId: req.params.commentId });
+    } catch (socketError) {
+      // Non-critical
+    }
+
+    res.json({ message: 'Comment deleted' });
+  } catch (error) {
+    console.error('Error deleting game comment:', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
+  }
+});
+
+// ─── End Game Comments ─────────────────────────────────────────────────────────
+
 // Pre-warm the games cache on startup — runs the two most expensive queries (list + categories)
 // so the first user after a restart never waits 12-20 seconds.
 const warmupGamesCache = async () => {

@@ -1563,6 +1563,55 @@ export const fetchGameCategories = async () => {
   }
 };
 
+export const fetchGameComments = async (gameId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}/comments`);
+    if (!response.ok) throw new Error('Failed to fetch comments');
+    return await response.json();
+  } catch (error) {
+    logger.error('Error fetching game comments:', error);
+    throw error;
+  }
+};
+
+export const postGameComment = async (gameId, text) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify({ text })
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to post comment');
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error('Error posting game comment:', error);
+    throw error;
+  }
+};
+
+export const deleteGameComment = async (gameId, commentId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeader()
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to delete comment');
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error('Error deleting game comment:', error);
+    throw error;
+  }
+};
+
 // Power-ups
 export const buyPowerUp = async (type) => {
   const res = await fetch(`${API_URL}/points/buy-powerup`, {

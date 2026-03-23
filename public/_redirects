@@ -18,6 +18,9 @@
 # AquaSwap token share URL - ALWAYS prerender
 /share/aquaswap /.netlify/functions/prerender-aquaswap 200!
 
+# Game share URL - ALWAYS prerender
+/share/game/:id /.netlify/functions/prerender-game-share 200!
+
 # Blog share URL - ALWAYS prerender
 /share/blog/:id /.netlify/functions/prerender-blog-share 200!
 

@@ -1276,6 +1276,15 @@ function init(server) {
         socket.emit('aquaPaySlugCheckResult', { available: false, reason: 'Error checking availability' });
       }
     });
+
+    // Game detail page — join/leave rooms for live comment feed
+    socket.on('joinGame', (gameId) => {
+      if (gameId) socket.join('game:' + gameId);
+    });
+
+    socket.on('leaveGame', (gameId) => {
+      if (gameId) socket.leave('game:' + gameId);
+    });
   });
   
   return io;

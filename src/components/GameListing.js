@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
 const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
@@ -8,6 +9,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   const [loading, setLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   useEffect(() => {
     if (currentUser) {
@@ -69,6 +71,17 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   
   const handleDeleteCancel = () => {
     setShowDeleteConfirm(false);
+  };
+
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/share/game/${game._id}`;
+    const finalUrl = currentUser?.username ? `${shareUrl}?ref=${currentUser.username}` : shareUrl;
+    navigator.clipboard.writeText(finalUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
   };
   
   const truncateDescription = (text, length = 150) => {
@@ -155,15 +168,17 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
             )}
           </>
         ) : (
-          <img 
-            src={game.bannerUrl} 
-            alt={game.title} 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/640x360?text=Game+Banner+Not+Available';
-            }}
-          />
+          <Link to={`/games/${game._id}`} className="block w-full h-full">
+            <img 
+              src={game.bannerUrl} 
+              alt={game.title} 
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://via.placeholder.com/640x360?text=Game+Banner+Not+Available';
+              }}
+            />
+          </Link>
         )}
       </div>
       
@@ -181,7 +196,12 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
       {/* Content */}
       <div className="px-4 pt-1 pb-4 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-white">{game.title}</h3>
+          <Link
+            to={`/games/${game._id}`}
+            className="text-xl font-bold text-white hover:text-yellow-400 transition-colors"
+          >
+            {game.title}
+          </Link>
           
           <div className="flex items-center">
             {/* Owner/Admin Buttons - Moved here for better visibility */}
@@ -247,20 +267,33 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         )}
         
         {/* Actions */}
-        <div className="flex justify-between items-center mt-auto">
-          <button
-            onClick={handleVote}
-            disabled={loading}
-            className={`flex items-center px-3 py-2 rounded text-sm ${
-              voted
-                ? 'bg-blue-700 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            } transition-colors disabled:opacity-50`}
-          >
-            <FaThumbsUp className={`mr-1 ${voted ? 'text-white' : 'text-gray-400'}`} />
-            {loading ? 'Processing...' : voted ? 'Voted' : 'Vote'}
-          </button>
-          
+        <div className="flex justify-between items-center mt-auto gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleVote}
+              disabled={loading}
+              className={`flex items-center px-3 py-2 rounded text-sm ${
+                voted
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              } transition-colors disabled:opacity-50`}
+            >
+              <FaThumbsUp className={`mr-1 ${voted ? 'text-white' : 'text-gray-400'}`} />
+              {loading ? 'Processing...' : voted ? 'Voted' : 'Vote'}
+            </button>
+
+            <button
+              onClick={handleShare}
+              className={`flex items-center px-3 py-2 rounded text-sm transition-colors ${
+                copied ? 'bg-green-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+              title="Copy share link"
+            >
+              <FaShare className="mr-1" />
+              {copied ? 'Copied!' : 'Share'}
+            </button>
+          </div>
+
           <button
             onClick={handlePlay}
             className="flex items-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded text-sm transition-colors"

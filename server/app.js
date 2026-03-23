@@ -736,6 +736,72 @@ app.get('/learn/:slug', async (req, res, next) => {
   next();
 });
 
+// Dynamic meta tags for individual game pages — must be before the React catch-all
+app.get('/games/:id', async (req, res, next) => {
+  // Skip static minigame routes — let them fall through to the SPA
+  const staticRoutes = ['dots-and-boxes', 'horse-racing', 'crossword'];
+  if (staticRoutes.includes(req.params.id)) {
+    return next();
+  }
+
+  try {
+    const Game = require('./models/Game');
+    const game = await Game.findById(req.params.id).lean();
+
+    if (game) {
+      let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+
+      const escapeHtml = (string) => {
+        if (!string) return '';
+        return string
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+
+      const shortDescription = game.description
+        ? game.description.replace(/<[^>]*>/g, '').slice(0, 200) + (game.description.length > 200 ? '...' : '')
+        : `Play ${game.title} on Aquads Game Hub!`;
+
+      const imageUrl = game.bannerType === 'image' && game.bannerUrl
+        ? game.bannerUrl
+        : `${req.protocol}://${req.get('host')}/logo712.png`;
+
+      const canonicalUrl = `${req.protocol}://${req.get('host')}/games/${game._id}`;
+
+      const injectedMeta = `
+<!-- START: Dynamic Meta Tags for Game: ${game._id} -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@AquadsXYZ">
+<meta name="twitter:title" content="${escapeHtml(game.title)} | Aquads Game Hub">
+<meta name="twitter:description" content="${escapeHtml(shortDescription)}">
+<meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aquads Game Hub">
+<meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+<meta property="og:title" content="${escapeHtml(game.title)} | Aquads Game Hub">
+<meta property="og:description" content="${escapeHtml(shortDescription)}">
+<meta property="og:image" content="${escapeHtml(imageUrl)}">
+
+<meta name="description" content="${escapeHtml(shortDescription)}">
+<!-- END: Dynamic Meta Tags -->
+`;
+
+      indexHtml = indexHtml.replace('<head>', '<head>' + injectedMeta);
+      indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${escapeHtml(game.title)} | Aquads Game Hub</title>`);
+
+      return res.send(indexHtml);
+    }
+  } catch (error) {
+    // Fall through to SPA on any error
+  }
+
+  next();
+});
+
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build/index.html'));
