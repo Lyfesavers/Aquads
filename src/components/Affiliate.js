@@ -239,11 +239,19 @@ const Affiliate = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-purple-900/20 px-2 rounded">
                           <span className="text-gray-300">💬 Daily Telegram message</span>
-                          <span className="text-purple-400 font-bold">2.5 pts</span>
+                          <span className="text-purple-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-purple-900/20 px-2 rounded">
                           <span className="text-gray-300">👍 Daily Telegram reaction</span>
-                          <span className="text-purple-400 font-bold">2.5 pts</span>
+                          <span className="text-purple-400 font-bold">5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-indigo-900/20 px-2 rounded">
+                          <span className="text-gray-300">💬 Daily Discord message</span>
+                          <span className="text-indigo-400 font-bold">5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600 bg-indigo-900/20 px-2 rounded">
+                          <span className="text-gray-300">👍 Daily Discord reaction</span>
+                          <span className="text-indigo-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Every swap on AquaSwap</span>
@@ -291,7 +299,7 @@ const Affiliate = () => {
                     </div>
                     <div className="mt-4 p-3 bg-purple-900/30 border border-purple-600/50 rounded-lg">
                       <p className="text-sm text-purple-300">
-                        💡 <strong>New!</strong> Join our Telegram group and link your account with @aquadsbumpbot to earn up to 5 points daily!
+                        💡 <strong>New!</strong> Join our Telegram and Discord and link your account with @aquadsbumpbot to earn points daily for messages and reactions!
                       </p>
                     </div>
 
