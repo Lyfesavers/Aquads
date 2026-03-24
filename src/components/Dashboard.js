@@ -30,9 +30,9 @@ const LinkBioPageAds = () => {
 
   const fetchPendingAds = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const res = await fetch(`${API_URL}/link-bio-ads/my-page-ads`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${u.token}` }
       });
       if (res.ok) setPendingAds(await res.json());
     } catch (_) {}
@@ -45,10 +45,10 @@ const LinkBioPageAds = () => {
     if (!window.confirm('Approve this ad? It will go live on your page immediately.')) return;
     setActionLoading(adId);
     try {
-      const token = localStorage.getItem('token');
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const res = await fetch(`${API_URL}/link-bio-ads/${adId}/approve`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${u.token}` }
       });
       if (res.ok) {
         setPendingAds(prev => prev.filter(a => a._id !== adId));
@@ -61,10 +61,10 @@ const LinkBioPageAds = () => {
     if (!window.confirm('Cancel this ad? You should refund the buyer manually if they already paid.')) return;
     setActionLoading(adId);
     try {
-      const token = localStorage.getItem('token');
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const res = await fetch(`${API_URL}/link-bio-ads/${adId}/cancel`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${u.token}` }
       });
       if (res.ok) {
         setPendingAds(prev => prev.filter(a => a._id !== adId));

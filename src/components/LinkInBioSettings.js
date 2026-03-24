@@ -53,7 +53,13 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
     const bg = currentUser?.linkInBioBackgroundImageUrl;
     setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
+  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl]);
+
+  useEffect(() => {
     setAdsEnabled(Boolean(currentUser?.linkInBioAdsEnabled));
+  }, [currentUser?.linkInBioAdsEnabled]);
+
+  useEffect(() => {
     const p = currentUser?.linkInBioAdPricing;
     if (p && typeof p === 'object') {
       setAdPricing({
@@ -62,7 +68,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         sevenDays: p.sevenDays > 0 ? p.sevenDays : 40
       });
     }
-  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl, currentUser?.linkInBioAdsEnabled, currentUser?.linkInBioAdPricing]);
+  }, [currentUser?.linkInBioAdPricing?.day, currentUser?.linkInBioAdPricing?.threeDays, currentUser?.linkInBioAdPricing?.sevenDays]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -121,6 +127,16 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         }
       });
       onProfileUpdate?.({ ...currentUser, ...updated });
+      if (updated.linkInBioAdsEnabled !== undefined) {
+        setAdsEnabled(Boolean(updated.linkInBioAdsEnabled));
+      }
+      if (updated.linkInBioAdPricing) {
+        setAdPricing({
+          day: updated.linkInBioAdPricing.day > 0 ? updated.linkInBioAdPricing.day : 10,
+          threeDays: updated.linkInBioAdPricing.threeDays > 0 ? updated.linkInBioAdPricing.threeDays : 20,
+          sevenDays: updated.linkInBioAdPricing.sevenDays > 0 ? updated.linkInBioAdPricing.sevenDays : 40
+        });
+      }
       showNotification?.('Link in bio saved.', 'success');
     } catch (err) {
       showNotification?.(err.error || 'Failed to save', 'error');
