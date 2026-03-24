@@ -14,7 +14,7 @@ const DURATION_OPTIONS = {
 
 // Per-username in-memory cache for active ads (avoids DB hit on every page load)
 const activeAdsCache = new Map();
-const ADS_CACHE_TTL = 60 * 1000; // 60 seconds
+const ADS_CACHE_TTL = 30 * 1000; // 30 seconds
 
 const getActiveAdsFromCache = async (username) => {
   const key = username.toLowerCase();

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaRocket, FaClock, FaBullhorn, FaExternalLinkAlt, FaImage, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { FaRocket, FaClock, FaBullhorn, FaExternalLinkAlt, FaImage, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 
 const DURATION_OPTIONS = [
@@ -8,12 +8,20 @@ const DURATION_OPTIONS = [
   { key: 'sevenDays', label: '7 Days', durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];
 
+const POLL_INTERVAL = 5000;
+const POLL_TIMEOUT = 5 * 60 * 1000;
+
 const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing }) => {
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
   const [adData, setAdData] = useState({ title: '', gif: '', url: '' });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState('form');
+  const [createdAdId, setCreatedAdId] = useState(null);
+  const [popupClosed, setPopupClosed] = useState(false);
+  const popupRef = useRef(null);
+  const pollStartRef = useRef(null);
 
   const getPrice = (key) => {
     if (!pricing) return 0;
@@ -80,14 +88,161 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
       const price = getPrice(selectedDuration.key);
       const paySlug = result.aquaPaySlug || aquaPaySlug;
       const aquaPayUrl = `https://aquads.xyz/pay/${paySlug}?amount=${price}&linkBioAdId=${result._id}`;
-      window.open(aquaPayUrl, '_blank');
-      onClose();
+
+      setCreatedAdId(result._id);
+      pollStartRef.current = Date.now();
+      popupRef.current = window.open(aquaPayUrl, '_blank');
+      setStep('waiting');
     } catch (err) {
       setError(err.message || 'Failed to create ad');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const checkAdActive = useCallback(async () => {
+    if (!createdAdId || !targetUsername) return false;
+    try {
+      const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(targetUsername)}`);
+      if (res.ok) {
+        const ads = await res.json();
+        return Array.isArray(ads) && ads.some(ad => ad._id === createdAdId);
+      }
+    } catch (_) {}
+    return false;
+  }, [createdAdId, targetUsername]);
+
+  useEffect(() => {
+    if (step !== 'waiting') return;
+
+    const popupCheck = setInterval(() => {
+      if (popupRef.current && popupRef.current.closed) {
+        setPopupClosed(true);
+      }
+    }, 1000);
+
+    const adPoll = setInterval(async () => {
+      const isActive = await checkAdActive();
+      if (isActive) {
+        setStep('success');
+      } else if (Date.now() - pollStartRef.current > POLL_TIMEOUT) {
+        setStep('timeout');
+      }
+    }, POLL_INTERVAL);
+
+    return () => {
+      clearInterval(popupCheck);
+      clearInterval(adPoll);
+    };
+  }, [step, checkAdActive]);
+
+  useEffect(() => {
+    if (step !== 'success') return;
+    const timer = setTimeout(() => onClose(), 6000);
+    return () => clearTimeout(timer);
+  }, [step, onClose]);
+
+  if (step === 'success') {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0f1320]/95 backdrop-blur-xl shadow-2xl p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+            <FaCheckCircle className="text-green-400 text-3xl" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Payment Confirmed!
+          </h2>
+          <p className="text-slate-300 text-sm mb-1">
+            Your ad is now live on <span className="text-cyan-400 font-semibold">@{targetUsername}</span>'s page.
+          </p>
+          <p className="text-slate-500 text-xs mb-6">
+            It will appear on the page within a few seconds.
+          </p>
+          <button
+            onClick={onClose}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold transition-all shadow-lg shadow-green-500/20"
+          >
+            Done
+          </button>
+          <p className="text-slate-600 text-xs mt-3">Auto-closing in a few seconds...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'waiting' || step === 'timeout') {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0f1320]/95 backdrop-blur-xl shadow-2xl p-8 text-center">
+          {step === 'timeout' ? (
+            <>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <FaClock className="text-yellow-400 text-2xl" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
+                Payment Timed Out
+              </h2>
+              <p className="text-slate-300 text-sm mb-4">
+                We didn't detect a payment yet. If you completed the payment, your ad will still activate automatically once confirmed on-chain.
+              </p>
+              <button
+                onClick={onClose}
+                className="px-8 py-3 rounded-xl bg-white/10 border border-white/10 hover:bg-white/15 text-white font-medium transition-all"
+              >
+                Close
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                <div className="w-8 h-8 border-3 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
+                Waiting for Payment
+              </h2>
+              <p className="text-slate-300 text-sm mb-2">
+                Complete your payment in the AquaPay window.
+              </p>
+              <p className="text-slate-500 text-xs mb-6">
+                Your ad will activate automatically once the crypto payment is confirmed on-chain.
+              </p>
+
+              {popupClosed && (
+                <div className="mb-4 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                  <p className="text-cyan-300 text-sm">
+                    Payment window closed. Checking for confirmation...
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const price = getPrice(selectedDuration.key);
+                    const paySlug = aquaPaySlug;
+                    const aquaPayUrl = `https://aquads.xyz/pay/${paySlug}?amount=${price}&linkBioAdId=${createdAdId}`;
+                    popupRef.current = window.open(aquaPayUrl, '_blank');
+                    setPopupClosed(false);
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors font-medium text-sm"
+                >
+                  Reopen Payment
+                </button>
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors font-medium text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -130,7 +285,7 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
                     <div className="text-white font-semibold text-sm">{opt.label}</div>
                     <div className="text-cyan-400 font-bold text-lg mt-0.5">${price}</div>
                     {selectedDuration.key === opt.key && (
-                      <div className="text-cyan-300 text-[10px] mt-0.5">✓ Selected</div>
+                      <div className="text-cyan-300 text-[10px] mt-0.5">Selected</div>
                     )}
                   </button>
                 );
@@ -197,7 +352,7 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
 
           {error && (
             <p className="text-red-400 text-sm flex items-center gap-1.5">
-              <span>⚠</span> {error}
+              <span>!</span> {error}
             </p>
           )}
 

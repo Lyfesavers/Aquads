@@ -290,7 +290,7 @@ const LinkInBio = () => {
       } catch (_) {}
     };
     fetchAds();
-    const interval = setInterval(fetchAds, 60000);
+    const interval = setInterval(fetchAds, 30000);
     return () => clearInterval(interval);
   }, [username]);
 
