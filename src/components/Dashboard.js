@@ -23,6 +23,110 @@ import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
 
+const LinkBioPageAds = () => {
+  const [pendingAds, setPendingAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const fetchPendingAds = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/link-bio-ads/my-page-ads`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setPendingAds(await res.json());
+    } catch (_) {}
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchPendingAds(); }, []);
+
+  const handleApprove = async (adId) => {
+    if (!window.confirm('Approve this ad? It will go live on your page immediately.')) return;
+    setActionLoading(adId);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/link-bio-ads/${adId}/approve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPendingAds(prev => prev.filter(a => a._id !== adId));
+      }
+    } catch (_) {}
+    setActionLoading(null);
+  };
+
+  const handleCancel = async (adId) => {
+    if (!window.confirm('Cancel this ad? You should refund the buyer manually if they already paid.')) return;
+    setActionLoading(adId);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/link-bio-ads/${adId}/cancel`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPendingAds(prev => prev.filter(a => a._id !== adId));
+      }
+    } catch (_) {}
+    setActionLoading(null);
+  };
+
+  if (loading) return <div className="text-gray-500 text-sm p-4">Loading pending ads...</div>;
+  if (pendingAds.length === 0) return null;
+
+  return (
+    <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+      <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+        <span className="text-lg">⏳</span>
+        Pending Ad Requests
+      </h3>
+      <p className="text-gray-400 text-xs mb-4">
+        These ads are waiting for payment confirmation. Most will auto-approve on crypto payment. You can manually approve or cancel if needed.
+      </p>
+      <div className="space-y-3 max-h-80 overflow-y-auto">
+        {pendingAds.map((ad) => (
+          <div key={ad._id} className="p-3 rounded-lg bg-gray-700/30 border border-gray-600/30">
+            <div className="flex items-center gap-3 mb-2">
+              <img src={ad.gif} alt="" className="w-20 h-10 rounded-full object-cover border border-gray-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-medium truncate">{ad.title}</p>
+                <p className="text-gray-500 text-xs">
+                  ${ad.price} USDC · {ad.duration >= 7 * 86400000 ? '7 days' : ad.duration >= 3 * 86400000 ? '3 days' : '24h'}
+                  {ad.advertiserInfo?.email && <span> · {ad.advertiserInfo.email}</span>}
+                </p>
+                <p className="text-gray-600 text-xs truncate mt-0.5">
+                  Link: {ad.url}
+                </p>
+              </div>
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 flex-shrink-0">
+                Pending
+              </span>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => handleApprove(ad._id)}
+                disabled={actionLoading === ad._id}
+                className="flex-1 px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {actionLoading === ad._id ? 'Processing...' : '✓ Approve'}
+              </button>
+              <button
+                onClick={() => handleCancel(ad._id)}
+                disabled={actionLoading === ad._id}
+                className="flex-1 px-3 py-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 text-red-400 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {actionLoading === ad._id ? 'Processing...' : '✕ Cancel'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
@@ -3594,6 +3698,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 onProfileUpdate={onProfileUpdate}
                 showNotification={showNotification}
               />
+              {currentUser?.linkInBioAdsEnabled && <LinkBioPageAds />}
             </div>
           )}
 

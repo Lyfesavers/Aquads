@@ -163,7 +163,7 @@ const AquaPayPage = ({ currentUser }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   
-  // Get bannerId, bumpId, projectId, addonOrderId, tokenPurchaseId, hyperspaceOrderId and amount from URL search params if provided
+  // Get payment context IDs and amount from URL search params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const bannerId = urlParams.get('bannerId');
   const bumpId = urlParams.get('bumpId');
@@ -171,7 +171,9 @@ const AquaPayPage = ({ currentUser }) => {
   const addonOrderId = urlParams.get('addonOrderId');
   const tokenPurchaseId = urlParams.get('tokenPurchaseId');
   const hyperspaceOrderId = urlParams.get('hyperspaceOrderId');
+  const linkBioAdId = urlParams.get('linkBioAdId');
   const urlAmount = urlParams.get('amount');
+  const isLockedPayment = !!(bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -859,12 +861,13 @@ const AquaPayPage = ({ currentUser }) => {
         token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
         amount: parseFloat(amount), senderAddress: walletAddress,
         senderUsername: currentUser?.username, message,
-        bannerId: bannerId || null, // Include bannerId if provided in URL
-        bumpId: bumpId || null, // Include bumpId if provided in URL
-        projectId: projectId || null, // Include projectId if provided in URL (for admin reference)
-        addonOrderId: addonOrderId || null, // Include addonOrderId if provided in URL (for admin reference)
-        tokenPurchaseId: tokenPurchaseId || null, // Include tokenPurchaseId if provided in URL
-        hyperspaceOrderId: hyperspaceOrderId || null // Include hyperspaceOrderId if provided in URL
+        bannerId: bannerId || null,
+        bumpId: bumpId || null,
+        projectId: projectId || null,
+        addonOrderId: addonOrderId || null,
+        tokenPurchaseId: tokenPurchaseId || null,
+        hyperspaceOrderId: hyperspaceOrderId || null,
+        linkBioAdId: linkBioAdId || null
       });
 
       // Fire emails in background (don't await) - won't block close or bog down UX
@@ -891,8 +894,8 @@ const AquaPayPage = ({ currentUser }) => {
         }).catch(() => {});
       }
 
-      // Close window immediately for banner/bump/token/hyperspace; don't wait for emails
-      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId) && response.data.approvedItem) {
+      // Close window immediately for auto-approved payment flows; don't wait for emails
+      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId) && response.data.approvedItem) {
         if (window.opener) {
           window.close();
         }
@@ -1197,22 +1200,29 @@ const AquaPayPage = ({ currentUser }) => {
                         <div>
                           <label className="block text-slate-400 text-sm mb-2">Amount</label>
                           <div className="relative">
-                            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
-                              className="w-full px-4 py-4 pr-20 bg-slate-800/50 border border-slate-700 focus:border-cyan-500 rounded-xl text-white text-2xl font-bold focus:outline-none transition-colors" />
+                            <input type="number" value={amount} onChange={isLockedPayment ? undefined : (e) => setAmount(e.target.value)} placeholder="0.00"
+                              readOnly={isLockedPayment}
+                              className={`w-full px-4 py-4 pr-20 bg-slate-800/50 border border-slate-700 focus:border-cyan-500 rounded-xl text-white text-2xl font-bold focus:outline-none transition-colors ${isLockedPayment ? 'cursor-not-allowed opacity-80' : ''}`} />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">{displaySymbol}</span>
+                            {isLockedPayment && (
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-400 text-sm">🔒</span>
+                            )}
                           </div>
+                          {isLockedPayment && <p className="text-amber-400/70 text-xs mt-1.5">Amount set by payment request and cannot be changed</p>}
                           {usdValue && <p className="text-slate-500 text-sm mt-2">≈ ${usdValue} USD</p>}
                         </div>
 
-                        {/* Quick Amounts */}
-                        <div className="flex gap-2">
-                          {(selectedToken === 'usdc' ? [5, 10, 25, 50] : [0.01, 0.05, 0.1, 0.5]).map(val => (
-                            <button key={val} onClick={() => setAmount(val.toString())}
-                              className="flex-1 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg text-sm font-medium border border-slate-700/50 transition-colors">
-                              {selectedToken === 'usdc' ? `$${val}` : val}
-                            </button>
-                          ))}
-                        </div>
+                        {/* Quick Amounts — hidden when amount is locked by a payment context */}
+                        {!isLockedPayment && (
+                          <div className="flex gap-2">
+                            {(selectedToken === 'usdc' ? [5, 10, 25, 50] : [0.01, 0.05, 0.1, 0.5]).map(val => (
+                              <button key={val} onClick={() => setAmount(val.toString())}
+                                className="flex-1 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg text-sm font-medium border border-slate-700/50 transition-colors">
+                                {selectedToken === 'usdc' ? `$${val}` : val}
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Note */}
                         <div>

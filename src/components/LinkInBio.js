@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../services/api';
+import CreateLinkBioAdModal from './CreateLinkBioAdModal';
 import {
+  FaBullhorn,
   FaExternalLinkAlt,
   FaDiscord,
   FaTwitter,
@@ -246,6 +248,9 @@ const LinkInBio = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeAds, setActiveAds] = useState([]);
+  const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [showAdModal, setShowAdModal] = useState(false);
 
   useEffect(() => {
     if (!username) {
@@ -271,6 +276,34 @@ const LinkInBio = () => {
     };
     fetchData();
   }, [username]);
+
+  // Fetch active ads for this page
+  useEffect(() => {
+    if (!username) return;
+    const fetchAds = async () => {
+      try {
+        const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`);
+        if (res.ok) {
+          const ads = await res.json();
+          setActiveAds(Array.isArray(ads) ? ads : []);
+        }
+      } catch (_) {}
+    };
+    fetchAds();
+    const interval = setInterval(fetchAds, 60000);
+    return () => clearInterval(interval);
+  }, [username]);
+
+  // Rotate ads every 15 seconds
+  useEffect(() => {
+    if (activeAds.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentAdIndex(prev => (prev + 1) % activeAds.length);
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [activeAds.length]);
+
+  const currentAd = activeAds.length > 0 ? activeAds[currentAdIndex % activeAds.length] : null;
 
   if (loading) {
     return (
@@ -325,7 +358,7 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle, linkInBioBackgroundImageUrl } = data;
+  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
   const hasLinks = Array.isArray(bioLinks) && bioLinks.length > 0;
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
@@ -484,12 +517,86 @@ const LinkInBio = () => {
           )}
         </motion.div>
 
+        {/* Banner Ad Display — pill-shaped horizontal at bottom */}
+        {currentAd && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+            className="w-full mt-8"
+          >
+            <AnimatePresence mode="wait">
+              <motion.a
+                key={currentAd._id}
+                href={currentAd.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="block w-full rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+                style={{
+                  border: `1px solid ${theme.badgeBorder}`,
+                  background: 'rgba(0,0,0,0.2)',
+                  backdropFilter: 'blur(8px)'
+                }}
+              >
+                <img
+                  src={currentAd.gif}
+                  alt={currentAd.title || 'Ad'}
+                  className="w-full h-auto object-cover"
+                  style={{ maxHeight: '80px', minHeight: '40px' }}
+                  loading="lazy"
+                />
+              </motion.a>
+            </AnimatePresence>
+            {activeAds.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-2">
+                {activeAds.map((ad, i) => (
+                  <div
+                    key={ad._id}
+                    className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                    style={{
+                      background: i === currentAdIndex % activeAds.length ? theme.accent : 'rgba(255,255,255,0.15)'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Advertise Here button — only if ads are enabled */}
+        {linkInBioAdsEnabled && aquaPaySlug && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            className="mt-6"
+          >
+            <button
+              onClick={() => setShowAdModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:scale-[1.03] text-xs font-medium"
+              style={{
+                background: theme.badgeBg,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${theme.badgeBorder}`,
+                color: theme.accent
+              }}
+            >
+              <FaBullhorn className="w-3 h-3" />
+              Advertise Here
+            </button>
+          </motion.div>
+        )}
+
         {/* Powered by — premium pill badge */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.4 }}
-          className="mt-auto pt-14 flex flex-col items-center gap-3"
+          className="mt-auto pt-8 flex flex-col items-center gap-3"
         >
           <a
             href="https://www.aquads.xyz"
@@ -515,6 +622,16 @@ const LinkInBio = () => {
           </a>
         </motion.div>
       </div>
+
+      {/* Ad purchase modal */}
+      {showAdModal && linkInBioAdsEnabled && aquaPaySlug && (
+        <CreateLinkBioAdModal
+          onClose={() => setShowAdModal(false)}
+          targetUsername={data.username}
+          aquaPaySlug={aquaPaySlug}
+          pricing={linkInBioAdPricing}
+        />
+      )}
 
       {/* Keyframe for hover shine — inject once */}
       <style>{`

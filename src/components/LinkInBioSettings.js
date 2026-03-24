@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio } from '../services/api';
-import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
 const BASE_URL = 'https://www.aquads.xyz';
@@ -26,6 +26,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [buttonColorCustom, setButtonColorCustom] = useState('');
   const [buttonStyle, setButtonStyle] = useState('rounded');
   const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  const [adsEnabled, setAdsEnabled] = useState(false);
+  const [adPricing, setAdPricing] = useState({ day: 10, threeDays: 20, sevenDays: 40 });
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -51,7 +53,16 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
     const bg = currentUser?.linkInBioBackgroundImageUrl;
     setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
-  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl]);
+    setAdsEnabled(Boolean(currentUser?.linkInBioAdsEnabled));
+    const p = currentUser?.linkInBioAdPricing;
+    if (p && typeof p === 'object') {
+      setAdPricing({
+        day: p.day > 0 ? p.day : 10,
+        threeDays: p.threeDays > 0 ? p.threeDays : 20,
+        sevenDays: p.sevenDays > 0 ? p.sevenDays : 40
+      });
+    }
+  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl, currentUser?.linkInBioAdsEnabled, currentUser?.linkInBioAdPricing]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -101,7 +112,13 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         linkInBioAccentColor: hex,
         linkInBioButtonColor: btnHex || null,
         linkInBioButtonStyle: buttonStyle,
-        linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null
+        linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
+        linkInBioAdsEnabled: adsEnabled,
+        linkInBioAdPricing: {
+          day: Math.max(1, adPricing.day || 10),
+          threeDays: Math.max(1, adPricing.threeDays || 20),
+          sevenDays: Math.max(1, adPricing.sevenDays || 40)
+        }
       });
       onProfileUpdate?.({ ...currentUser, ...updated });
       showNotification?.('Link in bio saved.', 'success');
@@ -366,6 +383,103 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
+      </div>
+
+      {/* Monetize with Ads */}
+      <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+        <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+          <FaBullhorn className="text-cyan-400" />
+          Monetize with Ads
+        </h3>
+        <p className="text-gray-400 text-sm mb-4">
+          Let anyone buy banner ad space on your link-in-bio page. Payments go directly to your AquaPay wallet via crypto.
+        </p>
+
+        {!currentUser?.aquaPay?.isEnabled ? (
+          <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4">
+            <p className="text-amber-200 text-sm font-medium">AquaPay required</p>
+            <p className="text-gray-400 text-xs mt-1">Enable AquaPay in your dashboard to receive ad payments directly to your wallet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-gray-700/30 border border-gray-600/50">
+              <div>
+                <p className="text-white text-sm font-medium">Enable ads on your page</p>
+                <p className="text-gray-500 text-xs">An "Advertise Here" button will appear on your page</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdsEnabled(!adsEnabled)}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${adsEnabled ? 'bg-cyan-500' : 'bg-gray-600'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${adsEnabled ? 'translate-x-6' : ''}`}
+                />
+              </button>
+            </div>
+
+            {adsEnabled && (
+              <div className="space-y-3">
+                <p className="text-gray-300 text-sm font-medium flex items-center gap-2">
+                  <FaDollarSign className="text-cyan-400" />
+                  Set your prices (USDC)
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-gray-500 text-xs mb-1">24 Hours</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="1"
+                        value={adPricing.day}
+                        onChange={(e) => setAdPricing(prev => ({ ...prev, day: parseFloat(e.target.value) || 0 }))}
+                        className="w-full pl-7 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 text-xs mb-1">3 Days</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="1"
+                        value={adPricing.threeDays}
+                        onChange={(e) => setAdPricing(prev => ({ ...prev, threeDays: parseFloat(e.target.value) || 0 }))}
+                        className="w-full pl-7 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 text-xs mb-1">7 Days</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="1"
+                        value={adPricing.sevenDays}
+                        onChange={(e) => setAdPricing(prev => ({ ...prev, sevenDays: parseFloat(e.target.value) || 0 }))}
+                        className="w-full pl-7 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-700/20 border border-gray-600/30">
+                  <p className="text-gray-400 text-xs">
+                    <strong className="text-gray-300">Banner specs:</strong> 1280×200px, GIF/PNG/JPG. Displayed as a pill-shaped banner at the bottom of your page. Ads auto-activate on crypto payment.
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <p className="text-gray-500 text-xs text-center">

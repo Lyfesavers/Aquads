@@ -34,7 +34,7 @@ const auth = async (req, res, next) => {
     }
     
     // Check if user is suspended - Fetch user from database
-    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl');
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
     
     if (!user) {
       throw new Error('User not found');
@@ -64,7 +64,13 @@ const auth = async (req, res, next) => {
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
       linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
-      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
+      linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
+      aquaPay: {
+        isEnabled: Boolean(user.aquaPay?.isEnabled),
+        paymentSlug: user.aquaPay?.paymentSlug || null
+      }
     };
 
     // Update user's lastActivity (rate limited to prevent excessive DB writes)

@@ -82,7 +82,8 @@ router.post('/payment', async (req, res) => {
       projectId, // Optional: for project listing payments (for admin reference)
       addonOrderId, // Optional: for addon order payments (for admin reference)
       tokenPurchaseId, // Optional: for token purchase payments
-      hyperspaceOrderId // Optional: for HyperSpace Twitter Space listener orders
+      hyperspaceOrderId, // Optional: for HyperSpace Twitter Space listener orders
+      linkBioAdId // Optional: for Link in Bio banner ad payments
     } = req.body;
 
     if (!recipientSlug || !txHash || !chain || !amount) {
@@ -140,7 +141,7 @@ router.post('/payment', async (req, res) => {
     // Process auto-approval for various payment types (banner, bump, project, token purchase, hyperspace, etc.)
     // This is handled by a separate service to keep aquapay.js clean
     let approvedItem = null;
-    if (bannerId || bumpId || projectId || tokenPurchaseId || hyperspaceOrderId) {
+    if (bannerId || bumpId || projectId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId) {
       const paymentAutoApproval = require('../services/paymentAutoApproval');
       approvedItem = await paymentAutoApproval.processPayment({
         bannerId,
@@ -148,6 +149,7 @@ router.post('/payment', async (req, res) => {
         projectId,
         tokenPurchaseId,
         hyperspaceOrderId,
+        linkBioAdId,
         recipientSlug,
         amount,
         txHash,

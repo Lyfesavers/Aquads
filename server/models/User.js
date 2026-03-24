@@ -120,6 +120,15 @@ const userSchema = new Schema({
     trim: true,
     maxlength: 2048
   },
+  linkInBioAdsEnabled: {
+    type: Boolean,
+    default: false
+  },
+  linkInBioAdPricing: {
+    day: { type: Number, default: 10 },
+    threeDays: { type: Number, default: 20 },
+    sevenDays: { type: Number, default: 40 }
+  },
   isAdmin: {
     type: Boolean,
     default: false

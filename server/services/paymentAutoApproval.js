@@ -19,9 +19,23 @@ const paymentAutoApproval = {
    * @returns {Object|null} - Approved item or null
    */
   async processPayment(paymentData) {
-    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
+    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, linkBioAdId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
 
-    // Only process payments to 'aquads' slug
+    // Link in Bio ads pay the influencer directly (not 'aquads'), so handle before the slug check
+    if (linkBioAdId) {
+      return await this.handleLinkBioAdPayment({
+        linkBioAdId,
+        recipientSlug,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
+    // Only process platform payments to 'aquads' slug
     if (recipientSlug.toLowerCase() !== 'aquads') {
       return null;
     }
@@ -596,6 +610,79 @@ const paymentAutoApproval = {
       return { type: 'hyperspace', id: order.orderId, status: order.status };
     } catch (error) {
       console.error('Error processing HyperSpace payment:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Handle Link in Bio banner ad payment auto-approval.
+   * Unlike other payments, these go to the influencer's wallet (not 'aquads').
+   */
+  async handleLinkBioAdPayment({ linkBioAdId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername }) {
+    try {
+      const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
+
+      const ad = await LinkInBioBannerAd.findById(linkBioAdId);
+      if (!ad || ad.status !== 'pending' || ad.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      // Look up the target user to verify the payment went to the right person
+      const targetUser = await User.findById(ad.targetUser)
+        .select('username linkInBioAdsEnabled aquaPay.paymentSlug aquaPay.isEnabled')
+        .lean();
+
+      if (!targetUser) {
+        console.log(`Link bio ad ${ad._id}: target user not found`);
+        return null;
+      }
+
+      if (!targetUser.linkInBioAdsEnabled) {
+        console.log(`Link bio ad ${ad._id}: target user has disabled ads`);
+        return null;
+      }
+
+      // Verify the payment recipient matches the target user's AquaPay slug or username
+      const targetSlug = (targetUser.aquaPay?.paymentSlug || targetUser.username).toLowerCase();
+      if (recipientSlug.toLowerCase() !== targetSlug) {
+        console.log(`Link bio ad ${ad._id}: recipient slug mismatch - expected ${targetSlug}, got ${recipientSlug}`);
+        return null;
+      }
+
+      // Verify exact payment amount
+      const expectedAmount = parseFloat(ad.price);
+      const paymentAmount = parseFloat(amount);
+      if (paymentAmount !== expectedAmount) {
+        console.log(`Link bio ad ${ad._id}: amount mismatch - expected ${expectedAmount}, received ${paymentAmount}`);
+        return null;
+      }
+
+      // Verify transaction on-chain
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(`Link bio ad ${ad._id}: transaction verification failed for ${txHash} on ${chain}`);
+        return null;
+      }
+
+      // Auto-approve the ad
+      ad.status = 'active';
+      ad.expiresAt = new Date(Date.now() + ad.duration);
+      ad.txSignature = txHash;
+      ad.paymentChain = chain;
+      ad.chainSymbol = token || 'USDC';
+      ad.chainAddress = senderAddress || '';
+      await ad.save();
+
+      // Invalidate the active ads cache for this user
+      try {
+        const { invalidateAdsCache } = require('../routes/linkBioAds');
+        invalidateAdsCache(ad.targetUsername);
+      } catch (_) {}
+
+      console.log(`Link bio ad ${ad._id} auto-approved after verified payment of ${paymentAmount} on ${chain} to ${targetSlug} by ${senderUsername || 'anonymous'}`);
+      return { type: 'linkBioAd', id: ad._id, status: ad.status };
+    } catch (error) {
+      console.error('Error auto-approving link bio ad:', error);
       return null;
     }
   },

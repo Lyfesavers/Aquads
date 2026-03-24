@@ -645,13 +645,30 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
         }
       }
     }
+    if (req.body.linkInBioAdsEnabled !== undefined) {
+      update.linkInBioAdsEnabled = req.body.linkInBioAdsEnabled === true;
+    }
+    if (req.body.linkInBioAdPricing !== undefined) {
+      const p = req.body.linkInBioAdPricing;
+      if (p && typeof p === 'object') {
+        const pricing = {};
+        const dayVal = parseFloat(p.day);
+        const threeVal = parseFloat(p.threeDays);
+        const sevenVal = parseFloat(p.sevenDays);
+        pricing.day = (dayVal > 0 && dayVal <= 10000) ? dayVal : 10;
+        pricing.threeDays = (threeVal > 0 && threeVal <= 10000) ? threeVal : 20;
+        pricing.sevenDays = (sevenVal > 0 && sevenVal <= 10000) ? sevenVal : 40;
+        update.linkInBioAdPricing = pricing;
+      }
+    }
+
     if (Object.keys(update).length === 0) return res.status(400).json({ error: 'No link-in-bio fields to update' });
 
     const updated = await User.findByIdAndUpdate(
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl').lean();
+    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
 
     res.json({
       userId: updated._id,
@@ -660,7 +677,9 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       linkInBioAccentColor: updated.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: updated.linkInBioButtonColor || null,
       linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded',
-      linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null
+      linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null,
+      linkInBioAdsEnabled: Boolean(updated.linkInBioAdsEnabled),
+      linkInBioAdPricing: updated.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }
     });
   } catch (err) {
     console.error('Link-in-bio update error:', err);
@@ -1178,7 +1197,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1203,6 +1222,15 @@ router.get('/links/:username', async (req, res) => {
       ? user.linkInBioBackgroundImageUrl.trim()
       : null;
 
+    const hasAquaPay = user.aquaPay?.isEnabled && user.aquaPay?.paymentSlug && (
+      user.aquaPay?.wallets?.solana ||
+      user.aquaPay?.wallets?.ethereum ||
+      user.aquaPay?.wallets?.bitcoin ||
+      user.aquaPay?.wallets?.tron
+    );
+
+    const adsEnabled = Boolean(user.linkInBioAdsEnabled) && hasAquaPay;
+
     res.json({
       username: user.username,
       displayName,
@@ -1211,7 +1239,10 @@ router.get('/links/:username', async (req, res) => {
       linkInBioAccentColor: accentColor,
       linkInBioButtonColor: buttonColor,
       linkInBioButtonStyle: buttonStyle,
-      linkInBioBackgroundImageUrl: backgroundImageUrl
+      linkInBioBackgroundImageUrl: backgroundImageUrl,
+      linkInBioAdsEnabled: adsEnabled,
+      linkInBioAdPricing: adsEnabled ? (user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }) : null,
+      aquaPaySlug: adsEnabled ? (user.aquaPay.paymentSlug || user.username.toLowerCase()) : null
     });
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);
