@@ -3757,6 +3757,7 @@ Tap to update:`;
       // Get the video file path
       const videoPath = path.join(__dirname, '../../public/TRENDINGLIST.mp4');
       const videoExists = fs.existsSync(videoPath);
+      console.log(`📹 Video path resolved: ${videoPath}, exists: ${videoExists}`);
 
       // Send to the specific group
       let result = false;
