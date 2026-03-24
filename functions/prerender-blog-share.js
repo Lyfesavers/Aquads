@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
   
   try {
     // Fetch the blog data from API (backend is on Render, not Netlify)
-    const apiUrl = `https://aquads.onrender.com/api/blogs/${blogId}`;
+    const apiUrl = `https://aquads-production.up.railway.app/api/blogs/${blogId}`;
     console.log('Fetching blog from:', apiUrl);
     
     const response = await fetch(apiUrl, {

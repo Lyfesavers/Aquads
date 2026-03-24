@@ -60,7 +60,7 @@ export default async (request, context) => {
 
   // Fetch blogs from API and add them to sitemap
   try {
-    const response = await fetch('https://aquads.onrender.com/api/blogs', {
+    const response = await fetch('https://aquads-production.up.railway.app/api/blogs', {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Aquads-Sitemap-Edge/1.0'
@@ -96,7 +96,7 @@ export default async (request, context) => {
 
   // Fetch marketplace services and add them to sitemap
   try {
-    const response = await fetch('https://aquads.onrender.com/api/services?limit=100', {
+    const response = await fetch('https://aquads-production.up.railway.app/api/services?limit=100', {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Aquads-Sitemap-Edge/1.0'

@@ -23,7 +23,7 @@ exports.handler = async (event, context) => {
   console.log('Game ID extracted:', gameId);
 
   try {
-    const apiUrl = `https://aquads.onrender.com/api/games/${gameId}`;
+    const apiUrl = `https://aquads-production.up.railway.app/api/games/${gameId}`;
     console.log('Fetching game from:', apiUrl);
 
     const response = await fetch(apiUrl, {

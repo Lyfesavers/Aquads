@@ -113,7 +113,7 @@ export default async (request, context) => {
     console.log('Token found:', symbol, 'Image:', tokenImage);
 
     // Generate dynamic OG image URL (Render backend generates the image)
-    const ogImageUrl = `https://aquads.onrender.com/og/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
+    const ogImageUrl = `https://aquads-production.up.railway.app/og/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
 
     // Format numbers
     const formatNum = (n) => {

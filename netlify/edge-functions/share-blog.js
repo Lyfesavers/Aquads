@@ -14,7 +14,7 @@ export default async (request, context) => {
 
   try {
     // Fetch blog data from Render API
-    const apiResponse = await fetch(`https://aquads.onrender.com/api/blogs/${blogId}`, {
+    const apiResponse = await fetch(`https://aquads-production.up.railway.app/api/blogs/${blogId}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Aquads-Edge-Function/1.0'

@@ -59,7 +59,7 @@ exports.handler = async (event, context) => {
 
   // Fetch blogs from API and add them to sitemap
   try {
-    const response = await fetch('https://aquads.onrender.com/api/blogs', {
+    const response = await fetch('https://aquads-production.up.railway.app/api/blogs', {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Aquads-Sitemap-Generator/1.0'

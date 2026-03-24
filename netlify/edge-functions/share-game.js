@@ -13,7 +13,7 @@ export default async (request, context) => {
   }
 
   try {
-    const apiResponse = await fetch(`https://aquads.onrender.com/api/games/${gameId}`, {
+    const apiResponse = await fetch(`https://aquads-production.up.railway.app/api/games/${gameId}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Aquads-Edge-Function/1.0'
