@@ -3190,26 +3190,24 @@ const CarouselCard = ({ feature, index }) => {
                   Monetize your audience with banner ads — set your own prices and get paid directly in crypto via AquaPay.
                 </p>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-6">
                   {[
-                    { icon: '🎨', label: 'Full Branding', value: 'Colors + Backgrounds' },
-                    { icon: '💰', label: 'Ad Monetization', value: 'Set Your Own Prices' },
-                    { icon: '⚡', label: 'Crypto Payments', value: 'Auto-Approve via AquaPay' },
-                    { icon: '🔗', label: 'Shareable Page', value: '/links/username' }
+                    { icon: '🎨', label: 'Branding', value: 'Colors & Styles' },
+                    { icon: '💰', label: 'Monetize', value: 'Your Prices' },
+                    { icon: '⚡', label: 'Crypto Pay', value: 'Auto-Approve' },
+                    { icon: '🔗', label: 'Share', value: '/links/you' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
-                      className="min-w-0 flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-2.5 py-2"
+                      className="flex flex-col items-center gap-0.5 text-white bg-white/5 rounded-lg px-2 py-2.5 overflow-hidden"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.3 + i * 0.1 }}
                     >
-                      <div className="w-full flex items-center justify-center lg:justify-start gap-2 min-w-0">
-                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
-                        <span className="font-semibold leading-tight text-center lg:text-left break-words">{item.label}</span>
-                      </div>
-                      <span className="text-yellow-400 text-[11px] leading-tight text-center lg:text-left break-all">{item.value}</span>
+                      <span className="text-base md:text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                      <span className="font-semibold text-[11px] md:text-xs leading-tight text-center">{item.label}</span>
+                      <span className="text-yellow-400 text-[10px] md:text-[11px] leading-tight text-center">{item.value}</span>
                     </motion.div>
                   ))}
                 </div>
