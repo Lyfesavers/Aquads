@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare, FaEye } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare, FaEye, FaPlay } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
@@ -108,20 +108,21 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     game.bannerUrl.startsWith('https://')
   );
   
-  // Format YouTube URLs for embedding
-  const formatVideoUrl = (url) => {
-    if (isYouTubeVideo) {
-      const videoId = url.includes('youtube.com/watch?v=') 
-        ? url.split('v=')[1].split('&')[0]
-        : url.includes('youtu.be/') 
-          ? url.split('youtu.be/')[1].split('?')[0]
-          : '';
-          
-      // Add parameters for controls and modest branding (mute removed)
-      return `https://www.youtube.com/embed/${videoId}?controls=1&mute=1&modestbranding=1`;
-    }
-    return url;
+  // Extract YouTube video ID for thumbnail
+  const getYouTubeVideoId = (url) => {
+    if (url.includes('youtube.com/watch?v='))
+      return url.split('v=')[1].split('&')[0];
+    if (url.includes('youtu.be/'))
+      return url.split('youtu.be/')[1].split('?')[0];
+    if (url.includes('youtube.com/embed/'))
+      return url.split('youtube.com/embed/')[1].split('?')[0];
+    return '';
   };
+
+  const youtubeVideoId = isYouTubeVideo ? getYouTubeVideoId(game.bannerUrl) : '';
+  const youtubeThumbnail = youtubeVideoId
+    ? `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`
+    : '';
   
   // Check if current user is the owner or an admin
   const isOwnerOrAdmin = currentUser && (
@@ -156,15 +157,22 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
                 )}
               </div>
             ) : (
-              <iframe 
-                src={formatVideoUrl(game.bannerUrl)}
-                title={game.title}
-                className="w-full h-full"
-                frameBorder="0"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                sandbox={isYouTubeVideo ? "allow-scripts allow-same-origin allow-presentation" : ""}
-              />
+              <Link to={`/games/${game._id}`} className="block w-full h-full group relative">
+                <img
+                  src={youtubeThumbnail}
+                  alt={game.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://via.placeholder.com/640x360?text=Video+Preview';
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                  <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <FaPlay className="text-white text-lg ml-0.5" />
+                  </div>
+                </div>
+              </Link>
             )}
           </>
         ) : (
