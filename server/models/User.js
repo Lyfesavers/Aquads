@@ -129,6 +129,10 @@ const userSchema = new Schema({
     threeDays: { type: Number, default: 20 },
     sevenDays: { type: Number, default: 40 }
   },
+  linkInBioPageViews: {
+    type: Number,
+    default: 0
+  },
   isAdmin: {
     type: Boolean,
     default: false

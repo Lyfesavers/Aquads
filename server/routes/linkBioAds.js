@@ -188,6 +188,18 @@ router.post('/', createAdLimiter, async (req, res) => {
   }
 });
 
+// POST /:id/click - Public: track ad click
+router.post('/:id/click', async (req, res) => {
+  try {
+    const ad = await LinkInBioBannerAd.findById(req.params.id);
+    if (!ad || ad.status !== 'active') return res.status(404).json({ error: 'Ad not found' });
+    await LinkInBioBannerAd.updateOne({ _id: ad._id }, { $inc: { clicks: 1 } });
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to track click' });
+  }
+});
+
 // GET /my-page-ads - Auth: pending ads on the logged-in user's page (owner management)
 router.get('/my-page-ads', auth, async (req, res) => {
   try {

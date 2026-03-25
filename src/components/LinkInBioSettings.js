@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { updateLinkInBio } from '../services/api';
-import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign } from 'react-icons/fa';
+import { updateLinkInBio, fetchLinkInBioAnalytics } from '../services/api';
+import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
 const BASE_URL = 'https://www.aquads.xyz';
@@ -30,6 +30,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [adPricing, setAdPricing] = useState({ day: 10, threeDays: 20, sevenDays: 40 });
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
     setBioLinks(Array.isArray(currentUser?.bioLinks) ? [...currentUser.bioLinks] : []);
@@ -69,6 +70,13 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       });
     }
   }, [currentUser?.linkInBioAdPricing?.day, currentUser?.linkInBioAdPricing?.threeDays, currentUser?.linkInBioAdPricing?.sevenDays]);
+
+  useEffect(() => {
+    if (!currentUser?.emailVerified) return;
+    fetchLinkInBioAnalytics()
+      .then(data => setAnalytics(data))
+      .catch(() => {});
+  }, [currentUser?.emailVerified]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {
@@ -199,6 +207,46 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
           </div>
         </div>
       </div>
+
+      {/* Analytics */}
+      {analytics && (
+        <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <FaChartBar className="text-cyan-400" />
+            Analytics
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-700/40 rounded-xl p-4 border border-gray-600/40 text-center">
+              <FaEye className="text-cyan-400 mx-auto mb-2 w-5 h-5" />
+              <p className="text-2xl font-bold text-white">{(analytics.pageViews || 0).toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-1">Page Views</p>
+            </div>
+            <div className="bg-gray-700/40 rounded-xl p-4 border border-gray-600/40 text-center">
+              <FaMousePointer className="text-cyan-400 mx-auto mb-2 w-5 h-5" />
+              <p className="text-2xl font-bold text-white">{(analytics.totalAdClicks || 0).toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-1">Ad Clicks</p>
+            </div>
+          </div>
+          {analytics.ads && analytics.ads.length > 0 && analytics.ads.some(a => a.clicks > 0) && (
+            <div className="mt-4">
+              <p className="text-gray-400 text-xs font-medium mb-2">Clicks per ad</p>
+              <div className="space-y-2">
+                {analytics.ads.filter(a => a.clicks > 0).map(ad => (
+                  <div key={ad._id} className="flex items-center justify-between bg-gray-700/30 rounded-lg px-3 py-2 border border-gray-600/30">
+                    <span className="text-white text-sm truncate mr-3">{ad.title}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${ad.status === 'active' ? 'bg-green-500/20 text-green-400' : ad.status === 'expired' ? 'bg-gray-500/20 text-gray-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                        {ad.status}
+                      </span>
+                      <span className="text-cyan-400 font-semibold text-sm">{ad.clicks.toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Background image */}
       <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">

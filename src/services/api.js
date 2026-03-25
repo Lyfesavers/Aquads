@@ -1134,6 +1134,20 @@ export const updateLinkInBio = async (data) => {
   }
 };
 
+// Fetch link-in-bio analytics (auth required)
+export const fetchLinkInBioAnalytics = async () => {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  if (!currentUser.token) throw new Error('No authentication token found');
+  try {
+    const response = await axios.get(`${API_URL}/users/link-in-bio/analytics`, {
+      headers: { Authorization: `Bearer ${currentUser.token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 // Request password reset
 export const requestPasswordReset = async (username, referralCode) => {
   try {

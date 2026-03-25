@@ -268,6 +268,8 @@ const LinkInBio = () => {
         }
         const json = await res.json();
         setData(json);
+        // Track page view (fire-and-forget)
+        fetch(`${API_URL}/users/links/${encodeURIComponent(username)}/view`, { method: 'POST' }).catch(() => {});
       } catch (err) {
         setError('Failed to load');
       } finally {
@@ -531,6 +533,9 @@ const LinkInBio = () => {
                 href={currentAd.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  fetch(`${API_URL}/link-bio-ads/${currentAd._id}/click`, { method: 'POST' }).catch(() => {});
+                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

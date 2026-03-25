@@ -14,6 +14,7 @@ const { emitAffiliateEarningUpdate } = require('../socket');
 const { OAuth2Client } = require('google-auth-library');
 const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
 const auditLogger = require('../utils/auditLogger');
+const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 
 // Modify the rate limiting for registration
@@ -1247,6 +1248,53 @@ router.get('/links/:username', async (req, res) => {
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);
     res.status(500).json({ error: 'Failed to load page' });
+  }
+});
+
+// Link-in-bio: track page view (fire-and-forget from public page)
+router.post('/links/:username/view', async (req, res) => {
+  try {
+    const username = req.params.username.trim();
+    if (!username) return res.status(400).json({ error: 'Username required' });
+    const sanitizedUsername = sanitizeForRegex(username);
+    await User.updateOne(
+      { username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') } },
+      { $inc: { linkInBioPageViews: 1 } }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to track view' });
+  }
+});
+
+// Link-in-bio: analytics for dashboard (auth required)
+router.get('/link-in-bio/analytics', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('linkInBioPageViews').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const ads = await LinkInBioBannerAd.find({ targetUser: req.user.userId })
+      .select('title clicks status createdAt expiresAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const totalAdClicks = ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0);
+
+    res.json({
+      pageViews: user.linkInBioPageViews || 0,
+      totalAdClicks,
+      ads: ads.map(a => ({
+        _id: a._id,
+        title: a.title,
+        clicks: a.clicks || 0,
+        status: a.status,
+        createdAt: a.createdAt,
+        expiresAt: a.expiresAt
+      }))
+    });
+  } catch (err) {
+    console.error('Link-in-bio analytics error:', err);
+    res.status(500).json({ error: 'Failed to load analytics' });
   }
 });
 
