@@ -505,7 +505,8 @@ async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: '❌ Invalid Twitter URL.' };
   }
   const tweetId = tweetIdMatch[1];
-  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
   if (existingRaid) {
     return { success: false, message: `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${tweetUrl}\n\n💡 Use \`/raids\` to see it.` };
   }
@@ -559,7 +560,8 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: '❌ Invalid Twitter URL. Use a valid tweet URL.' };
   }
   const tweetId = tweetIdMatch[1];
-  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const existingRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
   if (existingRaid) {
     return { success: false, message: `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use \`/raids\` to see it, or wait until it expires (48h).` };
   }

@@ -2396,7 +2396,8 @@ ${platformEmoji} ${platformName} Raid
             { inline_keyboard: [] });
           return;
         }
-        const existingRaidForTweet = await TwitterRaid.findOne({ tweetId, active: true });
+        const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+        const existingRaidForTweet = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
         if (existingRaidForTweet) {
           await telegramService.editMessageWithKeyboard(chatId, messageId,
             `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it.`,
@@ -4122,7 +4123,8 @@ Tap to update:`;
       const TwitterRaid = require('../models/TwitterRaid');
 
       // Prevent duplicate raids for the same tweet (match by tweetId; URLs can vary e.g. twitter.com vs x.com)
-      const existingRaid = await TwitterRaid.findOne({ tweetId, active: true });
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      const existingRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
       if (existingRaid) {
         await telegramService.sendBotMessage(chatId,
           `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it, or wait until it expires (48h).`);

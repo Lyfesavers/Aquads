@@ -322,7 +322,8 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     const tweetId = tweetIdMatch[1];
 
     // Prevent duplicate raids for the same tweet (match by tweetId)
-    const existingPointsRaid = await TwitterRaid.findOne({ tweetId, active: true });
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    const existingPointsRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
     if (existingPointsRaid) {
       return res.status(400).json({ error: 'A raid for this tweet already exists. No points were deducted. Use the raids list to see it.' });
     }
@@ -1122,7 +1123,8 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     const tweetId = tweetIdMatch[1];
 
     // Prevent duplicate raids for the same tweet (match by tweetId)
-    const existingFreeRaid = await TwitterRaid.findOne({ tweetId, active: true });
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    const existingFreeRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
     if (existingFreeRaid) {
       return res.status(400).json({ error: 'A raid for this tweet already exists. Use the raids list to see it, or wait until it expires (48h).' });
     }
