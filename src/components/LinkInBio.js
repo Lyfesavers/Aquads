@@ -577,11 +577,9 @@ const LinkInBio = () => {
           >
             <button
               onClick={() => setShowAdModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:scale-[1.03] text-xs font-medium"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300 hover:scale-[1.03] text-xs font-semibold shadow-lg hover:brightness-95"
               style={{
-                background: theme.badgeBg,
-                backdropFilter: 'blur(10px)',
-                border: `1px solid ${theme.badgeBorder}`,
+                background: '#f0ece6',
                 color: theme.accent
               }}
             >
