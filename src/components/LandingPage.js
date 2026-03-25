@@ -3182,19 +3182,19 @@ const CarouselCard = ({ feature, index }) => {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-purple">Link in Bio</span>
                   <br />
-                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Premium Branded Social Hub</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Branded Page + Ad Monetization</span>
                 </h2>
 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Build a premium share page with your links, custom colors, button styles, and full-screen background image.
-                  Share one URL everywhere and keep your brand experience consistent across platforms.
+                  Build a premium branded page with custom colors, button styles, and full-screen backgrounds.
+                  Monetize your audience with banner ads — set your own prices and get paid directly in crypto via AquaPay.
                 </p>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🎨', label: 'Brand Colors', value: 'Accent + Buttons' },
-                    { icon: '🖼️', label: 'Background URL', value: 'Full-Screen Image' },
-                    { icon: '🔘', label: 'Button Styles', value: '5 Presets' },
+                    { icon: '🎨', label: 'Full Branding', value: 'Colors + Backgrounds' },
+                    { icon: '💰', label: 'Ad Monetization', value: 'Set Your Own Prices' },
+                    { icon: '⚡', label: 'Crypto Payments', value: 'Auto-Approve via AquaPay' },
                     { icon: '🔗', label: 'Shareable Page', value: '/links/username' }
                   ].map((item, i) => (
                     <motion.div
@@ -3288,7 +3288,7 @@ const CarouselCard = ({ feature, index }) => {
                     animate={{ y: [0, -5, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    ✨ New
+                    💰 Monetize
                   </motion.div>
                 </div>
               </motion.div>
@@ -4010,7 +4010,7 @@ const LandingPage = () => {
     {
       icon: '🔗',
       title: 'Link in Bio',
-      description: 'Create a premium links page with custom colors, button styles, and a full-screen background image. Share one branded URL for all your socials and communities.',
+      description: 'Create a premium links page with custom colors, button styles, and background images. Monetize your page with banner ads — set your own prices, get paid in crypto directly via AquaPay.',
       gradient: 'from-purple-900/40 to-amber-900/80',
       link: '/docs?section=getting-started&page=link-in-bio'
     },
