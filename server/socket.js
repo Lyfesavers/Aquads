@@ -1277,6 +1277,43 @@ function init(server) {
       }
     });
 
+    // Handle user requesting link-in-bio analytics
+    socket.on('requestLinkInBioAnalytics', async (userData) => {
+      if (!userData || !userData.userId) {
+        socket.emit('linkInBioAnalyticsError', { error: 'User authentication required' });
+        return;
+      }
+      try {
+        const User = require('./models/User');
+        const LinkInBioBannerAd = require('./models/LinkInBioBannerAd');
+        const user = await User.findById(userData.userId).select('linkInBioPageViews').lean();
+        if (!user) {
+          socket.emit('linkInBioAnalyticsError', { error: 'User not found' });
+          return;
+        }
+        const ads = await LinkInBioBannerAd.find({ targetUser: userData.userId })
+          .select('title clicks status createdAt expiresAt')
+          .sort({ createdAt: -1 })
+          .lean();
+        const totalAdClicks = ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0);
+        socket.emit('linkInBioAnalyticsLoaded', {
+          pageViews: user.linkInBioPageViews || 0,
+          totalAdClicks,
+          ads: ads.map(a => ({
+            _id: a._id,
+            title: a.title,
+            clicks: a.clicks || 0,
+            status: a.status,
+            createdAt: a.createdAt,
+            expiresAt: a.expiresAt
+          }))
+        });
+      } catch (error) {
+        console.error('Error fetching link-in-bio analytics:', error);
+        socket.emit('linkInBioAnalyticsError', { error: 'Failed to load analytics' });
+      }
+    });
+
     // Game detail page — join/leave rooms for live comment feed
     socket.on('joinGame', (gameId) => {
       if (gameId) socket.join('game:' + gameId);
@@ -1587,6 +1624,35 @@ function emitHyperSpaceOrderStatusChange(orderId, status, additionalData = {}) {
   }
 }
 
+async function emitLinkInBioAnalyticsUpdate(userId) {
+  if (!io) return;
+  try {
+    const User = require('./models/User');
+    const LinkInBioBannerAd = require('./models/LinkInBioBannerAd');
+    const user = await User.findById(userId).select('linkInBioPageViews').lean();
+    if (!user) return;
+    const ads = await LinkInBioBannerAd.find({ targetUser: userId })
+      .select('title clicks status createdAt expiresAt')
+      .sort({ createdAt: -1 })
+      .lean();
+    const totalAdClicks = ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0);
+    io.to(`user_${userId}`).emit('linkInBioAnalyticsUpdate', {
+      pageViews: user.linkInBioPageViews || 0,
+      totalAdClicks,
+      ads: ads.map(a => ({
+        _id: a._id,
+        title: a.title,
+        clicks: a.clicks || 0,
+        status: a.status,
+        createdAt: a.createdAt,
+        expiresAt: a.expiresAt
+      }))
+    });
+  } catch (err) {
+    console.error('emitLinkInBioAnalyticsUpdate error:', err.message);
+  }
+}
+
 function emitEscrowUpdated(data) {
   if (io) {
     if (data.buyerId) {
@@ -1639,5 +1705,6 @@ module.exports = {
   emitHyperSpaceOrderUpdate,
   emitNewHyperSpaceOrder,
   emitHyperSpaceOrderStatusChange,
-  emitEscrowUpdated
+  emitEscrowUpdated,
+  emitLinkInBioAnalyticsUpdate
 }; 

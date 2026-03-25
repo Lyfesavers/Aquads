@@ -1257,11 +1257,16 @@ router.post('/links/:username/view', async (req, res) => {
     const username = req.params.username.trim();
     if (!username) return res.status(400).json({ error: 'Username required' });
     const sanitizedUsername = sanitizeForRegex(username);
-    await User.updateOne(
+    const user = await User.findOneAndUpdate(
       { username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') } },
-      { $inc: { linkInBioPageViews: 1 } }
+      { $inc: { linkInBioPageViews: 1 } },
+      { new: true, select: '_id' }
     );
     res.json({ ok: true });
+    if (user) {
+      const { emitLinkInBioAnalyticsUpdate } = require('../socket');
+      emitLinkInBioAnalyticsUpdate(user._id);
+    }
   } catch (err) {
     res.status(500).json({ error: 'Failed to track view' });
   }

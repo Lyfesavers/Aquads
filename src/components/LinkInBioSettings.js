@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { updateLinkInBio, fetchLinkInBioAnalytics } from '../services/api';
+import { updateLinkInBio, socket } from '../services/api';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
@@ -72,11 +72,21 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   }, [currentUser?.linkInBioAdPricing?.day, currentUser?.linkInBioAdPricing?.threeDays, currentUser?.linkInBioAdPricing?.sevenDays]);
 
   useEffect(() => {
-    if (!currentUser?.emailVerified) return;
-    fetchLinkInBioAnalytics()
-      .then(data => setAnalytics(data))
-      .catch(() => {});
-  }, [currentUser?.emailVerified]);
+    if (!currentUser?.emailVerified || !currentUser?.userId) return;
+
+    const handleLoaded = (data) => setAnalytics(data);
+    const handleUpdate = (data) => setAnalytics(data);
+
+    socket.on('linkInBioAnalyticsLoaded', handleLoaded);
+    socket.on('linkInBioAnalyticsUpdate', handleUpdate);
+
+    socket.emit('requestLinkInBioAnalytics', { userId: currentUser.userId });
+
+    return () => {
+      socket.off('linkInBioAnalyticsLoaded', handleLoaded);
+      socket.off('linkInBioAnalyticsUpdate', handleUpdate);
+    };
+  }, [currentUser?.emailVerified, currentUser?.userId]);
 
   const addLink = () => {
     if (bioLinks.length >= MAX_LINKS) {

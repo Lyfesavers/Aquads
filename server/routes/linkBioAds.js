@@ -195,6 +195,8 @@ router.post('/:id/click', async (req, res) => {
     if (!ad || ad.status !== 'active') return res.status(404).json({ error: 'Ad not found' });
     await LinkInBioBannerAd.updateOne({ _id: ad._id }, { $inc: { clicks: 1 } });
     res.json({ ok: true });
+    const { emitLinkInBioAnalyticsUpdate } = require('../socket');
+    emitLinkInBioAnalyticsUpdate(ad.targetUser);
   } catch (error) {
     res.status(500).json({ error: 'Failed to track click' });
   }
