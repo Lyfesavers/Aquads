@@ -351,6 +351,17 @@ const Affiliate = () => {
                           </ul>
                         </div>
 
+                        <div className="bg-red-900/30 rounded p-3 border border-red-600/50">
+                          <h5 className="text-red-400 font-semibold mb-2">🚨 Space Link Submission Rules (Via Email):</h5>
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li><strong>Same-day submission required:</strong> You must send the space/stream links for that day ON that same day. Sending yesterday's links the next day will result in us <strong>not awarding points</strong> for those spaces.</li>
+                            <li><strong>No duplicate submissions:</strong> Do not send space/stream links that you have already submitted previously. Any duplicate claims will be <strong>rejected</strong>.</li>
+                          </ul>
+                          <p className="text-red-300 text-xs mt-2 italic">
+                            These rules are strictly enforced — please keep track of your daily submissions to ensure you receive your points.
+                          </p>
+                        </div>
+
                         <p className="text-blue-300 italic mt-2">
                           💡 <strong>Pro Tip:</strong> Each stream or space earns 100 points — do up to 5 per day to hit the 500 point daily max. More streams/spaces also significantly increases your chances of approval and shows your dedication to the Aquads community!
                         </p>
