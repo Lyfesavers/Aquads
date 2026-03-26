@@ -4,6 +4,12 @@ import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, Fa
 const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired, highlightedJobId, onHighlightComplete }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
 
+  const isJobOwner = (userId, owner) => {
+    if (!userId || !owner) return false;
+    const ownerId = typeof owner === 'object' && owner !== null ? String(owner._id || owner.id) : String(owner);
+    return String(userId) === ownerId;
+  };
+
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
     if (highlightedJobId) {
@@ -217,7 +223,7 @@ Best regards,
                 {currentUser && job.source === 'user' && (
                   <div className="flex space-x-2">
                     {/* Owner controls */}
-                    {(currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                    {isJobOwner(currentUser.userId, job.owner) && (
                       <>
                         {job.status === 'expired' && (
                           <button
@@ -257,7 +263,7 @@ Best regards,
                     )}
                     
                     {/* Admin delete button (for user listings) */}
-                    {currentUser.isAdmin && (currentUser.userId !== job.owner && currentUser.userId !== job.owner._id) && (
+                    {currentUser.isAdmin && !isJobOwner(currentUser.userId, job.owner) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -294,7 +300,7 @@ Best regards,
               {/* Mobile action buttons - shown at bottom on mobile */}
               {currentUser && (job.source === 'user' || (currentUser.isAdmin && (job.source === 'remotive' || job.source === 'cryptojobslist'))) && (
                 <div className="sm:hidden flex justify-end space-x-2">
-                  {job.source === 'user' && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                  {job.source === 'user' && isJobOwner(currentUser.userId, job.owner) && (
                     <>
                       {job.status === 'expired' && (
                         <button
@@ -334,7 +340,7 @@ Best regards,
                   )}
                   
                   {currentUser.isAdmin && (
-                    (job.source === 'user' && currentUser.userId !== job.owner && currentUser.userId !== job.owner._id) || 
+                    (job.source === 'user' && !isJobOwner(currentUser.userId, job.owner)) || 
                     job.source === 'remotive' || job.source === 'cryptojobslist'
                   ) && (
                     <button
