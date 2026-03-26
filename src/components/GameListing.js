@@ -255,7 +255,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         
         <div className="mb-4 flex-grow">
           <div
-            className={`text-gray-300 text-sm ${showFullDescription ? '' : 'line-clamp-3'}`}
+            className={`text-gray-300 text-sm whitespace-pre-wrap ${showFullDescription ? '' : 'line-clamp-3'}`}
           >
             {showFullDescription ? game.description : truncateDescription(game.description)}
           </div>
