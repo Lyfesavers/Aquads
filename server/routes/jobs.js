@@ -85,6 +85,7 @@ const fetchAndCachePublicJobs = async (page, limit) => {
     .skip(skip)
     .limit(limit)
     .lean();
+  jobs.forEach(j => { if (!j.source) j.source = 'user'; });
   const responseData = {
     jobs,
     pagination: {
@@ -162,6 +163,7 @@ router.get('/', async (req, res) => {
       .skip(skip)
       .limit(limit)
       .lean();
+    jobs.forEach(j => { if (!j.source) j.source = 'user'; });
 
     const responseData = {
       jobs,

@@ -10,6 +10,8 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
     return String(userId) === ownerId;
   };
 
+  const isUserJob = (job) => !job.source || job.source === 'user';
+
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
     if (highlightedJobId) {
@@ -220,7 +222,7 @@ Best regards,
                   </div>
                 )}
                 
-                {currentUser && job.source === 'user' && (
+                {currentUser && isUserJob(job) && (
                   <div className="flex space-x-2">
                     {/* Owner controls */}
                     {isJobOwner(currentUser.userId, job.owner) && (
@@ -298,9 +300,9 @@ Best regards,
               </div>
               
               {/* Mobile action buttons - shown at bottom on mobile */}
-              {currentUser && (job.source === 'user' || (currentUser.isAdmin && (job.source === 'remotive' || job.source === 'cryptojobslist'))) && (
+              {currentUser && (isUserJob(job) || (currentUser.isAdmin && (job.source === 'remotive' || job.source === 'cryptojobslist'))) && (
                 <div className="sm:hidden flex justify-end space-x-2">
-                  {job.source === 'user' && isJobOwner(currentUser.userId, job.owner) && (
+                  {isUserJob(job) && isJobOwner(currentUser.userId, job.owner) && (
                     <>
                       {job.status === 'expired' && (
                         <button
@@ -340,7 +342,7 @@ Best regards,
                   )}
                   
                   {currentUser.isAdmin && (
-                    (job.source === 'user' && !isJobOwner(currentUser.userId, job.owner)) || 
+                    (isUserJob(job) && !isJobOwner(currentUser.userId, job.owner)) || 
                     job.source === 'remotive' || job.source === 'cryptojobslist'
                   ) && (
                     <button
@@ -452,7 +454,7 @@ Best regards,
                   </p>
 
                   {/* Alternative Contact Methods - Only for user jobs */}
-                  {job.source === 'user' && (job.contactTelegram || job.contactDiscord) && (
+                  {isUserJob(job) && (job.contactTelegram || job.contactDiscord) && (
                     <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-700">
                       <p className="text-gray-400 text-xs mb-2 text-center">
                         {currentUser ? 'Or contact via:' : '🔒 Login to view contact options'}
