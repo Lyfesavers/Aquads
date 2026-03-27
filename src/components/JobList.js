@@ -47,6 +47,32 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
     });
   };
 
+  const cleanDescription = (text, source) => {
+    if (!text || !source || source === 'user') return text;
+    
+    let cleaned = text;
+    
+    // Remove "Tags: ..." lines (CryptoJobsList tag block)
+    cleaned = cleaned.replace(/^Tags\s*:.*$/gm, '');
+    
+    // Remove lines of CryptoJobsList-style job category labels separated by bullets
+    cleaned = cleaned.replace(/^(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs\s*[•·]\s*)+(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs)\s*$/gm, '');
+    
+    // Remove lines of just hashtags
+    cleaned = cleaned.replace(/^(?:\s*#[\w\-\/\.]+[\s,]*){2,}\s*$/gm, '');
+    
+    // Remove trailing hashtag blocks
+    cleaned = cleaned.replace(/(?:\n\s*#[\w\-\/\.]+[\s,]*)+\s*$/g, '');
+    
+    // Remove "Apply for this job" CTA lines
+    cleaned = cleaned.replace(/^(?:apply\s+(?:for\s+this\s+)?(?:job|position|role)\s*(?:now|here|today)?|click\s+(?:here\s+)?to\s+apply)\s*[.!]?\s*$/gim, '');
+    
+    // Clean up excess blank lines left by removals
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+    
+    return cleaned;
+  };
+
   const handleEmailClick = (job) => {
     const emailSubject = `Application for ${job.title} position`;
     const emailBody = `Hi ${job.ownerUsername},
@@ -370,16 +396,18 @@ Best regards,
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
                   <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
-                    {job.description}
+                    {cleanDescription(job.description, job.source)}
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-2">Requirements</h4>
-                  <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
-                    {job.requirements}
+                {job.requirements && job.requirements !== 'See job description for requirements' && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Requirements</h4>
+                    <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
+                      {cleanDescription(job.requirements, job.source)}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Work Arrangement & Location Details */}
                 {job.workArrangement && (

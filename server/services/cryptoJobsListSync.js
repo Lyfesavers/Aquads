@@ -67,6 +67,15 @@ function cleanHTML(html) {
   
   let text = html;
   
+  // Remove CryptoJobsList featured image tag
+  text = text.replace(/<img[^>]*class=['"]?webfeedsFeaturedVisual['"]?[^>]*\/?>/gi, '');
+  
+  // Remove CryptoJobsList "Tags:" paragraph block with all anchor links
+  text = text.replace(/<p>\s*Tags\s*:[\s\S]*?(?=<p[\s>]|<h[1-6]|<div|<ul|<ol|$)/gi, '');
+  
+  // Fallback: remove any remaining "Tags:" text lines after HTML strip
+  text = text.replace(/Tags\s*:\s*(?:<a[^>]*>[^<]*<\/a>\s*[•·,|\s]*)+/gi, '');
+  
   // First, normalize whitespace within tags but preserve intentional breaks
   text = text.replace(/>\s+</g, '> <');
   
@@ -158,12 +167,48 @@ function cleanHTML(html) {
 }
 
 /**
+ * Remove any remaining tag-like content from cleaned text
+ */
+function stripTagsFromText(text) {
+  if (!text) return text;
+  
+  let cleaned = text;
+  
+  // Remove "Tags: ..." lines (the main CryptoJobsList tag block after HTML cleaning)
+  // These appear as "Tags: Web3 Jobs • Blockchain Engineering Jobs • ..." 
+  cleaned = cleaned.replace(/^Tags\s*:.*$/gm, '');
+  
+  // Remove lines that are just bullet-separated job category labels from cryptojobslist
+  // e.g., "Web3 Jobs • Blockchain Engineering Jobs • Cryptocurrency Senior Jobs"
+  cleaned = cleaned.replace(/^(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs\s*[•·]\s*)+(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs)\s*$/gm, '');
+  
+  // Remove lines that are just hashtags
+  cleaned = cleaned.replace(/^(?:\s*#[\w\-\/\.]+[\s,]*){2,}\s*$/gm, '');
+  
+  // Remove trailing hashtag blocks
+  cleaned = cleaned.replace(/(?:\n\s*#[\w\-\/\.]+[\s,]*)+\s*$/g, '');
+  
+  // Remove "Apply for this job" CTA lines
+  cleaned = cleaned.replace(/^(?:apply\s+(?:for\s+this\s+)?(?:job|position|role)\s*(?:now|here|today)?|click\s+(?:here\s+)?to\s+apply)\s*[.!]?\s*$/gim, '');
+  
+  // Clean up leftover whitespace from removals
+  cleaned = cleaned
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  return cleaned;
+}
+
+/**
  * Format job description for better readability
  */
 function formatJobContent(content) {
   if (!content) return '';
   
   let formatted = cleanHTML(content);
+  
+  // Strip any remaining tag text that survived HTML cleaning
+  formatted = stripTagsFromText(formatted);
   
   // Add section headers if they exist but aren't formatted
   const sectionPatterns = [
@@ -181,7 +226,6 @@ function formatJobContent(content) {
   }
   
   // Convert common text patterns to bullet points if not already
-  // Match lines that start with - or * followed by content
   formatted = formatted.replace(/^[\-\*]\s+/gm, '  • ');
   
   // Convert numbered items to cleaner format
@@ -190,10 +234,14 @@ function formatJobContent(content) {
   // Ensure proper spacing after section headers
   formatted = formatted.replace(/(📋[^\n]+)\n([^\n])/g, '$1\n\n$2');
   
+  // Ensure proper spacing before section headers (📌 and 📋)
+  formatted = formatted.replace(/([^\n])\n(📋|📌)/g, '$1\n\n$2');
+  
   // Clean up any remaining issues
   formatted = formatted
     .replace(/\n{4,}/g, '\n\n\n')
-    .replace(/^\s+/gm, (match) => match.length > 4 ? '    ' : match) // Limit indentation
+    .replace(/\n{3}/g, '\n\n')
+    .replace(/^\s+/gm, (match) => match.length > 4 ? '    ' : match)
     .trim();
   
   return formatted;
