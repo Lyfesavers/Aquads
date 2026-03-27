@@ -397,6 +397,28 @@ function formatRequirements(requirements) {
 }
 
 /**
+ * Remove the requirements section from description to avoid duplication
+ */
+function removeRequirementsFromDescription(description) {
+  const removalPatterns = [
+    /\n*(?:📋\s*)?requirements?[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+    /\n*(?:📋\s*)?qualifications?[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+    /\n*(?:📋\s*)?what you['']?ll need[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+    /\n*(?:📋\s*)?what we['']?re looking for[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+    /\n*(?:📋\s*)?must have[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+  ];
+  
+  for (const pattern of removalPatterns) {
+    const match = description.match(pattern);
+    if (match && match[0].trim().length > 20) {
+      return description.replace(match[0], '').replace(/\n{3,}/g, '\n\n').trim();
+    }
+  }
+  
+  return description;
+}
+
+/**
  * Map RSS feed item to Job schema
  */
 function mapRSSItemToJob(item) {
@@ -404,7 +426,7 @@ function mapRSSItemToJob(item) {
   const rawContent = item.contentSnippet || item.content || item.description || '';
   
   // Format description with improved structure
-  const description = formatJobContent(rawContent);
+  let description = formatJobContent(rawContent);
   const company = extractCompany(title, item);
   
   // Parse salary
@@ -418,6 +440,11 @@ function mapRSSItemToJob(item) {
   // Extract and format requirements
   const rawRequirements = extractRequirements(description);
   const requirements = formatRequirements(rawRequirements);
+  
+  // Remove requirements section from description to avoid showing it twice
+  if (requirements && requirements !== 'See job description for requirements') {
+    description = removeRequirementsFromDescription(description);
+  }
   
   // Get company logo if available
   let companyLogo = null;

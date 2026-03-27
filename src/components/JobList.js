@@ -73,6 +73,29 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
     return cleaned;
   };
 
+  const stripRequirementsFromDescription = (description, requirements) => {
+    if (!description || !requirements || requirements === 'See job description for requirements') return description;
+    
+    const patterns = [
+      /\n*(?:📋\s*)?requirements?[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+      /\n*(?:📋\s*)?qualifications?[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+      /\n*(?:📋\s*)?what you[''']?ll need[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+      /\n*(?:📋\s*)?what we[''']?re looking for[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+      /\n*(?:📋\s*)?must have[:\s]*[\s\S]*?(?=\n📋|\n📌|\n────|$)/i,
+    ];
+    
+    let cleaned = description;
+    for (const pattern of patterns) {
+      const match = cleaned.match(pattern);
+      if (match && match[0].trim().length > 20) {
+        cleaned = cleaned.replace(match[0], '');
+        break;
+      }
+    }
+    
+    return cleaned.replace(/\n{3,}/g, '\n\n').trim();
+  };
+
   const handleEmailClick = (job) => {
     const emailSubject = `Application for ${job.title} position`;
     const emailBody = `Hi ${job.ownerUsername},
@@ -396,7 +419,13 @@ Best regards,
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
                   <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
-                    {cleanDescription(job.description, job.source)}
+                    {(() => {
+                      let desc = cleanDescription(job.description, job.source);
+                      if (job.source && job.source !== 'user' && job.requirements && job.requirements !== 'See job description for requirements') {
+                        desc = stripRequirementsFromDescription(desc, job.requirements);
+                      }
+                      return desc;
+                    })()}
                   </div>
                 </div>
 
