@@ -433,6 +433,17 @@ function App() {
     }
     return null;
   });
+
+  // Single effect that mirrors React state → localStorage.
+  // This is the ONLY place localStorage gets written for auth.
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
+  }, [currentUser]);
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -1036,7 +1047,6 @@ function App() {
     try {
       const user = await loginUser(credentials);
       setCurrentUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
       
@@ -1064,7 +1074,6 @@ function App() {
     try {
       const user = await loginWithGoogle(idToken);
       setCurrentUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
 
@@ -1079,7 +1088,7 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('currentUser');
+    socket.disconnect();
     showNotification('Successfully logged out!', 'success');
   };
 
@@ -1694,55 +1703,59 @@ function App() {
     fetchAds(); // Only fetch once on mount - WebSocket handles updates
   }, [currentUser]);
 
-  // Then add a special hook to handle route changes inside the App component
+  // Pick up token refreshes that happen inside the fetch interceptor (outside React).
+  // Without this, React state would hold a stale token and the sync effect would
+  // overwrite the refreshed token in localStorage.
   useEffect(() => {
-    // Periodic token validation function
+    const handleTokenRefresh = (e) => {
+      const { token, refreshToken } = e.detail;
+      setCurrentUser(prev => prev ? { ...prev, token, refreshToken } : null);
+    };
+    window.addEventListener('tokenRefreshed', handleTokenRefresh);
+    return () => window.removeEventListener('tokenRefreshed', handleTokenRefresh);
+  }, []);
+
+  // Periodic token validation — keeps user data fresh from the database.
+  // The cancelled flag prevents stale async responses from updating state
+  // after the user has logged in as someone else or logged out.
+  useEffect(() => {
+    let cancelled = false;
+
     const validateToken = async () => {
-      if (currentUser && currentUser.token) {
-        try {
-          const verifiedUser = await verifyToken(currentUser.token);
-          if (verifiedUser) {
-            // Only update if there are actual changes to avoid unnecessary re-renders
-            if (JSON.stringify(verifiedUser) !== JSON.stringify(currentUser)) {
-              setCurrentUser(verifiedUser);
-            }
-          } else {
-            // Token invalid, log out
-            setCurrentUser(null);
-            localStorage.removeItem('currentUser');
+      if (!currentUser || !currentUser.token) return;
+      try {
+        const freshUser = await verifyToken(currentUser.token);
+        if (cancelled) return;
+        if (freshUser) {
+          if (JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
+            setCurrentUser(freshUser);
           }
-        } catch (error) {
-          logger.error('Periodic token validation failed:', error);
+        } else {
+          setCurrentUser(null);
         }
+      } catch (error) {
+        logger.error('Periodic token validation failed:', error);
       }
     };
 
-    // Listen for router navigation events to maintain authentication across routes
     const handleRouteChange = () => {
-      if (currentUser) {
-        // Reconnect socket when changing routes
+      if (currentUser && !cancelled) {
         reconnectSocket();
-        
-        // Also verify token on route change
         validateToken();
       }
     };
 
-    // Listen for route changes
     window.addEventListener('popstate', handleRouteChange);
-    
-    // Also ensure authentication on initial load
+
     if (currentUser) {
       reconnectSocket();
     }
 
-    // Set up periodic validation (every 5 minutes)
     const interval = setInterval(validateToken, 5 * 60 * 1000);
-    
-    // Initial validation
     validateToken();
 
     return () => {
+      cancelled = true;
       window.removeEventListener('popstate', handleRouteChange);
       clearInterval(interval);
     };
@@ -2494,9 +2507,9 @@ function App() {
             if (currentUser) {
               reconnectSocket();
               verifyToken(currentUser.token)
-                .then(verifiedUser => {
-                  if (verifiedUser && JSON.stringify(verifiedUser) !== JSON.stringify(currentUser)) {
-                    setCurrentUser(verifiedUser);
+                .then(freshUser => {
+                  if (freshUser && JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
+                    setCurrentUser(freshUser);
                   }
                 })
                 .catch(err => {

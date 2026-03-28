@@ -83,6 +83,11 @@ const refreshAccessToken = async () => {
         socket.connect();
       }
 
+      // Notify React state that tokens were refreshed outside its lifecycle
+      window.dispatchEvent(new CustomEvent('tokenRefreshed', {
+        detail: { token: data.token, refreshToken: data.refreshToken }
+      }));
+
       return data.token;
     } catch (error) {
       logger.error('Token refresh error:', error);
@@ -402,18 +407,9 @@ export const loginUser = async (credentials) => {
     }
 
     const userData = await response.json();
-    
-    // Store user data in a more robust way
-    try {
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-    } catch (storageError) {
-      logger.error('Error storing user data in localStorage:', storageError);
-    }
-    
-    // Update socket auth
+
+    // Update socket auth with the new token
     socket.auth = { token: userData.token };
-    
-    // Ensure socket is connected
     if (!socket.connected) {
       socket.connect();
     }
@@ -443,17 +439,8 @@ export const loginWithGoogle = async (idToken) => {
 
     const userData = await response.json();
 
-    // Store user data
-    try {
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-    } catch (storageError) {
-      logger.error('Error storing user data in localStorage:', storageError);
-    }
-
-    // Update socket auth
+    // Update socket auth with the new token
     socket.auth = { token: userData.token };
-
-    // Ensure socket is connected
     if (!socket.connected) {
       socket.connect();
     }
@@ -465,19 +452,13 @@ export const loginWithGoogle = async (idToken) => {
   }
 };
 
-// Update the verifyToken function to return user data and handle token parameter
-export const verifyToken = async (token = null) => {
+// Verify a token with the server and return fresh user data from the database.
+// This function is pure — it does NOT read or write localStorage.
+// The caller (App.js) is responsible for updating React state and localStorage.
+export const verifyToken = async (token) => {
   try {
-    // If token is not provided, try to get it from localStorage
-    if (!token) {
-      const savedUser = localStorage.getItem('currentUser');
-      if (!savedUser) return null;
-      
-      const user = JSON.parse(savedUser);
-      token = user.token;
-    }
-    
-    // Use the token to verify
+    if (!token) return null;
+
     const response = await fetch(`${API_URL}/verify-token`, {
       method: 'GET',
       headers: {
@@ -490,32 +471,11 @@ export const verifyToken = async (token = null) => {
       throw new Error('Token verification failed');
     }
 
-    // Server returns { valid: true, user: { userId, username, bioLinks, ... } }
     const data = await response.json();
-
-    // Get the stored user so we can preserve the token (req.user doesn't include it)
-    const savedUser = localStorage.getItem('currentUser');
-    const storedUser = savedUser ? JSON.parse(savedUser) : null;
-
-    // Merge fresh server data (data.user) with the stored token
     const serverUser = data && data.user;
-    if (serverUser && serverUser.userId) {
-      const merged = {
-        ...(storedUser || {}),
-        ...serverUser,
-        token: storedUser?.token || token // always keep the JWT
-      };
-      socket.auth = { token: merged.token };
-      if (!socket.connected) socket.connect();
-      localStorage.setItem('currentUser', JSON.stringify(merged));
-      return merged;
-    }
 
-    // Fallback: server didn't return user object — return stored data as-is
-    if (storedUser) {
-      socket.auth = { token: storedUser.token };
-      if (!socket.connected) socket.connect();
-      return storedUser;
+    if (serverUser && serverUser.userId) {
+      return { ...serverUser, token };
     }
 
     return null;
@@ -547,11 +507,12 @@ export const register = async (userData) => {
     }
 
     const data = await response.json();
-    localStorage.setItem('currentUser', JSON.stringify(data));
-    
-    // Update socket auth
+
+    // Update socket auth with the new token
     socket.auth = { token: data.token };
-    socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+    }
 
     return data;
   } catch (error) {
@@ -793,11 +754,12 @@ socket.on('connect_error', async (error) => {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        // Verify token before attempting reconnection
-        const isValid = await verifyToken();
-        if (isValid) {
-          socket.auth = { token: user.token };
-          socket.connect();
+        if (user.token) {
+          const isValid = await verifyToken(user.token);
+          if (isValid) {
+            socket.auth = { token: user.token };
+            socket.connect();
+          }
         }
       } catch (err) {
         logger.error('Reconnection auth error:', err);
