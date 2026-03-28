@@ -688,8 +688,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
             </div>
           </>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_minmax(200px,248px)] gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
-            <div className="flex flex-col min-w-0 min-h-0 gap-1 sm:gap-2">
+          <div className="flex flex-col min-w-0 min-h-0 gap-1 sm:gap-2 flex-1">
               <div className="flex flex-wrap items-center gap-1 sm:gap-2 shrink-0">
                 <span className="bg-black text-yellow-300 border-2 border-yellow-400 px-2 py-0.5 tracking-[0.2em] text-[8px] sm:text-[9px]">
                   {gameState.code}
@@ -702,8 +701,8 @@ export default function BeanstalksAndChutes({ currentUser }) {
                 </button>
               </div>
 
-              <div className="flex flex-row gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
-                <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden">
+              <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
+                <div className="flex-1 min-w-0 min-h-0 flex items-start justify-center overflow-hidden order-1">
                   <motion.div
                     layout
                     className="relative bg-[#d4a574] border-4 border-black p-1 sm:p-2 shadow-[8px_8px_0_#000] w-full max-h-full max-w-full"
@@ -1224,7 +1223,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
                   </motion.div>
                 </div>
 
-                <aside className="flex flex-col items-center justify-center gap-2 sm:gap-3 w-[96px] sm:w-[118px] shrink-0 self-stretch bg-[#fcbcb0] border-4 border-black shadow-[4px_4px_0_#000] py-2 sm:py-3 px-1.5">
+                <aside className="order-2 flex flex-col items-center justify-start gap-2 sm:gap-3 w-full max-w-[118px] mx-auto lg:mx-0 lg:w-[118px] shrink-0 self-stretch bg-[#fcbcb0] border-4 border-black shadow-[4px_4px_0_#000] pt-0 pb-2 sm:pb-3 px-1.5">
                   <DiceCube
                     spinning={diceSpinning}
                     value={diceValue}
@@ -1266,10 +1265,8 @@ export default function BeanstalksAndChutes({ currentUser }) {
                     <span className="text-black text-[6px] sm:text-[7px] text-center leading-tight px-0.5">WAIT HOST…</span>
                   )}
                 </aside>
-              </div>
-            </div>
 
-            <div className="bg-[#fcbcb0] border-4 border-black p-2 sm:p-3 text-black space-y-2 shadow-[6px_6px_0_#000] min-h-0 max-h-[min(240px,42dvh)] overflow-y-auto overscroll-contain lg:max-h-[calc(100dvh-5.25rem)]">
+                <div className="order-3 flex flex-col min-h-0 w-full lg:w-[min(248px,100%)] lg:min-w-[200px] lg:max-w-[248px] lg:shrink-0 lg:flex-none bg-[#fcbcb0] border-4 border-black p-2 sm:p-3 text-black space-y-2 shadow-[6px_6px_0_#000] max-h-[min(240px,42dvh)] overflow-y-auto overscroll-contain lg:max-h-none lg:self-stretch">
               <h3 className="text-[9px] border-b-2 border-black pb-1">PLAYERS</h3>
               <ul className="space-y-2">
                 {gameState.players.map((pl, i) => {
@@ -1295,7 +1292,8 @@ export default function BeanstalksAndChutes({ currentUser }) {
                 <p className="mb-1">· Land exactly on 100 to win. Chutes are softer; pipes help more.</p>
                 <p>· Roll 6 = bonus roll (still from the server).</p>
               </div>
-            </div>
+                </div>
+              </div>
           </div>
         )}
       </div>
