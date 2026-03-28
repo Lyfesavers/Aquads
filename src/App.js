@@ -449,6 +449,13 @@ function App() {
   // an unnecessary verify → setCurrentUser → 7 effects cascade.
   const skipNextValidationRef = useRef(false);
 
+  // Tracks the latest token so async callbacks (NavigationListener, etc.)
+  // can detect if the user changed before they apply stale results.
+  const currentTokenRef = useRef(currentUser?.token);
+  useEffect(() => {
+    currentTokenRef.current = currentUser?.token ?? null;
+  }, [currentUser]);
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -1055,6 +1062,7 @@ function App() {
       // (Dashboard, etc.) and the global fetch interceptor already have
       // the new token by the time they fire.
       localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1084,6 +1092,7 @@ function App() {
     try {
       const user = await loginWithGoogle(idToken);
       localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1102,6 +1111,7 @@ function App() {
     // Clear localStorage BEFORE setCurrentUser so child effects
     // and the fetch interceptor don't read stale auth data.
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
     setCurrentUser(null);
     socket.disconnect();
     showNotification('Successfully logged out!', 'success');
@@ -1128,6 +1138,7 @@ function App() {
       const user = await apiRegister(formData);
       if (user) {
         localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('token', user.token);
         skipNextValidationRef.current = true;
         setCurrentUser(user);
         setNewUsername(user.username);
@@ -1631,10 +1642,6 @@ function App() {
 
   // Add these socket event listeners in useEffect
   useEffect(() => {
-    socket.on('userAuthenticated', (userData) => {
-      setCurrentUser(userData);
-    });
-
     // Add listener for vote updates
     socket.on('adVoteUpdated', (voteData) => {
       setAds(prevAds => prevAds.map(ad => 
@@ -1666,8 +1673,7 @@ function App() {
     });
 
     return () => {
-      socket.off('userAuthenticated');
-      socket.off('adVoteUpdated'); // Remove listener on cleanup
+      socket.off('adVoteUpdated');
       socket.off('tokenPurchaseApproved');
       socket.off('bumpRequestUpdate');
     };
@@ -2538,10 +2544,13 @@ function App() {
         <NavigationListener 
           onNavigate={() => {
             if (currentUser) {
+              const tokenWhenFired = currentUser.token;
               reconnectSocket();
               verifyToken(currentUser.token)
                 .then(freshUser => {
                   if (!freshUser) return;
+                  // If the user changed while the request was in flight, discard
+                  if (currentTokenRef.current !== tokenWhenFired) return;
                   const merged = {
                     ...currentUser,
                     ...freshUser,

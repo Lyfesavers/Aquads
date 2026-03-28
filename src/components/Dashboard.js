@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
@@ -23,7 +23,7 @@ import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
 
-const LinkBioPageAds = () => {
+const LinkBioPageAds = ({ userId }) => {
   const [pendingAds, setPendingAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -39,7 +39,7 @@ const LinkBioPageAds = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPendingAds(); }, []);
+  useEffect(() => { setPendingAds([]); setLoading(true); fetchPendingAds(); }, [userId]);
 
   const handleApprove = async (adId) => {
     if (!window.confirm('Approve this ad? It will go live on your page immediately.')) return;
@@ -273,7 +273,46 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setActiveTab(initialActiveTab);
     }
   }, [initialActiveTab]);
-  
+
+  // When the logged-in user identity changes, clear all user-specific state
+  // so stale data from the previous account never leaks into the new session.
+  const prevUserIdRef = useRef(currentUser?.userId);
+  useEffect(() => {
+    if (currentUser?.userId !== prevUserIdRef.current) {
+      prevUserIdRef.current = currentUser?.userId;
+      setBookings([]);
+      setAffiliateInfo(null);
+      setPointsInfo(null);
+      setMembershipInfo(null);
+      setAffiliateEarnings(null);
+      setEarningsSummary(null);
+      setUserJobs([]);
+      setPremiumRequests([]);
+      setBannerAds([]);
+      setBumpRequests([]);
+      setPendingRedemptions([]);
+      setPendingTwitterRaids([]);
+      setPendingFacebookRaids([]);
+      setPendingTokenPurchases([]);
+      setPendingVoteBoosts([]);
+      setPendingServices([]);
+      setPendingAddonOrders([]);
+      setPendingHyperSpaceOrders([]);
+      setPendingListings([]);
+      setEscrowDisputes([]);
+      setAquaPayStats({ totalReceived: 0, totalTransactions: 0 });
+      setAquaPayPaymentHistory([]);
+      setAffiliateAnalytics(null);
+      setClickStats(null);
+      setClickTrends(null);
+      setRecentClicks([]);
+      setFreeRaidEligibility(null);
+      setSelectedBooking(null);
+      setActiveBookingConversation(null);
+      setActiveBooking(null);
+    }
+  }, [currentUser?.userId]);
+
   // OPTIMISTIC UI: Removed blocking useEffect - Dashboard now shows immediately
   // Individual sections show loading skeletons while their data loads
   // This provides instant UI feedback instead of blocking the entire tab
@@ -3698,7 +3737,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 onProfileUpdate={onProfileUpdate}
                 showNotification={showNotification}
               />
-              {currentUser?.linkInBioAdsEnabled && <LinkBioPageAds />}
+              {currentUser?.linkInBioAdsEnabled && <LinkBioPageAds userId={currentUser?.userId} />}
             </div>
           )}
 
