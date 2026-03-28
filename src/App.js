@@ -1051,6 +1051,10 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
+      // Write localStorage BEFORE setCurrentUser so that child effects
+      // (Dashboard, etc.) and the global fetch interceptor already have
+      // the new token by the time they fire.
+      localStorage.setItem('currentUser', JSON.stringify(user));
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1079,6 +1083,7 @@ function App() {
   const handleGoogleLogin = async (idToken) => {
     try {
       const user = await loginWithGoogle(idToken);
+      localStorage.setItem('currentUser', JSON.stringify(user));
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1094,6 +1099,9 @@ function App() {
   };
 
   const handleLogout = () => {
+    // Clear localStorage BEFORE setCurrentUser so child effects
+    // and the fetch interceptor don't read stale auth data.
+    localStorage.removeItem('currentUser');
     setCurrentUser(null);
     socket.disconnect();
     showNotification('Successfully logged out!', 'success');
@@ -1119,6 +1127,7 @@ function App() {
     try {
       const user = await apiRegister(formData);
       if (user) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
         skipNextValidationRef.current = true;
         setCurrentUser(user);
         setNewUsername(user.username);
