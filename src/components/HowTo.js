@@ -12,6 +12,12 @@ import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
+import {
+  TUTORIAL_VIDEOS,
+  tutorialPlaylistUrl,
+  watchUrl,
+  thumbUrl,
+} from '../data/tutorialVideos';
 
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
@@ -21,7 +27,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingBlogId, setDeletingBlogId] = useState(null);
-  const [videoError, setVideoError] = useState(false);
+  const [selectedTutorialId, setSelectedTutorialId] = useState(
+    () => TUTORIAL_VIDEOS[0]?.id ?? null
+  );
   // Initialize activeTab from sessionStorage or default to 'videos'
   const [activeTab, setActiveTab] = useState(() => {
     return sessionStorage.getItem('learnActiveTab') || 'videos';
@@ -36,7 +44,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const location = useLocation();
   const navigate = useNavigate();
   const blogListRef = useRef(null);
-  const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -634,23 +641,120 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {/* Content based on active tab */}
         {activeTab === 'videos' && (
           <div className="mb-12 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-blue-400">Video Tutorials</h2>
-            <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
-              {videoError ? (
-                <div className="flex items-center justify-center h-full text-gray-400 p-4 text-center">
-                  <p className="text-sm sm:text-base">Failed to load video playlist. Please try refreshing the page.</p>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Video Tutorials</h2>
+              <a
+                href={tutorialPlaylistUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-400 hover:text-blue-400 transition-colors shrink-0"
+              >
+                Open full playlist on YouTube →
+              </a>
+            </div>
+            <p className="text-gray-400 text-sm mb-6 max-w-3xl">
+              Pick a tutorial below to play it here, or open any video on YouTube for comments, chapters, and the full player.
+            </p>
+
+            {selectedTutorialId && (
+              <div className="mb-8 rounded-xl overflow-hidden border border-gray-700 bg-gray-900/50 shadow-lg">
+                <div className="aspect-video w-full bg-black">
+                  <iframe
+                    key={selectedTutorialId}
+                    src={`https://www.youtube.com/embed/${selectedTutorialId}?rel=0&modestbranding=1`}
+                    title={
+                      TUTORIAL_VIDEOS.find((v) => v.id === selectedTutorialId)?.title ||
+                      'Aquads tutorial'
+                    }
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full min-h-[200px]"
+                    loading="lazy"
+                  />
                 </div>
-              ) : (
-                <iframe
-                  src={`https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&enablejsapi=1`}
-                  title="Aquads Tutorials"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[600px]"
-                  onError={() => setVideoError(true)}
-                  loading="lazy"
-                />
-              )}
+                <div className="px-4 py-3 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-700">
+                  <p className="text-white font-medium text-sm sm:text-base leading-snug">
+                    {TUTORIAL_VIDEOS.find((v) => v.id === selectedTutorialId)?.title}
+                  </p>
+                  <a
+                    href={watchUrl(selectedTutorialId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors whitespace-nowrap"
+                  >
+                    Watch on YouTube
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <h3 className="text-lg font-semibold text-gray-200 mb-4">All tutorials</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {TUTORIAL_VIDEOS.map((video) => {
+                const isActive = video.id === selectedTutorialId;
+                return (
+                  <div
+                    key={video.id}
+                    className={`rounded-xl overflow-hidden border bg-gray-800/80 transition-all ${
+                      isActive
+                        ? 'border-blue-500 ring-2 ring-blue-500/40 shadow-lg shadow-blue-900/20'
+                        : 'border-gray-700 hover:border-gray-500'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTutorialId(video.id)}
+                      className="group w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                    >
+                      <div className="relative aspect-video bg-gray-900">
+                        <img
+                          src={thumbUrl(video.id)}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                          <span className="rounded-full bg-red-600 w-14 h-14 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                            <svg
+                              className="w-7 h-7 text-white ml-1"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                              aria-hidden
+                            >
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </span>
+                        </div>
+                        {isActive && (
+                          <span className="absolute top-2 left-2 text-xs font-semibold uppercase tracking-wide bg-blue-600 text-white px-2 py-0.5 rounded">
+                            Now playing
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-3 sm:p-4">
+                        <p className="text-white text-sm font-medium leading-snug line-clamp-2">
+                          {video.title}
+                        </p>
+                        <span className="mt-2 inline-block text-xs text-blue-400 group-hover:text-blue-300">
+                          Play in player above
+                        </span>
+                      </div>
+                    </button>
+                    <div className="px-3 pb-3 sm:px-4 sm:pb-4 -mt-1">
+                      <a
+                        href={watchUrl(video.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        Open on YouTube ↗
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
