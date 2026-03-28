@@ -408,11 +408,10 @@ export const loginUser = async (credentials) => {
 
     const userData = await response.json();
 
-    // Update socket auth with the new token
+    // Force-reconnect with the new token so the server authenticates as this user
+    socket.disconnect();
     socket.auth = { token: userData.token };
-    if (!socket.connected) {
-      socket.connect();
-    }
+    socket.connect();
 
     return userData;
   } catch (error) {
@@ -439,11 +438,10 @@ export const loginWithGoogle = async (idToken) => {
 
     const userData = await response.json();
 
-    // Update socket auth with the new token
+    // Force-reconnect with the new token so the server authenticates as this user
+    socket.disconnect();
     socket.auth = { token: userData.token };
-    if (!socket.connected) {
-      socket.connect();
-    }
+    socket.connect();
 
     return userData;
   } catch (error) {
@@ -508,11 +506,10 @@ export const register = async (userData) => {
 
     const data = await response.json();
 
-    // Update socket auth with the new token
+    // Force-reconnect with the new token so the server authenticates as this user
+    socket.disconnect();
     socket.auth = { token: data.token };
-    if (!socket.connected) {
-      socket.connect();
-    }
+    socket.connect();
 
     return data;
   } catch (error) {
@@ -1657,19 +1654,26 @@ export const submitLeaderboard = async (game, payload, tokenOverride = null) => 
   return res.json();
 };
 
-// Add a function to reconnect to socket with current token
+// Reconnect socket with the current user's token.
+// If the socket is already connected with a different token, force-disconnect first
+// so the server authenticates the new user on the fresh connection.
 export const reconnectSocket = () => {
   const savedUser = localStorage.getItem('currentUser');
   if (savedUser) {
     try {
       const user = JSON.parse(savedUser);
-      // Update socket auth
-      socket.auth = { token: user.token };
-      
-      // Check if socket is disconnected, and reconnect if needed
-      if (!socket.connected) {
-        socket.connect();
+      const currentToken = socket.auth?.token;
+
+      if (socket.connected && currentToken === user.token) {
+        return; // already connected with the right token
       }
+
+      socket.auth = { token: user.token };
+
+      if (socket.connected) {
+        socket.disconnect();
+      }
+      socket.connect();
     } catch (error) {
       logger.error('Socket reconnection error:', error);
     }

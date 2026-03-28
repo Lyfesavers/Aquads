@@ -1112,8 +1112,11 @@ function App() {
     // and the fetch interceptor don't read stale auth data.
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
-    setCurrentUser(null);
+    // Kill the socket AND clear its auth so auto-reconnect can't
+    // re-establish a session with the old token.
+    socket.auth = {};
     socket.disconnect();
+    setCurrentUser(null);
     showNotification('Successfully logged out!', 'success');
   };
 
