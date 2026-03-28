@@ -1108,16 +1108,14 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Clear localStorage BEFORE setCurrentUser so child effects
-    // and the fetch interceptor don't read stale auth data.
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
-    // Kill the socket AND clear its auth so auto-reconnect can't
-    // re-establish a session with the old token.
     socket.auth = {};
     socket.disconnect();
-    setCurrentUser(null);
-    showNotification('Successfully logged out!', 'success');
+    // Full page reload guarantees 100% clean state — no stale React state,
+    // closures, pending async ops, or socket connections survive.
+    // The next login behaves exactly like a first login.
+    window.location.replace('/home');
   };
 
     // Open MintFunnel platform in full-screen popup
@@ -2547,26 +2545,7 @@ function App() {
         <NavigationListener 
           onNavigate={() => {
             if (currentUser) {
-              const tokenWhenFired = currentUser.token;
               reconnectSocket();
-              verifyToken(currentUser.token)
-                .then(freshUser => {
-                  if (!freshUser) return;
-                  // If the user changed while the request was in flight, discard
-                  if (currentTokenRef.current !== tokenWhenFired) return;
-                  const merged = {
-                    ...currentUser,
-                    ...freshUser,
-                    token: currentUser.token,
-                    refreshToken: currentUser.refreshToken
-                  };
-                  if (JSON.stringify(merged) !== JSON.stringify(currentUser)) {
-                    setCurrentUser(merged);
-                  }
-                })
-                .catch(err => {
-                  logger.error('Route navigation token verification error:', err);
-                });
             }
           }}
         />
