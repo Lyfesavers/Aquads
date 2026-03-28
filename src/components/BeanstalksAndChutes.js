@@ -962,7 +962,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
                 })}
               </ul>
               <div className="text-[7px] leading-relaxed pt-2 border-t-2 border-black/30">
-                <p className="mb-1">· First roll puts you on that number (1–6) — no waiting for six.</p>
+                <p className="mb-1">· Roll a 6 to leave the start and land on square 6.</p>
                 <p className="mb-1">· Land exactly on 100 to win. Chutes are softer; pipes help more.</p>
                 <p>· Roll 6 = bonus roll (still from the server).</p>
               </div>

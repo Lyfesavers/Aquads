@@ -89,10 +89,21 @@ function walkSteps(start, roll) {
 }
 
 function computeRollResult(start, roll) {
-  /* From the gate: any roll 1–6 enters the track on that square (fairer, faster games) */
+  /* Off the board: must roll a 6 to enter on square 6 */
   if (start === 0) {
-    const land = roll;
-    const walk = walkSteps(0, roll);
+    if (roll !== 6) {
+      return {
+        moved: false,
+        roll,
+        path: [0],
+        slides: [],
+        finalPos: 0,
+        extraTurn: false,
+        gameOver: false,
+      };
+    }
+    const land = 6;
+    const walk = walkSteps(0, 6);
     const { final, slides } = fullPathFromWalk(land);
     const path = [...walk];
     for (const s of slides) {
@@ -104,7 +115,7 @@ function computeRollResult(start, roll) {
       path,
       slides,
       finalPos: final,
-      extraTurn: roll === 6,
+      extraTurn: true,
       gameOver: final === 100,
     };
   }
