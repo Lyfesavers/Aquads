@@ -741,7 +741,7 @@ app.get('/learn/:slug', async (req, res, next) => {
 // Dynamic meta tags for individual game pages — must be before the React catch-all
 app.get('/games/:id', async (req, res, next) => {
   // Skip static minigame routes — let them fall through to the SPA
-  const staticRoutes = ['dots-and-boxes', 'horse-racing', 'crossword'];
+  const staticRoutes = ['dots-and-boxes', 'horse-racing', 'crossword', 'snakes-and-ladders'];
   if (staticRoutes.includes(req.params.id)) {
     return next();
   }
