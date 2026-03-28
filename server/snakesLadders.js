@@ -10,13 +10,26 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 const PLAYER_COLORS = ['#E52521', '#049CD8', '#43B047', '#FBD000'];
 
+/* Friendlier Aquads board: more climbs, gentler slides, still punishing near the end */
 const LADDER_MAP = new Map([
-  [1, 38], [4, 14], [9, 31], [21, 42], [28, 84], [36, 44], [51, 67], [71, 91], [80, 100],
+  [1, 22], [4, 16], [8, 30], [13, 36], [18, 41], [23, 46], [27, 50], [32, 55], [37, 60], [42, 65],
+  [47, 70], [52, 75], [59, 82], [66, 88], [73, 94], [11, 28], [20, 39], [34, 53], [45, 63], [56, 74],
+  [68, 85], [77, 93], [80, 100],
 ]);
 const SNAKE_MAP = new Map([
-  [98, 28], [95, 24], [92, 51], [89, 53], [74, 17], [64, 60], [62, 19],
-  [56, 45], [49, 11], [47, 26], [16, 6],
+  [97, 88], [93, 82], [89, 76], [85, 71], [79, 65], [74, 60], [69, 54], [63, 48], [57, 43], [51, 38],
+  [44, 31], [39, 26], [31, 19], [25, 12],
 ]);
+
+async function fetchProfileImage(userId) {
+  try {
+    const User = require('./models/User');
+    const u = await User.findById(userId).select('image').lean();
+    return u?.image || null;
+  } catch {
+    return null;
+  }
+}
 
 const rooms = new Map();
 const socketToRoom = new Map();
@@ -77,27 +90,14 @@ function walkSteps(start, roll) {
 }
 
 function computeRollResult(start, roll) {
+  /* From the gate: any roll 1–6 enters the track on that square (fairer, faster games) */
   if (start === 0) {
-    if (roll !== 6) {
-      return {
-        moved: false,
-        roll,
-        path: [0],
-        slides: [],
-        finalPos: 0,
-        extraTurn: false,
-        gameOver: false,
-      };
-    }
-    const walk = walkSteps(0, 6);
-    const land = 6;
+    const land = roll;
+    const walk = walkSteps(0, roll);
     const { final, slides } = fullPathFromWalk(land);
-    let path = walk;
-    if (final !== land) {
-      path = [...walk];
-      for (const s of slides) {
-        path.push(s.to);
-      }
+    const path = [...walk];
+    for (const s of slides) {
+      path.push(s.to);
     }
     return {
       moved: true,
@@ -105,7 +105,7 @@ function computeRollResult(start, roll) {
       path,
       slides,
       finalPos: final,
-      extraTurn: true,
+      extraTurn: roll === 6,
       gameOver: final === 100,
     };
   }
@@ -153,6 +153,7 @@ function publicState(room) {
       color: p.color,
       position: p.position,
       connected: p.connected,
+      image: p.image || null,
     })),
     currentTurnIndex: room.currentTurnIndex,
     winnerIndex: room.winnerIndex,
@@ -232,7 +233,7 @@ function leaveRoomSocket(socket, io) {
 }
 
 function attachSnakesLadders(socket, io) {
-  socket.on('snl:createRoom', () => {
+  socket.on('snl:createRoom', async () => {
     const user = verifySocketUser(socket);
     if (!user) {
       socket.emit('snl:error', { message: 'Login required to play.' });
@@ -240,6 +241,7 @@ function attachSnakesLadders(socket, io) {
     }
     leaveRoomSocket(socket, io);
 
+    const image = await fetchProfileImage(user.userId);
     const code = genRoomCode();
     const room = {
       code,
@@ -252,6 +254,7 @@ function attachSnakesLadders(socket, io) {
           position: 0,
           socketId: socket.id,
           connected: true,
+          image,
         },
       ],
       phase: 'lobby',
@@ -267,7 +270,7 @@ function attachSnakesLadders(socket, io) {
     io.to(roomChannel(code)).emit('snl:state', publicState(room));
   });
 
-  socket.on('snl:joinRoom', (payload) => {
+  socket.on('snl:joinRoom', async (payload) => {
     const user = verifySocketUser(socket);
     if (!user) {
       socket.emit('snl:error', { message: 'Login required to play.' });
@@ -294,6 +297,8 @@ function attachSnakesLadders(socket, io) {
       existing.socketId = socket.id;
       existing.connected = true;
       existing.username = user.username;
+      const img = await fetchProfileImage(user.userId);
+      if (img) existing.image = img;
       socket.join(roomChannel(code));
       socketToRoom.set(socket.id, code);
       socket.emit('snl:joined', { state: publicState(room) });
@@ -312,6 +317,7 @@ function attachSnakesLadders(socket, io) {
     }
 
     leaveRoomSocket(socket, io);
+    const image = await fetchProfileImage(user.userId);
     room.players.push({
       userId: user.userId,
       username: user.username,
@@ -319,6 +325,7 @@ function attachSnakesLadders(socket, io) {
       position: 0,
       socketId: socket.id,
       connected: true,
+      image,
     });
     socket.join(roomChannel(code));
     socketToRoom.set(socket.id, code);
