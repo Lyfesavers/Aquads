@@ -205,6 +205,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
   const [boardInner, setBoardInner] = useState(440);
   const [cellPulse, setCellPulse] = useState(null);
   const [openRooms, setOpenRooms] = useState([]);
+  const [chuteBite, setChuteBite] = useState(null);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
@@ -237,7 +238,8 @@ export default function BeanstalksAndChutes({ currentUser }) {
   }, []);
 
   const stopIntervals = useCallback(() => {
-    if (animTimerRef.current) {
+    if (animTimerRef.current != null) {
+      clearTimeout(animTimerRef.current);
       clearInterval(animTimerRef.current);
       animTimerRef.current = null;
     }
@@ -245,6 +247,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
       clearTimeout(turnDelayRef.current);
       turnDelayRef.current = null;
     }
+    setChuteBite(null);
   }, []);
 
   useEffect(() => {
@@ -274,6 +277,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
     const runPathAnimation = (payload) => {
       const path = payload.path || [0];
       if (path.length <= 1 || !payload.moved) {
+        setChuteBite(null);
         setGameState(payload.state);
         setAnimOverride(null);
         setAnimating(false);
@@ -282,30 +286,67 @@ export default function BeanstalksAndChutes({ currentUser }) {
         return;
       }
 
+      const slides = payload.slides || [];
+      const playerIdx = payload.playerIndex;
+      const players = payload.state?.players || [];
+
+      const isSnakeTransition = (from, to) =>
+        slides.some((s) => s.type === 'snake' && s.from === from && s.to === to);
+
       let step = 0;
+
+      const finish = () => {
+        animTimerRef.current = null;
+        setChuteBite(null);
+        setAnimOverride(null);
+        setAnimating(false);
+        setCellPulse(null);
+        setGameState(payload.state);
+        const last = slides[slides.length - 1];
+        if (last?.type === 'ladder') playBlip(720, 0.1);
+        if (payload.gameOver) playBlip(880, 0.15);
+      };
+
       setAnimating(true);
-      setAnimOverride({ playerIndex: payload.playerIndex, cell: path[0] });
-      animTimerRef.current = setInterval(() => {
+      setAnimOverride({ playerIndex: playerIdx, cell: path[0] });
+
+      const advance = () => {
         step += 1;
         if (step >= path.length) {
-          clearInterval(animTimerRef.current);
-          animTimerRef.current = null;
-          setAnimOverride(null);
-          setAnimating(false);
-          setCellPulse(null);
-          setGameState(payload.state);
-          if (payload.slides?.length) {
-            const last = payload.slides[payload.slides.length - 1];
-            playBlip(last.type === 'ladder' ? 720 : 180, 0.1);
-          }
-          if (payload.gameOver) playBlip(880, 0.15);
+          finish();
           return;
         }
-        const c = path[step];
-        setAnimOverride({ playerIndex: payload.playerIndex, cell: c });
-        setCellPulse(c);
+        const prev = path[step - 1];
+        const curr = path[step];
+
+        if (isSnakeTransition(prev, curr)) {
+          setAnimOverride({ playerIndex: playerIdx, cell: prev });
+          const pl = players[playerIdx];
+          setChuteBite({
+            username: pl?.username || 'Player',
+            image: pl?.image || null,
+            color: pl?.color || '#888',
+            from: prev,
+            to: curr,
+          });
+          playBlip(120, 0.06);
+          animTimerRef.current = setTimeout(() => {
+            setChuteBite(null);
+            setAnimOverride({ playerIndex: playerIdx, cell: curr });
+            setCellPulse(curr);
+            playBlip(200, 0.12);
+            animTimerRef.current = setTimeout(advance, 130);
+          }, 1350);
+          return;
+        }
+
+        setAnimOverride({ playerIndex: playerIdx, cell: curr });
+        setCellPulse(curr);
         playBlip(420, 0.03);
-      }, 105);
+        animTimerRef.current = setTimeout(advance, 105);
+      };
+
+      animTimerRef.current = setTimeout(advance, 105);
     };
 
     const onJoined = ({ state }) => {
@@ -506,6 +547,21 @@ export default function BeanstalksAndChutes({ currentUser }) {
           50% { filter: brightness(1.25) saturate(1.2); }
         }
         .snl-pulse { animation: snl-cell-pulse 0.35s ease-out; }
+        @keyframes snl-chute-bubble {
+          0% { transform: translate3d(0, 100%, 0) scale(0.4); opacity: 0; }
+          12% { opacity: 0.85; }
+          100% { transform: translate3d(var(--bx, 0), -130%, 0) scale(1.15); opacity: 0; }
+        }
+        @keyframes snl-chute-shine {
+          0% { transform: translateX(-60%) skewX(-12deg); opacity: 0; }
+          30% { opacity: 0.35; }
+          100% { transform: translateX(180%) skewX(-12deg); opacity: 0; }
+        }
+        @keyframes snl-chute-streak {
+          0% { transform: translateY(-20%) scaleY(0.3); opacity: 0; }
+          20% { opacity: 0.5; }
+          100% { transform: translateY(120%) scaleY(1.2); opacity: 0; }
+        }
       `}</style>
 
       <div className="fixed inset-0 bg-gradient-to-b from-[#5c94fc] via-[#6bb5ff] to-[#88d0ff] -z-20" />
@@ -888,6 +944,279 @@ export default function BeanstalksAndChutes({ currentUser }) {
                             RUN IT BACK
                           </button>
                         )}
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {chuteBite && (
+                    <motion.div
+                      key="chute-bite"
+                      role="presentation"
+                      aria-live="polite"
+                      aria-label="Piranha chute animation"
+                      className="absolute inset-0 z-[60] flex items-center justify-center overflow-hidden rounded-sm pointer-events-none"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                    >
+                      {/* Cinematic backdrop */}
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            'radial-gradient(ellipse 85% 70% at 50% 38%, rgba(120,20,20,0.55) 0%, rgba(15,5,8,0.97) 55%, rgba(0,0,0,0.99) 100%)',
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 opacity-[0.14]"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")`,
+                        }}
+                      />
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute rounded-full blur-2xl opacity-40"
+                          style={{
+                            width: 80 + i * 40,
+                            height: 80 + i * 40,
+                            left: `${18 + i * 22}%`,
+                            top: `${8 + i * 12}%`,
+                            background: i === 1 ? 'rgba(255,100,80,0.5)' : 'rgba(180,40,60,0.35)',
+                          }}
+                          animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.45, 0.25] }}
+                          transition={{ duration: 2.2 + i * 0.4, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                      ))}
+                      <motion.div
+                        className="absolute inset-0 opacity-[0.07]"
+                        style={{
+                          backgroundImage: 'repeating-linear-gradient(92deg, transparent, transparent 14px, rgba(255,255,255,0.12) 14px, rgba(255,255,255,0.12) 15px)',
+                        }}
+                        animate={{ x: [0, -18, 0] }}
+                        transition={{ duration: 0.65, repeat: Infinity, ease: 'linear' }}
+                      />
+
+                      <motion.div
+                        className="relative z-10 flex flex-col items-center justify-center px-2 sm:px-4 py-3 max-w-[min(94%,300px)]"
+                        initial={{ scale: 0.92, filter: 'blur(4px)' }}
+                        animate={{
+                          scale: 1,
+                          filter: 'blur(0px)',
+                          x: [0, -4, 4, -3, 3, 0],
+                          y: [0, 2, -2, 1, 0],
+                        }}
+                        transition={{
+                          scale: { duration: 0.35, ease: 'easeOut' },
+                          filter: { duration: 0.35 },
+                          x: { duration: 0.42, times: [0, 0.15, 0.35, 0.55, 0.75, 1], ease: 'easeOut' },
+                          y: { duration: 0.42, times: [0, 0.15, 0.35, 0.55, 0.75, 1], ease: 'easeOut' },
+                        }}
+                      >
+                        <motion.p
+                          className="text-[8px] sm:text-[10px] mb-2 sm:mb-3 text-center tracking-[0.12em] font-bold"
+                          style={{
+                            color: '#fff176',
+                            textShadow:
+                              '0 0 20px rgba(255,200,80,0.75), 0 2px 0 #3e2723, 0 4px 0 #1a0a0a, 2px 2px 8px rgba(0,0,0,0.9)',
+                          }}
+                          initial={{ y: -28, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+                        >
+                          PIRANHA SNACK!
+                        </motion.p>
+
+                        {/* Illustrated piranha + pipe stack */}
+                        <div className="relative mb-0 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
+                          <svg
+                            width="200"
+                            height="118"
+                            viewBox="0 0 200 118"
+                            className="w-[min(72vw,200px)] h-auto"
+                            aria-hidden
+                          >
+                            <defs>
+                              <linearGradient id="snl-pir-body" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#4a0707" />
+                                <stop offset="28%" stopColor="#c62828" />
+                                <stop offset="55%" stopColor="#e53935" />
+                                <stop offset="78%" stopColor="#8b1010" />
+                                <stop offset="100%" stopColor="#2d0505" />
+                              </linearGradient>
+                              <radialGradient id="snl-pir-sheen" cx="32%" cy="28%" r="55%">
+                                <stop offset="0%" stopColor="#ffcdd2" stopOpacity="0.95" />
+                                <stop offset="35%" stopColor="#ff8a80" stopOpacity="0.35" />
+                                <stop offset="100%" stopColor="#c62828" stopOpacity="0" />
+                              </radialGradient>
+                              <linearGradient id="snl-tooth" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="#fffef7" />
+                                <stop offset="100%" stopColor="#e0e0e0" />
+                              </linearGradient>
+                              <filter id="snl-pir-glow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="2.5" result="b" />
+                                <feMerge>
+                                  <feMergeNode in="b" />
+                                  <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                              </filter>
+                            </defs>
+                            {/* Spots */}
+                            {[0, 1, 2, 3].map((i) => (
+                              <ellipse
+                                key={i}
+                                cx={48 + i * 28}
+                                cy={36 + (i % 2) * 8}
+                                rx={5 + (i % 2)}
+                                ry={4}
+                                fill="#1a0505"
+                                opacity={0.35}
+                              />
+                            ))}
+                            <ellipse cx="100" cy="58" rx="72" ry="48" fill="url(#snl-pir-body)" stroke="#000" strokeWidth="3.5" filter="url(#snl-pir-glow)" />
+                            <ellipse cx="100" cy="58" rx="72" ry="48" fill="url(#snl-pir-sheen)" />
+                            {/* Upper lip */}
+                            <path
+                              d="M 34 62 Q 100 48 166 62 Q 100 72 34 62"
+                              fill="#6d0f0f"
+                              stroke="#000"
+                              strokeWidth="2"
+                              opacity="0.85"
+                            />
+                            {/* Teeth */}
+                            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+                              const x = 38 + i * 14;
+                              return (
+                                <polygon
+                                  key={i}
+                                  points={`${x},66 ${x + 5},88 ${x + 10},66`}
+                                  fill="url(#snl-tooth)"
+                                  stroke="#3e2723"
+                                  strokeWidth="1.2"
+                                />
+                              );
+                            })}
+                            <motion.g style={{ transformOrigin: '100px 84px' }} animate={{ rotate: [0, 14, 0, 18, 6, 0] }} transition={{ duration: 0.55, repeat: 2, ease: 'easeInOut' }}>
+                              <path
+                                d="M 38 78 Q 100 118 162 78 Q 100 92 38 78"
+                                fill="#5c0000"
+                                stroke="#000"
+                                strokeWidth="2.5"
+                                opacity="0.95"
+                              />
+                            </motion.g>
+                            {/* Eyes */}
+                            <circle cx="68" cy="42" r="14" fill="#fff" stroke="#000" strokeWidth="2.5" />
+                            <circle cx="132" cy="42" r="14" fill="#fff" stroke="#000" strokeWidth="2.5" />
+                            <circle cx="72" cy="44" r="6" fill="#1a1a1a" />
+                            <circle cx="136" cy="44" r="6" fill="#1a1a1a" />
+                            <circle cx="75" cy="41" r="2.5" fill="#fff" opacity="0.9" />
+                            <circle cx="139" cy="41" r="2.5" fill="#fff" opacity="0.9" />
+                            {/* Pipe rim */}
+                            <rect x="54" y="102" width="92" height="16" rx="4" fill="#2e7d32" stroke="#000" strokeWidth="2.5" />
+                            <rect x="58" y="104" width="84" height="6" rx="2" fill="#66bb6a" opacity="0.7" />
+                          </svg>
+
+                          {/* Chute tube */}
+                          <div
+                            className="relative -mt-1 mx-auto w-[min(58vw,132px)] sm:w-[140px] h-[108px] sm:h-[124px] rounded-b-[52%] overflow-hidden"
+                            style={{
+                              border: '4px solid #000',
+                              boxShadow:
+                                'inset 0 0 32px rgba(0,0,0,0.92), inset 0 -8px 24px rgba(255,60,40,0.12), 0 0 0 2px rgba(255,200,120,0.15), 0 16px 40px rgba(0,0,0,0.75)',
+                              background: 'linear-gradient(100deg, #1a0303 0%, #5c1010 22%, #8b1c1c 42%, #b71c1c 50%, #8b1c1c 58%, #5c1010 78%, #1a0303 100%)',
+                            }}
+                          >
+                            <div
+                              className="absolute inset-0 pointer-events-none"
+                              style={{
+                                animation: 'snl-chute-shine 1.1s ease-in-out infinite',
+                                background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.22) 50%, transparent 65%)',
+                                width: '45%',
+                              }}
+                            />
+                            {[0, 1, 2, 3, 4, 5].map((i) => (
+                              <div
+                                key={i}
+                                className="absolute left-0 right-0 h-[2px] bg-black/40"
+                                style={{ top: 14 + i * 18 }}
+                              />
+                            ))}
+                            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                              <div
+                                key={i}
+                                className="absolute rounded-full bg-white/25 border border-white/20"
+                                style={{
+                                  width: 6 + (i % 3) * 3,
+                                  height: 6 + (i % 3) * 3,
+                                  left: `${12 + (i * 13) % 72}%`,
+                                  bottom: `${8 + i * 9}%`,
+                                  animation: `snl-chute-bubble ${1.1 + i * 0.08}s ease-in infinite`,
+                                  animationDelay: `${i * 0.12}s`,
+                                  '--bx': `${(i % 5) - 2}px`,
+                                }}
+                              />
+                            ))}
+                            {[0, 1, 2].map((i) => (
+                              <div
+                                key={`s-${i}`}
+                                className="absolute w-[2px] left-1/2 bg-gradient-to-b from-white/50 to-transparent opacity-0"
+                                style={{
+                                  height: '40%',
+                                  marginLeft: -8 + i * 8,
+                                  animation: `snl-chute-streak ${0.55 + i * 0.1}s ease-in infinite`,
+                                  animationDelay: `${0.15 + i * 0.12}s`,
+                                }}
+                              />
+                            ))}
+                            <motion.div
+                              className="absolute left-1/2 w-[54px] h-[54px] sm:w-[60px] sm:h-[60px] -translate-x-1/2 rounded-full overflow-hidden flex items-center justify-center"
+                              style={{
+                                top: 10,
+                                border: '3px solid #000',
+                                background: chuteBite.color,
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.65), inset 0 2px 8px rgba(255,255,255,0.2)',
+                              }}
+                              initial={{ y: 0, scale: 1, opacity: 1, filter: 'brightness(1)' }}
+                              animate={{
+                                y: [0, 6, 96],
+                                scale: [1, 0.96, 0.28],
+                                opacity: [1, 1, 0.15],
+                                filter: ['brightness(1)', 'brightness(1.08)', 'brightness(0.65)'],
+                              }}
+                              transition={{ duration: 1, ease: [0.45, 0, 0.75, 1], times: [0, 0.12, 1] }}
+                            >
+                              {(() => {
+                                const url = playerImageUrl(chuteBite.image);
+                                return url ? (
+                                  <img src={url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-white font-bold text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                    {(chuteBite.username || '?')[0].toUpperCase()}
+                                  </span>
+                                );
+                              })()}
+                            </motion.div>
+                          </div>
+                        </div>
+
+                        <p
+                          className="text-[7px] sm:text-[8px] mt-2 sm:mt-3 text-center leading-relaxed max-w-[260px]"
+                          style={{
+                            color: '#ffcdd2',
+                            textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 12px rgba(80,0,0,0.5)',
+                          }}
+                        >
+                          <span className="text-white/95 font-semibold">{chuteBite.username}</span> swallowed by the
+                          chute
+                          <br />
+                          <span className="text-amber-200/95 tabular-nums">
+                            square {chuteBite.from} → {chuteBite.to}
+                          </span>
+                        </p>
                       </motion.div>
                     </motion.div>
                   )}
