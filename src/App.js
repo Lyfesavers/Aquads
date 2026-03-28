@@ -444,6 +444,11 @@ function App() {
     }
   }, [currentUser]);
 
+  // When true, the next validateToken cycle is skipped because we just
+  // received fresh data from the server (login/register). This prevents
+  // an unnecessary verify → setCurrentUser → 7 effects cascade.
+  const skipNextValidationRef = useRef(false);
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -1046,6 +1051,7 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
+      skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
@@ -1073,6 +1079,7 @@ function App() {
   const handleGoogleLogin = async (idToken) => {
     try {
       const user = await loginWithGoogle(idToken);
+      skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
@@ -1112,6 +1119,7 @@ function App() {
     try {
       const user = await apiRegister(formData);
       if (user) {
+        skipNextValidationRef.current = true;
         setCurrentUser(user);
         setNewUsername(user.username);
         
@@ -1727,8 +1735,17 @@ function App() {
         const freshUser = await verifyToken(currentUser.token);
         if (cancelled) return;
         if (freshUser) {
-          if (JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
-            setCurrentUser(freshUser);
+          // Merge: preserve fields from login that verify-token doesn't return
+          // (email, userType, refreshToken), overlay with fresh DB data,
+          // and always keep the current token/refreshToken from React state.
+          const merged = {
+            ...currentUser,
+            ...freshUser,
+            token: currentUser.token,
+            refreshToken: currentUser.refreshToken
+          };
+          if (JSON.stringify(merged) !== JSON.stringify(currentUser)) {
+            setCurrentUser(merged);
           }
         } else {
           setCurrentUser(null);
@@ -1752,7 +1769,14 @@ function App() {
     }
 
     const interval = setInterval(validateToken, 5 * 60 * 1000);
-    validateToken();
+
+    // Skip immediate validation if we just received fresh data from login/register.
+    // The 5-minute interval still handles ongoing validation.
+    if (skipNextValidationRef.current) {
+      skipNextValidationRef.current = false;
+    } else {
+      validateToken();
+    }
 
     return () => {
       cancelled = true;
@@ -2508,8 +2532,15 @@ function App() {
               reconnectSocket();
               verifyToken(currentUser.token)
                 .then(freshUser => {
-                  if (freshUser && JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
-                    setCurrentUser(freshUser);
+                  if (!freshUser) return;
+                  const merged = {
+                    ...currentUser,
+                    ...freshUser,
+                    token: currentUser.token,
+                    refreshToken: currentUser.refreshToken
+                  };
+                  if (JSON.stringify(merged) !== JSON.stringify(currentUser)) {
+                    setCurrentUser(merged);
                   }
                 })
                 .catch(err => {
