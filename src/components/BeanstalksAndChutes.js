@@ -6,15 +6,14 @@ import { socket, reconnectSocket } from '../services/api';
 
 const BOARD_CELLS = 100;
 
-/* Must match server/snakesLadders.js */
+/* Must match server/beanstalksChutes.js — classic set + one extra pipe & chute */
 const LADDERS = [
-  [1, 22], [4, 16], [8, 30], [13, 36], [18, 41], [23, 46], [27, 50], [32, 55], [37, 60], [42, 65],
-  [47, 70], [52, 75], [59, 82], [66, 88], [73, 94], [11, 28], [20, 39], [34, 53], [45, 63], [56, 74],
-  [68, 85], [77, 93], [80, 100],
+  [1, 38], [4, 14], [9, 31], [21, 42], [28, 84], [36, 44], [51, 67], [71, 91], [80, 100],
+  [17, 40], [12, 35],
 ];
 const SNAKES = [
-  [97, 88], [93, 82], [89, 76], [85, 71], [79, 65], [74, 60], [69, 54], [63, 48], [57, 43], [51, 38],
-  [44, 31], [39, 26], [31, 19], [25, 12],
+  [98, 28], [95, 24], [92, 51], [89, 53], [74, 17], [64, 60], [62, 19], [56, 45], [49, 11], [47, 26],
+  [16, 6],
 ];
 
 const API_BASE = process.env.REACT_APP_API_URL || '';
@@ -193,7 +192,7 @@ function pipeRings(a, b, count) {
   return rings;
 }
 
-export default function SnakesAndLadders({ currentUser }) {
+export default function BeanstalksAndChutes({ currentUser }) {
   const [gameState, setGameState] = useState(null);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
@@ -205,6 +204,7 @@ export default function SnakesAndLadders({ currentUser }) {
   const [animating, setAnimating] = useState(false);
   const [boardInner, setBoardInner] = useState(440);
   const [cellPulse, setCellPulse] = useState(null);
+  const [openRooms, setOpenRooms] = useState([]);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
@@ -217,8 +217,18 @@ export default function SnakesAndLadders({ currentUser }) {
     const measure = () => {
       const w = typeof window !== 'undefined' ? window.innerWidth : 900;
       const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const cap = w >= 1024 ? 620 : w >= 768 ? 540 : Math.min(520, w - 28);
-      const next = Math.min(cap, Math.max(300, Math.floor(Math.min(w * 0.92, h * 0.55))));
+      const navAndChrome = 118;
+      const toolbarRow = 44;
+      const diceRail = 120;
+      const gap = 16;
+      const sidebar = w >= 1024 ? 268 : 0;
+      const gridGutter = w >= 1024 ? 16 : 0;
+      const horizontalPad = 24;
+      const maxFromH = Math.max(260, h - navAndChrome - toolbarRow - horizontalPad);
+      const contentW = Math.min(1152, w) - horizontalPad;
+      const maxFromW = Math.max(260, contentW - sidebar - gridGutter - diceRail - gap);
+      const cap = w >= 1024 ? 600 : w >= 768 ? 520 : 480;
+      const next = Math.min(cap, Math.max(280, Math.floor(Math.min(maxFromW, maxFromH))));
       setBoardInner(next);
     };
     measure();
@@ -240,6 +250,25 @@ export default function SnakesAndLadders({ currentUser }) {
   useEffect(() => {
     if (currentUser?.token) reconnectSocket();
   }, [currentUser?.token]);
+
+  useEffect(() => {
+    if (!currentUser?.token || gameState) return undefined;
+
+    const requestList = () => socket.emit('snl:listOpenRooms');
+    const onList = ({ rooms }) => setOpenRooms(Array.isArray(rooms) ? rooms : []);
+    const onRefresh = () => requestList();
+
+    socket.on('snl:openRooms', onList);
+    socket.on('snl:openRoomsRefresh', onRefresh);
+    requestList();
+    const interval = setInterval(requestList, 8000);
+
+    return () => {
+      socket.off('snl:openRooms', onList);
+      socket.off('snl:openRoomsRefresh', onRefresh);
+      clearInterval(interval);
+    };
+  }, [currentUser?.token, gameState]);
 
   useEffect(() => {
     const runPathAnimation = (payload) => {
@@ -348,6 +377,15 @@ export default function SnakesAndLadders({ currentUser }) {
     socket.emit('snl:joinRoom', { code: joinCode.trim() });
   };
 
+  const joinOpenRoom = (code) => {
+    const c = String(code || '').toUpperCase().trim();
+    if (c.length !== 6) return;
+    setError('');
+    setBanner('');
+    setJoinCode(c);
+    socket.emit('snl:joinRoom', { code: c });
+  };
+
   const startGame = () => {
     setError('');
     socket.emit('snl:startGame');
@@ -429,13 +467,14 @@ export default function SnakesAndLadders({ currentUser }) {
     return (
       <div className="min-h-screen bg-[#5c94fc] flex flex-col items-center justify-center px-4 font-['Press_Start_2P',cursive] text-[10px] sm:text-xs">
         <Helmet>
-          <title>Beanstalk Run — Aquads Game Hub</title>
+          <title>Beanstalks &amp; Chutes — Aquads Game Hub</title>
+          <link rel="canonical" href="https://www.aquads.xyz/games/beanstalks-and-chutes" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
         </Helmet>
         <div className="bg-[#c84c0c] border-4 border-black p-6 max-w-md text-center text-yellow-200 shadow-[8px_8px_0_#000]">
-          <p className="mb-4 leading-relaxed">Log in to play the server-run 4-player arena. Dice and moves are locked on Aquads so nobody can cheat.</p>
+          <p className="mb-4 leading-relaxed">Log in to play Beanstalks &amp; Chutes — the 4-player arena. Dice and moves are locked on Aquads so nobody can cheat.</p>
           <Link to="/games" className="inline-block bg-[#fcbcb0] text-black border-4 border-black px-4 py-3 hover:bg-white">
             ← Game Hub
           </Link>
@@ -446,15 +485,16 @@ export default function SnakesAndLadders({ currentUser }) {
 
   return (
     <div
-      className="min-h-screen text-yellow-100 overflow-x-hidden pb-16 relative"
+      className={`text-yellow-100 overflow-x-hidden relative ${gameState ? 'min-h-0 h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen pb-12'}`}
       style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '10px' }}
     >
       <Helmet>
-        <title>Beanstalk Run — Snakes & Ladders Reinvented | Aquads</title>
+        <title>Beanstalks &amp; Chutes — Multiplayer | Aquads</title>
         <meta
           name="description"
-          content="4-player Snakes & Ladders with Mario-style retro graphics. Server-authoritative dice and turns — fair public play on Aquads."
+          content="Beanstalks &amp; Chutes: 4-player retro pipes and chutes on Aquads. Server-authoritative dice and turns — fair public play."
         />
+        <link rel="canonical" href="https://www.aquads.xyz/games/beanstalks-and-chutes" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
@@ -485,88 +525,143 @@ export default function SnakesAndLadders({ currentUser }) {
         </motion.div>
       ))}
 
-      <nav className="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3 py-3 bg-[#c84c0c] border-b-4 border-black">
+      <nav className="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:py-3 bg-[#c84c0c] border-b-4 border-black shrink-0">
         <Link to="/games" className="text-[#fcbcb0] hover:text-white border-2 border-black bg-black/20 px-2 py-1">
           ← HUB
         </Link>
-        <h1 className="text-[9px] sm:text-[11px] text-center flex-1 text-yellow-200 drop-shadow-[2px_2px_0_#000]">
-          BEANSTALK RUN
+        <h1 className="text-[7px] sm:text-[9px] md:text-[10px] text-center flex-1 text-yellow-200 drop-shadow-[2px_2px_0_#000] leading-tight px-1">
+          BEANSTALKS &amp; CHUTES
         </h1>
         <span className="text-[8px] text-[#fcbcb0] hidden sm:inline">4P · SERVER FAIR</span>
       </nav>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-2 sm:px-4 pt-4">
-        <p className="text-center text-[8px] sm:text-[9px] text-black/80 mb-4 max-w-xl mx-auto leading-relaxed bg-white/30 border-2 border-black px-2 py-2">
-          Climb <span className="text-green-900 font-bold">vine-wrapped warp pipes</span>, dodge{' '}
-          <span className="text-red-900 font-bold">piranha chutes</span>. Bigger board, real 3D dice, your avatar on the
-          track — rolls still come from Aquads.
-        </p>
+      <div
+        className={`relative z-10 max-w-6xl mx-auto px-2 sm:px-4 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col pt-1' : 'pt-4'}`}
+      >
+        {!gameState && (
+          <p className="text-center text-[8px] sm:text-[9px] text-black/80 mb-4 max-w-xl mx-auto leading-relaxed bg-white/30 border-2 border-black px-2 py-2">
+            <span className="font-bold text-black">Beanstalks &amp; Chutes</span> — climb{' '}
+            <span className="text-green-900 font-bold">warp pipes</span>, ride the{' '}
+            <span className="text-red-900 font-bold">piranha chutes</span>. Big board, 3D dice, avatars on the track —
+            rolls come from Aquads.
+          </p>
+        )}
 
         {error && (
-          <div className="mb-3 bg-red-600 border-4 border-black text-white px-3 py-2 text-[8px]">{error}</div>
+          <div className={`bg-red-600 border-4 border-black text-white px-2 py-1.5 text-[8px] shrink-0 ${gameState ? 'mb-1' : 'mb-3'}`}>
+            {error}
+          </div>
         )}
         {banner && (
-          <div className="mb-3 bg-green-700 border-4 border-black text-yellow-100 px-3 py-2 text-[8px]">{banner}</div>
+          <div className={`bg-green-700 border-4 border-black text-yellow-100 px-2 py-1.5 text-[8px] shrink-0 ${gameState ? 'mb-1' : 'mb-3'}`}>
+            {banner}
+          </div>
         )}
 
         {!gameState ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-[#fcbcb0] border-4 border-black p-4 shadow-[6px_6px_0_#000]">
-              <h2 className="text-black mb-3 text-[10px]">HOST</h2>
-              <button
-                type="button"
-                onClick={createRoom}
-                className="w-full bg-[#43b047] text-black border-4 border-black py-3 hover:brightness-110 active:translate-y-0.5"
-              >
-                CREATE ROOM
-              </button>
+          <>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-[#fcbcb0] border-4 border-black p-4 shadow-[6px_6px_0_#000]">
+                <h2 className="text-black mb-3 text-[10px]">HOST</h2>
+                <button
+                  type="button"
+                  onClick={createRoom}
+                  className="w-full bg-[#43b047] text-black border-4 border-black py-3 hover:brightness-110 active:translate-y-0.5"
+                >
+                  CREATE ROOM
+                </button>
+              </div>
+              <div className="bg-[#fcbcb0] border-4 border-black p-4 shadow-[6px_6px_0_#000]">
+                <h2 className="text-black mb-3 text-[10px]">JOIN WITH CODE</h2>
+                <input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="CODE"
+                  maxLength={6}
+                  className="w-full mb-3 bg-white border-4 border-black px-2 py-2 text-black uppercase tracking-widest"
+                />
+                <button
+                  type="button"
+                  onClick={joinRoom}
+                  className="w-full bg-[#049cd8] text-black border-4 border-black py-3 hover:brightness-110"
+                >
+                  ENTER CODE
+                </button>
+              </div>
             </div>
-            <div className="bg-[#fcbcb0] border-4 border-black p-4 shadow-[6px_6px_0_#000]">
-              <h2 className="text-black mb-3 text-[10px]">JOIN</h2>
-              <input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="CODE"
-                maxLength={6}
-                className="w-full mb-3 bg-white border-4 border-black px-2 py-2 text-black uppercase tracking-widest"
-              />
-              <button
-                type="button"
-                onClick={joinRoom}
-                className="w-full bg-[#049cd8] text-black border-4 border-black py-3 hover:brightness-110"
-              >
-                ENTER CODE
-              </button>
+
+            <div className="mt-4 bg-[#fcbcb0] border-4 border-black p-3 sm:p-4 shadow-[6px_6px_0_#000]">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="text-black text-[10px]">OPEN LOBBIES</h2>
+                <button
+                  type="button"
+                  onClick={() => socket.emit('snl:listOpenRooms')}
+                  className="text-[8px] bg-white border-2 border-black px-2 py-1 text-black hover:bg-gray-100"
+                >
+                  REFRESH
+                </button>
+              </div>
+              {openRooms.length === 0 ? (
+                <p className="text-black/80 text-[8px] leading-relaxed">
+                  No open rooms right now. Create one above or check back in a few seconds — the list updates automatically.
+                </p>
+              ) : (
+                <ul className="space-y-2 max-h-[min(280px,45vh)] overflow-y-auto pr-1">
+                  {openRooms.map((r) => (
+                    <li
+                      key={r.code}
+                      className="flex flex-wrap items-center justify-between gap-2 bg-white/90 border-2 border-black px-2 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-black font-bold tracking-[0.15em] text-[10px] sm:text-[11px]">{r.code}</div>
+                        <div className="text-[7px] sm:text-[8px] text-black/75 mt-0.5">
+                          Host <span className="text-black font-semibold">{r.host}</span> · {r.players}/{r.max} players
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => joinOpenRoom(r.code)}
+                        className="shrink-0 bg-[#049cd8] text-black border-4 border-black px-3 py-2 text-[8px] sm:text-[9px] hover:brightness-110 active:translate-y-0.5 shadow-[3px_3px_0_#000]"
+                      >
+                        JOIN
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </div>
+          </>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_280px] gap-4 items-start">
-            <div className="flex flex-col items-center w-full">
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-3 w-full">
-                <span className="bg-black text-yellow-300 border-2 border-yellow-400 px-2 py-1 tracking-[0.2em]">
+          <div className="grid lg:grid-cols-[1fr_minmax(200px,248px)] gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
+            <div className="flex flex-col min-w-0 min-h-0 gap-1 sm:gap-2">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2 shrink-0">
+                <span className="bg-black text-yellow-300 border-2 border-yellow-400 px-2 py-0.5 tracking-[0.2em] text-[8px] sm:text-[9px]">
                   {gameState.code}
                 </span>
-                <button type="button" onClick={copyCode} className="bg-[#ffd700] text-black border-4 border-black px-2 py-1">
+                <button type="button" onClick={copyCode} className="bg-[#ffd700] text-black border-2 sm:border-4 border-black px-2 py-0.5 text-[8px]">
                   COPY
                 </button>
-                <button type="button" onClick={leave} className="bg-red-600 text-white border-4 border-black px-2 py-1">
+                <button type="button" onClick={leave} className="bg-red-600 text-white border-2 sm:border-4 border-black px-2 py-0.5 text-[8px]">
                   LEAVE
                 </button>
               </div>
 
-              <motion.div
-                layout
-                className="relative bg-[#d4a574] border-4 border-black p-2 sm:p-3 shadow-[8px_8px_0_#000] w-full max-w-[min(100%,680px)]"
-                initial={false}
-              >
-                <svg
-                  width="100%"
-                  height="100%"
-                  viewBox={`0 0 ${svgSize} ${svgSize}`}
-                  className="w-full h-auto block select-none"
-                  aria-label="Game board"
-                  preserveAspectRatio="xMidYMid meet"
-                >
+              <div className="flex flex-row gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
+                <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden">
+                  <motion.div
+                    layout
+                    className="relative bg-[#d4a574] border-4 border-black p-1 sm:p-2 shadow-[8px_8px_0_#000] w-full max-h-full max-w-full"
+                    style={{ aspectRatio: '1 / 1', maxHeight: 'min(100%, calc(100dvh - 6.75rem))' }}
+                    initial={false}
+                  >
+                    <svg
+                      width="100%"
+                      height="100%"
+                      viewBox={`0 0 ${svgSize} ${svgSize}`}
+                      className="w-full h-full block select-none"
+                      aria-label="Game board"
+                      preserveAspectRatio="xMidYMid meet"
+                    >
                   <defs>
                     <pattern id="snl-brick" width="16" height="8" patternUnits="userSpaceOnUse">
                       <rect width="16" height="8" fill="#b5651d" />
@@ -797,45 +892,55 @@ export default function SnakesAndLadders({ currentUser }) {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
-
-              <div className="mt-5 flex flex-col sm:flex-row items-center gap-6 w-full justify-center">
-                <div className="flex flex-col items-center gap-1">
-                  <DiceCube spinning={diceSpinning} value={diceValue} size={Math.min(88, Math.max(64, boardInner * 0.14))} />
-                  <span className="text-[7px] text-black/70 bg-white/50 px-1 border border-black/20">SERVER ROLL</span>
+                  </motion.div>
                 </div>
-                {gameState.phase === 'playing' && isMyTurn && (
-                  <button
-                    type="button"
-                    onClick={roll}
-                    disabled={rollPending || animating}
-                    className="bg-[#e52521] text-white border-4 border-black px-6 py-4 text-[10px] hover:brightness-110 disabled:opacity-50 shadow-[6px_6px_0_#000] active:translate-y-0.5"
-                  >
-                    ROLL DICE
-                  </button>
-                )}
-                {gameState.phase === 'playing' && !isMyTurn && (
-                  <span className="text-black bg-white/90 border-2 border-black px-2 py-1">
-                    {gameState.players[gameState.currentTurnIndex]?.username}&apos;S TURN
+
+                <aside className="flex flex-col items-center justify-center gap-2 sm:gap-3 w-[96px] sm:w-[118px] shrink-0 self-stretch bg-[#fcbcb0] border-4 border-black shadow-[4px_4px_0_#000] py-2 sm:py-3 px-1.5">
+                  <DiceCube
+                    spinning={diceSpinning}
+                    value={diceValue}
+                    size={Math.min(76, Math.max(52, Math.min(boardInner * 0.16, 84)))}
+                  />
+                  <span className="text-[6px] sm:text-[7px] text-black/80 bg-white/70 px-1 border border-black/30 text-center leading-tight">
+                    SERVER
+                    <br />
+                    ROLL
                   </span>
-                )}
-                {gameState.phase === 'lobby' && isHost && (
-                  <button
-                    type="button"
-                    onClick={startGame}
-                    disabled={gameState.players.length < 2}
-                    className="bg-[#43b047] text-black border-4 border-black px-6 py-3 disabled:opacity-40"
-                  >
-                    START ({gameState.players.length}/4)
-                  </button>
-                )}
-                {gameState.phase === 'lobby' && !isHost && (
-                  <span className="text-black">WAITING FOR HOST…</span>
-                )}
+                  {gameState.phase === 'playing' && isMyTurn && (
+                    <button
+                      type="button"
+                      onClick={roll}
+                      disabled={rollPending || animating}
+                      className="w-full bg-[#e52521] text-white border-2 sm:border-4 border-black px-1 py-2.5 text-[7px] sm:text-[8px] leading-tight hover:brightness-110 disabled:opacity-50 shadow-[3px_3px_0_#000] active:translate-y-0.5"
+                    >
+                      ROLL
+                    </button>
+                  )}
+                  {gameState.phase === 'playing' && !isMyTurn && (
+                    <p className="text-black bg-white/90 border-2 border-black px-1 py-1.5 text-[6px] sm:text-[7px] text-center leading-snug break-words w-full">
+                      {gameState.players[gameState.currentTurnIndex]?.username?.slice(0, 10)}
+                      {gameState.players[gameState.currentTurnIndex]?.username?.length > 10 ? '…' : ''}
+                      <span className="block text-[6px] opacity-80">TURN</span>
+                    </p>
+                  )}
+                  {gameState.phase === 'lobby' && isHost && (
+                    <button
+                      type="button"
+                      onClick={startGame}
+                      disabled={gameState.players.length < 2}
+                      className="w-full bg-[#43b047] text-black border-2 sm:border-4 border-black px-1 py-2 text-[7px] sm:text-[8px] leading-tight disabled:opacity-40"
+                    >
+                      START {gameState.players.length}/4
+                    </button>
+                  )}
+                  {gameState.phase === 'lobby' && !isHost && (
+                    <span className="text-black text-[6px] sm:text-[7px] text-center leading-tight px-0.5">WAIT HOST…</span>
+                  )}
+                </aside>
               </div>
             </div>
 
-            <div className="bg-[#fcbcb0] border-4 border-black p-3 text-black space-y-2 shadow-[6px_6px_0_#000]">
+            <div className="bg-[#fcbcb0] border-4 border-black p-2 sm:p-3 text-black space-y-2 shadow-[6px_6px_0_#000] min-h-0 max-h-[min(240px,42dvh)] overflow-y-auto overscroll-contain lg:max-h-[calc(100dvh-5.25rem)]">
               <h3 className="text-[9px] border-b-2 border-black pb-1">PLAYERS</h3>
               <ul className="space-y-2">
                 {gameState.players.map((pl, i) => {

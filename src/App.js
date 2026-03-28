@@ -71,7 +71,7 @@ import FilterControls from './components/FilterControls';
 const DotsAndBoxes = lazy(() => import('./components/DotsAndBoxes'));
 const HorseRacing = lazy(() => import('./components/HorseRacing'));
 const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
-const SnakesAndLadders = lazy(() => import('./components/SnakesAndLadders'));
+const BeanstalksAndChutes = lazy(() => import('./components/BeanstalksAndChutes'));
 
 const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
@@ -2621,7 +2621,8 @@ function App() {
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
           <Route path="/games/crossword" element={<CrosswordPuzzle currentUser={currentUser} />} />
-          <Route path="/games/snakes-and-ladders" element={<SnakesAndLadders currentUser={currentUser} />} />
+          <Route path="/games/beanstalks-and-chutes" element={<BeanstalksAndChutes currentUser={currentUser} />} />
+          <Route path="/games/snakes-and-ladders" element={<Navigate to="/games/beanstalks-and-chutes" replace />} />
 
           <Route path="/games/:id" element={
             <GamePage

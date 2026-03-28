@@ -3120,6 +3120,7 @@ Games can be listed on:
 ### Aquads Mini-Games
 
 Play games built into Aquads:
+- **Beanstalks & Chutes** - Multiplayer pipes & chutes (`/games/beanstalks-and-chutes`)
 - **Dots & Boxes** - Classic strategy game
 - **Horse Racing** - Betting game
 - More games coming soon!
@@ -3147,6 +3148,12 @@ Play games built into Aquads:
 Explore the games you can play right now on Aquads.
 
 ### Aquads Original Games
+
+**Beanstalks & Chutes**
+Multiplayer board game:
+- Up to four players per room
+- Server-fair dice and turns
+- Play at **/games/beanstalks-and-chutes**
 
 **Dots & Boxes**
 Classic strategy game:

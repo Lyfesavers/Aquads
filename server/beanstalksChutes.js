@@ -10,15 +10,14 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 const PLAYER_COLORS = ['#E52521', '#049CD8', '#43B047', '#FBD000'];
 
-/* Friendlier Aquads board: more climbs, gentler slides, still punishing near the end */
+/* Beanstalks & Chutes board: classic pipe/chute layout + 2 bonus beanstalks — 11 pipes, 11 chutes */
 const LADDER_MAP = new Map([
-  [1, 22], [4, 16], [8, 30], [13, 36], [18, 41], [23, 46], [27, 50], [32, 55], [37, 60], [42, 65],
-  [47, 70], [52, 75], [59, 82], [66, 88], [73, 94], [11, 28], [20, 39], [34, 53], [45, 63], [56, 74],
-  [68, 85], [77, 93], [80, 100],
+  [1, 38], [4, 14], [9, 31], [21, 42], [28, 84], [36, 44], [51, 67], [71, 91], [80, 100],
+  [17, 40], [12, 35],
 ]);
 const SNAKE_MAP = new Map([
-  [97, 88], [93, 82], [89, 76], [85, 71], [79, 65], [74, 60], [69, 54], [63, 48], [57, 43], [51, 38],
-  [44, 31], [39, 26], [31, 19], [25, 12],
+  [98, 28], [95, 24], [92, 51], [89, 53], [74, 17], [64, 60], [62, 19], [56, 45], [49, 11], [47, 26],
+  [16, 6],
 ]);
 
 async function fetchProfileImage(userId) {
@@ -198,13 +197,42 @@ function pruneRooms() {
 
 setInterval(pruneRooms, 5 * 60 * 1000);
 
+function buildOpenRoomsList() {
+  const list = [];
+  for (const room of rooms.values()) {
+    if (room.phase !== 'lobby') continue;
+    if (room.players.length >= MAX_PLAYERS) continue;
+    const host = room.players.find((pl) => pl.userId === room.hostId) || room.players[0];
+    list.push({
+      code: room.code,
+      players: room.players.length,
+      max: MAX_PLAYERS,
+      host: host?.username || 'Host',
+    });
+  }
+  list.sort((a, b) => {
+    if (b.players !== a.players) return b.players - a.players;
+    return a.code.localeCompare(b.code);
+  });
+  return list;
+}
+
+function notifyOpenRoomsChanged(io) {
+  if (io) {
+    io.emit('snl:openRoomsRefresh');
+  }
+}
+
 function leaveRoomSocket(socket, io) {
   const code = socketToRoom.get(socket.id);
   if (!code) return;
   const room = rooms.get(code);
   socketToRoom.delete(socket.id);
   socket.leave(roomChannel(code));
-  if (!room) return;
+  if (!room) {
+    notifyOpenRoomsChanged(io);
+    return;
+  }
 
   const user = verifySocketUser(socket);
   const userId = user?.userId;
@@ -213,6 +241,7 @@ function leaveRoomSocket(socket, io) {
     (userId ? room.players.find((pl) => pl.userId === userId) : null);
   if (!p) {
     if (room.players.length === 0) rooms.delete(code);
+    notifyOpenRoomsChanged(io);
     return;
   }
 
@@ -226,13 +255,24 @@ function leaveRoomSocket(socket, io) {
 
   if (room.players.length === 0) {
     rooms.delete(code);
+    notifyOpenRoomsChanged(io);
     return;
   }
 
   io.to(roomChannel(code)).emit('snl:state', publicState(room));
+  notifyOpenRoomsChanged(io);
 }
 
-function attachSnakesLadders(socket, io) {
+function attachBeanstalksChutes(socket, io) {
+  socket.on('snl:listOpenRooms', () => {
+    const user = verifySocketUser(socket);
+    if (!user) {
+      socket.emit('snl:error', { message: 'Login required to browse rooms.' });
+      return;
+    }
+    socket.emit('snl:openRooms', { rooms: buildOpenRoomsList() });
+  });
+
   socket.on('snl:createRoom', async () => {
     const user = verifySocketUser(socket);
     if (!user) {
@@ -268,6 +308,7 @@ function attachSnakesLadders(socket, io) {
     socketToRoom.set(socket.id, code);
     socket.emit('snl:joined', { state: publicState(room) });
     io.to(roomChannel(code)).emit('snl:state', publicState(room));
+    notifyOpenRoomsChanged(io);
   });
 
   socket.on('snl:joinRoom', async (payload) => {
@@ -303,6 +344,7 @@ function attachSnakesLadders(socket, io) {
       socketToRoom.set(socket.id, code);
       socket.emit('snl:joined', { state: publicState(room) });
       io.to(roomChannel(code)).emit('snl:state', publicState(room));
+      notifyOpenRoomsChanged(io);
       return;
     }
 
@@ -331,6 +373,7 @@ function attachSnakesLadders(socket, io) {
     socketToRoom.set(socket.id, code);
     socket.emit('snl:joined', { state: publicState(room) });
     io.to(roomChannel(code)).emit('snl:state', publicState(room));
+    notifyOpenRoomsChanged(io);
   });
 
   socket.on('snl:leaveRoom', () => {
@@ -359,6 +402,7 @@ function attachSnakesLadders(socket, io) {
       io.to(roomChannel(code)).emit('snl:state', publicState(room));
     }
     socket.emit('snl:left');
+    notifyOpenRoomsChanged(io);
   });
 
   socket.on('snl:startGame', () => {
@@ -389,6 +433,7 @@ function attachSnakesLadders(socket, io) {
     });
     room.processingRoll = false;
     io.to(roomChannel(room.code)).emit('snl:state', publicState(room));
+    notifyOpenRoomsChanged(io);
   });
 
   socket.on('snl:roll', () => {
@@ -474,6 +519,7 @@ function attachSnakesLadders(socket, io) {
     if (room.players.length === 0) {
       rooms.delete(room.code);
       socket.emit('snl:left');
+      notifyOpenRoomsChanged(io);
       return;
     }
     room.hostId = room.players[0].userId;
@@ -481,6 +527,7 @@ function attachSnakesLadders(socket, io) {
       p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
     });
     io.to(roomChannel(room.code)).emit('snl:state', publicState(room));
+    notifyOpenRoomsChanged(io);
   });
 
   socket.on('disconnect', () => {
@@ -488,4 +535,4 @@ function attachSnakesLadders(socket, io) {
   });
 }
 
-module.exports = { attachSnakesLadders };
+module.exports = { attachBeanstalksChutes };

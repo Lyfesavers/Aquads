@@ -234,7 +234,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
     <div className="h-screen overflow-y-auto bg-gray-900 text-yellow-400">
       <Helmet>
         <title>Web3 Games Hub - Play Crypto Games & Earn | Aquads</title>
-        <meta name="description" content="Play exciting Web3 games on Aquads - horse racing, dots and boxes, crossword puzzles and more. Discover community-built crypto games and earn while you play." />
+        <meta name="description" content="Play exciting Web3 games on Aquads — Beanstalks &amp; Chutes, horse racing, dots and boxes, crossword puzzles and more. Discover community-built crypto games and earn while you play." />
         <link rel="canonical" href="https://www.aquads.xyz/games" />
 
         <meta property="og:title" content="Web3 Games Hub - Play Crypto Games & Earn | Aquads" />

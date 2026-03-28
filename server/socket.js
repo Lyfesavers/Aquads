@@ -2,7 +2,7 @@ const {
   serializeHyperSpaceOrderForUser,
   serializeHyperSpaceOrderListItemForUser
 } = require('./utils/hyperSpacePublicOrder');
-const { attachSnakesLadders } = require('./snakesLadders');
+const { attachBeanstalksChutes } = require('./beanstalksChutes');
 
 // Socket.io singleton instance
 let io;
@@ -47,7 +47,7 @@ function init(server) {
   
   // Add socket event handlers
   io.on('connection', (socket) => {
-    attachSnakesLadders(socket, io);
+    attachBeanstalksChutes(socket, io);
 
     // Handle user requesting affiliate info
     socket.on('requestAffiliateInfo', async (userData) => {
