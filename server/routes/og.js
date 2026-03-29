@@ -176,6 +176,18 @@ router.get('/aquaswap', async (req, res) => {
     const changeArrow = isPositive ? '▲' : '▼';
     const changeSign = isPositive ? '+' : '';
 
+    const priceDisplay = formatPrice(priceUsd);
+    const changeLabel = `${changeArrow} ${changeSign}${priceChange24h.toFixed(2)}%`;
+    // 56px bold ~36px/char (DejaVu); pad so the change pill never sits under the price tail
+    const priceTailX = 80 + priceDisplay.length * 36;
+    const changePillW = Math.ceil(changeLabel.length * 17 + 52);
+    const changePillX = Math.min(
+      1120 - changePillW - 40,
+      Math.max(462, priceTailX + 36)
+    );
+    const changeTextX = changePillX + 22;
+    const label24hX = changePillX + changePillW + 12;
+
     // Build SVG
     const svg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
@@ -257,12 +269,12 @@ router.get('/aquaswap', async (req, res) => {
   <text x="262" y="235" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="${chain.color}">${escapeXml(chain.name)}</text>
   
   <!-- Price section -->
-  <text x="80" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(formatPrice(priceUsd))}</text>
+  <text x="80" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(priceDisplay)}</text>
   
   <!-- 24h Change -->
-  <rect x="450" y="290" width="${String(changeSign + priceChange24h.toFixed(2)).length * 14 + 80}" height="50" rx="12" fill="${changeColor}" opacity="0.15"/>
-  <text x="470" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="${changeColor}">${changeArrow} ${changeSign}${priceChange24h.toFixed(2)}%</text>
-  <text x="${470 + String(changeSign + priceChange24h.toFixed(2)).length * 14 + 50}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
+  <rect x="${changePillX}" y="290" width="${changePillW}" height="50" rx="12" fill="${changeColor}" opacity="0.15"/>
+  <text x="${changeTextX}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="${changeColor}">${changeLabel}</text>
+  <text x="${label24hX}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
   
   <!-- Divider line -->
   <rect x="80" y="370" width="1040" height="1" fill="rgba(255,255,255,0.1)"/>
