@@ -132,6 +132,21 @@ const YARD_SLOTS = [
   ],
 ];
 
+/** Center of the 2×2 pawn nest (SVG x = col + 0.5, y = row + 0.5). */
+function yardNestCenter(pi) {
+  const slots = YARD_SLOTS[pi] || [[7, 7]];
+  let sx = 0;
+  let sy = 0;
+  for (const [r, c] of slots) {
+    sx += c + 0.5;
+    sy += r + 0.5;
+  }
+  const n = slots.length;
+  return { cx: sx / n, cy: sy / n };
+}
+
+const YARD_DIAMOND_R = 1.38;
+
 function yardOwner(r, c) {
   if (r < 6 && c < 6) return 3;
   if (r < 6 && c > 8) return 2;
@@ -148,12 +163,12 @@ function isCenter(r, c) {
   return r >= 6 && r <= 8 && c >= 6 && c <= 8;
 }
 
-/** Token position in viewBox units (0–15); pawn group uses (c+0.5, r+0.5) after jitter. */
+/** Token position; track/home use cell indices + jitter — tokenVB adds 0.5 for center. Yard/DONE are already in viewBox coords. */
 function tokenCell(pi, t, ti) {
   const [jx, jy] = TOKEN_JITTER[ti] || [0, 0];
   if (t === YARD) {
     const slot = YARD_SLOTS[pi]?.[ti] || [7, 7];
-    return { r: slot[0] + jy * 0.18, c: slot[1] + jx * 0.18 };
+    return { r: slot[0] + 0.5 + jy * 0.1, c: slot[1] + 0.5 + jx * 0.1 };
   }
   if (t >= DONE) {
     const ang = (pi / 4) * Math.PI * 2 + ti * 0.55;
@@ -169,6 +184,7 @@ function tokenCell(pi, t, ti) {
 
 function tokenVB(pi, t, ti) {
   const p = tokenCell(pi, t, ti);
+  if (t === YARD || t >= DONE) return { x: p.c, y: p.r };
   return { x: p.c + 0.5, y: p.r + 0.5 };
 }
 
@@ -876,6 +892,26 @@ export default function Sludo({ currentUser }) {
                       <filter id="sludo-pawn-shadow" x="-50%" y="-50%" width="200%" height="200%">
                         <feDropShadow dx="0" dy="0.03" stdDeviation="0.04" floodOpacity="0.35" />
                       </filter>
+                      <linearGradient id="sludo-pyramid-t" gradientUnits="userSpaceOnUse" x1="7.5" y1="6" x2="7.5" y2="7.5">
+                        <stop offset="0%" stopColor={seatColor(2)} stopOpacity={0.95} />
+                        <stop offset="45%" stopColor={seatColor(2)} stopOpacity={0.78} />
+                        <stop offset="100%" stopColor={seatColor(2)} stopOpacity={0.42} />
+                      </linearGradient>
+                      <linearGradient id="sludo-pyramid-r" gradientUnits="userSpaceOnUse" x1="9" y1="7.5" x2="7.5" y2="7.5">
+                        <stop offset="0%" stopColor={seatColor(1)} stopOpacity={0.95} />
+                        <stop offset="45%" stopColor={seatColor(1)} stopOpacity={0.78} />
+                        <stop offset="100%" stopColor={seatColor(1)} stopOpacity={0.42} />
+                      </linearGradient>
+                      <linearGradient id="sludo-pyramid-b" gradientUnits="userSpaceOnUse" x1="7.5" y1="9" x2="7.5" y2="7.5">
+                        <stop offset="0%" stopColor={seatColor(0)} stopOpacity={0.95} />
+                        <stop offset="45%" stopColor={seatColor(0)} stopOpacity={0.78} />
+                        <stop offset="100%" stopColor={seatColor(0)} stopOpacity={0.42} />
+                      </linearGradient>
+                      <linearGradient id="sludo-pyramid-l" gradientUnits="userSpaceOnUse" x1="6" y1="7.5" x2="7.5" y2="7.5">
+                        <stop offset="0%" stopColor={seatColor(3)} stopOpacity={0.95} />
+                        <stop offset="45%" stopColor={seatColor(3)} stopOpacity={0.78} />
+                        <stop offset="100%" stopColor={seatColor(3)} stopOpacity={0.42} />
+                      </linearGradient>
                     </defs>
 
                     <rect
@@ -930,36 +966,6 @@ export default function Sludo({ currentUser }) {
                       ))
                     )}
 
-                    <rect x={6} y={6} width={3} height={3} fill="#1a2332" opacity={0.22} />
-                    <path
-                      d="M 6 6 L 8 6 L 7.5 7.5 Z"
-                      fill={seatColor(2)}
-                      fillOpacity={0.58}
-                      stroke="rgba(0,0,0,0.18)"
-                      strokeWidth={0.02}
-                    />
-                    <path
-                      d="M 8 6 L 8 8 L 7.5 7.5 Z"
-                      fill={seatColor(1)}
-                      fillOpacity={0.58}
-                      stroke="rgba(0,0,0,0.18)"
-                      strokeWidth={0.02}
-                    />
-                    <path
-                      d="M 8 8 L 6 8 L 7.5 7.5 Z"
-                      fill={seatColor(0)}
-                      fillOpacity={0.58}
-                      stroke="rgba(0,0,0,0.18)"
-                      strokeWidth={0.02}
-                    />
-                    <path
-                      d="M 6 8 L 6 6 L 7.5 7.5 Z"
-                      fill={seatColor(3)}
-                      fillOpacity={0.58}
-                      stroke="rgba(0,0,0,0.18)"
-                      strokeWidth={0.02}
-                    />
-
                     {Array.from({ length: GRID + 1 }, (_, i) => (
                       <React.Fragment key={`grid-${i}`}>
                         <line x1={i} y1={0} x2={i} y2={15} stroke="rgba(0,0,0,0.42)" strokeWidth={0.035} />
@@ -967,22 +973,50 @@ export default function Sludo({ currentUser }) {
                       </React.Fragment>
                     ))}
 
-                    {[
-                      { cx: 2.5, cy: 2.5, k: 'tl', seat: 3 },
-                      { cx: 12.5, cy: 2.5, k: 'tr', seat: 2 },
-                      { cx: 12.5, cy: 12.5, k: 'br', seat: 1 },
-                      { cx: 2.5, cy: 12.5, k: 'bl', seat: 0 },
-                    ].map(({ cx, cy, k, seat }) => (
-                      <polygon
-                        key={k}
-                        points={`${cx},${cy - 1.1} ${cx + 1.1},${cy} ${cx},${cy + 1.1} ${cx - 1.1},${cy}`}
-                        fill="rgba(255,255,255,0.14)"
-                        stroke={seatColor(seat)}
-                        strokeOpacity={0.55}
-                        strokeWidth={0.05}
-                        pointerEvents="none"
-                      />
-                    ))}
+                    <path
+                      d="M 6 6 L 9 6 L 7.5 7.5 Z"
+                      fill="url(#sludo-pyramid-t)"
+                      stroke="rgba(255,255,255,0.16)"
+                      strokeWidth={0.035}
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M 9 6 L 9 9 L 7.5 7.5 Z"
+                      fill="url(#sludo-pyramid-r)"
+                      stroke="rgba(255,255,255,0.16)"
+                      strokeWidth={0.035}
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M 9 9 L 6 9 L 7.5 7.5 Z"
+                      fill="url(#sludo-pyramid-b)"
+                      stroke="rgba(255,255,255,0.16)"
+                      strokeWidth={0.035}
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M 6 9 L 6 6 L 7.5 7.5 Z"
+                      fill="url(#sludo-pyramid-l)"
+                      stroke="rgba(255,255,255,0.16)"
+                      strokeWidth={0.035}
+                      strokeLinejoin="round"
+                    />
+
+                    {[3, 2, 1, 0].map((seat) => {
+                      const { cx, cy } = yardNestCenter(seat);
+                      const R = YARD_DIAMOND_R;
+                      return (
+                        <polygon
+                          key={`nest-dia-${seat}`}
+                          points={`${cx},${cy - R} ${cx + R},${cy} ${cx},${cy + R} ${cx - R},${cy}`}
+                          fill="rgba(255,255,255,0.12)"
+                          stroke={seatColor(seat)}
+                          strokeOpacity={0.6}
+                          strokeWidth={0.055}
+                          pointerEvents="none"
+                        />
+                      );
+                    })}
 
                     {YARD_SLOTS.flatMap((corner, pi) =>
                       corner.map(([yr, yc], idx) => (
