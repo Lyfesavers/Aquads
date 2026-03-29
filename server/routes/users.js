@@ -34,7 +34,7 @@ const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env
 
 function sanitizeBioLinkItems(raw) {
   const arr = Array.isArray(raw) ? raw : [];
-  return arr.slice(0, 12).map((item, i) => {
+  return arr.slice(0, 30).map((item, i) => {
     const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
     let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
     if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;

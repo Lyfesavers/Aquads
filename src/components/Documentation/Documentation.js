@@ -432,7 +432,7 @@ Manage your payment links:
 
 **Link in bio Tab**
 Build a premium links page for your audience:
-- Add up to 12 social or website links
+- Add up to 30 social or website links
 - Set accent and button colors
 - Choose button style (rounded, pill, minimal, bordered, filled)
 - Add a full-screen background image via direct URL
@@ -584,7 +584,7 @@ The Link in bio tool gives you a premium public page for all your important link
 
 | Setting | Description |
 |---------|-------------|
-| **Links** | Add up to 12 links (title + URL), drag/order style controls |
+| **Links** | Add up to 30 links (title + URL), drag/order style controls |
 | **Accent Color** | Main brand color for page accents |
 | **Button Color** | Optional separate color for button visuals |
 | **Button Style** | Rounded, Pill, Minimal, Bordered, Filled |

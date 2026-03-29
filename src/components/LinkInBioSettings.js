@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { updateLinkInBio, socket } from '../services/api';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
-const MAX_LINKS = 12;
+const MAX_LINKS = 30;
 const MAX_TAGLINE = 200;
 const BASE_URL = 'https://www.aquads.xyz';
 
