@@ -228,8 +228,8 @@ router.get('/aquaswap', async (req, res) => {
   <rect x="40" y="50" width="1120" height="540" rx="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
   
   <!-- AQUADS branding top right -->
-  <text x="1100" y="100" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
-  <text x="1100" y="125" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
+  <text x="1100" y="100" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
+  <text x="1100" y="125" font-family="DejaVu Sans, Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
   
   <!-- Logo glow effect -->
   <circle cx="140" cy="180" r="65" fill="url(#accentGrad)" opacity="0.3" filter="url(#glow)"/>
@@ -242,27 +242,27 @@ router.get('/aquaswap', async (req, res) => {
   <image x="80" y="120" width="120" height="120" href="${logoBase64}" clip-path="url(#logoClip)" preserveAspectRatio="xMidYMid slice"/>
   ` : `
   <!-- Default logo placeholder -->
-  <text x="140" y="190" font-family="Arial, sans-serif" font-size="40" fill="#00d4ff" text-anchor="middle">?</text>
+  <text x="140" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="40" fill="#00d4ff" text-anchor="middle">?</text>
   `}
   
   <!-- Token Symbol -->
-  <text x="230" y="160" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#00d4ff">$${escapeXml(symbol)}</text>
+  <text x="230" y="160" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" font-weight="bold" fill="#00d4ff">$${escapeXml(symbol)}</text>
   
   <!-- Token Name -->
-  <text x="230" y="200" font-family="Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.6)">${escapeXml(name.length > 30 ? name.substring(0, 30) + '...' : name)}</text>
+  <text x="230" y="200" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.6)">${escapeXml(name.length > 30 ? name.substring(0, 30) + '...' : name)}</text>
   
   <!-- Chain badge -->
   <rect x="230" y="215" width="${chain.name.length * 10 + 40}" height="28" rx="14" fill="${chain.color}" opacity="0.2"/>
   <circle cx="248" cy="229" r="6" fill="${chain.color}"/>
-  <text x="262" y="235" font-family="Arial, sans-serif" font-size="14" fill="${chain.color}">${escapeXml(chain.name)}</text>
+  <text x="262" y="235" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="${chain.color}">${escapeXml(chain.name)}</text>
   
   <!-- Price section -->
-  <text x="80" y="330" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(formatPrice(priceUsd))}</text>
+  <text x="80" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(formatPrice(priceUsd))}</text>
   
   <!-- 24h Change -->
   <rect x="450" y="290" width="${String(changeSign + priceChange24h.toFixed(2)).length * 14 + 80}" height="50" rx="12" fill="${changeColor}" opacity="0.15"/>
-  <text x="470" y="325" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="${changeColor}">${changeArrow} ${changeSign}${priceChange24h.toFixed(2)}%</text>
-  <text x="${470 + String(changeSign + priceChange24h.toFixed(2)).length * 14 + 50}" y="325" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
+  <text x="470" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="${changeColor}">${changeArrow} ${changeSign}${priceChange24h.toFixed(2)}%</text>
+  <text x="${470 + String(changeSign + priceChange24h.toFixed(2)).length * 14 + 50}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
   
   <!-- Divider line -->
   <rect x="80" y="370" width="1040" height="1" fill="rgba(255,255,255,0.1)"/>
@@ -270,30 +270,30 @@ router.get('/aquaswap', async (req, res) => {
   <!-- Stats boxes -->
   <!-- Market Cap -->
   <rect x="80" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="100" y="435" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)" text-transform="uppercase">MARKET CAP</text>
-  <text x="100" y="475" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(marketCap))}</text>
+  <text x="100" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)" text-transform="uppercase">MARKET CAP</text>
+  <text x="100" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(marketCap))}</text>
   
   <!-- Liquidity -->
   <rect x="350" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="370" y="435" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">LIQUIDITY</text>
-  <text x="370" y="475" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(liquidity))}</text>
+  <text x="370" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">LIQUIDITY</text>
+  <text x="370" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(liquidity))}</text>
   
   <!-- Volume -->
   <rect x="620" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="640" y="435" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">24H VOLUME</text>
-  <text x="640" y="475" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(volume24h))}</text>
+  <text x="640" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">24H VOLUME</text>
+  <text x="640" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(volume24h))}</text>
   
   <!-- FDV -->
   <rect x="890" y="400" width="230" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="910" y="435" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">FDV</text>
-  <text x="910" y="475" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(fdv))}</text>
+  <text x="910" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">FDV</text>
+  <text x="910" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(fdv))}</text>
   
   <!-- Bottom CTA -->
-  <text x="80" y="560" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">Trade now on</text>
-  <text x="220" y="560" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="url(#accentGrad)">aquads.xyz</text>
+  <text x="80" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">Trade now on</text>
+  <text x="220" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="bold" fill="url(#accentGrad)">aquads.xyz</text>
   
   <!-- Arrow icon -->
-  <text x="1100" y="560" font-family="Arial, sans-serif" font-size="24" fill="#00d4ff" text-anchor="end">→</text>
+  <text x="1100" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" fill="#00d4ff" text-anchor="end">→</text>
 </svg>`;
 
     // Convert SVG to PNG using sharp
@@ -330,9 +330,9 @@ router.get('/aquaswap', async (req, res) => {
     const errorSvg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#0a0a12"/>
-  <text x="600" y="280" font-family="Arial, sans-serif" font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
-  <text x="600" y="350" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
-  <text x="600" y="400" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
+  <text x="600" y="280" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
+  <text x="600" y="350" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
+  <text x="600" y="400" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
 </svg>`;
 
     try {

@@ -1,3 +1,7 @@
+# Sharp SVG→PNG uses Pango/fontconfig; without fonts, OG images show missing-glyph boxes on Linux (e.g. Railway).
+[phases.setup]
+nixPkgs = ["...", "fontconfig", "dejavu_fonts"]
+
 [phases.install]
 cmds = ["cd server && npm install --legacy-peer-deps"]
 
