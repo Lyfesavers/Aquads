@@ -4,8 +4,8 @@ import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { socket, reconnectSocket } from '../services/api';
 
-/* Must match server/ludo.js */
-const START = [0, 13, 26, 39];
+/* Must match server/ludo.js — BR/TL starts aligned to cyan/purple corners. */
+const START = [0, 39, 26, 13];
 const YARD = -1;
 const DONE = 200;
 const SAFE_TRACK = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
@@ -97,12 +97,12 @@ function trackGridCell(serverTrackIndex) {
   return TRACK_GRID_52[(serverTrackIndex + PATH_INDEX_OFFSET) % 52];
 }
 
-/* Seat 0 BL, 1 BR, 2 TR, 3 TL — five home cells (token 100–104) from each gate toward center. */
+/* Seat 0 BL, 1 BR, 2 TR, 3 TL — home stretch uses middle lane (row 7 / col 7); outer ring uses TRACK_GRID_52. */
 const HOME_PATHS = [
-  [[13, 6], [12, 6], [11, 6], [10, 6], [9, 6]],
-  [[6, 2], [6, 3], [6, 4], [6, 5], [6, 6]],
-  [[2, 8], [3, 8], [4, 8], [5, 8], [6, 8]],
-  [[8, 12], [8, 11], [8, 10], [8, 9], [8, 8]],
+  [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7]],
+  [[7, 13], [7, 12], [7, 11], [7, 10], [7, 9]],
+  [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7]],
+  [[7, 1], [7, 2], [7, 3], [7, 4], [7, 5]],
 ];
 
 const YARD_SLOTS = [
@@ -297,6 +297,118 @@ function PipFace({ value, size }) {
         />
       ))}
     </div>
+  );
+}
+
+function SludoWinnerCelebration({ open, winnerName, winnerColor, winnerImageUrl, youWon, isHost, onRematch }) {
+  const confetti = useMemo(
+    () =>
+      Array.from({ length: 56 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 0.55,
+        duration: 2.4 + Math.random() * 1.4,
+        hue: [330, 185, 88, 275][i % 4],
+        w: 5 + Math.random() * 7,
+        rot: Math.random() * 360,
+      })),
+    []
+  );
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="sludo-winner-overlay"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28 }}
+        >
+          <motion.div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            aria-hidden
+          />
+          <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+            {confetti.map((c) => (
+              <motion.div
+                key={c.id}
+                className="absolute rounded-[2px] -top-3"
+                style={{
+                  left: `${c.x}%`,
+                  width: c.w,
+                  height: c.w * 1.35,
+                  backgroundColor: `hsl(${c.hue} 82% 58%)`,
+                  boxShadow: `0 0 14px hsl(${c.hue} 90% 52% / 0.45)`,
+                }}
+                initial={{ y: -24, rotate: c.rot, opacity: 0.92 }}
+                animate={{
+                  y: typeof window !== 'undefined' ? window.innerHeight + 48 : 820,
+                  rotate: c.rot + 640,
+                }}
+                transition={{ duration: c.duration, delay: c.delay, repeat: Infinity, ease: 'linear', repeatDelay: 0 }}
+              />
+            ))}
+          </div>
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sludo-winner-title"
+            className="relative w-full max-w-[min(22rem,100%)] rounded-3xl border border-white/20 bg-gradient-to-b from-slate-900/98 via-slate-950/98 to-black/95 px-7 py-9 text-center shadow-[0_0_60px_rgba(244,114,182,0.2),0_0_100px_rgba(34,211,238,0.12),inset_0_1px_0_rgba(255,255,255,0.08)]"
+            initial={{ scale: 0.86, opacity: 0, y: 22 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.92, opacity: 0, y: 10 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+          >
+            <motion.div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-4xl shadow-[0_0_28px_rgba(255,255,255,0.12)]"
+              style={{ boxShadow: `0 0 32px ${winnerColor}55` }}
+              initial={{ rotate: -8, scale: 0.6 }}
+              animate={{ rotate: [0, -6, 6, -4, 0], scale: 1 }}
+              transition={{ duration: 0.55, delay: 0.12 }}
+              aria-hidden
+            >
+              🏆
+            </motion.div>
+            <p className="font-['Orbitron'] text-[10px] tracking-[0.35em] text-cyan-300/90 mb-2">GAME OVER</p>
+            <h2 id="sludo-winner-title" className="font-['Orbitron'] text-xl sm:text-2xl font-bold text-white tracking-tight mb-4">
+              {winnerName}
+            </h2>
+            {winnerImageUrl ? (
+              <div className="mx-auto mb-4 h-16 w-16 overflow-hidden rounded-full border-2 border-white/25 shadow-lg" style={{ borderColor: `${winnerColor}aa` }}>
+                <img src={winnerImageUrl} alt="" className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div
+                className="mx-auto mb-4 h-3 w-28 rounded-full opacity-90"
+                style={{
+                  background: `linear-gradient(90deg, transparent, ${winnerColor}, transparent)`,
+                  boxShadow: `0 0 20px ${winnerColor}66`,
+                }}
+                aria-hidden
+              />
+            )}
+            <p className="text-sm text-fuchsia-200/95 mb-6">
+              {youWon ? 'You cleared the core — stellar run!' : 'Wins the round — all four pawns docked.'}
+            </p>
+            {isHost ? (
+              <button
+                type="button"
+                onClick={onRematch}
+                className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-3 text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.35)] hover:brightness-110 active:scale-[0.98] transition"
+              >
+                Run it back — rematch
+              </button>
+            ) : (
+              <p className="text-xs text-slate-500">Host can start a rematch for everyone.</p>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -1215,6 +1327,16 @@ export default function Sludo({ currentUser }) {
                 </p>
               </div>
             </div>
+
+            <SludoWinnerCelebration
+              open={gameState.phase === 'finished' && gameState.winnerIndex != null}
+              winnerName={gameState.players[gameState.winnerIndex]?.username ?? 'Winner'}
+              winnerColor={gameState.players[gameState.winnerIndex]?.color ?? '#e2e8f0'}
+              winnerImageUrl={playerImageUrl(gameState.players[gameState.winnerIndex]?.image)}
+              youWon={myPlayerIndex >= 0 && myPlayerIndex === gameState.winnerIndex}
+              isHost={isHost}
+              onRematch={rematch}
+            />
           </div>
         )}
       </div>

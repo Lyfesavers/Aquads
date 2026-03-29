@@ -9,7 +9,8 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 const PLAYER_COLORS = ['#ff2d6a', '#00e5ff', '#b8ff00', '#c44dff'];
 
-const START = [0, 13, 26, 39];
+/* Seat 0 BL, 1 BR, 2 TR, 3 TL — indices 1 and 3 match BR/TL yards and colored arms. */
+const START = [0, 39, 26, 13];
 
 function gateSq(p) {
   return (START[p] - 1 + 52) % 52;
