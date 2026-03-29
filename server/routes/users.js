@@ -32,6 +32,16 @@ const tempTokenStore = new Map();
 // Google Identity client (ID token verification)
 const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
+function sanitizeBioLinkItems(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr.slice(0, 12).map((item, i) => {
+    const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
+    let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
+    if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+    return { title: title || 'Link', url: url || '#', order: i };
+  }).filter((item) => item.url && item.url !== '#');
+}
+
 // Register new user
 router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), validateRegistration, async (req, res) => {
   try {
@@ -382,6 +392,7 @@ router.post('/login', validateLogin, async (req, res) => {
       linkInBioButtonColor: user.linkInBioButtonColor || null,
       linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioTagline: user.linkInBioTagline || null,
       token,
       refreshToken
     });
@@ -609,14 +620,11 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
 
     const update = {};
     if (req.body.bioLinks !== undefined) {
-      const raw = Array.isArray(req.body.bioLinks) ? req.body.bioLinks : [];
-      const sanitized = raw.slice(0, 12).map((item, i) => {
-        const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
-        let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
-        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-        return { title: title || 'Link', url: url || '#', order: i };
-      }).filter(item => item.url && item.url !== '#');
-      update.bioLinks = sanitized;
+      update.bioLinks = sanitizeBioLinkItems(req.body.bioLinks);
+    }
+    if (req.body.linkInBioTagline !== undefined) {
+      const t = String(req.body.linkInBioTagline || '').trim().slice(0, 200);
+      update.linkInBioTagline = t || null;
     }
     if (req.body.linkInBioAccentColor !== undefined) {
       const hex = String(req.body.linkInBioAccentColor).trim();
@@ -669,12 +677,13 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
+    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
 
     res.json({
       userId: updated._id,
       username: updated.username,
       bioLinks: updated.bioLinks || [],
+      linkInBioTagline: updated.linkInBioTagline || null,
       linkInBioAccentColor: updated.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: updated.linkInBioButtonColor || null,
       linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded',
@@ -739,18 +748,15 @@ router.put('/profile', auth, async (req, res) => {
       if (!user.emailVerified) {
         return res.status(403).json({ error: 'Verify your email to use Link in bio' });
       }
-      const raw = Array.isArray(req.body.bioLinks) ? req.body.bioLinks : [];
-      const sanitized = raw.slice(0, 12).map((item, i) => {
-        const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
-        let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
-        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-        return { title: title || 'Link', url: url || '#', order: i };
-      }).filter(item => item.url && item.url !== '#');
-      user.bioLinks = sanitized;
+      user.bioLinks = sanitizeBioLinkItems(req.body.bioLinks);
     }
 
     // Update link-in-bio style if provided (verified users only)
     if (user.emailVerified) {
+      if (req.body.linkInBioTagline !== undefined) {
+        const t = String(req.body.linkInBioTagline || '').trim().slice(0, 200);
+        user.linkInBioTagline = t || null;
+      }
       if (req.body.linkInBioAccentColor !== undefined) {
         const hex = String(req.body.linkInBioAccentColor).trim();
         user.linkInBioAccentColor = /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : '#22d3ee';
@@ -814,6 +820,7 @@ router.put('/profile', auth, async (req, res) => {
       referralCode: user.referralCode,
       cv: user.cv,
       bioLinks: user.bioLinks || [],
+      linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
       linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
@@ -1198,13 +1205,15 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
     }
 
     const displayName = (user.cv && user.cv.fullName) ? user.cv.fullName.trim() : user.username;
+    const taglineRaw = user.linkInBioTagline && typeof user.linkInBioTagline === 'string' ? user.linkInBioTagline.trim().slice(0, 200) : '';
+    const linkInBioTagline = taglineRaw || null;
     const links = (user.bioLinks || [])
       .filter(l => l.url && l.title)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -1236,6 +1245,7 @@ router.get('/links/:username', async (req, res) => {
       username: user.username,
       displayName,
       image: user.image || 'https://i.imgur.com/6VBx3io.png',
+      linkInBioTagline,
       bioLinks: links,
       linkInBioAccentColor: accentColor,
       linkInBioButtonColor: buttonColor,

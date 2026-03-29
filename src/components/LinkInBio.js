@@ -191,6 +191,47 @@ const getSocialIcon = (url) => {
   return FaExternalLinkAlt;
 };
 
+/**
+ * Only “classic” social / community profile URLs go in the compact icon row.
+ * Other recognized URLs (GitHub, Spotify, Google, shops, etc.) stay full-width buttons but still get their icon on the button.
+ */
+const isClassicSocialBioUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const host = (new URL(url).hostname || '').toLowerCase().replace(/^www\./, '');
+    if (host.includes('discord')) return true;
+    if (host.includes('guilded')) return true;
+    if (host.includes('x.com') || host === 'twitter.com') return true;
+    if (host.includes('t.me') || host.includes('telegram')) return true;
+    if (host.includes('whatsapp') || host.includes('wa.me')) return true;
+    if (host.includes('weixin') || host.includes('wechat')) return true;
+    if (host.includes('line.me') || host.includes('line.naver')) return true;
+    if (host.includes('signal.') || host.includes('signalmessenger')) return true;
+    if (host.includes('messenger') || host.includes('fb.com') || host.includes('fb.me') || host.includes('facebook')) return true;
+    if (host.includes('mastodon') || host.includes('mstdn')) return true;
+    if (host.includes('tiktok')) return true;
+    if (host.includes('youtube') || host.includes('youtu.be')) return true;
+    if (host.includes('twitch')) return true;
+    if (host.includes('instagram')) return true;
+    if (host.includes('snapchat')) return true;
+    if (host.includes('pinterest')) return true;
+    if (host.includes('linkedin')) return true;
+    if (host.includes('reddit')) return true;
+    if (host.includes('quora')) return true;
+    if (host.includes('tumblr')) return true;
+    if (host.includes('soundcloud')) return true;
+    if (host.includes('meetup')) return true;
+    if (host.includes('goodreads')) return true;
+    if (host.includes('strava')) return true;
+    if (host.includes('vk.com') || host === 'vk') return true;
+    if (host.includes('weibo')) return true;
+    if (host.includes('xing')) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+};
+
 // Build theme from user's accent color (hex)
 function hexToRgba(hex, alpha = 1) {
   let h = hex.replace(/^#/, '');
@@ -360,8 +401,16 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
-  const hasLinks = Array.isArray(bioLinks) && bioLinks.length > 0;
+  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
+  const sortedLinks = Array.isArray(bioLinks)
+    ? [...bioLinks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    : [];
+  const socialLinks = sortedLinks.filter((l) => isClassicSocialBioUrl(l.url));
+  const buttonLinks = sortedLinks.filter((l) => !isClassicSocialBioUrl(l.url));
+  const hasSocialLinks = socialLinks.length > 0;
+  const hasButtonLinks = buttonLinks.length > 0;
+  const hasAnyLinks = hasSocialLinks || hasButtonLinks;
+  const taglineText = typeof linkInBioTagline === 'string' ? linkInBioTagline.trim() : '';
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
@@ -447,11 +496,59 @@ const LinkInBio = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
-          className="text-2xl font-semibold text-white tracking-tight mb-10 text-center"
+          className={`text-2xl font-semibold text-white tracking-tight text-center ${taglineText || hasSocialLinks ? 'mb-2' : 'mb-10'}`}
           style={{ fontFamily: "'Syne', sans-serif", letterSpacing: '-0.02em' }}
         >
           {displayName}
         </motion.h1>
+
+        {taglineText ? (
+          <motion.p
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.35 }}
+            className="text-slate-400 text-sm text-center max-w-sm mx-auto leading-relaxed mb-6 px-1"
+          >
+            {taglineText}
+          </motion.p>
+        ) : null}
+
+        {hasSocialLinks ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.35 }}
+            className="flex flex-wrap justify-center gap-2.5 w-full mb-8 px-1"
+            role="list"
+            aria-label="Social links"
+          >
+            {socialLinks.map((link, i) => {
+              const IconComponent = getSocialIcon(link.url);
+              return (
+                <motion.a
+                  key={`social-${i}-${link.url}`}
+                  role="listitem"
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.title || 'Social link'}
+                  title={link.title || 'Social link'}
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 border border-white/10 hover:scale-110 hover:border-white/20"
+                  style={{
+                    background: hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.06)',
+                    color: buttonTheme.accent,
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: `0 0 0 1px ${theme.badgeBorder}`
+                  }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <IconComponent className="w-5 h-5" />
+                </motion.a>
+              );
+            })}
+          </motion.div>
+        ) : null}
 
         {/* Links — staggered entrance + premium hover */}
         <motion.div
@@ -460,12 +557,12 @@ const LinkInBio = () => {
           animate="show"
           className="w-full space-y-3"
         >
-          {hasLinks ? (
-            bioLinks.map((link, i) => {
+          {hasButtonLinks ? (
+            buttonLinks.map((link, i) => {
               const IconComponent = getSocialIcon(link.url);
               return (
                 <motion.a
-                  key={i}
+                  key={`btn-${i}-${link.url}`}
                   variants={item}
                   href={link.url}
                   target="_blank"
@@ -512,11 +609,11 @@ const LinkInBio = () => {
                 </motion.a>
               );
             })
-          ) : (
+          ) : !hasAnyLinks ? (
             <motion.p variants={item} className="text-slate-500 text-center py-10 text-sm">
               No links yet.
             </motion.p>
-          )}
+          ) : null}
         </motion.div>
 
         {/* Banner Ad Display — pill-shaped horizontal at bottom */}

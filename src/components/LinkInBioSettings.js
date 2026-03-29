@@ -3,6 +3,7 @@ import { updateLinkInBio, socket } from '../services/api';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 12;
+const MAX_TAGLINE = 200;
 const BASE_URL = 'https://www.aquads.xyz';
 
 const PRESET_COLORS = [
@@ -28,6 +29,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
   const [adsEnabled, setAdsEnabled] = useState(false);
   const [adPricing, setAdPricing] = useState({ day: 10, threeDays: 20, sevenDays: 40 });
+  const [tagline, setTagline] = useState('');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [analytics, setAnalytics] = useState(null);
@@ -35,6 +37,11 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   useEffect(() => {
     setBioLinks(Array.isArray(currentUser?.bioLinks) ? [...currentUser.bioLinks] : []);
   }, [currentUser?.bioLinks]);
+
+  useEffect(() => {
+    const t = currentUser?.linkInBioTagline;
+    setTagline(typeof t === 'string' ? t : '');
+  }, [currentUser?.linkInBioTagline]);
 
   useEffect(() => {
     const c = currentUser?.linkInBioAccentColor;
@@ -133,6 +140,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         : (buttonColor || null);
       const updated = await updateLinkInBio({
         bioLinks: sanitized,
+        linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
         linkInBioAccentColor: hex,
         linkInBioButtonColor: btnHex || null,
         linkInBioButtonStyle: buttonStyle,
@@ -378,7 +386,22 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       </div>
 
       <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
-        <div className="flex items-center justify-between mb-4">
+        <h3 className="text-white font-semibold mb-2">Short bio</h3>
+        <p className="text-gray-400 text-sm mb-3">
+          One line under your name (e.g. role or company). Shown only on your public link page.
+        </p>
+        <textarea
+          value={tagline}
+          onChange={(e) => setTagline(e.target.value.slice(0, MAX_TAGLINE))}
+          placeholder="Designer · Web3 · Your company"
+          rows={2}
+          className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-y min-h-[2.75rem]"
+        />
+        <p className="text-gray-500 text-xs mt-1">{tagline.length} / {MAX_TAGLINE}</p>
+      </div>
+
+      <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <h3 className="text-white font-semibold">Links</h3>
           <button
             type="button"
@@ -390,6 +413,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
             Add link
           </button>
         </div>
+        <p className="text-gray-500 text-xs mb-4">
+          Major social profile links (X, Instagram, Discord, YouTube, TikTok, etc.) show as a compact icon row under your short bio. Everything else—including GitHub, Spotify, shops, Google Docs—stays as full-width buttons (with icons on the buttons when we recognize the site).
+        </p>
 
         {bioLinks.length === 0 ? (
           <p className="text-gray-500 text-sm py-4">No links yet. Add your first link above.</p>

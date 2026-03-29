@@ -34,7 +34,7 @@ const auth = async (req, res, next) => {
     }
     
     // Check if user is suspended - Fetch user from database
-    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
     
     if (!user) {
       throw new Error('User not found');
@@ -61,6 +61,7 @@ const auth = async (req, res, next) => {
       referredBy: user.referredBy,  // Include referredBy for affiliate detection
       cv: user.cv,  // Include CV data for display name functionality
       bioLinks: user.bioLinks || [],
+      linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
       linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',

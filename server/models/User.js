@@ -98,6 +98,12 @@ const userSchema = new Schema({
     url: { type: String, required: true, trim: true },
     order: { type: Number, default: 0 }
   }],
+  linkInBioTagline: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 200
+  },
   // Link-in-bio custom style (user picks colors + button style)
   linkInBioAccentColor: {
     type: String,
