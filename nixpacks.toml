@@ -1,4 +1,5 @@
-# Sharp SVG→PNG uses Pango/fontconfig; without fonts, OG images show missing-glyph boxes on Linux (e.g. Railway).
+# Nixpacks only (not Railpack). Railway Railpack uses railpack.json deploy.aptPackages for fonts.
+# Sharp SVG→PNG uses Pango/fontconfig; without fonts, OG images show missing-glyph boxes on Linux.
 [phases.setup]
 nixPkgs = ["...", "fontconfig", "dejavu_fonts"]
 

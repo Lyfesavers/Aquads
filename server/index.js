@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./fontconfig/bootstrap');
 
 // Validate critical environment variables on startup
 if (!process.env.JWT_SECRET) {

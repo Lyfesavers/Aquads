@@ -1,6 +1,9 @@
 [build]
 buildCommand = "cd server && npm install --legacy-peer-deps"
 
+# Railpack (default on Railway): fonts for Sharp SVG text live in railpack.json → deploy.aptPackages.
+# If the file is skipped, set service variable: RAILPACK_DEPLOY_APT_PACKAGES="fontconfig fonts-dejavu-core"
+
 [deploy]
 startCommand = "cd server && node index.js"
 restartPolicyType = "ON_FAILURE"
