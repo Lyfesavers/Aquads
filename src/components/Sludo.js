@@ -1,9 +1,7 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { ContactShadows, OrbitControls } from '@react-three/drei';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { socket, reconnectSocket } from '../services/api';
 
 /* Must match server/ludo.js */
@@ -14,6 +12,19 @@ const SAFE_TRACK = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
 function gateOf(p) {
   return (START[p] - 1 + 52) % 52;
+}
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
+
+function playerImageUrl(src) {
+  if (!src) return null;
+  if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+  if (src.startsWith('/')) return `${API_BASE}${src}`;
+  return src;
+}
+
+function getPad(inner) {
+  return Math.round(12 + inner * 0.028);
 }
 
 const TOKEN_JITTER = [
@@ -27,29 +38,33 @@ function cellAngle(idx) {
   return (idx / 52) * Math.PI * 2 - Math.PI / 2;
 }
 
-/** Board on XZ plane, Y up — ring radius ~4.2 */
-function tokenVec3(pi, t, ti) {
-  const [jx, jz] = (TOKEN_JITTER[ti] || [0, 0]).map((v) => v * 0.1);
-  const R0 = 4.15;
+function tokenXY(pi, t, ti, boardInner) {
+  const pad = getPad(boardInner);
+  const svgSize = boardInner + pad * 2 + 10;
+  const CX = svgSize / 2;
+  const CY = svgSize / 2;
+  const R = boardInner * 0.3;
+  const [jx, jy] = TOKEN_JITTER[ti] || [0, 0];
   if (t === YARD) {
     const ang = cellAngle(START[pi]) + Math.PI;
-    const rr = R0 + 1.08;
-    return [rr * Math.cos(ang) + jx, 0.44, rr * Math.sin(ang) + jz];
+    const rr = R + boardInner * 0.11;
+    return { x: CX + rr * Math.cos(ang) + jx * 7, y: CY + rr * Math.sin(ang) + jy * 7 };
   }
   if (t >= DONE) {
     const ang = (pi / 4) * Math.PI * 2 + ti * 0.55;
-    return [0.32 * Math.cos(ang), 0.62, 0.32 * Math.sin(ang)];
+    const rr = boardInner * 0.052;
+    return { x: CX + rr * Math.cos(ang), y: CY + rr * Math.sin(ang) };
   }
   if (t >= 100 && t <= 104) {
     const h = t - 100;
     const g = gateOf(pi);
     const a = cellAngle(g);
     const inward = 0.14 + (h + 1) * 0.095;
-    const rr = R0 * (1 - inward);
-    return [rr * Math.cos(a) + jx * 0.45, 0.44, rr * Math.sin(a) + jz * 0.45];
+    const rr = R * (1 - inward);
+    return { x: CX + rr * Math.cos(a) + jx * 4, y: CY + rr * Math.sin(a) + jy * 4 };
   }
   const a = cellAngle(t);
-  return [R0 * Math.cos(a) + jx, 0.4, R0 * Math.sin(a) + jz];
+  return { x: CX + R * Math.cos(a) + jx * 6, y: CY + R * Math.sin(a) + jy * 6 };
 }
 
 function playBlip(freq = 520, dur = 0.06) {
@@ -206,216 +221,60 @@ function pathValueAfterSegment(v, seg) {
   return v;
 }
 
-const R0 = 4.15;
-
-function TrackCells() {
+/** Classic Ludo-style pawn: domed head + tapered body (local coords, tip up). */
+function LudoPawn({ cx, cy, scale, color, imageUrl, highlight, onClick, pawnId }) {
+  const headR = 5.2 * scale;
+  const clipId = `sludo-av-${pawnId}`;
   return (
-    <group>
-      {Array.from({ length: 52 }, (_, i) => {
-        const a = cellAngle(i);
-        const x = R0 * Math.cos(a);
-        const z = R0 * Math.sin(a);
-        const safe = SAFE_TRACK.has(i);
-        const isStart = START.includes(i);
-        const em = isStart ? '#f472b6' : safe ? '#facc15' : '#64748b';
-        return (
-          <mesh key={i} position={[x, 0.14, z]} castShadow receiveShadow>
-            <cylinderGeometry args={[safe ? 0.22 : 0.16, safe ? 0.22 : 0.16, 0.08, 20]} />
-            <meshStandardMaterial
-              color={isStart ? '#9d174d' : safe ? '#713f12' : '#1e293b'}
-              emissive={em}
-              emissiveIntensity={safe || isStart ? 0.28 : 0.06}
-              metalness={0.25}
-              roughness={0.55}
-            />
-          </mesh>
-        );
-      })}
-    </group>
-  );
-}
-
-function BoardBase() {
-  return (
-    <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
-        <circleGeometry args={[R0 + 1.35, 64]} />
-        <meshStandardMaterial color="#0b1220" metalness={0.5} roughness={0.75} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[R0 - 0.12, R0 + 0.12, 64]} />
-        <meshStandardMaterial color="#164e63" metalness={0.6} roughness={0.4} emissive="#06b6d4" emissiveIntensity={0.08} />
-      </mesh>
-      <mesh position={[0, 0.35, 0]} castShadow>
-        <cylinderGeometry args={[0.85, 0.95, 0.7, 40]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.65} roughness={0.35} emissive="#22d3ee" emissiveIntensity={0.12} />
-      </mesh>
-      <mesh position={[0, 0.72, 0]}>
-        <sphereGeometry args={[0.28, 24, 24]} />
-        <meshStandardMaterial color="#020617" emissive="#a78bfa" emissiveIntensity={0.35} metalness={0.8} roughness={0.2} />
-      </mesh>
-    </group>
-  );
-}
-
-function CapturePulse3D({ position }) {
-  const ref = useRef();
-  const t = useRef(0);
-  useFrame((_, dt) => {
-    t.current += dt;
-    const mesh = ref.current;
-    if (mesh) {
-      const s = 1 + t.current * 1.6;
-      mesh.scale.setScalar(s);
-      const mat = mesh.material;
-      if (mat) mat.opacity = Math.max(0, 0.9 - t.current * 1.1);
-    }
-  });
-  if (!position) return null;
-  return (
-    <mesh ref={ref} position={position} rotation={[Math.PI / 2.5, 0, 0]}>
-      <torusGeometry args={[0.42, 0.035, 12, 40]} />
-      <meshBasicMaterial color="#fb7185" transparent opacity={0.9} depthWrite={false} />
-    </mesh>
-  );
-}
-
-function Pawn3D({ position, color, highlight, onPick, radius = 0.26 }) {
-  const ref = useRef();
-  useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.position.y = highlight ? Math.sin(state.clock.elapsedTime * 3.2) * 0.07 : 0;
-  });
-  return (
-    <group position={position}>
-      {highlight && (
-        <mesh position={[0, 0.05, 0]}>
-          <sphereGeometry args={[radius * 1.75, 20, 20]} />
-          <meshBasicMaterial color="#22d3ee" transparent opacity={0.18} depthWrite={false} />
-        </mesh>
-      )}
-      <mesh
-        ref={ref}
-        castShadow
-        onClick={(e) => {
-          e.stopPropagation();
-          onPick?.();
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <sphereGeometry args={[radius, 28, 28]} />
-        <meshStandardMaterial
-          color={color}
-          metalness={0.5}
-          roughness={0.32}
-          emissive={highlight ? color : '#000000'}
-          emissiveIntensity={highlight ? 0.45 : 0}
-        />
-      </mesh>
-      <mesh position={[0, -radius * 0.85, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[radius * 0.65, radius * 0.85, 20]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.25} />
-      </mesh>
-    </group>
-  );
-}
-
-function SludoScene({
-  gameState,
-  displayTokenValue,
-  choicePulse,
-  myPlayerIndex,
-  selectPiece,
-  captureFxPos,
-  captureFxId,
-}) {
-  return (
-    <>
-      <color attach="background" args={['transparent']} />
-      <ambientLight intensity={0.38} />
-      <hemisphereLight args={['#e0f2fe', '#1e1b4b', 0.55]} />
-      <spotLight position={[10, 16, 8]} angle={0.35} penumbra={0.85} intensity={1.15} castShadow color="#fef3c7" />
-      <pointLight position={[-10, 6, -6]} intensity={0.55} color="#f0abfc" />
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        minPolarAngle={0.42}
-        maxPolarAngle={Math.PI / 2.05}
-        minDistance={11}
-        maxDistance={21}
-        target={[0, 0.3, 0]}
-      />
-      <group rotation={[-0.36, 0.45, 0]}>
-        <BoardBase />
-        <TrackCells />
-        {captureFxPos ? <CapturePulse3D key={captureFxId} position={captureFxPos} /> : null}
-        {gameState.players.map((pl, pi) =>
-          pl.tokens.map((t, ti) => {
-            const tv = displayTokenValue(pi, ti);
-            const pos = tokenVec3(pi, tv, ti);
-            const highlight =
-              choicePulse &&
-              choicePulse.playerIndex === pi &&
-              choicePulse.options.includes(ti) &&
-              myPlayerIndex === pi;
-            return (
-              <Pawn3D
-                key={`${pl.userId}-${ti}`}
-                position={pos}
-                color={pl.color}
-                highlight={highlight}
-                onPick={highlight ? () => selectPiece(ti) : undefined}
-              />
-            );
-          })
-        )}
-      </group>
-      <ContactShadows position={[0, -0.04, 0]} opacity={0.45} scale={14} blur={2.4} far={5} />
-    </>
-  );
-}
-
-function SludoBoard3D({
-  boardSize,
-  gameState,
-  displayTokenValue,
-  choicePulse,
-  myPlayerIndex,
-  selectPiece,
-  captureFxPos,
-  captureFxId,
-}) {
-  return (
-    <div
-      className="rounded-3xl border border-white/10 bg-slate-950/50 shadow-[0_0_60px_rgba(34,211,238,0.1)] overflow-hidden touch-none"
-      style={{
-        width: boardSize,
-        height: boardSize,
-        maxWidth: '100%',
-        maxHeight: 'min(100%, calc(100dvh - 7rem))',
-      }}
+    <g
+      transform={`translate(${cx}, ${cy})`}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+      onClick={onClick}
+      onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
-      <Canvas
-        camera={{ position: [7.8, 10.2, 9.6], fov: 40, near: 0.1, far: 90 }}
-        shadows
-        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
-        dpr={[1, 2]}
-        style={{ width: '100%', height: '100%', display: 'block' }}
-      >
-        <Suspense fallback={null}>
-          <SludoScene
-            gameState={gameState}
-            displayTokenValue={displayTokenValue}
-            choicePulse={choicePulse}
-            myPlayerIndex={myPlayerIndex}
-            selectPiece={selectPiece}
-            captureFxPos={captureFxPos}
-            captureFxId={captureFxId}
+      {highlight && (
+        <motion.circle
+          r={headR * 2.4}
+          fill="none"
+          stroke="rgba(34,211,238,0.95)"
+          strokeWidth={1.8}
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: [0.5, 1, 0.5], r: [headR * 2.1, headR * 2.6, headR * 2.1] }}
+          transition={{ duration: 1.05, repeat: Infinity }}
+        />
+      )}
+      <ellipse cx={0} cy={headR * 1.35} rx={headR * 1.15} ry={headR * 0.42} fill="#000" opacity={0.35} />
+      <path
+        d={`M 0 ${-headR * 2.4} C ${-headR * 1.05} ${-headR * 2.4} ${-headR * 1.45} ${-headR * 1.35} ${-headR * 1.15} ${-headR * 0.35}
+            L ${-headR * 1.35} ${headR * 1.85} L ${headR * 1.35} ${headR * 1.85} L ${headR * 1.15} ${-headR * 0.35}
+            C ${headR * 1.45} ${-headR * 1.35} ${headR * 1.05} ${-headR * 2.4} 0 ${-headR * 2.4} Z`}
+        fill={color}
+        stroke="rgba(0,0,0,0.45)"
+        strokeWidth={1.1 * scale}
+        filter="url(#sludo-pawn-shadow)"
+      />
+      <circle cx={0} cy={-headR * 2.35} r={headR} fill={color} stroke="rgba(255,255,255,0.5)" strokeWidth={1 * scale} />
+      {imageUrl ? (
+        <>
+          <defs>
+            <clipPath id={clipId}>
+              <circle cx={0} cy={-headR * 2.35} r={headR * 0.92} />
+            </clipPath>
+          </defs>
+          <image
+            href={imageUrl}
+            x={-headR * 0.92}
+            y={-headR * 2.35 - headR * 0.92}
+            width={headR * 1.84}
+            height={headR * 1.84}
+            clipPath={`url(#${clipId})`}
+            preserveAspectRatio="xMidYMid slice"
           />
-        </Suspense>
-      </Canvas>
-      <span className="sr-only">Sludo 3D board — drag to orbit, scroll to zoom.</span>
-    </div>
+        </>
+      ) : null}
+    </g>
   );
 }
 
@@ -431,23 +290,27 @@ export default function Sludo({ currentUser }) {
   const [animOverride, setAnimOverride] = useState(null);
   const [openRooms, setOpenRooms] = useState([]);
   const [choicePulse, setChoicePulse] = useState(null);
-  const [boardSize, setBoardSize] = useState(420);
-  const [captureFxPos, setCaptureFxPos] = useState(null);
-  const [captureFxId, setCaptureFxId] = useState(0);
+  const [boardInner, setBoardInner] = useState(420);
+  const [captureFlash, setCaptureFlash] = useState(null);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
   const spinStartRef = useRef(0);
 
   const myUserId = currentUser?.userId || currentUser?.id;
+  const pad = getPad(boardInner);
+  const svgSize = boardInner + pad * 2 + 10;
+  const CX = svgSize / 2;
+  const CY = svgSize / 2;
+  const R = boardInner * 0.3;
 
   useEffect(() => {
     const measure = () => {
       const w = typeof window !== 'undefined' ? window.innerWidth : 900;
       const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const cap = w >= 1024 ? 540 : w >= 768 ? 480 : 340;
+      const cap = w >= 1024 ? 520 : w >= 768 ? 460 : 340;
       const maxH = Math.max(280, h - 200);
-      setBoardSize(Math.min(cap, maxH));
+      setBoardInner(Math.min(cap, maxH));
     };
     measure();
     window.addEventListener('resize', measure);
@@ -463,7 +326,7 @@ export default function Sludo({ currentUser }) {
       clearTimeout(turnDelayRef.current);
       turnDelayRef.current = null;
     }
-    setCaptureFxPos(null);
+    setCaptureFlash(null);
   }, []);
 
   useEffect(() => {
@@ -570,10 +433,8 @@ export default function Sludo({ currentUser }) {
         setDiceSpinning(false);
         playBlip(380 + payload.roll * 35, 0.05);
         if (payload.captures?.length) {
-          const c = payload.captures[0];
-          setCaptureFxId((k) => k + 1);
-          setCaptureFxPos(tokenVec3(c.playerIndex, YARD, c.tokenIndex));
-          setTimeout(() => setCaptureFxPos(null), 850);
+          setCaptureFlash(payload.captures);
+          setTimeout(() => setCaptureFlash(null), 900);
         }
         runPathAnimation(payload);
       };
@@ -692,6 +553,8 @@ export default function Sludo({ currentUser }) {
     return gameState?.players[pi]?.tokens?.[ti] ?? YARD;
   };
 
+  const pawnScale = Math.max(0.85, Math.min(1.35, boardInner / 380));
+
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-[#070a12] flex flex-col items-center justify-center px-4 font-[Syne,sans-serif]">
@@ -704,7 +567,7 @@ export default function Sludo({ currentUser }) {
         </Helmet>
         <div className="rounded-2xl border border-cyan-500/30 bg-slate-900/90 p-8 max-w-md text-center text-slate-200 shadow-[0_0_40px_rgba(34,211,238,0.15)]">
           <p className="mb-6 leading-relaxed text-sm">
-            Log in to play Sludo — 3D Ludo-style race with server-fair dice and orbit camera.
+            Log in to play Sludo — classic Ludo-style pawns on a neon board. Server-fair dice and moves.
           </p>
           <Link
             to="/games"
@@ -723,10 +586,10 @@ export default function Sludo({ currentUser }) {
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Helmet>
-        <title>Sludo — 3D multiplayer | Aquads</title>
+        <title>Sludo — Multiplayer | Aquads</title>
         <meta
           name="description"
-          content="Sludo: 3D Ludo-style board on Aquads — orbit the table, server-authoritative dice, captures, and home stretch."
+          content="Sludo: Ludo-style board on Aquads — server dice, captures, home stretch, classic pawns. Fair multiplayer."
         />
         <link rel="canonical" href="https://www.aquads.xyz/games/sludo" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -755,14 +618,14 @@ export default function Sludo({ currentUser }) {
         <h1 className="text-center flex-1 font-['Orbitron'] text-xs sm:text-sm tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300">
           SLUDO
         </h1>
-        <span className="text-[10px] text-fuchsia-300/80 hidden sm:inline tracking-widest">3D · 4P</span>
+        <span className="text-[10px] text-fuchsia-300/80 hidden sm:inline tracking-widest">4P · SYNC</span>
       </nav>
 
       <div className={`relative z-10 max-w-6xl mx-auto px-2 sm:px-4 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col pt-2' : 'pt-6'}`}>
         {!gameState && (
           <p className="text-center text-xs sm:text-sm text-slate-400 mb-6 max-w-xl mx-auto leading-relaxed">
-            <span className="text-cyan-300 font-semibold">Sludo</span> — spin the board in 3D, roll from the server, knock pieces to orbit,
-            and dock all four in the core. Drag to orbit · scroll to zoom.
+            <span className="text-cyan-300 font-semibold">Sludo</span> — race four pawns around the ring, bump rivals home on a lucky roll,
+            and finish with exact counts in the core.
           </p>
         )}
 
@@ -869,17 +732,135 @@ export default function Sludo({ currentUser }) {
 
             <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 items-stretch">
               <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden order-1">
-                <motion.div layout className="relative w-full flex justify-center items-center max-h-full">
-                  <SludoBoard3D
-                    boardSize={boardSize}
-                    gameState={gameState}
-                    displayTokenValue={displayTokenValue}
-                    choicePulse={choicePulse}
-                    myPlayerIndex={myPlayerIndex}
-                    selectPiece={selectPiece}
-                    captureFxPos={captureFxPos}
-                    captureFxId={captureFxId}
-                  />
+                <motion.div
+                  layout
+                  className="relative rounded-3xl border border-white/10 bg-slate-900/40 shadow-[0_0_60px_rgba(34,211,238,0.08)] w-full max-h-full"
+                  style={{
+                    width: boardInner + pad * 2 + 10,
+                    height: boardInner + pad * 2 + 10,
+                    maxWidth: '100%',
+                    maxHeight: 'min(100%, calc(100dvh - 7rem))',
+                    aspectRatio: '1 / 1',
+                  }}
+                >
+                  <svg
+                    width="100%"
+                    height="100%"
+                    viewBox={`0 0 ${svgSize} ${svgSize}`}
+                    className="block select-none"
+                    aria-label="Sludo board"
+                  >
+                    <defs>
+                      <filter id="sludo-pawn-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodOpacity="0.35" />
+                      </filter>
+                      <radialGradient id="sludo-hub" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="#1e293b" />
+                        <stop offset="100%" stopColor="#0f172a" />
+                      </radialGradient>
+                    </defs>
+
+                    <rect
+                      x={4}
+                      y={4}
+                      width={svgSize - 8}
+                      height={svgSize - 8}
+                      rx={18}
+                      fill="#0c1222"
+                      stroke="rgba(34,211,238,0.2)"
+                      strokeWidth={2}
+                    />
+                    <circle cx={CX} cy={CY} r={R + 16} fill="none" stroke="rgba(34,211,238,0.15)" strokeWidth={1} />
+                    <circle cx={CX} cy={CY} r={R + 6} fill="none" stroke="rgba(244,114,182,0.2)" strokeWidth={1} strokeDasharray="5 9" />
+
+                    {Array.from({ length: 52 }, (_, i) => {
+                      const a = cellAngle(i);
+                      const x = CX + R * Math.cos(a);
+                      const y = CY + R * Math.sin(a);
+                      const safe = SAFE_TRACK.has(i);
+                      const isStart = START.includes(i);
+                      const cr = safe ? 5.5 : 4.2;
+                      return (
+                        <g key={i}>
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={cr}
+                            fill={
+                              isStart ? 'rgba(244,114,182,0.4)' : safe ? 'rgba(250,204,21,0.28)' : 'rgba(148,163,184,0.14)'
+                            }
+                            stroke={isStart ? 'rgba(244,114,182,0.85)' : safe ? 'rgba(250,204,21,0.5)' : 'rgba(148,163,184,0.3)'}
+                            strokeWidth={1}
+                          />
+                        </g>
+                      );
+                    })}
+
+                    <circle cx={CX} cy={CY} r={28} fill="url(#sludo-hub)" stroke="rgba(34,211,238,0.4)" strokeWidth={2} />
+                    <text
+                      x={CX}
+                      y={CY + 5}
+                      textAnchor="middle"
+                      fill="rgba(148,163,184,0.75)"
+                      style={{ fontSize: 11, fontFamily: 'Orbitron, sans-serif' }}
+                    >
+                      CORE
+                    </text>
+
+                    <AnimatePresence>
+                      {captureFlash &&
+                        captureFlash.map((c, idx) => {
+                          const { x, y } = tokenXY(c.playerIndex, YARD, c.tokenIndex, boardInner);
+                          return (
+                            <motion.circle
+                              key={`cap-${c.playerIndex}-${c.tokenIndex}-${idx}`}
+                              cx={x}
+                              cy={y}
+                              r={18 * pawnScale}
+                              fill="none"
+                              stroke="#fb7185"
+                              strokeWidth={2}
+                              initial={{ opacity: 0.95, scale: 0.4 }}
+                              animate={{ opacity: 0, scale: 2.2 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.85 }}
+                            />
+                          );
+                        })}
+                    </AnimatePresence>
+
+                    {gameState.players.map((pl, pi) =>
+                      pl.tokens.map((t, ti) => {
+                        const tv = displayTokenValue(pi, ti);
+                        const { x, y } = tokenXY(pi, tv, ti, boardInner);
+                        const img = playerImageUrl(pl.image);
+                        const highlight =
+                          choicePulse &&
+                          choicePulse.playerIndex === pi &&
+                          choicePulse.options.includes(ti) &&
+                          myPlayerIndex === pi;
+                        return (
+                          <motion.g
+                            key={`${pl.userId}-${ti}`}
+                            initial={{ scale: 1 }}
+                            animate={{ scale: [1, 1.06, 1] }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <LudoPawn
+                              cx={x}
+                              cy={y}
+                              scale={pawnScale}
+                              color={pl.color}
+                              imageUrl={img}
+                              highlight={highlight}
+                              pawnId={`${pl.userId}-${ti}`}
+                              onClick={highlight ? () => selectPiece(ti) : undefined}
+                            />
+                          </motion.g>
+                        );
+                      })
+                    )}
+                  </svg>
                 </motion.div>
               </div>
 
@@ -889,7 +870,7 @@ export default function Sludo({ currentUser }) {
                   <ul className="space-y-2">
                     {gameState.players.map((p, i) => {
                       const turn = gameState.phase === 'playing' && gameState.currentTurnIndex === i;
-                      const doneCount = p.tokens.filter((t) => t === DONE).length;
+                      const doneCount = p.tokens.filter((tk) => tk === DONE).length;
                       return (
                         <li
                           key={p.userId}
@@ -912,7 +893,7 @@ export default function Sludo({ currentUser }) {
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 flex flex-col items-center gap-3">
-                  <DiceCube spinning={diceSpinning} value={diceValue} size={Math.min(76, boardSize * 0.16)} />
+                  <DiceCube spinning={diceSpinning} value={diceValue} size={Math.min(76, boardInner * 0.16)} />
                   {gameState.phase === 'lobby' && isHost && (
                     <button
                       type="button"
@@ -935,8 +916,7 @@ export default function Sludo({ currentUser }) {
                   )}
                   {gameState.phase === 'playing' && choicePulse && myPlayerIndex === choicePulse.playerIndex && (
                     <p className="text-[10px] text-center text-cyan-200/90 leading-relaxed">
-                      Rolled <span className="font-['Orbitron'] text-fuchsia-300">{choicePulse.roll}</span> — click a glowing piece on the
-                      board.
+                      Rolled <span className="font-['Orbitron'] text-fuchsia-300">{choicePulse.roll}</span> — tap a highlighted pawn.
                     </p>
                   )}
                   {gameState.phase === 'finished' && (
