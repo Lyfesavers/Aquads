@@ -10,6 +10,9 @@ const YARD = -1;
 const DONE = 200;
 const SAFE_TRACK = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
+/** Same order as server/ludo.js PLAYER_COLORS — used when a seat has no player yet (lobby / 2P). */
+const PLAYER_COLOR_DEFAULTS = ['#ff2d6a', '#00e5ff', '#b8ff00', '#c44dff'];
+
 const API_BASE = process.env.REACT_APP_API_URL || '';
 
 function playerImageUrl(src) {
@@ -356,9 +359,6 @@ function LudoPawn({ cx, cy, color, imageUrl, highlight, onClick, pawnId }) {
       transform={`translate(${cx}, ${cy})`}
       style={{ cursor: onClick ? 'pointer' : 'default' }}
       onClick={onClick}
-      onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
     >
       {highlight && (
         <motion.circle
@@ -675,6 +675,7 @@ export default function Sludo({ currentUser }) {
   };
 
   const players = gameState?.players || [];
+  const seatColor = (pi) => players[pi]?.color || PLAYER_COLOR_DEFAULTS[pi % 4];
 
   if (!currentUser) {
     return (
@@ -895,7 +896,7 @@ export default function Sludo({ currentUser }) {
                         const cream = '#f4efe6';
                         const field = '#123d28';
                         if (yo >= 0) {
-                          const col = players[yo]?.color || '#64748b';
+                          const col = seatColor(yo);
                           return (
                             <rect
                               key={`bg-${r}-${c}`}
@@ -904,7 +905,7 @@ export default function Sludo({ currentUser }) {
                               width={1}
                               height={1}
                               fill={col}
-                              fillOpacity={0.4}
+                              fillOpacity={0.52}
                             />
                           );
                         }
@@ -915,7 +916,7 @@ export default function Sludo({ currentUser }) {
                       })
                     )}
 
-                    {players.map((pl, pi) =>
+                    {[0, 1, 2, 3].map((pi) =>
                       (HOME_PATHS[pi] || []).map(([hr, hc], i) => (
                         <rect
                           key={`home-${pi}-${i}`}
@@ -923,39 +924,39 @@ export default function Sludo({ currentUser }) {
                           y={hr}
                           width={1}
                           height={1}
-                          fill={pl.color}
-                          fillOpacity={0.2}
+                          fill={seatColor(pi)}
+                          fillOpacity={0.34}
                         />
                       ))
                     )}
 
-                    <rect x={6} y={6} width={3} height={3} fill="#0f172a" opacity={0.28} />
+                    <rect x={6} y={6} width={3} height={3} fill="#1a2332" opacity={0.22} />
                     <path
-                      d="M 6 6 L 8 6 L 7 7 Z"
-                      fill={players[2]?.color || '#64748b'}
-                      fillOpacity={0.52}
-                      stroke="rgba(0,0,0,0.2)"
+                      d="M 6 6 L 8 6 L 7.5 7.5 Z"
+                      fill={seatColor(2)}
+                      fillOpacity={0.58}
+                      stroke="rgba(0,0,0,0.18)"
                       strokeWidth={0.02}
                     />
                     <path
-                      d="M 8 6 L 8 8 L 7 7 Z"
-                      fill={players[1]?.color || '#64748b'}
-                      fillOpacity={0.52}
-                      stroke="rgba(0,0,0,0.2)"
+                      d="M 8 6 L 8 8 L 7.5 7.5 Z"
+                      fill={seatColor(1)}
+                      fillOpacity={0.58}
+                      stroke="rgba(0,0,0,0.18)"
                       strokeWidth={0.02}
                     />
                     <path
-                      d="M 8 8 L 6 8 L 7 7 Z"
-                      fill={players[0]?.color || '#64748b'}
-                      fillOpacity={0.52}
-                      stroke="rgba(0,0,0,0.2)"
+                      d="M 8 8 L 6 8 L 7.5 7.5 Z"
+                      fill={seatColor(0)}
+                      fillOpacity={0.58}
+                      stroke="rgba(0,0,0,0.18)"
                       strokeWidth={0.02}
                     />
                     <path
-                      d="M 6 8 L 6 6 L 7 7 Z"
-                      fill={players[3]?.color || '#64748b'}
-                      fillOpacity={0.52}
-                      stroke="rgba(0,0,0,0.2)"
+                      d="M 6 8 L 6 6 L 7.5 7.5 Z"
+                      fill={seatColor(3)}
+                      fillOpacity={0.58}
+                      stroke="rgba(0,0,0,0.18)"
                       strokeWidth={0.02}
                     />
 
@@ -967,17 +968,18 @@ export default function Sludo({ currentUser }) {
                     ))}
 
                     {[
-                      { cx: 2.5, cy: 2.5, k: 'tl' },
-                      { cx: 12.5, cy: 2.5, k: 'tr' },
-                      { cx: 12.5, cy: 12.5, k: 'br' },
-                      { cx: 2.5, cy: 12.5, k: 'bl' },
-                    ].map(({ cx, cy, k }) => (
+                      { cx: 2.5, cy: 2.5, k: 'tl', seat: 3 },
+                      { cx: 12.5, cy: 2.5, k: 'tr', seat: 2 },
+                      { cx: 12.5, cy: 12.5, k: 'br', seat: 1 },
+                      { cx: 2.5, cy: 12.5, k: 'bl', seat: 0 },
+                    ].map(({ cx, cy, k, seat }) => (
                       <polygon
                         key={k}
                         points={`${cx},${cy - 1.1} ${cx + 1.1},${cy} ${cx},${cy + 1.1} ${cx - 1.1},${cy}`}
-                        fill="rgba(255,255,255,0.1)"
-                        stroke="rgba(0,0,0,0.32)"
-                        strokeWidth={0.04}
+                        fill="rgba(255,255,255,0.14)"
+                        stroke={seatColor(seat)}
+                        strokeOpacity={0.55}
+                        strokeWidth={0.05}
                         pointerEvents="none"
                       />
                     ))}
@@ -1026,7 +1028,7 @@ export default function Sludo({ currentUser }) {
                           gridC={sc}
                           dc={dc}
                           dr={dr}
-                          color={players[p]?.color || '#e2e8f0'}
+                          color={seatColor(p)}
                         />
                       );
                     })}
