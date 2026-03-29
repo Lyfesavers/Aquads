@@ -10,10 +10,6 @@ const YARD = -1;
 const DONE = 200;
 const SAFE_TRACK = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
-function gateOf(p) {
-  return (START[p] - 1 + 52) % 52;
-}
-
 const API_BASE = process.env.REACT_APP_API_URL || '';
 
 function playerImageUrl(src) {
@@ -23,10 +19,6 @@ function playerImageUrl(src) {
   return src;
 }
 
-function getPad(inner) {
-  return Math.round(12 + inner * 0.028);
-}
-
 const TOKEN_JITTER = [
   [-1, -1],
   [1, -1],
@@ -34,37 +26,171 @@ const TOKEN_JITTER = [
   [1, 1],
 ];
 
-function cellAngle(idx) {
-  return (idx / 52) * Math.PI * 2 - Math.PI / 2;
+/**
+ * 15×15 cross board — outer track (52 cells) in clockwise order.
+ * Independent layout for Sludo (Aquads); not copied from any branded board asset.
+ */
+const GRID = 15;
+
+const TRACK_GRID_52 = [
+  [14, 6],
+  [13, 6],
+  [12, 6],
+  [11, 6],
+  [10, 6],
+  [9, 6],
+  [8, 5],
+  [8, 4],
+  [8, 3],
+  [8, 2],
+  [8, 1],
+  [8, 0],
+  [7, 0],
+  [6, 0],
+  [6, 1],
+  [6, 2],
+  [6, 3],
+  [6, 4],
+  [6, 5],
+  [5, 6],
+  [4, 6],
+  [3, 6],
+  [2, 6],
+  [1, 6],
+  [0, 6],
+  [0, 7],
+  [0, 8],
+  [1, 8],
+  [2, 8],
+  [3, 8],
+  [4, 8],
+  [5, 8],
+  [6, 9],
+  [6, 10],
+  [6, 11],
+  [6, 12],
+  [6, 13],
+  [6, 14],
+  [7, 14],
+  [8, 14],
+  [8, 13],
+  [8, 12],
+  [8, 11],
+  [8, 10],
+  [8, 9],
+  [9, 8],
+  [10, 8],
+  [11, 8],
+  [12, 8],
+  [13, 8],
+  [14, 8],
+  [14, 7],
+];
+
+/** Aligns server ring index 0 with the first seat’s entry square on this grid. */
+const PATH_INDEX_OFFSET = 1;
+
+function trackGridCell(serverTrackIndex) {
+  return TRACK_GRID_52[(serverTrackIndex + PATH_INDEX_OFFSET) % 52];
 }
 
-function tokenXY(pi, t, ti, boardInner) {
-  const pad = getPad(boardInner);
-  const svgSize = boardInner + pad * 2 + 10;
-  const CX = svgSize / 2;
-  const CY = svgSize / 2;
-  const R = boardInner * 0.3;
+/* Seat 0 BL, 1 BR, 2 TR, 3 TL — five home cells (token 100–104) from each gate toward center. */
+const HOME_PATHS = [
+  [[13, 6], [12, 6], [11, 6], [10, 6], [9, 6]],
+  [[6, 2], [6, 3], [6, 4], [6, 5], [6, 6]],
+  [[2, 8], [3, 8], [4, 8], [5, 8], [6, 8]],
+  [[8, 12], [8, 11], [8, 10], [8, 9], [8, 8]],
+];
+
+const YARD_SLOTS = [
+  [
+    [11, 2],
+    [11, 3],
+    [12, 2],
+    [12, 3],
+  ],
+  [
+    [11, 11],
+    [11, 12],
+    [12, 11],
+    [12, 12],
+  ],
+  [
+    [2, 11],
+    [2, 12],
+    [3, 11],
+    [3, 12],
+  ],
+  [
+    [2, 2],
+    [2, 3],
+    [3, 2],
+    [3, 3],
+  ],
+];
+
+function yardOwner(r, c) {
+  if (r < 6 && c < 6) return 3;
+  if (r < 6 && c > 8) return 2;
+  if (r > 8 && c > 8) return 1;
+  if (r > 8 && c < 6) return 0;
+  return -1;
+}
+
+function isCrossArm(r, c) {
+  return (r >= 6 && r <= 8) || (c >= 6 && c <= 8);
+}
+
+function isCenter(r, c) {
+  return r >= 6 && r <= 8 && c >= 6 && c <= 8;
+}
+
+/** Token position in viewBox units (0–15); pawn group uses (c+0.5, r+0.5) after jitter. */
+function tokenCell(pi, t, ti) {
   const [jx, jy] = TOKEN_JITTER[ti] || [0, 0];
   if (t === YARD) {
-    const ang = cellAngle(START[pi]) + Math.PI;
-    const rr = R + boardInner * 0.11;
-    return { x: CX + rr * Math.cos(ang) + jx * 7, y: CY + rr * Math.sin(ang) + jy * 7 };
+    const slot = YARD_SLOTS[pi]?.[ti] || [7, 7];
+    return { r: slot[0] + jy * 0.18, c: slot[1] + jx * 0.18 };
   }
   if (t >= DONE) {
     const ang = (pi / 4) * Math.PI * 2 + ti * 0.55;
-    const rr = boardInner * 0.052;
-    return { x: CX + rr * Math.cos(ang), y: CY + rr * Math.sin(ang) };
+    return { r: 7.5 + Math.sin(ang) * 0.42, c: 7.5 + Math.cos(ang) * 0.42 };
   }
   if (t >= 100 && t <= 104) {
-    const h = t - 100;
-    const g = gateOf(pi);
-    const a = cellAngle(g);
-    const inward = 0.14 + (h + 1) * 0.095;
-    const rr = R * (1 - inward);
-    return { x: CX + rr * Math.cos(a) + jx * 4, y: CY + rr * Math.sin(a) + jy * 4 };
+    const cell = HOME_PATHS[pi]?.[t - 100] || [7, 7];
+    return { r: cell[0] + jy * 0.1, c: cell[1] + jx * 0.1 };
   }
-  const a = cellAngle(t);
-  return { x: CX + R * Math.cos(a) + jx * 6, y: CY + R * Math.sin(a) + jy * 6 };
+  const [tr, tc] = trackGridCell(t);
+  return { r: tr + jy * 0.14, c: tc + jx * 0.14 };
+}
+
+function tokenVB(pi, t, ti) {
+  const p = tokenCell(pi, t, ti);
+  return { x: p.c + 0.5, y: p.r + 0.5 };
+}
+
+function nextTrackDir(serverI) {
+  const [r0, c0] = trackGridCell(serverI);
+  const [r1, c1] = trackGridCell((serverI + 1) % 52);
+  return { dc: c1 - c0, dr: r1 - r0 };
+}
+
+function StartMarker({ gridR, gridC, dc, dr, color }) {
+  const cx = gridC + 0.5;
+  const cy = gridR + 0.5;
+  const hyp = Math.hypot(dc, dr) || 1;
+  const nx = dc / hyp;
+  const ny = dr / hyp;
+  const ax = cx + nx * 0.28;
+  const ay = cy + ny * 0.28;
+  const bx = cx - nx * 0.2;
+  const by = cy - ny * 0.2;
+  const wx = -ny * 0.16;
+  const wy = nx * 0.16;
+  const points = `${ax},${ay} ${bx + wx},${by + wy} ${bx - wx},${by - wy}`;
+  return (
+    <polygon points={points} fill={color} fillOpacity={0.92} stroke="rgba(0,0,0,0.4)" strokeWidth={0.025} pointerEvents="none" />
+  );
 }
 
 function playBlip(freq = 520, dur = 0.06) {
@@ -221,9 +347,9 @@ function pathValueAfterSegment(v, seg) {
   return v;
 }
 
-/** Classic Ludo-style pawn: domed head + tapered body (local coords, tip up). */
-function LudoPawn({ cx, cy, scale, color, imageUrl, highlight, onClick, pawnId }) {
-  const headR = 5.2 * scale;
+/** Classic Ludo-style pawn in viewBox coordinates (~1 cell tall). */
+function LudoPawn({ cx, cy, color, imageUrl, highlight, onClick, pawnId }) {
+  const headR = 0.2;
   const clipId = `sludo-av-${pawnId}`;
   return (
     <g
@@ -236,12 +362,12 @@ function LudoPawn({ cx, cy, scale, color, imageUrl, highlight, onClick, pawnId }
     >
       {highlight && (
         <motion.circle
-          r={headR * 2.4}
+          r={headR * 2.5}
           fill="none"
           stroke="rgba(34,211,238,0.95)"
-          strokeWidth={1.8}
+          strokeWidth={0.06}
           initial={{ opacity: 0.6 }}
-          animate={{ opacity: [0.5, 1, 0.5], r: [headR * 2.1, headR * 2.6, headR * 2.1] }}
+          animate={{ opacity: [0.5, 1, 0.5], r: [headR * 2.2, headR * 2.75, headR * 2.2] }}
           transition={{ duration: 1.05, repeat: Infinity }}
         />
       )}
@@ -252,10 +378,10 @@ function LudoPawn({ cx, cy, scale, color, imageUrl, highlight, onClick, pawnId }
             C ${headR * 1.45} ${-headR * 1.35} ${headR * 1.05} ${-headR * 2.4} 0 ${-headR * 2.4} Z`}
         fill={color}
         stroke="rgba(0,0,0,0.45)"
-        strokeWidth={1.1 * scale}
+        strokeWidth={0.035}
         filter="url(#sludo-pawn-shadow)"
       />
-      <circle cx={0} cy={-headR * 2.35} r={headR} fill={color} stroke="rgba(255,255,255,0.5)" strokeWidth={1 * scale} />
+      <circle cx={0} cy={-headR * 2.35} r={headR} fill={color} stroke="rgba(255,255,255,0.5)" strokeWidth={0.03} />
       {imageUrl ? (
         <>
           <defs>
@@ -298,11 +424,6 @@ export default function Sludo({ currentUser }) {
   const spinStartRef = useRef(0);
 
   const myUserId = currentUser?.userId || currentUser?.id;
-  const pad = getPad(boardInner);
-  const svgSize = boardInner + pad * 2 + 10;
-  const CX = svgSize / 2;
-  const CY = svgSize / 2;
-  const R = boardInner * 0.3;
 
   useEffect(() => {
     const measure = () => {
@@ -553,7 +674,7 @@ export default function Sludo({ currentUser }) {
     return gameState?.players[pi]?.tokens?.[ti] ?? YARD;
   };
 
-  const pawnScale = Math.max(0.85, Math.min(1.35, boardInner / 380));
+  const players = gameState?.players || [];
 
   if (!currentUser) {
     return (
@@ -736,8 +857,8 @@ export default function Sludo({ currentUser }) {
                   layout
                   className="relative rounded-3xl border border-white/10 bg-slate-900/40 shadow-[0_0_60px_rgba(34,211,238,0.08)] w-full max-h-full"
                   style={{
-                    width: boardInner + pad * 2 + 10,
-                    height: boardInner + pad * 2 + 10,
+                    width: boardInner + 16,
+                    height: boardInner + 16,
                     maxWidth: '100%',
                     maxHeight: 'min(100%, calc(100dvh - 7rem))',
                     aspectRatio: '1 / 1',
@@ -746,63 +867,178 @@ export default function Sludo({ currentUser }) {
                   <svg
                     width="100%"
                     height="100%"
-                    viewBox={`0 0 ${svgSize} ${svgSize}`}
+                    viewBox="0 0 15 15"
                     className="block select-none"
                     aria-label="Sludo board"
                   >
                     <defs>
                       <filter id="sludo-pawn-shadow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodOpacity="0.35" />
+                        <feDropShadow dx="0" dy="0.03" stdDeviation="0.04" floodOpacity="0.35" />
                       </filter>
-                      <radialGradient id="sludo-hub" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#1e293b" />
-                        <stop offset="100%" stopColor="#0f172a" />
-                      </radialGradient>
                     </defs>
 
                     <rect
-                      x={4}
-                      y={4}
-                      width={svgSize - 8}
-                      height={svgSize - 8}
-                      rx={18}
-                      fill="#0c1222"
-                      stroke="rgba(34,211,238,0.2)"
-                      strokeWidth={2}
+                      x="0"
+                      y="0"
+                      width="15"
+                      height="15"
+                      rx="0.28"
+                      fill="#0a1610"
+                      stroke="rgba(34,211,238,0.22)"
+                      strokeWidth="0.07"
                     />
-                    <circle cx={CX} cy={CY} r={R + 16} fill="none" stroke="rgba(34,211,238,0.15)" strokeWidth={1} />
-                    <circle cx={CX} cy={CY} r={R + 6} fill="none" stroke="rgba(244,114,182,0.2)" strokeWidth={1} strokeDasharray="5 9" />
 
-                    {Array.from({ length: 52 }, (_, i) => {
-                      const a = cellAngle(i);
-                      const x = CX + R * Math.cos(a);
-                      const y = CY + R * Math.sin(a);
-                      const safe = SAFE_TRACK.has(i);
-                      const isStart = START.includes(i);
-                      const cr = safe ? 5.5 : 4.2;
+                    {Array.from({ length: GRID }, (_, r) =>
+                      Array.from({ length: GRID }, (_, c) => {
+                        if (isCenter(r, c)) return null;
+                        const yo = yardOwner(r, c);
+                        const cream = '#f4efe6';
+                        const field = '#123d28';
+                        if (yo >= 0) {
+                          const col = players[yo]?.color || '#64748b';
+                          return (
+                            <rect
+                              key={`bg-${r}-${c}`}
+                              x={c}
+                              y={r}
+                              width={1}
+                              height={1}
+                              fill={col}
+                              fillOpacity={0.4}
+                            />
+                          );
+                        }
+                        if (isCrossArm(r, c)) {
+                          return <rect key={`bg-${r}-${c}`} x={c} y={r} width={1} height={1} fill={cream} />;
+                        }
+                        return <rect key={`bg-${r}-${c}`} x={c} y={r} width={1} height={1} fill={field} />;
+                      })
+                    )}
+
+                    {players.map((pl, pi) =>
+                      (HOME_PATHS[pi] || []).map(([hr, hc], i) => (
+                        <rect
+                          key={`home-${pi}-${i}`}
+                          x={hc}
+                          y={hr}
+                          width={1}
+                          height={1}
+                          fill={pl.color}
+                          fillOpacity={0.2}
+                        />
+                      ))
+                    )}
+
+                    <rect x={6} y={6} width={3} height={3} fill="#0f172a" opacity={0.28} />
+                    <path
+                      d="M 6 6 L 8 6 L 7 7 Z"
+                      fill={players[2]?.color || '#64748b'}
+                      fillOpacity={0.52}
+                      stroke="rgba(0,0,0,0.2)"
+                      strokeWidth={0.02}
+                    />
+                    <path
+                      d="M 8 6 L 8 8 L 7 7 Z"
+                      fill={players[1]?.color || '#64748b'}
+                      fillOpacity={0.52}
+                      stroke="rgba(0,0,0,0.2)"
+                      strokeWidth={0.02}
+                    />
+                    <path
+                      d="M 8 8 L 6 8 L 7 7 Z"
+                      fill={players[0]?.color || '#64748b'}
+                      fillOpacity={0.52}
+                      stroke="rgba(0,0,0,0.2)"
+                      strokeWidth={0.02}
+                    />
+                    <path
+                      d="M 6 8 L 6 6 L 7 7 Z"
+                      fill={players[3]?.color || '#64748b'}
+                      fillOpacity={0.52}
+                      stroke="rgba(0,0,0,0.2)"
+                      strokeWidth={0.02}
+                    />
+
+                    {Array.from({ length: GRID + 1 }, (_, i) => (
+                      <React.Fragment key={`grid-${i}`}>
+                        <line x1={i} y1={0} x2={i} y2={15} stroke="rgba(0,0,0,0.42)" strokeWidth={0.035} />
+                        <line x1={0} y1={i} x2={15} y2={i} stroke="rgba(0,0,0,0.42)" strokeWidth={0.035} />
+                      </React.Fragment>
+                    ))}
+
+                    {[
+                      { cx: 2.5, cy: 2.5, k: 'tl' },
+                      { cx: 12.5, cy: 2.5, k: 'tr' },
+                      { cx: 12.5, cy: 12.5, k: 'br' },
+                      { cx: 2.5, cy: 12.5, k: 'bl' },
+                    ].map(({ cx, cy, k }) => (
+                      <polygon
+                        key={k}
+                        points={`${cx},${cy - 1.1} ${cx + 1.1},${cy} ${cx},${cy + 1.1} ${cx - 1.1},${cy}`}
+                        fill="rgba(255,255,255,0.1)"
+                        stroke="rgba(0,0,0,0.32)"
+                        strokeWidth={0.04}
+                        pointerEvents="none"
+                      />
+                    ))}
+
+                    {YARD_SLOTS.flatMap((corner, pi) =>
+                      corner.map(([yr, yc], idx) => (
+                        <circle
+                          key={`yd-${pi}-${idx}`}
+                          cx={yc + 0.5}
+                          cy={yr + 0.5}
+                          r={0.19}
+                          fill="rgba(255,255,255,0.18)"
+                          stroke="rgba(0,0,0,0.28)"
+                          strokeWidth={0.02}
+                          pointerEvents="none"
+                        />
+                      ))
+                    )}
+
+                    {[...SAFE_TRACK].map((ti) => {
+                      const [tr, tc] = trackGridCell(ti);
                       return (
-                        <g key={i}>
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r={cr}
-                            fill={
-                              isStart ? 'rgba(244,114,182,0.4)' : safe ? 'rgba(250,204,21,0.28)' : 'rgba(148,163,184,0.14)'
-                            }
-                            stroke={isStart ? 'rgba(244,114,182,0.85)' : safe ? 'rgba(250,204,21,0.5)' : 'rgba(148,163,184,0.3)'}
-                            strokeWidth={1}
-                          />
-                        </g>
+                        <text
+                          key={`safe-${ti}`}
+                          x={tc + 0.5}
+                          y={tr + 0.62}
+                          textAnchor="middle"
+                          fill="#ca8a04"
+                          fontSize={0.52}
+                          fontFamily="system-ui,sans-serif"
+                          pointerEvents="none"
+                          aria-hidden
+                        >
+                          ★
+                        </text>
                       );
                     })}
 
-                    <circle cx={CX} cy={CY} r={28} fill="url(#sludo-hub)" stroke="rgba(34,211,238,0.4)" strokeWidth={2} />
+                    {[0, 1, 2, 3].map((p) => {
+                      const [sr, sc] = trackGridCell(START[p]);
+                      const { dc, dr } = nextTrackDir(START[p]);
+                      return (
+                        <StartMarker
+                          key={`st-${p}`}
+                          gridR={sr}
+                          gridC={sc}
+                          dc={dc}
+                          dr={dr}
+                          color={players[p]?.color || '#e2e8f0'}
+                        />
+                      );
+                    })}
+
                     <text
-                      x={CX}
-                      y={CY + 5}
+                      x={7.5}
+                      y={7.62}
                       textAnchor="middle"
-                      fill="rgba(148,163,184,0.75)"
-                      style={{ fontSize: 11, fontFamily: 'Orbitron, sans-serif' }}
+                      fill="rgba(148,163,184,0.5)"
+                      fontSize={0.36}
+                      fontFamily="Orbitron, sans-serif"
+                      pointerEvents="none"
                     >
                       CORE
                     </text>
@@ -810,16 +1046,16 @@ export default function Sludo({ currentUser }) {
                     <AnimatePresence>
                       {captureFlash &&
                         captureFlash.map((c, idx) => {
-                          const { x, y } = tokenXY(c.playerIndex, YARD, c.tokenIndex, boardInner);
+                          const { x, y } = tokenVB(c.playerIndex, YARD, c.tokenIndex);
                           return (
                             <motion.circle
                               key={`cap-${c.playerIndex}-${c.tokenIndex}-${idx}`}
                               cx={x}
                               cy={y}
-                              r={18 * pawnScale}
+                              r={0.38}
                               fill="none"
                               stroke="#fb7185"
-                              strokeWidth={2}
+                              strokeWidth={0.06}
                               initial={{ opacity: 0.95, scale: 0.4 }}
                               animate={{ opacity: 0, scale: 2.2 }}
                               exit={{ opacity: 0 }}
@@ -832,7 +1068,7 @@ export default function Sludo({ currentUser }) {
                     {gameState.players.map((pl, pi) =>
                       pl.tokens.map((t, ti) => {
                         const tv = displayTokenValue(pi, ti);
-                        const { x, y } = tokenXY(pi, tv, ti, boardInner);
+                        const { x, y } = tokenVB(pi, tv, ti);
                         const img = playerImageUrl(pl.image);
                         const highlight =
                           choicePulse &&
@@ -849,7 +1085,6 @@ export default function Sludo({ currentUser }) {
                             <LudoPawn
                               cx={x}
                               cy={y}
-                              scale={pawnScale}
                               color={pl.color}
                               imageUrl={img}
                               highlight={highlight}
