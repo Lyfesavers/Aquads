@@ -72,6 +72,7 @@ const DotsAndBoxes = lazy(() => import('./components/DotsAndBoxes'));
 const HorseRacing = lazy(() => import('./components/HorseRacing'));
 const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
 const BeanstalksAndChutes = lazy(() => import('./components/BeanstalksAndChutes'));
+const Sludo = lazy(() => import('./components/Sludo'));
 
 const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
@@ -2623,6 +2624,8 @@ function App() {
           <Route path="/games/crossword" element={<CrosswordPuzzle currentUser={currentUser} />} />
           <Route path="/games/beanstalks-and-chutes" element={<BeanstalksAndChutes currentUser={currentUser} />} />
           <Route path="/games/snakes-and-ladders" element={<Navigate to="/games/beanstalks-and-chutes" replace />} />
+          <Route path="/games/sludo" element={<Sludo currentUser={currentUser} />} />
+          <Route path="/games/pulse-ludo" element={<Navigate to="/games/sludo" replace />} />
 
           <Route path="/games/:id" element={
             <GamePage

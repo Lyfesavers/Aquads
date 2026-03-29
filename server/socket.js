@@ -3,6 +3,7 @@ const {
   serializeHyperSpaceOrderListItemForUser
 } = require('./utils/hyperSpacePublicOrder');
 const { attachBeanstalksChutes } = require('./beanstalksChutes');
+const { attachLudo } = require('./ludo');
 
 // Socket.io singleton instance
 let io;
@@ -48,6 +49,7 @@ function init(server) {
   // Add socket event handlers
   io.on('connection', (socket) => {
     attachBeanstalksChutes(socket, io);
+    attachLudo(socket, io);
 
     // Handle user requesting affiliate info
     socket.on('requestAffiliateInfo', async (userData) => {
