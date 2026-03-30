@@ -1,0 +1,12 @@
+# Smaller build context; do not exclude server/ or public/
+node_modules
+build
+.git
+.github
+.env
+.env.*
+!.env.example
+coverage
+*.log
+logs
+.cursor

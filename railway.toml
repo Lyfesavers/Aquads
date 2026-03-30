@@ -1,10 +1,8 @@
 [build]
-# Install is server-only (railpack.json). Netlify builds the CRA app; this service is the API.
-# No buildCommand — avoids a second full server install after npm ci.
-
-# Fonts for Sharp on Linux; if missing, set: RAILPACK_DEPLOY_APT_PACKAGES="fontconfig fonts-dejavu-core"
+# Builds use the repo-root Dockerfile (single server npm ci). No Railpack buildCommand.
 
 [deploy]
+# Run from repo layout /app (Railway may not use image WORKDIR for this).
 startCommand = "cd server && node index.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
