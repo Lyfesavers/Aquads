@@ -546,6 +546,7 @@ export default function Sludo({ currentUser }) {
   const [choicePulse, setChoicePulse] = useState(null);
   const [boardInner, setBoardInner] = useState(420);
   const [captureFlash, setCaptureFlash] = useState(null);
+  const [vsCpuCount, setVsCpuCount] = useState(1);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
@@ -714,9 +715,11 @@ export default function Sludo({ currentUser }) {
         runPathAnimation(payload);
       };
 
-      const minSpin = 1000;
+      const isCpuActor = payload.state?.players?.[payload.playerIndex]?.isCpu;
+      const minSpin = isCpuActor ? 380 : 1000;
       const elapsed = Date.now() - spinStartRef.current;
       const wait = Math.max(0, minSpin - elapsed);
+      if (isCpuActor) setDiceSpinning(true);
       if (wait > 0) turnDelayRef.current = setTimeout(settle, wait);
       else settle();
     };
@@ -758,6 +761,13 @@ export default function Sludo({ currentUser }) {
     setError('');
     setBanner('');
     socket.emit('ludo:createRoom');
+  };
+
+  const createVsCpuRoom = () => {
+    setError('');
+    setBanner('');
+    const n = Math.min(3, Math.max(1, Number(vsCpuCount) || 1));
+    socket.emit('ludo:createVsCpuRoom', { cpuCount: n });
   };
 
   const joinRoom = () => {
@@ -953,6 +963,47 @@ export default function Sludo({ currentUser }) {
               </motion.div>
             </div>
 
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="mt-4 rounded-2xl border border-violet-500/30 bg-slate-900/60 p-5 shadow-[0_0_32px_rgba(139,92,246,0.14)]"
+            >
+              <h2 className="font-['Orbitron'] text-xs tracking-widest text-violet-200 mb-2">VS COMPUTER</h2>
+              <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
+                Fill the table with computer players — you take one corner, they take the rest. Same rules and server-fair dice.
+              </p>
+              <div className="mb-3">
+                <p className="text-[10px] text-slate-500 mb-1.5 tracking-wide">CPU opponents</p>
+                <div className="flex rounded-xl border border-white/10 overflow-hidden bg-black/30">
+                  {[1, 2, 3].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setVsCpuCount(n)}
+                      className={`flex-1 py-2 text-xs font-bold transition ${
+                        vsCpuCount === n
+                          ? 'bg-violet-600/90 text-white'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1.5">
+                  {vsCpuCount === 1 ? '1v1' : vsCpuCount === 2 ? 'You + 2 CPUs (3 players)' : 'You + 3 CPUs (full 4)'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={createVsCpuRoom}
+                className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-violet-900/35 hover:brightness-110"
+              >
+                Start vs {vsCpuCount} computer{vsCpuCount > 1 ? 's' : ''}
+              </button>
+            </motion.div>
+
             <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h2 className="font-['Orbitron'] text-xs tracking-widest text-slate-300">OPEN LOBBIES</h2>
@@ -995,6 +1046,11 @@ export default function Sludo({ currentUser }) {
         ) : (
           <div className="flex flex-col min-w-0 min-h-0 gap-2 flex-1">
             <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {gameState.vsCpu && (
+                <span className="font-['Orbitron'] text-[9px] tracking-[0.2em] text-violet-200 border border-violet-500/40 rounded-lg px-2 py-1 bg-violet-500/15">
+                  VS CPU
+                </span>
+              )}
               <span className="font-['Orbitron'] text-[10px] sm:text-xs tracking-[0.25em] text-cyan-300 border border-cyan-500/40 rounded-lg px-2 py-1 bg-cyan-500/10">
                 {gameState.code}
               </span>
@@ -1289,9 +1345,11 @@ export default function Sludo({ currentUser }) {
                         >
                           <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: p.color }} />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold truncate">{p.username}</div>
+                            <div className="text-xs font-semibold truncate">{p.isCpu ? '🤖 ' : ''}{p.username}</div>
                             <div className="text-[10px] text-slate-500">
-                              Docked {doneCount}/4 {!p.connected && '· offline'}
+                              Docked {doneCount}/4
+                              {p.isCpu ? ' · AI' : ''}
+                              {!p.connected && !p.isCpu ? ' · offline' : ''}
                             </div>
                           </div>
                           {turn && <span className="text-[9px] text-cyan-300 font-['Orbitron']">TURN</span>}
@@ -1313,6 +1371,11 @@ export default function Sludo({ currentUser }) {
                       Start game
                     </button>
                   )}
+                  {gameState.phase === 'playing' &&
+                    gameState.players[gameState.currentTurnIndex]?.isCpu &&
+                    !animating && (
+                      <p className="text-[10px] text-center text-violet-200/90 leading-relaxed">Computer is rolling…</p>
+                    )}
                   {gameState.phase === 'playing' && isMyTurn && !gameState.awaitingChoice && !animating && (
                     <button
                       type="button"

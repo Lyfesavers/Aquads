@@ -7,6 +7,23 @@ const MAX_PLAYERS = 4;
 const MIN_PLAYERS_TO_START = 2;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+function cpuPlayerId(slot) {
+  return `__ludo_cpu__${slot}`;
+}
+
+function cpuPlayerUsername(slot, totalCpus) {
+  if (totalCpus === 1) return 'Computer';
+  return `Computer ${slot + 1}`;
+}
+
+const cpuTurnTimers = new Map();
+
+function clearCpuTurnTimer(code) {
+  const t = cpuTurnTimers.get(code);
+  if (t) clearTimeout(t);
+  cpuTurnTimers.delete(code);
+}
+
 const PLAYER_COLORS = ['#ff2d6a', '#00e5ff', '#b8ff00', '#c44dff'];
 
 /* Seat 0 BL, 1 BR, 2 TR, 3 TL — indices 1 and 3 match BR/TL yards and colored arms. */
@@ -246,11 +263,87 @@ function allTokensDone(pl) {
   return pl.tokens.every((t) => t === DONE);
 }
 
+function advanceLudoTurn(room, rolledSix) {
+  if (rolledSix) return;
+  room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+}
+
+/** Lower = closer to winning (CPU move heuristic). */
+function tokenGoalDistance(room, playerIndex, tokenIndex) {
+  const t = room.players[playerIndex].tokens[tokenIndex];
+  if (t === DONE) return 0;
+  if (t === YARD) return 130;
+  if (isHome(t)) {
+    const h = homeStep(t);
+    return Math.max(0, 6 - h);
+  }
+  if (!isTrack(t)) return 130;
+  const g = gateSq(playerIndex);
+  let pos = t;
+  for (let d = 0; d < 60; d++) {
+    if (pos === g) return d + 7;
+    pos = (pos + 1) % 52;
+  }
+  return 100;
+}
+
+function sumTokenDistances(room, playerIndex) {
+  let s = 0;
+  for (let ti = 0; ti < 4; ti++) s += tokenGoalDistance(room, playerIndex, ti);
+  return s;
+}
+
+function sumOpponentDistances(room, cpuPlayerIndex) {
+  let s = 0;
+  room.players.forEach((_, opi) => {
+    if (opi === cpuPlayerIndex) return;
+    s += sumTokenDistances(room, opi);
+  });
+  return s;
+}
+
+function pickHardCpuMove(room, cpuPlayerIndex, roll, legal) {
+  let best = legal[0];
+  let bestScore = -Infinity;
+  for (const move of legal) {
+    const res = tryMoveToken(room, cpuPlayerIndex, move.tokenIndex, roll);
+    if (!res) continue;
+    const sim = { players: res.clonePlayers };
+    if (allTokensDone(sim.players[cpuPlayerIndex])) return move;
+
+    let s = 0;
+    for (const cap of move.captures) {
+      s += 420;
+      s += tokenGoalDistance(room, cap.playerIndex, cap.tokenIndex) * 0.4;
+    }
+    if (res.newTokens[move.tokenIndex] === DONE) s += 950;
+    for (const seg of move.path) {
+      if (seg.kind === 'yardOut') s += 100;
+      if (seg.kind === 'enterHome') s += 140;
+      if (seg.kind === 'home') s += 22 + seg.step * 20;
+      if (seg.kind === 'finish') s += 220;
+    }
+    const myBefore = sumTokenDistances(room, cpuPlayerIndex);
+    const myAfter = sumTokenDistances(sim, cpuPlayerIndex);
+    s += (myBefore - myAfter) * 14;
+    const oppBefore = sumOpponentDistances(room, cpuPlayerIndex);
+    const oppAfter = sumOpponentDistances(sim, cpuPlayerIndex);
+    s += (oppAfter - oppBefore) * 10;
+
+    if (s > bestScore || (s === bestScore && crypto.randomInt(0, 2) === 0)) {
+      bestScore = s;
+      best = move;
+    }
+  }
+  return best;
+}
+
 function publicState(room) {
   return {
     code: room.code,
     phase: room.phase,
     hostId: room.hostId,
+    vsCpu: !!room.vsCpu,
     players: room.players.map((p) => ({
       userId: p.userId,
       username: p.username,
@@ -258,6 +351,7 @@ function publicState(room) {
       tokens: [...p.tokens],
       connected: p.connected,
       image: p.image || null,
+      isCpu: !!p.isCpu,
     })),
     currentTurnIndex: room.currentTurnIndex,
     winnerIndex: room.winnerIndex,
@@ -274,8 +368,12 @@ function removePlayerFromRoom(room, userId) {
   const idx = room.players.findIndex((p) => p.userId === userId);
   if (idx === -1) return;
   room.players.splice(idx, 1);
+  if (room.vsCpu && !room.players.some((p) => !p.isCpu)) {
+    room.players.length = 0;
+  }
   if (room.hostId === userId && room.players.length > 0) {
-    room.hostId = room.players[0].userId;
+    const human = room.players.find((p) => !p.isCpu);
+    room.hostId = human ? human.userId : room.players[0].userId;
   }
   if (room.phase === 'playing') {
     if (room.players.length < MIN_PLAYERS_TO_START) {
@@ -299,6 +397,7 @@ function pruneRooms() {
   const now = Date.now();
   for (const [code, room] of rooms.entries()) {
     if (room.players.length === 0 && now - room.createdAt > 60000) {
+      clearCpuTurnTimer(code);
       rooms.delete(code);
     }
   }
@@ -309,6 +408,7 @@ setInterval(pruneRooms, 5 * 60 * 1000);
 function buildOpenRoomsList() {
   const list = [];
   for (const room of rooms.values()) {
+    if (room.vsCpu) continue;
     if (room.phase !== 'lobby') continue;
     if (room.players.length >= MAX_PLAYERS) continue;
     const host = room.players.find((pl) => pl.userId === room.hostId) || room.players[0];
@@ -347,7 +447,10 @@ function leaveRoomSocket(socket, io) {
     room.players.find((pl) => pl.socketId === socket.id) ||
     (userId ? room.players.find((pl) => pl.userId === userId) : null);
   if (!p) {
-    if (room.players.length === 0) rooms.delete(code);
+    if (room.players.length === 0) {
+      clearCpuTurnTimer(code);
+      rooms.delete(code);
+    }
     notifyOpenRoomsChanged(io);
     return;
   }
@@ -361,6 +464,7 @@ function leaveRoomSocket(socket, io) {
   }
 
   if (room.players.length === 0) {
+    clearCpuTurnTimer(code);
     rooms.delete(code);
     notifyOpenRoomsChanged(io);
     return;
@@ -420,6 +524,65 @@ function attachLudo(socket, io) {
     notifyOpenRoomsChanged(io);
   });
 
+  socket.on('ludo:createVsCpuRoom', async (payload) => {
+    const user = verifySocketUser(socket);
+    if (!user) {
+      socket.emit('ludo:error', { message: 'Login required to play.' });
+      return;
+    }
+    let cpuCount = Number(payload?.cpuCount);
+    if (!Number.isInteger(cpuCount) || cpuCount < 1 || cpuCount > 3) {
+      socket.emit('ludo:error', { message: 'Choose 1 to 3 CPU opponents.' });
+      return;
+    }
+    leaveRoomSocket(socket, io);
+
+    const image = await fetchProfileImage(user.userId);
+    const code = genRoomCode();
+    const players = [
+      {
+        userId: user.userId,
+        username: user.username,
+        color: PLAYER_COLORS[0],
+        tokens: [YARD, YARD, YARD, YARD],
+        socketId: socket.id,
+        connected: true,
+        image,
+      },
+    ];
+    for (let i = 0; i < cpuCount; i++) {
+      players.push({
+        userId: cpuPlayerId(i),
+        username: cpuPlayerUsername(i, cpuCount),
+        color: PLAYER_COLORS[(1 + i) % PLAYER_COLORS.length],
+        tokens: [YARD, YARD, YARD, YARD],
+        socketId: null,
+        connected: true,
+        image: null,
+        isCpu: true,
+      });
+    }
+    const room = {
+      code,
+      hostId: user.userId,
+      vsCpu: true,
+      players,
+      phase: 'lobby',
+      currentTurnIndex: 0,
+      winnerIndex: null,
+      createdAt: Date.now(),
+      busy: false,
+      pendingRoll: null,
+      awaitingChoice: null,
+    };
+    rooms.set(code, room);
+    socket.join(roomChannel(code));
+    socketToRoom.set(socket.id, code);
+    socket.emit('ludo:joined', { state: publicState(room) });
+    io.to(roomChannel(code)).emit('ludo:state', publicState(room));
+    notifyOpenRoomsChanged(io);
+  });
+
   socket.on('ludo:joinRoom', async (payload) => {
     const user = verifySocketUser(socket);
     if (!user) {
@@ -454,6 +617,11 @@ function attachLudo(socket, io) {
       socket.emit('ludo:joined', { state: publicState(room) });
       io.to(roomChannel(code)).emit('ludo:state', publicState(room));
       notifyOpenRoomsChanged(io);
+      return;
+    }
+
+    if (room.vsCpu) {
+      socket.emit('ludo:error', { message: 'Cannot join — that match is vs computer.' });
       return;
     }
 
@@ -506,6 +674,7 @@ function attachLudo(socket, io) {
     socket.leave(roomChannel(code));
 
     if (room.players.length === 0) {
+      clearCpuTurnTimer(code);
       rooms.delete(code);
     } else {
       io.to(roomChannel(code)).emit('ludo:state', publicState(room));
@@ -545,11 +714,110 @@ function attachLudo(socket, io) {
     });
     io.to(roomChannel(room.code)).emit('ludo:state', publicState(room));
     notifyOpenRoomsChanged(io);
+    scheduleCpuTurnIfNeeded(room, io);
   });
 
-  function advanceTurn(room, rolledSix) {
-    if (rolledSix) return;
-    room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+  function emitPassTurn(room, turnIdx, roll, io) {
+    const current = room.players[turnIdx];
+    room.pendingRoll = null;
+    room.awaitingChoice = null;
+    advanceLudoTurn(room, roll === 6);
+    room.busy = false;
+    io.to(roomChannel(room.code)).emit('ludo:turnResult', {
+      type: 'pass',
+      playerIndex: turnIdx,
+      username: current.username,
+      roll,
+      path: [],
+      captures: [],
+      tokenIndex: null,
+      extraTurn: false,
+      gameOver: false,
+      state: publicState(room),
+    });
+    scheduleCpuTurnIfNeeded(room, io);
+  }
+
+  function emitMoveTurn(room, turnIdx, pick, roll, io) {
+    const current = room.players[turnIdx];
+    const moveFrom = current.tokens[pick.tokenIndex];
+    room.busy = true;
+    const res = tryMoveToken(room, turnIdx, pick.tokenIndex, roll);
+    room.players = res.clonePlayers;
+    room.players[turnIdx].tokens = res.newTokens;
+    const won = allTokensDone(room.players[turnIdx]);
+    if (won) {
+      room.phase = 'finished';
+      room.winnerIndex = turnIdx;
+    } else {
+      advanceLudoTurn(room, roll === 6);
+    }
+    room.pendingRoll = null;
+    room.awaitingChoice = null;
+    room.busy = false;
+    io.to(roomChannel(room.code)).emit('ludo:turnResult', {
+      type: 'move',
+      playerIndex: turnIdx,
+      username: current.username,
+      roll,
+      path: pick.path,
+      captures: pick.captures,
+      tokenIndex: pick.tokenIndex,
+      moveFrom,
+      extraTurn: roll === 6 && !won,
+      gameOver: won,
+      state: publicState(room),
+    });
+    scheduleCpuTurnIfNeeded(room, io);
+  }
+
+  function finalizeAfterRoll(room, turnIdx, roll, legal, io) {
+    const current = room.players[turnIdx];
+    const ch = roomChannel(room.code);
+    if (legal.length === 0) {
+      emitPassTurn(room, turnIdx, roll, io);
+      return;
+    }
+    if (legal.length === 1) {
+      emitMoveTurn(room, turnIdx, legal[0], roll, io);
+      return;
+    }
+    if (current.isCpu) {
+      const pick = pickHardCpuMove(room, turnIdx, roll, legal);
+      emitMoveTurn(room, turnIdx, pick, roll, io);
+      return;
+    }
+    room.pendingRoll = roll;
+    room.awaitingChoice = { legal: legal.map((m) => m.tokenIndex) };
+    room.busy = false;
+    io.to(ch).emit('ludo:choosePiece', {
+      playerIndex: turnIdx,
+      username: current.username,
+      roll,
+      options: legal.map((m) => ({ tokenIndex: m.tokenIndex, pathLen: m.path.length })),
+      state: publicState(room),
+    });
+  }
+
+  function scheduleCpuTurnIfNeeded(room, io) {
+    if (room.phase !== 'playing') return;
+    clearCpuTurnTimer(room.code);
+    const cur = room.players[room.currentTurnIndex];
+    if (!cur?.isCpu) return;
+    const delay = 520 + crypto.randomInt(0, 380);
+    const code = room.code;
+    const tid = setTimeout(() => {
+      cpuTurnTimers.delete(code);
+      const r = rooms.get(code);
+      if (!r || r.phase !== 'playing' || r.busy || r.awaitingChoice) return;
+      if (!r.players[r.currentTurnIndex]?.isCpu) return;
+      r.busy = true;
+      const roll = randomDie();
+      const turnIdx = r.currentTurnIndex;
+      const legal = legalMovesFor(r, turnIdx, roll);
+      finalizeAfterRoll(r, turnIdx, roll, legal, io);
+    }, delay);
+    cpuTurnTimers.set(code, tid);
   }
 
   socket.on('ludo:roll', () => {
@@ -583,69 +851,7 @@ function attachLudo(socket, io) {
     room.busy = true;
     const roll = randomDie();
     const legal = legalMovesFor(room, turnIdx, roll);
-
-    if (legal.length === 0) {
-      room.pendingRoll = null;
-      room.awaitingChoice = null;
-      advanceTurn(room, roll === 6);
-      room.busy = false;
-      io.to(roomChannel(room.code)).emit('ludo:turnResult', {
-        type: 'pass',
-        playerIndex: turnIdx,
-        username: current.username,
-        roll,
-        path: [],
-        captures: [],
-        tokenIndex: null,
-        extraTurn: false,
-        gameOver: false,
-        state: publicState(room),
-      });
-      return;
-    }
-
-    if (legal.length === 1) {
-      const pick = legal[0];
-      const moveFrom = current.tokens[pick.tokenIndex];
-      const res = tryMoveToken(room, turnIdx, pick.tokenIndex, roll);
-      room.players = res.clonePlayers;
-      room.players[turnIdx].tokens = res.newTokens;
-      const won = allTokensDone(room.players[turnIdx]);
-      if (won) {
-        room.phase = 'finished';
-        room.winnerIndex = turnIdx;
-      } else {
-        advanceTurn(room, roll === 6);
-      }
-      room.pendingRoll = null;
-      room.awaitingChoice = null;
-      room.busy = false;
-      io.to(roomChannel(room.code)).emit('ludo:turnResult', {
-        type: 'move',
-        playerIndex: turnIdx,
-        username: current.username,
-        roll,
-        path: pick.path,
-        captures: pick.captures,
-        tokenIndex: pick.tokenIndex,
-        moveFrom,
-        extraTurn: roll === 6 && !won,
-        gameOver: won,
-        state: publicState(room),
-      });
-      return;
-    }
-
-    room.pendingRoll = roll;
-    room.awaitingChoice = { legal: legal.map((m) => m.tokenIndex) };
-    room.busy = false;
-    io.to(roomChannel(room.code)).emit('ludo:choosePiece', {
-      playerIndex: turnIdx,
-      username: current.username,
-      roll,
-      options: legal.map((m) => ({ tokenIndex: m.tokenIndex, pathLen: m.path.length })),
-      state: publicState(room),
-    });
+    finalizeAfterRoll(room, turnIdx, roll, legal, io);
   });
 
   socket.on('ludo:selectPiece', (payload) => {
@@ -689,35 +895,7 @@ function attachLudo(socket, io) {
       return;
     }
 
-    const moveFrom = current.tokens[tokenIndex];
-    room.busy = true;
-    const res = tryMoveToken(room, turnIdx, tokenIndex, roll);
-    room.players = res.clonePlayers;
-    room.players[turnIdx].tokens = res.newTokens;
-    const won = allTokensDone(room.players[turnIdx]);
-    if (won) {
-      room.phase = 'finished';
-      room.winnerIndex = turnIdx;
-    } else {
-      advanceTurn(room, roll === 6);
-    }
-    room.pendingRoll = null;
-    room.awaitingChoice = null;
-    room.busy = false;
-
-    io.to(roomChannel(room.code)).emit('ludo:turnResult', {
-      type: 'move',
-      playerIndex: turnIdx,
-      username: current.username,
-      roll,
-      path: pick.path,
-      captures: pick.captures,
-      tokenIndex,
-      moveFrom,
-      extraTurn: roll === 6 && !won,
-      gameOver: won,
-      state: publicState(room),
-    });
+    emitMoveTurn(room, turnIdx, pick, roll, io);
   });
 
   socket.on('ludo:rematch', () => {
@@ -736,6 +914,7 @@ function attachLudo(socket, io) {
       socket.emit('ludo:error', { message: 'Finish a game before rematch.' });
       return;
     }
+    clearCpuTurnTimer(room.code);
     room.phase = 'lobby';
     room.winnerIndex = null;
     room.currentTurnIndex = 0;
@@ -747,12 +926,14 @@ function attachLudo(socket, io) {
     });
     room.players = room.players.filter((p) => p.connected);
     if (room.players.length === 0) {
+      clearCpuTurnTimer(room.code);
       rooms.delete(room.code);
       socket.emit('ludo:left');
       notifyOpenRoomsChanged(io);
       return;
     }
-    room.hostId = room.players[0].userId;
+    const humanHost = room.players.find((p) => !p.isCpu);
+    room.hostId = humanHost ? humanHost.userId : room.players[0].userId;
     room.players.forEach((p, i) => {
       p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
     });
