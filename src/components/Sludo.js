@@ -550,6 +550,8 @@ export default function Sludo({ currentUser }) {
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
   const spinStartRef = useRef(0);
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
 
   const myUserId = currentUser?.userId || currentUser?.id;
 
@@ -580,6 +582,30 @@ export default function Sludo({ currentUser }) {
 
   useEffect(() => {
     if (currentUser?.token) reconnectSocket();
+  }, [currentUser?.token]);
+
+  // After token refresh or network reconnect, server drops socket.id — re-bind to the same room.
+  useEffect(() => {
+    if (!currentUser?.token) return undefined;
+
+    const rejoinIfInRoom = () => {
+      const gs = gameStateRef.current;
+      if (!gs?.code) return;
+      const code = String(gs.code)
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 8);
+      if (code.length !== 6) return;
+      socket.emit('ludo:joinRoom', { code });
+    };
+
+    socket.on('connect', rejoinIfInRoom);
+    socket.io.on('reconnect', rejoinIfInRoom);
+
+    return () => {
+      socket.off('connect', rejoinIfInRoom);
+      socket.io.off('reconnect', rejoinIfInRoom);
+    };
   }, [currentUser?.token]);
 
   useEffect(() => {

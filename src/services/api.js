@@ -27,6 +27,12 @@ export const socket = io(BACKEND_URL, {
   pingInterval: 25000
 });
 
+/** JWT last sent on a successful socket handshake (server validates handshake auth, not live socket.auth updates). */
+let lastSocketHandshakeToken = null;
+socket.on('connect', () => {
+  lastSocketHandshakeToken = socket.auth?.token ?? null;
+});
+
 // Store original fetch before we override it
 const originalFetch = window.fetch;
 
@@ -77,11 +83,12 @@ const refreshAccessToken = async () => {
       
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       
-      // Update socket auth
+      // New JWT must reach the server via a fresh handshake; update auth and reconnect.
       socket.auth = { token: data.token };
-      if (!socket.connected) {
-        socket.connect();
+      if (socket.connected) {
+        socket.disconnect();
       }
+      socket.connect();
 
       // Notify React state that tokens were refreshed outside its lifecycle
       window.dispatchEvent(new CustomEvent('tokenRefreshed', {
@@ -1659,24 +1666,24 @@ export const submitLeaderboard = async (game, payload, tokenOverride = null) => 
 // so the server authenticates the new user on the fresh connection.
 export const reconnectSocket = () => {
   const savedUser = localStorage.getItem('currentUser');
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser);
-      const currentToken = socket.auth?.token;
+  if (!savedUser) return;
+  try {
+    const user = JSON.parse(savedUser);
+    if (!user?.token) return;
 
-      if (socket.connected && currentToken === user.token) {
-        return; // already connected with the right token
-      }
+    socket.auth = { token: user.token };
 
-      socket.auth = { token: user.token };
-
-      if (socket.connected) {
-        socket.disconnect();
-      }
-      socket.connect();
-    } catch (error) {
-      logger.error('Socket reconnection error:', error);
+    // Handshake token is fixed per connection; skip only if server already has this JWT.
+    if (socket.connected && user.token === lastSocketHandshakeToken) {
+      return;
     }
+
+    if (socket.connected) {
+      socket.disconnect();
+    }
+    socket.connect();
+  } catch (error) {
+    logger.error('Socket reconnection error:', error);
   }
 };
 
