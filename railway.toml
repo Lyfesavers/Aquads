@@ -1,8 +1,8 @@
 [build]
-buildCommand = "cd server && npm install --legacy-peer-deps"
+# Install is server-only (railpack.json). Netlify builds the CRA app; this service is the API.
+# No buildCommand — avoids a second full server install after npm ci.
 
-# Railpack (default on Railway): fonts for Sharp SVG text live in railpack.json → deploy.aptPackages.
-# If the file is skipped, set service variable: RAILPACK_DEPLOY_APT_PACKAGES="fontconfig fonts-dejavu-core"
+# Fonts for Sharp on Linux; if missing, set: RAILPACK_DEPLOY_APT_PACKAGES="fontconfig fonts-dejavu-core"
 
 [deploy]
 startCommand = "cd server && node index.js"
