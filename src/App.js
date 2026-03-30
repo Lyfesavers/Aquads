@@ -350,6 +350,39 @@ const DashboardTabHandler = ({ currentUser }) => {
   return null;
 };
 
+// Open login / create-account modals from URL (?showLogin=true, ?showCreateAccount=true).
+// Runs on every search change so SPA links from the landing page work (not only full page load).
+const AuthModalQueryHandler = ({ setShowLoginModal, setShowCreateAccountModal }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get('ref');
+    if (refCode && !sessionStorage.getItem('pendingReferralCode')) {
+      sessionStorage.setItem('pendingReferralCode', refCode);
+    }
+
+    let shouldReplace = false;
+    if (params.get('showCreateAccount') === 'true') {
+      setShowCreateAccountModal(true);
+      params.delete('showCreateAccount');
+      shouldReplace = true;
+    }
+    if (params.get('showLogin') === 'true') {
+      setShowLoginModal(true);
+      params.delete('showLogin');
+      shouldReplace = true;
+    }
+    if (shouldReplace) {
+      const next = params.toString();
+      navigate({ pathname: location.pathname, search: next ? `?${next}` : '' }, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate, setShowLoginModal, setShowCreateAccountModal]);
+
+  return null;
+};
+
 // Component to handle bubble layout when navigating to home page from landing page
 const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   const location = useLocation();
@@ -2012,30 +2045,6 @@ function App() {
   };
 
 
-  // Add effect to check for showCreateAccount parameter and capture referral code
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    // Capture ?ref= on initial page load and persist for the entire session.
-    // This guarantees the referral is tracked even if the user navigates away
-    // from the landing URL before creating an account.
-    const refCode = params.get('ref');
-    if (refCode && !sessionStorage.getItem('pendingReferralCode')) {
-      sessionStorage.setItem('pendingReferralCode', refCode);
-    }
-
-    if (params.get('showCreateAccount') === 'true') {
-      setShowCreateAccountModal(true);
-      
-      // Clear the parameter from the URL to avoid reopening modal on refresh
-      const newUrl = window.location.pathname + 
-        (window.location.search ? 
-          window.location.search.replace('showCreateAccount=true', '').replace(/(\?|&)$/, '') : 
-          '');
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, []);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -2559,6 +2568,10 @@ function App() {
         />
         <DashboardTabHandler 
           currentUser={currentUser}
+        />
+        <AuthModalQueryHandler
+          setShowLoginModal={setShowLoginModal}
+          setShowCreateAccountModal={setShowCreateAccountModal}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <DesktopInstallPrompt />

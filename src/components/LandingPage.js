@@ -4336,6 +4336,18 @@ const LandingPage = () => {
             >
               AquaSwap
             </Link>
+            <Link
+              to="/home?showLogin=true"
+              className="text-gray-400 hover:text-white transition-colors text-sm font-medium"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/home?showCreateAccount=true"
+              className="px-4 py-2 rounded-full text-sm font-bold text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 transition-all shadow-lg shadow-cyan-500/20"
+            >
+              Sign up
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -4385,6 +4397,23 @@ const LandingPage = () => {
               >
                 <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden overscroll-contain">
                   <div className="p-2">
+                    <div className="flex flex-col gap-2 px-2 pt-1 pb-2">
+                      <Link
+                        to="/home?showCreateAccount=true"
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-cyan-500 to-teal-500 text-center"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Sign up free
+                      </Link>
+                      <Link
+                        to="/home?showLogin=true"
+                        className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Log in
+                      </Link>
+                    </div>
+                    <div className="h-px bg-white/10 my-1 mx-2" />
                     <Link 
                       to="/home"
                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all"
@@ -4563,6 +4592,29 @@ const LandingPage = () => {
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
             </p>
+            <motion.div
+              className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8 md:mb-10"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15, duration: 0.5 }}
+            >
+              <Link to="/home?showCreateAccount=true">
+                <motion.span
+                  className="inline-flex px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/25"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Create free account
+                </motion.span>
+              </Link>
+              <Link
+                to="/home?showLogin=true"
+                className="text-sm md:text-base text-gray-400 hover:text-white font-medium transition-colors underline-offset-4 hover:underline"
+              >
+                Already have an account? Log in
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Stats */}
@@ -4624,7 +4676,16 @@ const LandingPage = () => {
             Ready to <span className="text-gradient-cyan">Dive In</span>?
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center flex-wrap">
+            <Link to="/home?showCreateAccount=true">
+              <motion.button
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm md:text-lg shadow-lg shadow-emerald-500/30"
+                whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(16, 185, 129, 0.45)' }}
+                whileTap={{ scale: 0.95 }}
+              >
+                ✨ Sign up free
+              </motion.button>
+            </Link>
             <Link to="/home">
               <motion.button
                 className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-lg glow-cyan"
@@ -4643,6 +4704,14 @@ const LandingPage = () => {
               >
                 👥 Find Talent
               </motion.button>
+            </Link>
+          </div>
+          <div className="mt-4">
+            <Link
+              to="/home?showLogin=true"
+              className="text-gray-400 hover:text-white text-sm md:text-base font-medium transition-colors"
+            >
+              Log in to your account
             </Link>
           </div>
 
