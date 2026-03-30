@@ -3098,7 +3098,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 onClick={() => handleTabSelect(tab)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-150 ${
                   activeTab === tab.id
-                    ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30'
+                    ? 'bg-purple-500/25 text-purple-200 ring-1 ring-purple-400/55 shadow-[0_0_12px_-2px_rgba(168,85,247,0.35)]'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                 }`}
               >
@@ -3117,7 +3117,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   onClick={() => handleAdminSubSelect(sub)}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 relative ${
                     activeAdminSection === sub.id
-                      ? 'bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30'
+                      ? 'bg-purple-500/25 text-purple-200 ring-1 ring-purple-400/55 shadow-[0_0_10px_-2px_rgba(168,85,247,0.3)]'
                       : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                   }`}
                 >
@@ -3149,14 +3149,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               onClick={() => handleTabSelect(tab)}
               className={`flex items-start gap-2 px-2 py-2 rounded-md text-[13px] font-medium transition-all duration-150 text-left group ${
                 activeTab === tab.id
-                  ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-400'
+                  ? 'bg-purple-500/20 text-purple-200 border-l-[3px] border-purple-400 shadow-[inset_0_0_20px_-12px_rgba(168,85,247,0.45)]'
                   : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
               }`}
             >
               <span className={`text-base w-5 text-center flex-shrink-0 leading-none pt-0.5 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
               <span className="min-w-0 flex-1 leading-snug break-words">{tab.label}</span>
               {tab.id === 'admin' && (
-                <svg className={`w-3.5 h-3.5 flex-shrink-0 ml-auto text-gray-500 transition-transform duration-200 self-start mt-0.5 ${activeTab === 'admin' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 flex-shrink-0 ml-auto transition-transform duration-200 self-start mt-0.5 ${activeTab === 'admin' ? 'rotate-180 text-purple-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               )}
@@ -3169,7 +3169,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     onClick={() => handleAdminSubSelect(sub)}
                     className={`flex items-start gap-1.5 w-full px-2 py-1.5 rounded-md text-[11px] font-medium transition-all duration-150 text-left relative ${
                       activeAdminSection === sub.id
-                        ? 'bg-blue-500/10 text-blue-400'
+                        ? 'bg-purple-500/15 text-purple-200'
                         : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                     }`}
                   >
@@ -3202,7 +3202,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             {sidebarTabs.map(tab => (
               <button
                 key={tab.id}
-                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === tab.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 whitespace-nowrap text-sm ${activeTab === tab.id ? 'text-purple-200 border-b-2 border-purple-400' : 'text-gray-400'}`}
                 onClick={() => handleTabSelect(tab)}
               >
                 {tab.label}
