@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { socket, reconnectSocket } from '../services/api';
+import { socket, reconnectSocket, getLeaderboard } from '../services/api';
 
 /* Must match server/ludo.js — BR/TL starts aligned to cyan/purple corners. */
 const START = [0, 39, 26, 13];
@@ -544,9 +544,13 @@ export default function Sludo({ currentUser }) {
   const [animOverride, setAnimOverride] = useState(null);
   const [openRooms, setOpenRooms] = useState([]);
   const [choicePulse, setChoicePulse] = useState(null);
-  const [boardInner, setBoardInner] = useState(420);
+  const [boardInner, setBoardInner] = useState(() =>
+    typeof window !== 'undefined' ? Math.max(200, Math.min(window.innerWidth, window.innerHeight) - 96) : 400
+  );
   const [captureFlash, setCaptureFlash] = useState(null);
   const [vsCpuCount, setVsCpuCount] = useState(1);
+  const [sludoLeaderboard, setSludoLeaderboard] = useState([]);
+  const boardStageRef = useRef(null);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
@@ -556,18 +560,30 @@ export default function Sludo({ currentUser }) {
 
   const myUserId = currentUser?.userId || currentUser?.id;
 
-  useEffect(() => {
-    const measure = () => {
-      const w = typeof window !== 'undefined' ? window.innerWidth : 900;
-      const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const cap = w >= 1024 ? 520 : w >= 768 ? 460 : 340;
-      const maxH = Math.max(280, h - 200);
-      setBoardInner(Math.min(cap, maxH));
+  useLayoutEffect(() => {
+    if (!gameState) return undefined;
+
+    const el = boardStageRef.current;
+    if (!el) return undefined;
+
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const pad = 12;
+      const d = Math.floor(Math.min(r.width, r.height) - pad);
+      setBoardInner(Math.max(200, d));
     };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
+  }, [gameState]);
 
   const stopTimers = useCallback(() => {
     if (animTimerRef.current != null) {
@@ -627,6 +643,27 @@ export default function Sludo({ currentUser }) {
       clearInterval(interval);
     };
   }, [currentUser?.token, gameState]);
+
+  useEffect(() => {
+    if (!currentUser?.token) return undefined;
+
+    const loadLb = async () => {
+      try {
+        const rows = await getLeaderboard('sludo', { limit: 25 });
+        setSludoLeaderboard(Array.isArray(rows) ? rows : []);
+      } catch (e) {
+        console.error('Sludo leaderboard load failed:', e);
+      }
+    };
+
+    loadLb();
+
+    const onLb = (data) => {
+      if (data?.game === 'sludo') loadLb();
+    };
+    socket.on('leaderboardUpdated', onLb);
+    return () => socket.off('leaderboardUpdated', onLb);
+  }, [currentUser?.token]);
 
   useEffect(() => {
     const runPathAnimation = (payload) => {
@@ -868,7 +905,7 @@ export default function Sludo({ currentUser }) {
 
   return (
     <div
-      className={`text-slate-100 overflow-x-hidden relative ${gameState ? 'min-h-0 h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen pb-12'}`}
+      className={`text-slate-100 overflow-x-hidden relative ${gameState ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen pb-12'}`}
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Helmet>
@@ -894,20 +931,59 @@ export default function Sludo({ currentUser }) {
         transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
       />
 
-      <nav className="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:py-3 border-b border-white/10 bg-black/30 backdrop-blur-md shrink-0">
+      <nav
+        className={`relative z-20 flex flex-wrap items-center gap-2 border-b border-white/10 bg-black/40 backdrop-blur-md shrink-0 ${
+          gameState ? 'min-h-[40px] px-2 py-1.5 sm:px-3' : 'px-3 py-2 sm:py-3 justify-between'
+        }`}
+      >
         <Link
           to="/games"
-          className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-cyan-200 hover:bg-white/10"
+          className={`relative z-30 rounded-lg border border-white/15 bg-white/5 text-cyan-200 hover:bg-white/10 shrink-0 ${gameState ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs'}`}
         >
           ← Hub
         </Link>
-        <h1 className="text-center flex-1 font-['Orbitron'] text-xs sm:text-sm tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300">
+        <h1
+          className={`font-['Orbitron'] tracking-[0.35em] text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300 ${
+            gameState
+              ? 'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-xs z-10'
+              : 'flex-1 text-center text-xs sm:text-sm'
+          }`}
+        >
           SLUDO
         </h1>
-        <span className="text-[10px] text-fuchsia-300/80 hidden sm:inline tracking-widest">4P · SYNC</span>
+        {gameState ? (
+          <div className="relative z-30 ml-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+            {gameState.vsCpu && (
+              <span className="font-['Orbitron'] text-[8px] tracking-widest text-violet-200 border border-violet-500/40 rounded-md px-1.5 py-0.5 bg-violet-500/15">
+                VS CPU
+              </span>
+            )}
+            <span className="font-['Orbitron'] text-[9px] sm:text-[10px] tracking-[0.2em] text-cyan-300 border border-cyan-500/40 rounded-md px-1.5 py-0.5 bg-cyan-500/10">
+              {gameState.code}
+            </span>
+            <button
+              type="button"
+              onClick={copyCode}
+              className="text-[9px] sm:text-[10px] rounded-md border border-white/15 px-2 py-0.5 hover:bg-white/5"
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              onClick={leave}
+              className="text-[9px] sm:text-[10px] rounded-md border border-red-500/30 text-red-300 px-2 py-0.5 hover:bg-red-500/10"
+            >
+              Leave
+            </button>
+          </div>
+        ) : (
+          <span className="text-[10px] text-fuchsia-300/80 hidden sm:inline tracking-widest shrink-0">4P · SYNC</span>
+        )}
       </nav>
 
-      <div className={`relative z-10 max-w-6xl mx-auto px-2 sm:px-4 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col pt-2' : 'pt-6'}`}>
+      <div
+        className={`relative z-10 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col px-0' : 'max-w-6xl mx-auto px-2 sm:px-4 pt-6'}`}
+      >
         {!gameState && (
           <p className="text-center text-xs sm:text-sm text-slate-400 mb-6 max-w-xl mx-auto leading-relaxed">
             <span className="text-cyan-300 font-semibold">Sludo</span> — race four pawns around the ring, bump rivals home on a lucky roll,
@@ -1042,39 +1118,68 @@ export default function Sludo({ currentUser }) {
                 </ul>
               )}
             </div>
+
+            <div className="mt-5 rounded-2xl border border-amber-500/25 bg-slate-900/50 p-4 shadow-[0_0_28px_rgba(245,158,11,0.08)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h2 className="font-['Orbitron'] text-xs tracking-widest text-amber-200/90">LEADERBOARD</h2>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const rows = await getLeaderboard('sludo', { limit: 25 });
+                      setSludoLeaderboard(Array.isArray(rows) ? rows : []);
+                    } catch (_) {}
+                  }}
+                  className="text-[10px] rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5 text-slate-400"
+                >
+                  Refresh
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">
+                Wins only — one count each time you finish first (online friends or vs computer). Ties sort by most recent win.
+              </p>
+              {sludoLeaderboard.length === 0 ? (
+                <p className="text-slate-500 text-xs">No wins logged yet. Win a match to appear here.</p>
+              ) : (
+                <ul className="space-y-1.5 max-h-[min(240px,40vh)] overflow-y-auto pr-1">
+                  {sludoLeaderboard.map((row, i) => {
+                    const isYou = myUserId && String(row.userId) === String(myUserId);
+                    return (
+                      <li
+                        key={String(row.userId)}
+                        className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs ${
+                          isYou
+                            ? 'border-amber-400/50 bg-amber-500/10 text-amber-50'
+                            : 'border-white/10 bg-black/25 text-slate-200'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span className="font-['Orbitron'] text-[10px] text-slate-500 w-5 shrink-0">{i + 1}</span>
+                          <span className="truncate font-medium">{row.username || 'Player'}</span>
+                          {isYou ? <span className="text-[9px] text-amber-300/90 shrink-0">you</span> : null}
+                        </span>
+                        <span className="shrink-0 font-['Orbitron'] text-sm text-cyan-200 tabular-nums">{row.wins}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </>
         ) : (
-          <div className="flex flex-col min-w-0 min-h-0 gap-2 flex-1">
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {gameState.vsCpu && (
-                <span className="font-['Orbitron'] text-[9px] tracking-[0.2em] text-violet-200 border border-violet-500/40 rounded-lg px-2 py-1 bg-violet-500/15">
-                  VS CPU
-                </span>
-              )}
-              <span className="font-['Orbitron'] text-[10px] sm:text-xs tracking-[0.25em] text-cyan-300 border border-cyan-500/40 rounded-lg px-2 py-1 bg-cyan-500/10">
-                {gameState.code}
-              </span>
-              <button type="button" onClick={copyCode} className="text-[10px] rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5">
-                Copy
-              </button>
-              <button type="button" onClick={leave} className="text-[10px] rounded-lg border border-red-500/30 text-red-300 px-2 py-1 hover:bg-red-500/10">
-                Leave
-              </button>
-            </div>
-
-            <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 items-stretch">
-              <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden order-1">
-                <motion.div
-                  layout
-                  className="relative rounded-3xl border border-white/10 bg-slate-900/40 shadow-[0_0_60px_rgba(34,211,238,0.08)] w-full max-h-full"
-                  style={{
-                    width: boardInner + 16,
-                    height: boardInner + 16,
-                    maxWidth: '100%',
-                    maxHeight: 'min(100%, calc(100dvh - 7rem))',
-                    aspectRatio: '1 / 1',
-                  }}
-                >
+          <div className="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 overflow-hidden">
+            <div
+              ref={boardStageRef}
+              className="flex-1 min-h-0 min-w-0 flex items-center justify-center p-1.5 sm:p-3 lg:p-4 overflow-hidden"
+            >
+              <motion.div
+                layout
+                className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-slate-900/50 shadow-[0_0_80px_rgba(34,211,238,0.12)] max-w-full max-h-full"
+                style={{
+                  width: boardInner + 16,
+                  height: boardInner + 16,
+                }}
+              >
                   <svg
                     width="100%"
                     height="100%"
@@ -1326,41 +1431,45 @@ export default function Sludo({ currentUser }) {
                       })
                     )}
                   </svg>
-                </motion.div>
+              </motion.div>
+            </div>
+
+            <aside className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 border-t border-white/10 bg-slate-950/90 backdrop-blur-xl px-3 py-2.5 sm:p-3 lg:w-[min(100%,300px)] lg:min-h-0 lg:shrink-0 lg:border-t-0 lg:border-l lg:border-white/10 max-h-[min(40vh,300px)] lg:max-h-none lg:overflow-y-auto overflow-y-auto">
+              <div className="rounded-xl lg:rounded-2xl border border-white/10 bg-slate-900/40 p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+                <h3 className="font-['Orbitron'] text-[9px] sm:text-[10px] tracking-widest text-slate-400">PLAYERS</h3>
+                <ul className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 sm:gap-2">
+                  {gameState.players.map((p, i) => {
+                    const turn = gameState.phase === 'playing' && gameState.currentTurnIndex === i;
+                    const doneCount = p.tokens.filter((tk) => tk === DONE).length;
+                    return (
+                      <li
+                        key={p.userId}
+                        className={`flex items-center gap-2 rounded-lg sm:rounded-xl px-2 py-1.5 sm:py-2 border ${
+                          turn ? 'border-cyan-400/50 bg-cyan-500/10' : 'border-white/5 bg-black/25'
+                        }`}
+                      >
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: p.color }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] sm:text-xs font-semibold truncate">{p.isCpu ? '🤖 ' : ''}{p.username}</div>
+                          <div className="text-[9px] sm:text-[10px] text-slate-500 leading-tight">
+                            {doneCount}/4
+                            {p.isCpu ? ' · AI' : ''}
+                            {!p.connected && !p.isCpu ? ' · off' : ''}
+                          </div>
+                        </div>
+                        {turn && <span className="text-[8px] sm:text-[9px] text-cyan-300 font-['Orbitron'] shrink-0">GO</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
 
-              <div className="w-full lg:w-[268px] shrink-0 flex flex-col gap-2 order-2">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
-                  <h3 className="font-['Orbitron'] text-[10px] tracking-widest text-slate-400">PLAYERS</h3>
-                  <ul className="space-y-2">
-                    {gameState.players.map((p, i) => {
-                      const turn = gameState.phase === 'playing' && gameState.currentTurnIndex === i;
-                      const doneCount = p.tokens.filter((tk) => tk === DONE).length;
-                      return (
-                        <li
-                          key={p.userId}
-                          className={`flex items-center gap-2 rounded-xl px-2 py-2 border ${
-                            turn ? 'border-cyan-400/50 bg-cyan-500/10' : 'border-white/5 bg-black/20'
-                          }`}
-                        >
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: p.color }} />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold truncate">{p.isCpu ? '🤖 ' : ''}{p.username}</div>
-                            <div className="text-[10px] text-slate-500">
-                              Docked {doneCount}/4
-                              {p.isCpu ? ' · AI' : ''}
-                              {!p.connected && !p.isCpu ? ' · offline' : ''}
-                            </div>
-                          </div>
-                          {turn && <span className="text-[9px] text-cyan-300 font-['Orbitron']">TURN</span>}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 flex flex-col items-center gap-3">
-                  <DiceCube spinning={diceSpinning} value={diceValue} size={Math.min(76, boardInner * 0.16)} />
+              <div className="rounded-xl lg:rounded-2xl border border-white/10 bg-slate-900/40 p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3">
+                <DiceCube
+                  spinning={diceSpinning}
+                  value={diceValue}
+                  size={Math.min(88, Math.max(64, Math.round(boardInner * 0.14)))}
+                />
                   {gameState.phase === 'lobby' && isHost && (
                     <button
                       type="button"
@@ -1408,14 +1517,13 @@ export default function Sludo({ currentUser }) {
                       )}
                     </div>
                   )}
-                </div>
-
-                <p className="text-[10px] text-slate-500 leading-relaxed px-1">
-                  Stars &amp; corners are safe. Stack two of your pieces to block captures. Six opens the yard or grants another roll after a
-                  legal move.
-                </p>
               </div>
-            </div>
+
+              <p className="hidden lg:block text-[10px] text-slate-500 leading-relaxed px-0.5">
+                Stars &amp; corners are safe. Stack two of your pieces to block captures. Six opens the yard or grants another roll after a
+                legal move.
+              </p>
+            </aside>
 
             <SludoWinnerCelebration
               open={gameState.phase === 'finished' && gameState.winnerIndex != null}

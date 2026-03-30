@@ -9,6 +9,35 @@ const { getIO } = require('../socket');
 router.get('/:game', async (req, res) => {
   try {
     const { game } = req.params;
+    const limitNum = Math.min(Number(req.query.limit) || 20, 200);
+
+    if (game === 'sludo') {
+      const rows = await LeaderboardEntry.aggregate([
+        { $match: { game: 'sludo', result: 'Win', userId: { $ne: null } } },
+        { $sort: { createdAt: -1 } },
+        {
+          $group: {
+            _id: '$userId',
+            username: { $first: '$username' },
+            wins: { $sum: 1 },
+            lastWin: { $max: '$createdAt' },
+          },
+        },
+        { $sort: { wins: -1, lastWin: -1 } },
+        { $limit: limitNum },
+        {
+          $project: {
+            _id: 0,
+            userId: '$_id',
+            username: 1,
+            wins: 1,
+            lastWin: 1,
+          },
+        },
+      ]);
+      return res.json(rows);
+    }
+
     const { limit = 20, difficulty, grid } = req.query;
     const query = { game, result: 'Win' }; // Only show wins
     if (difficulty && difficulty !== 'All') query.difficulty = difficulty;
@@ -29,6 +58,9 @@ router.get('/:game', async (req, res) => {
 router.post('/:game', auth, async (req, res) => {
   try {
     const { game } = req.params;
+    if (game === 'sludo') {
+      return res.status(403).json({ error: 'Sludo wins are recorded automatically when you finish a game.' });
+    }
     const { result, you, ai, grid, difficulty } = req.body || {};
     if (!result || you == null || ai == null || !grid || !difficulty) {
       return res.status(400).json({ error: 'Missing required fields' });

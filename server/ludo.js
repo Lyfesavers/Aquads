@@ -64,6 +64,30 @@ async function fetchProfileImage(userId) {
 const rooms = new Map();
 const socketToRoom = new Map();
 
+async function recordSludoWin(room, winnerIndex, io) {
+  const w = room.players[winnerIndex];
+  if (!w || w.isCpu) return;
+  const mongoose = require('mongoose');
+  const uid = w.userId;
+  if (!uid || !mongoose.Types.ObjectId.isValid(String(uid))) return;
+  try {
+    const LeaderboardEntry = require('./models/LeaderboardEntry');
+    await LeaderboardEntry.create({
+      game: 'sludo',
+      userId: new mongoose.Types.ObjectId(String(uid)),
+      username: String(w.username || 'Player').replace(/\s+/g, ' ').slice(0, 24),
+      result: 'Win',
+      you: 1,
+      ai: 0,
+      grid: room.vsCpu ? 'vs-cpu' : 'pvp',
+      difficulty: 'Easy',
+    });
+    io.emit('leaderboardUpdated', { game: 'sludo' });
+  } catch (e) {
+    console.error('Sludo leaderboard record failed:', e);
+  }
+}
+
 function verifySocketUser(socket) {
   try {
     const token = socket.handshake.auth?.token;
@@ -749,6 +773,7 @@ function attachLudo(socket, io) {
     if (won) {
       room.phase = 'finished';
       room.winnerIndex = turnIdx;
+      void recordSludoWin(room, turnIdx, io);
     } else {
       advanceLudoTurn(room, roll === 6);
     }
