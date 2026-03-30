@@ -3138,45 +3138,45 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   );
 
   const renderSidebar = () => (
-    <aside className="hidden lg:flex flex-col w-56 xl:w-64 flex-shrink-0 bg-gray-800/30 border-r border-gray-700/30">
-      <nav className="sticky top-14 flex flex-col py-5 px-3 gap-0.5 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
-        <div className="px-3 mb-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Navigation</p>
+    <aside className="hidden lg:flex flex-col w-52 xl:w-56 flex-shrink-0 bg-gray-800/30 border-r border-gray-700/30">
+      <nav className="sticky top-14 flex flex-col py-3 px-2 gap-px overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+        <div className="px-2 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Navigation</p>
         </div>
         {sidebarTabs.map(tab => (
           <React.Fragment key={tab.id}>
             <button
               onClick={() => handleTabSelect(tab)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left group ${
+              className={`flex items-start gap-2 px-2 py-2 rounded-md text-[13px] font-medium transition-all duration-150 text-left group ${
                 activeTab === tab.id
                   ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-400'
                   : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
               }`}
             >
-              <span className={`text-lg w-6 text-center flex-shrink-0 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
-              <span className="truncate">{tab.label}</span>
+              <span className={`text-base w-5 text-center flex-shrink-0 leading-none pt-0.5 transition-transform duration-150 ${activeTab !== tab.id ? 'group-hover:scale-110' : ''}`}>{tab.icon}</span>
+              <span className="min-w-0 flex-1 leading-snug break-words">{tab.label}</span>
               {tab.id === 'admin' && (
-                <svg className={`w-3.5 h-3.5 ml-auto text-gray-500 transition-transform duration-200 ${activeTab === 'admin' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 flex-shrink-0 ml-auto text-gray-500 transition-transform duration-200 self-start mt-0.5 ${activeTab === 'admin' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               )}
             </button>
             {tab.id === 'admin' && activeTab === 'admin' && (
-              <div className="ml-5 mt-0.5 mb-1 space-y-px border-l border-gray-600/40 pl-1.5">
+              <div className="ml-3 mt-0.5 mb-0.5 space-y-px border-l border-gray-600/40 pl-1">
                 {adminSubSections.map(sub => (
                   <button
                     key={sub.id}
                     onClick={() => handleAdminSubSelect(sub)}
-                    className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 text-left relative ${
+                    className={`flex items-start gap-1.5 w-full px-2 py-1.5 rounded-md text-[11px] font-medium transition-all duration-150 text-left relative ${
                       activeAdminSection === sub.id
                         ? 'bg-blue-500/10 text-blue-400'
                         : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                     }`}
                   >
-                    <span className="text-sm flex-shrink-0">{sub.icon}</span>
-                    <span className="truncate">{sub.label}</span>
+                    <span className="text-sm flex-shrink-0 leading-none pt-px">{sub.icon}</span>
+                    <span className="min-w-0 flex-1 leading-snug break-words">{sub.label}</span>
                     {sub.badge > 0 && (
-                      <span className="ml-auto flex-shrink-0 bg-red-500/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      <span className="flex-shrink-0 self-start bg-red-500/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                         {sub.badge}
                       </span>
                     )}
