@@ -2,7 +2,7 @@
 # Builds use the repo-root Dockerfile (single server npm ci). No Railpack buildCommand.
 
 [deploy]
-# Run from repo layout /app (Railway may not use image WORKDIR for this).
-startCommand = "cd server && node index.js"
+# No shell — Railway execs this directly, so avoid "cd ... &&" (cd is not an executable).
+startCommand = "node /app/server/index.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
