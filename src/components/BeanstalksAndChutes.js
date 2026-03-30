@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +27,27 @@ function playerImageUrl(src) {
 
 function getPad(inner) {
   return Math.round(12 + inner * 0.028);
+}
+
+/** Outer square (SVG + frame) must fit in min(stageW, stageH); solve for boardInner. */
+function boardInnerFromStageMinSide(minSide) {
+  const limit = Math.max(0, minSide - 28);
+  let lo = 200;
+  let hi = Math.min(920, limit);
+  let best = 260;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const p = getPad(mid);
+    const svg = mid + p * 2 + 10;
+    const outer = svg + 44;
+    if (outer <= limit) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return Math.max(260, best);
 }
 
 function cellCenter(cell, inner) {
@@ -202,10 +223,15 @@ export default function BeanstalksAndChutes({ currentUser }) {
   const [animOverride, setAnimOverride] = useState(null);
   const [rollPending, setRollPending] = useState(false);
   const [animating, setAnimating] = useState(false);
-  const [boardInner, setBoardInner] = useState(440);
+  const [boardInner, setBoardInner] = useState(() =>
+    typeof window !== 'undefined'
+      ? boardInnerFromStageMinSide(Math.min(window.innerWidth, window.innerHeight) - 96)
+      : 440
+  );
   const [cellPulse, setCellPulse] = useState(null);
   const [openRooms, setOpenRooms] = useState([]);
   const [chuteBite, setChuteBite] = useState(null);
+  const boardStageRef = useRef(null);
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
@@ -216,28 +242,29 @@ export default function BeanstalksAndChutes({ currentUser }) {
   const myUserId = currentUser?.userId || currentUser?.id;
   const pad = getPad(boardInner);
 
-  useEffect(() => {
-    const measure = () => {
-      const w = typeof window !== 'undefined' ? window.innerWidth : 900;
-      const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-      const navAndChrome = 118;
-      const toolbarRow = 44;
-      const diceRail = 120;
-      const gap = 16;
-      const sidebar = w >= 1024 ? 268 : 0;
-      const gridGutter = w >= 1024 ? 16 : 0;
-      const horizontalPad = 24;
-      const maxFromH = Math.max(260, h - navAndChrome - toolbarRow - horizontalPad);
-      const contentW = Math.min(1152, w) - horizontalPad;
-      const maxFromW = Math.max(260, contentW - sidebar - gridGutter - diceRail - gap);
-      const cap = w >= 1024 ? 600 : w >= 768 ? 520 : 480;
-      const next = Math.min(cap, Math.max(280, Math.floor(Math.min(maxFromW, maxFromH))));
+  useLayoutEffect(() => {
+    if (!gameState) return undefined;
+
+    const el = boardStageRef.current;
+    if (!el) return undefined;
+
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const next = boardInnerFromStageMinSide(Math.min(r.width, r.height));
       setBoardInner(next);
     };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
+  }, [gameState]);
 
   const stopIntervals = useCallback(() => {
     if (animTimerRef.current != null) {
@@ -494,6 +521,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
     gameState.players[myPlayerIndex]?.connected;
 
   const svgSize = boardInner + pad * 2 + 10;
+  const boardFramePx = svgSize + 44;
 
   const ladderLines = useMemo(() => {
     return LADDERS.map(([from, to]) => {
@@ -551,7 +579,7 @@ export default function BeanstalksAndChutes({ currentUser }) {
 
   return (
     <div
-      className={`text-yellow-100 overflow-x-hidden relative ${gameState ? 'min-h-0 h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen pb-12'}`}
+      className={`text-yellow-100 overflow-x-hidden relative ${gameState ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen pb-12'}`}
       style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '10px' }}
     >
       <Helmet>
@@ -606,18 +634,53 @@ export default function BeanstalksAndChutes({ currentUser }) {
         </motion.div>
       ))}
 
-      <nav className="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:py-3 bg-[#c84c0c] border-b-4 border-black shrink-0">
-        <Link to="/games" className="text-[#fcbcb0] hover:text-white border-2 border-black bg-black/20 px-2 py-1">
+      <nav
+        className={`relative z-20 flex flex-wrap items-center gap-2 bg-[#c84c0c] border-b-4 border-black shrink-0 ${
+          gameState ? 'min-h-[44px] px-2 py-1.5 sm:px-3' : 'px-3 py-2 sm:py-3 justify-between'
+        }`}
+      >
+        <Link
+          to="/games"
+          className={`relative z-30 text-[#fcbcb0] hover:text-white border-2 border-black bg-black/20 shrink-0 ${gameState ? 'px-2 py-0.5 text-[7px]' : 'px-2 py-1'}`}
+        >
           ← HUB
         </Link>
-        <h1 className="text-[7px] sm:text-[9px] md:text-[10px] text-center flex-1 text-yellow-200 drop-shadow-[2px_2px_0_#000] leading-tight px-1">
+        <h1
+          className={`text-yellow-200 drop-shadow-[2px_2px_0_#000] leading-tight ${
+            gameState
+              ? 'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] sm:text-[8px] z-10 max-w-[min(52vw,200px)] text-center'
+              : 'text-[7px] sm:text-[9px] md:text-[10px] text-center flex-1 px-1'
+          }`}
+        >
           BEANSTALKS &amp; CHUTES
         </h1>
-        <span className="text-[8px] text-[#fcbcb0] hidden sm:inline">4P · SERVER FAIR</span>
+        {gameState ? (
+          <div className="relative z-30 ml-auto flex flex-wrap items-center justify-end gap-1 sm:gap-1.5">
+            <span className="bg-black text-yellow-300 border-2 border-yellow-400 px-1.5 py-0.5 tracking-[0.15em] text-[7px] sm:text-[8px]">
+              {gameState.code}
+            </span>
+            <button
+              type="button"
+              onClick={copyCode}
+              className="bg-[#ffd700] text-black border-2 border-black px-1.5 py-0.5 text-[7px] sm:text-[8px] hover:brightness-110"
+            >
+              COPY
+            </button>
+            <button
+              type="button"
+              onClick={leave}
+              className="bg-red-600 text-white border-2 border-black px-1.5 py-0.5 text-[7px] sm:text-[8px] hover:brightness-110"
+            >
+              LEAVE
+            </button>
+          </div>
+        ) : (
+          <span className="text-[8px] text-[#fcbcb0] hidden sm:inline shrink-0">4P · SERVER FAIR</span>
+        )}
       </nav>
 
       <div
-        className={`relative z-10 max-w-6xl mx-auto px-2 sm:px-4 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col pt-1' : 'pt-4'}`}
+        className={`relative z-10 w-full ${gameState ? 'flex-1 min-h-0 flex flex-col px-0' : 'max-w-6xl mx-auto px-2 sm:px-4 pt-4'}`}
       >
         {!gameState && (
           <p className="text-center text-[8px] sm:text-[9px] text-black/80 mb-4 max-w-xl mx-auto leading-relaxed bg-white/30 border-2 border-black px-2 py-2">
@@ -713,27 +776,17 @@ export default function BeanstalksAndChutes({ currentUser }) {
             </div>
           </>
         ) : (
-          <div className="flex flex-col min-w-0 min-h-0 gap-1 sm:gap-2 flex-1">
-              <div className="flex flex-wrap items-center gap-1 sm:gap-2 shrink-0">
-                <span className="bg-black text-yellow-300 border-2 border-yellow-400 px-2 py-0.5 tracking-[0.2em] text-[8px] sm:text-[9px]">
-                  {gameState.code}
-                </span>
-                <button type="button" onClick={copyCode} className="bg-[#ffd700] text-black border-2 sm:border-4 border-black px-2 py-0.5 text-[8px]">
-                  COPY
-                </button>
-                <button type="button" onClick={leave} className="bg-red-600 text-white border-2 sm:border-4 border-black px-2 py-0.5 text-[8px]">
-                  LEAVE
-                </button>
-              </div>
-
-              <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 flex-1 min-h-0 items-stretch">
-                <div className="flex-1 min-w-0 min-h-0 flex items-start justify-center overflow-hidden order-1">
-                  <motion.div
-                    layout
-                    className="relative bg-[#d4a574] border-4 border-black p-1 sm:p-2 shadow-[8px_8px_0_#000] w-full max-h-full max-w-full"
-                    style={{ aspectRatio: '1 / 1', maxHeight: 'min(100%, calc(100dvh - 6.75rem))' }}
-                    initial={false}
-                  >
+          <div className="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 overflow-hidden">
+            <div
+              ref={boardStageRef}
+              className="flex-1 min-h-0 min-w-0 flex items-center justify-center p-1.5 sm:p-2 lg:p-3 overflow-hidden"
+            >
+              <motion.div
+                layout
+                className="relative bg-[#d4a574] border-4 border-black p-1 sm:p-2 shadow-[8px_8px_0_#000]"
+                style={{ width: boardFramePx, height: boardFramePx }}
+                initial={false}
+              >
                     <svg
                       width="100%"
                       height="100%"
@@ -1245,80 +1298,84 @@ export default function BeanstalksAndChutes({ currentUser }) {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                  </motion.div>
-                </div>
+              </motion.div>
+            </div>
 
-                <aside className="order-2 flex flex-col items-center justify-start gap-2 sm:gap-3 w-full max-w-[118px] mx-auto lg:mx-0 lg:w-[118px] shrink-0 self-stretch bg-[#fcbcb0] border-4 border-black shadow-[4px_4px_0_#000] pt-0 pb-2 sm:pb-3 px-1.5">
-                  <DiceCube
-                    spinning={diceSpinning}
-                    value={diceValue}
-                    size={Math.min(76, Math.max(52, Math.min(boardInner * 0.16, 84)))}
-                  />
-                  <span className="text-[6px] sm:text-[7px] text-black/80 bg-white/70 px-1 border border-black/30 text-center leading-tight">
-                    SERVER
-                    <br />
+            <aside className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 border-t-4 border-black bg-[#fcbcb0]/95 backdrop-blur-sm px-2 py-2 sm:p-3 lg:w-[min(100%,292px)] lg:min-h-0 lg:border-t-0 lg:border-l-4 max-h-[min(42vh,320px)] lg:max-h-none overflow-y-auto overscroll-contain shadow-[4px_4px_0_#000] lg:shadow-[6px_0_0_#000]">
+              <div>
+                <h3 className="text-[8px] sm:text-[9px] border-b-2 border-black pb-1 mb-2 text-black">PLAYERS</h3>
+                <ul className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 sm:gap-2">
+                  {gameState.players.map((pl, i) => {
+                    const img = playerImageUrl(pl.image);
+                    const turn = gameState.phase === 'playing' && gameState.currentTurnIndex === i;
+                    return (
+                      <li
+                        key={pl.userId}
+                        className={`flex items-center gap-2 text-[7px] sm:text-[8px] rounded border-2 border-black px-1.5 py-1 bg-white/80 ${turn ? 'ring-2 ring-green-600 ring-offset-1' : ''}`}
+                      >
+                        {img ? (
+                          <img src={img} alt="" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-black object-cover shrink-0" />
+                        ) : (
+                          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-black shrink-0" style={{ background: pl.color }} />
+                        )}
+                        <span className="flex-1 min-w-0 truncate text-black">{pl.username}</span>
+                        {!pl.connected && <span className="text-red-700 shrink-0 text-[6px]">OUT</span>}
+                        {turn && <span className="text-green-800 shrink-0">◆</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 border-t-2 border-black/40 pt-2">
+                <DiceCube
+                  spinning={diceSpinning}
+                  value={diceValue}
+                  size={Math.min(88, Math.max(56, Math.round(boardInner * 0.14)))}
+                />
+                <span className="text-[6px] sm:text-[7px] text-black/80 bg-white/70 px-1 border border-black/30 text-center leading-tight">
+                  SERVER
+                  <br />
+                  ROLL
+                </span>
+                {gameState.phase === 'playing' && isMyTurn && (
+                  <button
+                    type="button"
+                    onClick={roll}
+                    disabled={rollPending || animating}
+                    className="w-full max-w-[200px] bg-[#e52521] text-white border-2 sm:border-4 border-black px-2 py-2.5 text-[7px] sm:text-[8px] leading-tight hover:brightness-110 disabled:opacity-50 shadow-[3px_3px_0_#000] active:translate-y-0.5"
+                  >
                     ROLL
-                  </span>
-                  {gameState.phase === 'playing' && isMyTurn && (
-                    <button
-                      type="button"
-                      onClick={roll}
-                      disabled={rollPending || animating}
-                      className="w-full bg-[#e52521] text-white border-2 sm:border-4 border-black px-1 py-2.5 text-[7px] sm:text-[8px] leading-tight hover:brightness-110 disabled:opacity-50 shadow-[3px_3px_0_#000] active:translate-y-0.5"
-                    >
-                      ROLL
-                    </button>
-                  )}
-                  {gameState.phase === 'playing' && !isMyTurn && (
-                    <p className="text-black bg-white/90 border-2 border-black px-1 py-1.5 text-[6px] sm:text-[7px] text-center leading-snug break-words w-full">
-                      {gameState.players[gameState.currentTurnIndex]?.username?.slice(0, 10)}
-                      {gameState.players[gameState.currentTurnIndex]?.username?.length > 10 ? '…' : ''}
-                      <span className="block text-[6px] opacity-80">TURN</span>
-                    </p>
-                  )}
-                  {gameState.phase === 'lobby' && isHost && (
-                    <button
-                      type="button"
-                      onClick={startGame}
-                      disabled={gameState.players.length < 2}
-                      className="w-full bg-[#43b047] text-black border-2 sm:border-4 border-black px-1 py-2 text-[7px] sm:text-[8px] leading-tight disabled:opacity-40"
-                    >
-                      START {gameState.players.length}/4
-                    </button>
-                  )}
-                  {gameState.phase === 'lobby' && !isHost && (
-                    <span className="text-black text-[6px] sm:text-[7px] text-center leading-tight px-0.5">WAIT HOST…</span>
-                  )}
-                </aside>
+                  </button>
+                )}
+                {gameState.phase === 'playing' && !isMyTurn && (
+                  <p className="text-black bg-white/90 border-2 border-black px-2 py-1.5 text-[6px] sm:text-[7px] text-center leading-snug break-words w-full max-w-[200px]">
+                    {gameState.players[gameState.currentTurnIndex]?.username?.slice(0, 12)}
+                    {gameState.players[gameState.currentTurnIndex]?.username?.length > 12 ? '…' : ''}
+                    <span className="block text-[6px] opacity-80">TURN</span>
+                  </p>
+                )}
+                {gameState.phase === 'lobby' && isHost && (
+                  <button
+                    type="button"
+                    onClick={startGame}
+                    disabled={gameState.players.length < 2}
+                    className="w-full max-w-[200px] bg-[#43b047] text-black border-2 sm:border-4 border-black px-2 py-2 text-[7px] sm:text-[8px] leading-tight disabled:opacity-40"
+                  >
+                    START {gameState.players.length}/4
+                  </button>
+                )}
+                {gameState.phase === 'lobby' && !isHost && (
+                  <span className="text-black text-[6px] sm:text-[7px] text-center leading-tight px-0.5">WAIT HOST…</span>
+                )}
+              </div>
 
-                <div className="order-3 flex flex-col min-h-0 w-full lg:w-[min(248px,100%)] lg:min-w-[200px] lg:max-w-[248px] lg:shrink-0 lg:flex-none bg-[#fcbcb0] border-4 border-black p-2 sm:p-3 text-black space-y-2 shadow-[6px_6px_0_#000] max-h-[min(240px,42dvh)] overflow-y-auto overscroll-contain lg:max-h-none lg:self-stretch">
-              <h3 className="text-[9px] border-b-2 border-black pb-1">PLAYERS</h3>
-              <ul className="space-y-2">
-                {gameState.players.map((pl, i) => {
-                  const img = playerImageUrl(pl.image);
-                  return (
-                    <li key={pl.userId} className="flex items-center gap-2 text-[8px]">
-                      {img ? (
-                        <img src={img} alt="" className="w-7 h-7 rounded-full border-2 border-black object-cover shrink-0" />
-                      ) : (
-                        <span className="w-7 h-7 rounded-full border-2 border-black shrink-0" style={{ background: pl.color }} />
-                      )}
-                      <span className="flex-1 truncate">{pl.username}</span>
-                      {!pl.connected && <span className="text-red-700">OUT</span>}
-                      {gameState.phase === 'playing' && gameState.currentTurnIndex === i && (
-                        <span className="text-green-800">◆</span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="text-[7px] leading-relaxed pt-2 border-t-2 border-black/30">
+              <div className="hidden lg:block text-[7px] leading-relaxed pt-2 border-t-2 border-black/30 text-black">
                 <p className="mb-1">· Roll a 6 to leave the start and land on square 6.</p>
                 <p className="mb-1">· Land exactly on 100 to win. Chutes are softer; pipes help more.</p>
                 <p>· Roll 6 = bonus roll (still from the server).</p>
               </div>
-                </div>
-              </div>
+            </aside>
           </div>
         )}
       </div>
