@@ -8,7 +8,12 @@ const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 const { creditReferrerBonus } = require('../routes/points');
-const { getCombinedLeaderboard, rankEmoji, POINTS_PER_USDC_FOR_RANK } = require('./leaderboardService');
+const {
+  getCombinedLeaderboard,
+  rankEmoji,
+  POINTS_PER_USDC_FOR_RANK,
+  CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD
+} = require('./leaderboardService');
 
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
@@ -1261,14 +1266,15 @@ https://aquads.xyz`;
     try {
       const rows = await getCombinedLeaderboard(20);
       let msg = `🌊 Aquads Leaders — Top 20\n`;
-      msg += `Rank uses lifetime points + commission (${POINTS_PER_USDC_FOR_RANK} pts per $1 USDC).\n\n`;
+      msg += `Rank: lifetime points + USDC earnings (${POINTS_PER_USDC_FOR_RANK} pts per $1).\n`;
+      msg += `USDC earnings = affiliate commission + approved $100 CAD redemptions (${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD} USDC each).\n\n`;
       if (rows.length === 0) {
         msg += `📭 No data yet.\n`;
       } else {
         rows.forEach((row, i) => {
           const r = i + 1;
           const pts = Number(row.lifetimePointsEarned || 0).toLocaleString('en-US');
-          const usd = Number(row.lifetimeCommissionEarned || 0).toLocaleString('en-US', {
+          const usd = Number(row.lifetimeUsdcEarnings || 0).toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });

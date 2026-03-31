@@ -24,7 +24,12 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
-const { getCombinedLeaderboard, rankEmoji, POINTS_PER_USDC_FOR_RANK } = require('./leaderboardService');
+const {
+  getCombinedLeaderboard,
+  rankEmoji,
+  POINTS_PER_USDC_FOR_RANK,
+  CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD
+} = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
@@ -402,14 +407,16 @@ async function handleLeaders(interaction) {
         : rows
             .map((row, i) => {
               const r = i + 1;
-              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · $${fmtUsd(row.lifetimeCommissionEarned)} USDC`;
+              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · $${fmtUsd(row.lifetimeUsdcEarnings)} USDC`;
             })
             .join('\n');
 
     const embed = new EmbedBuilder()
       .setTitle('🌊 Aquads Leaders — Top 20')
       .setDescription(
-        `Rank: lifetime points + commission (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1** USDC).\n\n${lines}\n\n🌐 https://aquads.xyz`
+        `Rank: lifetime points + USDC earnings (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1**).\n` +
+          `USDC earnings = affiliate commission + approved **$100 CAD** redemptions (**${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD}** USDC each).\n\n` +
+          `${lines}\n\n🌐 https://aquads.xyz`
       )
       .setColor(0x00bfff)
       .setURL('https://aquads.xyz');

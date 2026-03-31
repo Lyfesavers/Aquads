@@ -1,10 +1,9 @@
 /**
  * Combined Aquads leaders: lifetime points earned (sum of positive pointsHistory),
- * lifetime commission (Ad + HyperSpace). Ranked by weighted score.
- * Affiliate stream/space 100-pt awards count when recorded as positive pointsHistory rows.
+ * lifetime USDC-equivalent earnings (affiliate commission + approved CAD redemptions).
+ * Ranked by weighted score.
  */
 
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const HyperSpaceAffiliateEarning = require('../models/HyperSpaceAffiliateEarning');
@@ -14,8 +13,14 @@ const LEADERBOARD_USER_MATCH = {
   isAdmin: { $ne: true }
 };
 
-/** For ranking only: each $1 USDC lifetime commission ≈ this many points */
+/** For ranking: each $1 USDC-equivalent earnings ≈ this many points */
 const POINTS_PER_USDC_FOR_RANK = 100;
+
+/**
+ * Approved $100 CAD gift-card redemptions (10k pts) count as this much USDC for the board.
+ * Scales linearly with redemption.amount when present (amount is CAD face value).
+ */
+const CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD = 72.5;
 
 async function buildLifetimeCommissionByUserId() {
   const [adRows, hsRows] = await Promise.all([
@@ -42,11 +47,12 @@ async function buildLifetimeCommissionByUserId() {
 }
 
 /**
- * Top users by weighted score: lifetimePointsEarned + (USDC commission * POINTS_PER_USDC_FOR_RANK).
- * Each row: username, lifetimePointsEarned, lifetimeCommissionEarned (0 if none).
+ * Top users by weighted score: lifetimePointsEarned + (lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK).
+ * lifetimeUsdcEarnings = affiliate commission (USDC) + approved CAD redemptions at USDC equivalent.
  */
 async function getCombinedLeaderboard(limit = 20) {
   const commissionByUserId = await buildLifetimeCommissionByUserId();
+  const cadPer100 = CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD;
 
   const pointsRows = await User.aggregate([
     { $match: LEADERBOARD_USER_MATCH },
@@ -66,6 +72,26 @@ async function getCombinedLeaderboard(limit = 20) {
               in: '$$h.amount'
             }
           }
+        },
+        cadRedemptionUsdcEquivalent: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: { $ifNull: ['$giftCardRedemptions', []] },
+                  as: 'r',
+                  cond: { $eq: ['$$r.status', 'approved'] }
+                }
+              },
+              as: 'r',
+              in: {
+                $multiply: [
+                  { $divide: [{ $ifNull: ['$$r.amount', 100] }, 100] },
+                  cadPer100
+                ]
+              }
+            }
+          }
         }
       }
     },
@@ -73,7 +99,8 @@ async function getCombinedLeaderboard(limit = 20) {
       $project: {
         _id: 1,
         username: 1,
-        lifetimePointsEarned: 1
+        lifetimePointsEarned: 1,
+        cadRedemptionUsdcEquivalent: 1
       }
     }
   ]);
@@ -84,12 +111,14 @@ async function getCombinedLeaderboard(limit = 20) {
     const id = row._id.toString();
     const pts = Number(row.lifetimePointsEarned) || 0;
     const comm = commissionByUserId.get(id) || 0;
-    if (pts === 0 && comm <= 0) continue;
+    const cadEq = Number(row.cadRedemptionUsdcEquivalent) || 0;
+    const lifetimeUsdcEarnings = comm + cadEq;
+    if (pts === 0 && lifetimeUsdcEarnings <= 0) continue;
     merged.push({
       username: row.username,
       lifetimePointsEarned: pts,
-      lifetimeCommissionEarned: comm,
-      weightedRankScore: pts + comm * POINTS_PER_USDC_FOR_RANK
+      lifetimeUsdcEarnings,
+      weightedRankScore: pts + lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK
     });
   }
 
@@ -108,5 +137,6 @@ function rankEmoji(rank) {
 module.exports = {
   getCombinedLeaderboard,
   rankEmoji,
-  POINTS_PER_USDC_FOR_RANK
+  POINTS_PER_USDC_FOR_RANK,
+  CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD
 };
