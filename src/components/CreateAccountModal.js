@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import Modal from './Modal';
 import emailService from '../services/emailService';
 import { FaSpinner, FaCheck, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 
-const CreateAccountModal = ({ onCreateAccount, onClose }) => {
+const inputClass =
+  'w-full rounded-lg border border-gray-600 bg-gray-900/50 px-3 py-2.5 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+
+const STEP_META = [
+  { title: 'Account', subtitle: 'Your role and contact details' },
+  { title: 'Security', subtitle: 'Choose a strong password' },
+  { title: 'Profile', subtitle: 'Optional image, referral, and terms' }
+];
+
+const isImageFlowMessage = (msg) =>
+  typeof msg === 'string' && (msg.includes('✨') || msg.includes('📋'));
+
+const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
+  const registerUser = onCreateAccount || onSubmit;
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     username: '',
     fullName: '',
@@ -323,6 +336,14 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     });
   }, [formData.username]);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const isUsernameValid = () => {
     return formData.username.length > 0 && Object.values(usernameValidation).every(value => value === true);
   };
@@ -366,56 +387,77 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     return Object.values(passwordValidation).every(value => value === true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validateStep1 = () => {
     setError('');
-
-    // Validate required fields
-    if (!formData.username || !formData.fullName || !formData.password || !formData.email) {
-      setError('Username, full name, password, and email are required');
-      return;
+    if (!formData.username?.trim()) {
+      setError('Username is required');
+      return false;
     }
-
-    // Validate username requirements
     if (!isUsernameValid()) {
       if (!usernameValidation.validChars) {
         setError('Username can only contain letters, numbers, underscores and hyphens (no spaces)');
       } else if (!usernameValidation.minLength) {
         setError('Username must be between 3 and 20 characters');
       }
-      return;
+      return false;
     }
-
-    // Validate full name (must be at least 2 characters and allow spaces/international chars)
     if (formData.fullName.trim().length < 2) {
       setError('Please enter your full name (at least 2 characters)');
-      return;
+      return false;
     }
-
-    // Validate email format
+    if (!formData.email?.trim()) {
+      setError('Email is required');
+      return false;
+    }
     if (!validateEmail(formData.email)) {
       setError('Please enter a valid email address');
-      return;
+      return false;
     }
+    return true;
+  };
 
-    // Validate password requirements
+  const validateStep2 = () => {
+    setError('');
     if (!isPasswordValid()) {
       setError('Password does not meet all requirements');
-      return;
+      return false;
     }
-
-    // Validate password match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
+  const goNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+    setError('');
+    setStep((s) => Math.min(s + 1, 3));
+  };
+
+  const goBack = () => {
+    setError('');
+    setStep((s) => Math.max(s - 1, 1));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (step !== 3) return;
+    setError('');
+
+    if (!validateStep1()) {
+      setStep(1);
+      return;
+    }
+    if (!validateStep2()) {
+      setStep(2);
       return;
     }
 
-    // Set submitting state to show loading indicator
     setIsSubmitting(true);
-    
     try {
-      await onCreateAccount(formData);
-      // Clear the persisted referral code now that the account was created successfully
+      await registerUser(formData);
       sessionStorage.removeItem('pendingReferralCode');
       setIsSubmitting(false);
     } catch (error) {
@@ -444,13 +486,13 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     }));
     setPreviewUrl('');
     // Show clear instructions instead of an error
-    setError('✨ Upload your image on Postimages, then copy the "Direct link" URL and paste it here');
+    setError('✨ Upload on Postimages, then copy the Direct link — the URL should end in .jpg, .jpeg, .png, .gif, or .webp');
     
     // For browsers that support it, set up a listener for when our window gets focus back
     // This likely means the user has completed their task in the popup
     window.addEventListener('focus', function onFocus() {
       // Update guidance when the user comes back to our window
-      setError('📋 Now paste the "Direct link" URL from Postimages into the field above');
+      setError('📋 Paste that direct link above (must look like a file URL ending in .jpg, .png, etc.)');
       window.removeEventListener('focus', onFocus);
     }, { once: true });
   };
@@ -501,7 +543,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
 
   // Password requirement item
   const PasswordRequirement = ({ met, text }) => (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2 text-xs sm:text-sm">
       {met ? (
         <FaCheck className="text-green-500" />
       ) : (
@@ -512,41 +554,66 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   );
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999999] overflow-y-auto p-2">
-      <div className="bg-gray-800 p-8 rounded-lg w-full max-w-6xl relative my-2">
-        <div className="max-h-[calc(100vh-2rem)] overflow-y-auto">
-          <div 
-            onClick={onClose} 
-            className="text-white text-center select-none cursor-pointer" 
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              width: '24px',
-              height: '24px',
-              lineHeight: '24px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              zIndex: 10
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label="Close"
-          >
-            ✕
+    <div
+      className="fixed inset-0 z-[1100000000] flex flex-col bg-zinc-950 text-white"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-account-title"
+    >
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:items-center sm:px-6">
+        <div className="min-w-0 pt-0.5 sm:pt-0">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+            Step {step} of {STEP_META.length}
+          </p>
+          <h2 id="create-account-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            {STEP_META[step - 1].title}
+          </h2>
+          <p className="mt-1 text-sm text-gray-400">{STEP_META[step - 1].subtitle}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex shrink-0 items-center justify-center rounded-full p-2.5 text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Close"
+        >
+          <FaTimes className="h-5 w-5" aria-hidden />
+        </button>
+      </header>
+
+      <form onSubmit={handleFormSubmit} className="flex min-h-0 flex-1 flex-col">
+        <div className="shrink-0 border-b border-white/5 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-xl gap-2">
+            {STEP_META.map((_, i) => {
+              const n = i + 1;
+              const active = step === n;
+              const done = step > n;
+              return (
+                <div
+                  key={n}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    active ? 'bg-blue-500' : done ? 'bg-blue-500/40' : 'bg-zinc-800'
+                  }`}
+                  title={STEP_META[i].title}
+                />
+              );
+            })}
           </div>
-          <h2 className="text-2xl font-bold mb-6 text-white">Create Account</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="mx-auto w-full max-w-xl px-4 py-6 sm:px-6 sm:py-8">
+            <div className="space-y-5">
+            {step === 1 && (
+            <>
             <div>
-              <label className="block text-gray-300 mb-2">Account Type</label>
-              <div className="grid grid-cols-2 gap-4">
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Account type</label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: 'freelancer' }))}
-                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                  className={`rounded-lg border-2 py-3 text-sm font-medium transition-colors ${
                     formData.userType === 'freelancer'
-                      ? 'border-blue-500 bg-blue-500/20 text-white'
-                      : 'border-gray-600 text-gray-400 hover:border-blue-400'
+                      ? 'border-blue-500 bg-blue-500/15 text-white'
+                      : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
                   }`}
                 >
                   Freelancer
@@ -554,23 +621,23 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: 'project' }))}
-                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                  className={`rounded-lg border-2 py-3 text-sm font-medium transition-colors ${
                     formData.userType === 'project'
-                      ? 'border-blue-500 bg-blue-500/20 text-white'
-                      : 'border-gray-600 text-gray-400 hover:border-blue-400'
+                      ? 'border-blue-500 bg-blue-500/15 text-white'
+                      : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
                   }`}
                 >
                   Project
                 </button>
               </div>
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="mt-2 text-xs text-gray-500 sm:text-sm">
                 {formData.userType === 'freelancer' 
                   ? 'Select this if you want to offer services'
                   : 'Select this if you want to hire freelancers'}
               </p>
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Username</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Username</label>
               <input
                 type="text"
                 name="username"
@@ -579,19 +646,19 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 onFocus={() => setUsernameFocused(true)}
                 onBlur={() => setUsernameFocused(false)}
                 required
-                placeholder="Enter username (used for login)"
-                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                placeholder="Used for login"
+                className={`${inputClass} ${
                   formData.username && isUsernameValid()
-                    ? "focus:ring-green-500 border border-green-500"
+                    ? 'border-green-500/80 focus:border-green-500 focus:ring-green-500'
                     : formData.username && !usernameValidation.validChars
-                    ? "focus:ring-red-500 border border-red-500"
-                    : "focus:ring-blue-500"
+                    ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500'
+                    : ''
                 }`}
               />
               
               {/* Username requirements checklist */}
               {(usernameFocused || formData.username) && (
-                <div className="mt-2 p-3 bg-gray-700 rounded space-y-1">
+                <div className="mt-2 space-y-1 rounded-lg border border-gray-600/80 bg-gray-900/40 p-3">
                   <div className="flex items-center gap-2 text-sm">
                     {usernameValidation.minLength ? (
                       <FaCheck className="text-green-500" />
@@ -614,40 +681,40 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                   </div>
                 </div>
               )}
-              <p className="text-xs text-gray-400 mt-1">Your unique username for login and identification</p>
+              <p className="mt-1 text-xs text-gray-500">Your unique username for login and identification</p>
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Full Name *</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Full name</label>
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
                 required
-                placeholder="Enter your full name (e.g., John Smith)"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. Jane Smith"
+                className={inputClass}
               />
-              <p className="text-xs text-gray-400 mt-1">Your real name as it will appear to clients and on your profile</p>
+              <p className="mt-1 text-xs text-gray-500">Shown to clients and on your profile</p>
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Email *</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                placeholder="Enter email (Required for verification)"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="For verification and login recovery"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Country</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Country</label>
               <select
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
               >
                 <option value="">Select your country</option>
                 {countries.map((country) => (
@@ -657,8 +724,12 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 ))}
               </select>
             </div>
+            </>
+            )}
+            {step === 2 && (
+            <>
             <div>
-              <label className="block text-gray-300 mb-2">Password</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -668,11 +739,11 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
                   required
-                  placeholder="Create a password"
-                  className={`w-full px-3 py-2 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
-                    formData.password && isPasswordValid() 
-                      ? "focus:ring-green-500 border border-green-500" 
-                      : "focus:ring-blue-500"
+                  placeholder="Create a strong password"
+                  className={`${inputClass} pr-10 ${
+                    formData.password && isPasswordValid()
+                      ? 'border-green-500/80 focus:border-green-500 focus:ring-green-500'
+                      : ''
                   }`}
                 />
                 <button
@@ -687,7 +758,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               
               {/* Password requirements checklist */}
               {(passwordFocused || formData.password) && (
-                <div className="mt-2 p-3 bg-gray-700 rounded space-y-1">
+                <div className="mt-2 space-y-1 rounded-lg border border-gray-600/80 bg-gray-900/40 p-3">
                   <PasswordRequirement 
                     met={passwordValidation.minLength} 
                     text="At least 8 characters" 
@@ -712,7 +783,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               )}
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Confirm Password</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Confirm password</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -720,11 +791,11 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  placeholder="Confirm password"
-                  className={`w-full px-3 py-2 pr-10 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                  placeholder="Re-enter password"
+                  className={`${inputClass} pr-10 ${
                     formData.confirmPassword && formData.password === formData.confirmPassword
-                      ? "focus:ring-green-500 border border-green-500" 
-                      : "focus:ring-blue-500"
+                      ? 'border-green-500/80 focus:border-green-500 focus:ring-green-500'
+                      : ''
                   }`}
                 />
                 <button
@@ -737,49 +808,77 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                <p className="mt-1 text-sm text-red-400">Passwords do not match</p>
               )}
             </div>
+            </>
+            )}
+            {step === 3 && (
+            <>
+            <div className="space-y-3 rounded-lg border border-zinc-700 bg-zinc-900/40 p-4">
+              <h4 className="text-sm font-medium text-gray-200">Profile image link (optional)</h4>
+              <p className="text-sm leading-relaxed text-gray-400">
+                Paste a <span className="font-medium text-gray-300">direct image URL</span> — the kind that opens the picture alone in the browser, not a gallery or album page.
+              </p>
+              <ul className="list-inside list-disc space-y-2 text-sm text-gray-400">
+                <li>
+                  On hosts like Postimages, choose the <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-xs text-gray-300">Direct link</span> (or equivalent), not HTML embed or thumbnail-only links.
+                </li>
+                <li>
+                  The address should end with a file type such as{' '}
+                  <span className="font-mono text-xs text-gray-300">.jpg</span>,{' '}
+                  <span className="font-mono text-xs text-gray-300">.jpeg</span>,{' '}
+                  <span className="font-mono text-xs text-gray-300">.png</span>,{' '}
+                  <span className="font-mono text-xs text-gray-300">.gif</span>, or{' '}
+                  <span className="font-mono text-xs text-gray-300">.webp</span>
+                  {' '}(extra <span className="font-mono text-xs">?query</span> parameters at the end are fine).
+                </li>
+                <li>If you are unsure, use <span className="font-medium text-gray-300">Upload image</span> below and copy the direct link the site gives you.</li>
+              </ul>
+            </div>
             <div>
-              <label className="block text-gray-300 mb-2">Profile Image URL (optional)</label>
-              <div className="flex space-x-2 mb-2">
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Image URL</label>
+              <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-stretch">
                 <input
                   type="text"
                   name="image"
                   value={formData.image}
                   onChange={handleChange}
-                  placeholder="Enter image URL or use upload button →"
-                  className="flex-1 px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://…/photo.png"
+                  className={`min-w-0 flex-1 ${inputClass}`}
                 />
                 <button
                   type="button"
                   onClick={openPostimagesUploader}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center whitespace-nowrap"
+                  className="flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 sm:w-auto"
                 >
-                  Upload Image
+                  Upload image
                 </button>
               </div>
               {error && error.includes('✨') ? (
-                <div className="p-3 bg-blue-900/30 border border-blue-800 rounded-md mt-2 mb-2">
-                  <h4 className="font-medium text-blue-300 mb-2">How to add your profile image:</h4>
-                  <ol className="list-decimal list-inside text-sm text-gray-300 space-y-1.5">
-                    <li>Upload your image on the Postimages website that just opened</li>
-                    <li>After upload, look for the <span className="font-mono bg-gray-800 px-1.5 py-0.5 rounded">Direct link</span> field</li>
-                    <li>Click the <span className="font-mono bg-gray-800 px-1.5 py-0.5 rounded">Copy</span> button next to it</li>
-                    <li>Come back to this window and paste the link in the field above</li>
+                <div className="mb-2 mt-2 rounded-lg border border-blue-500/25 bg-blue-500/5 p-3">
+                  <h4 className="mb-2 text-sm font-medium text-blue-200">After uploading on Postimages</h4>
+                  <ol className="list-inside list-decimal space-y-1.5 text-sm text-gray-300">
+                    <li>Find the <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-xs">Direct link</span> row (URL should end in <span className="font-mono text-xs">.jpg</span>, <span className="font-mono text-xs">.png</span>, etc.).</li>
+                    <li>Copy that full URL — not the HTML code or a short gallery link.</li>
+                    <li>Paste it into the field above; you should see a preview when it loads.</li>
                   </ol>
                 </div>
-              ) : (
-                <p className="text-xs text-gray-400 mb-2">
-                  Click "Upload Image" to open Postimages.org. After uploading, copy the "Direct Link" and paste it here.
-                </p>
-              )}
+              ) : null}
+              {error && error.includes('📋') ? (
+                <div className="mb-2 mt-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-100/90">
+                  {error}
+                </div>
+              ) : null}
+              <p className="text-xs text-gray-500">
+                Leave blank to add a profile photo later. Wrong links usually fail to preview — use a direct file URL.
+              </p>
               {previewUrl && (
                 <div className="mt-2">
                   <img
                     src={previewUrl}
                     alt="Profile preview"
-                    className="w-20 h-20 object-cover rounded"
+                    className="h-20 w-20 rounded-lg border border-gray-600 object-cover"
                     onError={() => {
                       setPreviewUrl('');
                       setError('Failed to load image');
@@ -789,51 +888,83 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               )}
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Referral Code (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Referral code (optional)</label>
               <input
                 type="text"
                 name="referralCode"
                 value={formData.referralCode}
                 onChange={handleChange}
-                placeholder="Enter referral code"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="If someone referred you"
+                className={inputClass}
               />
             </div>
-            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3 mt-4 mb-4">
-              <p className="text-gray-300 text-sm">
-                <strong>Notice:</strong> By creating an account, you accept our Terms & Conditions and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination.
+            <div className="rounded-lg border border-blue-500/25 bg-blue-500/5 p-4">
+              <p className="text-sm leading-relaxed text-gray-300">
+                <span className="font-medium text-gray-200">Notice:</span> By creating an account, you accept our Terms & Conditions and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination.
               </p>
             </div>
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
+            </>
             )}
-            <div className="flex justify-end space-x-4 pt-4">
+            {error && !isImageFlowMessage(error) && (
+              <p className="rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-300">{error}</p>
+            )}
+            </div>
+          </div>
+        </div>
+        <div className="shrink-0 border-t border-white/10 bg-zinc-950/95 px-4 py-4 backdrop-blur-sm supports-[backdrop-filter]:bg-zinc-950/80 sm:px-6">
+          <div
+            className={`mx-auto flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center ${
+              step === 1 ? 'sm:justify-end' : 'sm:justify-between'
+            }`}
+          >
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={isSubmitting}
+                className="rounded-lg border border-gray-600 bg-transparent px-5 py-2.5 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5 disabled:opacity-50"
+              >
+                Back
+              </button>
+            ) : null}
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+                className="rounded-lg border border-gray-600 bg-transparent px-5 py-2.5 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5 disabled:opacity-50 sm:min-w-[7rem]"
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <FaSpinner className="animate-spin mr-2" />
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </button>
+              {step < 3 ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50 sm:min-w-[7rem]"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50 sm:min-w-[10rem]"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <FaSpinner className="mr-2 animate-spin" />
+                      Creating account…
+                    </>
+                  ) : (
+                    'Create account'
+                  )}
+                </button>
+              )}
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </form>
     </div>,
     document.body
   );
