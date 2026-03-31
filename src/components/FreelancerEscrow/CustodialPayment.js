@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { ESCROW_WALLETS, ESCROW_MODE, FEE_CONFIG } from '../../config/wallets';
 import emailService from '../../services/emailService';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app';
 
 const SOLANA_ESCROW_WALLET = ESCROW_WALLETS.SOLANA;
 const EVM_ESCROW_WALLET = ESCROW_WALLETS.ETHEREUM;

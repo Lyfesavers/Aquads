@@ -3,7 +3,7 @@ import axios from 'axios';
 // Ensure API_URL ends with /api but doesn't have a trailing slash
 const API_URL = (() => {
   // Start with the base URL (environment variable or default)
-  let baseUrl = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+  let baseUrl = process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app';
   
   // Remove trailing slash if present
   if (baseUrl.endsWith('/')) {

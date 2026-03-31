@@ -81,7 +81,7 @@ After deployment, update webhook to include `message_reaction`:
 curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://aquads.onrender.com/api/twitter-raids/telegram-webhook",
+    "url": "https://aquads-production.up.railway.app/api/twitter-raids/telegram-webhook",
     "allowed_updates": ["message", "callback_query", "message_reaction"]
   }'
 ```
@@ -92,7 +92,7 @@ Replace `<YOUR_BOT_TOKEN>` with your actual bot token from `.env`.
 ```powershell
 $botToken = "YOUR_BOT_TOKEN_HERE"
 $body = @{
-  url = "https://aquads.onrender.com/api/twitter-raids/telegram-webhook"
+  url = "https://aquads-production.up.railway.app/api/twitter-raids/telegram-webhook"
   allowed_updates = @("message", "callback_query", "message_reaction")
 } | ConvertTo-Json
 
@@ -110,7 +110,7 @@ curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
 Should show:
 ```json
 {
-  "url": "https://aquads.onrender.com/api/twitter-raids/telegram-webhook",
+  "url": "https://aquads-production.up.railway.app/api/twitter-raids/telegram-webhook",
   "allowed_updates": ["message", "callback_query", "message_reaction"]
 }
 ```
@@ -247,7 +247,7 @@ curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/deleteWebhook"
 # Set new webhook with reactions
 curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://aquads.onrender.com/api/twitter-raids/telegram-webhook","allowed_updates":["message","callback_query","message_reaction"]}'
+  -d '{"url":"https://aquads-production.up.railway.app/api/twitter-raids/telegram-webhook","allowed_updates":["message","callback_query","message_reaction"]}'
 ```
 
 ### Bot Not Responding

@@ -2,8 +2,8 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import logger from '../utils/logger';
 
-const BACKEND_URL = process.env.REACT_APP_API_URL || 
-  (process.env.NODE_ENV === 'production' ? 'https://aquads.onrender.com' : 'http://localhost:5000');
+const BACKEND_URL = process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://aquads-production.up.railway.app' : 'http://localhost:5000');
 
 export const API_URL = `${BACKEND_URL}/api`;
 
@@ -115,7 +115,8 @@ const refreshAccessToken = async () => {
 window.fetch = async function(url, options = {}) {
   // Only intercept API calls to our backend
   const urlString = typeof url === 'string' ? url : url.toString();
-  const isApiCall = urlString.includes('aquads.onrender.com') || urlString.includes('localhost:5000') || urlString.includes('railway.app');
+  const isApiCall =
+    urlString.includes('localhost:5000') || urlString.includes('railway.app');
   
   if (!isApiCall) {
     // Not an API call, use original fetch

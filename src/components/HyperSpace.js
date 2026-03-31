@@ -5,7 +5,7 @@ import axios from 'axios';
 import { socket } from '../services/api';
 import Footer from './Footer';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app';
 
 // Payment chains
 const CHAINS = {

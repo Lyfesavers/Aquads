@@ -7,7 +7,7 @@ import emailService from '../services/emailService';
 import { AQUADS_WALLETS, FEE_CONFIG } from '../config/wallets';
 import { useConnect, useSolana, useDisconnect } from '@phantom/react-sdk';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app';
 
 // Platform wallets for fee collection
 const SOLANA_PLATFORM_WALLET = AQUADS_WALLETS.SOLANA;

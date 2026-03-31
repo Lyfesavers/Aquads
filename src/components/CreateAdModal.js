@@ -367,7 +367,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         if (!token) {
           throw new Error('Authentication required. Please log in again.');
         }
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app'}/api/addon-orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -457,7 +457,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         if (!token) {
           throw new Error('Authentication required. Please log in again.');
         }
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/api/addon-orders`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://aquads-production.up.railway.app'}/api/addon-orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
