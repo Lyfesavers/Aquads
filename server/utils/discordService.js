@@ -24,7 +24,7 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
-const { getLeaderboardPayload, rankEmoji } = require('./leaderboardService');
+const { getCombinedLeaderboard, rankEmoji, POINTS_PER_USDC_FOR_RANK } = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
@@ -121,7 +121,7 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('username').setDescription('Your Twitter or Facebook username').setRequired(true))
       .addStringOption(o => o.setName('post_url').setDescription('Tweet or post URL').setRequired(true)),
     new SlashCommandBuilder().setName('bubbles').setDescription('Top 10 bumped bubbles'),
-    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 lifetime points & lifetime commission earned'),
+    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 leaders (lifetime points + USDC commission, weighted rank)'),
     new SlashCommandBuilder().setName('mybubble').setDescription('Your project bubbles with vote buttons'),
     new SlashCommandBuilder().setName('createraid').setDescription('Create a Twitter raid')
       .addStringOption(o => o.setName('tweet_url').setDescription('Tweet URL').setRequired(true)),
@@ -391,48 +391,35 @@ async function handleCompleteSlash(interaction) {
 
 async function handleLeaders(interaction) {
   try {
-    const { pointsLeaders, commissionLeaders } = await getLeaderboardPayload(20);
+    const rows = await getCombinedLeaderboard(20);
     const fmtPts = (n) => Number(n || 0).toLocaleString('en-US');
     const fmtUsd = (n) =>
       Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const linesPts =
-      pointsLeaders.length === 0
+    const lines =
+      rows.length === 0
         ? '📭 No data yet.'
-        : pointsLeaders
+        : rows
             .map((row, i) => {
               const r = i + 1;
-              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts`;
+              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · $${fmtUsd(row.lifetimeCommissionEarned)} USDC`;
             })
             .join('\n');
 
-    const linesComm =
-      commissionLeaders.length === 0
-        ? '📭 No data yet.'
-        : commissionLeaders
-            .map((row, i) => {
-              const r = i + 1;
-              return `${rankEmoji(r)} #${r} ${row.username} — $${fmtUsd(row.lifetimeCommissionEarned)}`;
-            })
-            .join('\n');
-
-    const embedIntro = new EmbedBuilder()
-      .setTitle('🌊 Top 20 — Lifetime points earned')
-      .setDescription(linesPts + '\n\n🌐 https://aquads.xyz')
+    const embed = new EmbedBuilder()
+      .setTitle('🌊 Aquads Leaders — Top 20')
+      .setDescription(
+        `Rank: lifetime points + commission (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1** USDC).\n\n${lines}\n\n🌐 https://aquads.xyz`
+      )
       .setColor(0x00bfff)
       .setURL('https://aquads.xyz');
-
-    const embedComm = new EmbedBuilder()
-      .setTitle('💰 Top 20 — Lifetime commission earned (USDC)')
-      .setDescription(linesComm + '\n\n🌐 https://aquads.xyz')
-      .setColor(0x00bfff);
 
     const linkRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
       new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
     );
 
-    return interaction.reply({ embeds: [embedIntro, embedComm], components: [linkRow] });
+    return interaction.reply({ embeds: [embed], components: [linkRow] });
   } catch (e) {
     console.error('Discord /leaders error:', e.message);
     return reply(interaction, '❌ Could not load the leaderboard. Try again later.\n\nhttps://aquads.xyz', false);
@@ -1228,7 +1215,7 @@ async function startBot() {
             .setTitle('📊 Bubbles')
             .setDescription(
               '• `/bubbles` – Top 10 bumped bubbles\n' +
-                '• `/leaders` – Top 20 lifetime points & commission earned\n' +
+                '• `/leaders` – Top 20 (points + USDC, weighted rank)\n' +
                 '• `/mybubble` – Your projects with vote info\n\n' +
                 'https://aquads.xyz'
             )
@@ -1262,7 +1249,7 @@ async function startBot() {
               '1️⃣ **Link:** `/link your_aquads_username` (create account at aquads.xyz first)\n\n' +
               '2️⃣ **Socials:** `/twitter your_twitter` and `/facebook your_facebook`\n\n' +
               '3️⃣ **Earn:** `/raids` – complete raids for points\n' +
-              '`/mybubble` – your project · `/bubbles` – vote · `/leaders` – points & commission\n\n' +
+              '`/mybubble` – your project · `/bubbles` – vote · `/leaders` – leaders board\n\n' +
               'https://aquads.xyz'
             )
             .setColor(0x00bfff)

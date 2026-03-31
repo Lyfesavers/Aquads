@@ -1,6 +1,7 @@
 /**
- * Leaders: lifetime points earned (sum of positive pointsHistory) and
- * lifetime commission earned (Ad + HyperSpace), excluding suspended admins.
+ * Combined Aquads leaders: lifetime points earned (sum of positive pointsHistory),
+ * lifetime commission (Ad + HyperSpace). Ranked by weighted score.
+ * Affiliate stream/space 100-pt awards count when recorded as positive pointsHistory rows.
  */
 
 const mongoose = require('mongoose');
@@ -13,37 +14,10 @@ const LEADERBOARD_USER_MATCH = {
   isAdmin: { $ne: true }
 };
 
-async function getTopLifetimePointsEarned(limit = 20) {
-  const rows = await User.aggregate([
-    { $match: LEADERBOARD_USER_MATCH },
-    {
-      $addFields: {
-        lifetimePointsEarned: {
-          $sum: {
-            $map: {
-              input: {
-                $filter: {
-                  input: { $ifNull: ['$pointsHistory', []] },
-                  as: 'h',
-                  cond: { $gt: ['$$h.amount', 0] }
-                }
-              },
-              as: 'h',
-              in: '$$h.amount'
-            }
-          }
-        }
-      }
-    },
-    { $match: { lifetimePointsEarned: { $gt: 0 } } },
-    { $sort: { lifetimePointsEarned: -1 } },
-    { $limit: limit },
-    { $project: { _id: 0, username: 1, lifetimePointsEarned: 1 } }
-  ]);
-  return rows;
-}
+/** For ranking only: each $1 USDC lifetime commission ≈ this many points */
+const POINTS_PER_USDC_FOR_RANK = 100;
 
-async function getTopLifetimeCommissionEarned(limit = 20) {
+async function buildLifetimeCommissionByUserId() {
   const [adRows, hsRows] = await Promise.all([
     AffiliateEarning.aggregate([
       { $group: { _id: '$affiliateId', total: { $sum: '$commissionEarned' } } }
@@ -64,25 +38,64 @@ async function getTopLifetimeCommissionEarned(limit = 20) {
     const id = r._id.toString();
     merged.set(id, (merged.get(id) || 0) + (r.total || 0));
   }
+  return merged;
+}
 
-  const sorted = [...merged.entries()].sort((a, b) => b[1] - a[1]);
-  if (sorted.length === 0) return [];
+/**
+ * Top users by weighted score: lifetimePointsEarned + (USDC commission * POINTS_PER_USDC_FOR_RANK).
+ * Each row: username, lifetimePointsEarned, lifetimeCommissionEarned (0 if none).
+ */
+async function getCombinedLeaderboard(limit = 20) {
+  const commissionByUserId = await buildLifetimeCommissionByUserId();
 
-  const ids = sorted.map(([id]) => new mongoose.Types.ObjectId(id));
-  const users = await User.find({ _id: { $in: ids } })
-    .select('username suspended isAdmin')
-    .lean();
-  const byId = new Map(users.map((u) => [u._id.toString(), u]));
+  const pointsRows = await User.aggregate([
+    { $match: LEADERBOARD_USER_MATCH },
+    {
+      $addFields: {
+        lifetimePointsEarned: {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: { $ifNull: ['$pointsHistory', []] },
+                  as: 'h',
+                  cond: { $gt: ['$$h.amount', 0] }
+                }
+              },
+              as: 'h',
+              in: '$$h.amount'
+            }
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        lifetimePointsEarned: 1
+      }
+    }
+  ]);
 
-  const out = [];
-  for (const [id, total] of sorted) {
-    if (out.length >= limit) break;
-    const u = byId.get(id);
-    if (!u || u.suspended || u.isAdmin) continue;
-    if (total <= 0) continue;
-    out.push({ username: u.username, lifetimeCommissionEarned: total });
+  const merged = [];
+
+  for (const row of pointsRows) {
+    const id = row._id.toString();
+    const pts = Number(row.lifetimePointsEarned) || 0;
+    const comm = commissionByUserId.get(id) || 0;
+    if (pts === 0 && comm <= 0) continue;
+    merged.push({
+      username: row.username,
+      lifetimePointsEarned: pts,
+      lifetimeCommissionEarned: comm,
+      weightedRankScore: pts + comm * POINTS_PER_USDC_FOR_RANK
+    });
   }
-  return out;
+
+  merged.sort((a, b) => b.weightedRankScore - a.weightedRankScore);
+
+  return merged.slice(0, limit).map(({ weightedRankScore, ...rest }) => rest);
 }
 
 function rankEmoji(rank) {
@@ -92,17 +105,8 @@ function rankEmoji(rank) {
   return '🔹';
 }
 
-async function getLeaderboardPayload(limit = 20) {
-  const [pointsLeaders, commissionLeaders] = await Promise.all([
-    getTopLifetimePointsEarned(limit),
-    getTopLifetimeCommissionEarned(limit)
-  ]);
-  return { pointsLeaders, commissionLeaders };
-}
-
 module.exports = {
-  getTopLifetimePointsEarned,
-  getTopLifetimeCommissionEarned,
-  getLeaderboardPayload,
-  rankEmoji
+  getCombinedLeaderboard,
+  rankEmoji,
+  POINTS_PER_USDC_FOR_RANK
 };

@@ -8,7 +8,7 @@ const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 const { creditReferrerBonus } = require('../routes/points');
-const { getLeaderboardPayload, rankEmoji } = require('./leaderboardService');
+const { getCombinedLeaderboard, rankEmoji, POINTS_PER_USDC_FOR_RANK } = require('./leaderboardService');
 
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
@@ -1124,7 +1124,7 @@ Vote on projects and view trending bubbles!
   View top 10 bubbles (most bullish votes)
 
 • /leaders
-  Top 20 lifetime points earned & lifetime commission earned
+  Top 20 — lifetime points & USDC commission (one list, weighted rank)
 
 • /mybubble
   View YOUR projects with voting buttons
@@ -1200,7 +1200,7 @@ Get started in 3 easy steps:
    /raids - Complete raids for points
    /mybubble - Share your project
    /bubbles - Vote on projects
-   /leaders - Lifetime points & commission leaders
+   /leaders - Top 20 (points + commission)
 
 💰 Redeem points for rewards at:
 https://aquads.xyz`;
@@ -1256,32 +1256,23 @@ https://aquads.xyz`;
     }
   },
 
-  // Handle /leaders — lifetime points + lifetime commission (groups + DMs)
+  // Handle /leaders — combined rank: lifetime pts + lifetime commission (groups + DMs)
   handleLeadersCommand: async (chatId) => {
     try {
-      const { pointsLeaders, commissionLeaders } = await getLeaderboardPayload(20);
-      let msg = `🌊 Aquads Leaders\n\n`;
-      msg += `⭐ Top 20 — Lifetime points earned\n`;
-      if (pointsLeaders.length === 0) {
+      const rows = await getCombinedLeaderboard(20);
+      let msg = `🌊 Aquads Leaders — Top 20\n`;
+      msg += `Rank uses lifetime points + commission (${POINTS_PER_USDC_FOR_RANK} pts per $1 USDC).\n\n`;
+      if (rows.length === 0) {
         msg += `📭 No data yet.\n`;
       } else {
-        pointsLeaders.forEach((row, i) => {
+        rows.forEach((row, i) => {
           const r = i + 1;
           const pts = Number(row.lifetimePointsEarned || 0).toLocaleString('en-US');
-          msg += `${rankEmoji(r)} #${r} ${row.username} — ${pts} pts\n`;
-        });
-      }
-      msg += `\n💰 Top 20 — Lifetime commission earned (USDC)\n`;
-      if (commissionLeaders.length === 0) {
-        msg += `📭 No data yet.\n`;
-      } else {
-        commissionLeaders.forEach((row, i) => {
-          const r = i + 1;
           const usd = Number(row.lifetimeCommissionEarned || 0).toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });
-          msg += `${rankEmoji(r)} #${r} ${row.username} — $${usd}\n`;
+          msg += `${rankEmoji(r)} #${r} ${row.username} — ${pts} pts · $${usd} USDC\n`;
         });
       }
       msg += `\n🌐 https://aquads.xyz`;
