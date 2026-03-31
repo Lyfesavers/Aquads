@@ -121,7 +121,7 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('username').setDescription('Your Twitter or Facebook username').setRequired(true))
       .addStringOption(o => o.setName('post_url').setDescription('Tweet or post URL').setRequired(true)),
     new SlashCommandBuilder().setName('bubbles').setDescription('Top 10 bumped bubbles'),
-    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 by USDC earnings (commission + gift redeem), then points'),
+    new SlashCommandBuilder().setName('leaders').setDescription('Top 15 by USDC earnings (commission + gift redeem), then points'),
     new SlashCommandBuilder().setName('mybubble').setDescription('Your project bubbles with vote buttons'),
     new SlashCommandBuilder().setName('createraid').setDescription('Create a Twitter raid')
       .addStringOption(o => o.setName('tweet_url').setDescription('Tweet URL').setRequired(true)),
@@ -391,7 +391,7 @@ async function handleCompleteSlash(interaction) {
 
 async function handleLeaders(interaction) {
   try {
-    const rows = await getCombinedLeaderboard(20);
+    const rows = await getCombinedLeaderboard(15);
     const fmtPts = (n) => Number(n || 0).toLocaleString('en-US');
     const fmtUsd = (n) =>
       Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -407,7 +407,7 @@ async function handleLeaders(interaction) {
             .join('\n');
 
     const embed = new EmbedBuilder()
-      .setTitle('🌊 Aquads Leaders — Top 20')
+      .setTitle('🌊 Aquads Leaders — Top 15')
       .setDescription(
         '**Rank:** total **USDC earnings** (higher first), then lifetime **points**.\n' +
           '**Earnings:** affiliate commission (ads + HyperSpace) + approved gift redemptions.\n' +
@@ -1219,7 +1219,7 @@ async function startBot() {
             .setTitle('📊 Bubbles')
             .setDescription(
               '• `/bubbles` – Top 10 bumped bubbles\n' +
-                '• `/leaders` – Top 20 by USDC earnings (comm + gift), then points\n' +
+                '• `/leaders` – Top 15 by USDC earnings (comm + gift), then points\n' +
                 '• `/mybubble` – Your projects with vote info\n\n' +
                 'https://aquads.xyz'
             )

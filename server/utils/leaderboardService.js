@@ -68,7 +68,7 @@ function compareByUsdcEarningsThenPoints(a, b) {
 /**
  * @returns {Promise<Array<{ username, lifetimePointsEarned, lifetimeUsdcEarnings }>>}
  */
-async function getCombinedLeaderboard(limit = 20) {
+async function getCombinedLeaderboard(limit = 15) {
   const commissionByUserId = await buildLifetimeAffiliateCommissionByUserId();
   const giftUsdcPer100 = GIFT_CARD_USDC_PER_100_CAD;
 

@@ -1125,7 +1125,7 @@ Vote on projects and view trending bubbles!
   View top 10 bubbles (most bullish votes)
 
 • /leaders
-  Top 20 — lifetime points & USDC earnings (commission + gift redeem; rank by earnings)
+  Top 15 — lifetime points & USDC earnings (rank by earnings)
 
 • /mybubble
   View YOUR projects with voting buttons
@@ -1201,7 +1201,7 @@ Get started in 3 easy steps:
    /raids - Complete raids for points
    /mybubble - Share your project
    /bubbles - Vote on projects
-   /leaders - Top 20 (USDC earnings rank)
+   /leaders - Top 15 (USDC earnings rank)
 
 💰 Redeem points for rewards at:
 https://aquads.xyz`;
@@ -1260,8 +1260,8 @@ https://aquads.xyz`;
   // Handle /leaders — lifetime pts + USDC earnings (comm + approved gift redeem), rank by earnings (groups + DMs)
   handleLeadersCommand: async (chatId) => {
     try {
-      const rows = await getCombinedLeaderboard(20);
-      let msg = `🌊 Aquads Leaders — Top 20\n`;
+      const rows = await getCombinedLeaderboard(15);
+      let msg = `🌊 Aquads Leaders — Top 15\n`;
       msg += `Rank: total USDC earnings, then lifetime points.\n\n`;
       if (rows.length === 0) {
         msg += `📭 No data yet.\n`;
