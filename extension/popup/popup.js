@@ -5,6 +5,11 @@ if (typeof window.dbg === 'undefined') {
 }
 dbg('🌊 AquaSwap Extension loaded');
 
+const AQUADS_EXT_ORIGIN =
+  typeof AQUADS_API_ORIGIN !== 'undefined'
+    ? AQUADS_API_ORIGIN
+    : 'https://aquads-production.up.railway.app';
+
 // Socket.io connection for real-time points updates
 let socket = null;
 
@@ -20,7 +25,7 @@ async function initSocket() {
     }
 
     // Connect to socket server
-    socket = io('https://aquads.onrender.com', {
+    socket = io(AQUADS_EXT_ORIGIN, {
       auth: {
         token: storage.authToken
       },
@@ -381,7 +386,7 @@ window.addEventListener('message', (event) => {
         }
 
         dbg('Making API call to award swap points...');
-        const res = await fetch('https://aquads.onrender.com/api/points/swap-completed', {
+        const res = await fetch(`${AQUADS_EXT_ORIGIN}/api/points/swap-completed`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${storage.authToken}`,
@@ -444,7 +449,7 @@ async function loadAffiliatePoints() {
       return;
     }
 
-    const response = await fetch('https://aquads.onrender.com/api/points/my-points', {
+    const response = await fetch(`${AQUADS_EXT_ORIGIN}/api/points/my-points`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${result.authToken}`,
@@ -846,7 +851,7 @@ async function analyzeToken(detected) {
 
       for (const q of tryQueries) {
         const searchQuery = encodeURIComponent(q);
-        const tokenResponse = await fetch(`https://aquads.onrender.com/api/tokens?search=${searchQuery}`);
+        const tokenResponse = await fetch(`${AQUADS_EXT_ORIGIN}/api/tokens?search=${searchQuery}`);
       
         if (!tokenResponse.ok) {
           continue;
@@ -885,7 +890,7 @@ async function analyzeToken(detected) {
     let reviews = [];
     let avgRating = 0;
     try {
-      const reviewsResponse = await fetch(`https://aquads.onrender.com/api/reviews/${token.symbol}`);
+      const reviewsResponse = await fetch(`${AQUADS_EXT_ORIGIN}/api/reviews/${token.symbol}`);
       if (reviewsResponse.ok) {
         reviews = await reviewsResponse.json();
         if (reviews && reviews.length > 0) {

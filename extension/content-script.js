@@ -4,7 +4,11 @@
 (function() {
   'use strict';
 
-  const API_URL = 'https://aquads.onrender.com/api';
+  const API_ORIGIN =
+    typeof AQUADS_API_ORIGIN !== 'undefined'
+      ? AQUADS_API_ORIGIN
+      : 'https://aquads-production.up.railway.app';
+  const API_URL = `${API_ORIGIN}/api`;
   // No-op debug function to keep console clean
   const dbg = () => {};
   const AQUASWAP_PATH_MATCHERS = ['/aquaswap', '/swap', '/embed/aquaswap'];

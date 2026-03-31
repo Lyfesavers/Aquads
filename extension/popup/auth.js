@@ -1,5 +1,9 @@
 // AquaSwap Extension - Authentication Service
-const API_URL = 'https://aquads.onrender.com/api';
+const API_ORIGIN =
+  typeof AQUADS_API_ORIGIN !== 'undefined'
+    ? AQUADS_API_ORIGIN
+    : 'https://aquads-production.up.railway.app';
+const API_URL = `${API_ORIGIN}/api`;
 
 // Cache for Google Client ID (fetched from backend)
 let cachedGoogleClientId = null;
@@ -19,13 +23,18 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          throw new Error(`Login failed (${response.status})`);
+        }
+
         // Handle email verification requirement
         if (response.status === 403 && error.emailVerificationRequired) {
           throw new Error(error.message || 'Email verification required');
         }
-        
+
         throw new Error(error.error || 'Login failed');
       }
 
@@ -110,18 +119,23 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        
+        let error;
+        try {
+          error = await response.json();
+        } catch {
+          throw new Error(`Google login failed (${response.status})`);
+        }
+
         // Handle account not found (user needs to create account first)
         if (response.status === 400 || response.status === 404) {
           throw new Error(error.message || 'Please create an account first on aquads.xyz');
         }
-        
+
         // Handle email verification requirement
         if (response.status === 403 && error.emailVerificationRequired) {
           throw new Error(error.message || 'Email verification required');
         }
-        
+
         throw new Error(error.error || 'Google login failed');
       }
 

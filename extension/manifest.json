@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AquaSwap - Cross-Chain Token Swap",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Swap tokens instantly across any blockchain from any webpage. Powered by Aquads with the best rates across 50+ chains.",
   "icons": {
     "16": "icons/icon16.png",
@@ -32,12 +32,12 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content-script.js"],
+      "js": ["config.js", "content-script.js"],
       "run_at": "document_idle"
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://aquads.onrender.com wss://aquads.onrender.com https://api.dexscreener.com https://www.aquads.xyz https://aquads.xyz"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://aquads-production.up.railway.app wss://aquads-production.up.railway.app https://api.dexscreener.com https://www.aquads.xyz https://aquads.xyz"
   },
   "homepage_url": "https://aquads.xyz",
   "author": "Aquads Team"
