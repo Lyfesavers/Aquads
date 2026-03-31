@@ -24,11 +24,7 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
-const {
-  getCombinedLeaderboard,
-  rankEmoji,
-  CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD
-} = require('./leaderboardService');
+const { getCombinedLeaderboard, rankEmoji } = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
@@ -125,7 +121,7 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('username').setDescription('Your Twitter or Facebook username').setRequired(true))
       .addStringOption(o => o.setName('post_url').setDescription('Tweet or post URL').setRequired(true)),
     new SlashCommandBuilder().setName('bubbles').setDescription('Top 10 bumped bubbles'),
-    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 leaders (lifetime points + USDC commission, weighted rank)'),
+    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 by USDC earnings (commission + gift redeem), then points'),
     new SlashCommandBuilder().setName('mybubble').setDescription('Your project bubbles with vote buttons'),
     new SlashCommandBuilder().setName('createraid').setDescription('Create a Twitter raid')
       .addStringOption(o => o.setName('tweet_url').setDescription('Tweet URL').setRequired(true)),
@@ -406,17 +402,16 @@ async function handleLeaders(interaction) {
         : rows
             .map((row, i) => {
               const r = i + 1;
-              return (
-                `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · affiliate $${fmtUsd(row.affiliateCommissionUsdc)} · CAD $${fmtUsd(row.cadRedemptionUsdcEquivalent)}`
-              );
+              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · $${fmtUsd(row.lifetimeUsdcEarnings)} USDC earnings`;
             })
             .join('\n');
 
     const embed = new EmbedBuilder()
       .setTitle('🌊 Aquads Leaders — Top 20')
       .setDescription(
-        `**Rank:** (1) **Affiliate commission** + lifetime pts → (2) commission only → (3) no commission.\n` +
-          `**Pts:** lifetime from \`pointsHistory\` (reconciled with balance). **Affiliate $:** sum of \`AffiliateEarning\` + \`HyperSpaceAffiliateEarning\`. **CAD $:** approved \`giftCardRedemptions\` (**${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD}** USDC per $100 CAD).\n\n` +
+        '**Rank:** total **USDC earnings** (higher first), then lifetime **points**.\n' +
+          '**Earnings:** affiliate commission (ads + HyperSpace) + approved gift redemptions.\n' +
+          '**Points:** lifetime from `pointsHistory` (reconciled with balance).\n\n' +
           `${lines}\n\n🌐 https://aquads.xyz`
       )
       .setColor(0x00bfff)
@@ -1223,7 +1218,7 @@ async function startBot() {
             .setTitle('📊 Bubbles')
             .setDescription(
               '• `/bubbles` – Top 10 bumped bubbles\n' +
-                '• `/leaders` – Top 20 (points + USDC, weighted rank)\n' +
+                '• `/leaders` – Top 20 by USDC earnings (comm + gift), then points\n' +
                 '• `/mybubble` – Your projects with vote info\n\n' +
                 'https://aquads.xyz'
             )
