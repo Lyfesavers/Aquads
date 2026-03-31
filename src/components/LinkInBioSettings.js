@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio, socket } from '../services/api';
+import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 30;
@@ -11,12 +12,15 @@ const PRESET_COLORS = [
   '#f43f5e', '#fb923c', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#1e3a5f'
 ];
 
-const BUTTON_STYLE_OPTIONS = [
+const BUTTON_SHAPE_OPTIONS = [
   { id: 'rounded', label: 'Rounded', desc: 'Soft corners' },
-  { id: 'pill', label: 'Pill', desc: 'Fully rounded' },
-  { id: 'minimal', label: 'Minimal', desc: 'Outline only' },
-  { id: 'bordered', label: 'Bordered', desc: 'Light border' },
-  { id: 'filled', label: 'Filled', desc: 'Accent background' }
+  { id: 'pill', label: 'Pill', desc: 'Fully rounded ends' }
+];
+
+const BUTTON_FILL_OPTIONS = [
+  { id: 'bordered', label: 'Bordered', desc: 'Solid bar + accent border' },
+  { id: 'filled', label: 'Filled', desc: 'Solid accent fill' },
+  { id: 'minimal', label: 'Outline', desc: 'Border only, transparent center' }
 ];
 
 const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) => {
@@ -25,7 +29,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [customColor, setCustomColor] = useState('');
   const [buttonColor, setButtonColor] = useState('');
   const [buttonColorCustom, setButtonColorCustom] = useState('');
-  const [buttonStyle, setButtonStyle] = useState('rounded');
+  const [buttonShape, setButtonShape] = useState('rounded');
+  const [buttonFill, setButtonFill] = useState('bordered');
+  const [buttonTranslucent, setButtonTranslucent] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
   const [adsEnabled, setAdsEnabled] = useState(false);
   const [adPricing, setAdPricing] = useState({ day: 10, threeDays: 20, sevenDays: 40 });
@@ -57,11 +63,21 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       setButtonColor('');
       setButtonColorCustom('');
     }
-    const s = currentUser?.linkInBioButtonStyle;
-    if (s && BUTTON_STYLE_OPTIONS.some(o => o.id === s)) setButtonStyle(s);
+    const look = resolveLinkInBioButtonLook(currentUser || {});
+    setButtonShape(look.shape);
+    setButtonFill(look.fill);
+    setButtonTranslucent(look.translucent);
     const bg = currentUser?.linkInBioBackgroundImageUrl;
     setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
-  }, [currentUser?.linkInBioAccentColor, currentUser?.linkInBioButtonColor, currentUser?.linkInBioButtonStyle, currentUser?.linkInBioBackgroundImageUrl]);
+  }, [
+    currentUser?.linkInBioAccentColor,
+    currentUser?.linkInBioButtonColor,
+    currentUser?.linkInBioButtonShape,
+    currentUser?.linkInBioButtonFill,
+    currentUser?.linkInBioButtonTranslucent,
+    currentUser?.linkInBioButtonStyle,
+    currentUser?.linkInBioBackgroundImageUrl
+  ]);
 
   useEffect(() => {
     setAdsEnabled(Boolean(currentUser?.linkInBioAdsEnabled));
@@ -143,7 +159,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
         linkInBioAccentColor: hex,
         linkInBioButtonColor: btnHex || null,
-        linkInBioButtonStyle: buttonStyle,
+        linkInBioButtonShape: buttonShape,
+        linkInBioButtonFill: buttonFill,
+        linkInBioButtonTranslucent: buttonTranslucent,
         linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
         linkInBioAdsEnabled: adsEnabled,
         linkInBioAdPricing: {
@@ -367,21 +385,53 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
           </div>
         </div>
 
-        <div>
-          <p className="text-gray-300 text-sm font-medium mb-2">Button style</p>
-          <div className="flex flex-wrap gap-2">
-            {BUTTON_STYLE_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setButtonStyle(opt.id)}
-                className={`px-4 py-2.5 rounded-lg border-2 text-left transition-all ${buttonStyle === opt.id ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white bg-gray-700/30'}`}
-              >
-                <span className="font-medium block">{opt.label}</span>
-                <span className="text-xs opacity-80">{opt.desc}</span>
-              </button>
-            ))}
+        <div className="space-y-4">
+          <div>
+            <p className="text-gray-300 text-sm font-medium mb-1">Button shape</p>
+            <p className="text-gray-500 text-xs mb-2">Combine with fill below.</p>
+            <div className="flex flex-wrap gap-2">
+              {BUTTON_SHAPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setButtonShape(opt.id)}
+                  className={`px-4 py-2.5 rounded-lg border-2 text-left transition-all ${buttonShape === opt.id ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white bg-gray-700/30'}`}
+                >
+                  <span className="font-medium block">{opt.label}</span>
+                  <span className="text-xs opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
           </div>
+          <div>
+            <p className="text-gray-300 text-sm font-medium mb-1">Button fill</p>
+            <p className="text-gray-500 text-xs mb-2">Default is solid (not see-through). Turn on glass below if you want.</p>
+            <div className="flex flex-wrap gap-2">
+              {BUTTON_FILL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setButtonFill(opt.id)}
+                  className={`px-4 py-2.5 rounded-lg border-2 text-left transition-all ${buttonFill === opt.id ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white bg-gray-700/30'}`}
+                >
+                  <span className="font-medium block">{opt.label}</span>
+                  <span className="text-xs opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer select-none rounded-lg border border-gray-600 bg-gray-700/30 px-4 py-3 hover:border-gray-500 transition-colors">
+            <input
+              type="checkbox"
+              checked={buttonTranslucent}
+              onChange={(e) => setButtonTranslucent(e.target.checked)}
+              className="mt-1 rounded border-gray-500 text-cyan-500 focus:ring-cyan-500"
+            />
+            <span>
+              <span className="text-gray-200 text-sm font-medium block">Translucent / glass</span>
+              <span className="text-gray-500 text-xs">Softer, blurred see-through buttons. Off = fully solid colors (recommended).</span>
+            </span>
+          </label>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
 const auditLogger = require('../utils/auditLogger');
 const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
+const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -375,6 +376,7 @@ router.post('/login', validateLogin, async (req, res) => {
       req.headers['user-agent']
     );
 
+    const linkBioBtnLook = resolveLinkInBioButtonLook(user);
     // Return user data and both tokens
     res.json({
       userId: user._id,
@@ -390,7 +392,10 @@ router.post('/login', validateLogin, async (req, res) => {
       bioLinks: user.bioLinks || [],
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
-      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioButtonShape: linkBioBtnLook.shape,
+      linkInBioButtonFill: linkBioBtnLook.fill,
+      linkInBioButtonTranslucent: linkBioBtnLook.translucent,
+      linkInBioButtonStyle: lookToLegacyStyle(linkBioBtnLook.shape, linkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
       linkInBioTagline: user.linkInBioTagline || null,
       token,
@@ -634,9 +639,33 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       const hex = String(req.body.linkInBioButtonColor).trim();
       update.linkInBioButtonColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
     }
-    if (req.body.linkInBioButtonStyle !== undefined) {
+    if (req.body.linkInBioButtonShape !== undefined || req.body.linkInBioButtonFill !== undefined || req.body.linkInBioButtonTranslucent !== undefined) {
+      const u = await User.findById(req.user.userId).select('linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioButtonStyle').lean();
+      const merged = { ...u };
+      if (req.body.linkInBioButtonShape !== undefined) {
+        const sh = String(req.body.linkInBioButtonShape).toLowerCase();
+        merged.linkInBioButtonShape = ['rounded', 'pill'].includes(sh) ? sh : 'rounded';
+      }
+      if (req.body.linkInBioButtonFill !== undefined) {
+        const f = String(req.body.linkInBioButtonFill).toLowerCase();
+        merged.linkInBioButtonFill = ['filled', 'minimal', 'bordered'].includes(f) ? f : 'bordered';
+      }
+      if (req.body.linkInBioButtonTranslucent !== undefined) {
+        merged.linkInBioButtonTranslucent = req.body.linkInBioButtonTranslucent === true;
+      }
+      const look = resolveLinkInBioButtonLook(merged);
+      update.linkInBioButtonShape = look.shape;
+      update.linkInBioButtonFill = look.fill;
+      update.linkInBioButtonTranslucent = look.translucent;
+      update.linkInBioButtonStyle = lookToLegacyStyle(look.shape, look.fill);
+    } else if (req.body.linkInBioButtonStyle !== undefined) {
       const style = String(req.body.linkInBioButtonStyle).toLowerCase();
-      update.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+      const canonical = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+      const look = LEGACY_STYLE_MAP[canonical] || LEGACY_STYLE_MAP.rounded;
+      update.linkInBioButtonStyle = lookToLegacyStyle(look.shape, look.fill);
+      update.linkInBioButtonShape = look.shape;
+      update.linkInBioButtonFill = look.fill;
+      update.linkInBioButtonTranslucent = look.translucent;
     }
     if (req.body.linkInBioBackgroundImageUrl !== undefined) {
       const raw = String(req.body.linkInBioBackgroundImageUrl || '').trim();
@@ -677,8 +706,9 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
+    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
 
+    const savedLook = resolveLinkInBioButtonLook(updated);
     res.json({
       userId: updated._id,
       username: updated.username,
@@ -686,7 +716,10 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       linkInBioTagline: updated.linkInBioTagline || null,
       linkInBioAccentColor: updated.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: updated.linkInBioButtonColor || null,
-      linkInBioButtonStyle: updated.linkInBioButtonStyle || 'rounded',
+      linkInBioButtonShape: savedLook.shape,
+      linkInBioButtonFill: savedLook.fill,
+      linkInBioButtonTranslucent: savedLook.translucent,
+      linkInBioButtonStyle: lookToLegacyStyle(savedLook.shape, savedLook.fill),
       linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null,
       linkInBioAdsEnabled: Boolean(updated.linkInBioAdsEnabled),
       linkInBioAdPricing: updated.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }
@@ -765,9 +798,37 @@ router.put('/profile', auth, async (req, res) => {
         const hex = String(req.body.linkInBioButtonColor).trim();
         user.linkInBioButtonColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
       }
-      if (req.body.linkInBioButtonStyle !== undefined) {
+      if (req.body.linkInBioButtonShape !== undefined || req.body.linkInBioButtonFill !== undefined || req.body.linkInBioButtonTranslucent !== undefined) {
+        const merged = {
+          linkInBioButtonShape: user.linkInBioButtonShape,
+          linkInBioButtonFill: user.linkInBioButtonFill,
+          linkInBioButtonTranslucent: user.linkInBioButtonTranslucent,
+          linkInBioButtonStyle: user.linkInBioButtonStyle
+        };
+        if (req.body.linkInBioButtonShape !== undefined) {
+          const sh = String(req.body.linkInBioButtonShape).toLowerCase();
+          merged.linkInBioButtonShape = ['rounded', 'pill'].includes(sh) ? sh : 'rounded';
+        }
+        if (req.body.linkInBioButtonFill !== undefined) {
+          const f = String(req.body.linkInBioButtonFill).toLowerCase();
+          merged.linkInBioButtonFill = ['filled', 'minimal', 'bordered'].includes(f) ? f : 'bordered';
+        }
+        if (req.body.linkInBioButtonTranslucent !== undefined) {
+          merged.linkInBioButtonTranslucent = req.body.linkInBioButtonTranslucent === true;
+        }
+        const look = resolveLinkInBioButtonLook(merged);
+        user.linkInBioButtonShape = look.shape;
+        user.linkInBioButtonFill = look.fill;
+        user.linkInBioButtonTranslucent = look.translucent;
+        user.linkInBioButtonStyle = lookToLegacyStyle(look.shape, look.fill);
+      } else if (req.body.linkInBioButtonStyle !== undefined) {
         const style = String(req.body.linkInBioButtonStyle).toLowerCase();
-        user.linkInBioButtonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+        const canonical = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(style) ? style : 'rounded';
+        const look = LEGACY_STYLE_MAP[canonical] || LEGACY_STYLE_MAP.rounded;
+        user.linkInBioButtonStyle = lookToLegacyStyle(look.shape, look.fill);
+        user.linkInBioButtonShape = look.shape;
+        user.linkInBioButtonFill = look.fill;
+        user.linkInBioButtonTranslucent = look.translucent;
       }
       if (req.body.linkInBioBackgroundImageUrl !== undefined) {
         const raw = String(req.body.linkInBioBackgroundImageUrl || '').trim();
@@ -810,6 +871,7 @@ router.put('/profile', auth, async (req, res) => {
 
     await user.save();
 
+    const profileBtnLook = resolveLinkInBioButtonLook(user);
     // Return updated user data without password
     const userData = {
       userId: user._id,
@@ -823,7 +885,10 @@ router.put('/profile', auth, async (req, res) => {
       linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
-      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioButtonShape: profileBtnLook.shape,
+      linkInBioButtonFill: profileBtnLook.fill,
+      linkInBioButtonTranslucent: profileBtnLook.translucent,
+      linkInBioButtonStyle: lookToLegacyStyle(profileBtnLook.shape, profileBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null
     };
 
@@ -1205,7 +1270,7 @@ router.get('/links/:username', async (req, res) => {
     const sanitizedUsername = sanitizeForRegex(username);
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
+    }).select('username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1224,9 +1289,8 @@ router.get('/links/:username', async (req, res) => {
     const buttonColor = (user.linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioButtonColor))
       ? user.linkInBioButtonColor
       : null;
-    const buttonStyle = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(user.linkInBioButtonStyle)
-      ? user.linkInBioButtonStyle
-      : 'rounded';
+    const btnLook = resolveLinkInBioButtonLook(user);
+    const buttonStyle = lookToLegacyStyle(btnLook.shape, btnLook.fill);
 
     const backgroundImageUrl = (user.linkInBioBackgroundImageUrl && typeof user.linkInBioBackgroundImageUrl === 'string' && user.linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(user.linkInBioBackgroundImageUrl.trim()))
       ? user.linkInBioBackgroundImageUrl.trim()
@@ -1249,6 +1313,9 @@ router.get('/links/:username', async (req, res) => {
       bioLinks: links,
       linkInBioAccentColor: accentColor,
       linkInBioButtonColor: buttonColor,
+      linkInBioButtonShape: btnLook.shape,
+      linkInBioButtonFill: btnLook.fill,
+      linkInBioButtonTranslucent: btnLook.translucent,
       linkInBioButtonStyle: buttonStyle,
       linkInBioBackgroundImageUrl: backgroundImageUrl,
       linkInBioAdsEnabled: adsEnabled,

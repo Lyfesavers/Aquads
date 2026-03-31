@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { resolveLinkInBioButtonLook, lookToLegacyStyle } = require('../utils/linkInBioButtonLook');
 
 // In-memory cache to track last update times per user (prevents excessive DB writes)
 const lastUpdateCache = new Map();
@@ -34,7 +35,7 @@ const auth = async (req, res, next) => {
     }
     
     // Check if user is suspended - Fetch user from database
-    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
     
     if (!user) {
       throw new Error('User not found');
@@ -50,6 +51,7 @@ const auth = async (req, res, next) => {
       });
     }
     
+    const authBtnLook = resolveLinkInBioButtonLook(user);
     // Set both userId and id for better compatibility with different code styles
     req.user = {
       userId: userId,
@@ -64,7 +66,10 @@ const auth = async (req, res, next) => {
       linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
       linkInBioButtonColor: user.linkInBioButtonColor || null,
-      linkInBioButtonStyle: user.linkInBioButtonStyle || 'rounded',
+      linkInBioButtonShape: authBtnLook.shape,
+      linkInBioButtonFill: authBtnLook.fill,
+      linkInBioButtonTranslucent: authBtnLook.translucent,
+      linkInBioButtonStyle: lookToLegacyStyle(authBtnLook.shape, authBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
       linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
       linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },

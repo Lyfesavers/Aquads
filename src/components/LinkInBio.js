@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../services/api';
+import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
 import CreateLinkBioAdModal from './CreateLinkBioAdModal';
 import {
   FaBullhorn,
@@ -256,14 +257,58 @@ function buildThemeFromAccent(hex) {
   return { accent, accentHover: hover, accentFilled: filledBg, shine, avatarGlow: glow, badgeBorder, badgeBg, orb1, orb2, orb3 };
 }
 
-// Button style class names for link buttons
-const BUTTON_STYLES = {
-  rounded: 'rounded-2xl',
-  pill: 'rounded-full',
-  minimal: 'rounded-2xl border-0 bg-transparent',
-  bordered: 'rounded-2xl bg-transparent',
-  filled: 'rounded-2xl'
-};
+function normalizeHex(hex) {
+  if (!hex || typeof hex !== 'string') return '#22d3ee';
+  const h = hex.trim().startsWith('#') ? hex.trim() : `#${hex.trim()}`;
+  return /^#[0-9A-Fa-f]{3,6}$/.test(h) ? h : '#22d3ee';
+}
+
+/** Solid by default; translucent enables glass (blur + rgba). */
+function getLinkButtonSurface({ fill, translucent, buttonHex, buttonTheme, theme, hasBackgroundImage }) {
+  const hx = normalizeHex(buttonHex);
+  let background = '#161b22';
+  let border = `1px solid ${hexToRgba(hx, 0.42)}`;
+  let backdropFilter = 'none';
+
+  if (fill === 'filled') {
+    if (translucent) {
+      background = hasBackgroundImage ? theme.accentFilled : hexToRgba(hx, 0.32);
+      border = `1px solid ${hexToRgba(hx, 0.55)}`;
+      backdropFilter = 'blur(12px)';
+    } else {
+      background = hx;
+      border = `1px solid ${hexToRgba(hx, 0.9)}`;
+    }
+  } else if (fill === 'minimal') {
+    background = 'transparent';
+    border = `2px solid ${hx}`;
+  } else {
+    if (translucent) {
+      background = hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.06)';
+      border = `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}`;
+      backdropFilter = 'blur(12px)';
+    } else {
+      background = hasBackgroundImage ? '#0e1018' : '#161b22';
+      border = `1px solid ${hexToRgba(hx, hasBackgroundImage ? 0.5 : 0.38)}`;
+    }
+  }
+
+  return { background, border, backdropFilter };
+}
+
+function getLinkButtonIconChipStyle({ fill, translucent, hasBackgroundImage, buttonHex, buttonTheme }) {
+  const hx = normalizeHex(buttonHex);
+  if (fill === 'filled' && !translucent) {
+    return { color: '#ffffff', backgroundColor: 'rgba(0, 0, 0, 0.22)' };
+  }
+  if (fill === 'minimal') {
+    return { color: hx, backgroundColor: hexToRgba(hx, translucent ? 0.12 : 0.14) };
+  }
+  return {
+    color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent,
+    backgroundColor: translucent ? buttonTheme.accentHover : 'rgba(0, 0, 0, 0.28)'
+  };
+}
 
 // Load distinctive fonts (Syne + DM Sans) for this page only
 const fontLink = document.createElement('link');
@@ -401,7 +446,7 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioButtonStyle, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
+  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
   const sortedLinks = Array.isArray(bioLinks)
     ? [...bioLinks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     : [];
@@ -416,8 +461,24 @@ const LinkInBio = () => {
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
-  const buttonStyleKey = ['rounded', 'pill', 'minimal', 'bordered', 'filled'].includes(linkInBioButtonStyle) ? linkInBioButtonStyle : 'rounded';
-  const buttonClass = BUTTON_STYLES[buttonStyleKey] || BUTTON_STYLES.rounded;
+  const btnLook = resolveLinkInBioButtonLook(data);
+  const radiusClass = btnLook.shape === 'pill' ? 'rounded-full' : 'rounded-2xl';
+  const buttonSurface = getLinkButtonSurface({
+    fill: btnLook.fill,
+    translucent: btnLook.translucent,
+    buttonHex,
+    buttonTheme,
+    theme,
+    hasBackgroundImage
+  });
+  const iconChipStyle = getLinkButtonIconChipStyle({
+    fill: btnLook.fill,
+    translucent: btnLook.translucent,
+    hasBackgroundImage,
+    buttonHex,
+    buttonTheme
+  });
+  const labelMuted = btnLook.fill === 'filled' && !btnLook.translucent;
 
   return (
     <motion.div
@@ -567,11 +628,11 @@ const LinkInBio = () => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${buttonClass}`}
+                  className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${radiusClass}`}
                   style={{
-                    background: buttonStyleKey === 'filled' ? (hasBackgroundImage ? theme.accentFilled : buttonTheme.accentFilled) : buttonStyleKey === 'minimal' ? 'transparent' : hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.03)',
-                    border: buttonStyleKey === 'minimal' ? `1px solid ${buttonTheme.accent}` : buttonStyleKey === 'bordered' ? `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}` : `1px solid ${hasBackgroundImage ? theme.accent : 'rgba(255, 255, 255, 0.06)'}`,
-                    backdropFilter: buttonStyleKey === 'minimal' ? 'none' : 'blur(12px)'
+                    background: buttonSurface.background,
+                    border: buttonSurface.border,
+                    backdropFilter: buttonSurface.backdropFilter
                   }}
                   whileHover={{
                     scale: 1.02,
@@ -592,7 +653,7 @@ const LinkInBio = () => {
                   <span className="relative flex items-center gap-3 min-w-0 flex-1 pr-3">
                     <span
                       className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 group-hover:opacity-100"
-                      style={{ color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent, backgroundColor: hasBackgroundImage ? buttonTheme.accentHover : buttonTheme.accentHover }}
+                      style={iconChipStyle}
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
@@ -602,7 +663,7 @@ const LinkInBio = () => {
                   </span>
                   <span
                     className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent }}
+                    style={{ color: labelMuted ? 'rgba(255,255,255,0.92)' : buttonTheme.accent }}
                   >
                     <FaExternalLinkAlt className="w-4 h-4" />
                   </span>

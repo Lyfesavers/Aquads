@@ -120,6 +120,10 @@ const userSchema = new Schema({
     enum: ['rounded', 'pill', 'minimal', 'bordered', 'filled'],
     default: 'rounded'
   },
+  // Shape + fill combine; translucent optional. Null = derive from linkInBioButtonStyle (legacy).
+  linkInBioButtonShape: { type: String, default: null },
+  linkInBioButtonFill: { type: String, default: null },
+  linkInBioButtonTranslucent: { type: Boolean, default: null },
   linkInBioBackgroundImageUrl: {
     type: String,
     default: null,
