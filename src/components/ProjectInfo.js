@@ -597,6 +597,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 Community Twitter raids
               </li>
               <li className="flex items-center">
+                <FaFire className="text-amber-400 mr-3 flex-shrink-0" />
+                <span>
+                  BNB & Solana volume + trending (2 hrs/week × 4 weeks, included)
+                </span>
+              </li>
+              <li className="flex items-center">
                 <FaTelegram className="text-blue-400 mr-3" />
                 <FaDiscord className="text-indigo-400 mr-2" />
                 <span>

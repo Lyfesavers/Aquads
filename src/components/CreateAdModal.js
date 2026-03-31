@@ -1187,6 +1187,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                   </div>
                   
+                  <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-amber-900/20 rounded-lg border border-amber-500/40">
+                    <div className="bg-gradient-to-r from-amber-500 to-violet-500 p-2 rounded-full">
+                      <FaFire className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">BNB & Solana Volume + Trending</h4>
+                      <p className="text-gray-300 text-sm">Volume and trending exposure for BNB Chain and Solana tokens—2 hours per week for 4 weeks, included in your base listing fee. Pairs with our Telegram bot trending boost, HyperSpace, and the rest of Aquads for maximum momentum.</p>
+                    </div>
+                  </div>
+                  
                   <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-blue-900/30 rounded-lg border-2 border-blue-500/50">
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-full">
                       <FaTelegram className="text-white" />
