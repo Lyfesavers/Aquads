@@ -27,7 +27,6 @@ const User = require('../models/User');
 const {
   getCombinedLeaderboard,
   rankEmoji,
-  POINTS_PER_USDC_FOR_RANK,
   CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD
 } = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
@@ -407,16 +406,17 @@ async function handleLeaders(interaction) {
         : rows
             .map((row, i) => {
               const r = i + 1;
-              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · $${fmtUsd(row.lifetimeUsdcEarnings)} USDC`;
+              return (
+                `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts · affiliate $${fmtUsd(row.affiliateCommissionUsdc)} · CAD $${fmtUsd(row.cadRedemptionUsdcEquivalent)}`
+              );
             })
             .join('\n');
 
     const embed = new EmbedBuilder()
       .setTitle('🌊 Aquads Leaders — Top 20')
       .setDescription(
-        `**Rank:** users with **affiliate commission** and **lifetime points** first; then by score.\n` +
-          `**Score:** lifetime points + USDC earnings (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1**).\n` +
-          `USDC earnings = affiliate commission + approved **$100 CAD** redemptions (**${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD}** USDC each).\n\n` +
+        `**Rank:** (1) **Affiliate commission** + lifetime pts → (2) commission only → (3) no commission.\n` +
+          `**Pts:** lifetime from \`pointsHistory\` (reconciled with balance). **Affiliate $:** sum of \`AffiliateEarning\` + \`HyperSpaceAffiliateEarning\`. **CAD $:** approved \`giftCardRedemptions\` (**${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD}** USDC per $100 CAD).\n\n` +
           `${lines}\n\n🌐 https://aquads.xyz`
       )
       .setColor(0x00bfff)

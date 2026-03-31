@@ -132,7 +132,7 @@ const TelegramBot = () => {
     { cmd: '/createraid URL', desc: 'Create a Twitter raid (20 FREE daily for lifetime bump, then 2000 pts each)', category: 'Raids' },
     { cmd: '/cancelraid URL', desc: 'Cancel a raid you created', category: 'Raids' },
     { cmd: '/bubbles', desc: 'View top 10 bubbles by bullish votes', category: 'Bubbles' },
-    { cmd: '/leaders', desc: 'Top 20 — lifetime points & USDC commission (weighted rank)', category: 'Bubbles' },
+    { cmd: '/leaders', desc: 'Top 20 — lifetime pts, affiliate $ (DB), CAD redeem $; commission ranks first', category: 'Bubbles' },
     { cmd: '/mybubble', desc: 'View YOUR projects with voting buttons', category: 'Bubbles' },
     { cmd: '/boostvote', desc: 'Purchase vote boost packages for your bubble', category: 'Bubbles' },
     { cmd: '/setbranding', desc: 'Upload custom branding image (bumped projects only)', category: 'Branding' },
