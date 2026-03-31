@@ -422,7 +422,8 @@ async function handleLeaders(interaction) {
       new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
     );
 
-    return interaction.reply({ embeds: [embed], components: [linkRow] });
+    const files = fs.existsSync(VIDEO_LEADERBOARD) ? [VIDEO_LEADERBOARD] : [];
+    return interaction.reply({ embeds: [embed], components: [linkRow], files });
   } catch (e) {
     console.error('Discord /leaders error:', e.message);
     return reply(interaction, '❌ Could not load the leaderboard. Try again later.\n\nhttps://aquads.xyz', false);
@@ -1572,6 +1573,7 @@ const VIDEO_RAID_COMPLETION = path.join(PUBLIC_DIR, 'Just Raided.mp4');
 const VIDEO_VOTE = path.join(PUBLIC_DIR, 'New_vote.mp4');
 const VIDEO_TOP_BUBBLES = path.join(PUBLIC_DIR, 'TRENDINGLIST.mp4');
 const VIDEO_MYBUBBLE = path.join(PUBLIC_DIR, 'vote now .mp4');
+const VIDEO_LEADERBOARD = path.join(PUBLIC_DIR, 'leaderboard.mp4');
 
 /** Send payload to channel. Returns sent Message or null on failure (for storing message ID). */
 async function sendToChannel(channelId, payload) {

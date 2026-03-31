@@ -111,7 +111,8 @@ const telegramService = {
     trend: null,
     vote: null,
     raid: null,
-    raidCompletion: null
+    raidCompletion: null,
+    leaderboard: null
   },
 
   // Load active groups from database
@@ -1276,7 +1277,32 @@ https://aquads.xyz`;
         });
       }
       msg += `\n🌐 https://aquads.xyz`;
-      await telegramService.sendBotMessage(chatId, msg);
+
+      const videoPath = path.join(__dirname, '../../public/leaderboard.mp4');
+      const TG_VIDEO_CAPTION_MAX = 1024;
+      if (fs.existsSync(videoPath)) {
+        const caption =
+          msg.length <= TG_VIDEO_CAPTION_MAX
+            ? msg
+            : (() => {
+                const cut = msg.lastIndexOf('\n', TG_VIDEO_CAPTION_MAX - 5);
+                const head = cut > 80 ? msg.slice(0, cut) : msg.slice(0, TG_VIDEO_CAPTION_MAX - 4);
+                return `${head}\n…`;
+              })();
+        const sent = await telegramService.sendVideoToChat(
+          chatId,
+          videoPath,
+          caption,
+          'leaderboard'
+        );
+        if (sent == null) {
+          await telegramService.sendBotMessage(chatId, msg);
+        } else if (msg.length > TG_VIDEO_CAPTION_MAX) {
+          await telegramService.sendBotMessage(chatId, msg);
+        }
+      } else {
+        await telegramService.sendBotMessage(chatId, msg);
+      }
     } catch (error) {
       console.error('Leaders command error:', error);
       await telegramService.sendBotMessage(chatId,
