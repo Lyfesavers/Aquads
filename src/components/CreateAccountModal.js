@@ -47,6 +47,8 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
     validChars: true  // true by default since empty string has no invalid chars
   });
   const [usernameFocused, setUsernameFocused] = useState(false);
+  /** Prevents ghost taps / carried-over clicks when "Next" is swapped for "Create account" in the same screen area */
+  const [finalStepActionsUnlocked, setFinalStepActionsUnlocked] = useState(true);
 
   // Add countries list
   const countries = [
@@ -344,6 +346,16 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (step !== 3) {
+      setFinalStepActionsUnlocked(true);
+      return;
+    }
+    setFinalStepActionsUnlocked(false);
+    const t = window.setTimeout(() => setFinalStepActionsUnlocked(true), 500);
+    return () => window.clearTimeout(t);
+  }, [step]);
+
   const isUsernameValid = () => {
     return formData.username.length > 0 && Object.values(usernameValidation).every(value => value === true);
   };
@@ -441,9 +453,8 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
     setStep((s) => Math.max(s - 1, 1));
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (step !== 3) return;
+  const commitCreateAccount = async () => {
+    if (step !== 3 || !finalStepActionsUnlocked) return;
     setError('');
 
     if (!validateStep1()) {
@@ -580,7 +591,10 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
         </button>
       </header>
 
-      <form onSubmit={handleFormSubmit} className="flex min-h-0 flex-1 flex-col">
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <div className="shrink-0 border-b border-white/5 px-4 py-3 sm:px-6">
           <div className="mx-auto flex max-w-xl gap-2">
             {STEP_META.map((_, i) => {
@@ -947,9 +961,11 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
                 </button>
               ) : (
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
+                  type="button"
+                  onClick={() => commitCreateAccount()}
+                  disabled={isSubmitting || !finalStepActionsUnlocked}
                   className="flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50 sm:min-w-[10rem]"
+                  title={!finalStepActionsUnlocked ? 'Ready in a moment…' : undefined}
                 >
                   {isSubmitting ? (
                     <>
