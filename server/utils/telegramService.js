@@ -1266,7 +1266,8 @@ https://aquads.xyz`;
     try {
       const rows = await getCombinedLeaderboard(20);
       let msg = `🌊 Aquads Leaders — Top 20\n`;
-      msg += `Rank: lifetime points + USDC earnings (${POINTS_PER_USDC_FOR_RANK} pts per $1).\n`;
+      msg += `Rank: users with affiliate commission AND points come first; then by score.\n`;
+      msg += `Score = lifetime points + USDC earnings (${POINTS_PER_USDC_FOR_RANK} pts per $1).\n`;
       msg += `USDC earnings = affiliate commission + approved $100 CAD redemptions (${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD} USDC each).\n\n`;
       if (rows.length === 0) {
         msg += `📭 No data yet.\n`;

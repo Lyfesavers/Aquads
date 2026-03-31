@@ -414,7 +414,8 @@ async function handleLeaders(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('🌊 Aquads Leaders — Top 20')
       .setDescription(
-        `Rank: lifetime points + USDC earnings (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1**).\n` +
+        `**Rank:** users with **affiliate commission** and **lifetime points** first; then by score.\n` +
+          `**Score:** lifetime points + USDC earnings (**${POINTS_PER_USDC_FOR_RANK}** pts per **$1**).\n` +
           `USDC earnings = affiliate commission + approved **$100 CAD** redemptions (**${CAD_REDEMPTION_USDC_EQUIVALENT_PER_100_CAD}** USDC each).\n\n` +
           `${lines}\n\n🌐 https://aquads.xyz`
       )

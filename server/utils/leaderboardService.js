@@ -1,7 +1,7 @@
 /**
  * Combined Aquads leaders: lifetime points earned (sum of positive pointsHistory),
  * lifetime USDC-equivalent earnings (affiliate commission + approved CAD redemptions).
- * Ranked by weighted score.
+ * Ranked first by “affiliate commission + lifetime points” together, then by weighted score.
  */
 
 const User = require('../models/User');
@@ -47,8 +47,10 @@ async function buildLifetimeCommissionByUserId() {
 }
 
 /**
- * Top users by weighted score: lifetimePointsEarned + (lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK).
- * lifetimeUsdcEarnings = affiliate commission (USDC) + approved CAD redemptions at USDC equivalent.
+ * Top users: anyone with both affiliate commission (>0) and lifetime points (>0) ranks above
+ * everyone who lacks affiliate commission (e.g. points-only grinders). Within each band, sort by
+ * weighted score: lifetimePointsEarned + (lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK).
+ * lifetimeUsdcEarnings = affiliate commission + approved CAD redemptions (USDC equivalent).
  */
 async function getCombinedLeaderboard(limit = 20) {
   const commissionByUserId = await buildLifetimeCommissionByUserId();
@@ -114,17 +116,29 @@ async function getCombinedLeaderboard(limit = 20) {
     const cadEq = Number(row.cadRedemptionUsdcEquivalent) || 0;
     const lifetimeUsdcEarnings = comm + cadEq;
     if (pts === 0 && lifetimeUsdcEarnings <= 0) continue;
+    const affiliateCommissionUsdc = comm;
+    const hasAffiliateCommissionAndPoints =
+      affiliateCommissionUsdc > 0 && pts > 0 ? 1 : 0;
+
     merged.push({
       username: row.username,
       lifetimePointsEarned: pts,
       lifetimeUsdcEarnings,
-      weightedRankScore: pts + lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK
+      weightedRankScore: pts + lifetimeUsdcEarnings * POINTS_PER_USDC_FOR_RANK,
+      hasAffiliateCommissionAndPoints
     });
   }
 
-  merged.sort((a, b) => b.weightedRankScore - a.weightedRankScore);
+  merged.sort((a, b) => {
+    if (b.hasAffiliateCommissionAndPoints !== a.hasAffiliateCommissionAndPoints) {
+      return b.hasAffiliateCommissionAndPoints - a.hasAffiliateCommissionAndPoints;
+    }
+    return b.weightedRankScore - a.weightedRankScore;
+  });
 
-  return merged.slice(0, limit).map(({ weightedRankScore, ...rest }) => rest);
+  return merged
+    .slice(0, limit)
+    .map(({ weightedRankScore, hasAffiliateCommissionAndPoints, ...rest }) => rest);
 }
 
 function rankEmoji(rank) {
