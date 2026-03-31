@@ -24,6 +24,7 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 const User = require('../models/User');
+const { getLeaderboardPayload, rankEmoji } = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
@@ -120,6 +121,7 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('username').setDescription('Your Twitter or Facebook username').setRequired(true))
       .addStringOption(o => o.setName('post_url').setDescription('Tweet or post URL').setRequired(true)),
     new SlashCommandBuilder().setName('bubbles').setDescription('Top 10 bumped bubbles'),
+    new SlashCommandBuilder().setName('leaders').setDescription('Top 20 lifetime points & lifetime commission earned'),
     new SlashCommandBuilder().setName('mybubble').setDescription('Your project bubbles with vote buttons'),
     new SlashCommandBuilder().setName('createraid').setDescription('Create a Twitter raid')
       .addStringOption(o => o.setName('tweet_url').setDescription('Tweet URL').setRequired(true)),
@@ -385,6 +387,56 @@ async function handleCompleteSlash(interaction) {
     return reply(interaction, '❌ Invalid raid ID. Use `/raids` to get the correct ID.', true);
   }
   return handleCompleteFromModal(interaction, raidId, username, postUrl);
+}
+
+async function handleLeaders(interaction) {
+  try {
+    const { pointsLeaders, commissionLeaders } = await getLeaderboardPayload(20);
+    const fmtPts = (n) => Number(n || 0).toLocaleString('en-US');
+    const fmtUsd = (n) =>
+      Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const linesPts =
+      pointsLeaders.length === 0
+        ? '📭 No data yet.'
+        : pointsLeaders
+            .map((row, i) => {
+              const r = i + 1;
+              return `${rankEmoji(r)} #${r} ${row.username} — ${fmtPts(row.lifetimePointsEarned)} pts`;
+            })
+            .join('\n');
+
+    const linesComm =
+      commissionLeaders.length === 0
+        ? '📭 No data yet.'
+        : commissionLeaders
+            .map((row, i) => {
+              const r = i + 1;
+              return `${rankEmoji(r)} #${r} ${row.username} — $${fmtUsd(row.lifetimeCommissionEarned)}`;
+            })
+            .join('\n');
+
+    const embedIntro = new EmbedBuilder()
+      .setTitle('🌊 Top 20 — Lifetime points earned')
+      .setDescription(linesPts + '\n\n🌐 https://aquads.xyz')
+      .setColor(0x00bfff)
+      .setURL('https://aquads.xyz');
+
+    const embedComm = new EmbedBuilder()
+      .setTitle('💰 Top 20 — Lifetime commission earned (USDC)')
+      .setDescription(linesComm + '\n\n🌐 https://aquads.xyz')
+      .setColor(0x00bfff);
+
+    const linkRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
+      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
+    );
+
+    return interaction.reply({ embeds: [embedIntro, embedComm], components: [linkRow] });
+  } catch (e) {
+    console.error('Discord /leaders error:', e.message);
+    return reply(interaction, '❌ Could not load the leaderboard. Try again later.\n\nhttps://aquads.xyz', false);
+  }
 }
 
 async function handleBubbles(interaction) {
@@ -1099,7 +1151,7 @@ async function startBot() {
       if (interaction.isChatInputCommand()) {
         const name = interaction.commandName;
         // In server channels, allow /bubbles, /mybubble, /raidin, /raidout. Redirect rest to DMs to keep channel clean.
-        const allowedInChannel = ['bubbles', 'mybubble', 'raidin', 'raidout'];
+        const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout'];
         if (interaction.guildId && !allowedInChannel.includes(name)) {
           const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
           return reply(interaction,
@@ -1117,6 +1169,7 @@ async function startBot() {
         if (name === 'raids') return handleRaids(interaction);
         if (name === 'complete') return handleCompleteSlash(interaction);
         if (name === 'bubbles') return handleBubbles(interaction);
+        if (name === 'leaders') return handleLeaders(interaction);
         if (name === 'mybubble') return handleMyBubble(interaction);
         if (name === 'createraid') return handleCreateRaid(interaction);
         if (name === 'cancelraid') return handleCancelRaid(interaction);
@@ -1173,7 +1226,12 @@ async function startBot() {
         if (customId === 'help_bubbles') {
           const embed = new EmbedBuilder()
             .setTitle('📊 Bubbles')
-            .setDescription('• `/bubbles` – Top 10 bumped bubbles\n• `/mybubble` – Your projects with vote info\n\nhttps://aquads.xyz')
+            .setDescription(
+              '• `/bubbles` – Top 10 bumped bubbles\n' +
+                '• `/leaders` – Top 20 lifetime points & commission earned\n' +
+                '• `/mybubble` – Your projects with vote info\n\n' +
+                'https://aquads.xyz'
+            )
             .setColor(0x00bfff);
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('help_menu').setLabel('◀️ Back').setStyle(ButtonStyle.Secondary)
@@ -1204,7 +1262,7 @@ async function startBot() {
               '1️⃣ **Link:** `/link your_aquads_username` (create account at aquads.xyz first)\n\n' +
               '2️⃣ **Socials:** `/twitter your_twitter` and `/facebook your_facebook`\n\n' +
               '3️⃣ **Earn:** `/raids` – complete raids for points\n' +
-              '`/mybubble` – your project · `/bubbles` – vote on projects\n\n' +
+              '`/mybubble` – your project · `/bubbles` – vote · `/leaders` – points & commission\n\n' +
               'https://aquads.xyz'
             )
             .setColor(0x00bfff)
@@ -1219,7 +1277,7 @@ async function startBot() {
             .setTitle('📋 All Commands')
             .setDescription(
               '`/start` `/link` `/help` `/twitter` `/facebook`\n' +
-              '`/raids` `/complete` `/bubbles` `/mybubble`\n' +
+              '`/raids` `/complete` `/bubbles` `/leaders` `/mybubble`\n' +
               '`/createraid` `/cancelraid` `/raidin` `/raidout`\n' +
               '`/setbranding` `/removebranding` `/boostvote` `/cancel`'
             )

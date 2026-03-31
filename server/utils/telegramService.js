@@ -8,6 +8,7 @@ const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 const { creditReferrerBonus } = require('../routes/points');
+const { getLeaderboardPayload, rankEmoji } = require('./leaderboardService');
 
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
@@ -71,6 +72,13 @@ function addHyperSpaceToKeyboard(keyboard) {
   return {
     inline_keyboard: [...keyboard.inline_keyboard, HYPERSPACE_BUTTON_ROW]
   };
+}
+
+/** Hire an Expert + X Space Trender — same inline row as most bot sends */
+function defaultPromoInlineKeyboard() {
+  return addHyperSpaceToKeyboard({
+    inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
+  });
 }
 
 // Serialize raid notifications (TG + Discord) so delete → send → store never interleave (avoids race conditions)
@@ -714,9 +722,9 @@ const telegramService = {
       return;
     }
 
-    // Handle commands - redirect group commands to private chat (except /bubbles, /raidin, /raidout)
+    // Handle commands - redirect group commands to private chat (except /bubbles, /leaders, /raidin, /raidout)
     if (chatType === 'group' || chatType === 'supergroup') {
-      // In group chats, redirect most commands to private chat, but allow /bubbles, /raidin, /raidout
+      // In group chats, redirect most commands to private chat, but allow /bubbles, /leaders, /raidin, /raidout
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
         
@@ -743,6 +751,8 @@ const telegramService = {
       await telegramService.handleHelpCommand(chatId, userId);
     } else if (text.startsWith('/bubbles')) {
       await telegramService.handleBubblesCommand(chatId, userId);
+    } else if (text.startsWith('/leaders')) {
+      await telegramService.handleLeadersCommand(chatId);
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
@@ -1113,6 +1123,9 @@ Vote on projects and view trending bubbles!
 • /bubbles
   View top 10 bubbles (most bullish votes)
 
+• /leaders
+  Top 20 lifetime points earned & lifetime commission earned
+
 • /mybubble
   View YOUR projects with voting buttons
   📌 Run once in your group — we'll auto-post your bubble there twice daily!
@@ -1187,6 +1200,7 @@ Get started in 3 easy steps:
    /raids - Complete raids for points
    /mybubble - Share your project
    /bubbles - Vote on projects
+   /leaders - Lifetime points & commission leaders
 
 💰 Redeem points for rewards at:
 https://aquads.xyz`;
@@ -1211,7 +1225,7 @@ https://aquads.xyz`;
 /raids /createraid /cancelraid
 
 📊 Bubbles:
-/bubbles /mybubble /boostvote
+/bubbles /leaders /mybubble /boostvote
 
 🎨 Branding:
 /setbranding /removebranding
@@ -1239,6 +1253,43 @@ https://aquads.xyz`;
       console.error('Bubbles command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error fetching top bubbles. Please try again later.");
+    }
+  },
+
+  // Handle /leaders — lifetime points + lifetime commission (groups + DMs)
+  handleLeadersCommand: async (chatId) => {
+    try {
+      const { pointsLeaders, commissionLeaders } = await getLeaderboardPayload(20);
+      let msg = `🌊 Aquads Leaders\n\n`;
+      msg += `⭐ Top 20 — Lifetime points earned\n`;
+      if (pointsLeaders.length === 0) {
+        msg += `📭 No data yet.\n`;
+      } else {
+        pointsLeaders.forEach((row, i) => {
+          const r = i + 1;
+          const pts = Number(row.lifetimePointsEarned || 0).toLocaleString('en-US');
+          msg += `${rankEmoji(r)} #${r} ${row.username} — ${pts} pts\n`;
+        });
+      }
+      msg += `\n💰 Top 20 — Lifetime commission earned (USDC)\n`;
+      if (commissionLeaders.length === 0) {
+        msg += `📭 No data yet.\n`;
+      } else {
+        commissionLeaders.forEach((row, i) => {
+          const r = i + 1;
+          const usd = Number(row.lifetimeCommissionEarned || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+          msg += `${rankEmoji(r)} #${r} ${row.username} — $${usd}\n`;
+        });
+      }
+      msg += `\n🌐 https://aquads.xyz`;
+      await telegramService.sendBotMessage(chatId, msg);
+    } catch (error) {
+      console.error('Leaders command error:', error);
+      await telegramService.sendBotMessage(chatId,
+        '❌ Could not load the leaderboard. Try again later.\n\n🌐 https://aquads.xyz');
     }
   },
 
@@ -1573,16 +1624,12 @@ https://aquads.xyz`;
     if (!botToken) return { success: false };
 
     try {
-      const keyboard = addHyperSpaceToKeyboard({
-        inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-      });
-
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         {
           chat_id: chatId,
           text: message,
-          reply_markup: keyboard
+          reply_markup: defaultPromoInlineKeyboard()
         }
       );
 
