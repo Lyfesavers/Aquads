@@ -520,6 +520,19 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               Get your bumped bubble promoted live on X Spaces, YouTube, Twitch, Kick, and more! Community yappers host and pitch your project to active audiences across all major streaming platforms - free organic exposure that drives real engagement.
             </p>
           </div>
+
+          {/* Advantage 14 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-amber-500/60 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-gradient-to-r from-amber-500 to-violet-500 p-3 rounded-lg">
+                <FaFire className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">BNB & Solana Trending + Volume</h3>
+            </div>
+            <p className="text-gray-300">
+              Your base listing includes real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum. That hits especially hard alongside our Telegram bot’s trending boost and HyperSpace for your Twitter Spaces, then votes, raids, live streams, yappers, and AquaSwap BEX—all together it’s the perfect storm of attention and momentum to help send your token higher.
+            </p>
+          </div>
         </div>
       </div>
 
