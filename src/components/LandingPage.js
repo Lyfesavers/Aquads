@@ -3792,63 +3792,70 @@ const heroPillarColumnPaths = (
   </g>
 );
 
-// Subtle ancient-column watermarks for split hero (projects / talent pillars). Static, non-interactive.
-const HeroPillarWatermarks = () => (
+// Column watermarks sit inside each hero half above the gradient (section-level layer was fully covered by z-10 panels).
+const HeroSidePillarBackdrop = ({ side }) => (
   <div
-    className="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none"
+    className="absolute inset-0 z-[1] pointer-events-none overflow-hidden select-none"
     aria-hidden="true"
   >
-    {/* Left: two columns rising from bottom (projects side) */}
-    <svg
-      className="absolute inset-y-0 left-0 h-full w-[min(46vw,420px)] text-white opacity-[0.04] sm:opacity-[0.055] md:opacity-[0.065]"
-      viewBox="0 0 230 360"
-      preserveAspectRatio="xMinYMax slice"
-    >
-      <defs>
-        <linearGradient id="hero-pillar-wm-left" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(148, 163, 184, 0.35)" />
-          <stop offset="55%" stopColor="rgba(226, 232, 240, 0.2)" />
-          <stop offset="100%" stopColor="rgba(241, 245, 249, 0.08)" />
-        </linearGradient>
-      </defs>
-      <g fill="url(#hero-pillar-wm-left)">
-        <g transform="translate(4, 0)">{heroPillarColumnPaths}</g>
-        <g transform="translate(118, 6) scale(0.96)">{heroPillarColumnPaths}</g>
-      </g>
-    </svg>
-    {/* Right edge: one column (talent side), xMax anchor keeps it at screen edge */}
-    <svg
-      className="absolute inset-y-0 right-0 h-full w-[min(28vw,240px)] text-white opacity-[0.04] sm:opacity-[0.055] md:opacity-[0.065]"
-      viewBox="0 0 110 360"
-      preserveAspectRatio="xMaxYMax slice"
-    >
-      <defs>
-        <linearGradient id="hero-pillar-wm-right" x1="100%" y1="100%" x2="0%" y2="0%">
-          <stop offset="0%" stopColor="rgba(167, 139, 250, 0.22)" />
-          <stop offset="50%" stopColor="rgba(203, 213, 225, 0.18)" />
-          <stop offset="100%" stopColor="rgba(241, 245, 249, 0.06)" />
-        </linearGradient>
-      </defs>
-      <g fill="url(#hero-pillar-wm-right)" transform="translate(10, 0)">
-        {heroPillarColumnPaths}
-      </g>
-    </svg>
+    {side === 'left' ? (
+      <svg
+        className="absolute inset-y-0 left-0 h-full w-[min(92%,400px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
+        viewBox="0 0 230 360"
+        preserveAspectRatio="xMinYMax slice"
+      >
+        <defs>
+          <linearGradient id="hero-pillar-wm-left" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(165, 180, 198, 0.85)" />
+            <stop offset="50%" stopColor="rgba(226, 232, 240, 0.45)" />
+            <stop offset="100%" stopColor="rgba(207, 250, 254, 0.2)" />
+          </linearGradient>
+        </defs>
+        <g fill="url(#hero-pillar-wm-left)">
+          <g transform="translate(4, 0)">{heroPillarColumnPaths}</g>
+          <g transform="translate(118, 6) scale(0.96)">{heroPillarColumnPaths}</g>
+        </g>
+      </svg>
+    ) : (
+      <svg
+        className="absolute inset-y-0 right-0 h-full w-[min(55%,220px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
+        viewBox="0 0 110 360"
+        preserveAspectRatio="xMaxYMax slice"
+      >
+        <defs>
+          <linearGradient id="hero-pillar-wm-right" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="rgba(196, 181, 253, 0.55)" />
+            <stop offset="50%" stopColor="rgba(203, 213, 225, 0.4)" />
+            <stop offset="100%" stopColor="rgba(243, 232, 255, 0.22)" />
+          </linearGradient>
+        </defs>
+        <g fill="url(#hero-pillar-wm-right)" transform="translate(10, 0)">
+          {heroPillarColumnPaths}
+        </g>
+      </svg>
+    )}
   </div>
 );
 
 // Main orb component for hero - Triangle design
 const HeroOrb = ({ side, onClick, label, sublabel }) => (
   <motion.div
-    className={`
-      relative flex-1 h-full flex items-center justify-center cursor-pointer
-      ${side === 'left' ? 'bg-gradient-to-br from-cyan-950/50 via-slate-950 to-slate-950' : 'bg-gradient-to-bl from-purple-950/50 via-slate-950 to-slate-950'}
-    `}
+    className="relative flex-1 h-full flex items-center justify-center cursor-pointer overflow-hidden"
     whileHover={{ scale: 1.02 }}
     onClick={onClick}
   >
+    <div
+      className={`absolute inset-0 z-0 ${
+        side === 'left'
+          ? 'bg-gradient-to-br from-cyan-950/50 via-slate-950 to-slate-950'
+          : 'bg-gradient-to-bl from-purple-950/50 via-slate-950 to-slate-950'
+      }`}
+    />
+    <HeroSidePillarBackdrop side={side} />
+
     {/* Large central triangle container - responsive sizing */}
     <motion.div
-      className="absolute w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 flex items-center justify-center"
+      className="absolute z-10 w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 flex items-center justify-center"
       animate={{
         scale: [1, 1.05, 0.98, 1],
         rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
@@ -3927,7 +3934,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     </motion.div>
 
     {/* Labels */}
-    <div className="absolute bottom-16 sm:bottom-20 md:bottom-24 left-0 right-0 text-center px-3 sm:px-4">
+    <div className="absolute z-10 bottom-16 sm:bottom-20 md:bottom-24 left-0 right-0 text-center px-3 sm:px-4">
       <motion.h2 
         className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-1 md:mb-2 tracking-tight"
         style={{ fontFamily: "'Clash Display', 'Space Grotesk', sans-serif" }}
@@ -3950,7 +3957,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     {/* Click indicator */}
     <motion.div
       className={`
-        absolute bottom-3 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
+        absolute z-10 bottom-3 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
         px-3 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-3 rounded-full border backdrop-blur-sm
         ${side === 'left' 
           ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20' 
@@ -3965,16 +3972,18 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     </motion.div>
 
     {/* Floating particles */}
-    {[...Array(6)].map((_, i) => (
-      <FloatingParticle
-        key={i}
-        delay={i * 0.5}
-        size={Math.random() * 100 + 50}
-        color={side === 'left' ? 'rgba(34, 211, 238, 0.3)' : 'rgba(192, 132, 252, 0.3)'}
-        x={Math.random() * 80 + 10}
-        y={Math.random() * 60 + 20}
-      />
-    ))}
+    <div className="absolute inset-0 z-10 pointer-events-none">
+      {[...Array(6)].map((_, i) => (
+        <FloatingParticle
+          key={i}
+          delay={i * 0.5}
+          size={Math.random() * 100 + 50}
+          color={side === 'left' ? 'rgba(34, 211, 238, 0.3)' : 'rgba(192, 132, 252, 0.3)'}
+          x={Math.random() * 80 + 10}
+          y={Math.random() * 60 + 20}
+        />
+      ))}
+    </div>
   </motion.div>
 );
 
@@ -4601,13 +4610,11 @@ const LandingPage = () => {
         className="relative h-screen flex"
         style={{ opacity: heroOpacity }}
       >
-        <HeroPillarWatermarks />
-
         {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
 
         {/* Left side - Projects */}
-        <Link to="/home" className="relative z-10 flex-1 h-full">
+        <Link to="/home" className="flex-1 h-full">
           <HeroOrb 
             side="left"
             label="PROJECTS"
@@ -4616,7 +4623,7 @@ const LandingPage = () => {
         </Link>
 
         {/* Right side - Freelancers */}
-        <Link to="/marketplace" className="relative z-10 flex-1 h-full">
+        <Link to="/marketplace" className="flex-1 h-full">
           <HeroOrb 
             side="right"
             label="FREELANCERS"
