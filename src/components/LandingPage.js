@@ -3853,7 +3853,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     <HeroSidePillarBackdrop side={side} />
 
     {/* Triangle: outer wrapper keeps translate centering; inner motion only scales/rotates (avoids Framer overriding Tailwind transform). Mobile: sit above pillar capitals; sm+: dead center. */}
-    <div className="absolute z-10 left-1/2 w-36 h-36 max-sm:top-[min(34vh,9rem)] max-sm:-translate-y-1/2 sm:top-1/2 sm:h-52 sm:w-52 sm:-translate-x-1/2 sm:-translate-y-1/2 md:h-64 md:w-64 lg:h-80 lg:w-80 xl:h-96 xl:w-96 -translate-x-1/2">
+    <div className="absolute z-10 left-1/2 w-36 h-36 max-sm:top-[min(40vh,10.25rem)] max-sm:-translate-y-1/2 sm:top-1/2 sm:h-52 sm:w-52 sm:-translate-x-1/2 sm:-translate-y-1/2 md:h-64 md:w-64 lg:h-80 lg:w-80 xl:h-96 xl:w-96 -translate-x-1/2">
       <motion.div
         className="relative flex h-full w-full items-center justify-center"
         animate={{
