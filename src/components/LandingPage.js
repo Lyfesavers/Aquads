@@ -3959,7 +3959,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     <motion.div
       className={`
         absolute z-10 bottom-3 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2
-        px-3 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-3 rounded-full border backdrop-blur-sm
+        max-sm:px-7 max-sm:py-3.5 px-3 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-3 rounded-full border backdrop-blur-sm
         ${side === 'left' 
           ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20' 
           : 'border-purple-500/50 text-purple-400 hover:bg-purple-500/20'
@@ -3969,7 +3969,9 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <span className="font-semibold text-[10px] sm:text-xs md:text-sm lg:text-base">Enter →</span>
+      <span className="font-semibold max-sm:text-base max-sm:tracking-wide sm:text-xs md:text-sm lg:text-base">
+        Enter →
+      </span>
     </motion.div>
 
     {/* Floating particles */}
