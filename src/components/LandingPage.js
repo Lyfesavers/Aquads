@@ -3852,19 +3852,20 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
     />
     <HeroSidePillarBackdrop side={side} />
 
-    {/* Large central triangle container - responsive sizing */}
-    <motion.div
-      className="absolute z-10 w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 flex items-center justify-center"
-      animate={{
-        scale: [1, 1.05, 0.98, 1],
-        rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
-      }}
-      transition={{
-        duration: 8,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    >
+    {/* Triangle: outer wrapper keeps translate centering; inner motion only scales/rotates (avoids Framer overriding Tailwind transform). Mobile: sit above pillar capitals; sm+: dead center. */}
+    <div className="absolute z-10 left-1/2 w-36 h-36 max-sm:top-[min(26vh,7.25rem)] max-sm:-translate-y-1/2 sm:top-1/2 sm:h-52 sm:w-52 sm:-translate-x-1/2 sm:-translate-y-1/2 md:h-64 md:w-64 lg:h-80 lg:w-80 xl:h-96 xl:w-96 -translate-x-1/2">
+      <motion.div
+        className="relative flex h-full w-full items-center justify-center"
+        animate={{
+          scale: [1, 1.05, 0.98, 1],
+          rotate: side === 'left' ? [0, 5, -3, 0] : [0, -5, 3, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      >
       {/* Outer glow triangle */}
       <svg 
         viewBox="0 0 200 200" 
@@ -3931,6 +3932,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
         {side === 'left' ? <ProjectsIcon /> : <FreelancersIcon />}
       </motion.div>
     </motion.div>
+    </div>
 
     {/* Labels */}
     <div className="absolute z-10 bottom-16 sm:bottom-20 md:bottom-24 left-0 right-0 text-center px-3 sm:px-4">
