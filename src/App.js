@@ -531,6 +531,19 @@ function App() {
   
   // Initialize user presence tracking across all pages
   useUserPresence(currentUser);
+
+  // Logged-in users who never verified must see the code modal on every session until verified.
+  useEffect(() => {
+    if (!currentUser?.email) return;
+    if (currentUser.emailVerified === true) {
+      setShowEmailVerificationModal(false);
+      return;
+    }
+    if (currentUser.emailVerified === false) {
+      setPendingVerificationEmail(currentUser.email);
+      setShowEmailVerificationModal(true);
+    }
+  }, [currentUser?.userId, currentUser?.email, currentUser?.emailVerified]);
   
   /**
    * Determine how many bubbles to show per page based on screen size.
@@ -1138,7 +1151,14 @@ function App() {
       }, 1000);
     } catch (error) {
       logger.error('Google login error:', error);
-      showNotification(error.message || 'Google login failed', 'error');
+      if (error.emailVerificationRequired && error.email) {
+        setShowLoginModal(false);
+        setPendingVerificationEmail(error.email);
+        setShowEmailVerificationModal(true);
+        showNotification('Please verify your email to continue', 'info');
+      } else {
+        showNotification(error.message || 'Google login failed', 'error');
+      }
     }
   };
 
@@ -1173,15 +1193,9 @@ function App() {
     try {
       const user = await apiRegister(formData);
       if (user) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('token', user.token);
-        skipNextValidationRef.current = true;
-        setCurrentUser(user);
         setNewUsername(user.username);
-        
-        // Check if email verification is required
+
         if (user.verificationRequired && !user.emailVerified) {
-          // Send verification email
           if (user.verificationCode) {
             logger.log('Attempting to send verification email...');
             try {
@@ -1196,29 +1210,34 @@ function App() {
               alert('Account created but failed to send verification email. Please try resending.');
             }
           }
-          
+
           setPendingVerificationEmail(user.email);
           setShowEmailVerificationModal(true);
           setShowCreateAccountModal(false);
-        } else {
-          // Send welcome email if email is provided and verified
-          if (formData.email) {
-            logger.log('Attempting to send welcome email...');
-            try {
-              await emailService.sendWelcomeEmail(
-                formData.email,
-                user.username,
-                user.referralCode
-              );
-              logger.log('Welcome email sent successfully');
-            } catch (emailError) {
-              logger.error('Failed to send welcome email:', emailError);
-            }
-          }
-          
-          setShowWelcomeModal(true);
-          setShowCreateAccountModal(false);
+          return;
         }
+
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('token', user.token);
+        skipNextValidationRef.current = true;
+        setCurrentUser(user);
+
+        if (formData.email) {
+          logger.log('Attempting to send welcome email...');
+          try {
+            await emailService.sendWelcomeEmail(
+              formData.email,
+              user.username,
+              user.referralCode
+            );
+            logger.log('Welcome email sent successfully');
+          } catch (emailError) {
+            logger.error('Failed to send welcome email:', emailError);
+          }
+        }
+
+        setShowWelcomeModal(true);
+        setShowCreateAccountModal(false);
       }
     } catch (error) {
       logger.error('Error creating account:', error);
@@ -1226,27 +1245,47 @@ function App() {
     }
   };
 
-  const handleEmailVerificationComplete = async (message) => {
+  const handleEmailVerificationComplete = async ({ message, user: verifiedUser }) => {
     alert(message);
-    
-    // Send welcome email after successful verification
-    if (pendingVerificationEmail && currentUser) {
-      logger.log('Sending welcome email after verification...');
-      try {
-        await emailService.sendWelcomeEmail(
-          pendingVerificationEmail,
-          currentUser.username,
-          currentUser.referralCode
-        );
-        logger.log('Welcome email sent successfully after verification');
-      } catch (emailError) {
-        logger.error('Failed to send welcome email after verification:', emailError);
+
+    const welcomeTargetEmail = pendingVerificationEmail || verifiedUser?.email;
+
+    if (verifiedUser) {
+      skipNextValidationRef.current = true;
+      let merged;
+      setCurrentUser((prev) => {
+        merged = {
+          ...(prev || {}),
+          ...verifiedUser,
+          token: verifiedUser.token,
+          refreshToken: verifiedUser.refreshToken ?? prev?.refreshToken
+        };
+        localStorage.setItem('token', merged.token);
+        localStorage.setItem('currentUser', JSON.stringify(merged));
+        return merged;
+      });
+      reconnectSocket();
+
+      if (welcomeTargetEmail && merged?.username) {
+        logger.log('Sending welcome email after verification...');
+        try {
+          await emailService.sendWelcomeEmail(
+            welcomeTargetEmail,
+            merged.username,
+            merged.referralCode
+          );
+          logger.log('Welcome email sent successfully after verification');
+        } catch (emailError) {
+          logger.error('Failed to send welcome email after verification:', emailError);
+        }
       }
     }
-    
-    setShowWelcomeModal(true);
+
     setShowEmailVerificationModal(false);
     setPendingVerificationEmail('');
+    if (verifiedUser) {
+      setShowWelcomeModal(true);
+    }
   };
 
   const handleCreateAd = async (adData) => {
@@ -3431,17 +3470,6 @@ function App() {
                   />
                 )}
 
-                {showEmailVerificationModal && (
-                  <EmailVerificationModal
-                    email={pendingVerificationEmail}
-                    onVerificationComplete={handleEmailVerificationComplete}
-                    onClose={() => {
-                      setShowEmailVerificationModal(false);
-                      setPendingVerificationEmail('');
-                    }}
-                  />
-                )}
-
                 {showCreateModal && currentUser && (
                   <CreateAdModal
                     onCreateAd={handleCreateAd}
@@ -3768,6 +3796,12 @@ function App() {
             <Route path="/docs" element={<Documentation />} />
         </Routes>
         </Suspense>
+        {showEmailVerificationModal && pendingVerificationEmail && (
+          <EmailVerificationModal
+            email={pendingVerificationEmail}
+            onVerificationComplete={handleEmailVerificationComplete}
+          />
+        )}
       </Router>
     </AuthContext.Provider>
   );

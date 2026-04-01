@@ -191,28 +191,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
     }
 
     // Signup bonus points will be awarded after email verification
+    // No access/refresh tokens until email is verified — client completes session via POST /verify-email
 
-
-    // Generate access token (24 hours)
-    const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType, referredBy: user.referredBy },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Generate refresh token (7 days)
-    const refreshToken = jwt.sign(
-      { userId: user._id, tokenType: 'refresh' },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    // Store refresh token in database
-    user.refreshToken = refreshToken;
-    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    await user.save();
-
-    // Return user data and both tokens with verification info
     return res.status(201).json({
       userId: user._id,
       username: user.username,
@@ -222,8 +202,6 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), va
       referredBy: user.referredBy, // Include referredBy for affiliate detection
       userType: user.userType,
       cv: user.cv, // Include CV data for display name functionality
-      token,
-      refreshToken,
       emailVerified: false,
       verificationRequired: true,
       verificationCode: verificationCode, // Send code to frontend for EmailJS
@@ -452,6 +430,15 @@ router.post('/login/google', async (req, res) => {
         message: 'Your account has been suspended. Please contact support for more information.',
         suspendedReason: user.suspendedReason,
         suspendedAt: user.suspendedAt
+      });
+    }
+
+    if (user.email && !user.emailVerified) {
+      return res.status(403).json({
+        error: 'Email verification required',
+        message: 'Please verify your email before logging in. Check your inbox for the verification code.',
+        emailVerificationRequired: true,
+        email: user.email
       });
     }
 
@@ -1553,16 +1540,27 @@ router.post('/verify-email', async (req, res) => {
       await creditReferrerBonus(user._id, 'Signup bonus with affiliate code (email verified)');
     }
 
-    // Update last activity for email verification
+    // Update last activity and issue session tokens (same pattern as login)
     user.lastActivity = new Date();
-    await user.save();
 
-    // Generate new JWT token with updated verification status
+    const isExtension = req.headers.origin && req.headers.origin.startsWith('chrome-extension://');
+    const tokenExpiration = isExtension ? '1h' : '15m';
+
     const newToken = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: tokenExpiration }
     );
+
+    const refreshToken = jwt.sign(
+      { userId: user._id, tokenType: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await user.save();
 
     // Create message based on user type
     const message = user.userType === 'freelancer' 
@@ -1573,13 +1571,15 @@ router.post('/verify-email', async (req, res) => {
       message: message,
       emailVerified: true,
       token: newToken,
+      refreshToken,
       userId: user._id,
       username: user.username,
       email: user.email,
       image: user.image,
       isAdmin: user.isAdmin,
       userType: user.userType,
-      referredBy: user.referredBy // Include referredBy for affiliate detection
+      referredBy: user.referredBy, // Include referredBy for affiliate detection
+      referralCode: user.referralCode
     });
   } catch (error) {
     console.error('Email verification error:', error);

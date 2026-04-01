@@ -441,12 +441,17 @@ export const loginWithGoogle = async (idToken) => {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+      if (response.status === 403 && error.emailVerificationRequired) {
+        const verificationError = new Error(error.message || 'Email verification required');
+        verificationError.emailVerificationRequired = true;
+        verificationError.email = error.email;
+        throw verificationError;
+      }
       throw new Error(error.error || 'Google login failed');
     }
 
     const userData = await response.json();
 
-    // Force-reconnect with the new token so the server authenticates as this user
     socket.disconnect();
     socket.auth = { token: userData.token };
     socket.connect();
@@ -514,10 +519,11 @@ export const register = async (userData) => {
 
     const data = await response.json();
 
-    // Force-reconnect with the new token so the server authenticates as this user
-    socket.disconnect();
-    socket.auth = { token: data.token };
-    socket.connect();
+    if (data.token) {
+      socket.disconnect();
+      socket.auth = { token: data.token };
+      socket.connect();
+    }
 
     return data;
   } catch (error) {

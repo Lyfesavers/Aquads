@@ -4,7 +4,7 @@ import { FaSpinner, FaEnvelope } from 'react-icons/fa';
 import emailService from '../services/emailService';
 import logger from '../utils/logger';
 
-const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
+const EmailVerificationModal = ({ email, onVerificationComplete }) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,22 +44,26 @@ const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
         throw new Error(data.error || 'Verification failed');
       }
 
-      // Success - update user data if new token is provided
-      if (data.token) {
-        const updatedUser = {
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          image: data.image,
-          isAdmin: data.isAdmin,
-          emailVerified: data.emailVerified,
-          token: data.token
-        };
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      }
-      
-      onVerificationComplete(data.message);
-      onClose();
+      const sessionUser = data.token
+        ? {
+            userId: data.userId,
+            username: data.username,
+            email: data.email,
+            image: data.image,
+            isAdmin: data.isAdmin,
+            emailVerified: data.emailVerified,
+            userType: data.userType,
+            referredBy: data.referredBy,
+            referralCode: data.referralCode,
+            token: data.token,
+            refreshToken: data.refreshToken
+          }
+        : null;
+
+      onVerificationComplete({
+        message: data.message,
+        user: sessionUser
+      });
     } catch (error) {
       setError(error.message);
     } finally {
@@ -114,7 +118,7 @@ const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
   };
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={() => {}} closable={false}>
       <div className="bg-gray-900 rounded-xl shadow-2xl p-8 w-full max-w-md mx-auto border border-gray-700">
         <div className="text-center mb-6">
           <FaEnvelope className="mx-auto h-12 w-12 text-blue-400 mb-4" />
