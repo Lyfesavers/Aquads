@@ -3776,6 +3776,66 @@ const FreelancersIcon = () => (
   </svg>
 );
 
+// Ancient Doric-style column silhouette (viewBox units) — used only as a faint watermark.
+const heroPillarColumnPaths = (
+  <g stroke="none">
+    <path d="M 6 360 L 94 360 L 92 350 L 8 350 Z M 10 350 L 90 350 L 88 338 L 12 338 Z M 14 338 L 86 338 L 84 322 L 16 322 Z" />
+    <path d="M 18 322 L 22 98 L 26 92 L 74 92 L 78 98 L 82 322 Z" />
+    <path d="M 20 92 L 80 92 L 78 78 L 22 78 Z M 16 78 L 84 78 L 82 62 L 18 62 Z M 12 62 L 88 62 L 86 46 L 14 46 Z M 8 46 L 92 46 L 90 30 L 10 30 Z" opacity="0.92" />
+    <path
+      d="M 28 308 V 108 M 38 306 V 106 M 50 304 V 104 M 62 306 V 106 M 72 308 V 108"
+      stroke="currentColor"
+      strokeWidth="1.1"
+      fill="none"
+      opacity="0.18"
+    />
+  </g>
+);
+
+// Subtle ancient-column watermarks for split hero (projects / talent pillars). Static, non-interactive.
+const HeroPillarWatermarks = () => (
+  <div
+    className="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none"
+    aria-hidden="true"
+  >
+    {/* Left: two columns rising from bottom (projects side) */}
+    <svg
+      className="absolute inset-y-0 left-0 h-full w-[min(46vw,420px)] text-white opacity-[0.04] sm:opacity-[0.055] md:opacity-[0.065]"
+      viewBox="0 0 230 360"
+      preserveAspectRatio="xMinYMax slice"
+    >
+      <defs>
+        <linearGradient id="hero-pillar-wm-left" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="rgba(148, 163, 184, 0.35)" />
+          <stop offset="55%" stopColor="rgba(226, 232, 240, 0.2)" />
+          <stop offset="100%" stopColor="rgba(241, 245, 249, 0.08)" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#hero-pillar-wm-left)">
+        <g transform="translate(4, 0)">{heroPillarColumnPaths}</g>
+        <g transform="translate(118, 6) scale(0.96)">{heroPillarColumnPaths}</g>
+      </g>
+    </svg>
+    {/* Right edge: one column (talent side), xMax anchor keeps it at screen edge */}
+    <svg
+      className="absolute inset-y-0 right-0 h-full w-[min(28vw,240px)] text-white opacity-[0.04] sm:opacity-[0.055] md:opacity-[0.065]"
+      viewBox="0 0 110 360"
+      preserveAspectRatio="xMaxYMax slice"
+    >
+      <defs>
+        <linearGradient id="hero-pillar-wm-right" x1="100%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="rgba(167, 139, 250, 0.22)" />
+          <stop offset="50%" stopColor="rgba(203, 213, 225, 0.18)" />
+          <stop offset="100%" stopColor="rgba(241, 245, 249, 0.06)" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#hero-pillar-wm-right)" transform="translate(10, 0)">
+        {heroPillarColumnPaths}
+      </g>
+    </svg>
+  </div>
+);
+
 // Main orb component for hero - Triangle design
 const HeroOrb = ({ side, onClick, label, sublabel }) => (
   <motion.div
@@ -4541,11 +4601,13 @@ const LandingPage = () => {
         className="relative h-screen flex"
         style={{ opacity: heroOpacity }}
       >
+        <HeroPillarWatermarks />
+
         {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
 
         {/* Left side - Projects */}
-        <Link to="/home" className="flex-1 h-full">
+        <Link to="/home" className="relative z-10 flex-1 h-full">
           <HeroOrb 
             side="left"
             label="PROJECTS"
@@ -4554,7 +4616,7 @@ const LandingPage = () => {
         </Link>
 
         {/* Right side - Freelancers */}
-        <Link to="/marketplace" className="flex-1 h-full">
+        <Link to="/marketplace" className="relative z-10 flex-1 h-full">
           <HeroOrb 
             side="right"
             label="FREELANCERS"
