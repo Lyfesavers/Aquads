@@ -3800,9 +3800,9 @@ const HeroSidePillarBackdrop = ({ side }) => (
   >
     {side === 'left' ? (
       <svg
-        className="absolute inset-y-0 left-0 h-full w-[min(92%,400px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
-        viewBox="0 0 230 360"
-        preserveAspectRatio="xMinYMax slice"
+        className="absolute inset-y-0 left-0 h-full w-[min(82%,210px)] sm:w-[min(55%,220px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
+        viewBox="0 0 110 360"
+        preserveAspectRatio="xMinYMax meet"
       >
         <defs>
           <linearGradient id="hero-pillar-wm-left" x1="0%" y1="100%" x2="100%" y2="0%">
@@ -3811,16 +3811,15 @@ const HeroSidePillarBackdrop = ({ side }) => (
             <stop offset="100%" stopColor="rgba(207, 250, 254, 0.2)" />
           </linearGradient>
         </defs>
-        <g fill="url(#hero-pillar-wm-left)">
-          <g transform="translate(4, 0)">{heroPillarColumnPaths}</g>
-          <g transform="translate(118, 6) scale(0.96)">{heroPillarColumnPaths}</g>
+        <g fill="url(#hero-pillar-wm-left)" transform="translate(4, 0)">
+          {heroPillarColumnPaths}
         </g>
       </svg>
     ) : (
       <svg
-        className="absolute inset-y-0 right-0 h-full w-[min(55%,220px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
+        className="absolute inset-y-0 right-0 h-full w-[min(82%,210px)] sm:w-[min(55%,220px)] text-white opacity-[0.14] sm:opacity-[0.16] md:opacity-[0.18]"
         viewBox="0 0 110 360"
-        preserveAspectRatio="xMaxYMax slice"
+        preserveAspectRatio="xMaxYMax meet"
       >
         <defs>
           <linearGradient id="hero-pillar-wm-right" x1="100%" y1="100%" x2="0%" y2="0%">
@@ -3829,7 +3828,7 @@ const HeroSidePillarBackdrop = ({ side }) => (
             <stop offset="100%" stopColor="rgba(243, 232, 255, 0.22)" />
           </linearGradient>
         </defs>
-        <g fill="url(#hero-pillar-wm-right)" transform="translate(10, 0)">
+        <g fill="url(#hero-pillar-wm-right)" transform="translate(4, 0)">
           {heroPillarColumnPaths}
         </g>
       </svg>
@@ -4631,17 +4630,21 @@ const LandingPage = () => {
           />
         </Link>
 
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <span className="text-gray-500 text-xs tracking-widest uppercase hidden sm:block">Scroll to Explore</span>
-          <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </motion.div>
+        {/* Scroll indicator — centering on outer wrapper so Framer y-transform does not override -translate-x-1/2 */}
+        <div className="absolute bottom-8 left-1/2 z-20 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 justify-center pointer-events-none">
+          <motion.div
+            className="flex flex-col items-center gap-2 text-center"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <span className="text-gray-500 text-xs tracking-widest uppercase hidden sm:block px-1">
+              Scroll to Explore
+            </span>
+            <svg className="w-6 h-6 shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </motion.div>
+        </div>
       </motion.section>
 
       {/* Tagline Section */}
