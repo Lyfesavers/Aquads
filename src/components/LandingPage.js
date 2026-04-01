@@ -4589,10 +4589,8 @@ const LandingPage = () => {
               <br />
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
-            <p className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-black text-white mb-4 md:mb-6 leading-tight font-display">
-              The home for <span className="text-gradient-cyan">onchain resumes</span>
-              <br />
-              <span className="text-gradient-purple">Where hiring meets onchain</span>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 italic font-medium max-w-3xl mx-auto mb-4 md:mb-6 leading-relaxed">
+              Home of onchain resumes — where hiring meets onchain
             </p>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
