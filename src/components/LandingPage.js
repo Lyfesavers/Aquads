@@ -4584,11 +4584,16 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 md:mb-6 leading-tight font-display">
-              The <span className="text-gradient-cyan">Web3</span> Hub for
+            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-3 md:mb-4 leading-tight font-display">
+              The <span className="text-gradient-cyan">Web3</span> SuperHub for
               <br />
               <span className="text-gradient-purple">Projects & Talent</span>
             </h2>
+            <p className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-black text-white mb-4 md:mb-6 leading-tight font-display">
+              The home for <span className="text-gradient-cyan">onchain resumes</span>
+              <br />
+              <span className="text-gradient-purple">Where hiring meets onchain</span>
+            </p>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
             </p>
