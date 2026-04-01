@@ -1,8 +1,10 @@
 /**
  * Minimal service worker for PWA installability (Chrome/Edge desktop).
- * Pass-through only - no offline caching. Required for beforeinstallprompt to fire.
+ * No fetch listener: we were not caching — only re-fetching through the worker,
+ * which duplicates failures and floods the console with FetchEvent / sw.js errors
+ * when third-party requests fail. Default browser fetch avoids that extra hop.
  */
-const CACHE_VERSION = 'aquads-pwa-v1';
+const CACHE_VERSION = 'aquads-pwa-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -12,7 +14,3 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-  // Pass all requests through to network - no caching
-  event.respondWith(fetch(event.request));
-});
