@@ -393,6 +393,8 @@ router.post('/login', validateLogin, async (req, res) => {
       linkInBioButtonStyle: lookToLegacyStyle(linkBioBtnLook.shape, linkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
       linkInBioTagline: user.linkInBioTagline || null,
+      linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
+      linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
       token,
       refreshToken
     });
@@ -499,6 +501,7 @@ router.post('/login/google', async (req, res) => {
       req.headers['user-agent']
     );
 
+    const googleLinkBioBtnLook = resolveLinkInBioButtonLook(user);
     return res.json({
       userId: user._id,
       username: user.username,
@@ -510,6 +513,17 @@ router.post('/login/google', async (req, res) => {
       referredBy: user.referredBy,
       cv: user.cv,
       aquaPay: user.aquaPay,
+      bioLinks: user.bioLinks || [],
+      linkInBioAccentColor: user.linkInBioAccentColor || '#22d3ee',
+      linkInBioButtonColor: user.linkInBioButtonColor || null,
+      linkInBioButtonShape: googleLinkBioBtnLook.shape,
+      linkInBioButtonFill: googleLinkBioBtnLook.fill,
+      linkInBioButtonTranslucent: googleLinkBioBtnLook.translucent,
+      linkInBioButtonStyle: lookToLegacyStyle(googleLinkBioBtnLook.shape, googleLinkBioBtnLook.fill),
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioTagline: user.linkInBioTagline || null,
+      linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
+      linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
       token,
       refreshToken
     });

@@ -1097,10 +1097,6 @@ export const updateLinkInBio = async (data) => {
         'Authorization': `Bearer ${currentUser.token}`
       }
     });
-    if (response.data) {
-      const updatedUser = { ...currentUser, ...response.data };
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    }
     return response.data;
   } catch (error) {
     throw error.response?.data || error;

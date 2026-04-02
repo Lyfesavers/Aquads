@@ -148,29 +148,36 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       showNotification?.('All URLs must start with https:// (or http://)', 'error');
       return;
     }
+    const hex = customColor.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(customColor.trim()) ? customColor.trim() : accentColor;
+    const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
+      ? buttonColorCustom.trim()
+      : (buttonColor || null);
+    const payload = {
+      bioLinks: sanitized,
+      linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
+      linkInBioAccentColor: hex,
+      linkInBioButtonColor: btnHex || null,
+      linkInBioButtonShape: buttonShape,
+      linkInBioButtonFill: buttonFill,
+      linkInBioButtonTranslucent: buttonTranslucent,
+      linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
+      linkInBioAdsEnabled: adsEnabled,
+      linkInBioAdPricing: {
+        day: Math.max(1, adPricing.day || 10),
+        threeDays: Math.max(1, adPricing.threeDays || 20),
+        sevenDays: Math.max(1, adPricing.sevenDays || 40)
+      }
+    };
+    const beforeSave = {
+      ...currentUser,
+      bioLinks: Array.isArray(currentUser?.bioLinks) ? currentUser.bioLinks.map((l) => ({ ...l })) : [],
+      linkInBioAdPricing: currentUser?.linkInBioAdPricing ? { ...currentUser.linkInBioAdPricing } : undefined
+    };
+    onProfileUpdate?.((prev) => ({ ...prev, ...payload }), { silent: true });
     setSaving(true);
     try {
-      const hex = customColor.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(customColor.trim()) ? customColor.trim() : accentColor;
-      const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
-        ? buttonColorCustom.trim()
-        : (buttonColor || null);
-      const updated = await updateLinkInBio({
-        bioLinks: sanitized,
-        linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
-        linkInBioAccentColor: hex,
-        linkInBioButtonColor: btnHex || null,
-        linkInBioButtonShape: buttonShape,
-        linkInBioButtonFill: buttonFill,
-        linkInBioButtonTranslucent: buttonTranslucent,
-        linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
-        linkInBioAdsEnabled: adsEnabled,
-        linkInBioAdPricing: {
-          day: Math.max(1, adPricing.day || 10),
-          threeDays: Math.max(1, adPricing.threeDays || 20),
-          sevenDays: Math.max(1, adPricing.sevenDays || 40)
-        }
-      });
-      onProfileUpdate?.({ ...currentUser, ...updated });
+      const updated = await updateLinkInBio(payload);
+      onProfileUpdate?.((prev) => ({ ...prev, ...updated }), { silent: true });
       if (updated.linkInBioAdsEnabled !== undefined) {
         setAdsEnabled(Boolean(updated.linkInBioAdsEnabled));
       }
@@ -183,6 +190,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       }
       showNotification?.('Link in bio saved.', 'success');
     } catch (err) {
+      onProfileUpdate?.(() => beforeSave, { silent: true });
       showNotification?.(err.error || 'Failed to save', 'error');
     } finally {
       setSaving(false);

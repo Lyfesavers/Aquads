@@ -1875,9 +1875,13 @@ function App() {
     };
   }, [currentUser]);
 
-  const handleProfileUpdate = (updatedUser) => {
-    setCurrentUser(updatedUser);
-    showNotification('Profile updated successfully!', 'success');
+  const handleProfileUpdate = (updatedUserOrFn, options = {}) => {
+    setCurrentUser((prev) =>
+      typeof updatedUserOrFn === 'function' ? updatedUserOrFn(prev) : updatedUserOrFn
+    );
+    if (!options.silent) {
+      showNotification('Profile updated successfully!', 'success');
+    }
   };
 
   const handleBannerSubmit = async (bannerData) => {
