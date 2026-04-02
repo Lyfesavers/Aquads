@@ -263,6 +263,20 @@ function normalizeHex(hex) {
   return /^#[0-9A-Fa-f]{3,6}$/.test(h) ? h : '#22d3ee';
 }
 
+function relativeLuminanceFromHex(hex) {
+  let h = normalizeHex(hex).replace(/^#/, '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Foreground on a tile tinted with `hex` (e.g. social circle filled with accent). */
+function contrastOnTintHex(hex) {
+  return relativeLuminanceFromHex(hex) > 0.55 ? 'rgba(15, 17, 24, 0.92)' : 'rgba(255, 255, 255, 0.96)';
+}
+
 /** Solid by default; translucent enables glass (blur + rgba). */
 function getLinkButtonSurface({ fill, translucent, buttonHex, buttonTheme, theme, hasBackgroundImage }) {
   const hx = normalizeHex(buttonHex);
@@ -296,16 +310,16 @@ function getLinkButtonSurface({ fill, translucent, buttonHex, buttonTheme, theme
   return { background, border, backdropFilter };
 }
 
-function getLinkButtonIconChipStyle({ fill, translucent, hasBackgroundImage, buttonHex, buttonTheme }) {
+function getLinkButtonIconChipStyle({ fill, translucent, buttonHex, buttonTheme, theme }) {
   const hx = normalizeHex(buttonHex);
   if (fill === 'filled' && !translucent) {
-    return { color: '#ffffff', backgroundColor: 'rgba(0, 0, 0, 0.22)' };
+    return { color: theme.accent, backgroundColor: 'rgba(0, 0, 0, 0.22)' };
   }
   if (fill === 'minimal') {
-    return { color: hx, backgroundColor: hexToRgba(hx, translucent ? 0.12 : 0.14) };
+    return { color: theme.accent, backgroundColor: hexToRgba(hx, translucent ? 0.12 : 0.14) };
   }
   return {
-    color: hasBackgroundImage ? buttonTheme.accent : buttonTheme.accent,
+    color: theme.accent,
     backgroundColor: translucent ? buttonTheme.accentHover : 'rgba(0, 0, 0, 0.28)'
   };
 }
@@ -478,11 +492,16 @@ const LinkInBio = () => {
   const iconChipStyle = getLinkButtonIconChipStyle({
     fill: btnLook.fill,
     translucent: btnLook.translucent,
-    hasBackgroundImage,
     buttonHex,
-    buttonTheme
+    buttonTheme,
+    theme
   });
-  const labelMuted = btnLook.fill === 'filled' && !btnLook.translucent;
+  const accentNorm = normalizeHex(accentHex).toLowerCase();
+  const buttonNorm = normalizeHex(buttonHex).toLowerCase();
+  const linkTitleColor =
+    btnLook.fill === 'filled' && !btnLook.translucent && accentNorm === buttonNorm
+      ? contrastOnTintHex(accentHex)
+      : theme.accent;
 
   return (
     <motion.div
@@ -598,11 +617,12 @@ const LinkInBio = () => {
                   rel="noopener noreferrer"
                   aria-label={link.title || 'Social link'}
                   title={link.title || 'Social link'}
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 border border-white/10 hover:scale-110 hover:border-white/20"
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
                   style={{
-                    background: hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.06)',
-                    color: buttonTheme.accent,
-                    backdropFilter: 'blur(12px)',
+                    background: hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.48 : 0.88),
+                    color: contrastOnTintHex(accentHex),
+                    border: `1px solid ${hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.75 : 1)}`,
+                    backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
                     boxShadow: `0 0 0 1px ${theme.badgeBorder}`
                   }}
                   whileHover={{ y: -2 }}
@@ -661,13 +681,13 @@ const LinkInBio = () => {
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
-                    <span className="text-white font-medium truncate" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                    <span className="font-medium truncate" style={{ fontFamily: "'DM Sans', sans-serif", color: linkTitleColor }}>
                       {link.title}
                     </span>
                   </span>
                   <span
                     className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: labelMuted ? 'rgba(255,255,255,0.92)' : buttonTheme.accent }}
+                    style={{ color: linkTitleColor }}
                   >
                     <FaExternalLinkAlt className="w-4 h-4" />
                   </span>
