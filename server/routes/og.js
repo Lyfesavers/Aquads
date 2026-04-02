@@ -1,7 +1,34 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const sharp = require('sharp');
 const axios = require('axios');
+
+// Embedded in SVG so Sharp/librsvg does not depend on OS fontconfig (fixes tofu on Railway, etc.)
+const OG_FONT_FAMILY = 'AquadsOG';
+let embeddedFontFaceCss = null;
+
+function getEmbeddedFontFaceCss() {
+  if (embeddedFontFaceCss !== null) return embeddedFontFaceCss;
+  try {
+    const pkgRoot = path.dirname(require.resolve('dejavu-fonts-ttf/package.json'));
+    const regular = fs.readFileSync(path.join(pkgRoot, 'ttf', 'DejaVuSans.ttf'));
+    const bold = fs.readFileSync(path.join(pkgRoot, 'ttf', 'DejaVuSans-Bold.ttf'));
+    const r64 = regular.toString('base64');
+    const b64 = bold.toString('base64');
+    embeddedFontFaceCss = `@font-face{font-family:'${OG_FONT_FAMILY}';font-style:normal;font-weight:400;src:url('data:font/truetype;base64,${r64}') format('truetype');}
+@font-face{font-family:'${OG_FONT_FAMILY}';font-style:normal;font-weight:700;src:url('data:font/truetype;base64,${b64}') format('truetype');}`;
+  } catch (err) {
+    console.error('OG aquaswap: could not load dejavu-fonts-ttf:', err.message);
+    embeddedFontFaceCss = '';
+  }
+  return embeddedFontFaceCss;
+}
+
+function ogFontAttr() {
+  return `font-family="${OG_FONT_FAMILY}, DejaVu Sans, sans-serif"`;
+}
 
 // Simple test endpoint to verify route is loaded
 router.get('/test', (req, res) => {
@@ -188,10 +215,13 @@ router.get('/aquaswap', async (req, res) => {
     const changeTextX = changePillX + 22;
     const label24hX = changePillX + changePillW + 12;
 
+    const fontCss = getEmbeddedFontFaceCss();
+
     // Build SVG
     const svg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    ${fontCss ? `<style type="text/css"><![CDATA[${fontCss}]]></style>` : ''}
     <!-- Background gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#0a0a12"/>
@@ -240,8 +270,8 @@ router.get('/aquaswap', async (req, res) => {
   <rect x="40" y="50" width="1120" height="540" rx="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
   
   <!-- AQUADS branding top right -->
-  <text x="1100" y="100" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
-  <text x="1100" y="125" font-family="DejaVu Sans, Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
+  <text x="1100" y="100" ${ogFontAttr()} font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
+  <text x="1100" y="125" ${ogFontAttr()} font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
   
   <!-- Logo glow effect -->
   <circle cx="140" cy="180" r="65" fill="url(#accentGrad)" opacity="0.3" filter="url(#glow)"/>
@@ -254,27 +284,27 @@ router.get('/aquaswap', async (req, res) => {
   <image x="80" y="120" width="120" height="120" href="${logoBase64}" clip-path="url(#logoClip)" preserveAspectRatio="xMidYMid slice"/>
   ` : `
   <!-- Default logo placeholder -->
-  <text x="140" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="40" fill="#00d4ff" text-anchor="middle">?</text>
+  <text x="140" y="190" ${ogFontAttr()} font-size="40" fill="#00d4ff" text-anchor="middle">?</text>
   `}
   
   <!-- Token Symbol -->
-  <text x="230" y="160" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" font-weight="bold" fill="#00d4ff">$${escapeXml(symbol)}</text>
+  <text x="230" y="160" ${ogFontAttr()} font-size="48" font-weight="bold" fill="#00d4ff">$${escapeXml(symbol)}</text>
   
   <!-- Token Name -->
-  <text x="230" y="200" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.6)">${escapeXml(name.length > 30 ? name.substring(0, 30) + '...' : name)}</text>
+  <text x="230" y="200" ${ogFontAttr()} font-size="22" fill="rgba(255,255,255,0.6)">${escapeXml(name.length > 30 ? name.substring(0, 30) + '...' : name)}</text>
   
   <!-- Chain badge -->
   <rect x="230" y="215" width="${chain.name.length * 10 + 40}" height="28" rx="14" fill="${chain.color}" opacity="0.2"/>
   <circle cx="248" cy="229" r="6" fill="${chain.color}"/>
-  <text x="262" y="235" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="${chain.color}">${escapeXml(chain.name)}</text>
+  <text x="262" y="235" ${ogFontAttr()} font-size="14" fill="${chain.color}">${escapeXml(chain.name)}</text>
   
   <!-- Price section -->
-  <text x="80" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(priceDisplay)}</text>
+  <text x="80" y="330" ${ogFontAttr()} font-size="56" font-weight="bold" fill="#ffffff">${escapeXml(priceDisplay)}</text>
   
   <!-- 24h Change -->
   <rect x="${changePillX}" y="290" width="${changePillW}" height="50" rx="12" fill="${changeColor}" opacity="0.15"/>
-  <text x="${changeTextX}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="${changeColor}">${changeLabel}</text>
-  <text x="${label24hX}" y="325" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
+  <text x="${changeTextX}" y="325" ${ogFontAttr()} font-size="28" font-weight="bold" fill="${changeColor}">${changeLabel}</text>
+  <text x="${label24hX}" y="325" ${ogFontAttr()} font-size="20" fill="rgba(255,255,255,0.5)">24H</text>
   
   <!-- Divider line -->
   <rect x="80" y="370" width="1040" height="1" fill="rgba(255,255,255,0.1)"/>
@@ -282,30 +312,30 @@ router.get('/aquaswap', async (req, res) => {
   <!-- Stats boxes -->
   <!-- Market Cap -->
   <rect x="80" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="100" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)" text-transform="uppercase">MARKET CAP</text>
-  <text x="100" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(marketCap))}</text>
+  <text x="100" y="435" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)" text-transform="uppercase">MARKET CAP</text>
+  <text x="100" y="475" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(marketCap))}</text>
   
   <!-- Liquidity -->
   <rect x="350" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="370" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">LIQUIDITY</text>
-  <text x="370" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(liquidity))}</text>
+  <text x="370" y="435" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)">LIQUIDITY</text>
+  <text x="370" y="475" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(liquidity))}</text>
   
   <!-- Volume -->
   <rect x="620" y="400" width="240" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="640" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">24H VOLUME</text>
-  <text x="640" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(volume24h))}</text>
+  <text x="640" y="435" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)">24H VOLUME</text>
+  <text x="640" y="475" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(volume24h))}</text>
   
   <!-- FDV -->
   <rect x="890" y="400" width="230" height="100" rx="16" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <text x="910" y="435" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">FDV</text>
-  <text x="910" y="475" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(fdv))}</text>
+  <text x="910" y="435" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)">FDV</text>
+  <text x="910" y="475" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff">${escapeXml(formatNum(fdv))}</text>
   
   <!-- Bottom CTA -->
-  <text x="80" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">Trade now on</text>
-  <text x="220" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="bold" fill="url(#accentGrad)">aquads.xyz</text>
+  <text x="80" y="560" ${ogFontAttr()} font-size="18" fill="rgba(255,255,255,0.4)">Trade now on</text>
+  <text x="220" y="560" ${ogFontAttr()} font-size="18" font-weight="bold" fill="url(#accentGrad)">aquads.xyz</text>
   
   <!-- Arrow icon -->
-  <text x="1100" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" fill="#00d4ff" text-anchor="end">→</text>
+  <text x="1100" y="560" ${ogFontAttr()} font-size="24" fill="#00d4ff" text-anchor="end">→</text>
 </svg>`;
 
     // Convert SVG to PNG using sharp
@@ -338,13 +368,17 @@ router.get('/aquaswap', async (req, res) => {
   } catch (error) {
     console.error('OG image generation error:', error);
     
+    const errFontCss = getEmbeddedFontFaceCss();
     // Return a fallback error image
     const errorSvg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    ${errFontCss ? `<style type="text/css"><![CDATA[${errFontCss}]]></style>` : ''}
+  </defs>
   <rect width="1200" height="630" fill="#0a0a12"/>
-  <text x="600" y="280" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
-  <text x="600" y="350" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
-  <text x="600" y="400" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
+  <text x="600" y="280" ${ogFontAttr()} font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
+  <text x="600" y="350" ${ogFontAttr()} font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
+  <text x="600" y="400" ${ogFontAttr()} font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
 </svg>`;
 
     try {

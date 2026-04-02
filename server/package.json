@@ -14,6 +14,7 @@
     "bs58": "^6.0.0",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
+    "dejavu-fonts-ttf": "2.37.3",
     "discord.js": "^14.14.1",
     "dotenv": "^16.0.3",
     "ethers": "^6.16.0",
