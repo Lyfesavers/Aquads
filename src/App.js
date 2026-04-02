@@ -429,6 +429,32 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   return null;
 };
 
+/** Link-in-bio fields that must not be overwritten by a stale /verify-token during/after save */
+const LINK_IN_BIO_STATE_KEYS = [
+  'bioLinks',
+  'linkInBioTagline',
+  'linkInBioAccentColor',
+  'linkInBioButtonColor',
+  'linkInBioButtonShape',
+  'linkInBioButtonFill',
+  'linkInBioButtonTranslucent',
+  'linkInBioButtonStyle',
+  'linkInBioBackgroundImageUrl',
+  'linkInBioAdsEnabled',
+  'linkInBioAdPricing'
+];
+
+function pickLinkInBioState(user) {
+  if (!user || typeof user !== 'object') return {};
+  const out = {};
+  for (const key of LINK_IN_BIO_STATE_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(user, key) && user[key] !== undefined) {
+      out[key] = user[key];
+    }
+  }
+  return out;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -483,6 +509,16 @@ function App() {
   // received fresh data from the server (login/register). This prevents
   // an unnecessary verify → setCurrentUser → 7 effects cascade.
   const skipNextValidationRef = useRef(false);
+
+  // Latest session user for async validateToken (avoids stale closures).
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  // Until this timestamp, apply verify-token but keep link-in-bio fields from React state
+  // so a slow/stale GET cannot clobber an in-flight or just-applied PATCH.
+  const linkInBioProtectUntilRef = useRef(0);
 
   // Tracks the latest token so async callbacks (NavigationListener, etc.)
   // can detect if the user changed before they apply stale results.
@@ -1814,29 +1850,34 @@ function App() {
   }, []);
 
   // Periodic token validation — keeps user data fresh from the database.
-  // The cancelled flag prevents stale async responses from updating state
-  // after the user has logged in as someone else or logged out.
+  // Depends only on token + user id so optimistic profile/link-in-bio updates do not
+  // restart verify on every setCurrentUser (which raced PATCH and caused UI to snap back).
   useEffect(() => {
     let cancelled = false;
 
     const validateToken = async () => {
-      if (!currentUser || !currentUser.token) return;
+      const cu = currentUserRef.current;
+      if (!cu || !cu.token) return;
       try {
-        const freshUser = await verifyToken(currentUser.token);
+        const freshUser = await verifyToken(cu.token);
         if (cancelled) return;
         if (freshUser) {
-          // Merge: preserve fields from login that verify-token doesn't return
-          // (email, userType, refreshToken), overlay with fresh DB data,
-          // and always keep the current token/refreshToken from React state.
-          const merged = {
-            ...currentUser,
-            ...freshUser,
-            token: currentUser.token,
-            refreshToken: currentUser.refreshToken
-          };
-          if (JSON.stringify(merged) !== JSON.stringify(currentUser)) {
-            setCurrentUser(merged);
-          }
+          setCurrentUser((prev) => {
+            if (!prev?.token) return prev;
+            let merged = {
+              ...prev,
+              ...freshUser,
+              token: prev.token,
+              refreshToken: prev.refreshToken
+            };
+            if (Date.now() < linkInBioProtectUntilRef.current) {
+              Object.assign(merged, pickLinkInBioState(prev));
+            }
+            if (JSON.stringify(merged) !== JSON.stringify(prev)) {
+              return merged;
+            }
+            return prev;
+          });
         } else {
           setCurrentUser(null);
         }
@@ -1846,7 +1887,8 @@ function App() {
     };
 
     const handleRouteChange = () => {
-      if (currentUser && !cancelled) {
+      const live = currentUserRef.current;
+      if (live && !cancelled) {
         reconnectSocket();
         validateToken();
       }
@@ -1854,17 +1896,16 @@ function App() {
 
     window.addEventListener('popstate', handleRouteChange);
 
-    if (currentUser) {
+    const live = currentUserRef.current;
+    if (live) {
       reconnectSocket();
     }
 
     const interval = setInterval(validateToken, 5 * 60 * 1000);
 
-    // Skip immediate validation if we just received fresh data from login/register.
-    // The 5-minute interval still handles ongoing validation.
     if (skipNextValidationRef.current) {
       skipNextValidationRef.current = false;
-    } else {
+    } else if (live) {
       validateToken();
     }
 
@@ -1873,9 +1914,12 @@ function App() {
       window.removeEventListener('popstate', handleRouteChange);
       clearInterval(interval);
     };
-  }, [currentUser]);
+  }, [currentUser?.token, currentUser?.userId, currentUser?.id]);
 
   const handleProfileUpdate = (updatedUserOrFn, options = {}) => {
+    if (options.linkInBio) {
+      linkInBioProtectUntilRef.current = Date.now() + 5000;
+    }
     setCurrentUser((prev) =>
       typeof updatedUserOrFn === 'function' ? updatedUserOrFn(prev) : updatedUserOrFn
     );

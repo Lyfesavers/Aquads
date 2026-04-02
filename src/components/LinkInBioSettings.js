@@ -173,11 +173,11 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       bioLinks: Array.isArray(currentUser?.bioLinks) ? currentUser.bioLinks.map((l) => ({ ...l })) : [],
       linkInBioAdPricing: currentUser?.linkInBioAdPricing ? { ...currentUser.linkInBioAdPricing } : undefined
     };
-    onProfileUpdate?.((prev) => ({ ...prev, ...payload }), { silent: true });
+    onProfileUpdate?.((prev) => ({ ...prev, ...payload }), { silent: true, linkInBio: true });
     setSaving(true);
     try {
       const updated = await updateLinkInBio(payload);
-      onProfileUpdate?.((prev) => ({ ...prev, ...updated }), { silent: true });
+      onProfileUpdate?.((prev) => ({ ...prev, ...updated }), { silent: true, linkInBio: true });
       if (updated.linkInBioAdsEnabled !== undefined) {
         setAdsEnabled(Boolean(updated.linkInBioAdsEnabled));
       }
@@ -190,7 +190,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       }
       showNotification?.('Link in bio saved.', 'success');
     } catch (err) {
-      onProfileUpdate?.(() => beforeSave, { silent: true });
+      onProfileUpdate?.(() => beforeSave, { silent: true, linkInBio: true });
       showNotification?.(err.error || 'Failed to save', 'error');
     } finally {
       setSaving(false);
