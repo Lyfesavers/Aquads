@@ -10,15 +10,22 @@ export const LEGACY_STYLE_MAP = {
 
 export function resolveLinkInBioButtonLook(userOrPayload) {
   const u = userOrPayload || {};
-  const shapeOk = u.linkInBioButtonShape === 'rounded' || u.linkInBioButtonShape === 'pill';
-  const fillOk = ['filled', 'minimal', 'bordered'].includes(u.linkInBioButtonFill);
+  const shapeRaw = typeof u.linkInBioButtonShape === 'string' ? u.linkInBioButtonShape.trim().toLowerCase() : '';
+  const fillRaw = typeof u.linkInBioButtonFill === 'string' ? u.linkInBioButtonFill.trim().toLowerCase() : '';
+  const shapeOk = shapeRaw === 'rounded' || shapeRaw === 'pill';
+  const fillOk = ['filled', 'minimal', 'bordered'].includes(fillRaw);
   if (shapeOk && fillOk) {
     return {
-      shape: u.linkInBioButtonShape,
-      fill: u.linkInBioButtonFill,
+      shape: shapeRaw,
+      fill: fillRaw,
       translucent: u.linkInBioButtonTranslucent === true
     };
   }
-  const legacy = String(u.linkInBioButtonStyle || 'rounded').toLowerCase();
-  return LEGACY_STYLE_MAP[legacy] || LEGACY_STYLE_MAP.rounded;
+  const legacyKey = String(u.linkInBioButtonStyle || 'rounded').toLowerCase().trim();
+  const legacyLook = LEGACY_STYLE_MAP[legacyKey] || LEGACY_STYLE_MAP.rounded;
+  return {
+    shape: shapeOk ? shapeRaw : legacyLook.shape,
+    fill: fillOk ? fillRaw : legacyLook.fill,
+    translucent: u.linkInBioButtonTranslucent === true
+  };
 }

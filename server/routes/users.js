@@ -33,6 +33,23 @@ const tempTokenStore = new Map();
 // Google Identity client (ID token verification)
 const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
+const LINK_IN_BIO_PUBLIC_SELECT =
+  'username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified';
+
+/** Exact URL username first (Mongo usernames are case-sensitive; regex+i can return the wrong row). */
+async function findUserForPublicLinkInBio(usernameParam) {
+  const raw = (usernameParam || '').trim();
+  if (!raw) return null;
+  let doc = await User.findOne({ username: raw }).select(LINK_IN_BIO_PUBLIC_SELECT).lean();
+  if (!doc) {
+    const sanitizedUsername = sanitizeForRegex(raw);
+    doc = await User.findOne({
+      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
+    }).select(LINK_IN_BIO_PUBLIC_SELECT).lean();
+  }
+  return doc;
+}
+
 function sanitizeBioLinkItems(raw) {
   const arr = Array.isArray(raw) ? raw : [];
   return arr.slice(0, 30).map((item, i) => {
@@ -1254,10 +1271,7 @@ router.get('/multiple-device-registrations', auth, async (req, res) => {
 router.get('/links/:username', async (req, res) => {
   try {
     const username = req.params.username.trim();
-    const sanitizedUsername = sanitizeForRegex(username);
-    const user = await User.findOne({
-      username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') }
-    }).select('username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified').lean();
+    const user = await findUserForPublicLinkInBio(username);
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
@@ -1270,11 +1284,13 @@ router.get('/links/:username', async (req, res) => {
       .filter(l => l.url && l.title)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    const accentColor = (user.linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioAccentColor))
-      ? user.linkInBioAccentColor
+    const accentTrim = typeof user.linkInBioAccentColor === 'string' ? user.linkInBioAccentColor.trim() : '';
+    const accentColor = (accentTrim && /^#[0-9A-Fa-f]{3,6}$/.test(accentTrim))
+      ? accentTrim
       : '#22d3ee';
-    const buttonColor = (user.linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(user.linkInBioButtonColor))
-      ? user.linkInBioButtonColor
+    const buttonTrim = typeof user.linkInBioButtonColor === 'string' ? user.linkInBioButtonColor.trim() : '';
+    const buttonColor = (buttonTrim && /^#[0-9A-Fa-f]{3,6}$/.test(buttonTrim))
+      ? buttonTrim
       : null;
     const btnLook = resolveLinkInBioButtonLook(user);
     const buttonStyle = lookToLegacyStyle(btnLook.shape, btnLook.fill);
@@ -1320,12 +1336,19 @@ router.post('/links/:username/view', async (req, res) => {
   try {
     const username = req.params.username.trim();
     if (!username) return res.status(400).json({ error: 'Username required' });
-    const sanitizedUsername = sanitizeForRegex(username);
-    const user = await User.findOneAndUpdate(
-      { username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') } },
+    let user = await User.findOneAndUpdate(
+      { username },
       { $inc: { linkInBioPageViews: 1 } },
       { new: true, select: '_id' }
     );
+    if (!user) {
+      const sanitizedUsername = sanitizeForRegex(username);
+      user = await User.findOneAndUpdate(
+        { username: { $regex: new RegExp(`^${sanitizedUsername}$`, 'i') } },
+        { $inc: { linkInBioPageViews: 1 } },
+        { new: true, select: '_id' }
+      );
+    }
     res.json({ ok: true });
     if (user) {
       const { emitLinkInBioAnalyticsUpdate } = require('../socket');

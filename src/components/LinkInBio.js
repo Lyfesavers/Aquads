@@ -346,7 +346,9 @@ const LinkInBio = () => {
     }
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API_URL}/users/links/${encodeURIComponent(username)}`);
+        const res = await fetch(`${API_URL}/users/links/${encodeURIComponent(username)}`, {
+          cache: 'no-store'
+        });
         if (!res.ok) {
           if (res.status === 404) setError('Page not found');
           else setError('Failed to load');
@@ -370,7 +372,9 @@ const LinkInBio = () => {
     if (!username) return;
     const fetchAds = async () => {
       try {
-        const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`);
+        const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`, {
+          cache: 'no-store'
+        });
         if (res.ok) {
           const ads = await res.json();
           setActiveAds(Array.isArray(ads) ? ads : []);

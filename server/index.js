@@ -574,7 +574,12 @@ app.use('/api', (req, res, next) => {
   if (req.method === 'GET') {
     // Order status during payment must be fresh; no cache for hyperspace order/:id
     const isOrderStatus = /^\/hyperspace\/order\/[^/]+$/.test(req.path) && !req.path.includes('/admin');
-    if (isOrderStatus) {
+    // Per-user link-in-bio JSON and ads change when owners save settings — must not be cached as
+    // shared "public" for 5 minutes (browsers/CDNs would serve stale colors, links, and ads).
+    const isLinkInBioPublicData =
+      /^\/users\/links\/[^/]+$/.test(req.path) ||
+      /^\/link-bio-ads\/active\/[^/]+$/.test(req.path);
+    if (isOrderStatus || isLinkInBioPublicData) {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else {
       res.set('Cache-Control', 'public, max-age=300');
