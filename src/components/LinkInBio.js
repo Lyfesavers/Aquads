@@ -620,7 +620,7 @@ const LinkInBio = () => {
                   className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
                   style={{
                     background: hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.48 : 0.88),
-                    color: contrastOnTintHex(accentHex),
+                    color: normalizeHex(buttonHex),
                     border: `1px solid ${hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.75 : 1)}`,
                     backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
                     boxShadow: `0 0 0 1px ${theme.badgeBorder}`
@@ -681,7 +681,7 @@ const LinkInBio = () => {
                     >
                       <IconComponent className="w-5 h-5" />
                     </span>
-                    <span className="font-medium truncate" style={{ fontFamily: "'DM Sans', sans-serif", color: linkTitleColor }}>
+                    <span className="font-bold truncate" style={{ fontFamily: "'DM Sans', sans-serif", color: linkTitleColor }}>
                       {link.title}
                     </span>
                   </span>
