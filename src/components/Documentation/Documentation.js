@@ -3800,7 +3800,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 
 | Command | Description |
 |---------|-------------|
-| \`/setbranding\` | Upload custom branding image (bumped projects only) |
+| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (bumped only) |
 | \`/removebranding\` | Remove your custom branding |
 
 ### Group Commands
@@ -3895,7 +3895,7 @@ Purchase boosts via \`/boostvote\`:
 - Upload your logo/image (max 500KB, JPG/PNG)
 - Your branding appears on vote notifications
 - Notifications go to 5K+ member trending channel
-- Set with \`/setbranding\`, remove with \`/removebranding\`
+- Set with \`/setbranding\` (image max 500KB, or **direct** https \`.mp4\` link max **5MB** — e.g. **catbox.moe**), remove with \`/removebranding\`
 
 ### Community Raid Network
 

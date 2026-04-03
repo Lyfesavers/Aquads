@@ -44,10 +44,10 @@ const TelegramBot = () => {
     {
       icon: FaPalette,
       title: 'Custom Branding',
-      description: 'Upload your own branding image for vote notifications sent to our 5K+ trending channel. Your logo seen by thousands of active traders.',
+      description: 'Branding image or direct https .mp4 link (max 5MB; e.g. catbox.moe) for vote notifications—same video style as default alerts; we only store the URL.',
       command: '/setbranding • /removebranding',
       color: 'from-pink-500 to-rose-600',
-      details: ['5K+ trending channel reach', 'Max 500KB (JPG/PNG)', 'Exclusive for bumped projects'],
+      details: ['5K+ trending channel reach', 'Image max 500KB or direct .mp4 URL (max 5MB)', 'Try catbox.moe for easy hosting', 'Exclusive for bumped projects'],
       premium: true
     },
     {
@@ -135,7 +135,7 @@ const TelegramBot = () => {
     { cmd: '/leaders', desc: 'Top 15 — lifetime points & USDC earnings', category: 'Bubbles' },
     { cmd: '/mybubble', desc: 'View YOUR projects with voting buttons', category: 'Bubbles' },
     { cmd: '/boostvote', desc: 'Purchase vote boost packages for your bubble', category: 'Bubbles' },
-    { cmd: '/setbranding', desc: 'Upload custom branding image (bumped projects only)', category: 'Branding' },
+    { cmd: '/setbranding', desc: 'Photo or direct .mp4 URL, max 5MB (e.g. catbox) — bumped only', category: 'Branding' },
     { cmd: '/removebranding', desc: 'Remove custom branding', category: 'Branding' },
     { cmd: '/raidin', desc: 'Opt-in your group to community raid sharing', category: 'Groups' },
     { cmd: '/raidout', desc: 'Opt-out your group from community raids', category: 'Groups' }

@@ -169,6 +169,12 @@ const adSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // HTTPS URL to a short branding video (Telegram sendVideo / Discord attachment at send time)
+  customBrandingVideoUrl: {
+    type: String,
+    default: null,
+    maxlength: 2048
+  },
   // Rich project details shown in AquaSwap chart deep-dive section
   projectProfile: {
     about: { type: String, default: '' },

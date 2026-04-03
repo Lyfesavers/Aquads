@@ -9,6 +9,14 @@ const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 const { creditReferrerBonus } = require('../routes/points');
 const { getCombinedLeaderboard, rankEmoji } = require('./leaderboardService');
+const {
+  isValidBrandingVideoUrl,
+  projectUsesVideoBranding,
+  projectHasCustomBrandingMedia,
+  normalizeBrandingVideoUrlCandidate,
+  BRANDING_VIDEO_MAX_BYTES,
+  BRANDING_VIDEO_URL_GUIDANCE,
+} = require('./brandingMedia');
 
 // Constants for free raid limits
 const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
@@ -32,7 +40,7 @@ async function checkUserHasLifetimeBumpedAd(username) {
   }
 }
 
-// Get raid creator's custom branding (for white-label: raid + completion use creator's image when set)
+// Get raid creator's custom branding (for white-label: raid + completion use creator's image or video URL when set)
 async function getCreatorBrandingFromRaidId(raidId, platform = null) {
   try {
     let raid = null;
@@ -49,15 +57,51 @@ async function getCreatorBrandingFromRaidId(raidId, platform = null) {
       owner: user.username,
       isBumped: true,
       status: { $in: ['active', 'approved'] },
-      customBrandingImage: { $exists: true, $ne: null }
-    }).select('customBrandingImage').lean();
-    if (!ad?.customBrandingImage) return null;
-    const base64Data = ad.customBrandingImage.split(',')[1];
-    if (!base64Data) return null;
-    return { buffer: Buffer.from(base64Data, 'base64') };
+      $or: [
+        { customBrandingImage: { $exists: true, $ne: null } },
+        { customBrandingVideoUrl: { $exists: true, $ne: null } },
+      ],
+    }).select('customBrandingImage customBrandingVideoUrl').lean();
+    if (!ad) return null;
+    if (projectUsesVideoBranding(ad)) {
+      return { videoUrl: ad.customBrandingVideoUrl.trim() };
+    }
+    if (ad.customBrandingImage) {
+      const base64Data = ad.customBrandingImage.split(',')[1];
+      if (!base64Data) return null;
+      return { buffer: Buffer.from(base64Data, 'base64') };
+    }
+    return null;
   } catch (e) {
     return null;
   }
+}
+
+/** Telegram: send custom branding as video (URL) or photo (buffer). */
+async function telegramSendCustomBrandingMedia(botToken, chatId, { videoUrl, imageBuffer }, { caption, keyboard, parseMode }) {
+  if (videoUrl) {
+    const body = {
+      chat_id: chatId,
+      video: videoUrl,
+      caption,
+      reply_markup: keyboard,
+    };
+    if (parseMode) body.parse_mode = parseMode;
+    return axios.post(`https://api.telegram.org/bot${botToken}/sendVideo`, body, { timeout: 90000 });
+  }
+  if (imageBuffer) {
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
+    formData.append('caption', caption);
+    if (parseMode) formData.append('parse_mode', parseMode);
+    formData.append('reply_markup', JSON.stringify(keyboard));
+    return axios.post(`https://api.telegram.org/bot${botToken}/sendPhoto`, formData, {
+      headers: formData.getHeaders(),
+      timeout: 30000,
+    });
+  }
+  return null;
 }
 
 // HyperSpace promo: X Space Trender – shown on bot messages via inline button
@@ -328,7 +372,10 @@ const telegramService = {
       // Creator branding (white-label): use raid creator's custom branding when set
       if (!isAdmin && raidData.raidId) {
         const creatorBranding = await getCreatorBrandingFromRaidId(raidData.raidId);
-        if (creatorBranding) raidData.creatorBrandingBuffer = creatorBranding.buffer;
+        if (creatorBranding) {
+          if (creatorBranding.videoUrl) raidData.creatorBrandingVideoUrl = creatorBranding.videoUrl;
+          else if (creatorBranding.buffer) raidData.creatorBrandingBuffer = creatorBranding.buffer;
+        }
       }
 
       // Get the video file path (fallback when no creator branding)
@@ -356,22 +403,17 @@ const telegramService = {
       
       // Send to all groups
       let successCount = 0;
-      const useCreatorBranding = !!raidData.creatorBrandingBuffer;
+      const useCreatorBranding = !!(raidData.creatorBrandingBuffer || raidData.creatorBrandingVideoUrl);
       for (const chatId of groupsToNotify) {
         try {
           if (useCreatorBranding) {
-            // White-label: send creator's custom branding image
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('photo', raidData.creatorBrandingBuffer, { filename: 'branding.jpg' });
-            formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
-            const response = await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendPhoto`,
-              formData,
-              { headers: formData.getHeaders(), timeout: 30000 }
+            const response = await telegramSendCustomBrandingMedia(
+              botToken,
+              chatId,
+              { videoUrl: raidData.creatorBrandingVideoUrl, imageBuffer: raidData.creatorBrandingBuffer },
+              { caption: message, keyboard }
             );
-            if (response.data.ok) {
+            if (response && response.data.ok) {
               successCount++;
               const messageId = response.data.result.message_id;
               const creatorGroupId = sourceChatId || (isAdmin ? 'admin' : null);
@@ -712,6 +754,12 @@ const telegramService = {
         const handled = await telegramService.handleBoostTxInput(chatId, userId, text);
         if (handled) return;
       }
+
+      // Custom branding: paste HTTPS video URL (or invalid attempt while waiting)
+      if (conversationState.action === 'waiting_branding_image') {
+        const handled = await telegramService.handleBrandingVideoUrlInput(chatId, userId, text);
+        if (handled) return;
+      }
     }
 
     // Handle group-only commands first (raidin/raidout)
@@ -935,9 +983,9 @@ const telegramService = {
           owner: user.username,
           isBumped: true,
           status: { $in: ['active', 'approved'] }
-        }).select('customBrandingImage');
+        }).select('customBrandingImage customBrandingVideoUrl');
         
-        const branding = bumpedProject?.customBrandingImage ? '✅ Set' : '❌ Not set';
+        const branding = projectHasCustomBrandingMedia(bumpedProject) ? '✅ Set' : '❌ Not set';
         
         profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
 🐦 Twitter: ${twitter}
@@ -994,9 +1042,9 @@ ${profileSection}Select a category below:`;
           owner: user.username,
           isBumped: true,
           status: { $in: ['active', 'approved'] }
-        }).select('customBrandingImage');
+        }).select('customBrandingImage customBrandingVideoUrl');
         
-        const branding = bumpedProject?.customBrandingImage ? '✅ Set' : '❌ Not set';
+        const branding = projectHasCustomBrandingMedia(bumpedProject) ? '✅ Set' : '❌ Not set';
         
         profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
 🐦 Twitter: ${twitter}
@@ -1157,20 +1205,15 @@ Vote on projects and view trending bubbles!
 FREE for all bumped projects!
 
 • /setbranding
-  Upload your custom branding image
+  Send a photo (JPG/PNG, max 500KB) OR paste a direct https:// .mp4 link (max 5MB, not YouTube)
 
 • /removebranding
   Remove custom branding
 
-📋 Requirements:
-• Max size: 500KB
-• Format: JPG or PNG
-• Recommended: 1920×1080
+📋 Image: max 500KB · JPG or PNG
+🎬 Video: direct file URL only · max 5MB · try catbox.moe → files.catbox.moe/…mp4
 
-✨ Your image appears in:
-• Vote notifications for your project
-• /mybubble showcase
-• /bubbles when you use it
+✨ Appears in vote notifications, /mybubble, /bubbles, and raid posts when you're the raid creator
 
 🚀 Bump your project at: https://aquads.xyz`;
 
@@ -2105,13 +2148,16 @@ ${platformEmoji} ${platformName} Raid
       // Creator branding (white-label): use raid creator's custom branding when set
       if (completionData.raidId) {
         const creatorBranding = await getCreatorBrandingFromRaidId(completionData.raidId, completionData.platform === 'Facebook' ? 'Facebook' : null);
-        if (creatorBranding) completionData.creatorBrandingBuffer = creatorBranding.buffer;
+        if (creatorBranding) {
+          if (creatorBranding.videoUrl) completionData.creatorBrandingVideoUrl = creatorBranding.videoUrl;
+          else if (creatorBranding.buffer) completionData.creatorBrandingBuffer = creatorBranding.buffer;
+        }
       }
 
       // Get the video file path (fallback when no creator branding)
       const videoPath = path.join(__dirname, '../../public/Just Raided.mp4');
       const videoExists = fs.existsSync(videoPath);
-      const useCreatorBrandingCompletion = !!completionData.creatorBrandingBuffer;
+      const useCreatorBrandingCompletion = !!(completionData.creatorBrandingBuffer || completionData.creatorBrandingVideoUrl);
 
       const keyboard = addHyperSpaceToKeyboard({
         inline_keyboard: [[{ text: '🚀 Join Raids', url: 'https://t.me/aquadsbumpbot' }]]
@@ -2122,18 +2168,13 @@ ${platformEmoji} ${platformName} Raid
       for (const chatId of groupsToNotify) {
         try {
           if (useCreatorBrandingCompletion) {
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('photo', completionData.creatorBrandingBuffer, { filename: 'branding.jpg' });
-            formData.append('caption', message);
-            formData.append('parse_mode', 'Markdown');
-            formData.append('reply_markup', JSON.stringify(keyboard));
-            const response = await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendPhoto`,
-              formData,
-              { headers: formData.getHeaders(), timeout: 30000 }
+            const response = await telegramSendCustomBrandingMedia(
+              botToken,
+              chatId,
+              { videoUrl: completionData.creatorBrandingVideoUrl, imageBuffer: completionData.creatorBrandingBuffer },
+              { caption: message, keyboard, parseMode: 'Markdown' }
             );
-            if (response.data.ok) {
+            if (response && response.data.ok) {
               successCount++;
               await telegramService.storeRaidCompletionMessageId(chatId, response.data.result.message_id);
             }
@@ -3750,8 +3791,9 @@ Tap to update:`;
       // Delete old bubble messages first
       await telegramService.deleteOldBubbleMessages(chatId);
       
-      // Try to find the user's project with custom branding
-      let userCustomBranding = null;
+      // Try to find the user's project with custom branding (image or video URL)
+      let userBrandingVideoUrl = null;
+      let userBrandingImageBuffer = null;
       if (telegramUserId) {
         const user = await User.findOne({ telegramId: telegramUserId.toString() });
         if (user) {
@@ -3759,11 +3801,19 @@ Tap to update:`;
             owner: user.username,
             isBumped: true,
             status: { $in: ['active', 'approved'] },
-            customBrandingImage: { $ne: null }
-          }).select('customBrandingImage');
+            $or: [
+              { customBrandingImage: { $ne: null } },
+              { customBrandingVideoUrl: { $ne: null } },
+            ],
+          }).select('customBrandingImage customBrandingVideoUrl');
           
-          if (userProject && userProject.customBrandingImage) {
-            userCustomBranding = userProject.customBrandingImage;
+          if (userProject) {
+            if (projectUsesVideoBranding(userProject)) {
+              userBrandingVideoUrl = userProject.customBrandingVideoUrl.trim();
+            } else if (userProject.customBrandingImage) {
+              const b64 = userProject.customBrandingImage.split(',')[1];
+              if (b64) userBrandingImageBuffer = Buffer.from(b64, 'base64');
+            }
           }
         }
       }
@@ -3827,34 +3877,18 @@ Tap to update:`;
       let result = false;
       
       try {
-        if (userCustomBranding) {
-          // Send user's custom branding image
-          const base64Data = userCustomBranding.split(',')[1];
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-          
-          const formData = new FormData();
-          formData.append('chat_id', chatId);
-          formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
-          formData.append('caption', message);
-          formData.append('parse_mode', 'Markdown');
-          
+        if (userBrandingVideoUrl || userBrandingImageBuffer) {
           const keyboard = addHyperSpaceToKeyboard({
             inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
           });
-          formData.append('reply_markup', JSON.stringify(keyboard));
-
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendPhoto`,
-            formData,
-            {
-              headers: {
-                ...formData.getHeaders(),
-              },
-              timeout: 30000,
-            }
+          const response = await telegramSendCustomBrandingMedia(
+            botToken,
+            chatId,
+            { videoUrl: userBrandingVideoUrl, imageBuffer: userBrandingImageBuffer },
+            { caption: message, keyboard, parseMode: 'Markdown' }
           );
 
-          if (response.data.ok) {
+          if (response && response.data.ok) {
             result = true;
             const messageId = response.data.result.message_id;
             await telegramService.storeBubbleMessageId(chatId, messageId);
@@ -4038,38 +4072,30 @@ Tap to update:`;
           ]
         };
 
-        // Check if project has custom branding
-        const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
+        // Check if project has custom branding (image or HTTPS video URL)
+        const hasCustomBranding = projectHasCustomBrandingMedia(project);
+        const brandingVideoUrl = projectUsesVideoBranding(project) ? project.customBrandingVideoUrl.trim() : null;
+        const brandingImageBuffer = !brandingVideoUrl && project.customBrandingImage
+          ? (() => {
+              const b64 = project.customBrandingImage.split(',')[1];
+              return b64 ? Buffer.from(b64, 'base64') : null;
+            })()
+          : null;
         
         // Send with custom branding or default video
         const videoPath = path.join(__dirname, '../../public/vote now .mp4');
         const videoExists = fs.existsSync(videoPath);
         
         try {
-          if (hasCustomBranding) {
-            // Send custom branding image
-            const base64Data = project.customBrandingImage.split(',')[1];
-            const imageBuffer = Buffer.from(base64Data, 'base64');
-            
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
-            formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            const response = await axios.post(
-              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
-                },
-                timeout: 30000,
-              }
+          if (hasCustomBranding && (brandingVideoUrl || brandingImageBuffer)) {
+            const response = await telegramSendCustomBrandingMedia(
+              process.env.TELEGRAM_BOT_TOKEN,
+              chatId,
+              { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
+              { caption: message, keyboard }
             );
 
-            if (!response.data.ok) {
-              // Fallback to text message if image fails
+            if (!response || !response.data.ok) {
               await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
           } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
@@ -4674,8 +4700,15 @@ Tap to update:`;
         ]
       };
 
-      // Check if project has custom branding
-      const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
+      // Check if project has custom branding (image or HTTPS video URL)
+      const hasCustomBranding = projectHasCustomBrandingMedia(project);
+      const brandingVideoUrl = projectUsesVideoBranding(project) ? project.customBrandingVideoUrl.trim() : null;
+      const brandingImageBuffer = !brandingVideoUrl && project.customBrandingImage
+        ? (() => {
+            const b64 = project.customBrandingImage.split(',')[1];
+            return b64 ? Buffer.from(b64, 'base64') : null;
+          })()
+        : null;
       
       // Path to the new vote video (fallback)
       const videoPath = path.join(__dirname, '../../public/New_vote.mp4');
@@ -4686,26 +4719,12 @@ Tap to update:`;
         const groupChatId = project.telegramGroupId;
         
         try {
-          if (hasCustomBranding) {
-            // Send custom branding image
-            const base64Data = project.customBrandingImage.split(',')[1];
-            const imageBuffer = Buffer.from(base64Data, 'base64');
-            
-            const formData = new FormData();
-            formData.append('chat_id', groupChatId);
-            formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
-            formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendPhoto`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
-                },
-                timeout: 30000,
-              }
+          if (hasCustomBranding && (brandingVideoUrl || brandingImageBuffer)) {
+            await telegramSendCustomBrandingMedia(
+              botToken,
+              groupChatId,
+              { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
+              { caption: message, keyboard }
             );
           } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
             // Send default video (use cached file_id if available)
@@ -4770,29 +4789,15 @@ Tap to update:`;
       let trendingMessageId = null;
       
       try {
-        if (hasCustomBranding) {
-          // Send custom branding image to trending channel
-          const base64Data = project.customBrandingImage.split(',')[1];
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-          
-          const formData = new FormData();
-          formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
-          formData.append('photo', imageBuffer, { filename: 'branding.jpg' });
-          formData.append('caption', message);
-          formData.append('reply_markup', JSON.stringify(keyboard));
-
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendPhoto`,
-            formData,
-            {
-              headers: {
-                ...formData.getHeaders(),
-              },
-              timeout: 30000,
-            }
+        if (hasCustomBranding && (brandingVideoUrl || brandingImageBuffer)) {
+          const response = await telegramSendCustomBrandingMedia(
+            botToken,
+            telegramService.TRENDING_CHANNEL_ID,
+            { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
+            { caption: message, keyboard }
           );
 
-          if (response.data.ok) {
+          if (response && response.data.ok) {
             trendingMessageId = response.data.result.message_id;
           }
         } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
@@ -5120,7 +5125,7 @@ Tap to update:`;
       });
 
       await telegramService.sendBotMessage(chatId, 
-        `🎨 Upload your custom branding image!\n\n📋 Requirements:\n• Max size: 500KB\n• Format: JPG or PNG\n• Recommended: 1920×1080 or 1080×1080\n\nThis will appear in:\n✅ Vote notifications for your project\n✅ /mybubble command (your project showcase)\n✅ /bubbles command (when you use it in your group)\n\n📤 Send your image now:`);
+        `🎨 Set your custom branding\n\n📷 **Image:** send a photo (max 500KB, JPG/PNG)\n${BRANDING_VIDEO_URL_GUIDANCE}\nWe only store the link (not the file).\n\nThis appears in vote notifications, /mybubble, /bubbles, and raid messages when you're the creator.\n\n📤 Send a **photo** or **video URL** now:`);
 
     } catch (error) {
       console.error('SetBranding command error:', error);
@@ -5146,7 +5151,10 @@ Tap to update:`;
         owner: user.username,
         isBumped: true,
         status: { $in: ['active', 'approved'] },
-        customBrandingImage: { $ne: null }
+        $or: [
+          { customBrandingImage: { $ne: null } },
+          { customBrandingVideoUrl: { $ne: null } },
+        ],
       });
       
       if (!project) {
@@ -5159,6 +5167,7 @@ Tap to update:`;
       project.customBrandingImage = null;
       project.customBrandingImageSize = 0;
       project.customBrandingUploadedAt = null;
+      project.customBrandingVideoUrl = null;
       await project.save();
 
       await telegramService.sendBotMessage(chatId, 
@@ -5530,6 +5539,67 @@ Tap to update:`;
     }
   },
 
+  // Handle pasted HTTPS video URL for branding (waiting_branding_image state)
+  handleBrandingVideoUrlInput: async (chatId, telegramUserId, text) => {
+    try {
+      const conversationState = telegramService.getConversationState(telegramUserId);
+      if (!conversationState || conversationState.action !== 'waiting_branding_image') {
+        return false;
+      }
+
+      const candidate = normalizeBrandingVideoUrlCandidate(text);
+      if (!candidate || !isValidBrandingVideoUrl(candidate)) {
+        await telegramService.sendBotMessage(
+          chatId,
+          `❌ Not a valid **https://** video link.\n\n${BRANDING_VIDEO_URL_GUIDANCE}\n\n📷 Or send a **photo** (JPG/PNG, max 500KB).\n\nUse /cancel to abort.`
+        );
+        return true;
+      }
+
+      try {
+        const head = await axios.head(candidate.trim(), {
+          timeout: 15000,
+          maxRedirects: 5,
+          validateStatus: () => true,
+        });
+        const cl = head.headers['content-length'];
+        if (cl && !Number.isNaN(Number(cl)) && Number(cl) > BRANDING_VIDEO_MAX_BYTES) {
+          await telegramService.sendBotMessage(
+            chatId,
+            `❌ That file is over **5MB**. Use a smaller clip or stronger compression.\n\n${BRANDING_VIDEO_URL_GUIDANCE}\n\nUse /cancel to abort.`
+          );
+          return true;
+        }
+      } catch (_) {
+        /* HEAD unsupported or blocked — still allow save; user-facing rules apply */
+      }
+
+      const project = await Ad.findById(conversationState.projectId);
+      if (!project) {
+        await telegramService.sendBotMessage(chatId, '❌ Project not found.');
+        telegramService.clearConversationState(telegramUserId);
+        return true;
+      }
+
+      project.customBrandingVideoUrl = candidate.trim();
+      project.customBrandingImage = null;
+      project.customBrandingImageSize = 0;
+      project.customBrandingUploadedAt = new Date();
+      await project.save();
+
+      telegramService.clearConversationState(telegramUserId);
+      await telegramService.sendBotMessage(
+        chatId,
+        '✅ **Video branding saved!**\n\nTelegram will load your **direct** link when sending notifications (same style as our default videos). Keep the file **under 5MB** and the link working.\n\n💡 Use /removebranding to clear anytime.'
+      );
+      return true;
+    } catch (error) {
+      console.error('Branding video URL error:', error);
+      await telegramService.sendBotMessage(chatId, '❌ Error saving video URL. Try again or use /cancel.');
+      return true;
+    }
+  },
+
   // Handle photo uploads for branding
   handleBrandingImageUpload: async (chatId, telegramUserId, photo) => {
     try {
@@ -5585,6 +5655,7 @@ Tap to update:`;
       project.customBrandingImage = base64WithPrefix;
       project.customBrandingImageSize = fileSize;
       project.customBrandingUploadedAt = new Date();
+      project.customBrandingVideoUrl = null;
       await project.save();
       
       // Clear conversation state

@@ -33,8 +33,48 @@ const DiscordDailyEngagement = require('../models/DiscordDailyEngagement');
 const { creditReferrerBonus } = require('../routes/points');
 const path = require('path');
 const fs = require('fs');
+const {
+  isValidBrandingVideoUrl,
+  projectUsesVideoBranding,
+  projectHasCustomBrandingMedia,
+  normalizeBrandingVideoUrlCandidate,
+  BRANDING_VIDEO_MAX_BYTES,
+  BRANDING_VIDEO_URL_GUIDANCE,
+} = require('./brandingMedia');
 
 const DAILY_ENGAGEMENT_POINTS = 5;
+
+async function buildDiscordBrandingFiles(project) {
+  if (!project) return [];
+  if (projectUsesVideoBranding(project)) {
+    const url = project.customBrandingVideoUrl.trim();
+    try {
+      const res = await axios.get(url, {
+        responseType: 'arraybuffer',
+        maxContentLength: BRANDING_VIDEO_MAX_BYTES,
+        maxBodyLength: BRANDING_VIDEO_MAX_BYTES,
+        timeout: 90000,
+        validateStatus: s => s === 200,
+      });
+      const buf = Buffer.from(res.data);
+      const pathPart = url.split('?')[0].toLowerCase();
+      let ext = 'mp4';
+      if (pathPart.endsWith('.webm')) ext = 'webm';
+      else if (pathPart.endsWith('.mov')) ext = 'mov';
+      return [{ attachment: buf, name: `branding.${ext}` }];
+    } catch (e) {
+      console.error('Discord branding video fetch failed:', e.message);
+      return [];
+    }
+  }
+  if (project.customBrandingImage && project.customBrandingImage.length > 0) {
+    try {
+      const base64Data = project.customBrandingImage.split(',')[1];
+      if (base64Data) return [{ attachment: Buffer.from(base64Data, 'base64'), name: 'branding.jpg' }];
+    } catch (_) {}
+  }
+  return [];
+}
 
 function getEngagementChannelId() {
   return process.env.DISCORD_ENGAGEMENT_CHANNEL_ID || process.env.DISCORD_RAID_CHANNEL_ID || null;
@@ -129,7 +169,7 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('url').setDescription('Tweet or Facebook post URL').setRequired(true)),
     new SlashCommandBuilder().setName('raidin').setDescription('Enable community raids in this server'),
     new SlashCommandBuilder().setName('raidout').setDescription('Disable community raids in this server'),
-    new SlashCommandBuilder().setName('setbranding').setDescription('Set custom branding (upload image after)'),
+    new SlashCommandBuilder().setName('setbranding').setDescription('Branding: image or direct .mp4 URL (max 5MB, e.g. catbox)'),
     new SlashCommandBuilder().setName('removebranding').setDescription('Remove custom branding'),
     new SlashCommandBuilder().setName('boostvote').setDescription('Boost your bubble with votes + members'),
     new SlashCommandBuilder().setName('cancel').setDescription('Cancel current operation')
@@ -189,8 +229,8 @@ async function handleHelp(interaction) {
   if (user) {
     const tw = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
     const fb = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
-    const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage');
-    const branding = bumped?.customBrandingImage ? '✅ Set' : '❌ Not set';
+    const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl');
+    const branding = projectHasCustomBrandingMedia(bumped) ? '✅ Set' : '❌ Not set';
     profileSection = `**${user.username}** | 💰 ${user.points || 0} pts\n🐦 Twitter: ${tw}\n📘 Facebook: ${fb}\n🎨 Branding: ${branding}\n\n`;
   }
   const embed = new EmbedBuilder()
@@ -433,15 +473,14 @@ async function handleLeaders(interaction) {
 async function handleBubbles(interaction) {
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
-  let userBranding = null;
+  let brandingAd = null;
   if (user) {
-    const ad = await Ad.findOne({
+    brandingAd = await Ad.findOne({
       owner: user.username,
       isBumped: true,
       status: { $in: ['active', 'approved'] },
-      customBrandingImage: { $ne: null }
-    }).select('customBrandingImage');
-    if (ad?.customBrandingImage) userBranding = ad.customBrandingImage;
+      $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
+    }).select('customBrandingImage customBrandingVideoUrl').lean();
   }
   const bumpedBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .select('title logo url bullishVotes bearishVotes owner pairAddress contractAddress blockchain')
@@ -465,13 +504,7 @@ async function handleBubbles(interaction) {
     .setDescription(lines.join('\n\n') + '\n\n🌐 https://aquads.xyz')
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
-  let files = [];
-  if (userBranding) {
-    try {
-      const base64Data = userBranding.split(',')[1];
-      if (base64Data) files = [{ attachment: Buffer.from(base64Data, 'base64'), name: 'branding.jpg' }];
-    } catch (_) {}
-  }
+  let files = brandingAd ? await buildDiscordBrandingFiles(brandingAd) : [];
   if (files.length === 0 && fs.existsSync(VIDEO_TOP_BUBBLES)) files = [VIDEO_TOP_BUBBLES];
   return interaction.reply({ embeds: [embed], files, flags: MessageFlags.Ephemeral });
 }
@@ -485,7 +518,7 @@ async function handleMyBubble(interaction) {
   const userProjects = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } })
     .sort({ createdAt: -1 })
     .limit(5)
-    .select('title url pairAddress contractAddress blockchain bullishVotes bearishVotes _id customBrandingImage')
+    .select('title url pairAddress contractAddress blockchain bullishVotes bearishVotes _id customBrandingImage customBrandingVideoUrl')
     .lean();
   if (userProjects.length === 0) {
     return reply(interaction, `📭 No projects found for **${user.username}**.\n\nhttps://aquads.xyz`, true);
@@ -494,14 +527,8 @@ async function handleMyBubble(interaction) {
     .sort({ bullishVotes: -1 })
     .select('_id bullishVotes')
     .lean();
-  let files = [];
   const first = userProjects[0];
-  if (first.customBrandingImage && first.customBrandingImage.length > 0) {
-    try {
-      const base64Data = first.customBrandingImage.split(',')[1];
-      if (base64Data) files = [{ attachment: Buffer.from(base64Data, 'base64'), name: 'branding.jpg' }];
-    } catch (_) {}
-  }
+  let files = await buildDiscordBrandingFiles(first);
   if (files.length === 0 && fs.existsSync(VIDEO_MYBUBBLE)) files = [VIDEO_MYBUBBLE];
   else if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) files = [VIDEO_VOTE];
   const embeds = [];
@@ -796,7 +823,7 @@ async function handleSetBranding(interaction) {
   setState(discordUserId, { action: 'waiting_branding_image', projectId: bumped._id.toString() });
   return reply(
     interaction,
-    '🎨 **Upload your custom branding image**\n\n📋 Max size: 500KB · JPG or PNG · Recommended: 1920×1080 or 1080×1080\n\nThis will appear in vote notifications, `/mybubble`, and `/bubbles`.\n\n**Attach your image in your next message** in this channel (or in DMs with the bot).\n\nUse `/cancel` to abort.',
+    `🎨 **Set custom branding**\n\n📷 **Image:** attach JPG/PNG (max 500KB)\n${BRANDING_VIDEO_URL_GUIDANCE}\nWe only store the link.\n\nAppears in vote notifications, \`/mybubble\`, and \`/bubbles\`.\n\n**Next message:** attach an image **or** paste a video URL (in this channel or DMs).\n\nUse \`/cancel\` to abort.`,
     true
   );
 }
@@ -811,7 +838,7 @@ async function handleRemoveBranding(interaction) {
     owner: user.username,
     isBumped: true,
     status: { $in: ['active', 'approved'] },
-    customBrandingImage: { $ne: null }
+    $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
   });
   if (!project) {
     return reply(interaction, "❌ You don't have any custom branding set.", true);
@@ -819,6 +846,7 @@ async function handleRemoveBranding(interaction) {
   project.customBrandingImage = null;
   project.customBrandingImageSize = 0;
   project.customBrandingUploadedAt = null;
+  project.customBrandingVideoUrl = null;
   await project.save();
   return reply(interaction, '✅ Custom branding removed. Default branding will be used.', true);
 }
@@ -1037,45 +1065,97 @@ async function startBot() {
   });
 
   client.on('messageCreate', async (message) => {
-    if (message.author.bot || !message.content) return;
+    if (message.author.bot) return;
     const discordUserId = message.author.id;
 
     const state = getState(discordUserId);
-    if (state?.action === 'waiting_branding_image' && message.attachments?.size > 0) {
-      const attachment = message.attachments.filter(a => a.contentType?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(a.url || '')).first();
-      if (!attachment) {
-        await message.reply({ content: '❌ Please attach an **image** (JPG or PNG). Use `/cancel` to abort.', ephemeral: false }).catch(() => {});
+    if (state?.action === 'waiting_branding_image') {
+      if (message.attachments?.size > 0) {
+        const attachment = message.attachments.filter(a => a.contentType?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(a.url || '')).first();
+        if (!attachment) {
+          await message.reply({ content: `❌ Attach an **image** (JPG/PNG) or paste a **direct** **https://** **.mp4** link (max 5MB, not YouTube). Try **catbox.moe**. \`/cancel\` to abort.`, ephemeral: false }).catch(() => {});
+          return;
+        }
+        try {
+          const res = await axios.get(attachment.url, { responseType: 'arraybuffer', maxContentLength: 600000 });
+          const imageBuffer = Buffer.from(res.data);
+          const fileSize = imageBuffer.length;
+          if (fileSize > 500000) {
+            await message.reply({ content: '❌ Image too large! Max 500KB. Use `/cancel` to abort.', ephemeral: false }).catch(() => {});
+            return;
+          }
+          const base64Image = imageBuffer.toString('base64');
+          const mimeType = (attachment.contentType || 'image/jpeg').split(';')[0].trim() || 'image/jpeg';
+          const base64WithPrefix = `data:${mimeType};base64,${base64Image}`;
+          const project = await Ad.findById(state.projectId);
+          if (!project) {
+            clearState(discordUserId);
+            await message.reply({ content: '❌ Project not found.', ephemeral: false }).catch(() => {});
+            return;
+          }
+          project.customBrandingImage = base64WithPrefix;
+          project.customBrandingImageSize = fileSize;
+          project.customBrandingUploadedAt = new Date();
+          project.customBrandingVideoUrl = null;
+          await project.save();
+          clearState(discordUserId);
+          await message.reply({ content: `✅ **Custom branding saved!** (${(fileSize / 1024).toFixed(1)}KB)\n\nUse \`/removebranding\` to remove it.`, ephemeral: false }).catch(() => {});
+        } catch (e) {
+          console.error('Discord branding upload error:', e.message);
+          await message.reply({ content: '❌ Failed to process image. Try a smaller file or use `/cancel`.', ephemeral: false }).catch(() => {});
+        }
+        return;
+      }
+
+      const raw = (message.content || '').trim();
+      if (!raw) {
+        await message.reply({ content: `❌ Attach an **image** or a **direct** **.mp4** URL (max 5MB). ${BRANDING_VIDEO_URL_GUIDANCE} \`/cancel\` to abort.`, ephemeral: false }).catch(() => {});
+        return;
+      }
+      const urlToStore = normalizeBrandingVideoUrlCandidate(raw);
+      if (!urlToStore || !isValidBrandingVideoUrl(urlToStore)) {
+        await message.reply({ content: `❌ Paste a **direct** **https://** **.mp4** link (max 5MB), or attach an image.\n${BRANDING_VIDEO_URL_GUIDANCE}\n\`/cancel\` to abort.`, ephemeral: false }).catch(() => {});
         return;
       }
       try {
-        const res = await axios.get(attachment.url, { responseType: 'arraybuffer', maxContentLength: 600000 });
-        const imageBuffer = Buffer.from(res.data);
-        const fileSize = imageBuffer.length;
-        if (fileSize > 500000) {
-          await message.reply({ content: '❌ Image too large! Max 500KB. Use `/cancel` to abort.', ephemeral: false }).catch(() => {});
+        const head = await axios.head(urlToStore.trim(), {
+          timeout: 15000,
+          maxRedirects: 5,
+          validateStatus: () => true,
+        });
+        const cl = head.headers['content-length'];
+        if (cl && !Number.isNaN(Number(cl)) && Number(cl) > BRANDING_VIDEO_MAX_BYTES) {
+          await message.reply({
+            content: `❌ That file is over **5MB**. Use a smaller clip.\n${BRANDING_VIDEO_URL_GUIDANCE}\n\`/cancel\` to abort.`,
+            ephemeral: false,
+          }).catch(() => {});
           return;
         }
-        const base64Image = imageBuffer.toString('base64');
-        const mimeType = (attachment.contentType || 'image/jpeg').split(';')[0].trim() || 'image/jpeg';
-        const base64WithPrefix = `data:${mimeType};base64,${base64Image}`;
+      } catch (_) {
+        /* HEAD may fail — save still allowed */
+      }
+      try {
         const project = await Ad.findById(state.projectId);
         if (!project) {
           clearState(discordUserId);
           await message.reply({ content: '❌ Project not found.', ephemeral: false }).catch(() => {});
           return;
         }
-        project.customBrandingImage = base64WithPrefix;
-        project.customBrandingImageSize = fileSize;
+        project.customBrandingVideoUrl = urlToStore.trim();
+        project.customBrandingImage = null;
+        project.customBrandingImageSize = 0;
         project.customBrandingUploadedAt = new Date();
         await project.save();
         clearState(discordUserId);
-        await message.reply({ content: `✅ **Custom branding saved!** (${(fileSize / 1024).toFixed(1)}KB)\n\nUse \`/removebranding\` to remove it.`, ephemeral: false }).catch(() => {});
+        await message.reply({ content: '✅ **Video branding saved!** We fetch your **direct** link when posting (max **5MB** on Discord). Keep the file small and the URL working.\n\nUse `/removebranding` to remove.', ephemeral: false }).catch(() => {});
       } catch (e) {
-        console.error('Discord branding upload error:', e.message);
-        await message.reply({ content: '❌ Failed to process image. Try a smaller file or use `/cancel`.', ephemeral: false }).catch(() => {});
+        console.error('Discord branding video URL error:', e.message);
+        await message.reply({ content: '❌ Could not save video URL. Try again or `/cancel`.', ephemeral: false }).catch(() => {});
       }
       return;
     }
+
+    if (!message.content) return;
 
     const tweetUrlMatch = message.content.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
     if (tweetUrlMatch && tweetUrlMatch[1]) {
@@ -1234,9 +1314,9 @@ async function startBot() {
             .setTitle('🎨 Custom Branding')
             .setDescription(
               'FREE for all bumped projects.\n\n' +
-              '• `/setbranding` – Then attach your image in the next message\n' +
+              '• `/setbranding` – Image (max 500KB) **or** direct **https://** **.mp4** link (max **5MB**, e.g. **catbox.moe** → **files.catbox.moe** link)\n' +
               '• `/removebranding` – Remove custom branding\n\n' +
-              'Your image appears in vote notifications, /mybubble, and /bubbles.\n\n' +
+              'Shows in vote notifications, /mybubble, and /bubbles.\n\n' +
               'Bump your project at https://aquads.xyz'
             )
             .setColor(0x00bfff)
@@ -1323,8 +1403,8 @@ async function startBot() {
           if (user) {
             const tw = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
             const fb = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
-            const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage');
-            const branding = bumped?.customBrandingImage ? '✅ Set' : '❌ Not set';
+            const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl');
+            const branding = projectHasCustomBrandingMedia(bumped) ? '✅ Set' : '❌ Not set';
             profileSection = `**${user.username}** | 💰 ${user.points || 0} pts\n🐦 Twitter: ${tw}\n📘 Facebook: ${fb}\n🎨 Branding: ${branding}\n\n`;
           }
           const embed = new EmbedBuilder()
@@ -1722,9 +1802,13 @@ async function sendRaidNotificationToChannel(raidData) {
   );
 
   let files = [];
-  if (raidData.creatorBrandingBuffer && Buffer.isBuffer(raidData.creatorBrandingBuffer)) {
+  if (raidData.creatorBrandingVideoUrl && isValidBrandingVideoUrl(raidData.creatorBrandingVideoUrl)) {
+    files = await buildDiscordBrandingFiles({ customBrandingVideoUrl: raidData.creatorBrandingVideoUrl.trim() });
+  }
+  if (files.length === 0 && raidData.creatorBrandingBuffer && Buffer.isBuffer(raidData.creatorBrandingBuffer)) {
     files = [{ attachment: raidData.creatorBrandingBuffer, name: 'branding.jpg' }];
-  } else if (fs.existsSync(VIDEO_RAID)) {
+  }
+  if (files.length === 0 && fs.existsSync(VIDEO_RAID)) {
     files = [VIDEO_RAID];
   }
   const payload = { embeds: [embed], components, files };
@@ -1787,9 +1871,13 @@ async function sendRaidCompletionToChannel(completionData) {
     new ButtonBuilder().setLabel('Join Raids').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz')
   );
   let files = [];
-  if (completionData.creatorBrandingBuffer && Buffer.isBuffer(completionData.creatorBrandingBuffer)) {
+  if (completionData.creatorBrandingVideoUrl && isValidBrandingVideoUrl(completionData.creatorBrandingVideoUrl)) {
+    files = await buildDiscordBrandingFiles({ customBrandingVideoUrl: completionData.creatorBrandingVideoUrl.trim() });
+  }
+  if (files.length === 0 && completionData.creatorBrandingBuffer && Buffer.isBuffer(completionData.creatorBrandingBuffer)) {
     files = [{ attachment: completionData.creatorBrandingBuffer, name: 'branding.jpg' }];
-  } else if (fs.existsSync(VIDEO_RAID_COMPLETION)) {
+  }
+  if (files.length === 0 && fs.existsSync(VIDEO_RAID_COMPLETION)) {
     files = [VIDEO_RAID_COMPLETION];
   }
   const payload = { embeds: [embed], components: [row], files };
@@ -1840,19 +1928,7 @@ async function sendVoteNotificationToChannel(project) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setLabel('View on Aquads').setStyle(ButtonStyle.Link).setURL(viewUrl)
   );
-  let files = [];
-  const hasCustomBranding = project.customBrandingImage && project.customBrandingImage.length > 0;
-  if (hasCustomBranding) {
-    try {
-      const base64Data = project.customBrandingImage.split(',')[1];
-      if (base64Data) {
-        const imageBuffer = Buffer.from(base64Data, 'base64');
-        files = [{ attachment: imageBuffer, name: 'branding.jpg' }];
-      }
-    } catch (e) {
-      console.error('Discord vote notification: custom branding buffer error', e.message);
-    }
-  }
+  let files = await buildDiscordBrandingFiles(project);
   if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) {
     files = [VIDEO_VOTE];
   }
