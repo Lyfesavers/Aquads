@@ -718,9 +718,10 @@ const telegramService = {
     const userId = message.from.id;
     const username = message.from.username;
     const chatType = message.chat.type;
+    const isGroupChat = chatType === 'group' || chatType === 'supergroup';
 
     // Track group chats for notifications
-    if (chatType === 'group' || chatType === 'supergroup') {
+    if (isGroupChat) {
       telegramService.activeGroups.add(chatId.toString());
       // Save to database when adding new group
       telegramService.saveActiveGroups();
@@ -728,8 +729,19 @@ const telegramService = {
 
     // Check if user is in conversation state
     const conversationState = telegramService.getConversationState(userId);
-    
-    if (conversationState && !text.startsWith('/')) {
+
+    // In groups, do not intercept normal messages for DM-only flows (branding, onboarding, boosts, etc.).
+    // Otherwise a stuck state from private chat makes every group message look like a branding URL attempt.
+    if (isGroupChat && conversationState) {
+      const cancelToken = (text.split(/\s/)[0] || '').toLowerCase();
+      if (cancelToken === '/cancel' || cancelToken.startsWith('/cancel@')) {
+        telegramService.clearConversationState(userId);
+        await telegramService.sendBotMessage(chatId, '❌ Operation cancelled.');
+        return;
+      }
+    }
+
+    if (conversationState && !text.startsWith('/') && !isGroupChat) {
       // Check for onboarding-related states
       if (conversationState.action.startsWith('onboarding_') || 
           conversationState.action.startsWith('settings_')) {
@@ -772,7 +784,7 @@ const telegramService = {
     }
 
     // Handle commands - redirect group commands to private chat (except /bubbles, /leaders, /raidin, /raidout)
-    if (chatType === 'group' || chatType === 'supergroup') {
+    if (isGroupChat) {
       // In group chats, redirect most commands to private chat, but allow /bubbles, /leaders, /raidin, /raidout
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
@@ -5607,6 +5619,11 @@ Tap to update:`;
       
       if (!conversationState || conversationState.action !== 'waiting_branding_image') {
         return false; // Not in branding upload state
+      }
+
+      // Same as text flows: only accept branding media in private chat, not in groups
+      if (chatId < 0) {
+        return false;
       }
 
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
