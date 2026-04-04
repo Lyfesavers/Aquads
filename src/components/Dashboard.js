@@ -182,6 +182,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [twitterRaidRejectionReason, setTwitterRaidRejectionReason] = useState('');
   const [showTwitterRaidRejectModal, setShowTwitterRaidRejectModal] = useState(false);
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
+  const [twitterRaidSelectedKeys, setTwitterRaidSelectedKeys] = useState([]);
+  const [twitterRaidBulkActionLoading, setTwitterRaidBulkActionLoading] = useState(false);
+  const [twitterRaidBulkRejectTargets, setTwitterRaidBulkRejectTargets] = useState(null);
   const [selectedFacebookRaid, setSelectedFacebookRaid] = useState(null);
   const [facebookRaidRejectionReason, setFacebookRaidRejectionReason] = useState('');
   const [showFacebookRaidRejectModal, setShowFacebookRaidRejectModal] = useState(false);
@@ -292,6 +295,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setBumpRequests([]);
       setPendingRedemptions([]);
       setPendingTwitterRaids([]);
+      setTwitterRaidSelectedKeys([]);
+      setTwitterRaidBulkRejectTargets(null);
       setPendingFacebookRaids([]);
       setPendingTokenPurchases([]);
       setPendingVoteBoosts([]);
@@ -1056,6 +1061,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       socket.off('newPendingAddonOrder', handleNewPendingAddonOrder);
     };
   }, [socket, currentUser]);
+
+  useEffect(() => {
+    const valid = new Set(
+      pendingTwitterRaids.map((c) => `${c.raidId}-${c.completionId}`)
+    );
+    setTwitterRaidSelectedKeys((prev) => prev.filter((k) => valid.has(k)));
+  }, [pendingTwitterRaids]);
 
   // STAGGERED: When admin clicks Admin tab, load all admin data sequentially
   useEffect(() => {
@@ -2201,35 +2213,132 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  const getTwitterRaidCompletionKey = (completion) =>
+    `${completion.raidId}-${completion.completionId}`;
+
   const handleRejectTwitterRaidClick = (completion) => {
+    setTwitterRaidBulkRejectTargets(null);
     setSelectedTwitterRaid(completion);
     setTwitterRaidRejectionReason('');
     setShowTwitterRaidRejectModal(true);
   };
 
-  const handleRejectTwitterRaid = async () => {
+  const handleBulkRejectTwitterRaidClick = () => {
+    const selected = pendingTwitterRaids.filter((c) =>
+      twitterRaidSelectedKeys.includes(getTwitterRaidCompletionKey(c))
+    );
+    if (selected.length === 0) {
+      showNotification('Select at least one completion', 'info');
+      return;
+    }
+    setSelectedTwitterRaid(null);
+    setTwitterRaidBulkRejectTargets(selected);
+    setTwitterRaidRejectionReason('');
+    setShowTwitterRaidRejectModal(true);
+  };
+
+  const handleBulkApproveTwitterRaids = async (points = 20) => {
+    const selected = pendingTwitterRaids.filter((c) =>
+      twitterRaidSelectedKeys.includes(getTwitterRaidCompletionKey(c))
+    );
+    if (selected.length === 0) {
+      showNotification('Select at least one completion', 'info');
+      return;
+    }
+    setTwitterRaidBulkActionLoading(true);
+    let ok = 0;
+    let fail = 0;
     try {
-      if (!selectedTwitterRaid) return;
-      
-      const response = await fetch(`${API_URL}/twitter-raids/${selectedTwitterRaid.raidId}/completions/${selectedTwitterRaid.completionId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({ rejectionReason: twitterRaidRejectionReason })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reject completion');
+      for (const completion of selected) {
+        try {
+          const response = await fetch(
+            `${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${currentUser.token}`
+              },
+              body: JSON.stringify({ points })
+            }
+          );
+          if (response.ok) ok += 1;
+          else fail += 1;
+        } catch {
+          fail += 1;
+        }
       }
-      
-      const result = await response.json();
+      setTwitterRaidSelectedKeys([]);
+      const verifiedText = points === 50 ? ' (verified bonus)' : '';
+      if (fail === 0) {
+        showNotification(
+          `Approved ${ok} completion(s)${verifiedText}. ${points} pts each.`,
+          'success'
+        );
+      } else {
+        showNotification(
+          `Approved ${ok}, failed ${fail}${verifiedText}.`,
+          fail === selected.length ? 'error' : 'warning'
+        );
+      }
+    } finally {
+      setTwitterRaidBulkActionLoading(false);
+    }
+  };
+
+  const handleRejectTwitterRaid = async () => {
+    const targets =
+      twitterRaidBulkRejectTargets && twitterRaidBulkRejectTargets.length > 0
+        ? twitterRaidBulkRejectTargets
+        : selectedTwitterRaid
+          ? [selectedTwitterRaid]
+          : [];
+    if (targets.length === 0) return;
+
+    setTwitterRaidBulkActionLoading(true);
+    let ok = 0;
+    let fail = 0;
+    try {
+      for (const completion of targets) {
+        try {
+          const response = await fetch(
+            `${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/reject`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${currentUser.token}`
+              },
+              body: JSON.stringify({ rejectionReason: twitterRaidRejectionReason })
+            }
+          );
+          if (response.ok) ok += 1;
+          else fail += 1;
+        } catch {
+          fail += 1;
+        }
+      }
       setShowTwitterRaidRejectModal(false);
-      alert(result.message || 'Completion rejected successfully!');
+      setTwitterRaidBulkRejectTargets(null);
+      setSelectedTwitterRaid(null);
+      setTwitterRaidSelectedKeys([]);
+      if (fail === 0) {
+        showNotification(
+          targets.length > 1
+            ? `Rejected ${ok} completions.`
+            : 'Completion rejected successfully.',
+          'success'
+        );
+      } else {
+        showNotification(
+          `Rejected ${ok}, failed ${fail}.`,
+          fail === targets.length ? 'error' : 'warning'
+        );
+      }
     } catch (error) {
-      alert('Error rejecting completion: ' + error.message);
+      showNotification('Error rejecting completion(s): ' + error.message, 'error');
+    } finally {
+      setTwitterRaidBulkActionLoading(false);
     }
   };
 
@@ -2321,6 +2430,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Add a new function to render the Twitter Raids tab content
   const renderTwitterRaidsTab = () => {
+    const twitterRaidAllKeys = pendingTwitterRaids.map(getTwitterRaidCompletionKey);
+    const twitterRaidAllSelected =
+      twitterRaidAllKeys.length > 0 &&
+      twitterRaidAllKeys.every((k) => twitterRaidSelectedKeys.includes(k));
+
     return (
       <div className="space-y-4">
         <h3 className="text-xl font-semibold mb-4">Twitter Raid Completions Pending Approval</h3>
@@ -2334,6 +2448,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <p className="text-gray-400 text-center py-4">No pending completions to approve.</p>
         ) : (
           <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 bg-gray-800/80 rounded-lg border border-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={twitterRaidAllSelected}
+                  onChange={() => {
+                    if (twitterRaidAllSelected) setTwitterRaidSelectedKeys([]);
+                    else setTwitterRaidSelectedKeys([...twitterRaidAllKeys]);
+                  }}
+                  disabled={twitterRaidBulkActionLoading}
+                  className="rounded border-gray-600"
+                />
+                Select all ({pendingTwitterRaids.length})
+              </label>
+              <span className="text-sm text-gray-400">
+                {twitterRaidSelectedKeys.length} selected
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveTwitterRaids(20)}
+                  disabled={
+                    twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (20 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveTwitterRaids(50)}
+                  disabled={
+                    twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm rounded hover:from-blue-600 hover:to-cyan-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Use for verified blue checkmark accounts"
+                >
+                  {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (50 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRejectTwitterRaidClick}
+                  disabled={
+                    twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Reject selected…
+                </button>
+              </div>
+            </div>
             {pendingTwitterRaids.map(completion => {
               // Trust score display logic
               const getTrustColor = (trustLevel) => {
@@ -2361,13 +2526,30 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 return `${Math.round(trustScore.approvalRate)}% Trust (${trustScore.approvedCompletions}/${trustScore.totalCompletions})`;
               };
 
+              const rowKey = getTwitterRaidCompletionKey(completion);
               return (
               <div key={`${completion.raidId}-${completion.completionId}`} className="bg-gray-800 p-4 rounded-lg">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-white">{completion.raidTitle}</h4>
-                      <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={twitterRaidSelectedKeys.includes(rowKey)}
+                          onChange={() => {
+                            setTwitterRaidSelectedKeys((prev) =>
+                              prev.includes(rowKey)
+                                ? prev.filter((k) => k !== rowKey)
+                                : [...prev, rowKey]
+                            );
+                          }}
+                          disabled={twitterRaidBulkActionLoading}
+                          className="rounded border-gray-600 flex-shrink-0"
+                          aria-label={`Select submission by ${completion.user?.username || 'user'}`}
+                        />
+                        <h4 className="font-medium text-white truncate">{completion.raidTitle}</h4>
+                      </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="text-lg">{getTrustIcon(completion.trustScore.trustLevel)}</span>
                         <span className={`text-sm font-medium ${getTrustColor(completion.trustScore.trustLevel)}`}>
                           {getTrustText(completion.trustScore)}
@@ -2464,9 +2646,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         {showTwitterRaidRejectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Reject Completion</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {(twitterRaidBulkRejectTargets?.length || 0) > 1
+                  ? `Reject ${twitterRaidBulkRejectTargets.length} completions`
+                  : 'Reject Completion'}
+              </h3>
               <p className="mb-4 text-gray-300">
-                Are you sure you want to reject this completion? The user will not receive points and this action cannot be undone.
+                {(twitterRaidBulkRejectTargets?.length || 0) > 1
+                  ? 'These users will not receive points. The same rejection reason will be recorded for each selected completion.'
+                  : 'Are you sure you want to reject this completion? The user will not receive points and this action cannot be undone.'}
               </p>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -2482,16 +2670,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               </div>
               <div className="flex justify-end space-x-2">
                 <button
-                  onClick={() => setShowTwitterRaidRejectModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  onClick={() => {
+                    setShowTwitterRaidRejectModal(false);
+                    setTwitterRaidBulkRejectTargets(null);
+                  }}
+                  disabled={twitterRaidBulkActionLoading}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRejectTwitterRaid}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  disabled={twitterRaidBulkActionLoading}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
                 >
-                  Reject Completion
+                  {twitterRaidBulkActionLoading
+                    ? 'Working…'
+                    : (twitterRaidBulkRejectTargets?.length || 0) > 1
+                      ? `Reject ${twitterRaidBulkRejectTargets.length}`
+                      : 'Reject Completion'}
                 </button>
               </div>
             </div>
