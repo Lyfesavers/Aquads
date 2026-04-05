@@ -4609,7 +4609,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                           // Calculate price based on duration
                           const getPrice = (durationMs) => {
-                            if (durationMs === -1) return 150;
+                            if (durationMs === -1) return 99;
                             return 0;
                           };
 

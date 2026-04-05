@@ -231,7 +231,7 @@ const paymentAutoApproval = {
           } else if (bumpRequest.duration === 365 * 24 * 60 * 60 * 1000) { // 1 year (legacy)
             adAmount = 300; // 300 USDC
           } else if (bumpRequest.duration === -1) { // Lifetime
-            adAmount = 300; // 300 USDC
+            adAmount = 99; // 99 USDC
           }
 
           if (adAmount) {

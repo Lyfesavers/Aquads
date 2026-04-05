@@ -158,7 +158,7 @@ router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
         } else if (duration === 365 * 24 * 60 * 60 * 1000) { // 1 year (legacy)
           adAmount = 300; // 300 USDC
         } else if (duration === -1) { // Lifetime
-          adAmount = 300; // 300 USDC
+          adAmount = 99; // 99 USDC
         }
 
         const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
