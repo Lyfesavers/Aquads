@@ -1,11 +1,29 @@
 // Netlify function to prerender blog posts for social media crawlers
 const fetch = require('node-fetch');
 
+function getRequestPath(event) {
+  const raw = event.path || '';
+  const headers = event.headers || {};
+  const lower = {};
+  for (const k of Object.keys(headers)) {
+    lower[k.toLowerCase()] = headers[k];
+  }
+  const original =
+    lower['x-netlify-original-pathname'] ||
+    lower['x-forwarded-uri'] ||
+    lower['x-invoke-path'] ||
+    '';
+  const pathOnly = original ? original.split('?')[0] : '';
+  return pathOnly || raw.split('?')[0] || raw;
+}
+
 exports.handler = async (event, context) => {
-  // Extract the blog ID from the path
-  const path = event.path;
-  const match = path.match(/\/learn\/(.+)-([a-zA-Z0-9]+)$/);
-  
+  const path = getRequestPath(event);
+  let match = path.match(/\/learn\/(.+)-([a-fA-F0-9]{24})$/);
+  if (!match) {
+    match = path.match(/\/learn\/(.+)-([a-zA-Z0-9]+)$/);
+  }
+
   if (!match) {
     // If no match found, just serve a standard page
     return {
@@ -99,6 +117,9 @@ function getBlogHtml(blog, description, seoUrl) {
     <meta property="og:title" content="${blog.title} - Aquads Blog">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Aquads Blog">
     <meta property="og:url" content="${seoUrl}">
     <meta property="og:type" content="article">
     

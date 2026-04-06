@@ -73,29 +73,19 @@
       name="description"
       content="Aquads — BEX (Bicentralized Exchange): swap, Bubble Ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub."
     />
-    <!-- Twitter Card meta tags -->
+    <!-- Twitter Card + Open Graph (single set — duplicate tags confuse Facebook/Telegram parsers) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://www.aquads.xyz/METALOGO.png">
-    <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta name="twitter:description" content="Join Aquads — the BEX (Bicentralized Exchange) for swaps, Bubble Ads, crypto freelancers, AquaFi & live market data.">
-    
-    <!-- Open Graph meta tags -->
-    <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta property="og:description" content="Join Aquads — the BEX (Bicentralized Exchange) for swaps, Bubble Ads, crypto freelancers, AquaFi & live market data.">
-    <meta property="og:image" content="https://www.aquads.xyz/METALOGO.png">
-    <meta property="og:url" content="https://aquads.xyz">
-    <meta property="og:type" content="website">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    
-    <!-- Dynamic meta tags for service listings -->
     <meta name="twitter:image" id="dynamic-twitter-image" content="https://www.aquads.xyz/METALOGO.png">
     <meta name="twitter:title" id="dynamic-twitter-title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
     <meta name="twitter:description" id="dynamic-twitter-description" content="Join Aquads — the BEX (Bicentralized Exchange) for swaps, Bubble Ads, crypto freelancers, AquaFi & live market data.">
-    <meta property="og:image" id="dynamic-og-image" content="https://www.aquads.xyz/METALOGO.png">
+    <meta property="og:site_name" content="Aquads">
     <meta property="og:title" id="dynamic-og-title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
     <meta property="og:description" id="dynamic-og-description" content="Join Aquads — the BEX (Bicentralized Exchange) for swaps, Bubble Ads, crypto freelancers, AquaFi & live market data.">
-    <meta property="og:url" id="dynamic-og-url" content="https://aquads.xyz">
+    <meta property="og:image" id="dynamic-og-image" content="https://www.aquads.xyz/METALOGO.png">
+    <meta property="og:url" id="dynamic-og-url" content="https://www.aquads.xyz/">
+    <meta property="og:type" content="website">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     
@@ -136,7 +126,7 @@
         var blogId = url.searchParams.get('blogId');
         
         // Only proceed if we have a blogId
-        if (blogId && window.location.pathname.includes('/how-to')) {
+        if (blogId && window.location.pathname.includes('/learn')) {
           // Fetch the blog data from the API
           fetch('https://www.aquads.xyz/api/blogs/' + blogId)
             .then(function(response) {
@@ -172,8 +162,8 @@
               if (ogDescTag) ogDescTag.content = description;
               if (ogImageTag && blog.bannerImage) ogImageTag.content = blog.bannerImage;
               
-              // Create clean URL without referral parameters for og:url
-              var cleanUrl = window.location.origin + '/how-to?blogId=' + blogId;
+              // Create clean URL without referral parameters for og:url (must match /learn route)
+              var cleanUrl = window.location.origin + '/learn?blogId=' + blogId;
               if (ogUrlTag) ogUrlTag.content = cleanUrl;
               
               // If blog has a bannerImage, set image dimensions meta tags

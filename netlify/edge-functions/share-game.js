@@ -40,7 +40,9 @@ export default async (request, context) => {
       ? game.bannerUrl
       : 'https://www.aquads.xyz/logo712.png';
 
-    // Where humans land after the crawler reads the meta tags
+    // Humans land on the game page; og:url points at this share URL so Facebook/Telegram
+    // re-scrape the edge HTML instead of the SPA at /games/:id.
+    const sharePageUrl = `https://www.aquads.xyz/share/game/${gameId}`;
     const redirectUrl = `https://www.aquads.xyz/games/${gameId}`;
 
     const html = `<!DOCTYPE html>
@@ -61,7 +63,7 @@ export default async (request, context) => {
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aquads Game Hub">
-  <meta property="og:url" content="${escapeHtml(redirectUrl)}">
+  <meta property="og:url" content="${escapeHtml(sharePageUrl)}">
   <meta property="og:title" content="${escapeHtml(game.title)} | Aquads Game Hub">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">

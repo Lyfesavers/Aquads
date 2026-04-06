@@ -164,7 +164,6 @@ export default async (request, context) => {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script>window.location.replace("${pageUrl}");</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$${escapeHtml(symbol)} - ${escapeHtml(name)} │ Aquads DEX</title>
   <meta name="description" content="${escapeHtml(description)}">
@@ -189,6 +188,7 @@ export default async (request, context) => {
   
   <!-- Redirect to actual AquaSwap page -->
   <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
+  <script>window.location.replace("${pageUrl}");</script>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">

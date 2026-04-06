@@ -1,6 +1,20 @@
 // Netlify Edge Function to serve blog metadata for social media crawlers
 // Edge functions run on Deno at the CDN edge and don't have the same bot-blocking issues
 
+function createSlug(title) {
+  const slug = (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  const maxLength = 50;
+  if (slug.length > maxLength) {
+    const truncated = slug.substring(0, maxLength);
+    const lastDash = truncated.lastIndexOf('-');
+    return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
+  }
+  return slug;
+}
+
 export default async (request, context) => {
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -39,9 +53,9 @@ export default async (request, context) => {
     // Use blog banner image or default
     const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
     
-    // Redirect URL for users (after bots read meta tags)
-    // Use the blog's slug for the proper URL, fallback to ID if no slug
-    const redirectUrl = `https://www.aquads.xyz/learn/${blog.slug || blogId}`;
+    // Canonical in-app URL (must match BlogPage: /learn/{titleSlug}-{mongoId})
+    const titleSlug = createSlug(blog.title) || 'post';
+    const redirectUrl = `https://www.aquads.xyz/learn/${titleSlug}-${blogId}`;
     
     // Build HTML with proper metadata
     const html = `<!DOCTYPE html>
@@ -65,6 +79,8 @@ export default async (request, context) => {
   <meta property="og:title" content="${escapeHtml(blog.title)} - Aquads Blog">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:url" content="${escapeHtml(redirectUrl)}">
   
   <!-- Redirect to actual blog page -->

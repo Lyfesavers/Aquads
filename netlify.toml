@@ -64,6 +64,15 @@
   function = "share-blog"
   path = "/share/blog/*"
 
+# Canonical blog URLs (/learn/slug-id): Facebook/Telegram often re-fetch og:url and hit the SPA.
+# Serve prerendered HTML to crawlers so previews match Twitter/Open Graph debuggers.
+[[redirects]]
+  from = "/learn/*"
+  to = "/.netlify/functions/prerender-blog"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
 # Handle service pages
 [[redirects]]
   from = "/service/*"
