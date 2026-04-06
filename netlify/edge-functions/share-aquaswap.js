@@ -112,8 +112,10 @@ export default async (request, context) => {
 
     console.log('Token found:', symbol, 'Image:', tokenImage);
 
-    // Railway serves PNG from SVG via Sharp; ogv bumps URL so FB/X refetch after font/embed fixes
-    const ogImageUrl = `https://aquads-production.up.railway.app/og/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=3`;
+    // Branded card: serve via aquads.xyz proxy so Telegram/WhatsApp fetch the same PNG as X
+    // (direct *.railway.app image URLs are often skipped or time out in Telegram's crawler)
+    const ogImageUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=3`;
+    const sharePageUrl = `https://www.aquads.xyz/share/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
 
     // Format numbers
     const formatNum = (n) => {
@@ -155,7 +157,7 @@ export default async (request, context) => {
     // Rich description with more stats
     const description = `💰 MCap: ${formatNum(marketCap)} • 💧 Liq: ${formatNum(liquidity)} • 📊 Vol: ${formatNum(volume24h)} • ${chainDisplay.icon} ${chainDisplay.name} • Trade $${symbol} on Aquads`;
     
-    const pageUrl = `https://www.aquads.xyz/aquaswap?token=${tokenAddress}&blockchain=${rawBlockchain}`;
+    const pageUrl = `https://www.aquads.xyz/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
     const tokenAge = formatAge(pairCreatedAt);
 
     // Build HTML with enhanced Aquads-branded design
@@ -174,15 +176,15 @@ export default async (request, context) => {
   <meta name="twitter:creator" content="@AquadsXYZ">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${ogImageUrl}">
+  <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
   
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aquads DEX">
-  <meta property="og:url" content="${escapeHtml(pageUrl)}">
+  <meta property="og:url" content="${escapeHtml(sharePageUrl)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${ogImageUrl}">
+  <meta property="og:image" content="${escapeHtml(ogImageUrl)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   

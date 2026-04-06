@@ -56,6 +56,8 @@ exports.handler = async (event, context) => {
     const volume24h = pair.volume?.h24 || 0;
     const liquidity = pair.liquidity?.usd || 0;
     const tokenImage = pair.info?.imageUrl || 'https://www.aquads.xyz/logo712.png';
+    // Same branded OG card as /share/aquaswap, served via aquads.xyz for Telegram etc.
+    const ogCardUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}&ogv=3`;
     
     console.log('Token found:', symbol, 'Image:', tokenImage);
     
@@ -77,11 +79,11 @@ exports.handler = async (event, context) => {
     const changeSign = priceChange24h >= 0 ? '+' : '';
     const title = `$${symbol} │ ${formatPrice(priceUsd)} │ ${changeSign}${priceChange24h.toFixed(1)}% 24h`;
     const description = `MCAP: ${formatNum(marketCap)} • Vol: ${formatNum(volume24h)} • Liq: ${formatNum(liquidity)} • Trade ${symbol} on Aquads DEX`;
-    const pageUrl = `https://www.aquads.xyz/aquaswap?token=${tokenAddress}&blockchain=${blockchain}`;
+    const pageUrl = `https://www.aquads.xyz/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}`;
     
     return {
       statusCode: 200,
-      body: getTokenHtml(symbol, name, title, description, tokenImage, pageUrl, tokenAddress, blockchain),
+      body: getTokenHtml(symbol, name, title, description, ogCardUrl, pageUrl, tokenAddress, blockchain),
       headers: { 'Content-Type': 'text/html' },
     };
   } catch (error) {
@@ -94,7 +96,14 @@ exports.handler = async (event, context) => {
   }
 };
 
+function htmlAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 function getTokenHtml(symbol, name, title, description, image, url, token, blockchain) {
+  const img = htmlAttr(image);
+  const canonical = htmlAttr(url);
+  const qs = `token=${encodeURIComponent(token)}&blockchain=${encodeURIComponent(blockchain)}`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,16 +116,18 @@ function getTokenHtml(symbol, name, title, description, image, url, token, block
   <meta name="twitter:site" content="@_Aquads">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${image}">
+  <meta name="twitter:image" content="${img}">
   
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aquads DEX">
-  <meta property="og:url" content="${url}">
+  <meta property="og:url" content="${canonical}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${image}">
+  <meta property="og:image" content="${img}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   
-  <script>window.location.href='/aquaswap?token=${token}&blockchain=${blockchain}';</script>
+  <script>window.location.href='/aquaswap?${qs}';</script>
 </head>
 <body>
   <h1>$${symbol} - ${name}</h1>
