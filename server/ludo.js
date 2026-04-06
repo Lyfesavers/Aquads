@@ -24,6 +24,16 @@ function clearCpuTurnTimer(code) {
   cpuTurnTimers.delete(code);
 }
 
+/** Lower bound of client path animation (Sludo.js: 80ms lead-in + 115/220ms per segment) plus slack so CPU does not act before moves finish. */
+function estimateSludoPathAnimMs(path) {
+  if (!path || path.length === 0) return 550;
+  let ms = 100;
+  for (const seg of path) {
+    ms += seg && seg.kind === 'yardOut' ? 230 : 125;
+  }
+  return ms + 500;
+}
+
 const PLAYER_COLORS = ['#ff2d6a', '#00e5ff', '#b8ff00', '#c44dff'];
 
 /* Seat 0 BL, 1 BR, 2 TR, 3 TL — indices 1 and 3 match BR/TL yards and colored arms. */
@@ -759,7 +769,7 @@ function attachLudo(socket, io) {
       gameOver: false,
       state: publicState(room),
     });
-    scheduleCpuTurnIfNeeded(room, io);
+    scheduleCpuTurnIfNeeded(room, io, estimateSludoPathAnimMs([]));
   }
 
   function emitMoveTurn(room, turnIdx, pick, roll, io) {
@@ -793,7 +803,7 @@ function attachLudo(socket, io) {
       gameOver: won,
       state: publicState(room),
     });
-    scheduleCpuTurnIfNeeded(room, io);
+    scheduleCpuTurnIfNeeded(room, io, estimateSludoPathAnimMs(pick.path));
   }
 
   function finalizeAfterRoll(room, turnIdx, roll, legal, io) {
@@ -824,12 +834,12 @@ function attachLudo(socket, io) {
     });
   }
 
-  function scheduleCpuTurnIfNeeded(room, io) {
+  function scheduleCpuTurnIfNeeded(room, io, minDelayMs = 0) {
     if (room.phase !== 'playing') return;
     clearCpuTurnTimer(room.code);
     const cur = room.players[room.currentTurnIndex];
     if (!cur?.isCpu) return;
-    const delay = 520 + crypto.randomInt(0, 380);
+    const delay = Math.max(520 + crypto.randomInt(0, 380), minDelayMs);
     const code = room.code;
     const tid = setTimeout(() => {
       cpuTurnTimers.delete(code);

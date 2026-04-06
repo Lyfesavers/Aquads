@@ -554,6 +554,8 @@ export default function Sludo({ currentUser }) {
 
   const animTimerRef = useRef(null);
   const turnDelayRef = useRef(null);
+  const turnQueueRef = useRef([]);
+  const turnProcessingRef = useRef(false);
   const spinStartRef = useRef(0);
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
@@ -666,13 +668,14 @@ export default function Sludo({ currentUser }) {
   }, [currentUser?.token]);
 
   useEffect(() => {
-    const runPathAnimation = (payload) => {
+    const runPathAnimation = (payload, onDone) => {
       const path = payload.path || [];
       if (payload.type === 'pass' || path.length === 0) {
         setAnimOverride(null);
         setAnimating(false);
         setChoicePulse(null);
         setGameState(payload.state);
+        onDone?.();
         return;
       }
 
@@ -694,6 +697,7 @@ export default function Sludo({ currentUser }) {
         setGameState(payload.state);
         if (payload.gameOver) playBlip(880, 0.14);
         else if (payload.captures?.length) playBlip(180, 0.1);
+        onDone?.();
       };
 
       const tick = () => {
@@ -714,7 +718,44 @@ export default function Sludo({ currentUser }) {
       animTimerRef.current = setTimeout(tick, 80);
     };
 
+    const drainTurnQueue = () => {
+      if (turnProcessingRef.current) return;
+      const payload = turnQueueRef.current.shift();
+      if (!payload) return;
+      turnProcessingRef.current = true;
+
+      stopTimers();
+      setRollPending(false);
+      setChoicePulse(null);
+
+      const afterTurnVisuals = () => {
+        turnProcessingRef.current = false;
+        drainTurnQueue();
+      };
+
+      const settle = () => {
+        setDiceValue(payload.roll);
+        setDiceSpinning(false);
+        playBlip(380 + payload.roll * 35, 0.05);
+        if (payload.captures?.length) {
+          setCaptureFlash(payload.captures);
+          setTimeout(() => setCaptureFlash(null), 900);
+        }
+        runPathAnimation(payload, afterTurnVisuals);
+      };
+
+      const isCpuActor = payload.state?.players?.[payload.playerIndex]?.isCpu;
+      const minSpin = isCpuActor ? 380 : 1000;
+      const elapsed = Date.now() - spinStartRef.current;
+      const wait = Math.max(0, minSpin - elapsed);
+      if (isCpuActor) setDiceSpinning(true);
+      if (wait > 0) turnDelayRef.current = setTimeout(settle, wait);
+      else settle();
+    };
+
     const onJoined = ({ state }) => {
+      turnQueueRef.current = [];
+      turnProcessingRef.current = false;
       setGameState(state);
       setError('');
     };
@@ -737,31 +778,13 @@ export default function Sludo({ currentUser }) {
     };
 
     const onTurn = (payload) => {
-      stopTimers();
-      setRollPending(false);
-      setChoicePulse(null);
-
-      const settle = () => {
-        setDiceValue(payload.roll);
-        setDiceSpinning(false);
-        playBlip(380 + payload.roll * 35, 0.05);
-        if (payload.captures?.length) {
-          setCaptureFlash(payload.captures);
-          setTimeout(() => setCaptureFlash(null), 900);
-        }
-        runPathAnimation(payload);
-      };
-
-      const isCpuActor = payload.state?.players?.[payload.playerIndex]?.isCpu;
-      const minSpin = isCpuActor ? 380 : 1000;
-      const elapsed = Date.now() - spinStartRef.current;
-      const wait = Math.max(0, minSpin - elapsed);
-      if (isCpuActor) setDiceSpinning(true);
-      if (wait > 0) turnDelayRef.current = setTimeout(settle, wait);
-      else settle();
+      turnQueueRef.current.push(payload);
+      drainTurnQueue();
     };
 
     const onErr = ({ message }) => {
+      turnQueueRef.current = [];
+      turnProcessingRef.current = false;
       stopTimers();
       setDiceSpinning(false);
       setRollPending(false);
@@ -770,6 +793,8 @@ export default function Sludo({ currentUser }) {
     };
 
     const onLeft = () => {
+      turnQueueRef.current = [];
+      turnProcessingRef.current = false;
       setGameState(null);
       setBanner('You left the room.');
       setChoicePulse(null);
@@ -783,6 +808,8 @@ export default function Sludo({ currentUser }) {
     socket.on('ludo:left', onLeft);
 
     return () => {
+      turnQueueRef.current = [];
+      turnProcessingRef.current = false;
       socket.off('ludo:joined', onJoined);
       socket.off('ludo:state', onState);
       socket.off('ludo:turnResult', onTurn);
