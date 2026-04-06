@@ -44,12 +44,16 @@ export default async (request, context) => {
   const url = new URL(request.url);
   const tokenAddress = url.searchParams.get('token');
   const rawBlockchain = url.searchParams.get('blockchain');
+  // Telegram (and some bots) follow meta refresh; /aquaswap is the SPA shell without token OG → generic "Aquads" preview.
+  const ua = request.headers.get('user-agent') || '';
+  const isSocialPreviewCrawler =
+    /TelegramBot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|Googlebot|bingbot|Applebot|Embedly|vkShare|SkypeUriPreview|Pinterest/i.test(ua);
 
   console.log('AquaSwap share request:', { tokenAddress, rawBlockchain });
 
   if (!tokenAddress || !rawBlockchain) {
     console.log('Missing params, returning default');
-    return getDefaultResponse();
+    return getDefaultResponse(isSocialPreviewCrawler);
   }
 
   // Map blockchain name to DEXScreener format
@@ -87,7 +91,7 @@ export default async (request, context) => {
 
     if (!pair) {
       console.log('No pair found');
-      return getDefaultResponse();
+      return getDefaultResponse(isSocialPreviewCrawler);
     }
 
     // Extract comprehensive token data
@@ -188,9 +192,9 @@ export default async (request, context) => {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   
-  <!-- Redirect to actual AquaSwap page -->
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
-  <script>window.location.replace("${pageUrl}");</script>
+  <!-- Redirect only for real browsers. Crawlers that follow refresh would load the SPA and lose token OG (Telegram). -->
+  ${isSocialPreviewCrawler ? '<!-- no auto-redirect for preview crawlers -->' : `  <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
+  <script>window.location.replace("${pageUrl}");</script>`}
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -538,7 +542,7 @@ export default async (request, context) => {
 
   } catch (error) {
     console.error('Edge function error:', error);
-    return getDefaultResponse();
+    return getDefaultResponse(isSocialPreviewCrawler);
   }
 };
 
@@ -552,7 +556,10 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-function getDefaultResponse() {
+function getDefaultResponse(isSocialPreviewCrawler = false) {
+  const redirectMeta = isSocialPreviewCrawler
+    ? ''
+    : '<meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/aquaswap">';
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -573,7 +580,7 @@ function getDefaultResponse() {
   <meta property="og:description" content="Trade tokens on Aquads DEX with live charts, real-time prices, and instant swaps">
   <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
   
-  <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/aquaswap">
+  ${redirectMeta}
 </head>
 <body style="font-family: sans-serif; background: #0a0a12; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;">
   <div style="text-align: center;">
