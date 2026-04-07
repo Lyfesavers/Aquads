@@ -1787,6 +1787,15 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               >
                 {showEmbedCode ? '❌ Close' : '🔗 Embed'}
               </button>
+              <a
+                href="https://marketplace.dexscreener.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dexscreener-enhanced-link"
+                title="DexScreener Marketplace — enhanced token info and upgrades for your pair"
+              >
+                📊 Enhanced token info
+              </a>
               <button 
                 onClick={() => setShowBuyCryptoModal(true)}
                 className="fiat-purchase-button"
@@ -1844,6 +1853,15 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             >
               {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
             </button>
+            <a
+              href="https://marketplace.dexscreener.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dexscreener-enhanced-link"
+              title="DexScreener Marketplace — enhanced token info and upgrades for your pair"
+            >
+              📊 Enhanced token info
+            </a>
             <button 
               onClick={() => setShowBuyCryptoModal(true)}
               className="fiat-purchase-button"

@@ -95,6 +95,30 @@
   transform: translateY(-1px);
 }
 
+/* DexScreener Marketplace — enhanced token info (opens in new tab) */
+.dexscreener-enhanced-link {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  font-size: 0.75rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.dexscreener-enhanced-link:hover {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: #4ade80;
+  transform: translateY(-1px);
+  color: #86efac;
+}
+
 /* Fiat Purchase Button - Smaller */
 .fiat-purchase-button {
   background: rgba(255, 165, 0, 0.1);
@@ -166,7 +190,8 @@
   }
 
   .embed-toggle-button,
-  .fiat-purchase-button {
+  .fiat-purchase-button,
+  .dexscreener-enhanced-link {
     padding: 4px 8px;
     font-size: 0.7rem;
     border-radius: 5px;
@@ -180,7 +205,8 @@
   }
 
   .embed-toggle-button,
-  .fiat-purchase-button {
+  .fiat-purchase-button,
+  .dexscreener-enhanced-link {
     padding: 3px 6px;
     font-size: 0.65rem;
     border-radius: 4px;
@@ -2368,6 +2394,29 @@
     border-color: #00d4ff;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+  }
+
+  .header-actions .dexscreener-enhanced-link {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #4ade80;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .header-actions .dexscreener-enhanced-link:hover {
+    background: rgba(34, 197, 94, 0.22);
+    border-color: #4ade80;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+    color: #86efac;
   }
 
   .header-actions .fiat-purchase-button {
