@@ -81,7 +81,8 @@ const fetchAndCachePublicJobs = async (page, limit) => {
   const totalJobs = await Job.countDocuments(query);
   const jobs = await Job.find(query)
     .populate('owner', 'username image')
-    .sort({ source: 1, createdAt: -1 })
+    // Newest first across all sources (source:1 previously pinned cryptojobslist above remotive)
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
@@ -159,7 +160,7 @@ router.get('/', async (req, res) => {
     const totalJobs = await Job.countDocuments(query);
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
-      .sort({ source: 1, createdAt: -1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
