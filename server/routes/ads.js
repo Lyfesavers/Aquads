@@ -533,6 +533,9 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
     if (!updatedAd) {
       return res.status(404).json({ message: 'Ad not found after update attempt' });
     }
+
+    // Bubble list is cached (GET /); must invalidate so projectProfile.introVideoUrl etc. appear immediately
+    invalidateAdsCache();
     
     res.json(updatedAd);
   } catch (error) {

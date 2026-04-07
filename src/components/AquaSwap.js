@@ -2666,11 +2666,32 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               )}
             </div>
           ) : hasPendingUpdate ? (
-            <div className="project-empty-state project-pending-state">
-              <h3>Pending update from dev team</h3>
-              <p>
-                The project team has submitted updates. Content will appear here once approved by our admin team.
-              </p>
+            <div className="project-pending-deep-dive">
+              <div className="project-empty-state project-pending-state">
+                <h3>Pending QA review</h3>
+                <p>
+                  Your deep dive update is waiting for admin approval. The full profile (including team, milestones,
+                  and about text) will show here once verified.
+                </p>
+              </div>
+              {deepDiveIntroVideoSrc && projectForInsights && (
+                <div className="project-insight-card project-about-card project-pending-video-card">
+                  <p className="project-pending-video-label">Intro video (preview — live after approval)</p>
+                  <div className="project-deep-dive-video-wrap">
+                    <video
+                      className="project-deep-dive-video"
+                      autoPlay
+                      muted
+                      controls
+                      playsInline
+                      preload="auto"
+                      src={deepDiveIntroVideoSrc}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="project-empty-state">

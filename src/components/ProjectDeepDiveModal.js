@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Modal from './Modal';
 import {
   isValidDeepDiveIntroVideoUrl,
@@ -45,6 +45,13 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
   const [error, setError] = useState('');
   const [imageValidationErrors, setImageValidationErrors] = useState({});
   const [introVideoUrlError, setIntroVideoUrlError] = useState('');
+
+  // Re-sync when parent `ads` updates after save or socket (useState initializer only runs once per mount)
+  useEffect(() => {
+    setFormData(getInitialProfile(ad));
+    setIntroVideoUrlError('');
+    setImageValidationErrors({});
+  }, [ad?.id, ad?.projectProfile?.updatedAt, ad?.projectProfile?.introVideoUrl]);
 
   const aboutLength = useMemo(() => formData.about.trim().length, [formData.about]);
 

@@ -3182,6 +3182,23 @@
   line-height: 1.6;
 }
 
+.project-pending-deep-dive {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-pending-video-card .project-deep-dive-video-wrap {
+  margin-bottom: 0;
+}
+
+.project-pending-video-label {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fcd34d;
+}
+
 @media (max-width: 900px) {
   .project-deep-dive-grid {
     grid-template-columns: 1fr;

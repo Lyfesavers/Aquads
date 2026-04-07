@@ -877,21 +877,8 @@ app.get('/share-blog/:id', async (req, res) => {
 //   }
 // });
 
-// Update ad
-app.put('/api/ads/:id', auth, async (req, res) => {
-  try {
-    const updatedAd = await Ad.findOneAndUpdate(
-      { id: req.params.id },
-      req.body,
-      { new: true }
-    );
-    io.emit('adsUpdated', { type: 'update', ad: updatedAd });
-    res.json(updatedAd);
-  } catch (error) {
-    console.error('Error updating ad:', error);
-    res.status(500).json({ error: 'Failed to update ad' });
-  }
-});
+// PUT /api/ads/:id — handled by routes/ads.js (field allowlist, projectProfile.introVideoUrl, cache invalidation).
+// Duplicate handler removed; it used raw req.body and could desync clients.
 
 // Delete ad
 app.delete('/api/ads/:id', auth, async (req, res) => {
