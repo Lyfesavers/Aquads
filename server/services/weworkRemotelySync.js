@@ -11,6 +11,52 @@ const {
 
 const WWR_RSS_URL = 'https://weworkremotely.com/remote-jobs.rss';
 
+/** Logo hosts WWR uses in RSS / description HTML (extend if their CDN changes). */
+const WWR_LOGO_HOSTS = new Set(['we-work-remotely.imgix.net', 'wwr-pro.s3.amazonaws.com']);
+
+function isTrustedWWRLogoHost(hostname) {
+  if (!hostname) return false;
+  const h = hostname.toLowerCase();
+  if (WWR_LOGO_HOSTS.has(h)) return true;
+  for (const allowed of WWR_LOGO_HOSTS) {
+    if (h.endsWith(`.${allowed}`)) return true;
+  }
+  return false;
+}
+
+/** Only persist http(s) URLs on known WWR image hosts. */
+function normalizeTrustedWWRLogoUrl(urlString) {
+  if (!urlString || typeof urlString !== 'string') return null;
+  const trimmed = urlString.trim();
+  let u;
+  try {
+    u = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  if (!isTrustedWWRLogoHost(u.hostname)) return null;
+  return u.href;
+}
+
+/**
+ * First <img src> in description HTML when <media:content> is missing.
+ * Many listings still have no image in RSS at all — then we return null.
+ */
+function extractWWRLogoFromDescriptionHtml(html) {
+  if (!html || typeof html !== 'string') return null;
+  const quoted = html.match(/<img\b[^>]*\bsrc\s*=\s*["']([^"'<>]+)["']/i);
+  const unquoted = quoted ? null : html.match(/<img\b[^>]*\bsrc\s*=\s*([^\s>"']+)/i);
+  const raw = quoted ? quoted[1] : unquoted ? unquoted[1] : null;
+  if (!raw) return null;
+  const src = raw
+    .replace(/&amp;/g, '&')
+    .replace(/&#38;/g, '&')
+    .replace(/&quot;/g, '"')
+    .trim();
+  return normalizeTrustedWWRLogoUrl(src);
+}
+
 const parser = new Parser({
   customFields: {
     item: [
@@ -69,12 +115,10 @@ function mapRSSItemToJob(item) {
     description = removeRequirementsFromDescription(description);
   }
 
-  let companyLogo = null;
-  if (item.mediaContent && item.mediaContent.$) {
-    companyLogo = item.mediaContent.$.url;
-  } else if (item.enclosure && item.enclosure.url) {
-    companyLogo = item.enclosure.url;
-  }
+  let companyLogo =
+    normalizeTrustedWWRLogoUrl(item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) ||
+    normalizeTrustedWWRLogoUrl(item.enclosure && item.enclosure.url) ||
+    extractWWRLogoFromDescriptionHtml(rawContent);
 
   return {
     title,
