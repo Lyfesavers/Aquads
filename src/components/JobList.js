@@ -12,6 +12,9 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
 
   const isUserJob = (job) => !job.source || job.source === 'user';
 
+  const isExternalJobBoard = (job) =>
+    job.source === 'remotive' || job.source === 'cryptojobslist' || job.source === 'weworkremotely';
+
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
     if (highlightedJobId) {
@@ -49,7 +52,8 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
 
   const cleanDescription = (text, source) => {
     if (!text || !source || source === 'user') return text;
-    
+    if (source !== 'cryptojobslist') return text;
+
     let cleaned = text;
     
     // Remove "Tags: ..." lines (CryptoJobsList tag block)
@@ -145,7 +149,7 @@ Best regards,
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
                   <img
                     src={
-                      (job.source === 'remotive' || job.source === 'cryptojobslist') && job.companyLogo 
+                      isExternalJobBoard(job) && job.companyLogo 
                         ? job.companyLogo 
                         : job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`
                     }
@@ -193,6 +197,22 @@ Best regards,
                       >
                         <span>via</span>
                         <span className="font-semibold">CryptoJobsList</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                    {job.source === 'weworkremotely' && (
+                      <a 
+                        href={job.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-0.5 sm:py-1 text-xs bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-full hover:bg-teal-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
+                        title="View on We Work Remotely"
+                      >
+                        <span>via</span>
+                        <span className="font-semibold">We Work Remotely</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -332,7 +352,7 @@ Best regards,
                 )}
                 
                 {/* Admin delete button for external jobs */}
-                {currentUser && currentUser.isAdmin && (job.source === 'remotive' || job.source === 'cryptojobslist') && (
+                {currentUser && currentUser.isAdmin && isExternalJobBoard(job) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -349,7 +369,7 @@ Best regards,
               </div>
               
               {/* Mobile action buttons - shown at bottom on mobile */}
-              {currentUser && (isUserJob(job) || (currentUser.isAdmin && (job.source === 'remotive' || job.source === 'cryptojobslist'))) && (
+              {currentUser && (isUserJob(job) || (currentUser.isAdmin && isExternalJobBoard(job))) && (
                 <div className="sm:hidden flex justify-end space-x-2">
                   {isUserJob(job) && isJobOwner(currentUser.userId, job.owner) && (
                     <>
@@ -392,7 +412,7 @@ Best regards,
                   
                   {currentUser.isAdmin && (
                     (isUserJob(job) && !isJobOwner(currentUser.userId, job.owner)) || 
-                    job.source === 'remotive' || job.source === 'cryptojobslist'
+                    isExternalJobBoard(job)
                   ) && (
                     <button
                       onClick={(e) => {
@@ -483,7 +503,7 @@ Best regards,
                       }
                       
                       // Proceed with application
-                      if ((job.source === 'remotive' || job.source === 'cryptojobslist') && job.externalUrl) {
+                      if (isExternalJobBoard(job) && job.externalUrl) {
                         window.open(job.externalUrl, '_blank', 'noopener,noreferrer');
                       } else if (job.applicationUrl) {
                         window.open(job.applicationUrl, '_blank', 'noopener,noreferrer');
@@ -496,7 +516,15 @@ Best regards,
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>{job.source === 'remotive' ? 'Apply on Remotive' : job.source === 'cryptojobslist' ? 'Apply on CryptoJobsList' : 'Apply Now'}</span>
+                    <span>
+                      {job.source === 'remotive'
+                        ? 'Apply on Remotive'
+                        : job.source === 'cryptojobslist'
+                        ? 'Apply on CryptoJobsList'
+                        : job.source === 'weworkremotely'
+                        ? 'Apply on We Work Remotely'
+                        : 'Apply Now'}
+                    </span>
                   </button>
                   <p className="text-gray-400 text-xs mt-2 text-center">
                     {!currentUser 
@@ -504,7 +532,9 @@ Best regards,
                       : job.source === 'remotive' 
                         ? 'You will be redirected to Remotive.com'
                         : job.source === 'cryptojobslist'
-                        ? 'You will be redirected to CryptoJobsList.com' 
+                        ? 'You will be redirected to CryptoJobsList.com'
+                        : job.source === 'weworkremotely'
+                        ? 'You will be redirected to We Work Remotely'
                         : job.applicationUrl 
                           ? 'You will be redirected to the application page' 
                           : 'Apply via email'}

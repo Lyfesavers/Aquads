@@ -3,89 +3,64 @@ const Parser = require('rss-parser');
 const { cleanHTML, formatJobContent } = require('./rssJobFormatting');
 const {
   parseSalary,
-  parseSalaryFromField,
   extractCompany,
   extractRequirements,
   formatRequirements,
   removeRequirementsFromDescription,
 } = require('./rssJobCommon');
 
-const CRYPTO_JOBS_RSS_URL = 'https://api.cryptojobslist.com/jobs.rss';
+const WWR_RSS_URL = 'https://weworkremotely.com/remote-jobs.rss';
 
 const parser = new Parser({
   customFields: {
     item: [
-      ['company', 'company'],
-      ['location', 'location'],
-      ['salary', 'salary'],
+      ['region', 'region'],
+      ['country', 'country'],
+      ['state', 'state'],
+      ['skills', 'skills'],
       ['category', 'category'],
-      ['dc:creator', 'creator'],
+      ['type', 'type'],
+      ['expires_at', 'expiresAt'],
       ['media:content', 'mediaContent'],
     ],
   },
 });
 
-function parseLocation(item, description) {
-  const descLower = description.toLowerCase();
-
-  if (item.location) {
-    const locationStr = item.location.trim().toLowerCase();
-
-    if (locationStr.includes('remote') || locationStr.includes('worldwide') || locationStr.includes('anywhere')) {
-      return {
-        workArrangement: 'remote',
-        location: { country: 'Remote', city: 'Worldwide' },
-      };
-    }
-
-    if (item.location.includes(',')) {
-      const parts = item.location.split(',');
-      return {
-        workArrangement: 'remote',
-        location: { city: parts[0].trim(), country: parts[1].trim() },
-      };
-    }
-
-    return {
-      workArrangement: 'remote',
-      location: { country: item.location.trim(), city: '' },
-    };
-  }
+function parseLocationWWR(item) {
+  const regionRaw = (item.region || '').trim();
+  const region = regionRaw.toLowerCase();
 
   if (
-    descLower.includes('remote') ||
-    descLower.includes('work from home') ||
-    descLower.includes('anywhere') ||
-    descLower.includes('worldwide')
+    !region ||
+    region.includes('anywhere') ||
+    region.includes('world') ||
+    region.includes('worldwide')
   ) {
+    const country = regionRaw || (item.country && item.country.trim()) || 'Remote';
+    const city = (item.state && item.state.trim()) || '';
     return {
       workArrangement: 'remote',
-      location: { country: 'Remote', city: 'Worldwide' },
+      location: { country, city },
     };
   }
 
-  if (descLower.includes('hybrid')) {
-    return {
-      workArrangement: 'hybrid',
-      location: { country: 'Various', city: 'Hybrid' },
-    };
-  }
-
+  const country = (item.country && item.country.trim()) || regionRaw;
+  const city = (item.state && item.state.trim()) || '';
   return {
     workArrangement: 'remote',
-    location: { country: 'Remote', city: 'Worldwide' },
+    location: { country, city },
   };
 }
 
 function mapRSSItemToJob(item) {
-  const title = cleanHTML(item.title || '', { source: 'cryptojobslist' });
-  const rawContent = item.contentSnippet || item.content || item.description || '';
+  const title = cleanHTML(item.title || '', { source: 'weworkremotely' });
+  const rawContent = item.content || item.contentSnippet || item.description || '';
 
-  let description = formatJobContent(rawContent, 'cryptojobslist');
-  const company = extractCompany(title, item, 'Crypto Company');
+  let description = formatJobContent(rawContent, 'weworkremotely');
+  const company = extractCompany(title, item, 'We Work Remotely');
 
-  const salary = item.salary ? parseSalaryFromField(item.salary) : parseSalary(title, description);
-  const locationInfo = parseLocation(item, description);
+  const salary = parseSalary(title, description);
+  const locationInfo = parseLocationWWR(item);
 
   const rawRequirements = extractRequirements(description);
   const requirements = formatRequirements(rawRequirements);
@@ -114,29 +89,29 @@ function mapRSSItemToJob(item) {
     ownerImage: null,
     companyLogo,
     status: 'active',
-    source: 'cryptojobslist',
+    source: 'weworkremotely',
     externalUrl: item.link,
-    externalId: item.guid || item.link,
+    externalId: (item.guid || item.link || '').toString(),
     lastSynced: new Date(),
     createdAt: item.pubDate ? new Date(item.pubDate) : new Date(),
   };
 }
 
-async function syncCryptoJobsListJobs() {
+async function syncWeWorkRemotelyJobs() {
   const syncStartTime = new Date();
-  console.log(`[CryptoJobsList Sync] Starting sync at ${syncStartTime.toISOString()}`);
+  console.log(`[WeWorkRemotely Sync] Starting sync at ${syncStartTime.toISOString()}`);
 
   try {
-    console.log(`[CryptoJobsList Sync] Fetching jobs from ${CRYPTO_JOBS_RSS_URL}`);
+    console.log(`[WeWorkRemotely Sync] Fetching jobs from ${WWR_RSS_URL}`);
 
-    const feed = await parser.parseURL(CRYPTO_JOBS_RSS_URL);
+    const feed = await parser.parseURL(WWR_RSS_URL);
 
     if (!feed || !feed.items || feed.items.length === 0) {
-      console.log('[CryptoJobsList Sync] No jobs found in RSS feed');
+      console.log('[WeWorkRemotely Sync] No jobs found in RSS feed');
       return { success: true, added: 0, updated: 0, removed: 0, errors: 0 };
     }
 
-    console.log(`[CryptoJobsList Sync] Successfully fetched ${feed.items.length} jobs from RSS`);
+    console.log(`[WeWorkRemotely Sync] Successfully fetched ${feed.items.length} jobs from RSS`);
 
     let added = 0;
     let updated = 0;
@@ -147,13 +122,13 @@ async function syncCryptoJobsListJobs() {
         const jobData = mapRSSItemToJob(item);
 
         if (!jobData.title || !jobData.externalId) {
-          console.log('[CryptoJobsList Sync] Skipping item with missing title or ID');
+          console.log('[WeWorkRemotely Sync] Skipping item with missing title or ID');
           continue;
         }
 
         const existingJob = await Job.findOne({
           externalId: jobData.externalId,
-          source: 'cryptojobslist',
+          source: 'weworkremotely',
         });
 
         if (existingJob) {
@@ -175,20 +150,20 @@ async function syncCryptoJobsListJobs() {
           added++;
         }
       } catch (error) {
-        console.error(`[CryptoJobsList Sync] Error processing item: ${item.title}`, error.message);
+        console.error(`[WeWorkRemotely Sync] Error processing item: ${item.title}`, error.message);
         errors++;
       }
     }
 
     const removeResult = await Job.deleteMany({
-      source: 'cryptojobslist',
+      source: 'weworkremotely',
       lastSynced: { $lt: syncStartTime },
     });
 
     const removed = removeResult.deletedCount;
 
-    console.log('[CryptoJobsList Sync] Sync completed successfully');
-    console.log(`[CryptoJobsList Sync] Added: ${added}, Updated: ${updated}, Removed: ${removed}, Errors: ${errors}`);
+    console.log('[WeWorkRemotely Sync] Sync completed successfully');
+    console.log(`[WeWorkRemotely Sync] Added: ${added}, Updated: ${updated}, Removed: ${removed}, Errors: ${errors}`);
 
     return {
       success: true,
@@ -199,7 +174,7 @@ async function syncCryptoJobsListJobs() {
       timestamp: syncStartTime,
     };
   } catch (error) {
-    console.error('[CryptoJobsList Sync] Sync failed:', error.message);
+    console.error('[WeWorkRemotely Sync] Sync failed:', error.message);
     return {
       success: false,
       error: error.message,
@@ -209,5 +184,5 @@ async function syncCryptoJobsListJobs() {
 }
 
 module.exports = {
-  syncCryptoJobsListJobs,
+  syncWeWorkRemotelyJobs,
 };

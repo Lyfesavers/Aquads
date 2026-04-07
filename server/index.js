@@ -45,6 +45,7 @@ const discordService = require('./utils/discordService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
+const { syncWeWorkRemotelyJobs } = require('./services/weworkRemotelySync');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
@@ -491,6 +492,25 @@ setTimeout(async () => {
     console.error('[CryptoJobsList Sync] Error in initial sync:', error);
   }
 }, 30000); // Wait 30 seconds after server start (10s after Remotive)
+
+// Cron job for syncing We Work Remotely RSS (offset from CryptoJobsList)
+cron.schedule('0 4,12,20 * * *', async () => {
+  try {
+    console.log('[WeWorkRemotely Sync] Starting scheduled sync...');
+    await syncWeWorkRemotelyJobs();
+  } catch (error) {
+    console.error('[WeWorkRemotely Sync] Error in scheduled sync:', error);
+  }
+});
+
+setTimeout(async () => {
+  try {
+    console.log('[WeWorkRemotely Sync] Running initial sync on server start...');
+    await syncWeWorkRemotelyJobs();
+  } catch (error) {
+    console.error('[WeWorkRemotely Sync] Error in initial sync:', error);
+  }
+}, 40000); // After CryptoJobsList initial sync
 
 // Middleware
 const corsOptions = {
