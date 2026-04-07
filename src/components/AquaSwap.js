@@ -9,6 +9,7 @@ import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
 import logger from '../utils/logger';
+import { isValidDeepDiveIntroVideoUrl, normalizeDeepDiveVideoUrlCandidate } from '../utils/deepDiveVideoUrl';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
@@ -1723,6 +1724,10 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
   const partnerships = hasProjectDeepDive ? (projectProfile.partnerships || []).filter((item) => item.name) : [];
   const qaNotes = projectProfile?.verification?.qaNotes || '';
   const freshnessText = getFreshnessText(projectProfile?.updatedAt);
+  const deepDiveIntroVideoSrc = useMemo(() => {
+    const v = normalizeDeepDiveVideoUrlCandidate(projectProfile?.introVideoUrl || '');
+    return v && isValidDeepDiveIntroVideoUrl(v) ? v : '';
+  }, [projectProfile?.introVideoUrl]);
 
   // Main AquaSwap interface
   return (
@@ -2534,6 +2539,21 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
                     </a>
                   </div>
                 </div>
+                {deepDiveIntroVideoSrc && (
+                  <div className="project-deep-dive-video-wrap">
+                    <video
+                      className="project-deep-dive-video"
+                      autoPlay
+                      muted
+                      controls
+                      playsInline
+                      preload="auto"
+                      src={deepDiveIntroVideoSrc}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
                 <AboutMarkdown content={projectProfile.about} />
                 {projectProfile.mission && (
                   <p className="project-mission-text">

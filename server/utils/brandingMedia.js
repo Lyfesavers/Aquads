@@ -1,6 +1,14 @@
 /**
- * Shared helpers for custom branding (Telegram + Discord).
- * Video branding is URL-only (HTTPS) — no large blobs in Mongo.
+ * Shared URL helpers for two separate features (do not conflate storage):
+ *
+ * 1) Telegram / Discord branding → Ad.customBrandingVideoUrl
+ *    Validated with isValidBrandingVideoUrl (https only; Telegram/Discord fetch the file).
+ *
+ * 2) AquaSwap project deep dive intro → Ad.projectProfile.introVideoUrl
+ *    Validated with isValidDeepDiveIntroVideoUrl (https + direct .mp4/.webm/.ogg path).
+ *    Stricter so browser <video src> only gets file URLs, not arbitrary pages.
+ *
+ * normalizeBrandingVideoUrlCandidate is shared trimming/HTML-stripping for both.
  */
 
 const MAX_BRANDING_VIDEO_URL_LENGTH = 2048;
@@ -51,9 +59,28 @@ function projectHasCustomBrandingMedia(project) {
   return projectUsesVideoBranding(project) || img;
 }
 
+/**
+ * Deep dive intro video: direct HTTPS file URL only (.mp4 / .webm / .ogg), e.g. files.catbox.moe/….mp4
+ */
+function isValidDeepDiveIntroVideoUrl(text) {
+  const t = normalizeBrandingVideoUrlCandidate(text);
+  if (!t || t.length > MAX_BRANDING_VIDEO_URL_LENGTH) return false;
+  try {
+    const u = new URL(t);
+    if (u.protocol !== 'https:') return false;
+    const host = u.hostname.toLowerCase();
+    if (host === 'localhost' || host.endsWith('.local')) return false;
+    const path = u.pathname.toLowerCase();
+    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(path);
+  } catch {
+    return false;
+  }
+}
+
 module.exports = {
   normalizeBrandingVideoUrlCandidate,
   isValidBrandingVideoUrl,
+  isValidDeepDiveIntroVideoUrl,
   projectUsesVideoBranding,
   projectHasCustomBrandingMedia,
   MAX_BRANDING_VIDEO_URL_LENGTH,

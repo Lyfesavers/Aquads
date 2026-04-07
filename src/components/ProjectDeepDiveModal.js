@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import Modal from './Modal';
+import {
+  isValidDeepDiveIntroVideoUrl,
+  normalizeDeepDiveVideoUrlCandidate,
+  MAX_DEEP_DIVE_VIDEO_URL_LENGTH
+} from '../utils/deepDiveVideoUrl';
 
 const EMPTY_TEAM_MEMBER = { name: '', role: '', bio: '', image: '', xUrl: '', telegramUrl: '' };
 const EMPTY_MILESTONE = { title: '', status: 'planned', date: '', summary: '' };
@@ -20,6 +25,7 @@ const getInitialProfile = (ad) => {
   return {
     about: profile.about || '',
     mission: profile.mission || '',
+    introVideoUrl: profile.introVideoUrl || '',
     recentUpdate: profile.recentUpdate || '',
     verification: {
       status: profile.verification?.status || 'unverified',
@@ -38,6 +44,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [imageValidationErrors, setImageValidationErrors] = useState({});
+  const [introVideoUrlError, setIntroVideoUrlError] = useState('');
 
   const aboutLength = useMemo(() => formData.about.trim().length, [formData.about]);
 
@@ -124,6 +131,11 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
       setError('About Project should be at least 80 characters to show real project context.');
       return;
     }
+    const introTrimmed = normalizeDeepDiveVideoUrlCandidate(formData.introVideoUrl || '');
+    if (introTrimmed && !isValidDeepDiveIntroVideoUrl(introTrimmed)) {
+      setError('Intro video must be a direct https link to a .mp4, .webm, or .ogg file (e.g. catbox → files.catbox.moe/…mp4).');
+      return;
+    }
     if (Object.values(imageValidationErrors).some(Boolean)) {
       setError('Fix invalid image URLs before saving.');
       return;
@@ -132,6 +144,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
     const payload = {
       about: formData.about.trim(),
       mission: formData.mission.trim(),
+      introVideoUrl: introTrimmed,
       recentUpdate: formData.recentUpdate.trim(),
       team: sanitizeList(formData.team, 'name'),
       milestones: sanitizeList(formData.milestones, 'title'),
@@ -199,6 +212,54 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
               maxLength={MAX_MISSION}
             />
             <p className="text-xs text-gray-400 mt-1">{formData.mission.length}/{MAX_MISSION}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">Intro video (optional)</label>
+            <input
+              type="url"
+              inputMode="url"
+              value={formData.introVideoUrl}
+              onChange={(e) => {
+                updateField('introVideoUrl', e.target.value.slice(0, MAX_DEEP_DIVE_VIDEO_URL_LENGTH));
+                setIntroVideoUrlError('');
+              }}
+              onBlur={() => {
+                const t = normalizeDeepDiveVideoUrlCandidate(formData.introVideoUrl);
+                if (!t) {
+                  setIntroVideoUrlError('');
+                  return;
+                }
+                setIntroVideoUrlError(isValidDeepDiveIntroVideoUrl(t) ? '' : 'Use a direct https .mp4 / .webm / .ogg link (e.g. files.catbox.moe/…mp4). Not YouTube.');
+              }}
+              placeholder="https://files.catbox.moe/….mp4"
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              maxLength={MAX_DEEP_DIVE_VIDEO_URL_LENGTH}
+              autoComplete="off"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Direct file URL only — upload to{' '}
+              <a href="https://catbox.moe" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                catbox.moe
+              </a>{' '}
+              and paste the <code className="bg-gray-800 px-1 rounded">files.catbox.moe</code> link. Keeps layout compact on AquaSwap (inline player, user taps play).
+            </p>
+            {introVideoUrlError && <p className="text-xs text-red-400 mt-1">{introVideoUrlError}</p>}
+            {normalizeDeepDiveVideoUrlCandidate(formData.introVideoUrl) &&
+              isValidDeepDiveIntroVideoUrl(formData.introVideoUrl) && (
+                <div className="mt-3 rounded-lg overflow-hidden border border-cyan-500/30 bg-black/40 max-w-xl">
+                  <video
+                    key={normalizeDeepDiveVideoUrlCandidate(formData.introVideoUrl)}
+                    className="w-full max-h-48 object-contain bg-black"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    src={normalizeDeepDiveVideoUrlCandidate(formData.introVideoUrl)}
+                  >
+                    Preview unavailable in this browser.
+                  </video>
+                </div>
+              )}
           </div>
 
           <div>

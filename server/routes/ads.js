@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
 const telegramService = require('../utils/telegramService');
+const { isValidDeepDiveIntroVideoUrl, MAX_BRANDING_VIDEO_URL_LENGTH } = require('../utils/brandingMedia');
 
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
@@ -485,6 +486,25 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
         updateData[field] = updates[field];
       }
     });
+
+    if (updateData.projectProfile && typeof updateData.projectProfile === 'object') {
+      const raw = updateData.projectProfile.introVideoUrl;
+      if (raw !== undefined) {
+        if (typeof raw !== 'string' || raw.length > MAX_BRANDING_VIDEO_URL_LENGTH) {
+          return res.status(400).json({ message: 'Invalid deep dive intro video URL' });
+        }
+        const trimmed = raw.trim();
+        if (trimmed && !isValidDeepDiveIntroVideoUrl(trimmed)) {
+          return res.status(400).json({
+            message: 'Intro video must be a direct https link to a .mp4, .webm, or .ogg file (e.g. files.catbox.moe).'
+          });
+        }
+        updateData.projectProfile = {
+          ...updateData.projectProfile,
+          introVideoUrl: trimmed
+        };
+      }
+    }
     
     // Handle migration: if pairAddress is being updated, remove old contractAddress field
     if (updates.pairAddress !== undefined) {
