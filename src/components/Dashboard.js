@@ -2130,7 +2130,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleSaveProjectDeepDive = async (adId, projectProfile) => {
-    await onEditAd(adId, { projectProfile });
+    await onEditAd(adId, { projectProfile }, { skipSuccessNotification: true });
   };
 
   const handleOpenEditAdModal = (ad) => {
@@ -2147,17 +2147,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const handleApproveDeepDiveSubmission = async (ad) => {
     try {
       const profile = ad.projectProfile || {};
-      await onEditAd(ad.id, {
-        projectProfile: {
-          ...profile,
-          verification: {
-            ...(profile.verification || {}),
-            status: 'verified',
-            verifiedBy: currentUser?.username || '',
-            verifiedAt: new Date().toISOString()
+      await onEditAd(
+        ad.id,
+        {
+          projectProfile: {
+            ...profile,
+            verification: {
+              ...(profile.verification || {}),
+              status: 'verified',
+              verifiedBy: currentUser?.username || '',
+              verifiedAt: new Date().toISOString()
+            }
           }
-        }
-      });
+        },
+        { skipSuccessNotification: true }
+      );
       showNotification('Deep dive submission approved', 'success');
     } catch (error) {
       showNotification('Failed to approve deep dive submission', 'error');
@@ -2168,18 +2172,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     const reason = window.prompt('Enter a rejection note for the project team (optional):', '') || '';
     try {
       const profile = ad.projectProfile || {};
-      await onEditAd(ad.id, {
-        projectProfile: {
-          ...profile,
-          verification: {
-            ...(profile.verification || {}),
-            status: 'rejected',
-            qaNotes: reason.trim(),
-            verifiedBy: currentUser?.username || '',
-            verifiedAt: new Date().toISOString()
+      await onEditAd(
+        ad.id,
+        {
+          projectProfile: {
+            ...profile,
+            verification: {
+              ...(profile.verification || {}),
+              status: 'rejected',
+              qaNotes: reason.trim(),
+              verifiedBy: currentUser?.username || '',
+              verifiedAt: new Date().toISOString()
+            }
           }
-        }
-      });
+        },
+        { skipSuccessNotification: true }
+      );
       showNotification('Deep dive submission rejected', 'success');
     } catch (error) {
       showNotification('Failed to reject deep dive submission', 'error');

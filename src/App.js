@@ -1573,7 +1573,8 @@ function App() {
     }
   };
 
-  const handleEditAd = async (adIdOrAd, editedData) => {
+  const handleEditAd = async (adIdOrAd, editedData, options = {}) => {
+    const { skipSuccessNotification = false } = options;
     try {
       // Handle case where first parameter is the entire ad object
       let adId, updatedFields;
@@ -1607,7 +1608,9 @@ function App() {
       });
       setShowEditModal(false);
       setAdToEdit(null);
-      showNotification('Ad updated successfully!', 'success');
+      if (!skipSuccessNotification) {
+        showNotification('Ad updated successfully!', 'success');
+      }
     } catch (error) {
       logger.error('Error updating ad:', error);
       showNotification('Failed to update ad. Please try again.', 'error');

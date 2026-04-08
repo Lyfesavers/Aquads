@@ -45,6 +45,12 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
   const [error, setError] = useState('');
   const [imageValidationErrors, setImageValidationErrors] = useState({});
   const [introVideoUrlError, setIntroVideoUrlError] = useState('');
+  const [showSavedOverlay, setShowSavedOverlay] = useState(false);
+
+  // Clear success overlay only when switching to a different ad (not when profile updates after save)
+  useEffect(() => {
+    setShowSavedOverlay(false);
+  }, [ad?.id]);
 
   // Re-sync when parent `ads` updates after save or socket (useState initializer only runs once per mount)
   useEffect(() => {
@@ -169,7 +175,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
     setIsSubmitting(true);
     try {
       await onSave(ad.id, payload);
-      onClose();
+      setShowSavedOverlay(true);
     } catch (submitError) {
       setError('Failed to save project profile. Please try again.');
     } finally {
@@ -177,9 +183,14 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
     }
   };
 
+  const dismissSavedAndClose = () => {
+    setShowSavedOverlay(false);
+    onClose();
+  };
+
   return (
-    <Modal onClose={onClose} fullScreen={true}>
-      <div className="text-white max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-2">
+    <Modal onClose={showSavedOverlay ? dismissSavedAndClose : onClose} fullScreen={true}>
+      <div className="text-white max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-2 relative">
         <h2 className="text-2xl font-bold mb-2">Project Deep Dive</h2>
         <p className="text-sm text-gray-400 mb-5">
           Update the data shown on AquaSwap charts for <span className="text-cyan-300">{ad?.title}</span>.
@@ -419,6 +430,42 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
             </button>
           </div>
         </form>
+
+        {showSavedOverlay && (
+          <div
+            className="fixed inset-0 z-[100000] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="deep-dive-saved-title"
+          >
+            <div className="w-full max-w-md rounded-2xl border border-cyan-500/35 bg-gradient-to-b from-slate-900/98 to-gray-950 shadow-2xl shadow-cyan-500/10 px-6 py-8 sm:px-8 text-center">
+              <img
+                src="/Aquadsnewlogo.png"
+                alt=""
+                className="h-14 w-auto mx-auto mb-5 object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]"
+                width="120"
+                height="56"
+              />
+              <h3 id="deep-dive-saved-title" className="text-xl sm:text-2xl font-bold text-white mb-2">
+                Deep dive saved
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed mb-6">
+                Your changes can take <span className="text-cyan-300 font-semibold">up to 30 minutes</span> to show
+                everywhere—AquaSwap, charts, and your dashboard. Please check back later.
+              </p>
+              <p className="text-xs text-gray-500 mb-6">
+                Still not updated after that? Try a hard refresh (Ctrl+Shift+R) or clear this site&apos;s cache.
+              </p>
+              <button
+                type="button"
+                onClick={dismissSavedAndClose}
+                className="w-full sm:w-auto min-w-[200px] px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-semibold shadow-lg shadow-cyan-500/25 transition-all"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );
