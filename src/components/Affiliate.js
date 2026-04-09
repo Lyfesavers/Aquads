@@ -254,7 +254,7 @@ const Affiliate = () => {
                           <span className="text-indigo-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
-                          <span className="text-gray-300">Every swap on AquaSwap</span>
+                          <span className="text-gray-300">Every qualifying swap on AquaSwap (min. $5 USD)</span>
                           <span className="text-green-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">

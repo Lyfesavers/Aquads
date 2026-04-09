@@ -15,6 +15,7 @@ This lightweight browser extension provides quick access to AquaSwap's powerful 
 
 - ✅ **Instant Access**: Click extension icon to open swap interface anywhere
 - ✅ **Cross-Chain Swaps**: Swap between 50+ blockchain networks
+- ✅ **Aquads points**: When logged into Aquads, each **qualifying** completed swap earns 5 points. **Minimum swap notional: $5 USD** (From-side USD equivalent per the quote—see aquads.xyz documentation).
 - ✅ **Best Rates**: Optimal pricing across multiple chains
 - ✅ **Lightweight**: Only ~500KB - loads your existing embed
 - ✅ **Secure**: No sensitive data stored locally

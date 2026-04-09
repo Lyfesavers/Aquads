@@ -1919,7 +1919,7 @@ const CarouselCard = ({ feature, index }) => {
                     
                     {/* Points Earned */}
                     <div className="mt-2 text-center">
-                      <div className="text-xs text-teal-400 font-semibold">💰 Earn 5 Points Per Swap</div>
+                      <div className="text-xs text-teal-400 font-semibold">💰 Earn 5 Points Per Qualifying Swap (min. $5 USD)</div>
                     </div>
                   </div>
                   

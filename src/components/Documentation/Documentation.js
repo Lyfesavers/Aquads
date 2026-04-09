@@ -1752,6 +1752,12 @@ Navigate to AquaSwap by:
 | **Token Search** | Find any token by name or address |
 | **Price Charts** | View token price history |
 
+### Earning points on AquaSwap
+
+If you are **logged into Aquads** while completing a swap on AquaSwap (website or Chrome extension), you can earn **5 affiliate points** per **qualifying** completed swap.
+
+**Minimum swap amount:** **$5 USD** — the amount you send on the **From** side must have a notional value of at least five US dollars (**USD equivalent** as shown in the swap quote, regardless of which token you swap). Swaps below this minimum do not earn points.
+
 ### Supported Chains
 
 | Chain | Status | Native Token |
@@ -3507,7 +3513,7 @@ Whenever someone who signed up with your referral code **earns points** anywhere
 
 **When you earn the bonus:**
 - They complete a raid (Twitter/Facebook)
-- They complete a swap, vote on a bubble, or earn workshop/achievement points
+- They complete a qualifying AquaSwap swap (min. $5 USD notional), vote on a bubble, or earn workshop/achievement points
 - They vote on a game, leave a service review, or earn daily Telegram engagement points
 - They win in horse racing, or earn any other positive points in the ecosystem
 
@@ -4547,6 +4553,7 @@ For Bitcoin and TRON, users can copy addresses or scan QR codes for manual trans
 ### 5.2. AquaSwap Trading Fees
 
 - 0.5% fee on all token swaps and trading activities within the AquaSwap platform.
+- **Points eligibility:** affiliate points for swaps require a **minimum notional size of $5 USD** (From-side USD equivalent per the quote), in addition to being logged in. See the **AquaSwap** doc page for details.
 - Revenue generated from DeFi trading activities and cross-chain token exchanges.
 
 ### 5.3. AquaPay Transaction Fees

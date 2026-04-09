@@ -1930,7 +1930,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               </div>
               <div className="swap-footer">
                 <p>✨ Cross-chain swaps • 50+ blockchains • Best rates</p>
-                <p className="swap-points-note">🎯 Earn 5 points for every swap!</p>
+                <p className="swap-points-note">🎯 Earn 5 points per qualifying swap (minimum $5 USD notional).</p>
               </div>
               
               {/* Banner Display - smaller version below swap for desktop/tablet only */}

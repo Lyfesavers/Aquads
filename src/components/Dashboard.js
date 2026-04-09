@@ -3620,7 +3620,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
                       <p>• Earn 5 points for sending a message in our Telegram group (once per day)</p>
                       <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
-                      <p>• Earn 5 points for every swap completed on AquaSwap</p>
+                      <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
