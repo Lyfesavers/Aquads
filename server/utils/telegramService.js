@@ -1,6 +1,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
@@ -102,6 +103,43 @@ async function telegramSendCustomBrandingMedia(botToken, chatId, { videoUrl, ima
     });
   }
   return null;
+}
+
+/** Escape user-controlled strings for Telegram HTML parse mode. */
+function escapeTelegramHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** Strip @BotUsername suffix from command (e.g. /mybubble@aquadsbumpbot → /mybubble). */
+function normalizeTelegramCommandText(text) {
+  if (!text || typeof text !== 'string') return '';
+  const trimmed = text.trim();
+  const sp = trimmed.indexOf(' ');
+  const first = sp === -1 ? trimmed : trimmed.slice(0, sp);
+  const rest = sp === -1 ? '' : trimmed.slice(sp);
+  const normalizedFirst = first.replace(/^(\/\w+)(@[\w]+)?$/i, (_, cmd) => cmd);
+  return (normalizedFirst + rest).trim();
+}
+
+/** Telegram Bot API: only chat creator can configure project ↔ group link. */
+async function isTelegramChatCreator(chatId, telegramUserId) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+  try {
+    const res = await axios.get(`https://api.telegram.org/bot${botToken}/getChatMember`, {
+      params: { chat_id: chatId, user_id: telegramUserId },
+      timeout: 10000,
+    });
+    if (!res.data?.ok || !res.data.result) return false;
+    return res.data.result.status === 'creator';
+  } catch (e) {
+    console.error('getChatMember (creator check) failed:', e.message);
+    return false;
+  }
 }
 
 // HyperSpace promo: X Space Trender – shown on bot messages via inline button
@@ -714,7 +752,7 @@ const telegramService = {
   // Handle incoming commands
   handleCommand: async (message) => {
     const chatId = message.chat.id;
-    const text = message.text.trim();
+    const text = normalizeTelegramCommandText(message.text || '');
     const userId = message.from.id;
     const username = message.from.username;
     const chatType = message.chat.type;
@@ -780,6 +818,12 @@ const telegramService = {
       return;
     } else if (text.startsWith('/raidout')) {
       await telegramService.handleRaidOutCommand(chatId, userId, chatType);
+      return;
+    } else if (text.startsWith('/linkproject')) {
+      await telegramService.handleLinkProjectCommand(chatId, userId, chatType);
+      return;
+    } else if (text.startsWith('/unlinkproject')) {
+      await telegramService.handleUnlinkProjectCommand(chatId, userId, chatType);
       return;
     }
 
@@ -1689,20 +1733,22 @@ https://aquads.xyz`;
     }
   },
 
-  // Send message to user
-  sendBotMessage: async (chatId, message) => {
+  // Send message to user (optional { parseMode: 'HTML' | 'Markdown' })
+  sendBotMessage: async (chatId, message, opts = {}) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
     if (!botToken) return { success: false };
 
     try {
+      const body = {
+        chat_id: chatId,
+        text: message,
+        reply_markup: defaultPromoInlineKeyboard(),
+      };
+      if (opts.parseMode) body.parse_mode = opts.parseMode;
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
-        {
-          chat_id: chatId,
-          text: message,
-          reply_markup: defaultPromoInlineKeyboard()
-        }
+        body
       );
 
       if (response.data.ok) {
@@ -2326,8 +2372,8 @@ ${platformEmoji} ${platformName} Raid
     }
   },
 
-  // Send message with inline keyboard
-  sendBotMessageWithKeyboard: async (chatId, message, keyboard) => {
+  // Send message with inline keyboard (optional 4th arg { parseMode: 'HTML' })
+  sendBotMessageWithKeyboard: async (chatId, message, keyboard, opts = {}) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
     if (!botToken) return false;
@@ -2337,6 +2383,7 @@ ${platformEmoji} ${platformName} Raid
         chat_id: chatId,
         text: message,
       };
+      if (opts.parseMode) payload.parse_mode = opts.parseMode;
 
       // Add "Hire an Expert" and "X Space Trender" (HyperSpace) to the keyboard
       if (keyboard) {
@@ -2454,6 +2501,10 @@ ${platformEmoji} ${platformName} Raid
             await telegramService.editHelpAll(chatId, messageId);
             break;
         }
+      }
+      else if (callbackQuery.data.startsWith('linkproj_')) {
+        const adId = callbackQuery.data.slice('linkproj_'.length);
+        await telegramService.handleLinkProjectCallback(chatId, userId, messageId, adId);
       }
       // Check if it's a vote callback
       else if (callbackQuery.data.startsWith('vote_')) {
@@ -4000,180 +4051,353 @@ Tap to update:`;
     }
   },
 
+  sendSingleMyBubbleProjectToChat: async (chatId, project) => {
+    const allBubbles = await Ad.find({
+      isBumped: true,
+      status: { $in: ['active', 'approved'] },
+    })
+      .sort({ bullishVotes: -1 })
+      .select('_id bullishVotes');
 
+    const projectRank = allBubbles.findIndex((bubble) => bubble._id.toString() === project._id.toString()) + 1;
+    const rankEmoji = projectRank === 1 ? '🥇' : projectRank === 2 ? '🥈' : projectRank === 3 ? '🥉' : '🔸';
 
-  // Handle /mybubble command
-  handleMyBubbleCommand: async (chatId, telegramUserId) => {
+    let message = `🚀 Your Project: ${project.title}\n\n`;
+    message += `🏆 Rank: ${rankEmoji} #${projectRank}\n`;
+    message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
+    message += `🔗 URL: ${project.url}\n`;
+    message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
+    message += `💡 Share this message to get votes on your project!\n\n`;
+    message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
+
+    const tokenAddress = project.pairAddress || project.contractAddress;
+    const viewOnAquadsUrl =
+      tokenAddress && project.blockchain
+        ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&name=${encodeURIComponent(project.title || '')}&token=${encodeURIComponent(tokenAddress.trim())}`
+        : 'https://www.aquads.xyz/aquaswap';
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: '👍 Bullish', callback_data: 'vote_bullish_' + project._id.toString() },
+          { text: '👎 Bearish', callback_data: 'vote_bearish_' + project._id.toString() },
+        ],
+        [{ text: '🔗 View on Aquads', url: viewOnAquadsUrl }],
+      ],
+    };
+
+    const hasCustomBranding = projectHasCustomBrandingMedia(project);
+    const brandingVideoUrl = projectUsesVideoBranding(project) ? project.customBrandingVideoUrl.trim() : null;
+    const brandingImageBuffer =
+      !brandingVideoUrl && project.customBrandingImage
+        ? (() => {
+            const b64 = project.customBrandingImage.split(',')[1];
+            return b64 ? Buffer.from(b64, 'base64') : null;
+          })()
+        : null;
+
+    const videoPath = path.join(__dirname, '../../public/vote now .mp4');
+    const videoExists = fs.existsSync(videoPath);
+
     try {
-      // Check if user is linked
-      const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      
-      if (!user) {
-        const linkMsg = "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz";
-        await telegramService.sendBotMessage(chatId < 0 ? telegramUserId : chatId, linkMsg);
-        return;
-      }
+      if (hasCustomBranding && (brandingVideoUrl || brandingImageBuffer)) {
+        const response = await telegramSendCustomBrandingMedia(
+          process.env.TELEGRAM_BOT_TOKEN,
+          chatId,
+          { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
+          { caption: message, keyboard }
+        );
 
-      // Find user's projects (bubbles)
-      const userProjects = await Ad.find({ 
-        owner: user.username,
-        status: { $in: ['active', 'approved'] }
-      })
-      .sort({ createdAt: -1 })
-      .limit(5); // Show up to 5 most recent projects
-
-      if (userProjects.length === 0) {
-        await telegramService.sendBotMessage(chatId, 
-          `📭 No projects found for ${user.username}.\n\n🌐 Create projects on: https://aquads.xyz`);
-        return;
-      }
-
-      // Link group ID to user account if this is a group chat (negative chat IDs are groups)
-      if (chatId < 0) {
-        const groupIdStr = chatId.toString();
-        // Store the group ID on user account if not already set or different
-        if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
-          user.telegramGroupId = groupIdStr;
-          await user.save();
-          console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
-        }
-      }
-
-      // Send each project with voting buttons
-      for (const project of userProjects) {
-        // Store the group ID if this is a group chat (negative chat IDs are groups)
-        if (chatId < 0 && (!project.telegramGroupId || project.telegramGroupId !== chatId.toString())) {
-          project.telegramGroupId = chatId.toString();
-          await project.save();
-        }
-        // Get project rank based on bullish votes
-        const allBubbles = await Ad.find({ 
-          isBumped: true,
-          status: { $in: ['active', 'approved'] }
-        })
-        .sort({ bullishVotes: -1 })
-        .select('_id bullishVotes');
-        
-        const projectRank = allBubbles.findIndex(bubble => bubble._id.toString() === project._id.toString()) + 1;
-        const rankEmoji = projectRank === 1 ? '🥇' : projectRank === 2 ? '🥈' : projectRank === 3 ? '🥉' : '🔸';
-        
-        let message = `🚀 Your Project: ${project.title}\n\n`;
-        message += `🏆 Rank: ${rankEmoji} #${projectRank}\n`;
-        message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
-        message += `🔗 URL: ${project.url}\n`;
-        message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
-        message += `💡 Share this message to get votes on your project!\n\n`;
-        message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
-
-        // Build View on Aquads URL - link to AquaSwap with token in charts
-        const tokenAddress = project.pairAddress || project.contractAddress;
-        const viewOnAquadsUrl = (tokenAddress && project.blockchain)
-          ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&name=${encodeURIComponent(project.title || '')}&token=${encodeURIComponent(tokenAddress.trim())}`
-          : 'https://www.aquads.xyz/aquaswap';
-
-        // Create voting keyboard (simplified)
-        const keyboard = {
-          inline_keyboard: [
-            [
-              { text: "👍 Bullish", callback_data: "vote_bullish_" + project._id.toString() },
-              { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
-            ],
-            [
-              { text: "🔗 View on Aquads", url: viewOnAquadsUrl }
-            ]
-          ]
-        };
-
-        // Check if project has custom branding (image or HTTPS video URL)
-        const hasCustomBranding = projectHasCustomBrandingMedia(project);
-        const brandingVideoUrl = projectUsesVideoBranding(project) ? project.customBrandingVideoUrl.trim() : null;
-        const brandingImageBuffer = !brandingVideoUrl && project.customBrandingImage
-          ? (() => {
-              const b64 = project.customBrandingImage.split(',')[1];
-              return b64 ? Buffer.from(b64, 'base64') : null;
-            })()
-          : null;
-        
-        // Send with custom branding or default video
-        const videoPath = path.join(__dirname, '../../public/vote now .mp4');
-        const videoExists = fs.existsSync(videoPath);
-        
-        try {
-          if (hasCustomBranding && (brandingVideoUrl || brandingImageBuffer)) {
-            const response = await telegramSendCustomBrandingMedia(
-              process.env.TELEGRAM_BOT_TOKEN,
-              chatId,
-              { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
-              { caption: message, keyboard }
-            );
-
-            if (!response || !response.data.ok) {
-              await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
-            }
-          } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
-            // Send default video with caption and keyboard (use cached file_id if available)
-            let response;
-            const botToken = process.env.TELEGRAM_BOT_TOKEN;
-            
-            if (telegramService.cachedVideoFileIds.vote) {
-              // Use cached file_id (much faster)
-              response = await axios.post(
-                `https://api.telegram.org/bot${botToken}/sendVideo`,
-                {
-                  chat_id: chatId,
-                  video: telegramService.cachedVideoFileIds.vote,
-                  caption: message,
-                  reply_markup: keyboard
-                },
-                { timeout: 15000 }
-              );
-            } else {
-              // First time - upload the video file
-              const formData = new FormData();
-              formData.append('chat_id', chatId);
-              formData.append('video', fs.createReadStream(videoPath));
-              formData.append('caption', message);
-              formData.append('reply_markup', JSON.stringify(keyboard));
-
-              response = await axios.post(
-                `https://api.telegram.org/bot${botToken}/sendVideo`,
-                formData,
-                {
-                  headers: {
-                    ...formData.getHeaders(),
-                  },
-                  timeout: 60000, // Increased timeout for first upload
-                }
-              );
-              
-              // Cache the file_id for future use
-              if (response.data.ok && response.data.result.video) {
-                telegramService.cachedVideoFileIds.vote = response.data.result.video.file_id;
-                console.log('📹 Cached vote video file_id for faster future sends');
-              }
-            }
-
-            if (!response.data.ok) {
-              // Fallback to text message if video fails
-              await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
-            }
-          } else {
-            // Send text message without video
-            await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
-          }
-        } catch (error) {
-          console.error('Failed to send media, falling back to text:', error.message);
-          // Fallback to text message
+        if (!response || !response.data.ok) {
           await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
         }
+      } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
+        let response;
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+        if (telegramService.cachedVideoFileIds.vote) {
+          response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendVideo`,
+            {
+              chat_id: chatId,
+              video: telegramService.cachedVideoFileIds.vote,
+              caption: message,
+              reply_markup: keyboard,
+            },
+            { timeout: 15000 }
+          );
+        } else {
+          const formData = new FormData();
+          formData.append('chat_id', chatId);
+          formData.append('video', fs.createReadStream(videoPath));
+          formData.append('caption', message);
+          formData.append('reply_markup', JSON.stringify(keyboard));
+
+          response = await axios.post(`https://api.telegram.org/bot${botToken}/sendVideo`, formData, {
+            headers: formData.getHeaders(),
+            timeout: 60000,
+          });
+
+          if (response.data.ok && response.data.result.video) {
+            telegramService.cachedVideoFileIds.vote = response.data.result.video.file_id;
+            console.log('📹 Cached vote video file_id for faster future sends');
+          }
+        }
+
+        if (!response.data.ok) {
+          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+        }
+      } else {
+        await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+      }
+    } catch (error) {
+      console.error('Failed to send media, falling back to text:', error.message);
+      await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+    }
+  },
+
+  handleLinkProjectCommand: async (chatId, telegramUserId, chatType) => {
+    const html = { parseMode: 'HTML' };
+    if (chatType !== 'group' && chatType !== 'supergroup') {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ Use <b>/linkproject</b> in your Telegram <b>group</b> or <b>supergroup</b> (not in private chat).\n\n💡 Add the bot to the group, then run the command there.',
+        html
+      );
+      return;
+    }
+    const creator = await isTelegramChatCreator(chatId, telegramUserId);
+    if (!creator) {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ Only the <b>group creator</b> can link a project to this chat.\n\n💡 The person who created this group must run <code>/linkproject</code> after <code>/link your_username</code> in DM.',
+        html
+      );
+      return;
+    }
+    const user = await User.findOne({ telegramId: telegramUserId.toString() });
+    if (!user) {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ Link your Aquads account first in DM: <code>/link your_username</code>\n\n🌐 https://aquads.xyz',
+        html
+      );
+      return;
+    }
+    const groupIdStr = chatId.toString();
+    const existingForChat = await Ad.findOne({
+      telegramGroupId: groupIdStr,
+      status: { $in: ['active', 'approved'] },
+    });
+    if (existingForChat) {
+      await telegramService.sendBotMessage(
+        chatId,
+        `❌ This group is already linked to a project: <b>${escapeTelegramHtml(existingForChat.title)}</b>.\n\n` +
+          'The group creator (and Aquads project owner) must run <code>/unlinkproject</code> in this group first, then link again.',
+        html
+      );
+      return;
+    }
+    const userProjects = await Ad.find({
+      owner: user.username,
+      status: { $in: ['active', 'approved'] },
+    })
+      .sort({ createdAt: -1 })
+      .limit(10);
+    if (userProjects.length === 0) {
+      await telegramService.sendBotMessage(
+        chatId,
+        `📭 No projects found for <b>${escapeTelegramHtml(user.username)}</b>.\n\n🌐 Create a listing on https://aquads.xyz`,
+        html
+      );
+      return;
+    }
+    const rows = userProjects.map((p) => [
+      {
+        text: `🔗 ${p.title.length > 40 ? p.title.slice(0, 37) + '…' : p.title}`,
+        callback_data: 'linkproj_' + p._id.toString(),
+      },
+    ]);
+    await telegramService.sendBotMessageWithKeyboard(
+      chatId,
+      '✅ <b>Link a project to this group</b>\n\nTap your project below. This chat will receive scheduled <code>/mybubble</code> posts and vote notifications for that bubble.\n\n⚠️ One project per group. Use <code>/unlinkproject</code> here to change later.',
+      { inline_keyboard: rows },
+      html
+    );
+  },
+
+  handleUnlinkProjectCommand: async (chatId, telegramUserId, chatType) => {
+    const html = { parseMode: 'HTML' };
+    if (chatType !== 'group' && chatType !== 'supergroup') {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ Use <b>/unlinkproject</b> in the Telegram <b>group</b> where the project is linked.',
+        html
+      );
+      return;
+    }
+    const creator = await isTelegramChatCreator(chatId, telegramUserId);
+    if (!creator) {
+      await telegramService.sendBotMessage(chatId, '❌ Only the <b>group creator</b> can unlink a project from this chat.', html);
+      return;
+    }
+    const user = await User.findOne({ telegramId: telegramUserId.toString() });
+    if (!user) {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ Link your Aquads account first: <code>/link your_username</code>\n\n🌐 https://aquads.xyz',
+        html
+      );
+      return;
+    }
+    const groupIdStr = chatId.toString();
+    const linked = await Ad.findOne({
+      telegramGroupId: groupIdStr,
+      owner: user.username,
+      status: { $in: ['active', 'approved'] },
+    });
+    if (!linked) {
+      await telegramService.sendBotMessage(
+        chatId,
+        '❌ No project <b>you own</b> is linked to this group.\n\n💡 Run <code>/linkproject</code> here to choose a bubble, or use <code>/unlinkproject</code> in the correct group.',
+        html
+      );
+      return;
+    }
+    linked.telegramGroupId = null;
+    await linked.save();
+    if (user.telegramGroupId === groupIdStr) {
+      user.telegramGroupId = null;
+      await user.save();
+    }
+    await telegramService.sendBotMessage(
+      chatId,
+      `✅ Unlinked <b>${escapeTelegramHtml(linked.title)}</b> from this group.\n\nYou can run <code>/linkproject</code> to attach a different project.`,
+      html
+    );
+  },
+
+  handleLinkProjectCallback: async (chatId, telegramUserId, messageId, adId) => {
+    const html = { parseMode: 'HTML' };
+    try {
+      if (!mongoose.Types.ObjectId.isValid(adId)) {
+        await telegramService.sendBotMessage(chatId, '❌ Invalid project selection.');
+        return;
+      }
+      const isGroup = chatId < 0;
+      if (!isGroup) {
+        await telegramService.sendBotMessage(chatId, '❌ Linking must be done from a group.');
+        return;
+      }
+      const creator = await isTelegramChatCreator(chatId, telegramUserId);
+      if (!creator) {
+        await telegramService.sendBotMessage(chatId, '❌ Only the group creator can confirm linking.');
+        return;
+      }
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, '❌ Link your Aquads account first.');
+        return;
+      }
+      const groupIdStr = chatId.toString();
+      const ad = await Ad.findOne({
+        _id: adId,
+        owner: user.username,
+        status: { $in: ['active', 'approved'] },
+      });
+      if (!ad) {
+        await telegramService.sendBotMessage(chatId, '❌ Project not found or not owned by your linked account.');
+        return;
+      }
+      const existingForChat = await Ad.findOne({
+        telegramGroupId: groupIdStr,
+        status: { $in: ['active', 'approved'] },
+      });
+      if (existingForChat && existingForChat._id.toString() !== ad._id.toString()) {
+        await telegramService.sendBotMessage(
+          chatId,
+          '❌ This group is already linked to another project. Run <code>/unlinkproject</code> first.',
+          html
+        );
+        return;
+      }
+      if (ad.telegramGroupId && ad.telegramGroupId !== groupIdStr) {
+        await telegramService.sendBotMessage(
+          chatId,
+          `❌ <b>${escapeTelegramHtml(ad.title)}</b> is linked to another group. Unlink it there with <code>/unlinkproject</code> in that chat first.`,
+          html
+        );
+        return;
+      }
+      ad.telegramGroupId = groupIdStr;
+      await ad.save();
+      user.telegramGroupId = groupIdStr;
+      await user.save();
+      await telegramService.editMessageWithKeyboard(
+        chatId,
+        messageId,
+        `✅ Linked <b>${escapeTelegramHtml(ad.title)}</b> to this group.\n\nScheduled bubble posts (9 AM / 9 PM EST) and vote alerts will use this chat.`,
+        { inline_keyboard: [] }
+      );
+    } catch (e) {
+      console.error('handleLinkProjectCallback error:', e);
+      await telegramService.sendBotMessage(chatId, '❌ Could not complete linking. Try again.');
+    }
+  },
+
+  // Handle /mybubble — groups: project linked via /linkproject only. DMs: your projects (no group link writes).
+  handleMyBubbleCommand: async (chatId, telegramUserId) => {
+    try {
+      const isGroupChat = chatId < 0;
+
+      if (isGroupChat) {
+        const groupIdStr = chatId.toString();
+        const linkedAd = await Ad.findOne({
+          telegramGroupId: groupIdStr,
+          status: { $in: ['active', 'approved'] },
+        });
+        if (!linkedAd) {
+          await telegramService.sendBotMessage(
+            chatId,
+            '📭 <b>No project is linked to this group yet.</b>\n\n' +
+              'The <b>group creator</b> should:\n' +
+              '1. <code>/link your_username</code> in DM with the bot\n' +
+              '2. Run <code>/linkproject</code> <b>in this group</b> and pick a bubble\n\n' +
+              '💡 Use <code>/unlinkproject</code> here to remove or change the linked project.',
+            { parseMode: 'HTML' }
+          );
+          return;
+        }
+        await telegramService.sendSingleMyBubbleProjectToChat(chatId, linkedAd);
+        return;
       }
 
-
-
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        const linkMsg =
+          '❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz';
+        await telegramService.sendBotMessage(chatId, linkMsg);
+        return;
+      }
+      const userProjects = await Ad.find({
+        owner: user.username,
+        status: { $in: ['active', 'approved'] },
+      })
+        .sort({ createdAt: -1 })
+        .limit(5);
+      if (userProjects.length === 0) {
+        await telegramService.sendBotMessage(
+          chatId,
+          `📭 No projects found for ${user.username}.\n\n🌐 Create projects on: https://aquads.xyz`
+        );
+        return;
+      }
+      for (const project of userProjects) {
+        await telegramService.sendSingleMyBubbleProjectToChat(chatId, project);
+      }
     } catch (error) {
       console.error('MyBubble command error:', error);
-      await telegramService.sendBotMessage(chatId, 
-        "❌ Error fetching your projects. Please try again later.");
+      await telegramService.sendBotMessage(chatId, '❌ Error fetching your projects. Please try again later.');
     }
   },
 
@@ -6121,9 +6345,8 @@ Thanks! 🙏✨`;
     }
   },
 
-  // Send mybubble messages to every registered group twice daily.
-  // A group becomes "registered" the first time any user runs /mybubble in it,
-  // which writes the group chatId to project.telegramGroupId and user.telegramGroupId.
+  // Send mybubble messages to every registered group twice daily (9 AM / 9 PM EST).
+  // Groups are registered when the group creator links a project via /linkproject.
   sendScheduledMyBubbleToRegisteredGroups: async () => {
     try {
       console.log('[Scheduled MyBubble] Starting scheduled mybubble send to registered groups...');

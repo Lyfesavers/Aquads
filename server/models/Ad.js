@@ -156,6 +156,15 @@ const adSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Discord: text channel where this project is linked for /mybubble + vote mirror (guild + channel)
+  discordChannelId: {
+    type: String,
+    default: null
+  },
+  discordGuildId: {
+    type: String,
+    default: null
+  },
   // Custom branding image for Telegram notifications (base64 encoded)
   customBrandingImage: {
     type: String,
@@ -236,7 +245,7 @@ adSchema.index({ owner: 1, isBumped: 1, status: 1 });
 adSchema.index({ pairAddress: 1 }); // For pair address lookups
 adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
 adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
-
+adSchema.index({ discordChannelId: 1 }, { sparse: true });
 
 // Fix the double export
 module.exports = mongoose.model('Ad', adSchema); 

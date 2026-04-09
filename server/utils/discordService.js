@@ -20,9 +20,12 @@ const {
   TextInputStyle,
   PermissionFlagsBits,
   MessageFlags,
-  Partials
+  Partials,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder
 } = require('discord.js');
 const axios = require('axios');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { getCombinedLeaderboard, rankEmoji } = require('./leaderboardService');
 const TwitterRaid = require('../models/TwitterRaid');
@@ -162,7 +165,9 @@ function getSlashCommands() {
       .addStringOption(o => o.setName('post_url').setDescription('Tweet or post URL').setRequired(true)),
     new SlashCommandBuilder().setName('bubbles').setDescription('Top 10 bumped bubbles'),
     new SlashCommandBuilder().setName('leaders').setDescription('Top 15 by USDC earnings (commission + gift redeem), then points'),
-    new SlashCommandBuilder().setName('mybubble').setDescription('Your project bubbles with vote buttons'),
+    new SlashCommandBuilder().setName('mybubble').setDescription('Show the bubble linked to this channel, or your projects in DM'),
+    new SlashCommandBuilder().setName('linkproject').setDescription('Link your Aquads project to this channel (server owner only)'),
+    new SlashCommandBuilder().setName('unlinkproject').setDescription('Unlink project from this channel (server owner only)'),
     new SlashCommandBuilder().setName('createraid').setDescription('Create a Twitter raid')
       .addStringOption(o => o.setName('tweet_url').setDescription('Tweet URL').setRequired(true)),
     new SlashCommandBuilder().setName('cancelraid').setDescription('Cancel a raid you created')
@@ -509,7 +514,223 @@ async function handleBubbles(interaction) {
   return interaction.reply({ embeds: [embed], files, flags: MessageFlags.Ephemeral });
 }
 
+function isDiscordGuildOwner(interaction) {
+  const guild = interaction.guild;
+  if (!guild || !interaction.user) return false;
+  return guild.ownerId === interaction.user.id;
+}
+
+/** One bubble card + vote row + link row (shared by /mybubble, scheduled posts). */
+async function buildDiscordMyBubbleSingleProjectPayload(project) {
+  const allBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
+    .sort({ bullishVotes: -1 })
+    .select('_id bullishVotes')
+    .lean();
+  const rank = allBubbles.findIndex((b) => b._id.toString() === project._id.toString()) + 1;
+  const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
+  const tokenAddress = project.pairAddress || project.contractAddress;
+  const viewUrl =
+    tokenAddress && project.blockchain
+      ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&token=${encodeURIComponent(tokenAddress.trim())}`
+      : 'https://www.aquads.xyz/aquaswap';
+  const embed = new EmbedBuilder()
+    .setTitle(`🚀 ${project.title}`)
+    .setDescription(
+      `🏆 Rank: ${rankEmoji} #${rank}\n` +
+        `📊 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n` +
+        `🔗 ${project.url || 'N/A'}\n` +
+        `⛓️ ${project.blockchain || 'Ethereum'}`
+    )
+    .setColor(0x00bfff)
+    .setURL(viewUrl);
+  const projectId = project._id.toString();
+  const components = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`vote_bullish_${projectId}`).setLabel('👍 Bullish').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`vote_bearish_${projectId}`).setLabel('👎 Bearish').setStyle(ButtonStyle.Danger)
+    ),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('View on Aquads').setStyle(ButtonStyle.Link).setURL(viewUrl)
+    ),
+  ];
+  let files = await buildDiscordBrandingFiles(project);
+  if (files.length === 0 && fs.existsSync(VIDEO_MYBUBBLE)) files = [VIDEO_MYBUBBLE];
+  else if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) files = [VIDEO_VOTE];
+  return { embeds: [embed], components, files };
+}
+
+async function handleLinkProjectSlash(interaction) {
+  if (!interaction.guildId || !interaction.channelId) {
+    return reply(interaction, '❌ Use `/linkproject` in a server **text channel**.', true);
+  }
+  const ch = interaction.channel;
+  if (!ch || (ch.type !== ChannelType.GuildText && ch.type !== ChannelType.GuildAnnouncement)) {
+    return reply(interaction, '❌ Use this in a **text** or **announcements** channel.', true);
+  }
+  if (!isDiscordGuildOwner(interaction)) {
+    return reply(interaction, '❌ Only the **server owner** can link a project to this channel.', true);
+  }
+  const user = await User.findOne({ discordId: interaction.user.id });
+  if (!user) {
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
+  }
+  const channelId = String(interaction.channelId);
+  const existing = await Ad.findOne({
+    discordChannelId: channelId,
+    status: { $in: ['active', 'approved'] },
+  })
+    .select('title')
+    .lean();
+  if (existing) {
+    return reply(
+      interaction,
+      `❌ This channel is already linked to **${existing.title}**. Use \`/unlinkproject\` here first.`,
+      true
+    );
+  }
+  const userProjects = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } })
+    .sort({ createdAt: -1 })
+    .limit(25)
+    .select('title _id')
+    .lean();
+  if (userProjects.length === 0) {
+    return reply(interaction, `📭 No projects found for **${user.username}**.\n\nhttps://aquads.xyz`, true);
+  }
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('aquads_linkproj_menu')
+    .setPlaceholder('Choose a project to link to this channel')
+    .addOptions(
+      userProjects.map((p) =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel((p.title || 'Untitled').slice(0, 100))
+          .setValue(`${channelId}:${p._id.toString()}`)
+      )
+    );
+  const row = new ActionRowBuilder().addComponents(select);
+  return interaction.reply({
+    content:
+      '**Link a project to this channel**\n\n' +
+      'Scheduled `/mybubble`-style posts (9 AM / 9 PM EST) and vote notifications will use this channel.\n\n' +
+      '⚠️ **One project per channel** — use `/unlinkproject` to change.',
+    components: [row],
+    flags: MessageFlags.Ephemeral,
+  });
+}
+
+async function handleLinkProjectSelect(interaction) {
+  if (interaction.customId !== 'aquads_linkproj_menu') return;
+  const val = interaction.values[0];
+  const colon = val.indexOf(':');
+  if (colon < 1) {
+    return interaction.reply({ content: '❌ Invalid selection.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+  const cid = val.slice(0, colon);
+  const adId = val.slice(colon + 1);
+  if (cid !== String(interaction.channelId)) {
+    return interaction.reply({ content: '❌ Run `/linkproject` again in this channel.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+  if (!interaction.guildId || !isDiscordGuildOwner(interaction)) {
+    return interaction.reply({ content: '❌ Only the **server owner** can link a project.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+  if (!mongoose.Types.ObjectId.isValid(adId)) {
+    return interaction.reply({ content: '❌ Invalid project id.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+  const user = await User.findOne({ discordId: interaction.user.id });
+  if (!user) {
+    return interaction.reply({ content: '❌ Link your Aquads account with `/link` first.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+  await interaction.deferUpdate().catch(() => {});
+  try {
+    const ad = await Ad.findOne({
+      _id: adId,
+      owner: user.username,
+      status: { $in: ['active', 'approved'] },
+    });
+    if (!ad) {
+      return interaction.followUp({ content: '❌ Project not found or not owned by your linked account.', flags: MessageFlags.Ephemeral }).catch(() => {});
+    }
+    const existingChannel = await Ad.findOne({
+      discordChannelId: cid,
+      status: { $in: ['active', 'approved'] },
+    });
+    if (existingChannel && existingChannel._id.toString() !== ad._id.toString()) {
+      return interaction.followUp({ content: '❌ This channel is already linked to another project. Use `/unlinkproject` first.', flags: MessageFlags.Ephemeral }).catch(() => {});
+    }
+    if (ad.discordChannelId && ad.discordChannelId !== cid) {
+      return interaction
+        .followUp({
+          content: `❌ **${ad.title}** is linked to another channel. Unlink it there with \`/unlinkproject\` first.`,
+          flags: MessageFlags.Ephemeral,
+        })
+        .catch(() => {});
+    }
+    ad.discordChannelId = cid;
+    ad.discordGuildId = String(interaction.guildId);
+    await ad.save();
+    await interaction.editReply({
+      content: `✅ Linked **${ad.title}** to this channel.\n\nScheduled posts (9 AM / 9 PM EST) and vote alerts will use this channel.`,
+      components: [],
+    }).catch(() => {});
+  } catch (e) {
+    console.error('handleLinkProjectSelect error:', e);
+    await interaction.followUp({ content: '❌ Could not complete linking. Try again.', flags: MessageFlags.Ephemeral }).catch(() => {});
+  }
+}
+
+async function handleUnlinkProjectSlash(interaction) {
+  if (!interaction.guildId || !interaction.channelId) {
+    return reply(interaction, '❌ Use `/unlinkproject` in the channel where the project is linked.', true);
+  }
+  if (!isDiscordGuildOwner(interaction)) {
+    return reply(interaction, '❌ Only the **server owner** can unlink a project from this channel.', true);
+  }
+  const user = await User.findOne({ discordId: interaction.user.id });
+  if (!user) {
+    return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
+  }
+  const channelId = String(interaction.channelId);
+  const ad = await Ad.findOne({
+    discordChannelId: channelId,
+    owner: user.username,
+    status: { $in: ['active', 'approved'] },
+  });
+  if (!ad) {
+    return reply(
+      interaction,
+      '❌ No project **you own** is linked to this channel.\n\n💡 Use `/linkproject` here to choose one, or run `/unlinkproject` in the correct channel.',
+      true
+    );
+  }
+  ad.discordChannelId = null;
+  ad.discordGuildId = null;
+  await ad.save();
+  return reply(interaction, `✅ Unlinked **${ad.title}** from this channel.\n\nYou can run \`/linkproject\` to attach a different project.`, true);
+}
+
 async function handleMyBubble(interaction) {
+  if (interaction.guildId && interaction.channelId) {
+    const ch = interaction.channel;
+    if (!ch || (ch.type !== ChannelType.GuildText && ch.type !== ChannelType.GuildAnnouncement)) {
+      return reply(interaction, '❌ Use `/mybubble` in a **text** or **announcements** channel.', true);
+    }
+    const linked = await Ad.findOne({
+      discordChannelId: String(interaction.channelId),
+      status: { $in: ['active', 'approved'] },
+    })
+      .select('title url pairAddress contractAddress blockchain bullishVotes bearishVotes _id customBrandingImage customBrandingVideoUrl')
+      .lean();
+    if (!linked) {
+      return reply(
+        interaction,
+        '📭 **No project is linked to this channel yet.**\n\n' +
+          'The **server owner** should run `/linkproject` here (after `/link` in DM with the bot).',
+        true
+      );
+    }
+    const { embeds, components, files } = await buildDiscordMyBubbleSingleProjectPayload(linked);
+    return interaction.reply({ embeds, components, files });
+  }
+
   const discordUserId = interaction.user.id;
   const user = await User.findOne({ discordId: discordUserId });
   if (!user) {
@@ -534,19 +755,20 @@ async function handleMyBubble(interaction) {
   const embeds = [];
   const components = [];
   for (const project of userProjects) {
-    const rank = allBubbles.findIndex(b => b._id.toString() === project._id.toString()) + 1;
+    const rank = allBubbles.findIndex((b) => b._id.toString() === project._id.toString()) + 1;
     const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
     const tokenAddress = project.pairAddress || project.contractAddress;
-    const viewUrl = tokenAddress && project.blockchain
-      ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&token=${encodeURIComponent(tokenAddress.trim())}`
-      : 'https://www.aquads.xyz/aquaswap';
+    const viewUrl =
+      tokenAddress && project.blockchain
+        ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&token=${encodeURIComponent(tokenAddress.trim())}`
+        : 'https://www.aquads.xyz/aquaswap';
     const embed = new EmbedBuilder()
       .setTitle(`🚀 ${project.title}`)
       .setDescription(
         `🏆 Rank: ${rankEmoji} #${rank}\n` +
-        `📊 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n` +
-        `🔗 ${project.url || 'N/A'}\n` +
-        `⛓️ ${project.blockchain || 'Ethereum'}`
+          `📊 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n` +
+          `🔗 ${project.url || 'N/A'}\n` +
+          `⛓️ ${project.blockchain || 'Ethereum'}`
       )
       .setColor(0x00bfff)
       .setURL(viewUrl);
@@ -565,6 +787,32 @@ async function handleMyBubble(interaction) {
     )
   );
   return interaction.reply({ embeds, components, files, flags: MessageFlags.Ephemeral });
+}
+
+/** Twice-daily scheduled bubble posts for Discord channels linked via /linkproject (same schedule as Telegram). */
+async function sendScheduledMyBubbleToLinkedDiscordChannels() {
+  if (!discordClient?.isReady()) return;
+  const ads = await Ad.find({
+    discordChannelId: { $exists: true, $nin: [null, ''] },
+    status: { $in: ['active', 'approved'] },
+  })
+    .select('title url pairAddress contractAddress blockchain bullishVotes bearishVotes _id customBrandingImage customBrandingVideoUrl discordChannelId')
+    .lean();
+  if (!ads.length) return;
+  for (const ad of ads) {
+    if (!ad.discordChannelId) continue;
+    try {
+      const { embeds, components, files } = await buildDiscordMyBubbleSingleProjectPayload(ad);
+      const channel = await discordClient.channels.fetch(ad.discordChannelId).catch(() => null);
+      if (!channel || !channel.isTextBased()) continue;
+      await channel.send({ embeds, components, files }).catch((e) => {
+        console.error(`[Scheduled MyBubble Discord] channel ${ad.discordChannelId}:`, e.message);
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+    } catch (e) {
+      console.error('[Scheduled MyBubble Discord] error:', e.message);
+    }
+  }
 }
 
 /** Execute the paid (2000 pts) raid creation. Used after user confirms. Returns { success, message }. */
@@ -1219,10 +1467,15 @@ async function startBot() {
 
   client.on('interactionCreate', async (interaction) => {
     try {
+      if (interaction.isStringSelectMenu()) {
+        if (interaction.customId === 'aquads_linkproj_menu') {
+          return handleLinkProjectSelect(interaction);
+        }
+      }
       if (interaction.isChatInputCommand()) {
         const name = interaction.commandName;
-        // In server channels, allow /bubbles, /mybubble, /raidin, /raidout. Redirect rest to DMs to keep channel clean.
-        const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout'];
+        // In server channels, allow /bubbles, /mybubble, /raidin, /raidout, /linkproject, /unlinkproject. Redirect rest to DMs to keep channel clean.
+        const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout', 'linkproject', 'unlinkproject'];
         if (interaction.guildId && !allowedInChannel.includes(name)) {
           const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
           return reply(interaction,
@@ -1242,6 +1495,8 @@ async function startBot() {
         if (name === 'bubbles') return handleBubbles(interaction);
         if (name === 'leaders') return handleLeaders(interaction);
         if (name === 'mybubble') return handleMyBubble(interaction);
+        if (name === 'linkproject') return handleLinkProjectSlash(interaction);
+        if (name === 'unlinkproject') return handleUnlinkProjectSlash(interaction);
         if (name === 'createraid') return handleCreateRaid(interaction);
         if (name === 'cancelraid') return handleCancelRaid(interaction);
         if (name === 'raidin') return handleRaidIn(interaction);
@@ -1300,7 +1555,8 @@ async function startBot() {
             .setDescription(
               '• `/bubbles` – Top 10 bumped bubbles\n' +
                 '• `/leaders` – Top 15 by USDC earnings (comm + gift), then points\n' +
-                '• `/mybubble` – Your projects with vote info\n\n' +
+                '• `/mybubble` – In a channel: bubble linked with `/linkproject` (server owner). In DM: your projects\n' +
+                '• `/linkproject` / `/unlinkproject` – Server owner links a bubble to the current channel\n\n' +
                 'https://aquads.xyz'
             )
             .setColor(0x00bfff);
@@ -1895,33 +2151,25 @@ async function sendRaidCompletionToChannel(completionData) {
 }
 
 async function sendVoteNotificationToChannel(project) {
-  const channelId = process.env.DISCORD_VOTE_CHANNEL_ID;
-  if (!channelId) return false;
-
-  const voteMsgIds = await getStoredDiscordMessages(DISCORD_VOTE_MSG_KEY);
-  const oldId = voteMsgIds[channelId];
-  if (oldId) {
-    await deleteDiscordMessage(channelId, oldId);
-    delete voteMsgIds[channelId];
-    await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
-  }
+  const globalChannelId = process.env.DISCORD_VOTE_CHANNEL_ID;
 
   const allBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .sort({ bullishVotes: -1 })
     .select('_id bullishVotes')
     .lean();
-  const rank = allBubbles.findIndex(b => b._id.toString() === project._id.toString()) + 1;
+  const rank = allBubbles.findIndex((b) => b._id.toString() === project._id.toString()) + 1;
   const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
   const tokenAddress = project.pairAddress || project.contractAddress;
-  const viewUrl = (tokenAddress && project.blockchain)
-    ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&token=${encodeURIComponent(tokenAddress.trim())}`
-    : 'https://www.aquads.xyz/aquaswap';
+  const viewUrl =
+    tokenAddress && project.blockchain
+      ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&token=${encodeURIComponent(tokenAddress.trim())}`
+      : 'https://www.aquads.xyz/aquaswap';
   const embed = new EmbedBuilder()
     .setTitle(`🎉 New Vote for ${project.title}`)
     .setDescription(
       `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n` +
-      `🏆 Rank: ${rankEmoji} #${rank}\n\n` +
-      `[View on Aquads](${viewUrl})`
+        `🏆 Rank: ${rankEmoji} #${rank}\n\n` +
+        `[View on Aquads](${viewUrl})`
     )
     .setColor(0x00bfff)
     .setURL(viewUrl);
@@ -1932,13 +2180,37 @@ async function sendVoteNotificationToChannel(project) {
   if (files.length === 0 && fs.existsSync(VIDEO_VOTE)) {
     files = [VIDEO_VOTE];
   }
-  const message = await sendToChannel(channelId, { embeds: [embed], components: [row], files });
-  if (message) {
-    voteMsgIds[channelId] = message.id;
-    await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
-    return true;
+  const payload = { embeds: [embed], components: [row], files };
+
+  let ok = false;
+
+  if (globalChannelId) {
+    const voteMsgIds = await getStoredDiscordMessages(DISCORD_VOTE_MSG_KEY);
+    const oldId = voteMsgIds[globalChannelId];
+    if (oldId) {
+      await deleteDiscordMessage(globalChannelId, oldId);
+      delete voteMsgIds[globalChannelId];
+      await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
+    }
+    const message = await sendToChannel(globalChannelId, payload);
+    if (message) {
+      voteMsgIds[globalChannelId] = message.id;
+      await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
+      ok = true;
+    }
   }
-  return false;
+
+  let linkedChannelId = project.discordChannelId;
+  if (!linkedChannelId && project._id) {
+    const doc = await Ad.findById(project._id).select('discordChannelId').lean();
+    linkedChannelId = doc?.discordChannelId;
+  }
+  if (linkedChannelId && String(linkedChannelId) !== String(globalChannelId || '')) {
+    const sent = await sendToChannel(linkedChannelId, payload);
+    if (sent) ok = true;
+  }
+
+  return ok;
 }
 
 async function sendTopBubblesToChannel() {
@@ -2134,5 +2406,6 @@ module.exports = {
   sendRaidCompletionToChannel,
   sendVoteNotificationToChannel,
   sendTopBubblesToChannel,
-  sendDailyGMMessage
+  sendDailyGMMessage,
+  sendScheduledMyBubbleToLinkedDiscordChannels
 };

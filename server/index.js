@@ -439,11 +439,17 @@ cron.schedule('30 8 * * *', async () => {
   timezone: "America/New_York" // EST/EDT timezone
 });
 
-// Cron jobs for sending scheduled mybubble to registered groups — 9 AM and 9 PM EST
+// Cron jobs for sending scheduled mybubble to registered groups — 9 AM and 9 PM EST (Telegram + Discord)
 cron.schedule('0 9,21 * * *', async () => {
   try {
     console.log('[Scheduled MyBubble] Running twice-daily mybubble send...');
     await telegramService.sendScheduledMyBubbleToRegisteredGroups();
+    try {
+      const discordService = require('./utils/discordService');
+      await discordService.sendScheduledMyBubbleToLinkedDiscordChannels();
+    } catch (discordErr) {
+      console.error('[Scheduled MyBubble] Discord:', discordErr.message);
+    }
   } catch (error) {
     console.error('[Scheduled MyBubble] Error:', error);
   }
