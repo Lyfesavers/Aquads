@@ -3,6 +3,8 @@
  * Fetches live gas prices for different blockchain networks
  */
 
+import logger from '../utils/logger';
+
 // Chain configurations for gas price fetching
 // All using FREE public APIs and RPCs - no authentication required!
 const CHAIN_CONFIGS = {
@@ -147,7 +149,7 @@ async function fetchRpcGasPrice(config) {
     
     return null;
   } catch (error) {
-    console.error(`Error fetching RPC gas price for ${config.name}:`, error);
+    logger.error(`Error fetching RPC gas price for ${config.name}:`, error);
     return null;
   }
 }
@@ -194,7 +196,7 @@ async function fetchSolanaGasPrice(config) {
       slow: 1000
     };
   } catch (error) {
-    console.error('Error fetching Solana gas price:', error);
+    logger.error('Error fetching Solana gas price:', error);
     return {
       price: 5000,
       unit: 'Lamports',
@@ -221,7 +223,7 @@ async function fetchBitcoinGasPrice(config) {
       slow: data.hourFee || 5
     };
   } catch (error) {
-    console.error('Error fetching Bitcoin fees:', error);
+    logger.error('Error fetching Bitcoin fees:', error);
     return {
       price: 10,
       unit: 'sat/vB',
@@ -266,7 +268,7 @@ async function fetchNearGasPrice(config) {
     
     return null;
   } catch (error) {
-    console.error('Error fetching NEAR gas price:', error);
+    logger.error('Error fetching NEAR gas price:', error);
     return null;
   }
 }
@@ -279,7 +281,7 @@ export async function getGasPrice(chainId) {
   const config = CHAIN_CONFIGS[chainId];
   
   if (!config) {
-    console.warn(`No gas price configuration for chain: ${chainId}`);
+    logger.warn(`No gas price configuration for chain: ${chainId}`);
     return null;
   }
   
@@ -301,7 +303,7 @@ export async function getGasPrice(chainId) {
         return null;
     }
   } catch (error) {
-    console.error(`Failed to fetch gas price for ${config.name}:`, error);
+    logger.error(`Failed to fetch gas price for ${config.name}:`, error);
     return null;
   }
 }
