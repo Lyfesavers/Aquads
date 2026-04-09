@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
+import { LiFiWidget, useWidgetEvents, WidgetEvent, ChainId } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwapEmbed.css';
 
@@ -8,6 +8,8 @@ const FEE_PERCENTAGE = 0.005; // 0.5% fee
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET;
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET;
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;
+
+const SOLANA_RPC_URL = (process.env.REACT_APP_SOLANA_RPC_URL || '').trim();
 
 const AquaSwapEmbed = () => {
   const [embedOptions, setEmbedOptions] = useState({
@@ -222,12 +224,9 @@ const AquaSwapEmbed = () => {
     },
     // Enable URL building for mobile deep linking (matches main swap)
     buildUrl: true,
-    // Wallet configuration - disable partial management in iframe for proper balance fetching
     walletConfig: {
-      // Disable partial wallet management in iframe context to ensure proper token balance fetching
-      // When in iframe, WalletConnect + partial management can fail to fetch balances correctly
-      // The main website can keep usePartialWalletManagement for mobile Solana support
-      usePartialWalletManagement: window.parent === window ? true : false,
+      // Standalone embed: same as main AquaSwap (mobile-friendly hybrid). Iframe (e.g. extension): false so balances/RPC behave reliably inside embedded context.
+      usePartialWalletManagement: window.parent === window,
       // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
@@ -251,9 +250,7 @@ const AquaSwapEmbed = () => {
         maxPriceImpact: 0.5, // 50% max price impact
       },
       rpcUrls: {
-        // Add your RPC URLs here if you have custom ones
-        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
-        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
+        ...(SOLANA_RPC_URL ? { [ChainId.SOL]: [SOLANA_RPC_URL] } : {}),
       },
     },
     // Enhanced theme configuration for embedding

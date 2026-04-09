@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
 import { useNavigate, Link } from 'react-router-dom';
-import { LiFiWidget, useWidgetEvents, WidgetEvent } from '@lifi/widget';
+import { LiFiWidget, useWidgetEvents, WidgetEvent, ChainId } from '@lifi/widget';
 import { FaShareAlt, FaTwitter, FaTelegram } from 'react-icons/fa';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -25,6 +25,9 @@ const FEE_PERCENTAGE = 0.005; // 0.5% fee
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet address
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
+
+// Alchemy (or other) Solana HTTPS RPC — set in Netlify as REACT_APP_SOLANA_RPC_URL (full URL including API key path).
+const SOLANA_RPC_URL = (process.env.REACT_APP_SOLANA_RPC_URL || '').trim();
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -1639,9 +1642,8 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
     },
     // Enable URL building for mobile deep linking
     buildUrl: true,
-    // Wallet configuration - using partial management for mobile Solana support
     walletConfig: {
-      // Enable partial wallet management to handle mobile Solana limitations
+      // Hybrid wallet UI for mobile deep links / WalletConnect (EVM) + LiFi’s built-in Solana flow. Solana SPL reliability comes from sdkConfig.rpcUrls (Alchemy), not from turning this off.
       usePartialWalletManagement: true,
       // Provide WalletConnect for EVM chains while LiFi handles Solana
       walletConnect: {
@@ -1666,9 +1668,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
         maxPriceImpact: 0.5, // 50% max price impact
       },
       rpcUrls: {
-        // Add your RPC URLs here if you have custom ones
-        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
-        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
+        ...(SOLANA_RPC_URL ? { [ChainId.SOL]: [SOLANA_RPC_URL] } : {}),
       },
     },
     // Enhanced theme configuration
