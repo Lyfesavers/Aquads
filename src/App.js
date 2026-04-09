@@ -38,6 +38,7 @@ import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import DesktopInstallPrompt from './components/DesktopInstallPrompt';
+import { PWAInstallProvider } from './contexts/PWAInstallContext';
 import OnboardingSection from './components/OnboardingSection';
 const HowTo = lazy(() => import('./components/HowTo'));
 const BlogPage = lazy(() => import('./components/BlogPage'));
@@ -2643,6 +2644,7 @@ function App() {
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
       <Router>
+        <PWAInstallProvider>
         <NavigationListener 
           onNavigate={() => {
             if (currentUser) {
@@ -3853,6 +3855,7 @@ function App() {
             onVerificationComplete={handleEmailVerificationComplete}
           />
         )}
+        </PWAInstallProvider>
       </Router>
     </AuthContext.Provider>
   );

@@ -109,16 +109,22 @@ const CurrencyConverter = () => {
     }
   }, []);
 
-  // Fetch fiat rates from Frankfurter
+  // Fiat rates: Frankfurter blocks many browser origins (CORS). jsDelivr-backed feed allows cross-origin fetch.
   const fetchFiatRates = useCallback(async () => {
     try {
-      const response = await fetch('https://api.frankfurter.app/latest?from=USD');
-      
+      const response = await fetch(
+        'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json'
+      );
       if (!response.ok) throw new Error('Failed to fetch fiat rates');
-      
       const data = await response.json();
-      // Add USD to rates (it's the base)
-      const rates = { USD: 1, ...data.rates };
+      const usd = data.usd || {};
+      const rates = { USD: 1 };
+      Object.entries(usd).forEach(([code, value]) => {
+        const upper = String(code).toUpperCase();
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          rates[upper] = value;
+        }
+      });
       setFiatRates(rates);
       return rates;
     } catch (err) {
