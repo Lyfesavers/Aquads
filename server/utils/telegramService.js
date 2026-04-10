@@ -832,9 +832,26 @@ const telegramService = {
       // In group chats, redirect most commands to private chat, but allow /bubbles, /leaders, /raidin, /raidout
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
-        
-        await telegramService.sendBotMessage(chatId, 
-          `💬 Please use bot commands in private chat to keep group conversations clean.\n\n🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n💡 This keeps group chats focused and gives you a better bot experience!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
+        const fullDmText =
+          `💬 Please use bot commands in private chat to keep group conversations clean.\n\n` +
+          `🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n` +
+          `💡 This keeps group chats focused and gives you a better bot experience!\n\n` +
+          `🌐 Track points & claim rewards on: https://aquads.xyz`;
+        const groupNoticeOpts = { skipPromoKeyboard: true, disableWebPagePreview: true };
+        const dmResult = await telegramService.sendBotMessage(userId, fullDmText);
+        if (dmResult.success) {
+          await telegramService.sendBotMessage(
+            chatId,
+            'Use bot commands in private chat with @aquadsbumpbot — full details sent to your DM.',
+            groupNoticeOpts
+          );
+        } else {
+          await telegramService.sendBotMessage(
+            chatId,
+            'Use bot commands in private chat. Open @aquadsbumpbot, tap Start, then run your command there.',
+            groupNoticeOpts
+          );
+        }
         return;
       }
     }
@@ -1733,7 +1750,7 @@ https://aquads.xyz`;
     }
   },
 
-  // Send message to user (optional { parseMode: 'HTML' | 'Markdown' })
+  // Send message to user (optional { parseMode, skipPromoKeyboard, disableWebPagePreview })
   sendBotMessage: async (chatId, message, opts = {}) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
@@ -1743,9 +1760,14 @@ https://aquads.xyz`;
       const body = {
         chat_id: chatId,
         text: message,
-        reply_markup: defaultPromoInlineKeyboard(),
       };
+      if (!opts.skipPromoKeyboard) {
+        body.reply_markup = defaultPromoInlineKeyboard();
+      }
       if (opts.parseMode) body.parse_mode = opts.parseMode;
+      if (opts.disableWebPagePreview) {
+        body.disable_web_page_preview = true;
+      }
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
         body

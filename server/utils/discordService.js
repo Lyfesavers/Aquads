@@ -1478,10 +1478,22 @@ async function startBot() {
         const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout', 'linkproject', 'unlinkproject'];
         if (interaction.guildId && !allowedInChannel.includes(name)) {
           const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
-          return reply(interaction,
-            `💬 **Use commands in a DM with me** to keep this channel clean.\n\n` +
+          const fullDmText =
+            `💬 **Use commands in a DM with me** to keep server channels clean.\n\n` +
             `🤖 ${dmHint}\n\n` +
-            `Then use \`/${name}\` there. Raid/vote notifications and bubbles will still post here.\n\n🌐 https://aquads.xyz`,
+            `Then use \`/${name}\` there. Raid/vote notifications and bubbles will still post in linked channels.\n\n` +
+            `🌐 Track points & claim rewards: https://aquads.xyz`;
+          let dmOk = false;
+          try {
+            await interaction.user.send({ content: fullDmText });
+            dmOk = true;
+          } catch (_) {}
+          if (dmOk) {
+            return reply(interaction, 'Use bot commands in a DM with me — full details sent to your DM.', true);
+          }
+          return reply(
+            interaction,
+            `Use bot commands in a DM with me. ${dmHint} Then try \`/${name}\` again.`,
             true
           );
         }
