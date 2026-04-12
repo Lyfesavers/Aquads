@@ -763,7 +763,7 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
 
       {/* Footer */}
       <footer className="wa-footer">
-        <p>Powered by <span className="wa-footer-brand">AquaSwap</span> • Multi-Chain BEX</p>
+        <p>Powered by <span className="wa-footer-brand">AquaSwap</span> • Multi-Chain BexTools</p>
       </footer>
     </div>
   );

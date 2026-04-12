@@ -170,8 +170,8 @@ const AquaSwapBanner = () => {
           
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-xs sm:text-base mb-0.5 sm:mb-1 flex flex-wrap items-center gap-1 sm:gap-2" style={{color: '#FEBC10'}}>
-              <span className="hidden sm:inline">🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!</span>
-              <span className="sm:hidden">🚀 AquaSwap BEX</span>
+              <span className="hidden sm:inline">🚀 Use AquaSwap — The Ultimate Cross-Chain BexTools!</span>
+              <span className="sm:hidden">🚀 AquaSwap · BexTools</span>
               <span className="text-xs px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse whitespace-nowrap" style={{background: 'linear-gradient(to right, #FEBC10, #FCD34D)', color: '#51159D'}}>
                 LIVE
               </span>

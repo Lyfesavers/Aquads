@@ -3754,7 +3754,7 @@ function App() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
                             {[
                               { icon: '🐦', title: 'Twitter & Facebook Raids', desc: '20 FREE raids daily for lifetime bumps' },
-                              { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BEX & 5K+ channel' },
+                              { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BexTools & 5K+ channel' },
                               { icon: '🗳️', title: 'Voting & Boosts', desc: 'Get bullish votes + real TG members' },
                               { icon: '🎨', title: 'Custom Branding', desc: 'Your logo in vote notifications to 5K+ degens' },
                               { icon: '🌐', title: 'Cross-Community Raids', desc: 'Share raids across all opted-in groups' },

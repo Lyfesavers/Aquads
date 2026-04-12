@@ -318,7 +318,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> Aquads</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Join the Aquads BEX (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
+              Join Aquads BexTools (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
             </p>
                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
                <button
@@ -359,10 +359,10 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <div className="bg-blue-500 p-3 rounded-lg">
                 <FaChartLine className="text-white text-xl" />
               </div>
-              <h3 className="text-xl font-semibold text-white ml-4">Immediate Trading Integration on our BEX</h3>
+              <h3 className="text-xl font-semibold text-white ml-4">Immediate Trading Integration on our BexTools</h3>
             </div>
             <p className="text-gray-300">
-              Users click your bubble and instantly trade your token with live charts. Direct integration with AquaSwap Bex eliminates barriers and drives immediate conversions.</p>
+              Users click your bubble and instantly trade your token with live charts. Direct integration with AquaSwap and BexTools eliminates barriers and drives immediate conversions.</p>
           </div>
 
           {/* Advantage 2 */}
@@ -530,7 +530,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <h3 className="text-xl font-semibold text-white ml-4">BNB & Solana Trending + Volume</h3>
             </div>
             <p className="text-gray-300">
-              Your base listing includes real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum. That hits especially hard alongside our Telegram bot’s trending boost and HyperSpace for your Twitter Spaces, then votes, raids, live streams, yappers, and AquaSwap BEX—all together it’s the perfect storm of attention and momentum to help send your token higher.
+              Your base listing includes real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum. That hits especially hard alongside our Telegram bot’s trending boost and HyperSpace for your Twitter Spaces, then votes, raids, live streams, yappers, and AquaSwap & BexTools—all together it’s the perfect storm of attention and momentum to help send your token higher.
             </p>
           </div>
         </div>

@@ -271,7 +271,7 @@ router.get('/aquaswap', async (req, res) => {
   
   <!-- AQUADS branding top right -->
   <text x="1100" y="100" ${ogFontAttr()} font-size="28" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS</text>
-  <text x="1100" y="125" ${ogFontAttr()} font-size="16" fill="rgba(255,255,255,0.5)" text-anchor="end">BEX</text>
+  <text x="1100" y="125" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.5)" text-anchor="end">BexTools</text>
   
   <!-- Logo glow effect -->
   <circle cx="140" cy="180" r="65" fill="url(#accentGrad)" opacity="0.3" filter="url(#glow)"/>
@@ -376,7 +376,7 @@ router.get('/aquaswap', async (req, res) => {
     ${errFontCss ? `<style type="text/css"><![CDATA[${errFontCss}]]></style>` : ''}
   </defs>
   <rect width="1200" height="630" fill="#0a0a12"/>
-  <text x="600" y="280" ${ogFontAttr()} font-size="48" fill="#00d4ff" text-anchor="middle">AQUADS BEX</text>
+  <text x="600" y="280" ${ogFontAttr()} font-size="40" fill="#00d4ff" text-anchor="middle">AQUADS BEXTOOLS</text>
   <text x="600" y="350" ${ogFontAttr()} font-size="24" fill="rgba(255,255,255,0.6)" text-anchor="middle">Trade tokens with live charts</text>
   <text x="600" y="400" ${ogFontAttr()} font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/aquaswap</text>
 </svg>`;

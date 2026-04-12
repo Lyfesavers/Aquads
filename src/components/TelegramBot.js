@@ -28,10 +28,10 @@ const TelegramBot = () => {
     {
       icon: FaChartLine,
       title: 'Bubble Ranking & Trending',
-      description: 'View top 10 bubbles ranked by bullish votes. Bumped projects trend across Aquads homepage, BEX trending section, and bubble leaderboards.',
+      description: 'View top 10 bubbles ranked by bullish votes. Bumped projects trend across Aquads homepage, BexTools trending section, and bubble leaderboards.',
       command: '/bubbles • /mybubble',
       color: 'from-emerald-500 to-green-600',
-      details: ['Aquads platform trending', 'BEX trending section', 'Bubble leaderboard']
+      details: ['Aquads platform trending', 'BexTools trending section', 'Bubble leaderboard']
     },
     {
       icon: FaThumbsUp,
@@ -91,7 +91,7 @@ const TelegramBot = () => {
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
         { name: 'Trending Across Aquads Platform', included: false },
-        { name: 'BEX Trending Section', included: false },
+        { name: 'BexTools Trending Section', included: false },
         { name: 'Bubble Ranking Visibility', included: false },
         { name: '5K+ Trending Channel Exposure', included: false },
         { name: 'Custom Branding on Notifications', included: false },
@@ -111,7 +111,7 @@ const TelegramBot = () => {
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
         { name: 'Trending Across Aquads Platform', included: true, highlight: true },
-        { name: 'BEX Trending Section', included: true, highlight: true },
+        { name: 'BexTools Trending Section', included: true, highlight: true },
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
         { name: '5K+ Trending Channel Exposure', included: true, highlight: true },
         { name: 'Custom Branding on Notifications', included: true, highlight: true },
@@ -165,7 +165,7 @@ const TelegramBot = () => {
     {
       icon: FaTrophy,
       title: 'Trending Everywhere',
-      description: 'Get featured in bubble rankings, BEX trending, Aquads platform, AND our 5,000+ member trending channel. Maximum visibility.',
+      description: 'Get featured in bubble rankings, BexTools trending, Aquads platform, AND our 5,000+ member trending channel. Maximum visibility.',
       highlight: 'Multi-platform + 5K channel'
     },
     {
@@ -392,7 +392,7 @@ const TelegramBot = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Trend Everywhere When Listed</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Lifetime bumped projects get 20 FREE raid posts per day. List & bump to trend across <span className="text-cyan-400">Aquads homepage</span>, <span className="text-purple-400">BEX trending</span>, and <span className="text-green-400">bubble rankings</span>.
+              Lifetime bumped projects get 20 FREE raid posts per day. List & bump to trend across <span className="text-cyan-400">Aquads homepage</span>, <span className="text-purple-400">BexTools trending</span>, and <span className="text-green-400">bubble rankings</span>.
             </p>
           </div>
 
@@ -793,7 +793,7 @@ const TelegramBot = () => {
               {
                 step: '05',
                 title: 'Trend Everywhere',
-                description: 'List & bump to trend on Aquads homepage, BEX, bubble rankings + custom branding.',
+                description: 'List & bump to trend on Aquads homepage, BexTools, bubble rankings + custom branding.',
                 icon: FaCrown
               }
             ].map((item, index) => (
@@ -839,7 +839,7 @@ const TelegramBot = () => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost with votes + members, and list & bump to trend across Aquads, BEX, and bubble rankings with your custom branding.
+                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost with votes + members, and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
               </p>
               
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">

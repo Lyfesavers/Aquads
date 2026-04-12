@@ -1789,7 +1789,7 @@ const CarouselCard = ({ feature, index }) => {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
                   <span className="text-gradient-teal">AquaSwap</span>
                   <br />
-                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain BEX & Trading</span>
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain BexTools & Trading</span>
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
@@ -1869,7 +1869,7 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div>
                         <div className="text-white font-bold">Token Swap</div>
-                        <div className="text-gray-400 text-sm">Cross-Chain BEX</div>
+                        <div className="text-gray-400 text-sm">Cross-Chain BexTools</div>
                       </div>
                     </div>
                     
@@ -1980,14 +1980,14 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Interactive visualization of crypto projects based on community engagement. BEX trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.
+                  Interactive visualization of crypto projects based on community engagement. BexTools trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '📊', label: 'Bubble Rankings', value: 'By Votes' },
-                    { icon: '🔥', label: 'BEX Trending', value: 'Multi-Platform' },
+                    { icon: '🔥', label: 'BexTools Trending', value: 'Multi-Platform' },
                     { icon: '👍', label: '20 Pts/Vote', value: 'Earn Points' },
                     { icon: '🏆', label: 'Top 10 Leaderboard', value: 'Trending' }
                   ].map((item, i) => (
@@ -2082,7 +2082,7 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-xs">Platforms</span>
-                        <span className="text-teal-400 text-xs">Aquads • BEX</span>
+                        <span className="text-teal-400 text-xs">Aquads • BexTools</span>
                       </div>
                     </div>
                     
@@ -2875,7 +2875,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BEX, and bubble rankings. Custom branding in 5K+ trending channel.
+                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in 5K+ trending channel.
                 </p>
                 
                 {/* Stats grid */}
@@ -2972,7 +2972,7 @@ const CarouselCard = ({ feature, index }) => {
                     {/* Trending Badge */}
                     <div className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/40 rounded-xl p-3 mb-3 text-center">
                       <div className="text-emerald-400 text-xs font-semibold mb-1">📈 Trending</div>
-                      <div className="text-white text-xs">Aquads • BEX • Rankings</div>
+                      <div className="text-white text-xs">Aquads • BexTools • Rankings</div>
                     </div>
                     
                     {/* Custom Branding Badge */}
@@ -4087,7 +4087,7 @@ const LandingPage = () => {
     {
       icon: '🔮',
       title: 'Dynamic Token Bubbles',
-      description: 'Interactive visualization of crypto projects based on community engagement. BEX trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.',
+      description: 'Interactive visualization of crypto projects based on community engagement. BexTools trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.',
       gradient: 'from-cyan-900/40 to-slate-900/80'
     },
     {

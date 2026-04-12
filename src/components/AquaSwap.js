@@ -1777,7 +1777,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               />
               <div className="header-title">
                 <h1>AquaSwap</h1>
-                <p className="header-subtitle">Cross-Chain BEX</p>
+                <p className="header-subtitle">Cross-Chain BexTools</p>
               </div>
             </div>
           </div>
@@ -1847,7 +1847,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             />
             AquaSwap
           </h1>
-          <p>The Ultimate Cross-Chain BEX</p>
+          <p>The Ultimate Cross-Chain BexTools</p>
           
           {/* Mobile Action Buttons */}
           <div className="header-buttons">

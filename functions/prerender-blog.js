@@ -152,17 +152,17 @@ function getDefaultHtml() {
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Aquads - BEX swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub." />
+    <meta name="description" content="Aquads — BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub." />
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
     <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta name="twitter:description" content="BEX swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
+    <meta name="twitter:description" content="BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
     
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta property="og:description" content="BEX swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
+    <meta property="og:description" content="BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
     <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
     <meta property="og:url" content="https://aquads.xyz">
     <meta property="og:type" content="website">

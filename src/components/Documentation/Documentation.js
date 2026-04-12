@@ -3741,7 +3741,7 @@ For Facebook raid participation:
 
 When you list and bump your project:
 - 🔥 Trending across Aquads homepage
-- 🔥 BEX trending section visibility
+- 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
 - 🔥 5K+ trending channel exposure
 - 🔥 Custom branding on vote notifications
@@ -3873,7 +3873,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 
 **Multi-Platform Visibility:**
 - **Aquads Homepage**: Bumped projects appear in trending
-- **BEX Trending Section**: Featured visibility
+- **BexTools Trending Section**: Featured visibility
 - **Bubble Leaderboards**: Ranked by bullish votes
 - **5K+ Trending Channel**: Vote notifications reach thousands
 
