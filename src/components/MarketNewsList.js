@@ -47,7 +47,6 @@ function ImageBanner({ imageUrl, source, className = '' }) {
         className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
         loading="lazy"
         decoding="async"
-        referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent pointer-events-none" />

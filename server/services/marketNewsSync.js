@@ -44,16 +44,24 @@ function buildExternalKey(source, item) {
 
 function firstImgSrcFromHtml(html) {
   if (!html || typeof html !== 'string') return null;
-  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  let m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (m) return m[1].trim();
+  m = html.match(/\ssrc=(https?:\/\/[^\s>]+)/i);
   return m ? m[1].trim() : null;
 }
 
 function mediaUrlFromNode(node) {
   if (!node) return null;
-  if (typeof node === 'string') return null;
+  if (typeof node === 'string') return /^https?:\/\//i.test(node) ? node : null;
   if (node.$ && node.$.url) return node.$.url;
   if (node.url) return node.url;
   return null;
+}
+
+function collectMediaThumbnailNodes(item) {
+  const raw = item.mediaThumbnail ?? item['media:thumbnail'];
+  if (!raw) return [];
+  return Array.isArray(raw) ? raw : [raw];
 }
 
 function pickRawImageUrl(item) {
@@ -69,16 +77,17 @@ function pickRawImageUrl(item) {
       if (u) return u;
     }
   }
-  const mt = item.mediaThumbnail;
-  if (mt) {
-    const u = mediaUrlFromNode(Array.isArray(mt) ? mt[0] : mt);
+  for (const tn of collectMediaThumbnailNodes(item)) {
+    const u = mediaUrlFromNode(tn);
     if (u) return u;
   }
   if (item.enclosure && item.enclosure.url && /^image\//i.test(item.enclosure.type || '')) {
     return item.enclosure.url;
   }
-  const fromContent =
-    firstImgSrcFromHtml(item.content || '') || firstImgSrcFromHtml(item['content:encoded'] || '');
+  const htmlBlob = [item.content, item['content:encoded'], item.summary, item.contentSnippet]
+    .filter(Boolean)
+    .join('\n');
+  const fromContent = firstImgSrcFromHtml(htmlBlob);
   if (fromContent) return fromContent;
   return null;
 }
@@ -88,14 +97,20 @@ function refineImageUrl(url) {
   const trimmed = url.trim();
   if (!/^https:\/\//i.test(trimmed)) return null;
   try {
-    // BBC ichef: thumbnail paths use /news/{width}/… — request a larger width when it’s a small preset
+    // BBC ichef: older feeds use /news/{w}/…; newer use /ace/standard/{w}/…
     if (trimmed.includes('ichef.bbci.co.uk')) {
-      const upgraded = trimmed.replace(/\/news\/(\d{2,4})\//gi, (match, w) => {
+      let u = trimmed;
+      u = u.replace(/\/news\/(\d{2,4})\//gi, (match, w) => {
         const n = parseInt(w, 10);
         if (n > 0 && n < 800) return '/news/976/';
         return match;
       });
-      return upgraded.slice(0, 2000);
+      u = u.replace(/\/ace\/standard\/(\d{2,4})\//gi, (match, w) => {
+        const n = parseInt(w, 10);
+        if (n > 0 && n < 800) return '/ace/standard/976/';
+        return match;
+      });
+      return u.slice(0, 2000);
     }
   } catch {
     return trimmed.slice(0, 2000);
