@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const MarketNewsItem = require('../models/MarketNewsItem');
-const { RETENTION_DAYS } = require('../services/marketNewsSync');
+const { RETENTION_HOURS, getPublishedAtCutoff } = require('../services/marketNewsSync');
 
 router.get('/', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const skip = (page - 1) * limit;
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+    const cutoff = getPublishedAtCutoff();
 
     const query = { publishedAt: { $gte: cutoff } };
 
@@ -33,7 +32,7 @@ router.get('/', async (req, res) => {
         totalPages: Math.ceil(total / limit) || 0,
         hasMore: skip + items.length < total,
       },
-      retentionDays: RETENTION_DAYS,
+      retentionHours: RETENTION_HOURS,
     });
   } catch (err) {
     console.error('[marketNews] GET /', err);

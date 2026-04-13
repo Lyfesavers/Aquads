@@ -2,9 +2,15 @@ const Parser = require('rss-parser');
 const MarketNewsItem = require('../models/MarketNewsItem');
 
 const COINDESK_RSS_URL = 'https://www.coindesk.com/arc/outboundfeeds/rss';
-const GLOBAL_RSS_URL = 'https://www.theguardian.com/world/rss';
+// BBC News (world) — widely trusted; thumbnails often in description HTML or media fields
+const GLOBAL_RSS_URL = 'https://feeds.bbci.co.uk/news/world/rss.xml';
 
-const RETENTION_DAYS = 30;
+/** Only keep stories newer than this (rolling window). News moves fast; 72h keeps the list fresh. */
+const RETENTION_HOURS = 72;
+
+function getPublishedAtCutoff() {
+  return new Date(Date.now() - RETENTION_HOURS * 60 * 60 * 1000);
+}
 
 const parser = new Parser({
   timeout: 45000,
@@ -82,11 +88,14 @@ function refineImageUrl(url) {
   const trimmed = url.trim();
   if (!/^https:\/\//i.test(trimmed)) return null;
   try {
-    if (trimmed.includes('i.guim.co.uk')) {
-      const u = new URL(trimmed);
-      u.searchParams.set('width', '1200');
-      if (!u.searchParams.has('quality')) u.searchParams.set('quality', '85');
-      return u.toString().slice(0, 2000);
+    // BBC ichef: thumbnail paths use /news/{width}/… — request a larger width when it’s a small preset
+    if (trimmed.includes('ichef.bbci.co.uk')) {
+      const upgraded = trimmed.replace(/\/news\/(\d{2,4})\//gi, (match, w) => {
+        const n = parseInt(w, 10);
+        if (n > 0 && n < 800) return '/news/976/';
+        return match;
+      });
+      return upgraded.slice(0, 2000);
     }
   } catch {
     return trimmed.slice(0, 2000);
@@ -112,8 +121,7 @@ function itemPublishedAt(item) {
 
 async function ingestFeed(url, source) {
   const feed = await parser.parseURL(url);
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+  const cutoff = getPublishedAtCutoff();
 
   let added = 0;
   let updated = 0;
@@ -202,11 +210,10 @@ async function syncMarketNews() {
     results.global = { error: err.message };
   }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+  const cutoff = getPublishedAtCutoff();
   const del = await MarketNewsItem.deleteMany({ publishedAt: { $lt: cutoff } });
 
-  console.log(`[MarketNews Sync] Pruned ${del.deletedCount} items older than ${RETENTION_DAYS} days`);
+  console.log(`[MarketNews Sync] Pruned ${del.deletedCount} items older than ${RETENTION_HOURS} hours`);
 
   return {
     results,
@@ -217,7 +224,8 @@ async function syncMarketNews() {
 
 module.exports = {
   syncMarketNews,
-  RETENTION_DAYS,
+  RETENTION_HOURS,
+  getPublishedAtCutoff,
   COINDESK_RSS_URL,
   GLOBAL_RSS_URL,
 };

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const sourceLabel = (source) => {
   if (source === 'coindesk') return 'CoinDesk';
-  if (source === 'global') return 'The Guardian';
+  if (source === 'global') return 'BBC News';
   return source;
 };
 
@@ -30,7 +30,7 @@ function ImageBanner({ imageUrl, source, className = '' }) {
         aria-hidden
       >
         <span className="text-4xl font-black text-white/10 tracking-tighter select-none">
-          {source === 'coindesk' ? 'CD' : 'GU'}
+          {source === 'coindesk' ? 'CD' : 'BBC'}
         </span>
         <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
           {sourceLabel(source)}
@@ -128,7 +128,12 @@ function ArticleCard({ item }) {
   );
 }
 
-const MarketNewsList = ({ items, retentionDays }) => {
+const MarketNewsList = ({
+  items,
+  pagination = null,
+  onLoadMore,
+  isLoadingMore = false,
+}) => {
   if (!items?.length) {
     return (
       <div className="text-center py-16 text-gray-400 max-w-lg mx-auto">
@@ -144,20 +149,6 @@ const MarketNewsList = ({ items, retentionDays }) => {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-[0.35em] text-amber-500/90">Wire desk</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {typeof retentionDays === 'number'
-              ? `Rolling ${retentionDays}-day window · CoinDesk & The Guardian`
-              : 'CoinDesk & The Guardian'}
-          </p>
-        </div>
-        <p className="text-xs text-gray-600 max-w-md text-right sm:text-left">
-          Headlines &amp; images from RSS · Full reporting opens on the publisher&apos;s site
-        </p>
-      </div>
-
       <FeaturedCard item={lead} />
 
       {rest.length > 0 ? (
@@ -168,6 +159,36 @@ const MarketNewsList = ({ items, retentionDays }) => {
               <ArticleCard key={item._id} item={item} />
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {pagination?.hasMore && typeof onLoadMore === 'function' ? (
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/25 inline-flex items-center justify-center gap-2"
+          >
+            {isLoadingMore ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span>Loading…</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                <span>Load more headlines</span>
+                {typeof pagination.total === 'number' ? (
+                  <span className="text-sm opacity-75">
+                    ({Math.max(0, pagination.total - items.length)} more)
+                  </span>
+                ) : null}
+              </>
+            )}
+          </button>
         </div>
       ) : null}
     </div>

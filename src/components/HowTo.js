@@ -20,6 +20,8 @@ import {
   thumbUrl,
 } from '../data/tutorialVideos';
 
+const MARKET_NEWS_PAGE_SIZE = 20;
+
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
@@ -48,7 +50,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [marketNewsItems, setMarketNewsItems] = useState([]);
   const [marketNewsLoading, setMarketNewsLoading] = useState(false);
   const [marketNewsError, setMarketNewsError] = useState(null);
-  const [marketNewsRetentionDays, setMarketNewsRetentionDays] = useState(null);
+  const [marketNewsPagination, setMarketNewsPagination] = useState(null);
+  const [marketNewsPage, setMarketNewsPage] = useState(1);
+  const [isLoadingMoreMarketNews, setIsLoadingMoreMarketNews] = useState(false);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -75,18 +79,19 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     (async () => {
       setMarketNewsLoading(true);
       setMarketNewsError(null);
+      setMarketNewsPage(1);
+      setMarketNewsPagination(null);
       try {
-        const data = await fetchMarketNews(1, 60);
+        const data = await fetchMarketNews(1, MARKET_NEWS_PAGE_SIZE);
         if (!cancelled) {
           setMarketNewsItems(data.items || []);
-          setMarketNewsRetentionDays(
-            typeof data.retentionDays === 'number' ? data.retentionDays : null
-          );
+          setMarketNewsPagination(data.pagination || null);
         }
       } catch (e) {
         if (!cancelled) {
           setMarketNewsError(e.message || 'Failed to load market news');
           setMarketNewsItems([]);
+          setMarketNewsPagination(null);
         }
       } finally {
         if (!cancelled) setMarketNewsLoading(false);
@@ -96,6 +101,22 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       cancelled = true;
     };
   }, [activeTab]);
+
+  const handleLoadMoreMarketNews = async () => {
+    if (!marketNewsPagination?.hasMore || isLoadingMoreMarketNews) return;
+    try {
+      setIsLoadingMoreMarketNews(true);
+      const nextPage = marketNewsPage + 1;
+      const data = await fetchMarketNews(nextPage, MARKET_NEWS_PAGE_SIZE);
+      setMarketNewsItems((prev) => [...prev, ...(data.items || [])]);
+      setMarketNewsPagination(data.pagination || null);
+      setMarketNewsPage(nextPage);
+    } catch (e) {
+      setMarketNewsError(e.message || 'Failed to load more headlines');
+    } finally {
+      setIsLoadingMoreMarketNews(false);
+    }
+  };
 
   useEffect(() => {
     // Check if we're coming from BlogPage with edit state
@@ -813,10 +834,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           <div className="mt-12 sm:mt-16">
             <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Market &amp; world news</h2>
-              <p className="text-gray-400 text-sm mt-2 max-w-2xl">
-                Headlines from CoinDesk and The Guardian (world news), pulled over RSS and refreshed twice daily. Each
-                card opens the full article on the publisher&apos;s site.
-              </p>
             </div>
             {marketNewsError && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
@@ -831,7 +848,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 </div>
               </div>
             ) : (
-              <MarketNewsList items={marketNewsItems} retentionDays={marketNewsRetentionDays} />
+              <MarketNewsList
+                items={marketNewsItems}
+                pagination={marketNewsPagination}
+                onLoadMore={handleLoadMoreMarketNews}
+                isLoadingMore={isLoadingMoreMarketNews}
+              />
             )}
           </div>
         )}

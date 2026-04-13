@@ -519,8 +519,8 @@ setTimeout(async () => {
   }
 }, 40000); // After CryptoJobsList initial sync
 
-// Market news (CoinDesk + global RSS, default The Guardian World), twice daily; keep ~30 days in DB
-cron.schedule('0 5,17 * * *', async () => {
+// Market news (CoinDesk + BBC world RSS): 3× daily, ~8h apart UTC (spread across the day); keep last 72h in DB
+cron.schedule('0 0,8,16 * * *', async () => {
   try {
     console.log('[MarketNews Sync] Starting scheduled sync...');
     await syncMarketNews();
