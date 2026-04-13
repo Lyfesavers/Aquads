@@ -519,7 +519,7 @@ setTimeout(async () => {
   }
 }, 40000); // After CryptoJobsList initial sync
 
-// Market news (CoinDesk + BBC world RSS): 3× daily, ~8h apart UTC (spread across the day); keep last 72h in DB
+// Market news (CoinDesk + France 24 EN RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {
   try {
     console.log('[MarketNews Sync] Starting scheduled sync...');

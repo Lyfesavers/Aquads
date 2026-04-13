@@ -2,8 +2,8 @@ const Parser = require('rss-parser');
 const MarketNewsItem = require('../models/MarketNewsItem');
 
 const COINDESK_RSS_URL = 'https://www.coindesk.com/arc/outboundfeeds/rss';
-// BBC News (world) — widely trusted; thumbnails often in description HTML or media fields
-const GLOBAL_RSS_URL = 'https://feeds.bbci.co.uk/news/world/rss.xml';
+// France 24 (English world feed) — RSS includes media:thumbnail on every item in practice (reliable images)
+const GLOBAL_RSS_URL = 'https://www.france24.com/en/rss';
 
 /** Only keep stories newer than this (rolling window). News moves fast; 72h keeps the list fresh. */
 const RETENTION_HOURS = 72;
