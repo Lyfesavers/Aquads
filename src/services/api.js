@@ -1223,6 +1223,21 @@ export const fetchJobs = async (includeExpired = false, page = 1, limit = 20) =>
   }
 };
 
+export const fetchMarketNews = async (page = 1, limit = 60) => {
+  try {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const response = await fetch(`${API_URL}/market-news?${params.toString()}`);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch market news');
+    }
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching market news:', error);
+    throw error;
+  }
+};
+
 export const refreshJob = async (jobId, token) => {
   const response = await fetch(`${API_URL}/jobs/${jobId}/refresh`, {
     method: 'POST',

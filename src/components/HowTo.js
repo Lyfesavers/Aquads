@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
+import MarketNewsList from './MarketNewsList';
 import CreateBlogModal from './CreateBlogModal';
 import SkillTests from './SkillTests';
 import FreelancerWorkshop from './FreelancerWorkshop';
@@ -10,7 +11,7 @@ import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
-import { API_URL } from '../services/api';
+import { API_URL, fetchMarketNews } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 import {
   TUTORIAL_VIDEOS,
@@ -44,6 +45,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const location = useLocation();
   const navigate = useNavigate();
   const blogListRef = useRef(null);
+  const [marketNewsItems, setMarketNewsItems] = useState([]);
+  const [marketNewsLoading, setMarketNewsLoading] = useState(false);
+  const [marketNewsError, setMarketNewsError] = useState(null);
+  const [marketNewsRetentionDays, setMarketNewsRetentionDays] = useState(null);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -62,6 +67,34 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   // Store activeTab in sessionStorage whenever it changes
   useEffect(() => {
     sessionStorage.setItem('learnActiveTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'news') return undefined;
+    let cancelled = false;
+    (async () => {
+      setMarketNewsLoading(true);
+      setMarketNewsError(null);
+      try {
+        const data = await fetchMarketNews(1, 60);
+        if (!cancelled) {
+          setMarketNewsItems(data.items || []);
+          setMarketNewsRetentionDays(
+            typeof data.retentionDays === 'number' ? data.retentionDays : null
+          );
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setMarketNewsError(e.message || 'Failed to load market news');
+          setMarketNewsItems([]);
+        }
+      } finally {
+        if (!cancelled) setMarketNewsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab]);
 
   useEffect(() => {
@@ -588,7 +621,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-blue-400">How To Guide</h1>
           <p className="text-gray-400 text-base sm:text-lg px-2">
-            Learn how to make the most of Aquads with our video tutorials, skills tests, and community blog posts
+            Learn how to make the most of Aquads with our video tutorials, skills tests, community blog posts, and curated
+            market headlines
           </p>
         </div>
 
@@ -624,6 +658,16 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               }`}
             >
               Blog Posts
+            </button>
+            <button
+              onClick={() => setActiveTab('news')}
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === 'news'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Market news
             </button>
             <button
               onClick={() => setActiveTab('workshop')}
@@ -762,6 +806,33 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {activeTab === 'tests' && (
           <div className="mb-12 sm:mb-16">
             <SkillTests currentUser={currentUser} />
+          </div>
+        )}
+
+        {activeTab === 'news' && (
+          <div className="mt-12 sm:mt-16">
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Market &amp; world news</h2>
+              <p className="text-gray-400 text-sm mt-2 max-w-2xl">
+                Headlines from CoinDesk and The Guardian (world news), pulled over RSS and refreshed twice daily. Each
+                card opens the full article on the publisher&apos;s site.
+              </p>
+            </div>
+            {marketNewsError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
+                {marketNewsError}
+              </div>
+            )}
+            {marketNewsLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400" />
+                  <p className="text-gray-400 text-sm">Loading headlines…</p>
+                </div>
+              </div>
+            ) : (
+              <MarketNewsList items={marketNewsItems} retentionDays={marketNewsRetentionDays} />
+            )}
           </div>
         )}
 

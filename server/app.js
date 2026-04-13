@@ -503,6 +503,7 @@ app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
+app.use('/api/market-news', require('./routes/marketNews'));
 app.use('/api/ads', adsRoutes);
 app.use('/api/addon-orders', addonOrdersRoutes);
 app.use('/api/bumps', bumpRoutes);

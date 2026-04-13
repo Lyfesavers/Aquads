@@ -46,6 +46,7 @@ const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
 const { syncWeWorkRemotelyJobs } = require('./services/weworkRemotelySync');
+const { syncMarketNews } = require('./services/marketNewsSync');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
@@ -518,6 +519,25 @@ setTimeout(async () => {
   }
 }, 40000); // After CryptoJobsList initial sync
 
+// Market news (CoinDesk + global RSS, default The Guardian World), twice daily; keep ~30 days in DB
+cron.schedule('0 5,17 * * *', async () => {
+  try {
+    console.log('[MarketNews Sync] Starting scheduled sync...');
+    await syncMarketNews();
+  } catch (error) {
+    console.error('[MarketNews Sync] Error in scheduled sync:', error);
+  }
+});
+
+setTimeout(async () => {
+  try {
+    console.log('[MarketNews Sync] Running initial sync on server start...');
+    await syncMarketNews();
+  } catch (error) {
+    console.error('[MarketNews Sync] Error in initial sync:', error);
+  }
+}, 50000);
+
 // Middleware
 const corsOptions = {
   origin: function (origin, callback) {
@@ -747,6 +767,7 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
+app.use('/api/market-news', require('./routes/marketNews'));
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
