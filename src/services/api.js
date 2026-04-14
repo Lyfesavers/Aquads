@@ -1223,9 +1223,12 @@ export const fetchJobs = async (includeExpired = false, page = 1, limit = 20) =>
   }
 };
 
-export const fetchMarketNews = async (page = 1, limit = 20) => {
+export const fetchMarketNews = async (page = 1, limit = 20, source = 'all') => {
   try {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (source && source !== 'all') {
+      params.set('source', source);
+    }
     const response = await fetch(`${API_URL}/market-news?${params.toString()}`, {
       cache: 'no-store',
     });

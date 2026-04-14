@@ -53,6 +53,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [marketNewsPagination, setMarketNewsPagination] = useState(null);
   const [marketNewsPage, setMarketNewsPage] = useState(1);
   const [isLoadingMoreMarketNews, setIsLoadingMoreMarketNews] = useState(false);
+  const [marketNewsSourceFilter, setMarketNewsSourceFilter] = useState('all');
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -82,7 +83,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       setMarketNewsPage(1);
       setMarketNewsPagination(null);
       try {
-        const data = await fetchMarketNews(1, MARKET_NEWS_PAGE_SIZE);
+        const data = await fetchMarketNews(1, MARKET_NEWS_PAGE_SIZE, marketNewsSourceFilter);
         if (!cancelled) {
           setMarketNewsItems(data.items || []);
           setMarketNewsPagination(data.pagination || null);
@@ -100,14 +101,14 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     return () => {
       cancelled = true;
     };
-  }, [activeTab]);
+  }, [activeTab, marketNewsSourceFilter]);
 
   const handleLoadMoreMarketNews = async () => {
     if (!marketNewsPagination?.hasMore || isLoadingMoreMarketNews) return;
     try {
       setIsLoadingMoreMarketNews(true);
       const nextPage = marketNewsPage + 1;
-      const data = await fetchMarketNews(nextPage, MARKET_NEWS_PAGE_SIZE);
+      const data = await fetchMarketNews(nextPage, MARKET_NEWS_PAGE_SIZE, marketNewsSourceFilter);
       setMarketNewsItems((prev) => [...prev, ...(data.items || [])]);
       setMarketNewsPagination(data.pagination || null);
       setMarketNewsPage(nextPage);
@@ -834,6 +835,30 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           <div className="mt-12 sm:mt-16">
             <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Market &amp; world news</h2>
+              <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by source">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'coindesk', label: 'CoinDesk' },
+                  { id: 'sky', label: 'Sky News' },
+                ].map(({ id, label }) => {
+                  const active = marketNewsSourceFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setMarketNewsSourceFilter(id)}
+                      disabled={marketNewsLoading}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                        active
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
+                          : 'bg-gray-800/80 text-gray-300 hover:bg-gray-700 hover:text-white border border-white/10'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {marketNewsError && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">

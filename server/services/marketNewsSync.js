@@ -2,8 +2,8 @@ const Parser = require('rss-parser');
 const MarketNewsItem = require('../models/MarketNewsItem');
 
 const COINDESK_RSS_URL = 'https://www.coindesk.com/arc/outboundfeeds/rss';
-// France 24 (English world feed) — RSS includes media:thumbnail on every item in practice (reliable images)
-const GLOBAL_RSS_URL = 'https://www.france24.com/en/rss';
+// Sky News world — RSS thumbnails present on items we tested; replaces legacy "global" France24/BBC rows
+const SKY_RSS_URL = 'https://feeds.skynews.com/feeds/rss/world.xml';
 
 /** Only keep stories newer than this (rolling window). News moves fast; 72h keeps the list fresh. */
 const RETENTION_HOURS = 72;
@@ -207,7 +207,17 @@ async function syncMarketNews() {
   const start = new Date();
   console.log(`[MarketNews Sync] Starting at ${start.toISOString()}`);
 
-  const results = { coindesk: null, global: null };
+  // Remove deprecated source slug (was France24/BBC under "global") so schema + filters stay consistent
+  try {
+    const legacy = await MarketNewsItem.deleteMany({ source: 'global' });
+    if (legacy.deletedCount > 0) {
+      console.log(`[MarketNews Sync] Removed ${legacy.deletedCount} legacy source=global documents`);
+    }
+  } catch (e) {
+    console.error('[MarketNews Sync] Legacy global cleanup:', e.message);
+  }
+
+  const results = { coindesk: null, sky: null };
 
   try {
     results.coindesk = await ingestFeed(COINDESK_RSS_URL, 'coindesk');
@@ -218,11 +228,11 @@ async function syncMarketNews() {
   }
 
   try {
-    results.global = await ingestFeed(GLOBAL_RSS_URL, 'global');
-    console.log('[MarketNews Sync] Global feed:', GLOBAL_RSS_URL, results.global);
+    results.sky = await ingestFeed(SKY_RSS_URL, 'sky');
+    console.log('[MarketNews Sync] Sky News:', SKY_RSS_URL, results.sky);
   } catch (err) {
-    console.error('[MarketNews Sync] Global feed failed:', err.message);
-    results.global = { error: err.message };
+    console.error('[MarketNews Sync] Sky News feed failed:', err.message);
+    results.sky = { error: err.message };
   }
 
   const cutoff = getPublishedAtCutoff();
@@ -242,5 +252,5 @@ module.exports = {
   RETENTION_HOURS,
   getPublishedAtCutoff,
   COINDESK_RSS_URL,
-  GLOBAL_RSS_URL,
+  SKY_RSS_URL,
 };

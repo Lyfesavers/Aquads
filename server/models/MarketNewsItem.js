@@ -5,7 +5,7 @@ const marketNewsItemSchema = new mongoose.Schema(
     source: {
       type: String,
       required: true,
-      enum: ['coindesk', 'global'],
+      enum: ['coindesk', 'sky'],
       index: true,
     },
     externalKey: {

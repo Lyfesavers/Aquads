@@ -2,12 +2,19 @@ import React, { useState } from 'react';
 
 const sourceLabel = (source) => {
   if (source === 'coindesk') return 'CoinDesk';
-  if (source === 'global') return 'France 24';
+  if (source === 'sky') return 'Sky News';
   return source;
+};
+
+const sourceMonogram = (source) => {
+  if (source === 'coindesk') return 'CD';
+  if (source === 'sky') return 'SKY';
+  return '?';
 };
 
 const sourceAccent = (source) => {
   if (source === 'coindesk') return 'from-amber-500/25 to-orange-600/10 border-amber-500/30';
+  if (source === 'sky') return 'from-red-900/35 to-slate-950/40 border-red-500/25';
   return 'from-blue-600/20 to-indigo-950/30 border-blue-500/30';
 };
 
@@ -30,7 +37,7 @@ function ImageBanner({ imageUrl, source, className = '' }) {
         aria-hidden
       >
         <span className="text-4xl font-black text-white/10 tracking-tighter select-none">
-          {source === 'coindesk' ? 'CD' : 'F24'}
+          {sourceMonogram(source)}
         </span>
         <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
           {sourceLabel(source)}

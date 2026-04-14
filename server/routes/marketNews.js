@@ -11,7 +11,15 @@ router.get('/', async (req, res) => {
 
     const cutoff = getPublishedAtCutoff();
 
+    const rawSource = (req.query.source || 'all').toString().toLowerCase();
+    const sourceFilter = ['all', 'coindesk', 'sky'].includes(rawSource) ? rawSource : 'all';
+
     const query = { publishedAt: { $gte: cutoff } };
+    if (sourceFilter !== 'all') {
+      query.source = sourceFilter;
+    } else {
+      query.source = { $in: ['coindesk', 'sky'] };
+    }
 
     const [items, total] = await Promise.all([
       MarketNewsItem.find(query)
