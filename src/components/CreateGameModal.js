@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FaGamepad, FaTimesCircle } from 'react-icons/fa';
+import { FaGamepad, FaPlus, FaTrash } from 'react-icons/fa';
 import { createGame } from '../services/api';
 import Modal from './Modal';
+import { GAME_SOCIAL_PLATFORM_OPTIONS, sanitizeGameSocialsForApi } from './GameSocialLinks';
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'Ethereum', value: 'ethereum' },
@@ -48,7 +49,8 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
     projectName: '',
     category: 'action',
     blockchain: 'ethereum',
-    tags: ''
+    tags: '',
+    socials: []
   });
   
   const [errors, setErrors] = useState({});
@@ -101,6 +103,22 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
     if (!formData.projectName.trim()) {
       newErrors.projectName = 'Project name is required';
     }
+
+    const incompleteSocial = (formData.socials || []).some((row) => {
+      const u = row?.url?.trim();
+      const p = row?.platform;
+      return (u && !p) || (p && !u);
+    });
+    if (incompleteSocial) {
+      newErrors.socials = 'Each social row needs both a platform and a URL, or remove the row.';
+    }
+    const badSocialUrl = (formData.socials || []).some((row) => {
+      if (!row?.url?.trim() || !row?.platform) return false;
+      return !isValidUrl(row.url.trim());
+    });
+    if (badSocialUrl) {
+      newErrors.socials = 'Please enter a valid URL for each social link.';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,7 +150,8 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
       
       const gameData = {
         ...formData,
-        tags: tagsArray
+        tags: tagsArray,
+        socials: sanitizeGameSocialsForApi(formData.socials || [])
       };
       
       const newGame = await createGame(gameData);
@@ -149,6 +168,35 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
         submit: error.message || 'Failed to create game. Please try again.'
       }));
       setIsSubmitting(false);
+    }
+  };
+
+  const addSocialRow = () => {
+    if ((formData.socials || []).length >= 12) return;
+    setFormData((prev) => ({
+      ...prev,
+      socials: [...(prev.socials || []), { platform: 'twitter', url: '' }]
+    }));
+    setErrors((prev) => ({ ...prev, socials: '' }));
+  };
+
+  const removeSocialRow = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      socials: (prev.socials || []).filter((_, i) => i !== index)
+    }));
+    setErrors((prev) => ({ ...prev, socials: '' }));
+  };
+
+  const updateSocialRow = (index, field, value) => {
+    setFormData((prev) => {
+      const next = [...(prev.socials || [])];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, socials: next };
+    });
+    if (errors.socials) {
+      setErrors((prev) => ({ ...prev, socials: '' }));
     }
   };
   
@@ -315,6 +363,62 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
                 placeholder="e.g. nft, metaverse, play-to-earn"
               />
               <p className="text-gray-500 text-xs mt-1">Separate tags with commas</p>
+            </div>
+
+            <div className="col-span-1 md:col-span-2 border border-gray-600 rounded-lg p-4 bg-gray-900/40">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                <div>
+                  <label className="block text-gray-200 font-medium">Social links</label>
+                  <p className="text-gray-500 text-xs mt-0.5">Optional — add your community or project pages (max 12).</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addSocialRow}
+                  disabled={(formData.socials || []).length >= 12}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                >
+                  <FaPlus className="text-xs" />
+                  Add social
+                </button>
+              </div>
+              {errors.socials && (
+                <p className="text-red-500 text-sm mb-3">{errors.socials}</p>
+              )}
+              {(formData.socials || []).length === 0 ? (
+                <p className="text-gray-500 text-sm">No socials yet — use &quot;Add social&quot; to link Twitter, Discord, and more.</p>
+              ) : (
+                <div className="space-y-3">
+                  {(formData.socials || []).map((row, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                      <select
+                        value={row.platform || 'twitter'}
+                        onChange={(e) => updateSocialRow(index, 'platform', e.target.value)}
+                        className="sm:w-44 w-full bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {GAME_SOCIAL_PLATFORM_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="url"
+                        value={row.url || ''}
+                        onChange={(e) => updateSocialRow(index, 'url', e.target.value)}
+                        className="flex-1 w-full bg-gray-700 text-white border border-gray-600 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSocialRow(index)}
+                        className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-gray-700 hover:bg-red-900/50 text-gray-300 hover:text-red-300 border border-gray-600 transition-colors"
+                        title="Remove"
+                        aria-label="Remove social row"
+                      >
+                        <FaTrash className="text-sm" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           

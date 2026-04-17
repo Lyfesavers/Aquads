@@ -9,6 +9,9 @@ node_modules
 # production
 build
 
+# Cursor IDE — project rules stay local (not pushed to remote)
+.cursor/
+
 # misc
 .DS_Store
 .env.local

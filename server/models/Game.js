@@ -1,5 +1,24 @@
 const mongoose = require('mongoose');
 
+const GAME_SOCIAL_PLATFORMS = [
+  'twitter', 'discord', 'telegram', 'youtube', 'tiktok', 'facebook',
+  'instagram', 'twitch', 'reddit', 'linkedin', 'github', 'medium', 'website'
+];
+
+const gameSocialSchema = new mongoose.Schema({
+  platform: {
+    type: String,
+    enum: GAME_SOCIAL_PLATFORMS,
+    required: true
+  },
+  url: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 512
+  }
+}, { _id: false });
+
 const gameSchema = new mongoose.Schema({
   title: { 
     type: String, 
@@ -56,6 +75,16 @@ const gameSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive', 'pending'],
     default: 'active'
+  },
+  socials: {
+    type: [gameSocialSchema],
+    default: [],
+    validate: {
+      validator(v) {
+        return !v || v.length <= 12;
+      },
+      message: 'A maximum of 12 social links is allowed'
+    }
   }
 });
 

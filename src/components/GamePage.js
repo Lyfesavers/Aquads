@@ -11,6 +11,7 @@ import { socket } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
+import GameSocialLinks from './GameSocialLinks';
 
 // Format a date string into a human-readable relative time
 const timeAgo = (dateStr) => {
@@ -315,6 +316,9 @@ const GamePage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               )}
               <span className="ml-2">· {formatDate(game.createdAt)}</span>
             </p>
+            {game.socials && game.socials.length > 0 && (
+              <GameSocialLinks socials={game.socials} size="lg" className="mt-3" />
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">

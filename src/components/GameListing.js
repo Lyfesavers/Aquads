@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare, FaEye, FaPlay } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle, FaShare, FaEye, FaPlay } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
+import GameSocialLinks from './GameSocialLinks';
 
 const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
   const [voted, setVoted] = useState(false);
@@ -252,6 +253,10 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         <p className="text-sm text-gray-400 mb-2">
           By <span className="text-blue-400">{game.projectName}</span>
         </p>
+
+        {game.socials && game.socials.length > 0 && (
+          <GameSocialLinks socials={game.socials} size="sm" className="mb-3" />
+        )}
         
         <div className="mb-4 flex-grow">
           <div

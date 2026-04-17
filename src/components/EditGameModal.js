@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaTimesCircle } from 'react-icons/fa';
+import { FaGamepad, FaTimesCircle, FaPlus, FaTrash } from 'react-icons/fa';
 import { updateGame } from '../services/api';
 import Modal from './Modal';
+import { GAME_SOCIAL_PLATFORM_OPTIONS, sanitizeGameSocialsForApi } from './GameSocialLinks';
+
+const ALLOWED_SOCIAL_PLATFORMS = new Set(GAME_SOCIAL_PLATFORM_OPTIONS.map((o) => o.value));
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'Ethereum', value: 'ethereum' },
@@ -47,7 +50,8 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
     projectName: '',
     category: '',
     blockchain: '',
-    tags: []
+    tags: [],
+    socials: []
   });
   
   const [tagInput, setTagInput] = useState('');
@@ -66,7 +70,13 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
         projectName: game.projectName || '',
         category: game.category || '',
         blockchain: game.blockchain || '',
-        tags: game.tags || []
+        tags: game.tags || [],
+        socials: Array.isArray(game.socials)
+          ? game.socials.map((s) => ({
+              platform: ALLOWED_SOCIAL_PLATFORMS.has(s.platform) ? s.platform : 'website',
+              url: s.url || ''
+            }))
+          : []
       });
     }
   }, [game]);
@@ -139,6 +149,22 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
     if (!formData.projectName.trim()) newErrors.projectName = 'Project name is required';
     if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.blockchain) newErrors.blockchain = 'Blockchain is required';
+
+    const incompleteSocial = (formData.socials || []).some((row) => {
+      const u = row?.url?.trim();
+      const p = row?.platform;
+      return (u && !p) || (p && !u);
+    });
+    if (incompleteSocial) {
+      newErrors.socials = 'Each social row needs both a platform and a URL, or remove the row.';
+    }
+    const badSocialUrl = (formData.socials || []).some((row) => {
+      if (!row?.url?.trim() || !row?.platform) return false;
+      return !isValidUrl(row.url.trim());
+    });
+    if (badSocialUrl) {
+      newErrors.socials = 'Please enter a valid URL for each social link.';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -160,7 +186,11 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
     
     try {
       setIsSubmitting(true);
-      const updatedGame = await updateGame(game._id, formData);
+      const payload = {
+        ...formData,
+        socials: sanitizeGameSocialsForApi(formData.socials || [])
+      };
+      const updatedGame = await updateGame(game._id, payload);
       onUpdateGame(updatedGame);
       onClose();
     } catch (error) {
@@ -171,6 +201,35 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
       }));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const addSocialRow = () => {
+    if ((formData.socials || []).length >= 12) return;
+    setFormData((prev) => ({
+      ...prev,
+      socials: [...(prev.socials || []), { platform: 'twitter', url: '' }]
+    }));
+    setErrors((prev) => ({ ...prev, socials: null }));
+  };
+
+  const removeSocialRow = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      socials: (prev.socials || []).filter((_, i) => i !== index)
+    }));
+    setErrors((prev) => ({ ...prev, socials: null }));
+  };
+
+  const updateSocialRow = (index, field, value) => {
+    setFormData((prev) => {
+      const next = [...(prev.socials || [])];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, socials: next };
+    });
+    if (errors.socials) {
+      setErrors((prev) => ({ ...prev, socials: null }));
     }
   };
   
@@ -352,6 +411,62 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
                         className="ml-1 text-blue-300 hover:text-white"
                       >
                         <FaTimesCircle />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="col-span-1 md:col-span-2 border border-gray-600 rounded-lg p-4 bg-gray-900/30">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                <div>
+                  <label className="block mb-0.5 text-gray-200 font-medium">Social links</label>
+                  <p className="text-gray-500 text-xs">Optional — max 12 links with icons on your listing.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addSocialRow}
+                  disabled={(formData.socials || []).length >= 12}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                >
+                  <FaPlus className="text-xs" />
+                  Add social
+                </button>
+              </div>
+              {errors.socials && (
+                <p className="text-red-500 text-sm mb-3">{errors.socials}</p>
+              )}
+              {(formData.socials || []).length === 0 ? (
+                <p className="text-gray-500 text-sm">No socials — use Add social to link your profiles.</p>
+              ) : (
+                <div className="space-y-3">
+                  {(formData.socials || []).map((row, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                      <select
+                        value={row.platform || 'twitter'}
+                        onChange={(e) => updateSocialRow(index, 'platform', e.target.value)}
+                        className="sm:w-44 w-full bg-gray-700 rounded p-2 border border-gray-600"
+                      >
+                        {GAME_SOCIAL_PLATFORM_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="url"
+                        value={row.url || ''}
+                        onChange={(e) => updateSocialRow(index, 'url', e.target.value)}
+                        className="flex-1 w-full bg-gray-700 rounded p-2 border border-gray-600"
+                        placeholder="https://"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSocialRow(index)}
+                        className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-gray-700 hover:bg-red-900/50 text-gray-300 hover:text-red-300 border border-gray-600 transition-colors"
+                        title="Remove"
+                        aria-label="Remove social row"
+                      >
+                        <FaTrash className="text-sm" />
                       </button>
                     </div>
                   ))}
