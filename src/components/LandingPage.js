@@ -4082,7 +4082,7 @@ const LandingPage = () => {
       title: 'Link in Bio',
       description: 'Create a premium links page with custom colors, button styles, and background images. Monetize your page with banner ads — set your own prices, get paid in crypto directly via AquaPay.',
       gradient: 'from-purple-900/40 to-amber-900/80',
-      link: '/docs?section=getting-started&page=link-in-bio'
+      link: '/dashboard/linkinbio'
     },
     {
       icon: '🔮',
