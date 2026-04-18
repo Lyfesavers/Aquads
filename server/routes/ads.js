@@ -11,6 +11,12 @@ const User = require('../models/User');
 const socket = require('../socket');
 const telegramService = require('../utils/telegramService');
 const { isValidDeepDiveIntroVideoUrl, MAX_BRANDING_VIDEO_URL_LENGTH } = require('../utils/brandingMedia');
+const {
+  isVoteBumped,
+  getBumpSyncUpdate,
+  computeShrunkSize,
+  BUMP_VOTE_THRESHOLD
+} = require('../utils/bumpFromVotes');
 
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
@@ -93,97 +99,67 @@ const MAX_SIZE = 100; // This will be maximum size, client may request smaller f
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.9; // Shrink by 10% each interval
 
-// Function to calculate and update ad size
+const sizeOptsForBump = (now = Date.now()) => ({
+  SHRINK_INTERVAL,
+  MAX_SIZE,
+  MIN_SIZE,
+  SHRINK_PERCENTAGE,
+  now
+});
+
+const finalizeAdBumpAfterVote = async (adDoc) => {
+  const bumpSync = getBumpSyncUpdate(adDoc, adDoc.bullishVotes, sizeOptsForBump());
+  if (!bumpSync.changed) {
+    return adDoc;
+  }
+  const synced = await Ad.findByIdAndUpdate(adDoc._id, { $set: bumpSync.$set }, { new: true });
+  socket.emitAdUpdate('update', synced);
+  return synced;
+};
+
+// Function to calculate and update ad size (bump = bullishVotes >= BUMP_VOTE_THRESHOLD)
 const updateAdSize = async (ad) => {
   const now = Date.now();
 
   try {
-    // Check if bumped ad has expired
-    if (ad.isBumped && ad.bumpExpiresAt) {
-      const currentDate = new Date();
-      const expiryDate = new Date(ad.bumpExpiresAt);
-      
-      // Force comparison using timestamps
-      const isExpired = currentDate.getTime() > expiryDate.getTime();
-      
-      if (isExpired) {
-        try {
-          // Calculate the correct size based on time since creation
-          const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-          const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-          
-          // Start from MAX_SIZE and apply continuous shrinking
-          let newSize = MAX_SIZE;
-          for (let i = 0; i < shrinkIntervals; i++) {
-            newSize *= SHRINK_PERCENTAGE;
-          }
-          
-          // Ensure size doesn't go below minimum and round to 1 decimal
-          newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
-          
-          const result = await Ad.findByIdAndUpdate(
-            ad._id,
-            {
-              $set: { 
-                isBumped: false,
-                status: 'active',
-                size: newSize
-              }
-            },
-            { new: true }
-          );
-          
-          // Emit WebSocket event for the updated ad immediately
-          if (result) {
-            socket.emitAdUpdate('update', result);
-            // Bump expired, ad shrunk
-          }
-          return;
-        } catch (updateError) {
-          // Update failed, continue
-        }
+    const sizeOpts = sizeOptsForBump(now);
+    const { changed, $set } = getBumpSyncUpdate(ad, ad.bullishVotes, sizeOpts);
+
+    if (changed) {
+      const result = await Ad.findByIdAndUpdate(ad._id, { $set }, { new: true });
+      if (result) {
+        invalidateAdsCache();
+        socket.emitAdUpdate('update', result);
       }
+      return;
     }
 
-    // Rest of the existing updateAdSize logic...
-    if (ad.isBumped) {
+    if (isVoteBumped(ad.bullishVotes)) {
       if (ad.size !== MAX_SIZE) {
         const result = await Ad.findByIdAndUpdate(ad._id, {
           $set: { size: MAX_SIZE }
         }, { new: true });
-        
-        // Emit WebSocket event for the updated ad immediately
         if (result) {
           socket.emitAdUpdate('update', result);
-          // Bump active, ad maximized
         }
       }
       return;
     }
 
-    // Calculate shrink size for non-bumped ads
     const timeSinceCreation = now - new Date(ad.createdAt).getTime();
     const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-    
-    // Start from MAX_SIZE and apply continuous shrinking
     let newSize = MAX_SIZE;
     for (let i = 0; i < shrinkIntervals; i++) {
       newSize *= SHRINK_PERCENTAGE;
     }
-
-    // Ensure size doesn't go below minimum and round to 1 decimal
     newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
 
-    // Update if size changed
     if (newSize !== ad.size) {
       const result = await Ad.findByIdAndUpdate(ad._id, {
         $set: { size: newSize }
       }, { new: true });
-      
-      // Emit WebSocket event for the updated ad immediately
       if (result) {
         socket.emitAdUpdate('update', result);
-        // Ad size updated
       }
     }
   } catch (error) {
@@ -219,28 +195,26 @@ const invalidateAdsCache = () => {
 const fetchAndCacheAds = async () => {
   const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
   const currentTime = Date.now();
-  const processedAds = ads.map(ad => {
-    if (ad.isBumped && ad.bumpExpiresAt) {
-      const expiryDate = new Date(ad.bumpExpiresAt);
-      if (currentTime <= expiryDate.getTime()) {
-        return ad;
-      }
-    }
-    if (!ad.isBumped) {
-      const timeSinceCreation = currentTime - new Date(ad.createdAt).getTime();
-      const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-      let calculatedSize = MAX_SIZE;
-      for (let i = 0; i < shrinkIntervals; i++) {
-        calculatedSize *= SHRINK_PERCENTAGE;
-      }
-      calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
+  const processedAds = ads.map((ad) => {
+    const voteBumped = isVoteBumped(ad.bullishVotes);
+    const adObject = typeof ad.toObject === 'function' ? ad.toObject() : { ...ad };
+    adObject.isBumped = voteBumped;
+    if (!voteBumped) {
+      const calculatedSize = computeShrunkSize(ad.createdAt, currentTime, {
+        shrinkInterval: SHRINK_INTERVAL,
+        maxSize: MAX_SIZE,
+        minSize: MIN_SIZE,
+        shrinkPercentage: SHRINK_PERCENTAGE
+      });
       if (calculatedSize !== ad.size) {
-        const adObject = ad.toObject();
         adObject.size = calculatedSize;
-        return adObject;
       }
+      return adObject;
     }
-    return ad;
+    if (adObject.size !== MAX_SIZE) {
+      adObject.size = MAX_SIZE;
+    }
+    return adObject;
   });
   adsListCache = processedAds;
   adsListCacheTime = Date.now();
@@ -547,34 +521,12 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
   }
 });
 
-// POST route for bumping an ad
+// POST route for bumping an ad (legacy — paid bumps removed; bumps come from bullish votes)
 router.post('/bump', auth, async (req, res) => {
-  try {
-    // ... existing bump validation code ...
-
-    // Get the correct USDC amount based on bump duration
-    const adAmount = calculateBumpAmount(req.body.duration);
-
-    if (req.body.referredBy) {
-      const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
-      const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
-
-      const affiliateEarning = new AffiliateEarning({
-        affiliateId: req.body.referredBy,
-        referredUserId: req.user.userId,
-        adId: ad._id,
-        adAmount: adAmount, // This should be 20, 40, or 80 USDC
-        commissionRate,
-        commissionEarned
-      });
-
-      await affiliateEarning.save();
-    }
-
-    // ... rest of bump code ...
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process bump' });
-  }
+  res.status(410).json({
+    error: 'Paid bumps are no longer available.',
+    message: `Bubbles bump automatically at ${BUMP_VOTE_THRESHOLD}+ bullish votes (organic votes and vote boosts both count).`
+  });
 });
 
 // Special route for position updates only (no auth required)
@@ -654,7 +606,9 @@ router.post('/:id/vote', auth, async (req, res) => {
           adId: ad.id,
           bullishVotes: ad.bullishVotes,
           bearishVotes: ad.bearishVotes,
-          userVote: voteType
+          userVote: voteType,
+          isBumped: isVoteBumped(ad.bullishVotes),
+          size: isVoteBumped(ad.bullishVotes) ? MAX_SIZE : ad.size
         });
       }
       
@@ -708,27 +662,31 @@ router.post('/:id/vote', auth, async (req, res) => {
         // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
         await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
-      
+
+      const finalAd = await finalizeAdBumpAfterVote(updatedAd);
       invalidateAdsCache();
-      // Emit socket event for real-time updates
       socket.getIO().emit('adVoteUpdated', {
-        adId: updatedAd.id,
-        bullishVotes: updatedAd.bullishVotes,
-        bearishVotes: updatedAd.bearishVotes
+        adId: finalAd.id,
+        bullishVotes: finalAd.bullishVotes,
+        bearishVotes: finalAd.bearishVotes,
+        isBumped: finalAd.isBumped,
+        size: finalAd.size
       });
 
       // Send notification to registered Telegram group about vote change
-      telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
+      telegramService.sendVoteNotificationToGroup(finalAd).catch(err => {
         console.error('Error sending telegram notification:', err);
       });
       
       return res.json({
         success: true,
-        adId: updatedAd.id,
-        bullishVotes: updatedAd.bullishVotes,
-        bearishVotes: updatedAd.bearishVotes,
+        adId: finalAd.id,
+        bullishVotes: finalAd.bullishVotes,
+        bearishVotes: finalAd.bearishVotes,
         userVote: voteType,
-        pointsAwarded: shouldAwardPoints ? 20 : 0
+        pointsAwarded: shouldAwardPoints ? 20 : 0,
+        isBumped: finalAd.isBumped,
+        size: finalAd.size
       });
     } else {
       // New vote - update vote counts and add user to voterData
@@ -769,27 +727,31 @@ router.post('/:id/vote', auth, async (req, res) => {
         // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
         await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
       }
-      
+
+      const finalAd = await finalizeAdBumpAfterVote(updatedAd);
       invalidateAdsCache();
-      // Emit socket event for real-time updates
       socket.getIO().emit('adVoteUpdated', {
-        adId: updatedAd.id,
-        bullishVotes: updatedAd.bullishVotes,
-        bearishVotes: updatedAd.bearishVotes
+        adId: finalAd.id,
+        bullishVotes: finalAd.bullishVotes,
+        bearishVotes: finalAd.bearishVotes,
+        isBumped: finalAd.isBumped,
+        size: finalAd.size
       });
 
       // Send notification to registered Telegram group about new vote
-      telegramService.sendVoteNotificationToGroup(updatedAd).catch(err => {
+      telegramService.sendVoteNotificationToGroup(finalAd).catch(err => {
         console.error('Error sending telegram notification:', err);
       });
       
       return res.json({
         success: true,
-        adId: updatedAd.id,
-        bullishVotes: updatedAd.bullishVotes,
-        bearishVotes: updatedAd.bearishVotes,
+        adId: finalAd.id,
+        bullishVotes: finalAd.bullishVotes,
+        bearishVotes: finalAd.bearishVotes,
         userVote: voteType,
-        pointsAwarded: shouldAwardPoints ? 20 : 0
+        pointsAwarded: shouldAwardPoints ? 20 : 0,
+        isBumped: finalAd.isBumped,
+        size: finalAd.size
       });
     }
   } catch (error) {
@@ -822,6 +784,7 @@ router.get('/:id/votes', async (req, res) => {
       adId: ad.id,
       bullishVotes: ad.bullishVotes,
       bearishVotes: ad.bearishVotes,
+      isBumped: isVoteBumped(ad.bullishVotes),
       // Calculate sentiment percentage
       sentiment: ad.bullishVotes + ad.bearishVotes > 0 
         ? Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) 
@@ -951,3 +914,4 @@ const warmupAdsCache = async () => {
 
 module.exports = router;
 module.exports.warmupAdsCache = warmupAdsCache;
+module.exports.invalidatePublicAdsCache = invalidateAdsCache;

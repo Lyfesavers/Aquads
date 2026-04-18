@@ -68,7 +68,7 @@ const Terms = () => {
                   <li><span className="text-blue-400 font-semibold">AquaPay (Non-Custodial Payments):</span> A payment-link system enabling direct wallet-to-wallet crypto payments across multiple chains. Aquads does not hold or custody user funds; payments go to the recipient's wallet. A 0.5% platform fee applies (see Section 6).</li>
                   <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers LiFi, available on the website and as a Chrome browser extension for swapping tokens from any webpage.</li>
                   <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through MoonPay, Ramp Network, Mercuryo and LiFi.</li>
-                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings with paid advertising placements and optional visibility bump packages.</li>
+                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings with paid advertising placements; bubble bump visibility is driven by community bullish votes (including optional paid vote boost add-ons), not a separate paid bump product.</li>
                   <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Campaigns managed by Coinbound.io and other PR partners (Forbes, Yahoo Finance, Benzinga).</li>
                   <li><span className="text-blue-400 font-semibold">Game Hub:</span> Play‑to‑earn events, mini‑games, and token rewards operated by Aquads.</li>
                   <li><span className="text-blue-400 font-semibold">Savings & Staking Hub (AquaFi):</span> Third-party integrations for yield and staking services.</li>
@@ -147,7 +147,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">7. Project Hub & Bubble Ads</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">7.1 Free Listing & Bump Options.</span> Projects may list for free. Paid bump placements are subject to published rates and availability.</p>
+                <p><span className="text-blue-400 font-semibold">7.1 Free Listing & Bump Visibility.</span> Projects may list for free. Bump-style visibility on the map follows published rules (e.g. bullish vote thresholds). Optional paid add-ons such as vote boosts or banners are subject to published rates and availability.</p>
                 <p><span className="text-blue-400 font-semibold">7.2 Content Guidelines.</span> You represent that all ad content is accurate, lawful, and non‑infringing. Aquads may reject or remove any listing at its discretion.</p>
                 <p><span className="text-blue-400 font-semibold">7.3 Billing & Refunds.</span> Paid features are non‑refundable except as required by law. Disputes must be submitted in writing within 30 days.</p>
               </div>
@@ -238,7 +238,7 @@ const Terms = () => {
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">13. Fees, Payments & Commissions</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
                 <p><span className="text-blue-400 font-semibold">13.1 Affiliate Program.</span> Commission tiers and payout thresholds are as published. Affiliates are independent contractors responsible for taxes.</p>
-                <p><span className="text-blue-400 font-semibold">13.2 Paid Services.</span> Fees for bubble bumping, PR, or premium features will be disclosed before purchase; all payments are in USDC or crypto equivalent.</p>
+                <p><span className="text-blue-400 font-semibold">13.2 Paid Services.</span> Fees for paid add-ons (e.g. vote boosts, PR packages, banners), or other premium features will be disclosed before purchase; all payments are in USDC or crypto equivalent.</p>
                 <p><span className="text-blue-400 font-semibold">13.3 Refund Policy.</span> Except where required by law, paid services are non‑refundable.</p>
                 <p><span className="text-blue-400 font-semibold">13.4 Escrow Fee.</span> Use of crypto escrow for Service Bookings is subject to a platform fee of 1.25% of the escrowed amount, as disclosed in the product. This fee is generally deducted on release to the seller. In the event of a dispute resolved by refund to the buyer, the platform may retain the fee (or a portion thereof) as disclosed at the time of use; escrow fees are non‑refundable except where required by applicable law.</p>
               </div>

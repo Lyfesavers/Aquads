@@ -5,8 +5,7 @@ const { emitAdEvent } = require('../middleware/socketEmitter');
 const { emitBumpRequestUpdate } = require('../socket');
 const BumpRequest = require('../models/BumpRequest');
 const Ad = require('../models/Ad');
-const User = require('../models/User');
-const AffiliateEarning = require('../models/AffiliateEarning');
+const { getBumpSyncUpdate, BUMP_VOTE_THRESHOLD } = require('../utils/bumpFromVotes');
 
 // Get all pending bump requests
 router.get('/', async (req, res) => {
@@ -21,178 +20,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create a new bump request
+// Create a new bump request (disabled — bumps are earned via bullish votes)
 router.post('/', async (req, res) => {
-  try {
-    const { adId, owner, txSignature, duration, discountCode } = req.body;
-    
-    if (!adId || !owner || !duration) {
-      return res.status(400).json({ error: 'Missing required fields: adId, owner, or duration' });
-    }
-
-    // Allow 'aquapay-pending' as a placeholder for AquaPay payments
-    if (!txSignature || (txSignature !== 'aquapay-pending' && txSignature.trim() === '')) {
-      return res.status(400).json({ error: 'Missing required field: txSignature' });
-    }
-
-    // Check if there's already a pending bump request for this ad
-    const existingRequest = await BumpRequest.findOne({ 
-      adId, 
-      status: 'pending'
-    });
-
-    if (existingRequest) {
-      return res.status(400).json({ error: 'There is already a pending bump request for this ad' });
-    }
-
-    // Apply discount code if provided
-    let discountAmount = 0;
-    let appliedDiscountCode = null;
-    
-    if (discountCode) {
-      const DiscountCode = require('../models/DiscountCode');
-      const validDiscountCode = await DiscountCode.findValidCode(discountCode, 'bump');
-      
-      if (validDiscountCode) {
-        // Calculate bump price based on duration
-        let bumpPrice = 0;
-        if (duration === -1) bumpPrice = 99; // Lifetime
-        
-        discountAmount = validDiscountCode.calculateDiscount(bumpPrice);
-        appliedDiscountCode = validDiscountCode;
-        
-        // Increment usage count
-        await validDiscountCode.incrementUsage();
-      }
-    }
-
-    const bumpRequest = new BumpRequest({
-      adId,
-      owner,
-      txSignature,
-      duration,
-      status: 'pending',
-      appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
-      discountAmount: discountAmount
-    });
-
-    const savedRequest = await bumpRequest.save();
-    
-    // Emit socket event for new bump request
-    emitBumpRequestUpdate('create', savedRequest);
-    
-    res.status(201).json(savedRequest);
-  } catch (error) {
-    console.error('Error creating bump request:', error);
-    res.status(500).json({ error: error.message || 'Failed to create bump request' });
-  }
+  res.status(410).json({
+    error: 'Paid bumps are no longer available.',
+    message: `Bubbles bump automatically at ${BUMP_VOTE_THRESHOLD}+ bullish votes (organic votes and vote boosts both count).`
+  });
 });
 
-// Approve a bump request
+// Approve a bump request (disabled — paid bumps removed)
 router.post('/approve', auth, emitAdEvent('update'), async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    const { adId, processedBy } = req.body;
-
-    if (!adId || !processedBy) {
-      return res.status(400).json({ error: 'Missing required fields: adId or processedBy' });
-    }
-
-    // Find and update the bump request
-    const bumpRequest = await BumpRequest.findOne({ adId, status: 'pending' });
-
-    if (!bumpRequest) {
-      return res.status(404).json({ error: 'No pending bump request found for this ad' });
-    }
-
-    // Validate and convert duration
-    const duration = parseInt(bumpRequest.duration);
-    if (isNaN(duration) || (duration <= 0 && duration !== -1)) {
-      return res.status(400).json({ error: 'Invalid duration value' });
-    }
-
-    // Update bump request status
-    bumpRequest.status = 'approved';
-    bumpRequest.processedAt = new Date();
-    bumpRequest.processedBy = processedBy;
-    await bumpRequest.save();
-
-    const now = new Date();
-    // Handle lifetime bumps (duration = -1) by setting expiresAt to null
-    const expiresAt = duration === -1 ? null : new Date(now.getTime() + duration);
-
-    // Update the ad
-    const ad = await Ad.findOneAndUpdate(
-      { id: adId },
-      { 
-        size: 100, // MAX_SIZE
-        isBumped: true,
-        status: 'approved',
-        bumpedAt: now,
-        bumpDuration: duration,
-        bumpExpiresAt: expiresAt,
-        lastBumpTx: bumpRequest.txSignature
-      },
-      { new: true }
-    );
-
-    if (!ad) {
-      return res.status(404).json({ error: 'Ad not found. The bump request exists but the ad may have been deleted.' });
-    }
-
-    // Ad updated successfully
-
-    // Record affiliate commission if applicable
-    try {
-      const adOwner = await User.findOne({ username: ad.owner });
-      if (adOwner && adOwner.referredBy) {
-        // Calculate USDC amount based on bump duration
-        let adAmount;
-        if (duration === 90 * 24 * 60 * 60 * 1000) { // 3 months
-          adAmount = 99; // 99 USDC
-        } else if (duration === 180 * 24 * 60 * 60 * 1000) { // 6 months
-          adAmount = 150; // 150 USDC
-        } else if (duration === 365 * 24 * 60 * 60 * 1000) { // 1 year (legacy)
-          adAmount = 300; // 300 USDC
-        } else if (duration === -1) { // Lifetime
-          adAmount = 99; // 99 USDC
-        }
-
-        const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
-        const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
-        
-        const earning = new AffiliateEarning({
-          affiliateId: adOwner.referredBy,
-          referredUserId: adOwner._id,
-          adId: ad._id,
-          adAmount,           // This will now be in USDC
-          currency: 'USDC',   // Specify USDC currency
-          commissionRate,
-          commissionEarned
-        });
-        
-        await earning.save();
-      }
-    } catch (commissionError) {
-      console.error('Error recording affiliate commission:', commissionError);
-    }
-
-    // Emit socket event for approved bump request
-    emitBumpRequestUpdate('approve', bumpRequest);
-    
-    // Also emit ad update immediately so all clients see the bump
-    const socket = require('../socket');
-    socket.emitAdUpdate('update', ad);
-    // Bump approved and broadcasted
-
-    res.json({ bumpRequest, ad });
-  } catch (error) {
-    console.error('Error approving bump request:', error);
-    res.status(500).json({ error: error.message || 'Failed to approve bump request' });
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
   }
+  res.status(410).json({
+    error: 'Paid bump approval is no longer supported.',
+    message: `Bumps are based on ${BUMP_VOTE_THRESHOLD}+ bullish votes. Reject legacy pending requests if needed.`
+  });
 });
 
 // Reject a bump request
@@ -224,29 +68,29 @@ router.post('/reject', auth, emitAdEvent('update'), async (req, res) => {
       return res.status(404).json({ error: 'No pending bump request found for this ad' });
     }
 
-    // Update the ad status
-    const ad = await Ad.findOneAndUpdate(
-      { id: adId },
-      { 
-        status: 'active',
-        isBumped: false
-      },
-      { new: true }
-    );
+    const ad = await Ad.findOne({ id: adId });
 
     if (!ad) {
       return res.status(404).json({ error: 'Ad not found. The bump request exists but the ad may have been deleted.' });
     }
+
+    const { $set } = getBumpSyncUpdate(ad, ad.bullishVotes);
+    const updatedAd = await Ad.findOneAndUpdate(
+      { id: adId },
+      { $set: { ...$set, status: 'active' } },
+      { new: true }
+    );
 
     // Emit socket event for rejected bump request
     emitBumpRequestUpdate('reject', bumpRequest);
     
     // Also emit ad update immediately so all clients see the rejection
     const socket = require('../socket');
-    socket.emitAdUpdate('update', ad);
-    // Bump rejected and broadcasted
+    if (updatedAd) {
+      socket.emitAdUpdate('update', updatedAd);
+    }
 
-    res.json({ bumpRequest, ad });
+    res.json({ bumpRequest, ad: updatedAd });
   } catch (error) {
     console.error('Error rejecting bump request:', error);
     res.status(500).json({ error: error.message || 'Failed to reject bump request' });

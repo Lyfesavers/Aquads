@@ -86,7 +86,7 @@ const Whitepaper = () => {
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Interactive ad displays, premium bump mechanisms, and real-time ad management that increase project visibility.</li>
+                <li>Interactive ad displays, vote-driven bubble bump visibility, and real-time ad management that increase project visibility.</li>
               </ul>
             </div>
 
@@ -174,7 +174,7 @@ const Whitepaper = () => {
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Dynamic bubble ad sizing, premium bump system, real-time performance analytics, and premium ad banners.</li>
+                <li><strong>Features:</strong> Dynamic bubble ad sizing, vote-based bump visibility (community bullish votes), real-time performance analytics, and premium ad banners.</li>
                 <li><strong>Benefits:</strong> Boost project visibility with targeted, performance-based advertising.</li>
               </ul>
             </div>
@@ -759,7 +759,7 @@ const Whitepaper = () => {
 
             <h3 className="text-xl font-semibold mb-3">5.5. Advertising Revenue</h3>
             <ul className="list-disc pl-6 mb-4">
-              <li>Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.</li>
+              <li>Base ad placements, vote boosts, banners, and extended visibility options create a performance-driven advertising model.</li>
               <li>VIP ad banners, AMAs, and additional monetized features are planned for future phases and more.</li>
               <li>Paid twitter raid post</li>
             </ul>
@@ -787,7 +787,7 @@ const Whitepaper = () => {
               <li>A tiered commission structure rewards affiliates based on the volume of referred sales.</li>
               <li>Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.</li>
               <li>Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.</li>
-              <li>Affiliates earn commission on: project listings, lifetime bumps, banner ads, and HyperSpace (Twitter Space Listeners) orders.</li>
+              <li>Affiliates earn commission on: project listings, add-ons (e.g. marketing packages, vote boosts), banner ads, and HyperSpace (Twitter Space Listeners) orders.</li>
               <li>HyperSpace commissions are calculated on profit margin, ensuring sustainable affiliate rewards.</li>
               <li>This program serves as a key user acquisition and retention strategy rather than a primary revenue source.</li>
             </ul>

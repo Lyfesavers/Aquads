@@ -244,6 +244,9 @@ setInterval(async () => {
 // Vote Boost Background Service - Add votes every 30 seconds for active boosts
 setInterval(async () => {
   try {
+    const { getBumpSyncUpdate } = require('./utils/bumpFromVotes');
+    const adsRoutesForCache = require('./routes/ads');
+
     // Find all active boosts that haven't completed yet
     const activeBoosts = await VoteBoost.find({
       status: 'active',
@@ -282,15 +285,25 @@ setInterval(async () => {
 
             await boost.save();
 
-            // Emit socket update for real-time vote count
+            let finalAd = ad;
+            const bumpSync = getBumpSyncUpdate(ad, ad.bullishVotes);
+            if (bumpSync.changed) {
+              finalAd = await Ad.findByIdAndUpdate(ad._id, { $set: bumpSync.$set }, { new: true });
+              if (typeof adsRoutesForCache.invalidatePublicAdsCache === 'function') {
+                adsRoutesForCache.invalidatePublicAdsCache();
+              }
+              socketModule.emitAdUpdate('update', finalAd);
+            }
+
             socketModule.getIO().emit('adVoteUpdated', {
-              adId: ad.id,
-              bullishVotes: ad.bullishVotes,
-              bearishVotes: ad.bearishVotes
+              adId: finalAd.id,
+              bullishVotes: finalAd.bullishVotes,
+              bearishVotes: finalAd.bearishVotes,
+              isBumped: finalAd.isBumped,
+              size: finalAd.size
             });
 
-            // Send Telegram vote notification (same as regular votes)
-            telegramService.sendVoteNotificationToGroup(ad).catch(err => {
+            telegramService.sendVoteNotificationToGroup(finalAd).catch(err => {
               console.error('[Vote Boost] Error sending telegram notification:', err.message);
             });
           }

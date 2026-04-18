@@ -3,7 +3,6 @@ import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCir
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
-import BumpStore from './BumpStore';
 
 // Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
 // All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
@@ -202,8 +201,6 @@ const ADDON_PACKAGES = [
 const ProjectInfo = ({ currentUser, ads = [] }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
-  const [showBumpStore, setShowBumpStore] = useState(false);
-  const [selectedAdForBump, setSelectedAdForBump] = useState(null);
   const [preSelectedPackage, setPreSelectedPackage] = useState(null);
 
   // Check if user has any projects listed
@@ -250,23 +247,19 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
     }
   };
 
-  const handleBumpPurchase = async (adId, txSignature, duration) => {
-    try {
-      // This will be handled by the BumpStore component
-      setShowBumpStore(false);
-      setSelectedAdForBump(null);
-    } catch (error) {
-      console.error('Error purchasing bump:', error);
-    }
-  };
-
   const handleBumpClick = () => {
-    // Get the user's first project for bumping
     const userAd = ads.find(ad => ad.owner === currentUser?.username);
-    if (userAd) {
-      setSelectedAdForBump(userAd);
-      setShowBumpStore(true);
+    const bullish = userAd ? (userAd.bullishVotes || 0) : 0;
+    const need = Math.max(0, 100 - bullish);
+    if (!userAd) {
+      alert('List a project first, then grow bullish votes to bump.');
+      return;
     }
+    alert(
+      need === 0
+        ? 'Your bubble already has 100+ bullish votes and is bumped.'
+        : `Bumps are free: reach 100 bullish votes (${bullish} now, ${need} to go). Organic votes and vote boosts both count.`
+    );
   };
 
   // Authentication check functions
@@ -639,22 +632,22 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           {/* Bump Options */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Bump Options</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
-              <div className="text-gray-400">USDC</div>
+              <h3 className="text-2xl font-bold text-white mb-2">Bubble bump</h3>
+              <div className="text-4xl font-bold text-green-400 mb-2">100 votes</div>
+              <div className="text-gray-400">Bullish threshold (free)</div>
             </div>
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                Lifetime: $99 USDC
+                100+ bullish votes = bumped bubble (max size, main row)
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                Maximum size bubble on main page
+                Organic votes and paid vote boosts both count
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                Priority positioning & enhanced visibility
+                Drops below 100 = unbumped (size shrinks over time as before)
               </li>
               <li className="flex items-center">
                 <FaTrophy className="text-yellow-400 mr-3" />
@@ -675,7 +668,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-center text-sm text-blue-300">
                 <FaStar className="text-yellow-400 mr-3" />
-                <span className="italic">All Base Listing perks included when bumped to max size!</span>
+                <span className="italic">All Base Listing perks apply when your bubble hits max size from votes.</span>
               </li>
             </ul>
                          {userHasProjects && (
@@ -684,7 +677,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                  className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                >
                  <FaRocket className="mr-2" />
-                 Purchase Bump
+                 How bumping works
                  <FaArrowRight className="ml-2" />
                </button>
              )}
@@ -1071,15 +1064,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         />
       )}
 
-             {/* Bump Store Modal */}
-       {showBumpStore && selectedAdForBump && (
-         <BumpStore
-           ad={selectedAdForBump}
-           onClose={() => setShowBumpStore(false)}
-           onSubmitPayment={handleBumpPurchase}
-           currentUser={currentUser}
-         />
-       )}
     </div>
   );
 };

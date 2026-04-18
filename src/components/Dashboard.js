@@ -4,7 +4,6 @@ import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
 import BookingConversation from './BookingConversation';
-import BumpStore from './BumpStore';
 import EasterEggAnimation from './EasterEggAnimation';
 import CreateJobModal from './CreateJobModal';
 import TokenBalance from './TokenBalance';
@@ -127,14 +126,13 @@ const LinkBioPageAds = ({ userId }) => {
   );
 };
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBumpRequest, setSelectedBumpRequest] = useState(null);
   const [selectedAd, setSelectedAd] = useState(null);
-  const [showBumpStore, setShowBumpStore] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [affiliateInfo, setAffiliateInfo] = useState(null);
   const [pointsInfo, setPointsInfo] = useState(null);
@@ -169,8 +167,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Use global socket connection for real-time updates
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
   const [activeBooking, setActiveBooking] = useState(null);
-  const [selectedAdForBump, setSelectedAdForBump] = useState(null);
-  const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
   const [showProjectDeepDiveModal, setShowProjectDeepDiveModal] = useState(false);
   const [selectedProjectForDeepDive, setSelectedProjectForDeepDive] = useState(null);
   const [showEditAdModal, setShowEditAdModal] = useState(false);
@@ -2105,23 +2101,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     loadInitialBooking();
   }, [initialBookingId, currentUser, bookings, API_URL]);
 
-  // New function to handle the bump button click
   const handleBumpClick = (adId) => {
-    setSelectedAdForBump(ads.find(ad => ad.id === adId));
-    setShowBumpStoreModal(true);
-  };
-  
-  // New function to handle bump submission from BumpStore
-  const handleSubmitBump = (adId, txSignature, duration) => {
-    onBumpAd(adId, txSignature, duration); 
-    setShowBumpStoreModal(false);
-    setSelectedAdForBump(null);
-  };
-  
-  // New function to close the bump store
-  const handleCloseBumpStore = () => {
-    setShowBumpStoreModal(false);
-    setSelectedAdForBump(null);
+    const ad = ads.find(a => a.id === adId);
+    const bullish = ad ? (ad.bullishVotes || 0) : 0;
+    const need = Math.max(0, 100 - bullish);
+    showNotification(
+      need === 0
+        ? 'Your bubble is already bumped (100+ bullish votes).'
+        : `Bumps are free: reach 100 bullish votes to bump your bubble (${bullish} now — ${need} to go). Vote boosts count too.`,
+      'info'
+    );
   };
 
   const handleOpenProjectDeepDive = (ad) => {
@@ -3740,7 +3729,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </p>
                         {freeRaidEligibility.eligibilitySource === 'lifetime_bump' && (
                           <p className="text-xs text-green-400 mt-1">
-                            ✓ Lifetime Bump Active
+                            ✓ Bumped bubble active (100+ bullish votes)
                           </p>
                         )}
                       </div>
@@ -3765,7 +3754,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <div>
                         <h4 className="text-lg font-medium text-white">Get 20 Free Raids Per Day!</h4>
                         <p className="text-sm text-gray-300 mt-1">
-                          List your project in the bubbles and get a <span className="text-purple-400 font-semibold">Lifetime Bump</span> to unlock 20 free raid posts every day.
+                          List your project in the bubbles and reach <span className="text-purple-400 font-semibold">100+ bullish votes</span> (bumped) to unlock 20 free raid posts every day.
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <a 
@@ -6871,14 +6860,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             }));
           }}
           viewOnly={selectedViewOnly}
-        />
-      )}
-
-      {selectedAdForBump && showBumpStoreModal && (
-        <BumpStore
-          ad={selectedAdForBump}
-          onSubmitPayment={handleSubmitBump}
-          onClose={handleCloseBumpStore}
         />
       )}
 

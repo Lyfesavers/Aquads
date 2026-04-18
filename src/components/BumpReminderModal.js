@@ -10,8 +10,8 @@ const BumpReminderModal = ({
 }) => {
   if (!isOpen || !userAd) return null;
 
-  const handleBumpNow = () => {
-    onBumpNow(userAd.id);
+  const handleLearnMore = () => {
+    onBumpNow();
     onClose();
   };
 
@@ -38,7 +38,7 @@ const BumpReminderModal = ({
             Boost Your Visibility!
           </h2>
           <p className="text-base md:text-lg text-gray-300 px-2">
-            Your bubble ad "<span className="text-blue-400 font-semibold break-words">{userAd.title}</span>" needs a bump to stay at the top!
+            <span className="text-blue-400 font-semibold break-words">{userAd.title}</span> is not on the main bump row yet. Reach <span className="text-green-400 font-semibold">100 bullish votes</span> (organic and vote boosts) to bump automatically — no payment.
           </p>
         </div>
 
@@ -63,8 +63,8 @@ const BumpReminderModal = ({
               </p>
             </div>
             <div className="text-center flex-shrink-0">
-              <div className="text-red-400 text-sm font-medium whitespace-nowrap">Not Bumped</div>
-              <div className="text-gray-500 text-xs whitespace-nowrap">Lower visibility</div>
+              <div className="text-amber-400 text-sm font-medium whitespace-nowrap">Under 100 votes</div>
+              <div className="text-gray-500 text-xs whitespace-nowrap">Earn bump free</div>
             </div>
           </div>
         </div>
@@ -73,20 +73,20 @@ const BumpReminderModal = ({
         <div className="mb-6">
           <h4 className="text-white font-semibold mb-3 flex items-center text-sm sm:text-base">
             <FaFire className="text-orange-500 mr-2 flex-shrink-0" />
-            Why Bump Your Bubble?
+            Why votes matter
           </h4>
           <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center text-xs sm:text-sm text-gray-300">
               <FaArrowUp className="text-green-500 mr-2 sm:mr-3 text-xs flex-shrink-0" />
-              <span>Larger size and maximum visibility</span>
+              <span>100+ bullish votes = max size and main bump row</span>
             </div>
             <div className="flex items-center text-xs sm:text-sm text-gray-300">
               <FaArrowUp className="text-green-500 mr-2 sm:mr-3 text-xs flex-shrink-0" />
-              <span>Stay at the top of the bubble display</span>
+              <span>Share your listing so supporters can vote</span>
             </div>
             <div className="flex items-center text-xs sm:text-sm text-gray-300">
               <FaArrowUp className="text-green-500 mr-2 sm:mr-3 text-xs flex-shrink-0" />
-              <span>More clicks and user engagement</span>
+              <span>Vote boosts count toward the same threshold</span>
             </div>
           </div>
         </div>
@@ -94,12 +94,12 @@ const BumpReminderModal = ({
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
           <button
-            onClick={handleBumpNow}
+            onClick={handleLearnMore}
             className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/30"
           >
             <div className="flex items-center justify-center">
               <FaBullhorn className="mr-2" />
-              Bump Now
+              Got it
             </div>
           </button>
           <button
@@ -112,7 +112,7 @@ const BumpReminderModal = ({
 
         {/* Small disclaimer */}
         <p className="text-xs text-gray-500 text-center mt-4">
-          Bumping keeps your project visible and competitive in the marketplace
+          No paid bump — visibility follows community bullish sentiment.
         </p>
       </div>
     </Modal>

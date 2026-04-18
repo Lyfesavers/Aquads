@@ -189,7 +189,7 @@ Aquads is a comprehensive Web3 ecosystem designed to connect crypto projects, fr
 
 The heart of Aquads is our **interactive bubble map** - a dynamic visualization where crypto projects appear as colorful bubbles. Each bubble represents a listed token, with:
 
-- **Size** determined by community engagement and bumps
+- **Size** driven by community engagement; **100+ bullish votes** bumps your bubble (max size, main row)—no separate bump purchase
 - **Color** indicating the blockchain network (Ethereum = Blue, Solana = Purple, BSC = Yellow, etc.)
 - **Position** optimized for visibility based on activity
 
@@ -403,7 +403,7 @@ Your dashboard is the central hub for managing all your activities on Aquads.
 Manage your listed crypto projects:
 - View all your token listings
 - See vote counts and engagement stats
-- Bump listings for more visibility
+- Grow **bullish votes** toward the bump threshold (100+) for more visibility
 - Edit or delete projects
 - Track click analytics
 
@@ -456,7 +456,7 @@ When clicking your username, you'll see:
 
 - Respond to booking inquiries within 24 hours for better ratings
 - Keep your services updated with competitive pricing
-- Regularly bump your token listings for visibility
+- Encourage **bullish votes** on your listings (and vote boosts count) to reach bump visibility
 - Generate a referral QR code to share with your community
     `,
     prevPage: { id: 'platform-overview', title: 'Platform Overview' },
@@ -730,9 +730,9 @@ The bubble map is Aquads' unique way of displaying crypto projects. Understandin
 Each listed project appears as a bubble on the interactive map. Bubbles have several properties:
 
 **Size**
-- Determined by bumps and engagement
-- Larger bubbles get more visibility
-- Bubbles shrink over time without bumps
+- **Bumped** bubbles (100+ bullish votes) use max size; others **shrink over time** from their last max-size baseline
+- Larger bubbles get more visibility on the map
+- Growing **bullish votes** (including boosts) is how you earn bump status
 
 **Position**
 - New bubbles appear in available space
@@ -757,16 +757,16 @@ Opens the project modal with:
 - Sentiment data
 
 **Voting**
-- Vote bullish or bearish on any project
-- Votes affect bubble size
-- Limited to one vote per project per day
+- Vote bullish or bearish on any project (when logged in)
+- Bullish votes contribute to rankings and to the **100-vote bump** threshold
+- One vote record per account per project (you can **change** bullish ↔ bearish)
 
 ### Bubble Growth Strategies
 
-1. **Regular Bumps**: Keep your bubble large with consistent bumps
-2. **Community Engagement**: Encourage your community to vote
-3. **Quality Presentation**: Professional logos attract more clicks
-4. **Social Proof**: Active social links increase trust
+1. **Bullish votes**: Aim for **100+** to keep bump status (community + boosts)
+2. **Community engagement**: Encourage daily voting and sharing your Aquads link
+3. **Quality presentation**: Professional logos attract more clicks
+4. **Social proof**: Active social links increase trust
 
 ### Filtering Bubbles
 
@@ -803,9 +803,9 @@ The voting system allows the community to express sentiment on projects and infl
 
 ### Voting Rules
 
-- One vote per project per day
 - Must be logged in to vote
-- Votes are public on the project page
+- One vote stance per account per project (you may switch bullish ↔ bearish)
+- Votes are reflected on the project and map
 - Cannot vote on your own project
 
 ### Rankings System
@@ -816,7 +816,7 @@ Projects are ranked based on multiple factors:
 |--------|--------|-------------|
 | Vote Ratio | 35% | Bullish vs bearish sentiment |
 | Total Votes | 25% | Overall engagement |
-| Bump Status | 20% | Recent bumping activity |
+| Bump (100+ bullish) | 20% | Whether the bubble is in bumped / max-visibility tier |
 | Profile Completion | 10% | Quality of listing |
 | Social Activity | 10% | Linked social engagement |
 
@@ -830,8 +830,8 @@ View top projects on the leaderboard:
 
 ### Improving Your Ranking
 
-1. Encourage your community to vote daily
-2. Keep your bubble bumped
+1. Encourage your community to vote bullish
+2. Keep **bullish votes at or above 100** to stay bumped
 3. Maintain active social presence
 4. Respond to community questions
 5. Add all relevant project information
@@ -912,63 +912,46 @@ Users can leave detailed reviews:
   
   bumpingTokens: {
     title: 'Bumping Your Token',
-    description: 'How to bump your token listing for increased visibility.',
+    description: 'How your bubble earns bump status from community votes.',
     content: `
 ## Bumping Your Token
 
-Bumping increases your bubble size and visibility on the map.
+A **bumped** bubble is larger, appears on the **main bump row** first, and gets maximum visibility. On Aquads this is **earned with votes**, not bought as a separate bump product.
 
-### What is Bumping?
+### What counts as bumped?
 
-Bumping is a paid feature that:
-- Instantly increases bubble size
-- Boosts visibility on the map
-- Moves your bubble to prime positions
-- Shows a "Just Bumped" indicator
+Your listing is **bumped** when it reaches **100 or more bullish votes** (👍).
 
-### How to Bump
+- **Organic votes** from logged-in users count.
+- **Vote boost** packages (paid add-on that adds bullish votes over time) **also count** toward the same total.
 
-**Step 1: Access Your Project**
-- Go to Dashboard > My Projects
-- Or click your bubble on the map
+If bullish votes drop **below 100**, the bubble is **no longer bumped** (it behaves like other listings again, including size shrinking over time).
 
-**Step 2: Click "Bump"**
-Select the Bump option from the project menu.
+### How to get there
 
-**Step 3: Choose Bump Package**
+**Step 1: List your project**
+- Complete your listing with a clear logo, links, and pair info so visitors trust the page.
 
-| Package | Size Increase | Duration | Price |
-|---------|--------------|----------|-------|
-| Basic | +20% | 24 hours | 0.01 SOL |
-| Standard | +40% | 48 hours | 0.02 SOL |
-| Premium | +60% | 72 hours | 0.035 SOL |
-| Ultra | +100% | 1 week | 0.05 SOL |
+**Step 2: Share your Aquads link**
+- Post on X, Telegram, Discord—anywhere your community can open the listing and vote **bullish**.
 
-**Step 4: Complete Payment**
-- Connect your wallet
-- Confirm the transaction
-- Bump is applied instantly
+**Step 3: Optional — vote boosts**
+- From the dashboard, you can still purchase **vote + member boost** packages; they increase **bullish votes** and help cross the bump threshold.
 
-### Bump Strategies
+**Step 4: Use the Dashboard “Bump” hint**
+- The Bump control in the dashboard **explains** progress toward 100 votes (no checkout for a paid “bubble bump”).
 
-**Timing**
-- Bump during high-traffic hours
-- Coordinate with announcements
-- Bump before major events
+### Strategy
 
-**Consistency**
-- Regular bumps maintain visibility
-- Set reminders for rebumping
-- Consider weekly bump schedule
+- Coordinate votes with announcements and launches.
+- Remind holders they can switch to bullish if they had voted bearish earlier.
+- Combine community voting with boosts if you want faster visibility.
 
-### Bump Store
+> 💡 **Pro Tip**: A coordinated vote push when traffic is high can push you over 100 bullish in one session.
 
-Visit the Bump Store for:
-- Discounted bump packages
-- Bundle deals
-- Special promotions
+### What we removed
 
-> 💡 **Pro Tip**: Time your bumps with major announcements for maximum impact.
+There is **no paid “lifetime bump” or Bump Store checkout** for map bumping anymore—visibility for bumps follows **bullish sentiment** on your bubble.
     `,
     prevPage: { id: 'token-sentiment', title: 'Sentiment & Reviews' },
     nextPage: { id: 'banner-advertising', title: 'Banner Advertising' },
@@ -3534,7 +3517,7 @@ Earn real USDC commissions when your referrals make purchases:
 | VIP | By invitation | 30% |
 
 **What Earns Commission:**
-- 🫧 Bubble Listings & Bumps
+- 🫧 Bubble listings and add-ons (e.g. marketing packages, vote boosts)
 - 📺 Banner Ads  
 - 🚀 **HyperSpace Orders** (Twitter Space Listeners) - NEW!
 
@@ -3731,15 +3714,15 @@ For Facebook raid participation:
 
 ### What You Get (Free)
 
-- ✅ 20 FREE raid posts daily (for lifetime bumped projects)
+- ✅ 20 FREE raid posts daily (for **bumped** projects: 100+ bullish votes on your bubble)
 - ✅ Complete raids & earn 20 points each
 - ✅ Vote on projects (earn 20 pts per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after free daily)
 
-### Premium Features (List & Bump Required)
+### Premium Features (listed project + bump tier required)
 
-When you list and bump your project:
+When you list your project and it reaches **bumped** status (**100+ bullish votes**):
 - 🔥 Trending across Aquads homepage
 - 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
@@ -3791,7 +3774,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | Command | Description |
 |---------|-------------|
 | \`/raids\` | View all available Twitter & Facebook raids |
-| \`/createraid URL\` | Create a Twitter raid (20 FREE daily for lifetime bump, then 2000 pts) |
+| \`/createraid URL\` | Create a Twitter raid (20 FREE daily when your bubble is **bumped** / 100+ bullish, then 2000 pts) |
 | \`/cancelraid URL\` | Cancel a raid you created |
 
 ### Bubble & Voting Commands
@@ -3806,7 +3789,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 
 | Command | Description |
 |---------|-------------|
-| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (bumped only) |
+| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**bumped** listings only) |
 | \`/removebranding\` | Remove your custom branding |
 
 ### Group Commands
@@ -3856,7 +3839,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 4. Participants earn 20 points per completion
 
 **Raid Details:**
-- 20 FREE raid posts per day (for lifetime bumped projects)
+- 20 FREE raid posts per day (when your bubble is **bumped**: 100+ bullish votes)
 - Additional raids cost 2000 points each
 - Raids auto-expire after 48 hours
 - Support both Twitter and Facebook
@@ -3872,7 +3855,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 ### Bubble Rankings & Trending
 
 **Multi-Platform Visibility:**
-- **Aquads Homepage**: Bumped projects appear in trending
+- **Aquads Homepage**: **Bumped** (100+ bullish) projects get trending-style visibility
 - **BexTools Trending Section**: Featured visibility
 - **Bubble Leaderboards**: Ranked by bullish votes
 - **5K+ Trending Channel**: Vote notifications reach thousands
@@ -3897,7 +3880,7 @@ Purchase boosts via \`/boostvote\`:
 
 ### Custom Branding
 
-**For Bumped Projects:**
+**For bumped projects (100+ bullish votes):**
 - Upload your logo/image (max 500KB, JPG/PNG)
 - Your branding appears on vote notifications
 - Notifications go to 5K+ member trending channel
@@ -3920,7 +3903,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: List and bump your project on Aquads to unlock premium features like trending visibility and custom branding.
+> 💡 **Tip**: List your project and grow **100+ bullish votes** to unlock premium bot features like branding on vote notifications and raid perks tied to bump tier.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },
@@ -4192,7 +4175,7 @@ The Web3 space is expanding rapidly, yet the ecosystem lacks a unified platform 
 Aquads combines a suite of interrelated features into one platform:
 
 **Dynamic Advertising System:**
-- Interactive ad displays, premium bump mechanisms, and real-time ad management that increase project visibility.
+- Interactive ad displays, vote-driven bubble bumping, and real-time ad management that increase project visibility.
 
 **Freelancer Marketplace:**
 - A dedicated space for freelancers with verification, integrated reviews, and streamlined service matching.
@@ -4254,7 +4237,7 @@ Aquads combines a suite of interrelated features into one platform:
 ### 4.1. Core Components
 
 **Dynamic Advertising System:**
-- **Features:** Dynamic bubble ad sizing, premium bump system, real-time performance analytics, and premium ad banners.
+- **Features:** Dynamic bubble ad sizing, vote-based bump visibility (100+ bullish), real-time performance analytics, and premium ad banners.
 - **Benefits:** Boost project visibility with targeted, performance-based advertising.
 
 **Freelancer Marketplace:**
@@ -4571,7 +4554,7 @@ For Bitcoin and TRON, users can copy addresses or scan QR codes for manual trans
 
 ### 5.5. Advertising Revenue
 
-- Base ad placements, premium bump features, and extended visibility options create a performance-driven advertising model.
+- Base ad placements, vote boosts, banner ads, and extended visibility options create a performance-driven advertising model.
 - VIP ad banners, AMAs, and additional monetized features are planned for future phases.
 - Paid twitter raid posts.
 
@@ -4602,7 +4585,7 @@ For Bitcoin and TRON, users can copy addresses or scan QR codes for manual trans
 - A tiered commission structure rewards affiliates based on the volume of referred sales.
 - Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.
 - Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.
-- Affiliates earn commission on: project listings, lifetime bumps, banner ads, and HyperSpace (Twitter Space Listeners) orders.
+- Affiliates earn commission on: project listings, add-ons (e.g. marketing packages, vote boosts), banner ads, and HyperSpace (Twitter Space Listeners) orders.
 - HyperSpace commissions are calculated on profit margin, ensuring sustainable affiliate rewards.
 - This program serves as a key user acquisition and retention strategy rather than a primary revenue source.
 

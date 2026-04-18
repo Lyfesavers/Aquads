@@ -248,8 +248,8 @@ export const DashboardMockup = () => (
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-400 text-sm">+85 votes</span>
-                  <button className="bg-purple-500 text-white text-xs px-2 py-1 rounded">Bump</button>
+                  <span className="text-green-400 text-sm">85 / 100 bullish</span>
+                  <span className="text-gray-500 text-xs">Votes bump free</span>
                 </div>
               </div>
             </div>
@@ -1558,16 +1558,14 @@ export const BubbleAdsMockup = () => (
         </div>
       </div>
 
-      {/* Bump info */}
+      {/* Bump = votes */}
       <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <h4 className="text-cyan-400 font-medium text-sm">⚡ Bump Your Token</h4>
-            <p className="text-gray-400 text-xs">Increase visibility & bubble size</p>
+            <h4 className="text-cyan-400 font-medium text-sm">100+ bullish = bumped</h4>
+            <p className="text-gray-400 text-xs">Max size & main row — organic + vote boosts</p>
           </div>
-          <button className="bg-cyan-500 text-white px-3 py-1.5 rounded text-sm font-medium">
-            Bump Now
-          </button>
+          <span className="text-cyan-300 text-xs font-medium whitespace-nowrap">No paid bump</span>
         </div>
       </div>
     </div>

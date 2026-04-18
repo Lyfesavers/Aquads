@@ -8,7 +8,6 @@ const DashboardPage = ({
   ads, 
   currentUser, 
   onDeleteAd, 
-  onBumpAd, 
   onEditAd, 
   onRejectBump, 
   onApproveBump,
@@ -104,7 +103,6 @@ const DashboardPage = ({
         currentUser={currentUser}
         onClose={handleClose}
         onDeleteAd={onDeleteAd}
-        onBumpAd={onBumpAd}
         onEditAd={onEditAd}
         onRejectBump={onRejectBump}
         onApproveBump={onApproveBump}

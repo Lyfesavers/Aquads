@@ -10,17 +10,14 @@ import {
   loginUser, 
   loginWithGoogle,
   register as apiRegister,
-  createBumpRequest,
   approveBumpRequest,
   rejectBumpRequest,
-  fetchBumpRequests,
   verifyToken,
   pingServer,
   API_URL,
   reconnectSocket,
   trackClick
 } from './services/api';
-import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
@@ -534,8 +531,6 @@ function App() {
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
-  const [showBumpStore, setShowBumpStore] = useState(false);
-  const [selectedAdId, setSelectedAdId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [adToEdit, setAdToEdit] = useState(null);
@@ -1122,11 +1117,9 @@ function App() {
     const userAd = ads.find(ad => ad.owner === user.username);
     
     if (userAd) {
-      // Check if the ad is not bumped or bump has expired
-      const isNotBumped = !userAd.isBumped;
-      const isBumpExpired = userAd.bumpExpiresAt && new Date() > new Date(userAd.bumpExpiresAt);
-      
-      if (isNotBumped || isBumpExpired) {
+      const bullish = userAd.bullishVotes || 0;
+      const voteBumped = bullish >= 100;
+      if (!voteBumped) {
         setUnbumpedAd(userAd);
         setShowBumpReminderModal(true);
       }
@@ -1134,10 +1127,12 @@ function App() {
   };
 
   // Function to handle when user clicks "Bump Now" from the reminder modal
-  const handleBumpFromReminder = (adId) => {
-    setSelectedAdId(adId);
-    setShowBumpStore(true);
+  const handleBumpFromReminder = () => {
     setShowBumpReminderModal(false);
+    showNotification(
+      'Bumps are free: reach 100 bullish votes on your bubble (organic votes and vote boosts both count). Share your listing so the community can vote!',
+      'info'
+    );
   };
 
   const handleLogin = async (credentials) => {
@@ -1450,90 +1445,6 @@ function App() {
     }
   };
 
-  const handleBumpPurchase = async (adId, txSignature, duration, discountCode = null) => {
-    try {
-      logger.log(`Bump purchase initiated - Ad ID: ${adId}, Signature: ${txSignature}, Duration: ${duration}`);
-      const ad = ads.find(a => a.id === adId);
-      
-      if (!currentUser) {
-        showNotification('Please log in first!', 'error');
-        return;
-      }
-
-      if (!ad) {
-        showNotification('Ad not found!', 'error');
-        return;
-      }
-
-      if (!txSignature) {
-        showNotification('Transaction signature is required!', 'error');
-        return;
-      }
-
-      if (!duration) {
-        showNotification('Bump duration is required!', 'error');
-        return;
-      }
-
-      // If admin is approving the bump
-      if (currentUser.isAdmin && ad.status === 'pending') {
-        try {
-          logger.log("Admin approving bump");
-          const [bumpResponse, adResponse] = await Promise.all([
-            approveBumpRequest(adId, currentUser.username),
-            apiUpdateAd(adId, {
-              size: getMaxSize(),
-              isBumped: true,
-              status: 'approved',
-              bumpedAt: new Date(),
-              bumpDuration: duration,
-              bumpExpiresAt: duration === -1 ? null : new Date(Date.now() + duration)
-            })
-          ]);
-
-          logger.log("Bump approved successfully:", bumpResponse);
-          setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
-          setShowBumpStore(false);
-          showNotification('Bump approved successfully!', 'success');
-          return;
-        } catch (error) {
-          logger.error('Error approving bump:', error);
-          showNotification(error.message || 'Failed to approve bump request', 'error');
-          return;
-        }
-      }
-
-      // If user is submitting a bump request
-      try {
-        logger.log("User submitting bump request:", {
-          adId,
-          owner: currentUser.username,
-          txSignature,
-          duration
-        });
-        
-        const bumpResponse = await createBumpRequest({
-          adId,
-          owner: currentUser.username,
-          txSignature,
-          duration,
-          status: 'pending',
-          discountCode
-        });
-
-        logger.log("Bump request submitted successfully:", bumpResponse);
-        setShowBumpStore(false);
-        showNotification('Bump request submitted for approval!', 'success');
-      } catch (error) {
-        logger.error('Error submitting bump request:', error);
-        const errorMessage = error.response?.data?.error || error.message || 'Failed to process bump request';
-        showNotification(errorMessage, 'error');
-      }
-    } catch (error) {
-      logger.error('Bump purchase error:', error);
-      showNotification(error.message || 'Failed to process bump purchase!', 'error');
-    }
-  };
   const handleRejectBump = async (adId, reason) => {
     try {
       if (!currentUser?.isAdmin) {
@@ -1547,15 +1458,10 @@ function App() {
         return;
       }
 
-      const [bumpResponse, adResponse] = await Promise.all([
-        rejectBumpRequest(adId, currentUser.username, reason),
-        apiUpdateAd(adId, { 
-          status: 'active',
-          isBumped: false 
-        })
-      ]);
-
-      setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
+      const result = await rejectBumpRequest(adId, currentUser.username, reason);
+      if (result.ad) {
+        setAds(prevAds => prevAds.map(a => (a.id === adId ? result.ad : a)));
+      }
       showNotification('Bump request rejected successfully!', 'success');
     } catch (error) {
       logger.error('Error rejecting bump:', error);
@@ -1624,37 +1530,7 @@ function App() {
         showNotification('Only admins can approve bump requests', 'error');
         return;
       }
-
-      const ad = ads.find(a => a.id === adId);
-      if (!ad) {
-        showNotification('Ad not found!', 'error');
-        return;
-      }
-
-      // Get the bump request to get the duration
-      const bumpRequest = await fetchBumpRequests().then(requests => 
-        requests.find(req => req.adId === adId && req.status === 'pending')
-      );
-
-      if (!bumpRequest) {
-        showNotification('Bump request not found!', 'error');
-        return;
-      }
-
-      const [bumpResponse, adResponse] = await Promise.all([
-        approveBumpRequest(adId, currentUser.username),
-        apiUpdateAd(adId, {
-          size: getMaxSize(),
-          isBumped: true,
-          status: 'approved',
-          bumpedAt: new Date(),
-          bumpDuration: bumpRequest.duration,
-          bumpExpiresAt: bumpRequest.duration === -1 ? null : new Date(Date.now() + bumpRequest.duration)
-        })
-      ]);
-
-      setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
-      showNotification('Bump approved successfully!', 'success');
+      await approveBumpRequest(adId, currentUser.username);
     } catch (error) {
       logger.error('Error approving bump:', error);
       showNotification(error.message || 'Failed to approve bump request', 'error');
@@ -1698,16 +1574,18 @@ function App() {
       const votedAd = ads.find(ad => ad.id === adId);
       
       // Update the ads state with the new vote counts and user's vote
-      setAds(prevAds => prevAds.map(ad => 
-        ad.id === adId 
-          ? { 
-              ...ad, 
-              bullishVotes: data.bullishVotes, 
-              bearishVotes: data.bearishVotes,
-              userVote: data.userVote // Track what the user voted
-            } 
-          : ad
-      ));
+      setAds(prevAds => prevAds.map(ad => {
+        if (ad.id !== adId) return ad;
+        const next = {
+          ...ad,
+          bullishVotes: data.bullishVotes,
+          bearishVotes: data.bearishVotes,
+          userVote: data.userVote
+        };
+        if (data.isBumped !== undefined) next.isBumped = data.isBumped;
+        if (data.size !== undefined) next.size = data.size;
+        return next;
+      }));
       
       // Show enhanced notification about vote and points if awarded
       if (data.pointsAwarded > 0) {
@@ -1759,15 +1637,17 @@ function App() {
   useEffect(() => {
     // Add listener for vote updates
     socket.on('adVoteUpdated', (voteData) => {
-      setAds(prevAds => prevAds.map(ad => 
-        ad.id === voteData.adId 
-          ? { 
-              ...ad, 
-              bullishVotes: voteData.bullishVotes, 
-              bearishVotes: voteData.bearishVotes 
-            } 
-          : ad
-      ));
+      setAds(prevAds => prevAds.map(ad => {
+        if (ad.id !== voteData.adId) return ad;
+        const next = {
+          ...ad,
+          bullishVotes: voteData.bullishVotes,
+          bearishVotes: voteData.bearishVotes
+        };
+        if (voteData.isBumped !== undefined) next.isBumped = voteData.isBumped;
+        if (voteData.size !== undefined) next.size = voteData.size;
+        return next;
+      }));
     });
 
     // Listen for token purchase approval (after successful payment)
@@ -2682,7 +2562,6 @@ function App() {
               ads={ads}
               currentUser={currentUser}
               onDeleteAd={handleDeleteAd}
-              onBumpAd={handleBumpPurchase}
               onEditAd={handleEditAd}
               onRejectBump={handleRejectBump}
               onApproveBump={handleApproveBump}
@@ -3536,18 +3415,6 @@ function App() {
                   <CreateBannerModal
                     onSubmit={handleBannerSubmit}
                     onClose={() => setShowBannerModal(false)}
-                  />
-                )}
-
-                {showBumpStore && selectedAdId && currentUser && (
-                  <BumpStore
-                    ad={ads.find(ad => ad.id === selectedAdId)}
-                    onClose={() => {
-                      setShowBumpStore(false);
-                      setSelectedAdId(null);
-                    }}
-                    onSubmitPayment={handleBumpPurchase}
-                    currentUser={currentUser}
                   />
                 )}
 
