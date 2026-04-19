@@ -18,7 +18,7 @@ const paymentAutoApproval = {
    * @returns {Object|null} - Approved item or null
    */
   async processPayment(paymentData) {
-    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, linkBioAdId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
+    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, linkBioAdId, voteBoostId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
 
     // Link in Bio ads pay the influencer directly (not 'aquads'), so handle before the slug check
     if (linkBioAdId) {
@@ -82,6 +82,19 @@ const paymentAutoApproval = {
     if (hyperspaceOrderId) {
       return await this.handleHyperSpacePayment({
         hyperspaceOrderId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
+    // Vote boost (Telegram/Discord bot flow): attach real tx after AquaPay checkout
+    if (voteBoostId) {
+      return await this.handleVoteBoostPayment({
+        voteBoostId,
         amount,
         txHash,
         chain,
@@ -576,6 +589,58 @@ const paymentAutoApproval = {
       return { type: 'linkBioAd', id: ad._id, status: ad.status };
     } catch (error) {
       console.error('Error auto-approving link bio ad:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Record vote boost payment from AquaPay (pending request was created in bot with placeholder tx).
+   */
+  async handleVoteBoostPayment({ voteBoostId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+    try {
+      const VoteBoost = require('../models/VoteBoost');
+      const { emitVoteBoostUpdate } = require('../socket');
+
+      const boost = await VoteBoost.findById(voteBoostId);
+      if (!boost || boost.status !== 'pending' || boost.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      if (senderUsername && boost.owner && senderUsername.toLowerCase() !== boost.owner.toLowerCase()) {
+        console.log(`Vote boost ${voteBoostId} ownership mismatch: boost owner ${boost.owner}, payer ${senderUsername}`);
+        return null;
+      }
+
+      const expectedAmount = parseFloat(boost.price);
+      const paymentAmount = parseFloat(amount);
+      if (paymentAmount !== expectedAmount) {
+        console.log(`Vote boost ${voteBoostId} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
+        return null;
+      }
+
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(`Vote boost ${voteBoostId} transaction verification failed for ${txHash} on ${chain}`);
+        return null;
+      }
+
+      boost.txSignature = txHash;
+      boost.paymentChain = chain;
+      boost.chainSymbol = token || 'USDC';
+      boost.chainAddress = senderAddress || null;
+      await boost.save();
+
+      const ad = await Ad.findOne({ id: boost.adId }).lean();
+      try {
+        emitVoteBoostUpdate('update', boost, ad);
+      } catch (socketErr) {
+        console.error('emitVoteBoostUpdate failed for vote boost payment:', socketErr.message);
+      }
+
+      console.log(`Vote boost ${voteBoostId} AquaPay payment recorded (${paymentAmount} USDC on ${chain})`);
+      return { type: 'voteBoost', id: boost._id, status: boost.status };
+    } catch (error) {
+      console.error('Error recording vote boost AquaPay payment:', error);
       return null;
     }
   },

@@ -1803,6 +1803,17 @@ async function startBot() {
           return handleBoostBubbleSelected(interaction, packageId, bubbleId);
         }
         if (customId === 'boost_cancel') {
+          const st = getState(interaction.user.id);
+          if (st?.voteBoostId) {
+            try {
+              const VoteBoost = require('../models/VoteBoost');
+              await VoteBoost.deleteOne({
+                _id: st.voteBoostId,
+                txSignature: 'aquapay-pending',
+                status: 'pending'
+              });
+            } catch (_) {}
+          }
           clearState(interaction.user.id);
           return interaction.update({ content: '❌ Vote boost cancelled. Use `/boostvote` to start again.', embeds: [], components: [] }).catch(() => interaction.reply({ content: '❌ Cancelled.', flags: MessageFlags.Ephemeral }));
         }
@@ -1832,28 +1843,73 @@ async function startBot() {
           if (!isTg && !isDiscord) {
             return interaction.reply({ content: '❌ Send a valid Telegram group link (t.me/...) or Discord server invite (discord.gg/...).', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
+          const user = await User.findOne({ discordId: discordUserId });
+          if (!user) {
+            return interaction.reply({ content: '❌ Link your account first: `/link your_username`', flags: MessageFlags.Ephemeral }).catch(() => {});
+          }
           const packages = { starter: { name: 'Starter', votes: 100, price: 20 }, basic: { name: 'Basic', votes: 250, price: 40 }, growth: { name: 'Growth', votes: 500, price: 80 }, pro: { name: 'Pro', votes: 1000, price: 150 } };
           const pkg = packages[state.packageId];
           const bubble = await Ad.findOne({ id: state.bubbleId }).select('title').lean();
-          setState(discordUserId, { action: 'boost_waiting_tx', packageId: state.packageId, bubbleId: state.bubbleId, packageName: pkg.name, price: pkg.price, votes: pkg.votes, inviteLink: link, isDiscordLink: isDiscord });
+          const VoteBoost = require('../models/VoteBoost');
+          const { emitVoteBoostUpdate } = require('../socket');
+          await VoteBoost.deleteMany({
+            adId: state.bubbleId,
+            owner: user.username,
+            status: 'pending',
+            txSignature: 'aquapay-pending'
+          });
+          const pendingOther = await VoteBoost.findOne({ adId: state.bubbleId, owner: user.username, status: 'pending' });
+          if (pendingOther) {
+            return interaction.reply({
+              content: '❌ You already have a pending vote boost for this bubble. Wait for admin review or contact support.',
+              flags: MessageFlags.Ephemeral
+            }).catch(() => {});
+          }
+          const voteBoost = new VoteBoost({
+            adId: state.bubbleId,
+            owner: user.username,
+            txSignature: 'aquapay-pending',
+            packageName: pkg.name,
+            votesToAdd: pkg.votes,
+            price: pkg.price,
+            status: 'pending',
+            paymentChain: 'AquaPay',
+            chainSymbol: 'USDC',
+            telegramGroupLink: isDiscord ? null : link,
+            discordInviteLink: isDiscord ? link : null
+          });
+          await voteBoost.save();
+          if (emitVoteBoostUpdate) emitVoteBoostUpdate('create', voteBoost, bubble);
+          const payBase = 'https://aquads.xyz/pay/aquads';
+          const aquaPayUrl = `${payBase}?amount=${pkg.price}&voteBoostId=${voteBoost._id}`;
+          setState(discordUserId, {
+            action: 'boost_waiting_tx',
+            packageId: state.packageId,
+            bubbleId: state.bubbleId,
+            packageName: pkg.name,
+            price: pkg.price,
+            votes: pkg.votes,
+            inviteLink: link,
+            isDiscordLink: isDiscord,
+            voteBoostId: voteBoost._id.toString()
+          });
           const embed = new EmbedBuilder()
             .setTitle(`✅ Boosting: ${bubble?.title || 'Bubble'}`)
             .setDescription(
               `📦 **${pkg.name}** · ${pkg.votes.toLocaleString()} votes · **$${pkg.price} USDC**\n\n` +
               `🔗 ${link}\n\n` +
-              `**💳 Send $${pkg.price} USDC** (pick one chain):\n` +
-              `• **Solana:** \`F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf\`\n` +
-              `• **Ethereum:** \`0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358\`\n` +
-              `• **Base:** \`0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358\`\n` +
-              `• **Sui:** \`0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a\`\n\n` +
-              `After payment, click **I've paid - Submit TX** and paste your transaction signature.`
+              `**Pay with AquaPay** (USDC) — use the button below. When payment completes, your transaction is saved automatically.\n\n` +
+              `**Optional:** If you sent USDC to the treasury manually, use **I've paid - Submit TX** to paste the hash.`
             )
             .setColor(0x00bfff);
-          const row = new ActionRowBuilder().addComponents(
+          const row1 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setLabel('Open AquaPay').setStyle(ButtonStyle.Link).setURL(aquaPayUrl)
+          );
+          const row2 = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('boost_submit_tx').setLabel("I've paid - Submit TX").setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setCustomId('boost_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary)
           );
-          return interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral }).catch(() => {});
+          return interaction.reply({ embeds: [embed], components: [row1, row2], flags: MessageFlags.Ephemeral }).catch(() => {});
         }
         if (interaction.customId === 'boost_tx_modal') {
           const txSignature = interaction.fields.getTextInputValue('tx').trim();
@@ -1868,6 +1924,34 @@ async function startBot() {
             return interaction.reply({ content: '❌ User not found.', flags: MessageFlags.Ephemeral }).catch(() => {});
           }
           const VoteBoost = require('../models/VoteBoost');
+          const { emitVoteBoostUpdate } = require('../socket');
+          const bubble = await Ad.findOne({ id: state.bubbleId }).select('title').lean();
+
+          if (state.voteBoostId) {
+            const boost = await VoteBoost.findById(state.voteBoostId);
+            if (!boost || boost.owner !== user.username) {
+              clearState(discordUserId);
+              return interaction.reply({ content: '❌ Could not find this boost request.', flags: MessageFlags.Ephemeral }).catch(() => {});
+            }
+            if (boost.txSignature !== 'aquapay-pending') {
+              clearState(discordUserId);
+              return interaction.reply({
+                content: '✅ Payment for this boost is already on file. Wait for admin review.',
+                flags: MessageFlags.Ephemeral
+              }).catch(() => {});
+            }
+            boost.txSignature = txSignature;
+            boost.paymentChain = 'Unknown';
+            boost.chainSymbol = 'USDC';
+            await boost.save();
+            clearState(discordUserId);
+            if (emitVoteBoostUpdate) emitVoteBoostUpdate('update', boost, bubble);
+            return interaction.reply({
+              content: `✅ **Transaction saved for your vote boost!**\n\n📦 ${state.packageName}\n🔗 ${bubble?.title || state.bubbleId}\n\n⏳ Awaiting admin approval.`,
+              flags: MessageFlags.Ephemeral
+            }).catch(() => {});
+          }
+
           const voteBoost = new VoteBoost({
             adId: state.bubbleId,
             owner: user.username,
@@ -1883,8 +1967,6 @@ async function startBot() {
           });
           await voteBoost.save();
           clearState(discordUserId);
-          const bubble = await Ad.findOne({ id: state.bubbleId }).select('title').lean();
-          const { emitVoteBoostUpdate } = require('../socket');
           if (emitVoteBoostUpdate) emitVoteBoostUpdate('create', voteBoost, bubble);
           const msg = `✅ **Vote boost submitted!**\n\n📦 ${state.packageName} · ${state.votes.toLocaleString()} votes · $${state.price} USDC\n🔗 ${bubble?.title || state.bubbleId}\n\n⏳ Awaiting admin approval.`;
           return interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});

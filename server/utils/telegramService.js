@@ -2550,6 +2550,17 @@ ${platformEmoji} ${platformName} Raid
       }
       // Check if it's a boost cancel callback
       else if (callbackQuery.data === 'boost_cancel') {
+        const cancelState = telegramService.getConversationState(userId);
+        if (cancelState?.voteBoostId) {
+          try {
+            const VoteBoost = require('../models/VoteBoost');
+            await VoteBoost.deleteOne({
+              _id: cancelState.voteBoostId,
+              txSignature: 'aquapay-pending',
+              status: 'pending'
+            });
+          } catch (_) {}
+        }
         telegramService.clearConversationState(userId);
         await telegramService.editMessageWithKeyboard(chatId, messageId, 
           "❌ Vote boost purchase cancelled.\n\nUse /boostvote to start again.", 
@@ -5650,7 +5661,7 @@ Tap to update:`;
     }
   },
 
-  // Show payment step for boost
+  // Show payment step for boost (AquaPay checkout — same pattern as BumpStore / banners)
   showBoostPaymentStep: async (chatId, telegramUserId, packageId, bubbleId, messageId, groupLink = null) => {
     try {
       const packages = {
@@ -5668,6 +5679,13 @@ Tap to update:`;
         return;
       }
 
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ User not found. Link your account with /link");
+        telegramService.clearConversationState(telegramUserId);
+        return;
+      }
+
       // Get group link from params or existing state
       const existingState = telegramService.getConversationState(telegramUserId);
       const tgGroupLink = groupLink || existingState?.telegramGroupLink;
@@ -5678,6 +5696,42 @@ Tap to update:`;
         return;
       }
 
+      const VoteBoost = require('../models/VoteBoost');
+      const { emitVoteBoostUpdate } = require('../socket');
+
+      await VoteBoost.deleteMany({
+        adId: bubbleId,
+        owner: user.username,
+        status: 'pending',
+        txSignature: 'aquapay-pending'
+      });
+
+      const pendingOther = await VoteBoost.findOne({ adId: bubbleId, owner: user.username, status: 'pending' });
+      if (pendingOther) {
+        await telegramService.sendBotMessage(chatId,
+          "❌ You already have a pending vote boost for this bubble. Wait for admin review or contact support.");
+        telegramService.clearConversationState(telegramUserId);
+        return;
+      }
+
+      const voteBoost = new VoteBoost({
+        adId: bubbleId,
+        owner: user.username,
+        txSignature: 'aquapay-pending',
+        packageName: selectedPkg.name,
+        votesToAdd: selectedPkg.votes,
+        price: selectedPkg.price,
+        status: 'pending',
+        paymentChain: 'AquaPay',
+        chainSymbol: 'USDC',
+        telegramGroupLink: tgGroupLink
+      });
+      await voteBoost.save();
+      emitVoteBoostUpdate('create', voteBoost, bubble);
+
+      const payBase = 'https://aquads.xyz/pay/aquads';
+      const aquaPayUrl = `${payBase}?amount=${selectedPkg.price}&voteBoostId=${voteBoost._id}`;
+
       let message = `✅ <b>Boosting: ${bubble.title}</b>\n\n`;
       message += `📦 <b>${selectedPkg.name} Package</b>\n`;
       message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
@@ -5685,19 +5739,16 @@ Tap to update:`;
       message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
       message += `📢 <b>TG Group:</b> ${tgGroupLink}\n\n`;
       message += `━━━━━━━━━━━━━━━━━━\n`;
-      message += `<b>💳 Send $${selectedPkg.price} USDC</b>\n\n`;
-      message += `⚠️ <b>Choose ONE chain below to send USDC:</b>\n`;
-      message += `<i>(All options accept USDC only - pick your preferred network)</i>\n\n`;
-      message += `<b>📍 Solana Network (USDC):</b>\n<code>F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf</code>\n\n`;
-      message += `<b>📍 Ethereum Network (USDC):</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>📍 Base Network (USDC):</b>\n<code>0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358</code>\n\n`;
-      message += `<b>📍 Sui Network (USDC):</b>\n<code>0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a</code>\n\n`;
-      message += `━━━━━━━━━━━━━━━━━━\n\n`;
-      message += `📝 <b>After payment, paste your TX signature/hash here</b>`;
+      message += `<b>💳 Pay with AquaPay</b>\n\n`;
+      message += `Open the link below on your phone or desktop. Use <b>USDC</b> for the shown amount.\n`;
+      message += `If you are logged into Aquads in your browser, your payment will be tied to your account automatically.\n\n`;
+      message += `<a href="${aquaPayUrl}">${aquaPayUrl}</a>\n\n`;
+      message += `✅ When payment succeeds, your TX is recorded automatically — no need to paste it here.\n\n`;
+      message += `<i>Optional:</i> If you sent USDC manually to our treasury instead, paste the transaction signature/hash here and we will match it to this request.`;
 
-      // Set conversation state to wait for TX signature
       telegramService.setConversationState(telegramUserId, {
         action: 'boost_waiting_tx',
+        voteBoostId: voteBoost._id.toString(),
         packageId: packageId,
         bubbleId: bubbleId,
         price: selectedPkg.price,
@@ -5708,6 +5759,7 @@ Tap to update:`;
 
       const keyboard = {
         inline_keyboard: [
+          [{ text: '💳 Open AquaPay', url: aquaPayUrl }],
           [{ text: "❌ Cancel", callback_data: "boost_cancel" }]
         ]
       };
@@ -5748,9 +5800,37 @@ Tap to update:`;
         return true;
       }
 
-      // Create the vote boost request
       const VoteBoost = require('../models/VoteBoost');
-      
+      const { emitVoteBoostUpdate } = require('../socket');
+
+      if (state.voteBoostId) {
+        const boost = await VoteBoost.findById(state.voteBoostId);
+        if (!boost || boost.owner !== user.username) {
+          await telegramService.sendBotMessage(chatId, "❌ Could not find this boost request. Start over with /boostvote");
+          telegramService.clearConversationState(telegramUserId);
+          return true;
+        }
+        if (boost.txSignature !== 'aquapay-pending') {
+          await telegramService.sendBotMessage(chatId,
+            "✅ Payment for this boost is already on file. You can check status in your Aquads dashboard or wait for admin review.");
+          telegramService.clearConversationState(telegramUserId);
+          return true;
+        }
+        boost.txSignature = trimmedTx;
+        boost.paymentChain = 'Unknown';
+        boost.chainSymbol = 'USDC';
+        await boost.save();
+        telegramService.clearConversationState(telegramUserId);
+        const bubble = await Ad.findOne({ id: state.bubbleId });
+        let message = `✅ <b>Transaction saved for your vote boost!</b>\n\n`;
+        message += `📦 Package: ${state.packageName}\n`;
+        message += `🔗 Bubble: ${bubble?.title || state.bubbleId}\n\n`;
+        message += `⏳ <b>Awaiting admin approval...</b>`;
+        await telegramService.sendBotMessage(chatId, message);
+        emitVoteBoostUpdate('update', boost, bubble);
+        return true;
+      }
+
       const voteBoost = new VoteBoost({
         adId: state.bubbleId,
         owner: user.username,
@@ -5759,17 +5839,15 @@ Tap to update:`;
         votesToAdd: state.votes,
         price: state.price,
         status: 'pending',
-        paymentChain: 'Unknown', // User didn't specify
+        paymentChain: 'Unknown',
         chainSymbol: 'USDC',
         telegramGroupLink: state.telegramGroupLink
       });
 
       await voteBoost.save();
 
-      // Clear conversation state
       telegramService.clearConversationState(telegramUserId);
 
-      // Get bubble name for confirmation
       const bubble = await Ad.findOne({ id: state.bubbleId });
 
       let message = `✅ <b>Vote Boost Request Submitted!</b>\n\n`;
@@ -5782,8 +5860,6 @@ Tap to update:`;
 
       await telegramService.sendBotMessage(chatId, message);
 
-      // Emit socket event for admin notification
-      const { emitVoteBoostUpdate } = require('../socket');
       emitVoteBoostUpdate('create', voteBoost, bubble);
 
       return true;

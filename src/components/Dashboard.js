@@ -799,6 +799,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
           }
           return prevBoosts;
         });
+      } else if (type === 'update') {
+        setPendingVoteBoosts(prevBoosts =>
+          prevBoosts.map(boost =>
+            boost._id === voteBoost._id ? { ...boost, ...voteBoost, ad: ad || boost.ad } : boost
+          )
+        );
       } else if (type === 'approve' || type === 'reject') {
         // Remove processed vote boost from the list
         setPendingVoteBoosts(prevBoosts => 

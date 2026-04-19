@@ -172,8 +172,9 @@ const AquaPayPage = ({ currentUser }) => {
   const tokenPurchaseId = urlParams.get('tokenPurchaseId');
   const hyperspaceOrderId = urlParams.get('hyperspaceOrderId');
   const linkBioAdId = urlParams.get('linkBioAdId');
+  const voteBoostId = urlParams.get('voteBoostId');
   const urlAmount = urlParams.get('amount');
-  const isLockedPayment = !!(bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId);
+  const isLockedPayment = !!(bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId || voteBoostId);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -867,7 +868,8 @@ const AquaPayPage = ({ currentUser }) => {
         addonOrderId: addonOrderId || null,
         tokenPurchaseId: tokenPurchaseId || null,
         hyperspaceOrderId: hyperspaceOrderId || null,
-        linkBioAdId: linkBioAdId || null
+        linkBioAdId: linkBioAdId || null,
+        voteBoostId: voteBoostId || null
       });
 
       // Fire emails in background (don't await) - won't block close or bog down UX
@@ -895,7 +897,7 @@ const AquaPayPage = ({ currentUser }) => {
       }
 
       // Close window immediately for auto-approved payment flows; don't wait for emails
-      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId) && response.data.approvedItem) {
+      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId || voteBoostId) && response.data.approvedItem) {
         if (window.opener) {
           window.close();
         }
