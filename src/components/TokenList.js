@@ -9,6 +9,37 @@ import FacebookRaids from './FacebookRaids';
 import logger from '../utils/logger';
 import { socket } from '../services/api';
 
+/** Stable sort for token table — fixes duplicate/out-of-order # when using CoinGecko rank on a differently sorted list. */
+const sortTokenList = (items, key, direction) => {
+  if (!Array.isArray(items)) return [];
+  const mult = direction === 'asc' ? 1 : -1;
+  return [...items].sort((a, b) => {
+    const tieBreak = () => {
+      const ra = Number(a.marketCapRank);
+      const rb = Number(b.marketCapRank);
+      if (Number.isFinite(ra) && Number.isFinite(rb) && ra !== rb) {
+        return ra < rb ? -1 : 1;
+      }
+      return String(a.id || '').localeCompare(String(b.id || ''));
+    };
+
+    let cmp = 0;
+    if (key === 'name') {
+      cmp = String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' });
+    } else {
+      const na = Number(a[key]);
+      const nb = Number(b[key]);
+      if (Number.isFinite(na) && Number.isFinite(nb)) {
+        if (na !== nb) cmp = na < nb ? -1 : 1;
+      } else {
+        cmp = String(a[key] ?? '').localeCompare(String(b[key] ?? ''));
+      }
+    }
+    if (cmp !== 0) return cmp * mult;
+    return tieBreak();
+  });
+};
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEX_OPTIONS = [
@@ -60,6 +91,8 @@ const TokenList = ({ currentUser, showNotification }) => {
   // Prevents request stacking: if a fetch is already in-flight, don't fire another one.
   // Without this, slow server responses cause multiple concurrent requests to pile up.
   const isFetchingTokens = useRef(false);
+  const sortConfigRef = useRef({ key: 'marketCap', direction: 'desc' });
+  sortConfigRef.current = sortConfig;
 
   // Get tokens to display (paginated)
   const displayedTokens = filteredTokens.slice(0, displayCount);
@@ -77,20 +110,17 @@ const TokenList = ({ currentUser, showNotification }) => {
 
 
 
-  // Sorting functionality
-  const handleSort = (key) => {
-    const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
+  // Sorting (desktop column headers)
+  const handleColumnSort = (key) => {
+    let direction;
+    if (sortConfig.key === key) {
+      direction = sortConfig.direction === 'desc' ? 'asc' : 'desc';
+    } else {
+      direction = key === 'marketCapRank' || key === 'name' ? 'asc' : 'desc';
+    }
     setSortConfig({ key, direction });
-    setDisplayCount(20); // Reset pagination when sorting
-    
-    const sorted = [...filteredTokens].sort((a, b) => {
-      if (direction === 'asc') {
-        return a[key] > b[key] ? 1 : -1;
-      }
-      return a[key] < b[key] ? 1 : -1;
-    });
-    
-    setFilteredTokens(sorted);
+    setDisplayCount(20);
+    setFilteredTokens((prev) => sortTokenList(prev, key, direction));
   };
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
@@ -121,7 +151,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       setTokens(data);
-      setFilteredTokens(data);
+      const cfg = sortConfigRef.current;
+      setFilteredTokens(sortTokenList(data, cfg.key, cfg.direction));
       setError(null);
 
     } catch (error) {
@@ -145,7 +176,8 @@ const TokenList = ({ currentUser, showNotification }) => {
     setDisplayCount(20); // Reset pagination when searching
     
       if (!searchTerm.trim()) {
-        setFilteredTokens(tokens);
+        const cfg = sortConfigRef.current;
+        setFilteredTokens(sortTokenList(tokens, cfg.key, cfg.direction));
         setIsLoading(false);
       return;
     }
@@ -157,7 +189,8 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       const data = await response.json();
       if (Array.isArray(data)) {
-        setFilteredTokens(data);
+        const cfg = sortConfigRef.current;
+        setFilteredTokens(sortTokenList(data, cfg.key, cfg.direction));
         setError(null);
       } else {
         // Fallback to client-side filtering
@@ -165,7 +198,8 @@ const TokenList = ({ currentUser, showNotification }) => {
           token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
           token.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredTokens(filtered);
+        const cfg = sortConfigRef.current;
+        setFilteredTokens(sortTokenList(filtered, cfg.key, cfg.direction));
       }
     } catch (error) {
       logger.error('Search error:', error);
@@ -174,7 +208,8 @@ const TokenList = ({ currentUser, showNotification }) => {
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
         token.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredTokens(filtered);
+      const cfg = sortConfigRef.current;
+      setFilteredTokens(sortTokenList(filtered, cfg.key, cfg.direction));
     } finally {
       setIsLoading(false);
     }
@@ -188,8 +223,9 @@ const TokenList = ({ currentUser, showNotification }) => {
     // WebSocket event handlers
     const handleTokenUpdate = (data) => {
       if (data.type === 'update' && Array.isArray(data.tokens)) {
+        const cfg = sortConfigRef.current;
         setTokens(data.tokens);
-        setFilteredTokens(data.tokens);
+        setFilteredTokens(sortTokenList(data.tokens, cfg.key, cfg.direction));
         setError(null);
       }
     };
@@ -391,8 +427,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                 <select
                   value={sortConfig.key}
                   onChange={(e) => {
-                    setSortConfig({ key: e.target.value, direction: sortConfig.direction });
-                    handleSort(e.target.value);
+                    const k = e.target.value;
+                    const dir = sortConfig.direction;
+                    setSortConfig({ key: k, direction: dir });
+                    setDisplayCount(20);
+                    setFilteredTokens((prev) => sortTokenList(prev, k, dir));
                   }}
                   className="bg-gray-700 text-white rounded px-2 py-2 text-xs sm:text-sm"
                 >
@@ -406,7 +445,8 @@ const TokenList = ({ currentUser, showNotification }) => {
                   onClick={() => {
                     const newOrder = sortConfig.direction === 'asc' ? 'desc' : 'asc';
                     setSortConfig({ key: sortConfig.key, direction: newOrder });
-                    handleSort(sortConfig.key, newOrder);
+                    setDisplayCount(20);
+                    setFilteredTokens((prev) => sortTokenList(prev, sortConfig.key, newOrder));
                   }}
                   className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded"
                 >
@@ -443,7 +483,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       <tr className="border-b border-gray-700/30">
                         <th 
                           className="w-12 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('marketCapRank')}
+                          onClick={() => handleColumnSort('marketCapRank')}
                         >
                           # {sortConfig.key === 'marketCapRank' && (
                             <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
@@ -451,26 +491,26 @@ const TokenList = ({ currentUser, showNotification }) => {
                         </th>
                         <th 
                           className="w-1/4 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('name')}
+                          onClick={() => handleColumnSort('name')}
                         >
                           Token {sortConfig.key === 'name' && (
                             <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </th>
                         <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleSort('currentPrice')}>
+                            onClick={() => handleColumnSort('currentPrice')}>
                           Price
                         </th>
                         <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleSort('priceChangePercentage24h')}>
+                            onClick={() => handleColumnSort('priceChangePercentage24h')}>
                           24h %
                         </th>
                         <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleSort('marketCap')}>
+                            onClick={() => handleColumnSort('marketCap')}>
                           Market Cap
                         </th>
                         <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleSort('totalVolume')}>
+                            onClick={() => handleColumnSort('totalVolume')}>
                           Volume
                         </th>
                         <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -485,7 +525,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                             className="hover:bg-gray-800/40 cursor-pointer"
                             onClick={() => handleTokenClick(token)}
                           >
-                            <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
+                            <td className="px-2 py-4 text-sm text-gray-300">{index + 1}</td>
                             <td className="px-2 py-4">
                               <div className="flex items-center min-w-0">
                                 <img
@@ -562,7 +602,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
                             <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-700 rounded text-xs font-bold text-gray-300">
-                              #{token.marketCapRank || index + 1}
+                              #{index + 1}
                             </span>
                             <img
                               src={token.image}
