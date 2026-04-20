@@ -5,7 +5,25 @@ const axios = require('axios');
 const { emitTokenUpdate } = require('../socket');
 
 let lastUpdateTime = 0;
-const UPDATE_INTERVAL = 4.5 * 60 * 1000; // 4.5 minutes - pushing to 9,999 calls/month limit (320 calls/day)
+/** Min time between successful CoinGecko syncs (~96 calls/day per instance on free tier). */
+const UPDATE_INTERVAL = 15 * 60 * 1000;
+/** After 429, wait at least this long before calling CoinGecko again (unless Retry-After says longer). */
+const DEFAULT_429_BACKOFF_MS = 15 * 60 * 1000;
+/** Defer first fetch after boot so deploys / multiple instances do not spike CoinGecko at t=0. */
+const STARTUP_FETCH_DELAY_MIN_MS = 45 * 1000;
+const STARTUP_FETCH_DELAY_JITTER_MS = 45 * 1000;
+
+let nextCoinGeckoAttemptAt = 0;
+
+function getRetryAfterMsFromError(error) {
+  const headers = error.response?.headers;
+  if (!headers) return DEFAULT_429_BACKOFF_MS;
+  const raw = headers['retry-after'] ?? headers['Retry-After'];
+  if (raw == null) return DEFAULT_429_BACKOFF_MS;
+  const sec = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(sec) || sec <= 0) return DEFAULT_429_BACKOFF_MS;
+  return Math.min(sec * 1000, 60 * 60 * 1000);
+}
 
 // In-memory cache for the GET /api/tokens response to prevent MongoDB connection pool exhaustion
 let tokensReadCache = null;
@@ -15,16 +33,14 @@ const TOKENS_READ_CACHE_TTL = 60 * 1000; // 60 seconds
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
-  if (!force && now - lastUpdateTime < UPDATE_INTERVAL) {
-
+  if (now < nextCoinGeckoAttemptAt) {
+    return null;
+  }
+  if (!force && lastUpdateTime > 0 && now - lastUpdateTime < UPDATE_INTERVAL) {
     return null;
   }
 
   try {
-
-    // Token cache update starting (using CoinGecko API)
-    
-    // Using CoinGecko API - much more generous free tier
     const response = await axios.get(
       'https://api.coingecko.com/api/v3/coins/markets',
       {
@@ -106,6 +122,7 @@ const updateTokenCache = async (force = false) => {
 
     await Token.bulkWrite(bulkOps, { ordered: false });
     lastUpdateTime = now;
+    nextCoinGeckoAttemptAt = 0;
 
     // Invalidate the read cache so the next GET request fetches fresh data
     tokensReadCache = null;
@@ -123,33 +140,56 @@ const updateTokenCache = async (force = false) => {
 
     return tokens;
   } catch (error) {
+    const status = error.response?.status;
+    if (status === 429) {
+      const waitMs = getRetryAfterMsFromError(error);
+      nextCoinGeckoAttemptAt = Date.now() + waitMs;
+      console.warn(
+        `[Tokens] CoinGecko rate limited (429); serving cached DB data. Next sync after ${new Date(nextCoinGeckoAttemptAt).toISOString()}`
+      );
+      return null;
+    }
     console.error('=== TOKEN CACHE UPDATE FAILED ===');
     console.error('Error:', error.message);
     console.error('URL:', error.config?.url);
-    console.error('Status:', error.response?.status);
+    console.error('Status:', status);
     console.error('Response data:', error.response?.data);
     return null;
   }
 };
 
-// Initialize cache without blocking
-updateTokenCache(true).catch(console.error);
-
-// Set up periodic updates
-setInterval(() => {
-  updateTokenCache().catch(console.error);
-}, UPDATE_INTERVAL);
+const startupDelay =
+  STARTUP_FETCH_DELAY_MIN_MS + Math.floor(Math.random() * STARTUP_FETCH_DELAY_JITTER_MS);
+setTimeout(() => {
+  updateTokenCache(false)
+    .catch(() => {})
+    .finally(() => {
+      setInterval(() => updateTokenCache(false).catch(() => {}), UPDATE_INTERVAL);
+    });
+}, startupDelay);
 
 // Manual refresh endpoint for debugging
 router.post('/refresh', async (req, res) => {
   try {
-    // Manual token refresh requested
+    if (Date.now() < nextCoinGeckoAttemptAt) {
+      return res.status(503).json({
+        success: false,
+        message: 'CoinGecko rate limit backoff active; try again later',
+        retryAfterMs: Math.max(0, nextCoinGeckoAttemptAt - Date.now())
+      });
+    }
     const tokens = await updateTokenCache(true);
     if (tokens) {
       res.json({ 
         success: true, 
         message: `Successfully refreshed ${tokens.length} tokens`,
         count: tokens.length 
+      });
+    } else if (Date.now() < nextCoinGeckoAttemptAt) {
+      res.status(503).json({
+        success: false,
+        message: 'CoinGecko rate limited; cached tokens unchanged',
+        retryAfterMs: Math.max(0, nextCoinGeckoAttemptAt - Date.now())
       });
     } else {
       res.status(500).json({ 
