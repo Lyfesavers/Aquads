@@ -166,6 +166,40 @@ function defaultPromoInlineKeyboard() {
 // Serialize raid notifications (TG + Discord) so delete → send → store never interleave (avoids race conditions)
 let _raidNotifyLock = Promise.resolve();
 
+/** Telegram bots can only delete their own messages for a limited window (~48h). Sweep raid posts before that. */
+const RAID_MESSAGE_CLEANUP_AFTER_MS = 42 * 60 * 60 * 1000;
+
+function normalizeRaidMessageIdsEntry(entry) {
+  if (entry == null) return null;
+  if (typeof entry === 'number') return { messageId: entry, storedAt: null };
+  if (typeof entry === 'object' && entry.messageId != null) {
+    return { messageId: Number(entry.messageId), storedAt: entry.storedAt || null };
+  }
+  return null;
+}
+
+function normalizeRaidMessagesByRaidEntry(msg) {
+  if (!msg || msg.messageId == null || msg.chatId == null) return null;
+  return {
+    chatId: String(msg.chatId),
+    messageId: Number(msg.messageId),
+    storedAt: msg.storedAt || null,
+  };
+}
+
+function raidMessageAgeEligible(storedAt, cleanupAfterMs) {
+  const t = new Date(storedAt).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t >= cleanupAfterMs;
+}
+
+/** Composite key is `${chatId}_${creatorGroupId}` — chat id is always a (possibly negative) integer string. */
+function parseRaidMessageIdsCompositeKey(compositeKey) {
+  const m = String(compositeKey).match(/^(-?\d+)_(.+)$/);
+  if (!m) return null;
+  return { chatIdStr: m[1], creatorSuffix: m[2] };
+}
+
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
@@ -196,6 +230,8 @@ const telegramService = {
     raidCompletion: null,
     leaderboard: null
   },
+
+  RAID_MESSAGE_CLEANUP_AFTER_MS,
 
   // Load active groups from database
   loadActiveGroups: async () => {
@@ -325,6 +361,168 @@ const telegramService = {
     } catch (error) {
       // Safe to ignore when message isn't pinned or permissions are limited
       return false;
+    }
+  },
+
+  // Unpin then delete a raid message (best-effort unpin so pins do not linger if delete fails later)
+  deleteRaidTelegramMessage: async (chatId, messageId) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return false;
+    try {
+      await telegramService.unpinMessage(chatId, messageId);
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/deleteMessage`,
+        {
+          chat_id: chatId,
+          message_id: messageId
+        }
+      );
+      return response.data?.ok === true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  /**
+   * Periodic sweep: delete raid TG posts before Telegram's ~48h delete window ends.
+   * Drops DB refs after each attempt (success or fail) so stale IDs do not accumulate.
+   */
+  scheduledRaidTelegramRaidMessageCleanup: async () => {
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
+
+    const cleanupAfterMs = RAID_MESSAGE_CLEANUP_AFTER_MS;
+
+    try {
+      const settingsIds = await BotSettings.findOne({ key: 'raidMessageIds' });
+      let raidMessageIds =
+        settingsIds?.value && typeof settingsIds.value === 'object' ? { ...settingsIds.value } : {};
+      let changedIds = false;
+
+      for (const compositeKey of Object.keys(raidMessageIds)) {
+        const parsed = parseRaidMessageIdsCompositeKey(compositeKey);
+        if (!parsed) {
+          console.log(`[Raid TG cleanup] Skipping malformed raidMessageIds key: ${compositeKey}`);
+          continue;
+        }
+        const { chatIdStr } = parsed;
+        const entries = raidMessageIds[compositeKey];
+        if (!Array.isArray(entries)) continue;
+
+        const kept = [];
+        let keyDirty = false;
+        for (const entry of entries) {
+          const norm = normalizeRaidMessageIdsEntry(entry);
+          if (!norm) continue;
+
+          if (!norm.storedAt) {
+            kept.push({
+              messageId: norm.messageId,
+              storedAt: new Date().toISOString()
+            });
+            keyDirty = true;
+            continue;
+          }
+
+          if (!raidMessageAgeEligible(norm.storedAt, cleanupAfterMs)) {
+            kept.push({ messageId: norm.messageId, storedAt: norm.storedAt });
+            continue;
+          }
+
+          const ok = await telegramService.deleteRaidTelegramMessage(chatIdStr, norm.messageId);
+          if (ok) {
+            console.log(`[Raid TG cleanup] Deleted raidMessageIds msg ${norm.messageId} chat ${chatIdStr}`);
+          } else {
+            console.log(
+              `[Raid TG cleanup] Could not delete raidMessageIds msg ${norm.messageId} chat ${chatIdStr} — dropping DB ref`
+            );
+          }
+          keyDirty = true;
+        }
+
+        if (kept.length === 0) {
+          delete raidMessageIds[compositeKey];
+          changedIds = true;
+        } else if (keyDirty || kept.length !== entries.length) {
+          raidMessageIds[compositeKey] = kept;
+          changedIds = true;
+        }
+      }
+
+      if (changedIds) {
+        await BotSettings.findOneAndUpdate(
+          { key: 'raidMessageIds' },
+          { value: raidMessageIds, updatedAt: new Date() },
+          { upsert: true }
+        );
+      }
+
+      const settingsByRaid = await BotSettings.findOne({ key: 'raidMessagesByRaidId' });
+      let raidMessagesByRaid =
+        settingsByRaid?.value && typeof settingsByRaid.value === 'object'
+          ? { ...settingsByRaid.value }
+          : {};
+      let changedByRaid = false;
+
+      for (const raidIdStr of Object.keys(raidMessagesByRaid)) {
+        const msgs = raidMessagesByRaid[raidIdStr];
+        if (!Array.isArray(msgs)) continue;
+
+        const keptMsgs = [];
+        let raidKeyDirty = false;
+        for (const raw of msgs) {
+          const norm = normalizeRaidMessagesByRaidEntry(raw);
+          if (!norm) continue;
+
+          if (!norm.storedAt) {
+            keptMsgs.push({
+              chatId: norm.chatId,
+              messageId: norm.messageId,
+              storedAt: new Date().toISOString()
+            });
+            raidKeyDirty = true;
+            continue;
+          }
+
+          if (!raidMessageAgeEligible(norm.storedAt, cleanupAfterMs)) {
+            keptMsgs.push({
+              chatId: norm.chatId,
+              messageId: norm.messageId,
+              storedAt: norm.storedAt
+            });
+            continue;
+          }
+
+          const ok = await telegramService.deleteRaidTelegramMessage(norm.chatId, norm.messageId);
+          if (ok) {
+            console.log(
+              `[Raid TG cleanup] Deleted raidMessagesByRaidId msg ${norm.messageId} chat ${norm.chatId} raid ${raidIdStr}`
+            );
+          } else {
+            console.log(
+              `[Raid TG cleanup] Could not delete raidMessagesByRaidId msg ${norm.messageId} chat ${norm.chatId} — dropping DB ref`
+            );
+          }
+          raidKeyDirty = true;
+        }
+
+        if (keptMsgs.length === 0) {
+          delete raidMessagesByRaid[raidIdStr];
+          changedByRaid = true;
+        } else if (raidKeyDirty || keptMsgs.length !== msgs.length) {
+          raidMessagesByRaid[raidIdStr] = keptMsgs;
+          changedByRaid = true;
+        }
+      }
+
+      if (changedByRaid) {
+        await BotSettings.findOneAndUpdate(
+          { key: 'raidMessagesByRaidId' },
+          { value: raidMessagesByRaid, updatedAt: new Date() },
+          { upsert: true }
+        );
+      }
+    } catch (error) {
+      console.error('[Raid TG cleanup] Error:', error.message);
     }
   },
 
@@ -1871,11 +2069,14 @@ https://aquads.xyz`;
       const settings = await BotSettings.findOne({ key: 'raidMessageIds' });
       const existingData = settings?.value || {};
       
-      // Add new message ID
+      // Add new message ID (with timestamp for scheduled cleanup before Telegram delete window closes)
       if (!existingData[compositeKey]) {
         existingData[compositeKey] = [];
       }
-      existingData[compositeKey].push(messageId);
+      existingData[compositeKey].push({
+        messageId,
+        storedAt: new Date().toISOString()
+      });
       
       // Save back to database
       await BotSettings.findOneAndUpdate(
@@ -1902,7 +2103,11 @@ https://aquads.xyz`;
       if (!existingData[raidIdStr]) {
         existingData[raidIdStr] = [];
       }
-      existingData[raidIdStr].push({ chatId: chatIdStr, messageId: messageId });
+      existingData[raidIdStr].push({
+        chatId: chatIdStr,
+        messageId,
+        storedAt: new Date().toISOString()
+      });
       
       // Save back to database
       await BotSettings.findOneAndUpdate(
@@ -1917,8 +2122,7 @@ https://aquads.xyz`;
 
   // Delete all Telegram messages for a specific raid (when raid is cancelled)
   deleteRaidMessagesByRaidId: async (raidId) => {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) return;
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
 
     try {
       const raidIdStr = raidId.toString();
@@ -1937,16 +2141,15 @@ https://aquads.xyz`;
       
       let deletedCount = 0;
       for (const msg of messagesToDelete) {
-        try {
-          await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
-            chat_id: msg.chatId,
-            message_id: msg.messageId
-          });
-          console.log(`✅ Deleted raid message ${msg.messageId} from chat ${msg.chatId}`);
+        const mid = msg && msg.messageId != null ? Number(msg.messageId) : null;
+        const cid = msg && msg.chatId != null ? String(msg.chatId) : null;
+        if (mid == null || !cid) continue;
+        const ok = await telegramService.deleteRaidTelegramMessage(cid, mid);
+        if (ok) {
+          console.log(`✅ Deleted raid message ${mid} from chat ${cid}`);
           deletedCount++;
-        } catch (error) {
-          // Message might already be deleted or bot doesn't have permission
-          console.log(`⚠️ Could not delete message ${msg.messageId} from chat ${msg.chatId}: ${error.message}`);
+        } else {
+          console.log(`⚠️ Could not delete message ${mid} from chat ${cid} (dropping DB ref)`);
         }
       }
       
@@ -1993,8 +2196,7 @@ https://aquads.xyz`;
 
   // Delete old raid messages (only from specified groups, only messages created by the specified creator)
   deleteOldRaidMessages: async (groupsToDeleteFrom, creatorGroupId) => {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) return;
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
 
     try {
       // Load message IDs from database
@@ -2031,17 +2233,19 @@ https://aquads.xyz`;
         
         if (!messageIds || messageIds.length === 0) continue;
 
-        for (const messageId of messageIds) {
-          try {
-            await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
-              chat_id: chatIdStr,
-              message_id: messageId
-            });
-            console.log(`✅ Deleted old raid message ${messageId} from chat ${chatIdStr} (created by ${creatorGroupIdStr})`);
+        for (const messageEntry of messageIds) {
+          const norm = normalizeRaidMessageIdsEntry(messageEntry);
+          if (!norm) continue;
+          const ok = await telegramService.deleteRaidTelegramMessage(chatIdStr, norm.messageId);
+          if (ok) {
+            console.log(
+              `✅ Deleted old raid message ${norm.messageId} from chat ${chatIdStr} (created by ${creatorGroupIdStr})`
+            );
             deletedCount++;
-          } catch (error) {
-            // Message might already be deleted or bot doesn't have permission
-            console.log(`❌ Could not delete message ${messageId} from chat ${chatIdStr}: ${error.message}`);
+          } else {
+            console.log(
+              `❌ Could not delete message ${norm.messageId} from chat ${chatIdStr} (clearing stored id)`
+            );
           }
         }
 

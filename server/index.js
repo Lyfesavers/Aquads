@@ -471,6 +471,16 @@ cron.schedule('0 9,21 * * *', async () => {
   timezone: "America/New_York"
 });
 
+// Sweep Telegram raid announcement messages before Telegram's ~48h bot delete window ends (stored IDs + stale pins)
+cron.schedule('0 */2 * * *', async () => {
+  try {
+    console.log('[Raid TG cleanup] Running scheduled raid message sweep...');
+    await telegramService.scheduledRaidTelegramRaidMessageCleanup();
+  } catch (error) {
+    console.error('[Raid TG cleanup] Error:', error);
+  }
+});
+
 // Cron job for syncing Remotive jobs every 8 hours
 // Runs at 12:00 AM, 8:00 AM, and 4:00 PM daily
 cron.schedule('0 */8 * * *', async () => {
