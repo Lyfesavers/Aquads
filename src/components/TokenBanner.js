@@ -1,8 +1,56 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import logger from '../utils/logger';
 import Modal from './Modal';
 import './TokenBanner.css';
+
+// GeckoTerminal (api.geckoterminal.com) — separate from CoinGecko REST used on the server.
+const GECKO_TERMINAL_STORAGE_KEY = 'aquads_token_banner_trending_v1';
+const GECKO_TERMINAL_STORAGE_TS_KEY = 'aquads_token_banner_trending_v1_ts';
+/** Min time between full trending fetches (3 paginated calls per round). */
+const GECKO_TERMINAL_MIN_FETCH_INTERVAL_MS = 5 * 60 * 1000;
+
+function loadCachedTrendingTokens() {
+  try {
+    const raw = localStorage.getItem(GECKO_TERMINAL_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function getLastTrendingFetchTime() {
+  try {
+    const t = localStorage.getItem(GECKO_TERMINAL_STORAGE_TS_KEY);
+    return t ? parseInt(t, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveTrendingTokens(tokens) {
+  try {
+    localStorage.setItem(GECKO_TERMINAL_STORAGE_KEY, JSON.stringify(tokens));
+    localStorage.setItem(GECKO_TERMINAL_STORAGE_TS_KEY, String(Date.now()));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function shouldSkipGeckoTerminalFetch(force) {
+  if (force) return false;
+  const last = getLastTrendingFetchTime();
+  if (!last) return false;
+  return Date.now() - last < GECKO_TERMINAL_MIN_FETCH_INTERVAL_MS;
+}
+
+function readInitialBannerState() {
+  const cached = loadCachedTrendingTokens();
+  const tokens = cached || [];
+  return { tokens, loading: tokens.length === 0 };
+}
 
 // Move formatting functions outside component to prevent recreation on each render
 const formatVolume = (volume) => {
@@ -118,13 +166,26 @@ const mapNetworkToBlockchain = (networkId) => {
 };
 
 const TokenBanner = () => {
-  const [tokens, setTokens] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialBanner = useMemo(() => readInitialBannerState(), []);
+  const [tokens, setTokens] = useState(initialBanner.tokens);
+  const [loading, setLoading] = useState(initialBanner.loading);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectedChain, setSelectedChain] = useState('all');
 
   // Memoize fetchTokens to prevent recreation
-  const fetchTokens = useCallback(async () => {
+  const fetchTokens = useCallback(async (options = {}) => {
+    const force = options.force === true;
+
+    if (shouldSkipGeckoTerminalFetch(force)) {
+      const stale = loadCachedTrendingTokens();
+      if (stale?.length) setTokens(stale);
+      setLoading(false);
+      return;
+    }
+
+    const cachedBefore = loadCachedTrendingTokens();
+    if (!cachedBefore?.length) setLoading(true);
+
     try {
       let allTokens = [];
       
@@ -262,7 +323,11 @@ const TokenBanner = () => {
 
       // Take top 50 tokens in original trending order
       const finalTokens = allTokens.slice(0, 50);
-      setTokens(finalTokens);
+      if (finalTokens.length > 0) {
+        setTokens(finalTokens);
+        saveTrendingTokens(finalTokens);
+      }
+      // On empty / partial failure, keep showing last saved list (state + localStorage unchanged)
 
     } catch (error) {
       // Silent error handling for production
@@ -273,8 +338,7 @@ const TokenBanner = () => {
 
   useEffect(() => {
     fetchTokens();
-    // Reduce polling frequency to reduce JS execution
-    const interval = setInterval(fetchTokens, 120000); // Fetch every 2 minutes instead of every minute
+    const interval = setInterval(fetchTokens, GECKO_TERMINAL_MIN_FETCH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchTokens]);
 
