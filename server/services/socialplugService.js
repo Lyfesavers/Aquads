@@ -41,7 +41,7 @@ const SELLING_PRICES = {
 const TEST_PRICE_OVERRIDE = {
   listeners: 100,
   duration: 30,
-  price: 0
+  price: 0.5
 };
 
 /**
