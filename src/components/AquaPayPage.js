@@ -146,6 +146,10 @@ class ProxiedConnection {
   async getAccountInfo(pubkey) {
     return await this._call('getAccountInfo', [pubkey.toString(), { encoding: 'base64' }]);
   }
+
+  async getMultipleAccounts(pubkeys) {
+    return await this._call('getMultipleAccounts', [pubkeys.map((p) => p.toString()), { encoding: 'base64' }]);
+  }
 }
 
 const CHAINS = {
@@ -729,24 +733,19 @@ const AquaPayPage = ({ currentUser }) => {
           const recipientATA = await getAssociatedTokenAddress(mint, toPubkey);
           const platformATA = await getAssociatedTokenAddress(mint, platformPubkey);
           
-          // Check if recipient ATA exists, create if needed
+          // One RPC round-trip for ATA existence (shorter path before blockhash = less time for user to outwait expiry)
           try {
-            const acctInfo = await connection.getAccountInfo(recipientATA);
-            if (!acctInfo?.value) {
+            const multi = await connection.getMultipleAccounts([recipientATA, platformATA]);
+            const accounts = multi?.value || [];
+            if (!accounts[0]) {
               transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, recipientATA, toPubkey, mint));
             }
-          } catch { 
-            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, recipientATA, toPubkey, mint)); 
-          }
-          
-          // Check if platform ATA exists, create if needed (should already exist)
-          try {
-            const platformAcctInfo = await connection.getAccountInfo(platformATA);
-            if (!platformAcctInfo?.value) {
+            if (!accounts[1]) {
               transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, platformATA, platformPubkey, mint));
             }
-          } catch { 
-            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, platformATA, platformPubkey, mint)); 
+          } catch {
+            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, recipientATA, toPubkey, mint));
+            transaction.add(createAssociatedTokenAccountInstruction(fromPubkey, platformATA, platformPubkey, mint));
           }
           
           // Calculate amounts in USDC smallest units (6 decimals)
@@ -847,7 +846,10 @@ const AquaPayPage = ({ currentUser }) => {
       } else if (errMsg.includes('insufficient') || errMsg.includes('Insufficient')) {
         setTxError('Insufficient balance. Please check your wallet has enough funds (including gas fees).');
       } else if (errMsg.includes('blockhash') || errMsg.includes('Blockhash') || errMsg.includes('expired') || errMsg.includes('simulation failed')) {
-        setTxError('Transaction could not be submitted (often due to blockhash expiry after signing). Please try the payment again — we’ll use a fresh blockhash.');
+        setTxError(
+          'Transaction could not be submitted — on Solana this often happens if approval took too long (blockhash expires in about 60–90 seconds).\n\n' +
+            'Please tap Pay again, then open your wallet and approve as soon as it appears. On mobile, avoid leaving the app for long before approving.'
+        );
       } else {
         setTxError(errMsg);
       }

@@ -208,6 +208,7 @@ router.post('/solana-rpc', async (req, res) => {
       'getSignatureStatuses',
       'getBalance',
       'getAccountInfo',
+      'getMultipleAccounts',
       'getTokenAccountsByOwner'
     ];
     
