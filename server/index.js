@@ -648,7 +648,9 @@ app.use('/api', (req, res, next) => {
     const isLinkInBioPublicData =
       /^\/users\/links\/[^/]+$/.test(req.path) ||
       /^\/link-bio-ads\/active\/[^/]+$/.test(req.path);
-    if (isOrderStatus || isLinkInBioPublicData) {
+    // Per-user (Authorization); must not be shared CDN cache
+    const isPfpGeneratorStatus = /^\/pfp-generator\/status$/.test(req.path);
+    if (isOrderStatus || isLinkInBioPublicData || isPfpGeneratorStatus) {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else {
       res.set('Cache-Control', 'public, max-age=300');
@@ -808,6 +810,7 @@ app.use('/api/on-chain-resume', require('./routes/onChainResume'));
 app.use('/api/aquapay', aquapayRoutes);
 app.use('/api/freelancer-escrow', require('./routes/freelancerEscrow'));
 app.use('/api/wallet-analyzer', walletAnalyzerRoutes);
+app.use('/api/pfp-generator', require('./routes/pfpGenerator'));
 app.use('/api/hyperspace', require('./routes/hyperspace'));
 
 // OG image generation routes (for social media previews)

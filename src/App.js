@@ -47,6 +47,7 @@ const AquaFi = lazy(() => import('./components/AquaFi'));
 const AquaSwap = lazy(() => import('./components/AquaSwap'));
 const AquaSwapEmbed = lazy(() => import('./components/AquaSwapEmbed'));
 const WalletAnalyzer = lazy(() => import('./components/WalletAnalyzer'));
+const AquadsPFPGenerator = lazy(() => import('./components/AquadsPFPGenerator'));
 const VerifyUser = lazy(() => import('./components/VerifyUser'));
 const MemberVerification = lazy(() => import('./components/MemberVerification'));
 import BannerDisplay from './components/BannerDisplay';
@@ -3706,6 +3707,16 @@ function App() {
             <Route path="/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/share/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/wallet-analyzer" element={<WalletAnalyzer currentUser={currentUser} showNotification={showNotification} />} />
+            <Route
+              path="/pfp-generator"
+              element={
+                <AquadsPFPGenerator
+                  currentUser={currentUser}
+                  onLogin={() => setShowLoginModal(true)}
+                  showNotification={showNotification}
+                />
+              }
+            />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />

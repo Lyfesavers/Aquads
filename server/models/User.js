@@ -58,6 +58,10 @@ const userSchema = new Schema({
     type: String,
     default: 'https://i.imgur.com/6VBx3io.png'
   },
+  pfpGeneratorLastAt: {
+    type: Date,
+    default: null
+  },
   ipAddress: {
     type: String,
     default: null
