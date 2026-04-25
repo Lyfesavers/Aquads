@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import './LandingPage.css';
+import HowItWorksSection from './HowItWorksSection';
 
 // Floating particle component
 const FloatingParticle = ({ delay, size, color, x, y }) => (
@@ -4741,6 +4742,9 @@ const LandingPage = () => {
           <FeaturesCarousel features={features} />
         </div>
       </section>
+
+      {/* How It Works — dual-rail (Projects: momentum / Freelancers: reputation) */}
+      <HowItWorksSection />
 
       {/* CTA Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
