@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../services/api';
+import './AquadsPFPGenerator.css';
 
 function downloadBlobFromBase64(base64, mime, filename) {
   const byteChars = atob(base64);
@@ -54,6 +56,7 @@ function downloadJpegFromBase64(base64, mime, filename) {
 }
 
 export default function AquadsPFPGenerator({ currentUser, onLogin, showNotification }) {
+  const navigate = useNavigate();
   const [imageBase64, setImageBase64] = useState('');
   const [imageMime, setImageMime] = useState('image/png');
   const [loading, setLoading] = useState(false);
@@ -159,29 +162,41 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
         <title>PFP Generator | Aquads</title>
         <meta name="description" content="Generate a weekly Aquads turtle mascot profile picture." />
       </Helmet>
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#000',
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 20
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 520,
-            background: 'rgba(20,20,30,0.85)',
-            borderRadius: 16,
-            padding: 24,
-            textAlign: 'center'
-          }}
-        >
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>AQUADS PFP GENERATOR</h1>
-          <p style={{ fontSize: 13, opacity: 0.75, marginTop: 8 }}>
+      <div className="pfp-page">
+        <header className="pfp-header">
+          <div className="pfp-header-left">
+            <img
+              src="/Aquadsnewlogo.png"
+              alt="Aquads"
+              className="pfp-logo"
+              onClick={() => navigate('/home')}
+              onKeyDown={(e) => e.key === 'Enter' && navigate('/home')}
+              role="button"
+              tabIndex={0}
+              title="Back to Home"
+            />
+          </div>
+          <div className="pfp-header-center">
+            <div className="pfp-title-wrap">
+              <span className="pfp-title-emoji" aria-hidden>
+                🐢
+              </span>
+              <div>
+                <h1 className="pfp-title-heading">PFP Generator</h1>
+                <p className="pfp-title-tagline">Aquads • Brand mascot studio</p>
+              </div>
+            </div>
+          </div>
+          <div className="pfp-header-right">
+            <button type="button" className="pfp-back-btn" onClick={() => navigate('/home')}>
+              ← Home
+            </button>
+          </div>
+        </header>
+
+        <main className="pfp-main">
+          <div className="pfp-card">
+          <p className="pfp-card-lead">
             Signed-in users: one free generation per rolling 7 days.
           </p>
 
@@ -314,7 +329,8 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
               </div>
             </>
           )}
-        </div>
+          </div>
+        </main>
       </div>
     </>
   );
