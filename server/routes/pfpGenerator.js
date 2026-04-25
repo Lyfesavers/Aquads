@@ -67,11 +67,18 @@ const buildPrompt = (t, coloredTrait, gender) => {
       ? 'sleek athletic female turtle warrior, agile powerful stance, elegant but strong physique'
       : 'muscular male turtle bodybuilder, heavy powerful physique, broad shoulders, strong stance';
 
+  const backgroundIsYellow = Math.random() < 0.5;
+  const backgroundColor = backgroundIsYellow ? '#febc10' : '#51159d';
+  const textColor = backgroundIsYellow ? '#51159d' : '#febc10';
+  const backgroundName = backgroundIsYellow ? 'bright Aquads yellow' : 'deep Aquads purple';
+  const textName = backgroundIsYellow ? 'deep Aquads purple' : 'bright Aquads yellow';
+
   return [
     'ultra high quality anthropomorphic TURTLE mascot for AQUADS branding identity',
     genderModifiers,
-    'AQUADS logo clearly visible and centered',
-    'logo curved like a smile at bottom',
+    `AQUADS logo and any AQUADS text MUST ALWAYS be rendered in solid ${textName} color hex ${textColor}, no other color, no gradient, no shading on the text, must contrast strongly with the background`,
+    'AQUADS wordmark clearly visible, centered, sharp, legible, spelled exactly as A-Q-U-A-D-S',
+    `logo curved like a smile at bottom in the same ${textName} ${textColor}`,
     'centered circular profile portrait',
     'pencil sketch style illustration',
     'monochrome graphite shading with clean linework',
@@ -79,7 +86,7 @@ const buildPrompt = (t, coloredTrait, gender) => {
     'STRICT: include ALL traits exactly as described',
     'safe margins, no cropping, fully visible face shell and body',
     `shell=${t.shell}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}`,
-    'solid background color ONLY: either bright yellow #febc10 OR deep purple #51159d, no gradients, no white, no patterns, clean flat background'
+    `solid background color ONLY: ${backgroundName} ${backgroundColor}, no gradients, no white, no patterns, clean flat background. The AQUADS branding text MUST be the opposite color (${textColor}) so it contrasts strongly and stays clearly readable.`
   ].join(', ');
 };
 
