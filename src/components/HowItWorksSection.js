@@ -28,7 +28,7 @@ const projectSteps = [
     oneLiner:
       "$199 one-time. Auto-fill from DexScreener (symbol, chain, pair). Your bubble goes live and the flywheel starts the moment you launch.",
     perks: ['One-time fee', 'DexScreener auto-fill', '5% off for affiliates'],
-    cta: { label: 'Create your listing', to: '/home?showCreateAccount=true' },
+    cta: { label: 'Create your listing', to: '/home?openListProject=true' },
     mockup: 'ignite',
   },
   {
@@ -721,7 +721,7 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <Link to="/home?showCreateAccount=true">
+          <Link to="/home?openListProject=true">
             <motion.span
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/30"
               whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(34,211,238,0.5)' }}

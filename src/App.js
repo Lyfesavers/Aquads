@@ -349,9 +349,12 @@ const DashboardTabHandler = ({ currentUser }) => {
   return null;
 };
 
-// Open login / create-account modals from URL (?showLogin=true, ?showCreateAccount=true).
+// Open login / create-account / list-project modals from URL.
+// Supported params: ?showLogin=true, ?showCreateAccount=true, ?openListProject=true
 // Runs on every search change so SPA links from the landing page work (not only full page load).
-const AuthModalQueryHandler = ({ setShowLoginModal, setShowCreateAccountModal }) => {
+// `openListProject=true` is auth-aware: logged-in users see the List Project modal,
+// guests are routed into the sign-up modal first so they can never trigger a paid flow without an account.
+const AuthModalQueryHandler = ({ setShowLoginModal, setShowCreateAccountModal, setShowCreateModal, currentUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -373,11 +376,20 @@ const AuthModalQueryHandler = ({ setShowLoginModal, setShowCreateAccountModal })
       params.delete('showLogin');
       shouldReplace = true;
     }
+    if (params.get('openListProject') === 'true') {
+      if (currentUser) {
+        setShowCreateModal(true);
+      } else {
+        setShowCreateAccountModal(true);
+      }
+      params.delete('openListProject');
+      shouldReplace = true;
+    }
     if (shouldReplace) {
       const next = params.toString();
       navigate({ pathname: location.pathname, search: next ? `?${next}` : '' }, { replace: true });
     }
-  }, [location.pathname, location.search, navigate, setShowLoginModal, setShowCreateAccountModal]);
+  }, [location.pathname, location.search, navigate, setShowLoginModal, setShowCreateAccountModal, setShowCreateModal, currentUser]);
 
   return null;
 };
@@ -2545,6 +2557,8 @@ function App() {
         <AuthModalQueryHandler
           setShowLoginModal={setShowLoginModal}
           setShowCreateAccountModal={setShowCreateAccountModal}
+          setShowCreateModal={setShowCreateModal}
+          currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <DesktopInstallPrompt />

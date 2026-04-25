@@ -4721,6 +4721,9 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* How It Works — dual-rail (Projects: momentum / Freelancers: reputation) */}
+      <HowItWorksSection />
+
       {/* Features Interactive Carousel */}
       <section className="relative w-full py-2 md:py-4 overflow-hidden">
         <div className="w-full">
@@ -4742,9 +4745,6 @@ const LandingPage = () => {
           <FeaturesCarousel features={features} />
         </div>
       </section>
-
-      {/* How It Works — dual-rail (Projects: momentum / Freelancers: reputation) */}
-      <HowItWorksSection />
 
       {/* CTA Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
