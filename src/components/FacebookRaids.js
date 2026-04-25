@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './SocialMediaRaids.css'; // Reuse the same CSS
 import { socket } from '../services/api';
 
@@ -629,7 +630,13 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
-               <span>Must have the <strong>Aquads logo</strong> in your profile picture</span>
+               <span>
+                 Use an <strong>Aquads-branded PFP</strong> on Facebook: generate one free each week in the{' '}
+                 <Link to="/pfp-generator" className="text-cyan-400 underline hover:text-cyan-300 font-semibold">
+                   PFP Generator
+                 </Link>{' '}
+                 (includes the Aquads logo) and set it on your profile
+               </span>
              </li>
            </ul>
          </div>

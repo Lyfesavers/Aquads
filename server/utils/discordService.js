@@ -1552,7 +1552,7 @@ async function startBot() {
               '• Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet\n' +
               '  Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"\n' +
               '• Twitter account must not be shadow banned or suspended\n' +
-              '• Must have the Aquads logo in your profile picture\n\n' +
+              '• Use an Aquads-branded PFP on X: generate one free per week at https://www.aquads.xyz/pfp-generator (includes the Aquads logo) and set it as your profile photo\n\n' +
               'Earn points at https://aquads.xyz'
             )
             .setColor(0x00bfff);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
 import { socket } from '../services/api';
 
@@ -1158,7 +1159,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
-                  <span>Must have the <strong>Aquads logo</strong> in your profile picture</span>
+                  <span>
+                    Use an <strong>Aquads-branded PFP</strong> on X: generate one free each week in the{' '}
+                    <Link to="/pfp-generator" className="text-cyan-400 underline hover:text-cyan-300 font-semibold">
+                      PFP Generator
+                    </Link>{' '}
+                    (includes the Aquads logo) and set it on your X profile
+                  </span>
                 </div>
               </div>
             </div>

@@ -2672,6 +2672,7 @@ Our system verifies actions via:
 - Act quickly on new raids
 - Complete all required actions
 - Use authentic engagement
+- Use an Aquads-branded profile picture on the social platform where you raid: generate one free per week with the [PFP Generator](https://www.aquads.xyz/pfp-generator) (includes the Aquads logo) and upload it to your profile
 
 **For Creators**
 - Write engaging tweet content

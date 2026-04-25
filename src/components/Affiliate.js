@@ -344,7 +344,13 @@ const Affiliate = () => {
                         <div className="bg-gray-800/50 rounded p-3">
                           <h5 className="text-yellow-400 font-semibold mb-2">⚠️ Requirements for Both Options:</h5>
                           <ul className="list-disc list-inside space-y-1 ml-2">
-                            <li>Must display Aquads logo in your profile picture OR use QR code generated from your dashboard</li>
+                            <li>
+                              Must use an <strong>Aquads-branded PFP</strong> from the{' '}
+                              <Link to="/pfp-generator" className="text-yellow-300 underline hover:text-yellow-200">
+                                PFP Generator
+                              </Link>{' '}
+                              on the platform you promote, <strong>or</strong> use the QR code generated from your dashboard
+                            </li>
                             <li>Stream/space must be recorded</li>
                             <li>Must send us the link to the recorded stream/space for verification</li>
                             <li>Earn 100 points per stream/space, maximum 100 points per day</li>
