@@ -650,7 +650,9 @@ app.use('/api', (req, res, next) => {
       /^\/link-bio-ads\/active\/[^/]+$/.test(req.path);
     // Per-user (Authorization); must not be shared CDN cache
     const isPfpGeneratorStatus = /^\/pfp-generator\/status$/.test(req.path);
-    if (isOrderStatus || isLinkInBioPublicData || isPfpGeneratorStatus) {
+    // Per-user PFP collection list (Authorization); must not be shared CDN cache
+    const isPfpGeneratorList = /^\/pfp-generator\/list$/.test(req.path);
+    if (isOrderStatus || isLinkInBioPublicData || isPfpGeneratorStatus || isPfpGeneratorList) {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else {
       res.set('Cache-Control', 'public, max-age=300');
