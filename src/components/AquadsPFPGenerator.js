@@ -21,40 +21,6 @@ function downloadBlobFromBase64(base64, mime, filename) {
   URL.revokeObjectURL(url);
 }
 
-function downloadJpegFromBase64(base64, mime, filename) {
-  const dataUrl = `data:${mime || 'image/png'};base64,${base64}`;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      },
-      'image/jpeg',
-      0.92
-    );
-  };
-  img.onerror = () => {
-    downloadBlobFromBase64(base64, mime, filename.replace(/\.jpe?g$/i, '.png'));
-  };
-  img.src = dataUrl;
-}
-
 export default function AquadsPFPGenerator({ currentUser, onLogin, showNotification }) {
   const navigate = useNavigate();
   const [imageBase64, setImageBase64] = useState('');
@@ -129,7 +95,7 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
       setImageMime(data.mimeType || 'image/png');
       setTraits(data.traits || null);
       await loadStatus();
-      showNotification?.('PFP generated! You can download PNG or JPEG below.', 'success');
+      showNotification?.('PFP generated! Tap "Download PNG" below to save it.', 'success');
     } catch (err) {
       const msg = err.message || 'Error generating image';
       setError(msg);
@@ -142,11 +108,6 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
   const onDownloadPng = () => {
     if (!imageBase64) return;
     downloadBlobFromBase64(imageBase64, imageMime || 'image/png', 'aquads-pfp.png');
-  };
-
-  const onDownloadJpeg = () => {
-    if (!imageBase64) return;
-    downloadJpegFromBase64(imageBase64, imageMime || 'image/png', 'aquads-pfp.jpg');
   };
 
   const nextLabel = nextAvailableAt
@@ -298,8 +259,8 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
                   type="button"
                   onClick={onDownloadPng}
                   style={{
-                    flex: '1 1 140px',
-                    padding: 12,
+                    flex: '1 1 100%',
+                    padding: 14,
                     borderRadius: 10,
                     border: 'none',
                     cursor: 'pointer',
@@ -309,22 +270,6 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
                   }}
                 >
                   Download PNG
-                </button>
-                <button
-                  type="button"
-                  onClick={onDownloadJpeg}
-                  style={{
-                    flex: '1 1 140px',
-                    padding: 12,
-                    borderRadius: 10,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    background: 'rgba(124,58,237,0.2)',
-                    color: '#fff'
-                  }}
-                >
-                  Download JPEG
                 </button>
               </div>
             </>
