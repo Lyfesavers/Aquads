@@ -77,6 +77,31 @@ function getIO() {
 }
 
 /**
+ * Per-game lock so two concurrent /action requests for the same game can't
+ * race (load v_N, both apply move, last save wins). Pending requests for the
+ * same gameId queue through a Promise chain and execute one at a time.
+ * Ref-counted so the map auto-cleans when the queue empties.
+ */
+const gameLocks = new Map();
+async function withGameLock(gameId, fn) {
+  const key = String(gameId);
+  const slot = gameLocks.get(key) || { busy: Promise.resolve(), refs: 0 };
+  slot.refs += 1;
+  gameLocks.set(key, slot);
+  const prev = slot.busy;
+  let release;
+  slot.busy = new Promise((r) => { release = r; });
+  try {
+    await prev;
+    return await fn();
+  } finally {
+    release();
+    slot.refs -= 1;
+    if (slot.refs === 0) gameLocks.delete(key);
+  }
+}
+
+/**
  * Load a SolitaireGame doc and ensure the requesting user owns it.
  * Returns the Mongoose document (live, save()-able).
  */
@@ -154,6 +179,9 @@ router.post('/games/new', auth, async (req, res) => {
 });
 
 // GET /api/aquataire/games/active  -> resume the latest active non-daily game
+// Read-only: we update elapsedMs in the response only. Saving here would race
+// with in-flight POSTs (loading the doc before their save commits), and could
+// overwrite a successful move with stale state.
 router.get('/games/active', auth, async (req, res) => {
   try {
     const doc = await SolitaireGame.findOne({
@@ -163,20 +191,18 @@ router.get('/games/active', auth, async (req, res) => {
     }).sort({ updatedAt: -1 });
     if (!doc) return res.json({ gameId: null });
     recomputeElapsed(doc);
-    await doc.save();
     res.json({ gameId: String(doc._id), state: engine.viewState(doc) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch active game' });
   }
 });
 
-// GET /api/aquataire/games/:id
+// GET /api/aquataire/games/:id  -> read-only fetch (see comment above)
 router.get('/games/:id', auth, async (req, res) => {
   try {
     const game = await loadOwnedGame(req, res);
     if (!game) return;
     recomputeElapsed(game);
-    if (game.status === 'active') await game.save();
     res.json({ gameId: String(game._id), state: engine.viewState(game) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch game' });
@@ -186,56 +212,73 @@ router.get('/games/:id', auth, async (req, res) => {
 // POST /api/aquataire/games/:id/action  { type: 'draw' | 'recycle' | 'play' | 'autoComplete', from, to }
 router.post('/games/:id/action', auth, async (req, res) => {
   try {
-    const game = await loadOwnedGame(req, res);
-    if (!game) return;
-    if (game.status !== 'active') {
-      return res.status(409).json({ error: 'Game is not active' });
-    }
-    const move = req.body || {};
-    try {
-      engine.applyMove(game, move);
-    } catch (e) {
-      return res.status(400).json({ error: e.message || 'Illegal move' });
-    }
+    await withGameLock(req.params.id, async () => {
+      const game = await loadOwnedGame(req, res);
+      if (!game) return;
+      if (game.status !== 'active') {
+        return res.status(409).json({ error: 'Game is not active' });
+      }
+      const move = req.body || {};
+      try {
+        engine.applyMove(game, move);
+      } catch (e) {
+        // Illegal move — return current authoritative state so the client can
+        // re-sync without doing a separate refetch (which used to race with
+        // an in-flight successful save).
+        recomputeElapsed(game);
+        return res.status(400).json({
+          error: e.message || 'Illegal move',
+          state: engine.viewState(game),
+          gameId: String(game._id),
+        });
+      }
 
-    if (engine.isWon(game)) {
-      game.status = 'won';
-      game.endedAt = new Date();
+      if (engine.isWon(game)) {
+        game.status = 'won';
+        game.endedAt = new Date();
+        recomputeElapsed(game);
+        await game.save();
+        await recordWin(game, getIO());
+        return res.json({
+          gameId: String(game._id),
+          state: engine.viewState(game, { revealAll: true }),
+          won: true,
+        });
+      }
+
       recomputeElapsed(game);
       await game.save();
-      await recordWin(game, getIO());
-      return res.json({
-        gameId: String(game._id),
-        state: engine.viewState(game, { revealAll: true }),
-        won: true,
-      });
-    }
-
-    recomputeElapsed(game);
-    await game.save();
-    res.json({ gameId: String(game._id), state: engine.viewState(game) });
+      res.json({ gameId: String(game._id), state: engine.viewState(game) });
+    });
   } catch (err) {
     console.error('[Aquataire] action error:', err);
-    res.status(500).json({ error: 'Action failed' });
+    if (!res.headersSent) res.status(500).json({ error: 'Action failed' });
   }
 });
 
 // POST /api/aquataire/games/:id/undo
 router.post('/games/:id/undo', auth, async (req, res) => {
   try {
-    const game = await loadOwnedGame(req, res);
-    if (!game) return;
-    if (game.status !== 'active') return res.status(409).json({ error: 'Game is not active' });
-    try {
-      engine.undoLast(game);
-    } catch (e) {
-      return res.status(400).json({ error: e.message || 'Cannot undo' });
-    }
-    recomputeElapsed(game);
-    await game.save();
-    res.json({ gameId: String(game._id), state: engine.viewState(game) });
+    await withGameLock(req.params.id, async () => {
+      const game = await loadOwnedGame(req, res);
+      if (!game) return;
+      if (game.status !== 'active') return res.status(409).json({ error: 'Game is not active' });
+      try {
+        engine.undoLast(game);
+      } catch (e) {
+        recomputeElapsed(game);
+        return res.status(400).json({
+          error: e.message || 'Cannot undo',
+          state: engine.viewState(game),
+          gameId: String(game._id),
+        });
+      }
+      recomputeElapsed(game);
+      await game.save();
+      res.json({ gameId: String(game._id), state: engine.viewState(game) });
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Undo failed' });
+    if (!res.headersSent) res.status(500).json({ error: 'Undo failed' });
   }
 });
 
@@ -255,16 +298,18 @@ router.post('/games/:id/hint', auth, async (req, res) => {
 // POST /api/aquataire/games/:id/abandon
 router.post('/games/:id/abandon', auth, async (req, res) => {
   try {
-    const game = await loadOwnedGame(req, res);
-    if (!game) return;
-    if (game.status !== 'active') return res.json({ ok: true, alreadyEnded: true });
-    game.status = 'abandoned';
-    game.endedAt = new Date();
-    recomputeElapsed(game);
-    await game.save();
-    res.json({ ok: true });
+    await withGameLock(req.params.id, async () => {
+      const game = await loadOwnedGame(req, res);
+      if (!game) return;
+      if (game.status !== 'active') return res.json({ ok: true, alreadyEnded: true });
+      game.status = 'abandoned';
+      game.endedAt = new Date();
+      recomputeElapsed(game);
+      await game.save();
+      res.json({ ok: true });
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Abandon failed' });
+    if (!res.headersSent) res.status(500).json({ error: 'Abandon failed' });
   }
 });
 

@@ -6,7 +6,6 @@ import {
   reconnectSocket,
   aquataireNewGame,
   aquataireGetActive,
-  aquataireGetGame,
   aquataireAction,
   aquataireUndo,
   aquataireHint,
@@ -202,6 +201,14 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
   const sfx = useRef(new SfxEngine()).current;
   const boardRef = useRef(null);
   const ghostLayerRef = useRef(null);
+  // True while a POST /action (or undo) is on the wire. Prevents a second
+  // request from racing the first — the server is the source of truth and
+  // back-to-back fires (e.g. an over-eager double-click) used to land a stale
+  // action that visually rolled the board back to a prior state.
+  const inFlightRef = useRef(false);
+  // Last auto-move {key,t} so a second click on the same source within ~400ms
+  // is ignored (defends against react double-fire and rapid double-click).
+  const lastAutoMoveRef = useRef({ key: '', t: 0 });
 
   const [gameId, setGameId] = useState(null);
   const [state, setState] = useState(null);
@@ -429,6 +436,11 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
 
   const sendAction = useCallback(async (action, sfxKey = 'place') => {
     if (!gameId) return;
+    // Drop the request entirely if one is already in flight. The server only
+    // commits one move at a time anyway, and queuing a second click would just
+    // race with whatever it produced.
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setHintMove(null);
     try {
       const r = await aquataireAction(gameId, action);
@@ -438,20 +450,38 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
     } catch (e) {
       sfx.err();
       showError(e.message || 'Illegal move');
-      try {
-        const live = await aquataireGetGame(gameId);
-        refreshFromServer(live);
-      } catch (_) {}
+      // Keep the board live: do NOT refetch on error. The previous "refetch
+      // on error" path could read a stale snapshot mid-write and visually
+      // roll the game back to a prior move. The server sometimes returns its
+      // current authoritative state in the error body — use that if present.
+      if (e && e.data && e.data.state) {
+        refreshFromServer({ gameId: e.data.gameId || gameId, state: e.data.state });
+      }
+      // Otherwise we simply leave the existing UI state alone; the user can
+      // continue playing from exactly where they were.
+    } finally {
+      inFlightRef.current = false;
     }
   }, [gameId, refreshFromServer, sfx, showError]);
 
   const undo = useCallback(async () => {
     if (!gameId) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     try {
       const r = await aquataireUndo(gameId);
       refreshFromServer(r);
       sfx.flip();
-    } catch (e) { showError(e.message || 'Nothing to undo'); }
+    } catch (e) {
+      showError(e.message || 'Nothing to undo');
+      // Keep board live; if the server returned its current state in the
+      // error body, rehydrate from that instead of a separate fetch.
+      if (e && e.data && e.data.state) {
+        refreshFromServer({ gameId: e.data.gameId || gameId, state: e.data.state });
+      }
+    } finally {
+      inFlightRef.current = false;
+    }
   }, [gameId, refreshFromServer, sfx, showError]);
 
   const requestHint = useCallback(async () => {
@@ -486,6 +516,14 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
 
   const autoMoveFromSource = useCallback((sourceDesc) => {
     if (!state) return;
+    // Dedupe rapid double-fires on the same source (browser double-click,
+    // pointerup+click both reaching us, etc.). 400ms is well below human
+    // re-click threshold for "another move" but blocks the duplicate burst.
+    const key = JSON.stringify(sourceDesc);
+    const now = Date.now();
+    if (lastAutoMoveRef.current.key === key && now - lastAutoMoveRef.current.t < 400) return;
+    lastAutoMoveRef.current = { key, t: now };
+
     let card = null;
     if (sourceDesc.kind === 'waste') {
       const top = state.wasteTop[state.wasteTop.length - 1];
@@ -500,13 +538,17 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
     }
     if (!card) return;
 
+    // Pin the exact card id we think we're moving so the server can reject
+    // stale duplicate requests instead of moving an unintended card.
+    const fromWithId = { ...sourceDesc, cardId: card.id };
+
     let isTopmost = true;
     if (sourceDesc.kind === 'tableau') {
       const col = state.tableau[sourceDesc.col];
       isTopmost = sourceDesc.idx === col.length - 1;
     }
     if (isTopmost && canPlaceOnFoundation(card, state.foundation[card.suit])) {
-      sendAction({ type: 'play', from: sourceDesc, to: { kind: 'foundation', suit: card.suit } }, 'found');
+      sendAction({ type: 'play', from: fromWithId, to: { kind: 'foundation', suit: card.suit } }, 'found');
       return;
     }
     let movingValid = true;
@@ -519,7 +561,7 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
       if (sourceDesc.kind === 'tableau' && sourceDesc.col === to) continue;
       const target = state.tableau[to][state.tableau[to].length - 1] || null;
       if (canStackOnTableau(card, target)) {
-        sendAction({ type: 'play', from: sourceDesc, to: { kind: 'tableau', col: to } }, 'place');
+        sendAction({ type: 'play', from: fromWithId, to: { kind: 'tableau', col: to } }, 'place');
         return;
       }
     }
@@ -682,14 +724,17 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
     const cards = d.cards;
     cleanupDrag();
     if (!target || !sourceDesc) return;
+    const head = cards && cards[0];
+    // Pin the card identity so the server can reject this request if the
+    // source pile changed under us (stale duplicate from a held drag, etc.).
+    const fromWithId = head ? { ...sourceDesc, cardId: head.id } : sourceDesc;
     const kind = target.dataset.kind;
     if (kind === 'tableau') {
       const col = Number(target.dataset.col);
-      sendAction({ type: 'play', from: sourceDesc, to: { kind: 'tableau', col } }, 'place');
+      sendAction({ type: 'play', from: fromWithId, to: { kind: 'tableau', col } }, 'place');
     } else if (kind === 'foundation') {
-      const head = cards && cards[0];
       const suit = (target.dataset.suit) || (head && head.suit);
-      sendAction({ type: 'play', from: sourceDesc, to: { kind: 'foundation', suit } }, 'found');
+      sendAction({ type: 'play', from: fromWithId, to: { kind: 'foundation', suit } }, 'found');
     }
   }, [autoMoveFromSource, cleanupDrag, findDropTarget, sendAction]);
 

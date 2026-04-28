@@ -294,6 +294,14 @@ function doPlay(g, from, to) {
     throw new Error('Unknown source');
   }
 
+  // Card-identity guard: if the client pinned the card it thought it was
+  // moving, reject the move when that card is no longer at the source. This
+  // catches stale duplicate requests (e.g. a double-click that fired twice)
+  // before they mutate the wrong card.
+  if (from.cardId != null && moving[0] && moving[0].id !== from.cardId) {
+    throw new Error('Source card has changed — please retry');
+  }
+
   // 2. Validate target.
   if (to.kind === 'tableau') {
     const col = g.tableau[to.col];
