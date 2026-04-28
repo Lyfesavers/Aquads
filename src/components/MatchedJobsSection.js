@@ -216,19 +216,23 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
               </span>
 
               {/* Source badge */}
-              {job.source !== 'user' && (
+              {job.source && job.source !== 'user' && (
                 <span className={`px-1.5 py-0.5 rounded text-[10px] ${
                   job.source === 'remotive'
                     ? 'bg-blue-500/20 text-blue-400'
                     : job.source === 'weworkremotely'
                     ? 'bg-teal-500/20 text-teal-400'
-                    : 'bg-orange-500/20 text-orange-400'
+                    : job.source === 'himalayas'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-gray-500/20 text-gray-300'
                 }`}>
                   {job.source === 'remotive'
                     ? 'Remotive'
                     : job.source === 'weworkremotely'
                     ? 'WWR'
-                    : 'CryptoJobs'}
+                    : job.source === 'himalayas'
+                    ? 'Himalayas'
+                    : job.source}
                 </span>
               )}
             </div>

@@ -1,6 +1,5 @@
 /**
  * Shared HTML → plain text formatting for RSS-sourced jobs.
- * CryptoJobsList-specific stripping runs only when source === 'cryptojobslist'.
  */
 
 function cleanHTML(html, options = {}) {
@@ -8,12 +7,6 @@ function cleanHTML(html, options = {}) {
   if (!html) return '';
 
   let text = html;
-
-  if (source === 'cryptojobslist') {
-    text = text.replace(/<img[^>]*class=['"]?webfeedsFeaturedVisual['"]?[^>]*\/?>/gi, '');
-    text = text.replace(/<p>\s*Tags\s*:[\s\S]*?(?=<p[\s>]|<h[1-6]|<div|<ul|<ol|$)/gi, '');
-    text = text.replace(/Tags\s*:\s*(?:<a[^>]*>[^<]*<\/a>\s*[•·,|\s]*)+/gi, '');
-  }
 
   if (source === 'weworkremotely') {
     text = text.replace(/^<img[^>]*>\s*/i, '');
@@ -87,20 +80,10 @@ function cleanHTML(html, options = {}) {
   return text;
 }
 
-function stripTagsFromText(text, source = 'generic') {
+function stripTagsFromText(text) {
   if (!text) return text;
 
   let cleaned = text;
-
-  if (source === 'cryptojobslist') {
-    cleaned = cleaned.replace(/^Tags\s*:.*$/gm, '');
-    cleaned = cleaned.replace(
-      /^(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs\s*[•·]\s*)+(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs)\s*$/gm,
-      ''
-    );
-    cleaned = cleaned.replace(/^(?:\s*#[\w\-\/\.]+[\s,]*){2,}\s*$/gm, '');
-    cleaned = cleaned.replace(/(?:\n\s*#[\w\-\/\.]+[\s,]*)+\s*$/g, '');
-  }
 
   cleaned = cleaned.replace(
     /^(?:apply\s+(?:for\s+this\s+)?(?:job|position|role)\s*(?:now|here|today)?|click\s+(?:here\s+)?to\s+apply)\s*[.!]?\s*$/gim,
@@ -116,7 +99,7 @@ function formatJobContent(content, source = 'generic') {
   if (!content) return '';
 
   let formatted = cleanHTML(content, { source });
-  formatted = stripTagsFromText(formatted, source);
+  formatted = stripTagsFromText(formatted);
 
   const sectionPatterns = [
     { pattern: /^(about\s+(?:the\s+)?(?:role|position|job|company|us|team))[:.]?\s*/gim, replacement: '\n\n📋 $1\n' },

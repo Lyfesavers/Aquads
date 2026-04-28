@@ -1,5 +1,5 @@
 /**
- * Shared helpers for RSS job sync (CryptoJobsList, We Work Remotely, etc.)
+ * Shared helpers for RSS job sync (We Work Remotely, Himalayas, etc.)
  */
 
 function parseSalary(title, description) {
@@ -30,51 +30,6 @@ function parseSalary(title, description) {
         payType: 'year',
       };
     }
-  }
-
-  return null;
-}
-
-function parseSalaryFromField(salaryStr) {
-  if (!salaryStr) return null;
-
-  const salaryLower = salaryStr.toLowerCase();
-
-  if (
-    salaryLower.includes('eur') ||
-    salaryLower.includes('gbp') ||
-    salaryLower.includes('£') ||
-    salaryLower.includes('€') ||
-    salaryLower.includes('cad') ||
-    salaryLower.includes('aud')
-  ) {
-    if (!salaryLower.includes('usd') && !salaryLower.includes('$')) {
-      return null;
-    }
-  }
-
-  const isHourly = salaryLower.includes('/hr') || salaryLower.includes('per hour') || salaryLower.includes('hourly');
-  const isMonthly = salaryLower.includes('month') || salaryLower.includes('/mo');
-
-  const match = salaryStr.match(/\$?(\d+,?\d*)[kK]?/);
-  if (match) {
-    const amountStr = match[1].replace(',', '');
-    let amount = parseInt(amountStr, 10);
-
-    if (salaryStr.toLowerCase().includes('k')) {
-      amount *= 1000;
-    }
-
-    if (isHourly) {
-      return { payAmount: amount, payType: 'hour' };
-    }
-    if (isMonthly) {
-      return { payAmount: amount, payType: 'month' };
-    }
-    if (amount < 500) {
-      return { payAmount: amount, payType: 'hour' };
-    }
-    return { payAmount: amount >= 1000 ? amount : amount * 1000, payType: 'year' };
   }
 
   return null;
@@ -172,7 +127,6 @@ function removeRequirementsFromDescription(description) {
 
 module.exports = {
   parseSalary,
-  parseSalaryFromField,
   extractCompany,
   extractRequirements,
   formatRequirements,

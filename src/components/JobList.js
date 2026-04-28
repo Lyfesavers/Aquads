@@ -13,7 +13,9 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
   const isUserJob = (job) => !job.source || job.source === 'user';
 
   const isExternalJobBoard = (job) =>
-    job.source === 'remotive' || job.source === 'cryptojobslist' || job.source === 'weworkremotely';
+    job.source === 'remotive' ||
+    job.source === 'weworkremotely' ||
+    job.source === 'himalayas';
 
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
@@ -48,33 +50,6 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  const cleanDescription = (text, source) => {
-    if (!text || !source || source === 'user') return text;
-    if (source !== 'cryptojobslist') return text;
-
-    let cleaned = text;
-    
-    // Remove "Tags: ..." lines (CryptoJobsList tag block)
-    cleaned = cleaned.replace(/^Tags\s*:.*$/gm, '');
-    
-    // Remove lines of CryptoJobsList-style job category labels separated by bullets
-    cleaned = cleaned.replace(/^(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs\s*[•·]\s*)+(?:(?:Web3|Blockchain|Cryptocurrency|Crypto|DeFi|NFT)\s+\w[\w\s]*Jobs)\s*$/gm, '');
-    
-    // Remove lines of just hashtags
-    cleaned = cleaned.replace(/^(?:\s*#[\w\-\/\.]+[\s,]*){2,}\s*$/gm, '');
-    
-    // Remove trailing hashtag blocks
-    cleaned = cleaned.replace(/(?:\n\s*#[\w\-\/\.]+[\s,]*)+\s*$/g, '');
-    
-    // Remove "Apply for this job" CTA lines
-    cleaned = cleaned.replace(/^(?:apply\s+(?:for\s+this\s+)?(?:job|position|role)\s*(?:now|here|today)?|click\s+(?:here\s+)?to\s+apply)\s*[.!]?\s*$/gim, '');
-    
-    // Clean up excess blank lines left by removals
-    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
-    
-    return cleaned;
   };
 
   const stripRequirementsFromDescription = (description, requirements) => {
@@ -186,22 +161,6 @@ Best regards,
                         </svg>
                       </a>
                     )}
-                    {job.source === 'cryptojobslist' && (
-                      <a 
-                        href={job.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="px-2 py-0.5 sm:py-1 text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-full hover:bg-orange-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
-                        title="View on CryptoJobsList"
-                      >
-                        <span>via</span>
-                        <span className="font-semibold">CryptoJobsList</span>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    )}
                     {job.source === 'weworkremotely' && (
                       <a 
                         href={job.externalUrl}
@@ -213,6 +172,22 @@ Best regards,
                       >
                         <span>via</span>
                         <span className="font-semibold">We Work Remotely</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                    {job.source === 'himalayas' && (
+                      <a
+                        href={job.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-0.5 sm:py-1 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full hover:bg-emerald-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
+                        title="View on Himalayas"
+                      >
+                        <span>via</span>
+                        <span className="font-semibold">Himalayas</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -440,7 +415,7 @@ Best regards,
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
                   <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
                     {(() => {
-                      let desc = cleanDescription(job.description, job.source);
+                      let desc = job.description;
                       if (job.source && job.source !== 'user' && job.requirements && job.requirements !== 'See job description for requirements') {
                         desc = stripRequirementsFromDescription(desc, job.requirements);
                       }
@@ -453,7 +428,7 @@ Best regards,
                   <div>
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Requirements</h4>
                     <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
-                      {cleanDescription(job.requirements, job.source)}
+                      {job.requirements}
                     </div>
                   </div>
                 )}
@@ -519,10 +494,10 @@ Best regards,
                     <span>
                       {job.source === 'remotive'
                         ? 'Apply on Remotive'
-                        : job.source === 'cryptojobslist'
-                        ? 'Apply on CryptoJobsList'
                         : job.source === 'weworkremotely'
                         ? 'Apply on We Work Remotely'
+                        : job.source === 'himalayas'
+                        ? 'Apply on Himalayas'
                         : 'Apply Now'}
                     </span>
                   </button>
@@ -531,10 +506,10 @@ Best regards,
                       ? '🔒 Login required to apply' 
                       : job.source === 'remotive' 
                         ? 'You will be redirected to Remotive.com'
-                        : job.source === 'cryptojobslist'
-                        ? 'You will be redirected to CryptoJobsList.com'
                         : job.source === 'weworkremotely'
                         ? 'You will be redirected to We Work Remotely'
+                        : job.source === 'himalayas'
+                        ? 'You will be redirected to Himalayas.app'
                         : job.applicationUrl 
                           ? 'You will be redirected to the application page' 
                           : 'Apply via email'}

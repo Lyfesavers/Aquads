@@ -44,8 +44,8 @@ const telegramService = require('./utils/telegramService');
 const discordService = require('./utils/discordService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
-const { syncCryptoJobsListJobs } = require('./services/cryptoJobsListSync');
 const { syncWeWorkRemotelyJobs } = require('./services/weworkRemotelySync');
+const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
@@ -492,17 +492,6 @@ cron.schedule('0 */8 * * *', async () => {
   }
 });
 
-// Cron job for syncing CryptoJobsList jobs every 8 hours
-// Runs at 2:00 AM, 10:00 AM, and 6:00 PM daily (offset from Remotive to spread load)
-cron.schedule('0 2,10,18 * * *', async () => {
-  try {
-    console.log('[CryptoJobsList Sync] Starting scheduled sync...');
-    await syncCryptoJobsListJobs();
-  } catch (error) {
-    console.error('[CryptoJobsList Sync] Error in scheduled sync:', error);
-  }
-});
-
 // Sync Remotive jobs on server start (after a delay to ensure DB is ready)
 setTimeout(async () => {
   try {
@@ -513,17 +502,20 @@ setTimeout(async () => {
   }
 }, 20000); // Wait 20 seconds after server start
 
-// Sync CryptoJobsList jobs on server start (with offset to avoid overloading)
+// One-time cleanup: CryptoJobsList was retired; purge any stale rows from prior syncs.
 setTimeout(async () => {
   try {
-    console.log('[CryptoJobsList Sync] Running initial sync on server start...');
-    await syncCryptoJobsListJobs();
+    const Job = require('./models/Job');
+    const result = await Job.deleteMany({ source: 'cryptojobslist' });
+    if (result.deletedCount > 0) {
+      console.log(`[CryptoJobsList Cleanup] Removed ${result.deletedCount} stale jobs (source retired)`);
+    }
   } catch (error) {
-    console.error('[CryptoJobsList Sync] Error in initial sync:', error);
+    console.error('[CryptoJobsList Cleanup] Error removing stale jobs:', error.message);
   }
-}, 30000); // Wait 30 seconds after server start (10s after Remotive)
+}, 25000);
 
-// Cron job for syncing We Work Remotely RSS (offset from CryptoJobsList)
+// Cron job for syncing We Work Remotely RSS
 cron.schedule('0 4,12,20 * * *', async () => {
   try {
     console.log('[WeWorkRemotely Sync] Starting scheduled sync...');
@@ -540,7 +532,26 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[WeWorkRemotely Sync] Error in initial sync:', error);
   }
-}, 40000); // After CryptoJobsList initial sync
+}, 40000); // After Remotive initial sync
+
+// Cron job for syncing Himalayas RSS (offset 1h from WWR)
+cron.schedule('0 5,13,21 * * *', async () => {
+  try {
+    console.log('[Himalayas Sync] Starting scheduled sync...');
+    await syncHimalayasJobs();
+  } catch (error) {
+    console.error('[Himalayas Sync] Error in scheduled sync:', error);
+  }
+});
+
+setTimeout(async () => {
+  try {
+    console.log('[Himalayas Sync] Running initial sync on server start...');
+    await syncHimalayasJobs();
+  } catch (error) {
+    console.error('[Himalayas Sync] Error in initial sync:', error);
+  }
+}, 45000); // After WWR initial sync
 
 // Market news (CoinDesk + Sky News world RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {
