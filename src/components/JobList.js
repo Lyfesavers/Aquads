@@ -14,7 +14,6 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
 
   const isExternalJobBoard = (job) =>
     job.source === 'remotive' ||
-    job.source === 'weworkremotely' ||
     job.source === 'himalayas';
 
   // Auto-expand and scroll to highlighted job when it changes
@@ -156,22 +155,6 @@ Best regards,
                       >
                         <span>via</span>
                         <span className="font-semibold">Remotive</span>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    )}
-                    {job.source === 'weworkremotely' && (
-                      <a 
-                        href={job.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="px-2 py-0.5 sm:py-1 text-xs bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-full hover:bg-teal-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
-                        title="View on We Work Remotely"
-                      >
-                        <span>via</span>
-                        <span className="font-semibold">We Work Remotely</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -494,8 +477,6 @@ Best regards,
                     <span>
                       {job.source === 'remotive'
                         ? 'Apply on Remotive'
-                        : job.source === 'weworkremotely'
-                        ? 'Apply on We Work Remotely'
                         : job.source === 'himalayas'
                         ? 'Apply on Himalayas'
                         : 'Apply Now'}
@@ -506,8 +487,6 @@ Best regards,
                       ? '🔒 Login required to apply' 
                       : job.source === 'remotive' 
                         ? 'You will be redirected to Remotive.com'
-                        : job.source === 'weworkremotely'
-                        ? 'You will be redirected to We Work Remotely'
                         : job.source === 'himalayas'
                         ? 'You will be redirected to Himalayas.app'
                         : job.applicationUrl 

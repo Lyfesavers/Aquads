@@ -2,15 +2,10 @@
  * Shared HTML → plain text formatting for RSS-sourced jobs.
  */
 
-function cleanHTML(html, options = {}) {
-  const source = options.source || 'generic';
+function cleanHTML(html) {
   if (!html) return '';
 
   let text = html;
-
-  if (source === 'weworkremotely') {
-    text = text.replace(/^<img[^>]*>\s*/i, '');
-  }
 
   text = text.replace(/>\s+</g, '> <');
 
@@ -95,10 +90,10 @@ function stripTagsFromText(text) {
   return cleaned;
 }
 
-function formatJobContent(content, source = 'generic') {
+function formatJobContent(content) {
   if (!content) return '';
 
-  let formatted = cleanHTML(content, { source });
+  let formatted = cleanHTML(content);
   formatted = stripTagsFromText(formatted);
 
   const sectionPatterns = [

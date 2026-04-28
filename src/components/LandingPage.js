@@ -1238,7 +1238,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities. Integrated with Remotive, We Work Remotely & Himalayas.
+                  Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities. Integrated with Remotive & Himalayas.
                 </p>
                 
                 {/* Stats grid */}
@@ -1247,7 +1247,7 @@ const CarouselCard = ({ feature, index }) => {
                     { icon: '🤖', label: 'AI Matching', value: 'CV Skills' },
                     { icon: '🌍', label: 'Remote/Hybrid', value: 'Flexible' },
                     { icon: '💼', label: 'Hiring/For-Hire', value: 'Both Types' },
-                    { icon: '🔗', label: 'Multi-Source', value: '3 Platforms' }
+                    { icon: '🔗', label: 'Multi-Source', value: '2 Platforms' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}

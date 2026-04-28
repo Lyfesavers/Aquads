@@ -1,5 +1,5 @@
 /**
- * Shared helpers for RSS job sync (We Work Remotely, Himalayas, etc.)
+ * Shared helpers for RSS job sync (Himalayas, etc.)
  */
 
 function parseSalary(title, description) {

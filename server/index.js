@@ -44,7 +44,6 @@ const telegramService = require('./utils/telegramService');
 const discordService = require('./utils/discordService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
-const { syncWeWorkRemotelyJobs } = require('./services/weworkRemotelySync');
 const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
 const { sanitizeForRegex } = require('./utils/security');
@@ -502,39 +501,20 @@ setTimeout(async () => {
   }
 }, 20000); // Wait 20 seconds after server start
 
-// One-time cleanup: CryptoJobsList was retired; purge any stale rows from prior syncs.
+// One-time cleanup: retired RSS sources — purge any stale rows from prior syncs.
 setTimeout(async () => {
   try {
     const Job = require('./models/Job');
-    const result = await Job.deleteMany({ source: 'cryptojobslist' });
+    const result = await Job.deleteMany({ source: { $in: ['cryptojobslist', 'weworkremotely'] } });
     if (result.deletedCount > 0) {
-      console.log(`[CryptoJobsList Cleanup] Removed ${result.deletedCount} stale jobs (source retired)`);
+      console.log(`[Retired Sources Cleanup] Removed ${result.deletedCount} stale jobs (cryptojobslist + weworkremotely retired)`);
     }
   } catch (error) {
-    console.error('[CryptoJobsList Cleanup] Error removing stale jobs:', error.message);
+    console.error('[Retired Sources Cleanup] Error removing stale jobs:', error.message);
   }
 }, 25000);
 
-// Cron job for syncing We Work Remotely RSS
-cron.schedule('0 4,12,20 * * *', async () => {
-  try {
-    console.log('[WeWorkRemotely Sync] Starting scheduled sync...');
-    await syncWeWorkRemotelyJobs();
-  } catch (error) {
-    console.error('[WeWorkRemotely Sync] Error in scheduled sync:', error);
-  }
-});
-
-setTimeout(async () => {
-  try {
-    console.log('[WeWorkRemotely Sync] Running initial sync on server start...');
-    await syncWeWorkRemotelyJobs();
-  } catch (error) {
-    console.error('[WeWorkRemotely Sync] Error in initial sync:', error);
-  }
-}, 40000); // After Remotive initial sync
-
-// Cron job for syncing Himalayas RSS (offset 1h from WWR)
+// Cron job for syncing Himalayas RSS (offset from Remotive)
 cron.schedule('0 5,13,21 * * *', async () => {
   try {
     console.log('[Himalayas Sync] Starting scheduled sync...');
@@ -551,7 +531,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[Himalayas Sync] Error in initial sync:', error);
   }
-}, 45000); // After WWR initial sync
+}, 45000); // After Remotive initial sync
 
 // Market news (CoinDesk + Sky News world RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {

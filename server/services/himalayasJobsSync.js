@@ -105,11 +105,11 @@ function parseLocationHimalayas(item) {
 }
 
 function mapRSSItemToJob(item) {
-  const title = cleanHTML(item.title || '', { source: 'himalayas' });
+  const title = cleanHTML(item.title || '');
   const rawContent =
     item.contentEncoded || item.content || item.contentSnippet || item.description || '';
 
-  let description = formatJobContent(rawContent, 'himalayas');
+  let description = formatJobContent(rawContent);
 
   // Himalayas exposes the company name as a dedicated namespaced field.
   // Feed it into the shared extractor via item.company so existing fallbacks
