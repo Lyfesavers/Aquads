@@ -72,6 +72,7 @@ const HorseRacing = lazy(() => import('./components/HorseRacing'));
 const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
 const BeanstalksAndChutes = lazy(() => import('./components/BeanstalksAndChutes'));
 const Sludo = lazy(() => import('./components/Sludo'));
+const Aquataire = lazy(() => import('./components/Aquataire'));
 
 const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
@@ -2625,6 +2626,8 @@ function App() {
           <Route path="/games/snakes-and-ladders" element={<Navigate to="/games/beanstalks-and-chutes" replace />} />
           <Route path="/games/sludo" element={<Sludo currentUser={currentUser} />} />
           <Route path="/games/pulse-ludo" element={<Navigate to="/games/sludo" replace />} />
+          <Route path="/aquataire" element={<Aquataire currentUser={currentUser} onLogin={handleLogin} onCreateAccount={handleCreateAccount} />} />
+          <Route path="/games/aquataire" element={<Navigate to="/aquataire" replace />} />
 
           <Route path="/games/:id" element={
             <GamePage

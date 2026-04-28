@@ -789,6 +789,7 @@ app.use('/api/market-news', require('./routes/marketNews'));
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
+app.use('/api/aquataire', require('./routes/solitaire'));
 app.use('/api/horse-racing', require('./routes/horse-racing'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/twitter-raids', require('./routes/twitter-raids'));

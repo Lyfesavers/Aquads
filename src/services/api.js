@@ -1684,6 +1684,63 @@ export const submitLeaderboard = async (game, payload, tokenOverride = null) => 
   return res.json();
 };
 
+// ---------- Aquataire (server-authoritative Klondike) ----------
+const aquataireFetch = async (path, opts = {}) => {
+  const res = await fetch(`${API_URL}/aquataire${path}`, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+      ...getAuthHeader(),
+    },
+  });
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `Aquataire request failed (${res.status})`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+};
+
+export const aquataireNewGame = (opts = {}) =>
+  aquataireFetch('/games/new', { method: 'POST', body: JSON.stringify(opts) });
+
+export const aquataireGetActive = () =>
+  aquataireFetch('/games/active', { method: 'GET' });
+
+export const aquataireGetGame = (gameId) =>
+  aquataireFetch(`/games/${encodeURIComponent(gameId)}`, { method: 'GET' });
+
+export const aquataireAction = (gameId, action) =>
+  aquataireFetch(`/games/${encodeURIComponent(gameId)}/action`, {
+    method: 'POST',
+    body: JSON.stringify(action),
+  });
+
+export const aquataireUndo = (gameId) =>
+  aquataireFetch(`/games/${encodeURIComponent(gameId)}/undo`, { method: 'POST' });
+
+export const aquataireHint = (gameId) =>
+  aquataireFetch(`/games/${encodeURIComponent(gameId)}/hint`, { method: 'POST' });
+
+export const aquataireAbandon = (gameId) =>
+  aquataireFetch(`/games/${encodeURIComponent(gameId)}/abandon`, { method: 'POST' });
+
+export const aquataireDailyStatus = () =>
+  aquataireFetch('/daily/status', { method: 'GET' });
+
+export const aquataireLeaderboard = ({ mode = 'klondike-d1', sort = 'score', limit = 25 } = {}) => {
+  const params = new URLSearchParams({ mode, sort, limit: String(limit) });
+  return fetch(`${API_URL}/aquataire/leaderboard?${params.toString()}`)
+    .then((r) => {
+      if (!r.ok) throw new Error('Failed to load leaderboard');
+      return r.json();
+    });
+};
+
 // Reconnect socket with the current user's token.
 // If the socket is already connected with a different token, force-disconnect first
 // so the server authenticates the new user on the fresh connection.
