@@ -122,6 +122,35 @@
     }
   }
 
+  function cleanBullets(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(function (s) { return typeof s === 'string'; })
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; })
+      .slice(0, 8);
+  }
+
+  function renderBulletSection(variant, title, items) {
+    if (!items || items.length === 0) return '';
+    const labelMap = { pros: '+', cons: '\u2212', watch: '!' };
+    const icon = labelMap[variant] || '\u2022';
+    let h = '';
+    h += '<div class="tt-bullets tt-bullets-' + variant + '">';
+    h += '<div class="tt-bullets-head">';
+    h += '<span class="tt-bullets-icon">' + escapeHtml(icon) + '</span>';
+    h += '<span class="tt-bullets-title">' + escapeHtml(title) + '</span>';
+    h += '<span class="tt-bullets-count">' + items.length + '</span>';
+    h += '</div>';
+    h += '<ul class="tt-bullets-list">';
+    items.forEach(function (item) {
+      h += '<li>' + escapeHtml(item) + '</li>';
+    });
+    h += '</ul>';
+    h += '</div>';
+    return h;
+  }
+
   function renderAnalysis(analysis, meta) {
     if (!analysis || typeof analysis !== 'object') {
       showError('Could not parse analysis', 'The server returned an unexpected response.');
@@ -130,27 +159,35 @@
 
     const tone = safeStr(analysis.tone) || 'neutral';
     const conf = safeStr(analysis.confidence) || 'medium';
-    const headline = safeStr(analysis.headline) || 'Thread summarized';
+    // Accept legacy `headline` as a fallback for older server responses.
+    const verdict = safeStr(analysis.verdict) || safeStr(analysis.headline) || 'Thread summarized';
     const coverage = safeStr(analysis.coverage_note) ||
       (meta && meta.analyzedCount
         ? 'Based on ' + meta.analyzedCount + ' visible comment' + (meta.analyzedCount === 1 ? '' : 's') + '.'
         : '');
+    const pros = cleanBullets(analysis.pros);
+    const cons = cleanBullets(analysis.cons);
+    const watchOuts = cleanBullets(analysis.watch_outs || analysis.watchOuts);
     const summary = safeStr(analysis.summary);
     const themes = Array.isArray(analysis.themes) ? analysis.themes : [];
     const caveats = Array.isArray(analysis.caveats) ? analysis.caveats : [];
 
     let html = '';
 
-    html += '<div class="tt-headline">';
-    html += '<div class="tt-headline-row">';
+    html += '<div class="tt-verdict">';
+    html += '<div class="tt-verdict-row">';
     html += '<span class="tt-tone-chip ' + toneClass(tone) + '">' + escapeHtml(tone) + '</span>';
     html += '<span class="tt-conf-chip">confidence: ' + escapeHtml(conf) + '</span>';
     html += '</div>';
-    html += '<p class="tt-headline-text">' + escapeHtml(headline) + '</p>';
+    html += '<p class="tt-verdict-text">' + escapeHtml(verdict) + '</p>';
     if (coverage) {
       html += '<p class="tt-coverage-note">' + escapeHtml(coverage) + '</p>';
     }
     html += '</div>';
+
+    html += renderBulletSection('pros', 'Pros', pros);
+    html += renderBulletSection('cons', 'Cons', cons);
+    html += renderBulletSection('watch', 'Watch-outs', watchOuts);
 
     if (summary) {
       html += '<div class="tt-summary">';
