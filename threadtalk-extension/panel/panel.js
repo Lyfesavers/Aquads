@@ -26,6 +26,7 @@
   let lastSnapshot = null;
   let scrapeWaiters = new Map();
   let nextRequestId = 1;
+  let hasAutoRun = false;
 
   function postToHost(message) {
     window.parent.postMessage(
@@ -293,6 +294,19 @@
 
     if (data.type === 'PAGE_SNAPSHOT') {
       setContext(data.payload);
+      // Auto-run analysis the first time we see a valid thread page.
+      // The user controls coverage by expanding more comments and clicking
+      // "Re-analyze" afterward — only the very first open is automatic.
+      if (
+        !hasAutoRun &&
+        data.payload &&
+        data.payload.isThreadPage &&
+        Array.isArray(data.payload.comments) &&
+        data.payload.comments.length > 0
+      ) {
+        hasAutoRun = true;
+        analyze();
+      }
       return;
     }
 
