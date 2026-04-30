@@ -2,7 +2,7 @@
 
 A Chrome extension that summarizes the dominant sentiment, themes and quoted highlights of a Reddit comment thread based on the comments **currently visible on the page**. The user controls coverage by expanding "view more comments" and re-running the analysis.
 
-> **Made by Aquads.** Independent product. **Not affiliated with Reddit Inc.**
+> **Made by Aquads.** Independent product.
 
 ---
 
@@ -116,7 +116,7 @@ When ready to publish:
 4. Upload via the Chrome Web Store Developer Dashboard.
 
 In the listing, make it clear:
-- **Made by Aquads. Not affiliated with Reddit.**
+- **Made by Aquads. Independent product.**
 - ThreadTalk only analyzes comments visible on the page; it does not access the Reddit API.
 
 ---
