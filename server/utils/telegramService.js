@@ -991,12 +991,6 @@ const telegramService = {
         return;
       }
 
-      // Check for boost vote group link state
-      if (conversationState.action === 'boost_waiting_group_link') {
-        const handled = await telegramService.handleBoostGroupLinkInput(chatId, userId, text);
-        if (handled) return;
-      }
-
       // Check for boost vote TX signature state
       if (conversationState.action === 'boost_waiting_tx') {
         const handled = await telegramService.handleBoostTxInput(chatId, userId, text);
@@ -2750,7 +2744,7 @@ ${platformEmoji} ${platformName} Raid
         const parts = callbackQuery.data.replace('boost_bubble_', '').split('_');
         const packageId = parts[0];
         const bubbleId = parts.slice(1).join('_'); // Handle bubble IDs with underscores
-        await telegramService.askBoostGroupLink(chatId, userId, packageId, bubbleId, messageId);
+        await telegramService.showBoostPaymentStep(chatId, userId, packageId, bubbleId, messageId);
       }
       // Check if it's a boost cancel callback
       else if (callbackQuery.data === 'boost_cancel') {
@@ -5681,24 +5675,23 @@ Tap to update:`;
       let message = `🗳️ <b>BOOST YOUR BUBBLE</b>\n\n`;
       message += `Skyrocket your ranking with guaranteed bullish votes!\n\n`;
       message += `✅ Bullish votes added to your bubble\n`;
-      message += `✅ New group members for your TG\n`;
-      message += `✅ TG notifications with each vote\n\n`;
+      message += `✅ Notifications with each vote (where configured)\n\n`;
       message += `<b>Select a package below:</b>`;
 
       // Create package selection buttons
       const keyboard = {
         inline_keyboard: [
           [
-            { text: "🌟 100 Votes + Members - $20", callback_data: "boost_pkg_starter" }
+            { text: "🌟 100 Votes - $20", callback_data: "boost_pkg_starter" }
           ],
           [
-            { text: "📦 250 Votes + Members - $40 (20% OFF)", callback_data: "boost_pkg_basic" }
+            { text: "📦 250 Votes - $40 (20% OFF)", callback_data: "boost_pkg_basic" }
           ],
           [
-            { text: "🚀 500 Votes + Members - $80 (20% OFF)", callback_data: "boost_pkg_growth" }
+            { text: "🚀 500 Votes - $80 (20% OFF)", callback_data: "boost_pkg_growth" }
           ],
           [
-            { text: "💎 1000 Votes + Members - $150 (25% OFF)", callback_data: "boost_pkg_pro" }
+            { text: "💎 1000 Votes - $150 (25% OFF)", callback_data: "boost_pkg_pro" }
           ]
         ]
       };
@@ -5750,7 +5743,7 @@ Tap to update:`;
       // If user has multiple bubbles, ask which one to boost
       if (userBubbles.length > 1) {
         let message = `📦 <b>${selectedPkg.name} Package Selected</b>\n`;
-        message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes + Group Members\n`;
+        message += `• ${selectedPkg.votes.toLocaleString()} bullish votes\n`;
         message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
         message += `<b>Which bubble do you want to boost?</b>`;
 
@@ -5761,107 +5754,12 @@ Tap to update:`;
         const keyboard = { inline_keyboard: bubbleButtons };
         await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
       } else {
-        // Only one bubble, ask for TG group link
-        await telegramService.askBoostGroupLink(chatId, telegramUserId, packageId, userBubbles[0].id, messageId);
+        await telegramService.showBoostPaymentStep(chatId, telegramUserId, packageId, userBubbles[0].id, messageId);
       }
 
     } catch (error) {
       console.error('Boost package selection error:', error);
       await telegramService.sendBotMessage(chatId, "❌ Error processing selection. Please try again.");
-    }
-  },
-
-  // Ask for Telegram group invite link
-  askBoostGroupLink: async (chatId, telegramUserId, packageId, bubbleId, messageId) => {
-    try {
-      const packages = {
-        starter: { name: 'Starter', votes: 100, price: 20 },
-        basic: { name: 'Basic', votes: 250, price: 40 },
-        growth: { name: 'Growth', votes: 500, price: 80 },
-        pro: { name: 'Pro', votes: 1000, price: 150 }
-      };
-
-      const selectedPkg = packages[packageId];
-      const bubble = await Ad.findOne({ id: bubbleId });
-
-      let message = `✅ <b>Boosting: ${bubble?.title || 'Your Bubble'}</b>\n\n`;
-      message += `📦 <b>${selectedPkg.name} Package</b>\n`;
-      message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes + Group Members\n`;
-      message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
-      message += `━━━━━━━━━━━━━━━━━━\n\n`;
-      message += `📢 <b>Send your Telegram GROUP invite link</b>\n\n`;
-      message += `⚠️ <b>Must be a GROUP, not a channel!</b>\n`;
-      message += `<i>Example: https://t.me/+ABC123xyz or https://t.me/yourgroup</i>\n\n`;
-      message += `We'll add new members to your group as part of the boost package.`;
-
-      // Set conversation state to wait for group link
-      telegramService.setConversationState(telegramUserId, {
-        action: 'boost_waiting_group_link',
-        packageId: packageId,
-        bubbleId: bubbleId,
-        price: selectedPkg.price,
-        votes: selectedPkg.votes,
-        packageName: selectedPkg.name
-      });
-
-      const keyboard = {
-        inline_keyboard: [
-          [{ text: "❌ Cancel", callback_data: "boost_cancel" }]
-        ]
-      };
-
-      if (messageId) {
-        await telegramService.editMessageWithKeyboard(chatId, messageId, message, keyboard);
-      } else {
-        await telegramService.sendMessageWithKeyboard(chatId, message, keyboard);
-      }
-
-    } catch (error) {
-      console.error('Ask boost group link error:', error);
-      await telegramService.sendBotMessage(chatId, "❌ Error. Please try again with /boostvote");
-    }
-  },
-
-  // Handle group link input for boost
-  handleBoostGroupLinkInput: async (chatId, telegramUserId, groupLink) => {
-    try {
-      const state = telegramService.getConversationState(telegramUserId);
-      
-      if (!state || state.action !== 'boost_waiting_group_link') {
-        return false; // Not in group link state
-      }
-
-      const trimmedLink = groupLink.trim();
-
-      // Validate it looks like a Telegram link
-      const isValidTgLink = trimmedLink.includes('t.me/') || trimmedLink.includes('telegram.me/');
-      
-      if (!isValidTgLink) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid Telegram link. Please send a valid group invite link.\n\n" +
-          "Examples:\n• https://t.me/+ABC123xyz\n• https://t.me/yourgroup\n\n" +
-          "💡 Type /cancel to abort.");
-        return true;
-      }
-
-      // Update state with group link and proceed to payment
-      telegramService.setConversationState(telegramUserId, {
-        ...state,
-        action: 'boost_ready_for_payment',
-        telegramGroupLink: trimmedLink
-      });
-
-      // Show payment step
-      await telegramService.showBoostPaymentStep(chatId, telegramUserId, state.packageId, state.bubbleId, null, trimmedLink);
-      
-      return true;
-
-    } catch (error) {
-      console.error('Boost group link input error:', error);
-      await telegramService.sendBotMessage(chatId, 
-        "❌ Error processing group link. Please try again with /boostvote");
-      telegramService.clearConversationState(telegramUserId);
-      return true;
     }
   },
 
@@ -5890,15 +5788,10 @@ Tap to update:`;
         return;
       }
 
-      // Get group link from params or existing state
-      const existingState = telegramService.getConversationState(telegramUserId);
-      const tgGroupLink = groupLink || existingState?.telegramGroupLink;
-
-      if (!tgGroupLink) {
-        await telegramService.sendBotMessage(chatId, "❌ Group link missing. Please start over with /boostvote");
-        telegramService.clearConversationState(telegramUserId);
-        return;
-      }
+      const tgGroupLink =
+        typeof groupLink === 'string' && groupLink.trim()
+          ? groupLink.trim()
+          : null;
 
       const VoteBoost = require('../models/VoteBoost');
       const { emitVoteBoostUpdate } = require('../socket');
@@ -5938,10 +5831,8 @@ Tap to update:`;
 
       let message = `✅ <b>Boosting: ${bubble.title}</b>\n\n`;
       message += `📦 <b>${selectedPkg.name} Package</b>\n`;
-      message += `• ${selectedPkg.votes.toLocaleString()} Bullish Votes\n`;
-      message += `• Group Members for your TG\n`;
+      message += `• ${selectedPkg.votes.toLocaleString()} bullish votes\n`;
       message += `• Price: <b>$${selectedPkg.price} USDC</b>\n\n`;
-      message += `📢 <b>TG Group:</b> ${tgGroupLink}\n\n`;
       message += `━━━━━━━━━━━━━━━━━━\n`;
       message += `<b>💳 Pay with AquaPay</b>\n\n`;
       message += `Open the link below on your phone or desktop. Use <b>USDC</b> for the shown amount.\n`;
@@ -5957,8 +5848,7 @@ Tap to update:`;
         bubbleId: bubbleId,
         price: selectedPkg.price,
         votes: selectedPkg.votes,
-        packageName: selectedPkg.name,
-        telegramGroupLink: tgGroupLink
+        packageName: selectedPkg.name
       });
 
       const keyboard = {

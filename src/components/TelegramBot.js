@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaUsers, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaUserPlus, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart } from 'react-icons/fa';
 
 const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
 import { Link } from 'react-router-dom';
@@ -68,11 +68,11 @@ const TelegramBot = () => {
     },
     {
       icon: FaRocket,
-      title: 'Vote & Member Boost',
-      description: 'Skyrocket your meme coin\'s ranking! Get guaranteed bullish votes PLUS real Telegram group members delivered to your community.',
+      title: 'Vote boost',
+      description: 'Skyrocket your meme coin\'s ranking with guaranteed bullish votes applied to your bubble.',
       command: '/boostvote',
       color: 'from-rose-500 to-red-600',
-      details: ['Votes + TG Members combo', '100-1000 packages', 'Up to 25% discounts'],
+      details: ['/boostvote — Telegram & Discord', '100–1000 vote tiers', 'Up to 25% discounts'],
       premium: true
     }
   ];
@@ -95,7 +95,7 @@ const TelegramBot = () => {
         { name: 'Bubble Ranking Visibility', included: false },
         { name: '5K+ Trending Channel Exposure', included: false },
         { name: 'Custom Branding on Notifications', included: false },
-        { name: 'Vote + Member Boost Packages', included: false }
+        { name: 'Vote boost packages (Telegram & Discord)', included: false }
       ]
     },
     premium: {
@@ -115,7 +115,7 @@ const TelegramBot = () => {
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
         { name: '5K+ Trending Channel Exposure', included: true, highlight: true },
         { name: 'Custom Branding on Notifications', included: true, highlight: true },
-        { name: 'Vote + Member Boost Packages', included: true, highlight: true }
+        { name: 'Vote boost packages (Telegram & Discord)', included: true, highlight: true }
       ]
     }
   };
@@ -141,12 +141,12 @@ const TelegramBot = () => {
     { cmd: '/raidout', desc: 'Opt-out your group from community raids', category: 'Groups' }
   ];
 
-  // Vote + Member boost packages (real data)
+  // Vote boost packages (real data — Telegram /boostvote)
   const boostPackages = [
-    { name: 'Starter', votes: 100, price: 20, discount: null, desc: 'Votes + Members' },
-    { name: 'Basic', votes: 250, price: 40, discount: '20% OFF', desc: 'Votes + Members' },
-    { name: 'Growth', votes: 500, price: 80, discount: '20% OFF', desc: 'Votes + Members' },
-    { name: 'Pro', votes: 1000, price: 150, discount: '25% OFF', desc: 'Votes + Members' }
+    { name: 'Starter', votes: 100, price: 20, discount: null, desc: 'Bullish votes' },
+    { name: 'Basic', votes: 250, price: 40, discount: '20% OFF', desc: 'Bullish votes' },
+    { name: 'Growth', votes: 500, price: 80, discount: '20% OFF', desc: 'Bullish votes' },
+    { name: 'Pro', votes: 1000, price: 150, discount: '25% OFF', desc: 'Bullish votes' }
   ];
 
   const benefits = [
@@ -157,10 +157,10 @@ const TelegramBot = () => {
       highlight: 'FREE daily raids'
     },
     {
-      icon: FaUsers,
-      title: 'Votes + Real Members',
-      description: 'Our boost packages deliver both bullish votes AND real Telegram or Discord members to your community. Grow your holder base.',
-      highlight: 'Double the value'
+      icon: FaChartLine,
+      title: 'Guaranteed bullish votes',
+      description: '/boostvote packages add guaranteed bullish votes to your bubble so you climb the leaderboard faster.',
+      highlight: 'Rank higher'
     },
     {
       icon: FaTrophy,
@@ -263,7 +263,7 @@ const TelegramBot = () => {
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 The same powerful bot on <span className="text-cyan-400 font-semibold">Telegram</span> and <span className="text-indigo-400 font-semibold">Discord</span>. Get <span className="text-green-400 font-semibold">20 FREE raid posts daily</span> (for lifetime bumped projects), 
-                boost with <span className="text-cyan-400 font-semibold">votes + community members</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
+                boost with <span className="text-cyan-400 font-semibold">guaranteed bullish votes</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
               </p>
 
               {/* CTA Buttons */}
@@ -661,29 +661,25 @@ const TelegramBot = () => {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              🚀 Vote + Member
+              🚀 Vote
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Boost Packages</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Pump your meme coin's ranking with guaranteed bullish votes <span className="text-cyan-400 font-semibold">AND</span> real Telegram or Discord community members delivered to your group or server.
+              Pump your meme coin&apos;s ranking with guaranteed bullish votes for your bubble.
             </p>
           </div>
 
           {/* Package Benefits */}
           <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl p-6 border border-cyan-500/20 mb-8">
-            <h3 className="text-lg font-bold text-white mb-4 text-center">🎁 Every Package Includes BOTH:</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <h3 className="text-lg font-bold text-white mb-4 text-center">🎁 Every package includes</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 justify-center">
                 <FaThumbsUp className="text-green-500" />
-                <span className="text-gray-300 font-medium">Guaranteed Bullish Votes</span>
-              </div>
-              <div className="flex items-center gap-3 justify-center">
-                <FaUserPlus className="text-blue-500" />
-                <span className="text-gray-300 font-medium">Real TG / Discord Members</span>
+                <span className="text-gray-300 font-medium">Guaranteed bullish votes</span>
               </div>
               <div className="flex items-center gap-3 justify-center">
                 <FaBell className="text-purple-500" />
-                <span className="text-gray-300 font-medium">Vote Notifications</span>
+                <span className="text-gray-300 font-medium">Vote notifications (where configured)</span>
               </div>
             </div>
           </div>
@@ -708,7 +704,7 @@ const TelegramBot = () => {
                   <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-1">
                     {pkg.votes.toLocaleString()}
                   </div>
-                  <p className="text-cyan-400 text-sm font-semibold mb-4">Votes + Members</p>
+                  <p className="text-cyan-400 text-sm font-semibold mb-4">{pkg.desc}</p>
                   
                   <div className="text-2xl font-bold text-white mb-2">
                     ${pkg.price}
@@ -716,12 +712,11 @@ const TelegramBot = () => {
                   </div>
                   
                   <div className="text-xs text-gray-500 mb-2">
-                    ${(pkg.price / pkg.votes).toFixed(2)} per vote/member
+                    ${(pkg.price / pkg.votes).toFixed(2)} per vote
                   </div>
 
                   <div className="flex flex-wrap gap-1 justify-center">
                     <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded">👍 Votes</span>
-                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">👥 Members</span>
                   </div>
                 </div>
               </div>
@@ -786,9 +781,9 @@ const TelegramBot = () => {
               },
               {
                 step: '04',
-                title: 'Boost Votes + Members',
-                description: 'Use /boostvote to pump your bubble ranking.',
-                icon: FaUsers
+                title: 'Boost votes',
+                description: 'Use /boostvote to add bullish votes and pump your bubble ranking.',
+                icon: FaChartLine
               },
               {
                 step: '05',
@@ -839,7 +834,7 @@ const TelegramBot = () => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost with votes + members, and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
+                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost bubble ranking with `/boostvote` (votes only), and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
               </p>
               
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
