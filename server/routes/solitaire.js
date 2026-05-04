@@ -26,6 +26,7 @@ const LEADERBOARD_GAME = 'aquataire';
 
 function gridLabel(g) {
   if (g.isDaily) return 'daily';
+  // Draw 3 retired — anything not daily is the standard Klondike Draw 1 board.
   return g.drawCount === 3 ? 'klondike-d3' : 'klondike-d1';
 }
 
@@ -128,7 +129,8 @@ async function loadOwnedGame(req, res) {
 // POST /api/aquataire/games/new   { drawCount, daily }
 router.post('/games/new', auth, async (req, res) => {
   try {
-    const drawCount = req.body && Number(req.body.drawCount) === 3 ? 3 : 1;
+    // Draw 3 has been retired — every new deal is Draw 1, regardless of payload.
+    const drawCount = 1;
     const isDaily = !!(req.body && req.body.daily);
 
     if (isDaily) {

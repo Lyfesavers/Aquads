@@ -36,8 +36,7 @@ const RANK_LABEL = {
 };
 const FOUNDATION_ORDER = ['s', 'h', 'd', 'c'];
 const MODES = [
-  { id: 'klondike-d1', label: 'Draw 1',          drawCount: 1, daily: false },
-  { id: 'klondike-d3', label: 'Draw 3',          drawCount: 3, daily: false },
+  { id: 'klondike-d1', label: 'Klondike',        drawCount: 1, daily: false },
   { id: 'daily',       label: 'Daily',           drawCount: 1, daily: true  },
 ];
 const DRAG_THRESHOLD = 5;
@@ -270,8 +269,7 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
         if (r && r.gameId) {
           setGameId(r.gameId);
           setState(r.state);
-          if (r.state.drawCount === 3) setMode('klondike-d3');
-          else if (r.state.isDaily) setMode('daily');
+          if (r.state.isDaily) setMode('daily');
           else setMode('klondike-d1');
           if (r.state.elapsedMs) setElapsedSec(Math.floor(r.state.elapsedMs / 1000));
         }
