@@ -74,7 +74,7 @@ const isValidTableauRun = (cards) => {
 // ----- sound engine (Web Audio synth) -----
 
 class SfxEngine {
-  constructor() { this.ctx = null; this.enabled = true; }
+  constructor() { this.ctx = null; this.enabled = true; this._noiseBuf = null; }
   setEnabled(on) { this.enabled = !!on; }
   ensure() {
     if (this.ctx) return;
@@ -82,6 +82,18 @@ class SfxEngine {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (Ctx) this.ctx = new Ctx();
     } catch (_) { this.ctx = null; }
+  }
+  // Lazily build a 1-second white-noise buffer the cardlike shuffle/flip
+  // sounds reuse. Filtered noise sounds way more like cards than oscillators.
+  _noise() {
+    if (!this.ctx) return null;
+    if (this._noiseBuf) return this._noiseBuf;
+    const sr = this.ctx.sampleRate;
+    const buf = this.ctx.createBuffer(1, sr, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    this._noiseBuf = buf;
+    return buf;
   }
   blip(freq, dur = 0.06, type = 'triangle', vol = 0.08) {
     if (!this.enabled) return;
@@ -101,15 +113,79 @@ class SfxEngine {
       osc.stop(t0 + dur);
     } catch (_) {}
   }
+  // Short bandpass-filtered noise burst — emulates one card flick.
+  _noiseClick(when, dur = 0.035, centerHz = 2200, q = 1.2, vol = 0.18) {
+    if (!this.enabled) return;
+    this.ensure();
+    if (!this.ctx) return;
+    const buf = this._noise();
+    if (!buf) return;
+    try {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = false;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = centerHz;
+      filter.Q.value = q;
+      const gain = this.ctx.createGain();
+      const t0 = when;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol, t0 + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      const startOffset = Math.random() * (buf.duration - dur - 0.01);
+      src.connect(filter).connect(gain).connect(this.ctx.destination);
+      src.start(t0, Math.max(0, startOffset), dur + 0.02);
+      src.stop(t0 + dur + 0.05);
+    } catch (_) {}
+  }
   flip()   { this.blip(680, 0.05, 'square',  0.05); }
   place()  { this.blip(440, 0.06, 'triangle', 0.08); }
   pickup() { this.blip(560, 0.04, 'sine',    0.06); }
   draw()   { this.blip(300, 0.05, 'square',  0.06); setTimeout(() => this.blip(380, 0.04, 'square', 0.05), 40); }
   found()  { this.blip(880, 0.08, 'triangle', 0.10); setTimeout(() => this.blip(1175, 0.08, 'triangle', 0.09), 60); }
   err()    { this.blip(140, 0.10, 'sawtooth', 0.06); }
+  // Iconic riffle-shuffle "brrrrt": ~30 short filtered-noise clicks ramping
+  // up and tapering off, followed by a soft "thwap" as the deck squares up.
+  shuffle() {
+    if (!this.enabled) return;
+    this.ensure();
+    if (!this.ctx) return;
+    const t0 = this.ctx.currentTime;
+    const totalDur = 0.55;
+    const count = 30;
+    for (let i = 0; i < count; i++) {
+      const p = i / (count - 1);
+      // accelerate slightly then slow down (riffle envelope)
+      const time = t0 + p * totalDur + (Math.random() * 0.006 - 0.003);
+      const env = Math.sin(p * Math.PI);
+      const vol = 0.08 + env * 0.16;
+      const center = 1800 + Math.random() * 1600;
+      this._noiseClick(time, 0.02 + Math.random() * 0.02, center, 1.1, vol);
+    }
+    // squaring-up tap at the end
+    this._noiseClick(t0 + totalDur + 0.02, 0.06, 600, 0.8, 0.18);
+    this.blip(180, 0.08, 'sine', 0.08);
+  }
+  // Cards cascading down: rapid stream of mid-pitched flips fanning down.
+  cascade() {
+    if (!this.enabled) return;
+    this.ensure();
+    if (!this.ctx) return;
+    const count = 26;
+    for (let i = 0; i < count; i++) {
+      const p = i / (count - 1);
+      const delay = p * 900;
+      const freq = 900 - p * 450 + (Math.random() * 80 - 40);
+      const vol = 0.06 + (1 - p) * 0.05;
+      setTimeout(() => this.blip(freq, 0.06, 'square', vol), delay);
+    }
+  }
   win() {
+    this.shuffle();
+    setTimeout(() => this.cascade(), 580);
     const notes = [523, 659, 784, 1047, 1319, 1568];
-    notes.forEach((f, i) => setTimeout(() => this.blip(f, 0.18, 'triangle', 0.10), i * 90));
+    notes.forEach((f, i) => setTimeout(() => this.blip(f, 0.18, 'triangle', 0.10), 620 + i * 90));
   }
 }
 
@@ -422,7 +498,7 @@ const Aquataire = ({ currentUser, onLogin, onCreateAccount }) => {
     try {
       const r = await aquataireNewGame({ drawCount: m.drawCount, daily: m.daily });
       refreshFromServer(r);
-      sfx.draw();
+      sfx.shuffle();
       setMode(m.id);
       setLbMode(m.id);
       try { const ds = await aquataireDailyStatus(); setDailyStatus(ds); } catch (_) {}
