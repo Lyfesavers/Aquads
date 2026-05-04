@@ -27,6 +27,23 @@ const traitPool = {
     'Diamond Shell',
     'Stealth Carbon Shell'
   ],
+  clothing: [
+    'Clean Black T-Shirt',
+    'Clean White T-Shirt',
+    'Oversized Streetwear Tee',
+    'Luxury Hoodie',
+    'Techwear Jacket',
+    'Gold Trim Tank Top',
+    'Minimal Designer Shirt'
+  ],
+  headwear: [
+    'None',
+    'Fitted Cap',
+    'Sideways Fitted Cap',
+    'Beanie',
+    'Luxury Snapback',
+    'Cyber Headband'
+  ],
   accessory: [
     'None',
     'Generate random cyberpunk accessories',
@@ -67,6 +84,8 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 const generateTraits = () => ({
   shell: pick(traitPool.shell),
+  clothing: pick(traitPool.clothing),
+  headwear: pick(traitPool.headwear),
   accessory: pick(traitPool.accessory),
   expression: pick(traitPool.expression),
   aura: pick(traitPool.aura)
@@ -78,6 +97,9 @@ const buildPrompt = (t, coloredTrait, gender) => {
       ? 'sleek athletic female turtle warrior, agile powerful stance, elegant but strong physique'
       : 'muscular male turtle bodybuilder, heavy powerful physique, broad shoulders, strong stance';
 
+  const stylePrompt =
+    'premium realistic 3D web3 collectible style, ultra-detailed turtle character, luxury NFT-quality rendering, cinematic lighting, premium streetwear fashion, fitted caps and designer clothing, realistic textures, expressive eyes, layered accessories, highly polished 3D character design, premium collectible profile picture aesthetic';
+
   const backgroundIsYellow = Math.random() < 0.5;
   const backgroundColor = backgroundIsYellow ? '#febc10' : '#51159d';
   const textColor = backgroundIsYellow ? '#51159d' : '#febc10';
@@ -87,16 +109,15 @@ const buildPrompt = (t, coloredTrait, gender) => {
   return [
     'ultra high quality anthropomorphic TURTLE mascot for AQUADS branding identity',
     genderModifiers,
+    stylePrompt,
     `AQUADS logo and any AQUADS text MUST ALWAYS be rendered in solid ${textName} color hex ${textColor}, no other color, no gradient, no shading on the text, must contrast strongly with the background`,
     'AQUADS wordmark clearly visible, centered, sharp, legible, spelled exactly as A-Q-U-A-D-S',
     `logo curved like a smile at bottom in the same ${textName} ${textColor}`,
     'centered circular profile portrait',
-    'pencil sketch style illustration',
-    'monochrome graphite shading with clean linework',
-    `PRIMARY COLORED ELEMENT: ${coloredTrait} (${t[coloredTrait]}), plus subtle secondary accent colors allowed ONLY for aura effects (low saturation glow), all other traits remain grayscale pencil sketch`,
+    'full realistic premium color rendering, vibrant cinematic lighting, luxury collectible quality',
     'STRICT: include ALL traits exactly as described',
     'safe margins, no cropping, fully visible face shell and body',
-    `shell=${t.shell}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}`,
+    `shell=${t.shell}, clothing=${t.clothing}, headwear=${t.headwear}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}`,
     `solid background color ONLY: ${backgroundName} ${backgroundColor}, no gradients, no white, no patterns, clean flat background. The AQUADS branding text MUST be the opposite color (${textColor}) so it contrasts strongly and stays clearly readable.`
   ].join(', ');
 };
