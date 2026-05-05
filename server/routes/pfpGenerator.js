@@ -100,17 +100,19 @@ const buildPrompt = (t, coloredTrait, gender) => {
   const stylePrompt =
     'premium realistic 3D web3 collectible style, ultra-detailed turtle character, luxury NFT-quality rendering, cinematic lighting, premium streetwear fashion, fitted caps and designer clothing, realistic textures, expressive eyes, layered accessories, highly polished 3D character design, premium collectible profile picture aesthetic';
 
-  const backgroundIsYellow = Math.random() < 0.5;
-  const backgroundColor = backgroundIsYellow ? '#febc10' : '#51159d';
-  const textColor = backgroundIsYellow ? '#51159d' : '#febc10';
-  const backgroundName = backgroundIsYellow ? 'bright Aquads yellow' : 'deep Aquads purple';
-  const textName = backgroundIsYellow ? 'deep Aquads purple' : 'bright Aquads yellow';
+  // AQUADS branding (logo + wordmark) must ALWAYS be the official Aquads
+  // yellow (#febc10). Background is locked to the contrasting Aquads purple
+  // (#51159d) so the yellow branding stays readable and on-brand.
+  const backgroundColor = '#51159d';
+  const textColor = '#febc10';
+  const backgroundName = 'deep Aquads purple';
+  const textName = 'bright Aquads yellow';
 
   return [
     'ultra high quality anthropomorphic TURTLE mascot for AQUADS branding identity',
     genderModifiers,
     stylePrompt,
-    `AQUADS logo and any AQUADS text MUST ALWAYS be rendered in solid ${textName} color hex ${textColor}, no other color, no gradient, no shading on the text, must contrast strongly with the background`,
+    `AQUADS logo and any AQUADS text MUST ALWAYS be rendered in solid ${textName} color hex ${textColor}, never purple, never white, never any other color, no gradient, no shading on the text, must contrast strongly with the background`,
     'AQUADS wordmark clearly visible, centered, sharp, legible, spelled exactly as A-Q-U-A-D-S',
     `logo curved like a smile at bottom in the same ${textName} ${textColor}`,
     'centered circular profile portrait',
@@ -118,7 +120,7 @@ const buildPrompt = (t, coloredTrait, gender) => {
     'STRICT: include ALL traits exactly as described',
     'safe margins, no cropping, fully visible face shell and body',
     `shell=${t.shell}, clothing=${t.clothing}, headwear=${t.headwear}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}`,
-    `solid background color ONLY: ${backgroundName} ${backgroundColor}, no gradients, no white, no patterns, clean flat background. The AQUADS branding text MUST be the opposite color (${textColor}) so it contrasts strongly and stays clearly readable.`
+    `solid background color ONLY: ${backgroundName} ${backgroundColor}, no gradients, no white, no patterns, clean flat background. The AQUADS branding text and curved smile logo MUST always be the official Aquads yellow ${textColor} so it contrasts strongly and stays clearly readable.`
   ].join(', ');
 };
 
