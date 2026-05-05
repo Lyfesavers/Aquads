@@ -190,8 +190,11 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
   return (
     <>
       <Helmet>
-        <title>PFP Generator | Aquads</title>
-        <meta name="description" content="Generate a weekly Aquads turtle mascot profile picture." />
+        <title>The Bored Turtles Yacht Club | PFP Generator | Aquads</title>
+        <meta
+          name="description"
+          content="Mint your weekly profile picture from The Bored Turtles Yacht Club — the official Aquads turtle mascot collection."
+        />
       </Helmet>
       <div className="pfp-page">
         <header className="pfp-header">
@@ -213,8 +216,8 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
                 🐢
               </span>
               <div>
-                <h1 className="pfp-title-heading">PFP Generator</h1>
-                <p className="pfp-title-tagline">Aquads • Brand mascot studio</p>
+                <h1 className="pfp-title-heading">The Bored Turtles Yacht Club</h1>
+                <p className="pfp-title-tagline">Aquads PFP Generator • Brand mascot collection</p>
               </div>
             </div>
           </div>
@@ -228,8 +231,9 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
         <main className="pfp-main">
           <div className="pfp-card">
             <p className="pfp-card-lead">
-              Signed-in users: one free generation per rolling 7 days. Your last {slotsLimit} PFPs
-              are saved here so you can re-download them anytime.
+              Welcome to <strong>The Bored Turtles Yacht Club</strong> — Aquads' official turtle
+              mascot collection. Signed-in users get one free mint per rolling 7 days. Your last{' '}
+              {slotsLimit} turtles are saved here so you can re-download them anytime.
             </p>
 
             {currentUser?.token && (
@@ -320,7 +324,7 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
             {currentUser?.token && (
               <div className="pfp-gallery-section">
                 <div className="pfp-gallery-heading">
-                  <h3 className="pfp-gallery-title">Your collection</h3>
+                  <h3 className="pfp-gallery-title">Your Bored Turtles Yacht Club</h3>
                   {collection.length > 0 && (
                     <span className="pfp-gallery-hint">Tap Download to save · Tap Delete to free a slot</span>
                   )}
@@ -330,7 +334,7 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
                   <p className="pfp-gallery-empty">Loading your collection...</p>
                 ) : collection.length === 0 ? (
                   <p className="pfp-gallery-empty">
-                    No PFPs yet. Generate one above and it will appear here.
+                    No turtles in your club yet. Mint one above and it will appear here.
                   </p>
                 ) : (
                   <div className="pfp-gallery-grid">
