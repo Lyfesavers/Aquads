@@ -55,6 +55,12 @@
   function = "og-free-course-card"
   path = "/og/course-card"
 
+# Same pattern for Job listings — branded OG image with job title, work
+# arrangement, pay, and "Apply Now" CTA. Meta tags reference this URL.
+[[edge_functions]]
+  function = "og-job-card"
+  path = "/og/job-card"
+
 # GUARANTEED share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/aquaswap?token=xxx&blockchain=xxx
 # Handled by Edge Function which reliably serves meta tags to all bots

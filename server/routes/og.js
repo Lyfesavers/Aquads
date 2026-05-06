@@ -690,5 +690,281 @@ router.get('/free-course', async (req, res) => {
   }
 });
 
+// ──────────────────────────────────────────────────────────────────────────────
+// /og/job — Branded OG card for Job listings (1200×630)
+// Renders headline (job title), work arrangement / location / pay metadata,
+// owner / company avatar, an "Apply Now →" CTA, and a source attribution
+// (Posted by <user> / via Remotive / via Himalayas).
+// Mirrors the /og/free-course layout so the job preview has the same polish.
+// ──────────────────────────────────────────────────────────────────────────────
+
+const JOB_ARRANGEMENT_LABEL = {
+  remote: 'Remote',
+  hybrid: 'Hybrid',
+  onsite: 'On-site',
+};
+
+const JOB_ARRANGEMENT_ACCENT = {
+  remote: '#34d399', // emerald-400
+  hybrid: '#60a5fa', // blue-400
+  onsite: '#a78bfa', // violet-400
+};
+
+const JOB_SOURCE_LABEL = {
+  remotive: 'Remotive',
+  himalayas: 'Himalayas',
+};
+
+function formatJobPay(job) {
+  if (!job || !job.payAmount || !job.payType) return '';
+  if (job.payType === 'percentage') return `${job.payAmount}%`;
+  try {
+    return `$${Number(job.payAmount).toLocaleString()}/${job.payType}`;
+  } catch (_) {
+    return `$${job.payAmount}/${job.payType}`;
+  }
+}
+
+router.get('/job', async (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).send('Missing id parameter');
+  }
+  if (!/^[a-f0-9]{24}$/i.test(id)) {
+    return res.status(400).send('Invalid job id');
+  }
+
+  const ogv = (req.query.ogv || '1').toString();
+  const cacheKey = `job:${id}:v${ogv}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.set('X-Cache', 'HIT');
+    return res.send(cached.buffer);
+  }
+
+  try {
+    const Job = require('../models/Job');
+    const job = await Job.findById(id)
+      .populate('owner', 'username image')
+      .lean();
+
+    if (!job) {
+      return res.status(404).send('Job not found');
+    }
+
+    const arrangement = job.workArrangement || 'remote';
+    const arrangementLabel = JOB_ARRANGEMENT_LABEL[arrangement] || 'Remote';
+    const accent = JOB_ARRANGEMENT_ACCENT[arrangement] || '#34d399';
+
+    // Build location string (only meaningful for hybrid / onsite)
+    const loc = job.location || {};
+    const locationLabel = (() => {
+      if (!loc.city && !loc.country) return '';
+      if (loc.city && loc.country) return `${loc.city}, ${loc.country}`;
+      return loc.country || loc.city;
+    })();
+
+    // Source attribution
+    const sourceLabel = (() => {
+      if (job.source === 'remotive' || job.source === 'himalayas') {
+        return `via ${JOB_SOURCE_LABEL[job.source]}`;
+      }
+      return job.ownerUsername ? `Posted by ${job.ownerUsername}` : '';
+    })();
+
+    // Top-right context line: arrangement + location (or just arrangement)
+    const contextBits = [arrangementLabel.toUpperCase()];
+    if (locationLabel && (arrangement === 'hybrid' || arrangement === 'onsite')) {
+      contextBits.push(locationLabel.toUpperCase());
+    }
+    const contextLine = contextBits.join('  ·  ');
+    const contextDisplay = contextLine.length > 56 ? contextLine.slice(0, 55) + '…' : contextLine;
+
+    // Auto-fit the title — same staircase as free-course OG.
+    const rawTitle = (job.title || '').trim();
+    let titleFontSize, titleMaxChars, titleMaxLines, titleLineHeight;
+    if (rawTitle.length <= 28) {
+      titleFontSize = 56; titleMaxChars = 22; titleMaxLines = 2; titleLineHeight = 66;
+    } else if (rawTitle.length <= 60) {
+      titleFontSize = 46; titleMaxChars = 26; titleMaxLines = 3; titleLineHeight = 56;
+    } else {
+      titleFontSize = 38; titleMaxChars = 32; titleMaxLines = 4; titleLineHeight = 48;
+    }
+    const titleLines = wrapTextToLines(rawTitle, titleMaxChars, titleMaxLines);
+
+    // Pick the avatar image: company logo (external boards) → owner image → null
+    const avatarSrc =
+      (job.source && job.source !== 'user' && job.companyLogo) ||
+      (job.owner && job.owner.image) ||
+      job.ownerImage ||
+      null;
+
+    let avatarBase64 = null;
+    if (avatarSrc) {
+      avatarBase64 = await fetchImageAsBase64(avatarSrc, {
+        timeout: 8000,
+        normalize: true,
+        fit: { width: 480, height: 480, fit: 'cover' },
+      });
+    }
+
+    const fontCss = getEmbeddedFontFaceCss();
+
+    const titleStartY = 280;
+    const titleSvg = titleLines
+      .map(
+        (line, i) =>
+          `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="${titleFontSize}" font-weight="bold" fill="#ffffff">${escapeXml(line)}</text>`
+      )
+      .join('\n  ');
+
+    // Pay pill — only render when we actually have pay info (don't fake it).
+    const payDisplay = formatJobPay(job);
+
+    // Initial for placeholder avatar — first letter of source provider or username.
+    const placeholderLetter = ((
+      job.source === 'remotive' ? 'R' :
+      job.source === 'himalayas' ? 'H' :
+      (job.ownerUsername || 'A').charAt(0)
+    ) || 'A').toUpperCase();
+
+    const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    ${fontCss ? `<style type="text/css"><![CDATA[${fontCss}]]></style>` : ''}
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a12"/>
+      <stop offset="55%" style="stop-color:#0d1124"/>
+      <stop offset="100%" style="stop-color:#181030"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${accent}"/>
+      <stop offset="100%" style="stop-color:#8a2be2"/>
+    </linearGradient>
+    <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="avatarBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${accent};stop-opacity:0.22"/>
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.18"/>
+    </linearGradient>
+    <clipPath id="avatarClip">
+      <circle cx="260" cy="315" r="135"/>
+    </clipPath>
+    <filter id="ctaShadow" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000" flood-opacity="0.4"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="avatarGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <circle cx="100" cy="100" r="320" fill="rgba(99,102,241,0.05)"/>
+  <circle cx="1100" cy="530" r="260" fill="rgba(139,92,246,0.05)"/>
+
+  <!-- Top accent line -->
+  <rect x="40" y="40" width="1120" height="2" fill="url(#accentGrad)" opacity="0.7"/>
+
+  <!-- Card frame -->
+  <rect x="40" y="50" width="1120" height="540" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- AQUADS JOBS branding (top-right) -->
+  <text x="1120" y="100" ${ogFontAttr()} font-size="30" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS JOBS</text>
+  <text x="1120" y="125" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="end">Web3 &amp; Crypto Careers</text>
+
+  <!-- Avatar / company logo (left side, circular) -->
+  <circle cx="260" cy="315" r="142" fill="url(#avatarBgGrad)" filter="url(#avatarGlow)" opacity="0.85"/>
+  <circle cx="260" cy="315" r="135" fill="#0d1124" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  ${avatarBase64
+    ? `<image x="125" y="180" width="270" height="270" href="${avatarBase64}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`}
+
+  <!-- HIRING badge below avatar -->
+  <rect x="170" y="475" width="180" height="42" rx="21" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.5)" stroke-width="1"/>
+  <circle cx="195" cy="496" r="5" fill="#22c55e"/>
+  <text x="210" y="503" ${ogFontAttr()} font-size="18" font-weight="bold" fill="#86efac">HIRING NOW</text>
+
+  <!-- Context line (arrangement · location) -->
+  <text x="500" y="200" ${ogFontAttr()} font-size="18" font-weight="bold" fill="${accent}" letter-spacing="2">${escapeXml(contextDisplay)}</text>
+  <rect x="500" y="215" width="60" height="3" rx="1.5" fill="${accent}" opacity="0.85"/>
+
+  <!-- Headline (job title) -->
+  ${titleSvg}
+
+  <!-- Pay strip (only when we have pay info) -->
+  ${payDisplay
+    ? `<text x="500" y="465" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)" letter-spacing="2">COMPENSATION</text>
+       <text x="500" y="498" ${ogFontAttr()} font-size="32" font-weight="bold" fill="#4ade80">${escapeXml(payDisplay)}</text>`
+    : `<text x="500" y="465" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)" letter-spacing="2">COMPENSATION</text>
+       <text x="500" y="498" ${ogFontAttr()} font-size="28" font-weight="bold" fill="rgba(255,255,255,0.7)">Competitive</text>`}
+
+  <!-- CTA button -->
+  <g filter="url(#ctaShadow)">
+    <rect x="820" y="465" width="300" height="68" rx="16" fill="url(#ctaGrad)"/>
+    <text x="850" y="509" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#ffffff">Apply Now</text>
+    <text x="1095" y="509" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff" text-anchor="end">→</text>
+  </g>
+
+  <!-- Source attribution (bottom-right) -->
+  ${sourceLabel
+    ? `<text x="1120" y="562" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.45)" text-anchor="end">${escapeXml(sourceLabel)}</text>`
+    : ''}
+</svg>`;
+
+    const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
+
+    imageCache.set(cacheKey, { buffer: pngBuffer, timestamp: Date.now() });
+    if (imageCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of imageCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+          imageCache.delete(key);
+        }
+      }
+    }
+
+    res.set('Content-Type', 'image/png');
+    // Short cache — jobs can be edited / refreshed / deleted, so don't pin too long.
+    res.set('Cache-Control', 'public, max-age=600');
+    res.set('X-Cache', 'MISS');
+    return res.send(pngBuffer);
+  } catch (error) {
+    console.error('OG job image error:', error);
+    const fallbackFontCss = getEmbeddedFontFaceCss();
+    const errorSvg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>${fallbackFontCss ? `<style type="text/css"><![CDATA[${fallbackFontCss}]]></style>` : ''}</defs>
+  <rect width="1200" height="630" fill="#0a0a12"/>
+  <text x="600" y="290" ${ogFontAttr()} font-size="44" fill="#6366f1" text-anchor="middle">AQUADS JOBS</text>
+  <text x="600" y="350" ${ogFontAttr()} font-size="22" fill="rgba(255,255,255,0.6)" text-anchor="middle">Web3 &amp; Crypto Careers — find your next role</text>
+  <text x="600" y="410" ${ogFontAttr()} font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/marketplace?jobs=true</text>
+</svg>`;
+    try {
+      const errorPng = await sharp(Buffer.from(errorSvg)).png().toBuffer();
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=60');
+      return res.send(errorPng);
+    } catch (e) {
+      return res.status(500).send('Failed to generate image');
+    }
+  }
+});
+
 module.exports = router;
 

@@ -96,14 +96,11 @@ export default async (request, context) => {
       ? `${taglineBits.join(' · ')} — ${description}`.slice(0, 300)
       : description;
 
-    // Prefer the company logo (external boards) or owner image as the OG image,
-    // fall back to the Aquads logo. Crawlers want a 1200×630-ish image; small
-    // square avatars still work as `summary_large_image` falls back gracefully.
-    const imageUrl =
-      (job.source && job.source !== 'user' && job.companyLogo) ||
-      job.ownerImage ||
-      (job.owner && job.owner.image) ||
-      'https://www.aquads.xyz/logo712.png';
+    // Branded OG card (1200×630) generated server-side: includes the job title,
+    // work arrangement / pay context, an "Apply Now →" CTA, and the owner /
+    // company avatar. Served through the primary domain (edge-function proxy)
+    // so Telegram/WhatsApp/Facebook all fetch from www.aquads.xyz, not Railway.
+    const imageUrl = `https://www.aquads.xyz/og/job-card?id=${encodeURIComponent(jobId)}&ogv=1`;
 
     // Canonical SPA URL — opens marketplace with Jobs view active and the job
     // pre-expanded/highlighted (handled by Marketplace.js URL effect).
@@ -133,6 +130,9 @@ export default async (request, context) => {
   <meta property="og:description" content="${escapeHtml(finalDescription)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${escapeHtml(job.title)} — Job on Aquads">
   <meta property="og:url" content="${escapeHtml(sharePageUrl)}">
 
