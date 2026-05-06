@@ -87,7 +87,11 @@ function getCourseHtml(course) {
   )
     .toString()
     .slice(0, 280);
-  const imageUrl = course.imageUrl || 'https://www.aquads.xyz/logo712.png';
+
+  // Branded OG image with course title headline + Start Free Course CTA + Cursa
+  // attribution baked into the PNG. Served via the Netlify edge proxy so strict
+  // bots (Telegram/WhatsApp) reliably get it from the apex domain.
+  const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}`;
   const canonicalUrl = `https://www.aquads.xyz/learn/courses/${course.slug}`;
   const titleWithSuffix = `${course.title} — Free ${feedLabel} Course on Aquads`;
 
@@ -103,16 +107,20 @@ function getCourseHtml(course) {
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@AquadsXYZ">
-    <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+    <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
+    <meta name="twitter:image:alt" content="${escapeHtml(course.title)} — Free Course on Aquads">
     <meta name="twitter:title" content="${escapeHtml(titleWithSuffix)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
 
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="${escapeHtml(titleWithSuffix)}">
     <meta property="og:description" content="${escapeHtml(description)}">
-    <meta property="og:image" content="${escapeHtml(imageUrl)}">
+    <meta property="og:image" content="${escapeHtml(ogImageUrl)}">
+    <meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="${escapeHtml(course.title)} — Free Course on Aquads">
     <meta property="og:site_name" content="Aquads Learn">
     <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
     <meta property="og:type" content="article">

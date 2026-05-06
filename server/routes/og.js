@@ -392,5 +392,230 @@ router.get('/aquaswap', async (req, res) => {
   }
 });
 
+// ──────────────────────────────────────────────────────────────────────────────
+// /og/free-course — OG card for "Free Online Courses" tab on /learn
+// Renders a 1200×630 image with course thumbnail, headline (course title),
+// a "Start Free Course →" call-to-action button, and a clear "Provided by
+// cursa.app" attribution so we credit the upstream content provider.
+// ──────────────────────────────────────────────────────────────────────────────
+
+const FREE_COURSE_FEED_LABEL = {
+  technology: 'Technology & Programming',
+  business: 'Business & Marketing',
+  languages: 'Languages',
+};
+
+const FREE_COURSE_FEED_ACCENT = {
+  technology: '#38bdf8', // sky-400
+  business: '#34d399', // emerald-400
+  languages: '#fb7185', // rose-400
+};
+
+// Word-aware wrap so long titles render on up to N lines instead of overflowing.
+function wrapTextToLines(text, maxCharsPerLine, maxLines) {
+  const words = (text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    if (lines.length === maxLines - 1 && (current + ' ' + word).length > maxCharsPerLine) {
+      // Last line — push current and start the final line, which we'll truncate later.
+      lines.push(current.trim());
+      current = word;
+      continue;
+    }
+    if ((current + ' ' + word).trim().length <= maxCharsPerLine) {
+      current = (current + ' ' + word).trim();
+    } else {
+      lines.push(current.trim());
+      current = word;
+      if (lines.length >= maxLines) break;
+    }
+  }
+  if (current && lines.length < maxLines) {
+    lines.push(current.trim());
+  }
+  // Truncate the last line with ellipsis if we ran out of room
+  if (lines.length === maxLines) {
+    const consumed = lines.join(' ').length;
+    const totalChars = (text || '').length;
+    if (consumed < totalChars - 4) {
+      const last = lines[maxLines - 1];
+      lines[maxLines - 1] = last.length > maxCharsPerLine - 1
+        ? last.slice(0, maxCharsPerLine - 1).replace(/\s+\S*$/, '') + '…'
+        : last + '…';
+    }
+  }
+  return lines;
+}
+
+router.get('/free-course', async (req, res) => {
+  const { slug } = req.query;
+  if (!slug) {
+    return res.status(400).send('Missing slug parameter');
+  }
+
+  const cacheKey = `free-course:${slug}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.set('X-Cache', 'HIT');
+    return res.send(cached.buffer);
+  }
+
+  try {
+    // Pull course from our own DB (the route module is loaded above).
+    const FreeCourse = require('../models/FreeCourse');
+    const course = await FreeCourse.findOne({ slug })
+      .select('feed category title description imageUrl creator')
+      .lean();
+
+    if (!course) {
+      return res.status(404).send('Course not found');
+    }
+
+    const feedLabel = FREE_COURSE_FEED_LABEL[course.feed] || 'Free Course';
+    const accent = FREE_COURSE_FEED_ACCENT[course.feed] || '#38bdf8';
+    const titleLines = wrapTextToLines(course.title, 30, 3);
+
+    let thumbBase64 = null;
+    if (course.imageUrl) {
+      thumbBase64 = await fetchImageAsBase64(course.imageUrl);
+    }
+
+    const fontCss = getEmbeddedFontFaceCss();
+
+    const titleStartY = 230;
+    const titleLineHeight = 72;
+    const titleSvg = titleLines
+      .map(
+        (line, i) =>
+          `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="60" font-weight="bold" fill="#ffffff">${escapeXml(line)}</text>`
+      )
+      .join('\n  ');
+
+    const tagline = `Free ${feedLabel} Course`;
+    const categoryLabel = course.category && course.category !== feedLabel ? course.category : null;
+
+    const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    ${fontCss ? `<style type="text/css"><![CDATA[${fontCss}]]></style>` : ''}
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a12"/>
+      <stop offset="55%" style="stop-color:#0d1124"/>
+      <stop offset="100%" style="stop-color:#181030"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${accent}"/>
+      <stop offset="100%" style="stop-color:#8a2be2"/>
+    </linearGradient>
+    <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <clipPath id="thumbClip">
+      <rect x="80" y="180" width="360" height="270" rx="20"/>
+    </clipPath>
+    <filter id="ctaShadow" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000" flood-opacity="0.4"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <circle cx="100" cy="100" r="320" fill="rgba(56,189,248,0.04)"/>
+  <circle cx="1100" cy="530" r="260" fill="rgba(139,92,246,0.05)"/>
+
+  <!-- Top accent line -->
+  <rect x="40" y="40" width="1120" height="2" fill="url(#accentGrad)" opacity="0.7"/>
+
+  <!-- Card frame -->
+  <rect x="40" y="50" width="1120" height="540" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- AQUADS LEARN branding (top-right) -->
+  <text x="1120" y="100" ${ogFontAttr()} font-size="30" font-weight="bold" fill="url(#accentGrad)" text-anchor="end">AQUADS LEARN</text>
+  <text x="1120" y="125" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="end">Free Online Courses</text>
+
+  <!-- Course thumbnail (left side) -->
+  <rect x="80" y="180" width="360" height="270" rx="20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  ${thumbBase64
+    ? `<image x="80" y="180" width="360" height="270" href="${thumbBase64}" clip-path="url(#thumbClip)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<text x="260" y="320" ${ogFontAttr()} font-size="36" font-weight="bold" fill="rgba(255,255,255,0.15)" text-anchor="middle">${escapeXml(feedLabel.split(' ')[0].toUpperCase())}</text>`}
+
+  <!-- Tagline pill -->
+  <rect x="500" y="170" width="${tagline.length * 11 + 50}" height="34" rx="17" fill="${accent}" opacity="0.18"/>
+  <circle cx="520" cy="187" r="5" fill="${accent}"/>
+  <text x="535" y="193" ${ogFontAttr()} font-size="16" font-weight="bold" fill="${accent}">${escapeXml(tagline.toUpperCase())}</text>
+
+  ${categoryLabel
+    ? `<rect x="${500 + tagline.length * 11 + 65}" y="170" width="${categoryLabel.length * 10 + 28}" height="34" rx="17" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+       <text x="${500 + tagline.length * 11 + 79}" y="193" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.85)">${escapeXml(categoryLabel)}</text>`
+    : ''}
+
+  <!-- Headline (course title) -->
+  ${titleSvg}
+
+  <!-- Divider -->
+  <rect x="500" y="475" width="620" height="1" fill="rgba(255,255,255,0.08)"/>
+
+  <!-- CTA button -->
+  <g filter="url(#ctaShadow)">
+    <rect x="500" y="500" width="360" height="68" rx="16" fill="url(#ctaGrad)"/>
+    <text x="525" y="544" ${ogFontAttr()} font-size="26" fill="#ffffff">▶</text>
+    <text x="565" y="544" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#ffffff">Start Free Course</text>
+    <text x="836" y="544" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#ffffff" text-anchor="end">→</text>
+  </g>
+
+  <!-- Cursa attribution (bottom-right) — credits the upstream provider -->
+  <text x="1120" y="540" ${ogFontAttr()} font-size="13" fill="rgba(255,255,255,0.45)" text-anchor="end">Course provided by</text>
+  <text x="1120" y="562" ${ogFontAttr()} font-size="18" font-weight="bold" fill="rgba(255,255,255,0.85)" text-anchor="end">cursa.app</text>
+</svg>`;
+
+    const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
+
+    imageCache.set(cacheKey, { buffer: pngBuffer, timestamp: Date.now() });
+    if (imageCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of imageCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+          imageCache.delete(key);
+        }
+      }
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('X-Cache', 'MISS');
+    return res.send(pngBuffer);
+  } catch (error) {
+    console.error('OG free-course image error:', error);
+    const fallbackFontCss = getEmbeddedFontFaceCss();
+    const errorSvg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>${fallbackFontCss ? `<style type="text/css"><![CDATA[${fallbackFontCss}]]></style>` : ''}</defs>
+  <rect width="1200" height="630" fill="#0a0a12"/>
+  <text x="600" y="290" ${ogFontAttr()} font-size="44" fill="#38bdf8" text-anchor="middle">AQUADS LEARN · Free Courses</text>
+  <text x="600" y="350" ${ogFontAttr()} font-size="22" fill="rgba(255,255,255,0.6)" text-anchor="middle">Hand-picked free certificate courses from cursa.app</text>
+  <text x="600" y="410" ${ogFontAttr()} font-size="18" fill="rgba(255,255,255,0.4)" text-anchor="middle">aquads.xyz/learn</text>
+</svg>`;
+    try {
+      const errorPng = await sharp(Buffer.from(errorSvg)).png().toBuffer();
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=60');
+      return res.send(errorPng);
+    } catch (e) {
+      return res.status(500).send('Failed to generate image');
+    }
+  }
+});
+
 module.exports = router;
 

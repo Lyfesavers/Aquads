@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
   FaArrowLeft,
@@ -63,6 +63,7 @@ const RelatedCard = ({ course }) => (
 const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [course, setCourse] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +101,24 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
   useEffect(() => {
     sessionStorage.setItem('learnActiveTab', 'free-courses');
   }, []);
+
+  // Once the course loads, rewrite the URL bar to the guaranteed /share/courses/:slug
+  // path. This way ANY URL the user copies (or refreshes from) hits the Netlify edge
+  // function that always renders rich Open Graph / Twitter Card meta — no reliance on
+  // a social platform's User-Agent matching our crawler list. Mirrors the BlogPage
+  // /share/blog/:id pattern. Uses replace:true so we don't pollute browser history,
+  // and only fires when we're currently sitting on the canonical /learn/courses/...
+  // path (so navigating in via the share URL is a no-op).
+  useEffect(() => {
+    if (!course || !course.slug) return;
+    const shareUrl = `/share/courses/${course.slug}`;
+    if (
+      location.pathname.startsWith('/learn/courses/') &&
+      location.pathname !== shareUrl
+    ) {
+      navigate(shareUrl, { replace: true });
+    }
+  }, [course, location.pathname, navigate]);
 
   const handleShare = async () => {
     if (!course) return;
@@ -356,21 +375,37 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
   }
 
   const courseUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/learn/courses/${course.slug}`;
+  // Branded server-side OG image (course title headline + Start Free Course CTA
+  // + Cursa attribution baked in). The image itself is the single source-credit
+  // surface — keep meta-tag text clean.
+  const ogImageUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://www.aquads.xyz'}/og/course-card?slug=${encodeURIComponent(course.slug)}`;
+  const ogDescription = (course.description || course.title).slice(0, 200);
+  const titleWithSuffix = `${course.title} — Free ${FEED_LABEL[course.feed] || 'Course'} on Aquads`;
+  const ogImageAlt = `${course.title} — Free Course on Aquads`;
 
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
-        <title>{course.title} - Free Course on Aquads</title>
-        <meta
-          name="description"
-          content={(course.description || course.title).slice(0, 160)}
-        />
+        <title>{titleWithSuffix}</title>
+        <meta name="description" content={ogDescription} />
         <link rel="canonical" href={courseUrl} />
-        <meta property="og:title" content={`${course.title} - Free Course on Aquads`} />
-        <meta property="og:description" content={(course.description || course.title).slice(0, 200)} />
-        {course.imageUrl ? <meta property="og:image" content={course.imageUrl} /> : null}
+        <meta property="og:title" content={titleWithSuffix} />
+        <meta property="og:description" content={ogDescription} />
+        <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:image:secure_url" content={ogImageUrl} />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={ogImageAlt} />
+        <meta property="og:site_name" content="Aquads Learn" />
         <meta property="og:url" content={courseUrl} />
         <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@AquadsXYZ" />
+        <meta name="twitter:title" content={titleWithSuffix} />
+        <meta name="twitter:description" content={ogDescription} />
+        <meta name="twitter:image" content={ogImageUrl} />
+        <meta name="twitter:image:alt" content={ogImageAlt} />
       </Helmet>
 
       {renderHeader()}

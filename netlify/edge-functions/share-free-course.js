@@ -48,7 +48,10 @@ export default async (request, context) => {
       .toString()
       .slice(0, 280);
 
-    const imageUrl = course.imageUrl || 'https://www.aquads.xyz/logo712.png';
+    // Branded OG image (1200×630) generated server-side: includes course title,
+    // a "Start Free Course →" CTA, and a "Provided by cursa.app" attribution
+    // baked into the image — that's our single source-credit surface.
+    const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}`;
     const canonicalUrl = `https://www.aquads.xyz/learn/courses/${course.slug}`;
     const titleWithSuffix = `${course.title} — Free ${feedLabel} Course on Aquads`;
 
@@ -65,16 +68,20 @@ export default async (request, context) => {
   <meta name="twitter:site" content="@AquadsXYZ">
   <meta name="twitter:title" content="${escapeHtml(titleWithSuffix)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+  <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
+  <meta name="twitter:image:alt" content="${escapeHtml(course.title)} — Free Course on Aquads">
 
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Aquads Learn">
   <meta property="og:title" content="${escapeHtml(titleWithSuffix)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image" content="${escapeHtml(ogImageUrl)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${escapeHtml(course.title)} — Free Course on Aquads">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
 
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
