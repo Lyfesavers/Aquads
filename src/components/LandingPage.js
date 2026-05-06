@@ -4138,7 +4138,7 @@ const LandingPage = () => {
   const stats = [
     { value: 50, suffix: '+', label: 'Blockchains Supported' },
     { value: 170, suffix: '+', label: 'Wallets Integrated' },
-    { value: 1000, suffix: '+', label: 'User Accounts' },
+    { value: 100, suffix: '+', label: 'Free Online Certificate Courses' },
     { value: 30, suffix: '+', label: 'Service Categories' }
   ];
 
