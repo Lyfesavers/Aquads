@@ -51,7 +51,7 @@ export default async (request, context) => {
     // Branded OG image (1200×630) generated server-side: includes course title,
     // a "Start Free Course →" CTA, and a "Provided by cursa.app" attribution
     // baked into the image — that's our single source-credit surface.
-    const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}`;
+    const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}&ogv=2`;
     const canonicalUrl = `https://www.aquads.xyz/learn/courses/${course.slug}`;
     const titleWithSuffix = `${course.title} — Free ${feedLabel} Course on Aquads`;
 

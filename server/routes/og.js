@@ -110,20 +110,26 @@ function escapeXml(str) {
 }
 
 // Fetch and convert image to base64
-async function fetchImageAsBase64(url) {
+async function fetchImageAsBase64(url, options = {}) {
   try {
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
-      timeout: 5000,
+      timeout: options.timeout || 5000,
       headers: {
-        'User-Agent': 'Aquads-OG-Generator/1.0'
-      }
+        'User-Agent':
+          options.userAgent ||
+          'Mozilla/5.0 (compatible; Aquads-OG-Generator/1.0; +https://aquads.xyz)',
+        ...(options.referer ? { Referer: options.referer } : {}),
+        Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+      maxRedirects: 5,
+      validateStatus: (s) => s >= 200 && s < 400,
     });
     const base64 = Buffer.from(response.data).toString('base64');
     const contentType = response.headers['content-type'] || 'image/png';
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
-    console.error('Failed to fetch token image:', error.message);
+    console.error('Failed to fetch image:', url, '→', error.message);
     return null;
   }
 }
@@ -454,7 +460,8 @@ router.get('/free-course', async (req, res) => {
     return res.status(400).send('Missing slug parameter');
   }
 
-  const cacheKey = `free-course:${slug}`;
+  const ogv = (req.query.ogv || '1').toString();
+  const cacheKey = `free-course:${slug}:v${ogv}`;
   const cached = imageCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     res.set('Content-Type', 'image/png');
@@ -476,26 +483,56 @@ router.get('/free-course', async (req, res) => {
 
     const feedLabel = FREE_COURSE_FEED_LABEL[course.feed] || 'Free Course';
     const accent = FREE_COURSE_FEED_ACCENT[course.feed] || '#38bdf8';
-    const titleLines = wrapTextToLines(course.title, 30, 3);
+
+    // Auto-fit the title: shrink font-size + tighten char budget for long titles
+    // so they never overflow the 640px-wide text column.
+    const rawTitle = (course.title || '').trim();
+    let titleFontSize, titleMaxChars, titleMaxLines, titleLineHeight;
+    if (rawTitle.length <= 28) {
+      titleFontSize = 56; titleMaxChars = 22; titleMaxLines = 2; titleLineHeight = 66;
+    } else if (rawTitle.length <= 60) {
+      titleFontSize = 46; titleMaxChars = 26; titleMaxLines = 3; titleLineHeight = 56;
+    } else {
+      titleFontSize = 38; titleMaxChars = 32; titleMaxLines = 4; titleLineHeight = 48;
+    }
+    const titleLines = wrapTextToLines(rawTitle, titleMaxChars, titleMaxLines);
 
     let thumbBase64 = null;
     if (course.imageUrl) {
-      thumbBase64 = await fetchImageAsBase64(course.imageUrl);
+      thumbBase64 = await fetchImageAsBase64(course.imageUrl, {
+        timeout: 8000,
+        referer: 'https://cursa.app/',
+      });
     }
 
     const fontCss = getEmbeddedFontFaceCss();
 
-    const titleStartY = 230;
-    const titleLineHeight = 72;
+    const titleStartY = 280;
     const titleSvg = titleLines
       .map(
         (line, i) =>
-          `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="60" font-weight="bold" fill="#ffffff">${escapeXml(line)}</text>`
+          `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="${titleFontSize}" font-weight="bold" fill="#ffffff">${escapeXml(line)}</text>`
       )
       .join('\n  ');
 
-    const tagline = `Free ${feedLabel} Course`;
+    const tagline = `Free ${feedLabel} Course`.toUpperCase();
     const categoryLabel = course.category && course.category !== feedLabel ? course.category : null;
+
+    // Combined label rendered as plain colored text (no pill collisions).
+    const labelLine = categoryLabel
+      ? `${tagline}  ·  ${categoryLabel.toUpperCase()}`
+      : tagline;
+    // Truncate the label if it's somehow huge (defensive — keeps it inside the column).
+    const labelDisplay = labelLine.length > 56 ? labelLine.slice(0, 55) + '…' : labelLine;
+
+    // Pick a safe Unicode glyph for the placeholder (DejaVu covers these).
+    const placeholderGlyphByFeed = {
+      technology: '⚙',
+      business: '★',
+      languages: '✦',
+    };
+    const placeholderGlyph = placeholderGlyphByFeed[course.feed] || '✦';
+    const placeholderLabel = (course.feed || 'free').toUpperCase();
 
     const svg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
@@ -513,6 +550,10 @@ router.get('/free-course', async (req, res) => {
     <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#3b82f6"/>
       <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="thumbFallback" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${accent};stop-opacity:0.22"/>
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.18"/>
     </linearGradient>
     <clipPath id="thumbClip">
       <rect x="80" y="180" width="360" height="270" rx="20"/>
@@ -545,20 +586,18 @@ router.get('/free-course', async (req, res) => {
   <text x="1120" y="125" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="end">Free Online Courses</text>
 
   <!-- Course thumbnail (left side) -->
-  <rect x="80" y="180" width="360" height="270" rx="20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
   ${thumbBase64
-    ? `<image x="80" y="180" width="360" height="270" href="${thumbBase64}" clip-path="url(#thumbClip)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<text x="260" y="320" ${ogFontAttr()} font-size="36" font-weight="bold" fill="rgba(255,255,255,0.15)" text-anchor="middle">${escapeXml(feedLabel.split(' ')[0].toUpperCase())}</text>`}
+    ? `<rect x="80" y="180" width="360" height="270" rx="20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+       <image x="80" y="180" width="360" height="270" href="${thumbBase64}" clip-path="url(#thumbClip)" preserveAspectRatio="xMidYMid slice"/>
+       <rect x="80" y="180" width="360" height="270" rx="20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`
+    : `<rect x="80" y="180" width="360" height="270" rx="20" fill="url(#thumbFallback)" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+       <text x="260" y="305" ${ogFontAttr()} font-size="84" font-weight="bold" fill="${accent}" opacity="0.85" text-anchor="middle">${placeholderGlyph}</text>
+       <text x="260" y="365" ${ogFontAttr()} font-size="22" font-weight="bold" fill="rgba(255,255,255,0.85)" text-anchor="middle">${escapeXml(placeholderLabel)}</text>
+       <text x="260" y="395" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="middle">FREE COURSE</text>`}
 
-  <!-- Tagline pill -->
-  <rect x="500" y="170" width="${tagline.length * 11 + 50}" height="34" rx="17" fill="${accent}" opacity="0.18"/>
-  <circle cx="520" cy="187" r="5" fill="${accent}"/>
-  <text x="535" y="193" ${ogFontAttr()} font-size="16" font-weight="bold" fill="${accent}">${escapeXml(tagline.toUpperCase())}</text>
-
-  ${categoryLabel
-    ? `<rect x="${500 + tagline.length * 11 + 65}" y="170" width="${categoryLabel.length * 10 + 28}" height="34" rx="17" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-       <text x="${500 + tagline.length * 11 + 79}" y="193" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.85)">${escapeXml(categoryLabel)}</text>`
-    : ''}
+  <!-- Combined feed + category label (single line, plain text — no overlap) -->
+  <text x="500" y="200" ${ogFontAttr()} font-size="18" font-weight="bold" fill="${accent}" letter-spacing="2">${escapeXml(labelDisplay)}</text>
+  <rect x="500" y="215" width="60" height="3" rx="1.5" fill="${accent}" opacity="0.85"/>
 
   <!-- Headline (course title) -->
   ${titleSvg}
