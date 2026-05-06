@@ -7,7 +7,7 @@ const freeCourseSchema = new mongoose.Schema(
     feed: {
       type: String,
       required: true,
-      enum: ['technology', 'business'],
+      enum: ['technology', 'business', 'languages'],
       index: true,
     },
     // More granular topical bucket derived from the title (Programming, Web Dev, AI & Data,

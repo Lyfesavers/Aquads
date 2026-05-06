@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  FaPlayCircle,
+  FaGraduationCap,
+  FaPenSquare,
+  FaNewspaper,
+  FaBookOpen,
+  FaChalkboardTeacher,
+  FaChevronLeft,
+  FaChevronRight,
+  FaBars,
+  FaTimes,
+} from 'react-icons/fa';
 import BlogList from './BlogList';
 import MarketNewsList from './MarketNewsList';
 import FreeCoursesList from './FreeCoursesList';
@@ -24,6 +36,67 @@ import {
 const MARKET_NEWS_PAGE_SIZE = 20;
 const FREE_COURSES_PAGE_SIZE = 24;
 
+// Side panel definition for the Learn page. Order here = order in the sidebar.
+const LEARN_TABS = [
+  {
+    id: 'videos',
+    label: 'Video Tutorials',
+    short: 'Videos',
+    description: 'Watch step-by-step tutorials covering every Aquads feature.',
+    icon: FaPlayCircle,
+    activeClass: 'bg-blue-500/15 text-blue-300 border-blue-400/40',
+    iconClass: 'text-blue-300',
+  },
+  {
+    id: 'tests',
+    label: 'Skills Tests',
+    short: 'Tests',
+    description: 'Take short skill assessments and earn verified badges.',
+    icon: FaGraduationCap,
+    activeClass: 'bg-amber-500/15 text-amber-200 border-amber-400/40',
+    iconClass: 'text-amber-300',
+  },
+  {
+    id: 'blogs',
+    label: 'Blog Posts',
+    short: 'Blogs',
+    description: 'Read the latest articles from the Aquads community.',
+    icon: FaPenSquare,
+    activeClass: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/40',
+    iconClass: 'text-emerald-300',
+  },
+  {
+    id: 'news',
+    label: 'Market News',
+    short: 'News',
+    description: 'Curated headlines from CoinDesk and Sky News.',
+    icon: FaNewspaper,
+    activeClass: 'bg-orange-500/15 text-orange-200 border-orange-400/40',
+    iconClass: 'text-orange-300',
+  },
+  {
+    id: 'free-courses',
+    label: 'Free Online Courses',
+    short: 'Courses',
+    description: 'Hand-picked free certificate courses from cursa.app.',
+    icon: FaBookOpen,
+    badge: 'New',
+    activeClass: 'bg-sky-500/15 text-sky-200 border-sky-400/40',
+    iconClass: 'text-sky-300',
+  },
+  {
+    id: 'workshop',
+    label: 'Freelancer Workshop',
+    short: 'Workshop',
+    description: 'Interactive freelancer training with quizzes and progress tracking.',
+    icon: FaChalkboardTeacher,
+    activeClass: 'bg-gradient-to-r from-purple-500/25 to-pink-500/15 text-pink-200 border-pink-400/40',
+    iconClass: 'text-pink-300',
+  },
+];
+
+const VALID_TAB_IDS = LEARN_TABS.map((t) => t.id);
+
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
@@ -35,10 +108,19 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [selectedTutorialId, setSelectedTutorialId] = useState(
     () => TUTORIAL_VIDEOS[0]?.id ?? null
   );
-  // Initialize activeTab from sessionStorage or default to 'videos'
+  // Initialize activeTab from sessionStorage or default to 'videos'.
+  // Validate against the known tab list so a stale storage value can't render an empty page.
   const [activeTab, setActiveTab] = useState(() => {
-    return sessionStorage.getItem('learnActiveTab') || 'videos';
+    const stored = sessionStorage.getItem('learnActiveTab');
+    return stored && VALID_TAB_IDS.includes(stored) ? stored : 'videos';
   });
+  // Desktop side panel collapse (icon-only) — persisted across sessions in localStorage.
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('learnSidebarCollapsed') === 'true';
+  });
+  // Mobile slide-in drawer for the side panel.
+  const [isLearnNavOpen, setIsLearnNavOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -88,6 +170,35 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   useEffect(() => {
     sessionStorage.setItem('learnActiveTab', activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('learnSidebarCollapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
+  // Lock body scroll while the mobile drawer is open and close it on Esc.
+  useEffect(() => {
+    if (!isLearnNavOpen) return undefined;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') setIsLearnNavOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isLearnNavOpen]);
+
+  const handleSelectTab = (id) => {
+    setActiveTab(id);
+    setIsLearnNavOpen(false);
+  };
+
+  const activeTabMeta = LEARN_TABS.find((t) => t.id === activeTab) || LEARN_TABS[0];
+  // Capitalize so JSX treats it as a component (rather than a lowercase HTML tag)
+  const ActiveTabIcon = activeTabMeta.icon;
 
   useEffect(() => {
     if (activeTab !== 'news') return undefined;
@@ -725,80 +836,146 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         </div>
       </nav>
 
-              <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 pt-16 sm:pt-20">
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-blue-400">How To Guide</h1>
-          <p className="text-gray-400 text-base sm:text-lg px-2">
-            Learn how to make the most of Aquads with our video tutorials, skills tests, community blog posts, and curated
-            market headlines
-          </p>
+      {/* Mobile-only floating button to open the side panel drawer */}
+      <button
+        type="button"
+        onClick={() => setIsLearnNavOpen(true)}
+        className="lg:hidden fixed top-[68px] sm:top-[76px] left-3 z-[150] inline-flex items-center gap-2 rounded-lg bg-gray-800/95 hover:bg-gray-700 border border-white/10 text-blue-300 px-3 py-2 shadow-lg backdrop-blur"
+        aria-label="Open Learn navigation"
+      >
+        <FaBars className="w-3.5 h-3.5" />
+        <span className="text-xs font-semibold">{activeTabMeta.short}</span>
+      </button>
+
+      {/* Mobile backdrop */}
+      {isLearnNavOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/65 backdrop-blur-sm z-[180]"
+          onClick={() => setIsLearnNavOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* Side panel — fixed below the top nav, doubles as a slide-in drawer on mobile */}
+      <aside
+        className={`fixed left-0 top-14 sm:top-16 bottom-0 z-[190] bg-gray-900/95 backdrop-blur-md border-r border-white/5 shadow-2xl shadow-black/40 flex flex-col transition-all duration-300 ease-in-out
+          w-72 max-w-[80vw]
+          ${isLearnNavOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+          ${isSidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}
+        aria-label="Learn sections"
+      >
+        {/* Sidebar header — title on mobile + expanded desktop, hidden when collapsed */}
+        <div
+          className={`flex items-center justify-between gap-2 px-4 py-4 border-b border-white/5 ${
+            isSidebarCollapsed ? 'lg:justify-center lg:px-2' : ''
+          }`}
+        >
+          <div className={`min-w-0 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Aquads</p>
+            <p className="text-base font-bold text-white truncate">Learn Center</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsLearnNavOpen(false)}
+            className="lg:hidden text-gray-400 hover:text-white p-1.5 rounded hover:bg-white/5"
+            aria-label="Close Learn navigation"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="bg-gray-800/50 rounded-lg p-1 flex flex-wrap justify-center gap-1 max-w-full overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('videos')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'videos'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Video Tutorials
-            </button>
-            <button
-              onClick={() => setActiveTab('tests')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'tests'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Skills Tests
-            </button>
-            <button
-              onClick={() => setActiveTab('blogs')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'blogs'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Blog Posts
-            </button>
-            <button
-              onClick={() => setActiveTab('news')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'news'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Market news
-            </button>
-            <button
-              onClick={() => setActiveTab('free-courses')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'free-courses'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Free Online Courses
-            </button>
-            <button
-              onClick={() => setActiveTab('workshop')}
-              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
-                activeTab === 'workshop'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              🎓 Freelancer Workshop
-            </button>
-          </div>
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1" aria-label="Learn tabs">
+          {LEARN_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSelectTab(tab.id)}
+                title={isSidebarCollapsed ? tab.label : undefined}
+                className={`group w-full flex items-center gap-3 rounded-lg border transition-all text-left
+                  ${isSidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-3' : ''}
+                  px-3 py-2.5
+                  ${
+                    isActive
+                      ? `${tab.activeClass} shadow-inner shadow-black/20`
+                      : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive ? tab.iconClass : 'text-gray-500 group-hover:text-gray-300'
+                  }`}
+                />
+                <span className={`flex-1 min-w-0 text-sm font-semibold truncate ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+                  {tab.label}
+                </span>
+                {tab.badge ? (
+                  <span
+                    className={`text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5 bg-blue-500/25 text-blue-200 border border-blue-400/30 ${
+                      isSidebarCollapsed ? 'lg:hidden' : ''
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Desktop-only collapse / expand toggle */}
+        <div className="hidden lg:flex items-center justify-end px-2 py-3 border-t border-white/5">
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed((v) => !v)}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white px-2.5 py-1.5 rounded-md hover:bg-white/5 transition-colors"
+            aria-label={isSidebarCollapsed ? 'Expand side panel' : 'Collapse side panel'}
+            title={isSidebarCollapsed ? 'Expand' : 'Collapse'}
+          >
+            {isSidebarCollapsed ? (
+              <FaChevronRight className="w-3 h-3" />
+            ) : (
+              <>
+                <FaChevronLeft className="w-3 h-3" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
         </div>
+      </aside>
+
+      {/* Main content shifts right to accommodate the desktop side panel */}
+      <main
+        className={`pt-14 sm:pt-16 transition-[padding] duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
+        }`}
+      >
+        <div className="px-3 sm:px-4 lg:px-8 py-6 sm:py-8 pt-12 sm:pt-10 max-w-6xl mx-auto">
+          {/* Per-tab header — replaces the old generic page intro */}
+          <header className="mb-6 sm:mb-8 flex items-start gap-3 sm:gap-4">
+            <span
+              className={`hidden sm:inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl border bg-gray-900/70 ${activeTabMeta.activeClass}`}
+              aria-hidden
+            >
+              <ActiveTabIcon className={`w-5 h-5 ${activeTabMeta.iconClass}`} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-gray-500">
+                Aquads Learn
+              </p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                {activeTabMeta.label}
+              </h1>
+              <p className="text-gray-400 text-sm sm:text-base mt-1.5 max-w-3xl">
+                {activeTabMeta.description}
+              </p>
+            </div>
+          </header>
 
         {/* Content based on active tab */}
         {activeTab === 'videos' && (
@@ -1144,7 +1321,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             onProfileUpdate={() => {}}
           />
         )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

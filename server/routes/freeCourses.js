@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const FreeCourse = require('../models/FreeCourse');
 
-const VALID_FEEDS = ['technology', 'business'];
+const VALID_FEEDS = ['technology', 'business', 'languages'];
 
 // GET /api/free-courses
 //   Query: ?feed=technology|business|all (default all)

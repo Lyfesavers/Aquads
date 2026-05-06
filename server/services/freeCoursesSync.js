@@ -14,6 +14,11 @@ const FEEDS = [
     label: 'Business & Marketing',
     url: 'https://rss.app/feeds/8QEP43MOqJ0G3YvT.xml',
   },
+  {
+    feed: 'languages',
+    label: 'Languages',
+    url: 'https://rss.app/feeds/nEXXzSZBaIDgTV44.xml',
+  },
 ];
 
 const parser = new Parser({
@@ -108,7 +113,10 @@ function itemPublishedAt(item) {
 
 // Keyword-based topical classifier. The RSS feeds don't expose categories per item,
 // so we infer one from the course title. Order matters — first match wins.
-const CATEGORY_RULES = [
+// Rules are scoped per feed to avoid cross-feed false positives (e.g. "java" in a
+// programming course shouldn't be tagged as Japanese in the languages feed and
+// vice-versa).
+const TECH_BUSINESS_RULES = [
   { category: 'AI & Data Science', keywords: ['ai essentials', 'artificial intelligence', 'machine learning', 'tensorflow', 'data science', 'computational thinking', 'neural'] },
   { category: 'Cybersecurity', keywords: ['cyber security', 'cybersecurity', 'systems security', 'security', 'ethical hacking'] },
   { category: 'Mobile Development', keywords: ['android', 'ios ', 'react native', 'flutter', 'kotlin', 'swift'] },
@@ -127,13 +135,35 @@ const CATEGORY_RULES = [
   { category: 'Management & HR', keywords: ['human resource', 'hr ', 'management', 'leadership', 'purchasing'] },
 ];
 
+// Sign Language is checked first so it doesn't get swallowed by the broader
+// English/etc. matchers. Each language gets its own category for filter chips.
+const LANGUAGE_RULES = [
+  { category: 'Sign Language', keywords: ['sign language', ' asl ', 'asl '] },
+  { category: 'English', keywords: ['english'] },
+  { category: 'Spanish', keywords: ['spanish'] },
+  { category: 'French', keywords: ['french', 'tef', 'tcf'] },
+  { category: 'German', keywords: ['german'] },
+  { category: 'Japanese', keywords: ['japanese', 'jlpt'] },
+  { category: 'Korean', keywords: ['korean'] },
+  { category: 'Mandarin / Chinese', keywords: ['mandarin', 'chinese'] },
+  { category: 'Italian', keywords: ['italian'] },
+  { category: 'Portuguese', keywords: ['portuguese'] },
+  { category: 'Russian', keywords: ['russian'] },
+  { category: 'Polish', keywords: ['polish'] },
+  { category: 'Arabic', keywords: ['arabic'] },
+  { category: 'Dutch', keywords: ['dutch'] },
+  { category: 'Hindi', keywords: ['hindi'] },
+];
+
 function classifyCategory(title, feed) {
   const t = ` ${(title || '').toLowerCase()} `;
-  for (const rule of CATEGORY_RULES) {
+  const rules = feed === 'languages' ? LANGUAGE_RULES : TECH_BUSINESS_RULES;
+  for (const rule of rules) {
     if (rule.keywords.some((kw) => t.includes(kw))) {
       return rule.category;
     }
   }
+  if (feed === 'languages') return 'Other Languages';
   return feed === 'technology' ? 'Technology' : 'Business';
 }
 

@@ -5,16 +5,19 @@ import { FaShareAlt, FaExternalLinkAlt } from 'react-icons/fa';
 const FEED_LABEL = {
   technology: 'Technology',
   business: 'Business',
+  languages: 'Languages',
 };
 
 const FEED_ACCENT = {
   technology: 'from-sky-500/25 to-indigo-600/10 border-sky-500/30',
   business: 'from-emerald-500/25 to-teal-600/10 border-emerald-500/30',
+  languages: 'from-rose-500/25 to-fuchsia-600/10 border-rose-500/30',
 };
 
 const FEED_BADGE = {
   technology: 'bg-sky-500/15 text-sky-300 border-sky-400/30',
   business: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30',
+  languages: 'bg-rose-500/15 text-rose-200 border-rose-400/30',
 };
 
 const formatDate = (date) =>
@@ -186,6 +189,7 @@ const FreeCoursesList = ({
               { id: 'all', label: 'All feeds' },
               { id: 'technology', label: 'Technology & Programming' },
               { id: 'business', label: 'Business & Marketing' },
+              { id: 'languages', label: 'Languages' },
             ].map(({ id, label }) => {
               const active = feedFilter === id;
               return (

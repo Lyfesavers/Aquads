@@ -18,6 +18,7 @@ import { getDisplayName } from '../utils/nameUtils';
 const FEED_LABEL = {
   technology: 'Technology & Programming',
   business: 'Business & Marketing',
+  languages: 'Languages',
 };
 
 const formatDate = (date) =>
