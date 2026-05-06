@@ -766,12 +766,29 @@ router.get('/job', async (req, res) => {
       return loc.country || loc.city;
     })();
 
-    // Source attribution
+    // Source attribution at the bottom of the card. The hiring entity
+    // (company / poster) gets its own prominent line above the title (see
+    // hiringLine below), so the bottom attribution is just the syndication
+    // source for external boards and is omitted entirely for user posts.
     const sourceLabel = (() => {
       if (job.source === 'remotive' || job.source === 'himalayas') {
         return `via ${JOB_SOURCE_LABEL[job.source]}`;
       }
-      return job.ownerUsername ? `Posted by ${job.ownerUsername}` : '';
+      return '';
+    })();
+
+    // Hiring entity line shown right above the headline. For external boards
+    // (remotive / himalayas) the sync services store the COMPANY NAME in
+    // ownerUsername (see services/remotiveSync.js extractCompany()). For
+    // user-posted jobs ownerUsername is the literal poster handle, so we
+    // prefix it with "@" to disambiguate.
+    const rawHiringName = (job.ownerUsername || '').trim();
+    const hiringLine = (() => {
+      if (!rawHiringName) return '';
+      const isUserSource = !job.source || job.source === 'user';
+      const display = isUserSource ? `@${rawHiringName}` : rawHiringName;
+      // Cap at ~36 chars so it fits the 640px text column at 24px font.
+      return display.length > 36 ? display.slice(0, 35) + '…' : display;
     })();
 
     // Top-right context line: arrangement + location (or just arrangement)
@@ -782,15 +799,17 @@ router.get('/job', async (req, res) => {
     const contextLine = contextBits.join('  ·  ');
     const contextDisplay = contextLine.length > 56 ? contextLine.slice(0, 55) + '…' : contextLine;
 
-    // Auto-fit the title — same staircase as free-course OG.
+    // Auto-fit the title — slightly tighter than the free-course staircase
+    // because the job card carries an extra hiring-entity line above the
+    // headline, leaving less vertical room before the pay/CTA row at Y≈465.
     const rawTitle = (job.title || '').trim();
     let titleFontSize, titleMaxChars, titleMaxLines, titleLineHeight;
     if (rawTitle.length <= 28) {
-      titleFontSize = 56; titleMaxChars = 22; titleMaxLines = 2; titleLineHeight = 66;
+      titleFontSize = 52; titleMaxChars = 22; titleMaxLines = 2; titleLineHeight = 60;
     } else if (rawTitle.length <= 60) {
-      titleFontSize = 46; titleMaxChars = 26; titleMaxLines = 3; titleLineHeight = 56;
+      titleFontSize = 42; titleMaxChars = 28; titleMaxLines = 3; titleLineHeight = 50;
     } else {
-      titleFontSize = 38; titleMaxChars = 32; titleMaxLines = 4; titleLineHeight = 48;
+      titleFontSize = 34; titleMaxChars = 34; titleMaxLines = 3; titleLineHeight = 42;
     }
     const titleLines = wrapTextToLines(rawTitle, titleMaxChars, titleMaxLines);
 
@@ -812,7 +831,9 @@ router.get('/job', async (req, res) => {
 
     const fontCss = getEmbeddedFontFaceCss();
 
-    const titleStartY = 280;
+    // Title starts further down than the course OG to leave room for the
+    // hiring-entity line at Y=248. titleStartY is the baseline of line 1.
+    const titleStartY = 300;
     const titleSvg = titleLines
       .map(
         (line, i) =>
@@ -903,6 +924,11 @@ router.get('/job', async (req, res) => {
   <!-- Context line (arrangement · location) -->
   <text x="500" y="200" ${ogFontAttr()} font-size="18" font-weight="bold" fill="${accent}" letter-spacing="2">${escapeXml(contextDisplay)}</text>
   <rect x="500" y="215" width="60" height="3" rx="1.5" fill="${accent}" opacity="0.85"/>
+
+  <!-- Hiring entity (company name for external boards, @username for user posts) -->
+  ${hiringLine
+    ? `<text x="500" y="248" ${ogFontAttr()} font-size="22" font-weight="bold" fill="rgba(255,255,255,0.78)">${escapeXml(hiringLine)}</text>`
+    : ''}
 
   <!-- Headline (job title) -->
   ${titleSvg}
