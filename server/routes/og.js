@@ -110,6 +110,11 @@ function escapeXml(str) {
 }
 
 // Fetch and convert image to base64
+// IMPORTANT: librsvg (used by Sharp to rasterise SVG) only decodes PNG/JPEG inside
+// <image href="data:..."> — it CANNOT handle WebP/AVIF/GIF. Cursa, Cloudflare image
+// proxies, and many modern hosts serve WebP by default, which silently renders as a
+// blank box. Pass `normalize: true` to first re-encode the fetched bytes through
+// Sharp into a PNG (or fitted PNG) so the embedded image always paints.
 async function fetchImageAsBase64(url, options = {}) {
   try {
     const response = await axios.get(url, {
@@ -125,8 +130,32 @@ async function fetchImageAsBase64(url, options = {}) {
       maxRedirects: 5,
       validateStatus: (s) => s >= 200 && s < 400,
     });
-    const base64 = Buffer.from(response.data).toString('base64');
-    const contentType = response.headers['content-type'] || 'image/png';
+
+    let buffer = Buffer.from(response.data);
+    let contentType = (response.headers['content-type'] || '').split(';')[0].trim() || 'image/png';
+
+    if (options.normalize) {
+      // Re-encode through Sharp → PNG so librsvg can definitely decode it.
+      // Optional fit: { width, height, fit } resizes server-side to keep payload small.
+      try {
+        let pipeline = sharp(buffer, { failOn: 'none' });
+        if (options.fit && options.fit.width && options.fit.height) {
+          pipeline = pipeline.resize({
+            width: options.fit.width,
+            height: options.fit.height,
+            fit: options.fit.fit || 'cover',
+            position: 'center',
+          });
+        }
+        buffer = await pipeline.png().toBuffer();
+        contentType = 'image/png';
+      } catch (normErr) {
+        console.error('Image normalize failed, using raw bytes:', normErr.message);
+        // fall through with original buffer/contentType
+      }
+    }
+
+    const base64 = buffer.toString('base64');
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
     console.error('Failed to fetch image:', url, '→', error.message);
@@ -502,6 +531,11 @@ router.get('/free-course', async (req, res) => {
       thumbBase64 = await fetchImageAsBase64(course.imageUrl, {
         timeout: 8000,
         referer: 'https://cursa.app/',
+        // Re-encode through Sharp → PNG so librsvg can render it (WebP from cursa
+        // would otherwise silently fail), and pre-fit to the thumbnail slot to
+        // keep the embedded data URL small.
+        normalize: true,
+        fit: { width: 720, height: 540, fit: 'cover' },
       });
     }
 

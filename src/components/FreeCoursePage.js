@@ -378,7 +378,7 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
   // Branded server-side OG image (course title headline + Start Free Course CTA
   // + Cursa attribution baked in). The image itself is the single source-credit
   // surface — keep meta-tag text clean.
-  const ogImageUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://www.aquads.xyz'}/og/course-card?slug=${encodeURIComponent(course.slug)}&ogv=2`;
+  const ogImageUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://www.aquads.xyz'}/og/course-card?slug=${encodeURIComponent(course.slug)}&ogv=3`;
   const ogDescription = (course.description || course.title).slice(0, 200);
   const titleWithSuffix = `${course.title} — Free ${FEED_LABEL[course.feed] || 'Course'} on Aquads`;
   const ogImageAlt = `${course.title} — Free Course on Aquads`;
