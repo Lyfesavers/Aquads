@@ -46,6 +46,7 @@ const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
+const { syncFreeCourses } = require('./services/freeCoursesSync');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
@@ -552,6 +553,19 @@ setTimeout(async () => {
   }
 }, 50000);
 
+// Free online courses (Cursa.app via rss.app feeds): boot-only sync.
+// Course content is evergreen (titles/descriptions don't change) and we never
+// prune, so we only need to ingest once per server start. To pick up newly
+// added courses from the feed, redeploy / restart the server.
+setTimeout(async () => {
+  try {
+    console.log('[FreeCourses Sync] Running initial sync on server start...');
+    await syncFreeCourses();
+  } catch (error) {
+    console.error('[FreeCourses Sync] Error in initial sync:', error);
+  }
+}, 55000);
+
 // Middleware
 const corsOptions = {
   origin: function (origin, callback) {
@@ -786,6 +800,7 @@ app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
 app.use('/api/market-news', require('./routes/marketNews'));
+app.use('/api/free-courses', require('./routes/freeCourses'));
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));

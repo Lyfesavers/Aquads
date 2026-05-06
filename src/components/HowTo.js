@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import MarketNewsList from './MarketNewsList';
+import FreeCoursesList from './FreeCoursesList';
 import CreateBlogModal from './CreateBlogModal';
 import SkillTests from './SkillTests';
 import FreelancerWorkshop from './FreelancerWorkshop';
@@ -11,7 +12,7 @@ import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
-import { API_URL, fetchMarketNews } from '../services/api';
+import { API_URL, fetchMarketNews, fetchFreeCourses } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 import {
   TUTORIAL_VIDEOS,
@@ -21,6 +22,7 @@ import {
 } from '../data/tutorialVideos';
 
 const MARKET_NEWS_PAGE_SIZE = 20;
+const FREE_COURSES_PAGE_SIZE = 24;
 
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
@@ -54,6 +56,19 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [marketNewsPage, setMarketNewsPage] = useState(1);
   const [isLoadingMoreMarketNews, setIsLoadingMoreMarketNews] = useState(false);
   const [marketNewsSourceFilter, setMarketNewsSourceFilter] = useState('all');
+
+  // Free online courses tab state
+  const [freeCoursesItems, setFreeCoursesItems] = useState([]);
+  const [freeCoursesCategories, setFreeCoursesCategories] = useState([]);
+  const [freeCoursesPagination, setFreeCoursesPagination] = useState(null);
+  const [freeCoursesLoading, setFreeCoursesLoading] = useState(false);
+  const [freeCoursesError, setFreeCoursesError] = useState(null);
+  const [freeCoursesPage, setFreeCoursesPage] = useState(1);
+  const [isLoadingMoreFreeCourses, setIsLoadingMoreFreeCourses] = useState(false);
+  const [freeCoursesFeed, setFreeCoursesFeed] = useState('all');
+  const [freeCoursesCategory, setFreeCoursesCategory] = useState('all');
+  const [freeCoursesSearch, setFreeCoursesSearch] = useState('');
+  const [freeCoursesSearchDebounced, setFreeCoursesSearchDebounced] = useState('');
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -102,6 +117,77 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       cancelled = true;
     };
   }, [activeTab, marketNewsSourceFilter]);
+
+  // Debounce search input so we don't fire a request on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setFreeCoursesSearchDebounced(freeCoursesSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [freeCoursesSearch]);
+
+  // Whenever we're on the free-courses tab AND any of the filters change, reload page 1.
+  useEffect(() => {
+    if (activeTab !== 'free-courses') return undefined;
+    let cancelled = false;
+    (async () => {
+      setFreeCoursesLoading(true);
+      setFreeCoursesError(null);
+      setFreeCoursesPage(1);
+      setFreeCoursesPagination(null);
+      try {
+        const data = await fetchFreeCourses({
+          page: 1,
+          limit: FREE_COURSES_PAGE_SIZE,
+          feed: freeCoursesFeed,
+          category: freeCoursesCategory,
+          search: freeCoursesSearchDebounced,
+        });
+        if (cancelled) return;
+        setFreeCoursesItems(data.items || []);
+        setFreeCoursesCategories(data.categories || []);
+        setFreeCoursesPagination(data.pagination || null);
+      } catch (e) {
+        if (!cancelled) {
+          setFreeCoursesError(e.message || 'Failed to load free courses');
+          setFreeCoursesItems([]);
+          setFreeCoursesPagination(null);
+        }
+      } finally {
+        if (!cancelled) setFreeCoursesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, freeCoursesFeed, freeCoursesCategory, freeCoursesSearchDebounced]);
+
+  const handleLoadMoreFreeCourses = async () => {
+    if (!freeCoursesPagination?.hasMore || isLoadingMoreFreeCourses) return;
+    try {
+      setIsLoadingMoreFreeCourses(true);
+      const nextPage = freeCoursesPage + 1;
+      const data = await fetchFreeCourses({
+        page: nextPage,
+        limit: FREE_COURSES_PAGE_SIZE,
+        feed: freeCoursesFeed,
+        category: freeCoursesCategory,
+        search: freeCoursesSearchDebounced,
+      });
+      setFreeCoursesItems((prev) => [...prev, ...(data.items || [])]);
+      setFreeCoursesPagination(data.pagination || null);
+      setFreeCoursesPage(nextPage);
+    } catch (e) {
+      setFreeCoursesError(e.message || 'Failed to load more courses');
+    } finally {
+      setIsLoadingMoreFreeCourses(false);
+    }
+  };
+
+  // Switching the high-level feed filter should reset the secondary category filter
+  // so users don't end up looking at an empty set.
+  const handleChangeFreeCoursesFeed = (id) => {
+    setFreeCoursesFeed(id);
+    setFreeCoursesCategory('all');
+  };
 
   const handleLoadMoreMarketNews = async () => {
     if (!marketNewsPagination?.hasMore || isLoadingMoreMarketNews) return;
@@ -359,7 +445,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
         <title>How To Guide - Aquads</title>
-        <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
+        <meta name="description" content="Learn how to use Aquads with video tutorials, skill tests, community blog posts, market headlines, and a curated library of free online courses with certificates" />
         <link rel="canonical" href={`${window.location.origin}${location.pathname.split('?')[0]}`} />
       </Helmet>
 
@@ -692,6 +778,16 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               Market news
             </button>
             <button
+              onClick={() => setActiveTab('free-courses')}
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === 'free-courses'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Free Online Courses
+            </button>
+            <button
               onClick={() => setActiveTab('workshop')}
               className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'workshop'
@@ -880,6 +976,40 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 isLoadingMore={isLoadingMoreMarketNews}
               />
             )}
+          </div>
+        )}
+
+        {activeTab === 'free-courses' && (
+          <div className="mt-12 sm:mt-16">
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-400">Free Online Courses</h2>
+              <p className="text-gray-400 text-sm mt-2 max-w-3xl">
+                Hand-picked free online courses with certificates from cursa.app — covering programming,
+                AI, web dev, marketing, finance and more. Filter by category, share with friends, and
+                jump straight into the lessons.
+              </p>
+            </div>
+
+            {freeCoursesError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
+                {freeCoursesError}
+              </div>
+            )}
+
+            <FreeCoursesList
+              items={freeCoursesItems}
+              categories={freeCoursesCategories}
+              feedFilter={freeCoursesFeed}
+              onChangeFeedFilter={handleChangeFreeCoursesFeed}
+              categoryFilter={freeCoursesCategory}
+              onChangeCategoryFilter={setFreeCoursesCategory}
+              search={freeCoursesSearch}
+              onChangeSearch={setFreeCoursesSearch}
+              loading={freeCoursesLoading}
+              pagination={freeCoursesPagination}
+              onLoadMore={handleLoadMoreFreeCourses}
+              isLoadingMore={isLoadingMoreFreeCourses}
+            />
           </div>
         )}
 

@@ -1243,6 +1243,42 @@ export const fetchMarketNews = async (page = 1, limit = 20, source = 'all') => {
   }
 };
 
+export const fetchFreeCourses = async ({ page = 1, limit = 24, feed = 'all', category = 'all', search = '' } = {}) => {
+  try {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (feed && feed !== 'all') params.set('feed', feed);
+    if (category && category !== 'all') params.set('category', category);
+    if (search) params.set('search', search);
+    const response = await fetch(`${API_URL}/free-courses?${params.toString()}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch free courses');
+    }
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching free courses:', error);
+    throw error;
+  }
+};
+
+export const fetchFreeCourse = async (slug) => {
+  try {
+    const response = await fetch(`${API_URL}/free-courses/${encodeURIComponent(slug)}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch course');
+    }
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching free course:', error);
+    throw error;
+  }
+};
+
 export const refreshJob = async (jobId, token) => {
   const response = await fetch(`${API_URL}/jobs/${jobId}/refresh`, {
     method: 'POST',

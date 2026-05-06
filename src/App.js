@@ -39,6 +39,7 @@ import { PWAInstallProvider } from './contexts/PWAInstallContext';
 import OnboardingSection from './components/OnboardingSection';
 const HowTo = lazy(() => import('./components/HowTo'));
 const BlogPage = lazy(() => import('./components/BlogPage'));
+const FreeCoursePage = lazy(() => import('./components/FreeCoursePage'));
 const Affiliate = lazy(() => import('./components/Affiliate'));
 const Terms = lazy(() => import('./components/Terms'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
@@ -3698,6 +3699,8 @@ function App() {
           } />
                       <Route path="/whitepaper" element={<Navigate to="/docs#wp-executive-summary" replace />} />
             <Route path="/learn" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />
+            <Route path="/learn/courses" element={<Navigate to="/learn" replace />} />
+            <Route path="/learn/courses/:slug" element={<FreeCoursePage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
                                  <Route path="/learn/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />
             <Route path="/share/blog/:id" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} ads={ads} />} />
             <Route path="/affiliate" element={<Affiliate />} />
