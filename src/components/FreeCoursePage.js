@@ -103,7 +103,10 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
 
   const handleShare = async () => {
     if (!course) return;
-    const url = `${window.location.origin}/learn/courses/${course.slug}`;
+    // Use the guaranteed share URL — Netlify edge function at /share/courses/:slug
+    // always renders rich Open Graph / Twitter Card meta for crawlers, then
+    // redirects real browsers back to the canonical /learn/courses/:slug page.
+    const url = `${window.location.origin}/share/courses/${course.slug}`;
     if (navigator.share) {
       try {
         await navigator.share({

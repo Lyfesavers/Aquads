@@ -167,7 +167,8 @@ const FreeCoursesList = ({
       onShare(course);
       return;
     }
-    const url = `${window.location.origin}/learn/courses/${course.slug}`;
+    // Guaranteed share URL — see FreeCoursePage.handleShare for full explanation.
+    const url = `${window.location.origin}/share/courses/${course.slug}`;
     if (navigator.share) {
       navigator
         .share({ title: course.title, text: course.description || course.title, url })

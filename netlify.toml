@@ -70,6 +70,23 @@
   function = "share-blog"
   path = "/share/blog/*"
 
+# GUARANTEED free-course share URL - ALWAYS prerenders (no User-Agent check)
+# Use this URL for sharing: /share/courses/:slug
+# Handled by Edge Function which reliably serves meta tags to all bots
+[[edge_functions]]
+  function = "share-free-course"
+  path = "/share/courses/*"
+
+# Canonical free course URLs (/learn/courses/:slug): crawlers should hit a course
+# prerender (NOT the blog one). Must be listed BEFORE the broader /learn/* rule
+# below — Netlify uses first-match-wins for redirects.
+[[redirects]]
+  from = "/learn/courses/*"
+  to = "/.netlify/functions/prerender-free-course"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
 # Canonical blog URLs (/learn/slug-id): Facebook/Telegram often re-fetch og:url and hit the SPA.
 # Serve prerendered HTML to crawlers so previews match Twitter/Open Graph debuggers.
 [[redirects]]
