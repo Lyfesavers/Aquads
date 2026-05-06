@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo, FaShare } from 'react-icons/fa';
 
 const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired, highlightedJobId, onHighlightComplete }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
@@ -72,6 +72,41 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
     }
     
     return cleaned.replace(/\n{3,}/g, '\n\n').trim();
+  };
+
+  const handleShareJob = (job) => {
+    // Use /share/job/:id so social crawlers (Twitter, Facebook, Telegram,
+    // Discord, WhatsApp, LinkedIn, Slack, etc.) get the OG meta tags from the
+    // Netlify edge function. Real browsers are redirected to the SPA listing.
+    const shareUrl = `${window.location.origin}/share/job/${job._id}`;
+    const finalUrl = currentUser?.username
+      ? `${shareUrl}?ref=${encodeURIComponent(currentUser.username)}`
+      : shareUrl;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: job.title,
+          text: job.description ? String(job.description).slice(0, 200) : job.title,
+          url: finalUrl,
+        })
+        .catch(() => {
+          fallbackCopy(finalUrl);
+        });
+      return;
+    }
+    fallbackCopy(finalUrl);
+  };
+
+  const fallbackCopy = (url) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        () => {
+          try { alert('Job link copied to clipboard!'); } catch (_) {}
+        },
+        () => {}
+      );
+    }
   };
 
   const handleEmailClick = (job) => {
@@ -248,7 +283,20 @@ Best regards,
                     Competitive
                   </div>
                 )}
-                
+
+                {/* Share button - available to everyone */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareJob(job);
+                  }}
+                  className="text-blue-400 hover:text-blue-300 transition-colors"
+                  title="Share job"
+                  aria-label={`Share ${job.title}`}
+                >
+                  <FaShare size={18} />
+                </button>
+
                 {currentUser && isUserJob(job) && (
                   <div className="flex space-x-2">
                     {/* Owner controls */}
@@ -327,66 +375,77 @@ Best regards,
               </div>
               
               {/* Mobile action buttons - shown at bottom on mobile */}
-              {currentUser && (isUserJob(job) || (currentUser.isAdmin && isExternalJobBoard(job))) && (
-                <div className="sm:hidden flex justify-end space-x-2">
-                  {isUserJob(job) && isJobOwner(currentUser.userId, job.owner) && (
-                    <>
-                      {job.status === 'expired' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRefreshJob(job._id);
-                          }}
-                          className="text-blue-500 hover:text-blue-400 transition-colors p-2"
-                          title="Refresh job"
-                        >
-                          <FaRedo size={16} />
-                        </button>
-                      )}
+              <div className="sm:hidden flex justify-end space-x-2">
+                {/* Share button - available to everyone */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareJob(job);
+                  }}
+                  className="text-blue-400 hover:text-blue-300 transition-colors p-2"
+                  title="Share job"
+                  aria-label={`Share ${job.title}`}
+                >
+                  <FaShare size={16} />
+                </button>
+
+                {currentUser && isUserJob(job) && isJobOwner(currentUser.userId, job.owner) && (
+                  <>
+                    {job.status === 'expired' && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onEditJob(job);
+                          onRefreshJob(job._id);
                         }}
                         className="text-blue-500 hover:text-blue-400 transition-colors p-2"
-                        title="Edit job"
+                        title="Refresh job"
                       >
-                        <FaEdit size={16} />
+                        <FaRedo size={16} />
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm('Are you sure you want to delete this job?')) {
-                            onDeleteJob(job._id);
-                          }
-                        }}
-                        className="text-red-500 hover:text-red-400 transition-colors p-2"
-                        title="Delete job"
-                      >
-                        <FaTrash size={16} />
-                      </button>
-                    </>
-                  )}
-                  
-                  {currentUser.isAdmin && (
-                    (isUserJob(job) && !isJobOwner(currentUser.userId, job.owner)) || 
-                    isExternalJobBoard(job)
-                  ) && (
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm('Are you sure you want to delete this job? (Admin action)')) {
+                        onEditJob(job);
+                      }}
+                      className="text-blue-500 hover:text-blue-400 transition-colors p-2"
+                      title="Edit job"
+                    >
+                      <FaEdit size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Are you sure you want to delete this job?')) {
                           onDeleteJob(job._id);
                         }
                       }}
                       className="text-red-500 hover:text-red-400 transition-colors p-2"
-                      title="Delete job (Admin)"
+                      title="Delete job"
                     >
                       <FaTrash size={16} />
                     </button>
-                  )}
-                </div>
-              )}
+                  </>
+                )}
+
+                {currentUser && currentUser.isAdmin && (
+                  (isUserJob(job) && !isJobOwner(currentUser.userId, job.owner)) ||
+                  isExternalJobBoard(job)
+                ) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this job? (Admin action)')) {
+                        onDeleteJob(job._id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-400 transition-colors p-2"
+                    title="Delete job (Admin)"
+                  >
+                    <FaTrash size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

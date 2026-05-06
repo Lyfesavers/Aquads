@@ -83,6 +83,13 @@
   function = "share-free-course"
   path = "/share/courses/*"
 
+# GUARANTEED job share URL - ALWAYS prerenders (no User-Agent check)
+# Use this URL for sharing: /share/job/:id
+# Handled by Edge Function which reliably serves meta tags to all bots
+[[edge_functions]]
+  function = "share-job"
+  path = "/share/job/*"
+
 # Canonical free course URLs (/learn/courses/:slug): crawlers should hit a course
 # prerender (NOT the blog one). Must be listed BEFORE the broader /learn/* rule
 # below — Netlify uses first-match-wins for redirects.

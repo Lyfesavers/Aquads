@@ -290,6 +290,85 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     }
   }, [services]);
 
+  // Handle shared job links (/marketplace?jobs=true&job=:id)
+  // Mirrors the shared-service handler above so /share/job/:id (Netlify edge
+  // function) redirects land on the jobs view with the right job pre-expanded.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jobsParam = params.get('jobs');
+    const sharedJobId = params.get('job');
+
+    if (jobsParam === 'true' || sharedJobId) {
+      setShowJobs(true);
+    }
+
+    if (!sharedJobId) return;
+
+    const jobInList = jobs.find((j) => j._id === sharedJobId);
+
+    const applyMetaTags = (job) => {
+      const dynamicTwitterImage = document.getElementById('dynamic-twitter-image');
+      const dynamicTwitterTitle = document.getElementById('dynamic-twitter-title');
+      const dynamicTwitterDesc = document.getElementById('dynamic-twitter-description');
+      const dynamicOgImage = document.getElementById('dynamic-og-image');
+      const dynamicOgTitle = document.getElementById('dynamic-og-title');
+      const dynamicOgDesc = document.getElementById('dynamic-og-description');
+      const dynamicOgUrl = document.getElementById('dynamic-og-url');
+
+      const stripHtml = (s) => (s ? String(s).replace(/<[^>]*>/g, '').trim() : '');
+      const desc = (stripHtml(job.description) || stripHtml(job.requirements) || '').slice(0, 200);
+      const titleSuffix = job.workArrangement ? `${job.workArrangement.charAt(0).toUpperCase()}${job.workArrangement.slice(1)} ` : '';
+      const fullTitle = `${job.title} — ${titleSuffix}Job on Aquads`;
+      const image = (job.source && job.source !== 'user' && job.companyLogo) || job.ownerImage || (job.owner && job.owner.image) || 'https://www.aquads.xyz/logo712.png';
+      const cleanUrl = `${window.location.origin}/marketplace?jobs=true&job=${sharedJobId}`;
+
+      if (dynamicTwitterImage) dynamicTwitterImage.content = image;
+      if (dynamicTwitterTitle) dynamicTwitterTitle.content = fullTitle;
+      if (dynamicTwitterDesc) dynamicTwitterDesc.content = desc;
+      if (dynamicOgImage) dynamicOgImage.content = image;
+      if (dynamicOgTitle) dynamicOgTitle.content = fullTitle;
+      if (dynamicOgDesc) dynamicOgDesc.content = desc;
+      if (dynamicOgUrl) dynamicOgUrl.content = cleanUrl;
+    };
+
+    if (jobInList) {
+      applyMetaTags(jobInList);
+      setHighlightedJobId(sharedJobId);
+      return;
+    }
+
+    // Job not in current page — fetch a larger batch so we can find and highlight it.
+    // Only run when jobs have loaded at least once (prevents racing with initial load).
+    if (jobs.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setIsLoading((prev) => ({ ...prev, jobs: true }));
+        const response = await fetchJobs(false, 1, 200);
+        if (cancelled) return;
+        const allJobs = response.jobs || response;
+        setJobs(allJobs);
+        setJobsPagination(response.pagination || null);
+        setJobsPage(1);
+        const found = allJobs.find((j) => j._id === sharedJobId);
+        if (found) {
+          applyMetaTags(found);
+          setHighlightedJobId(sharedJobId);
+        }
+      } catch (err) {
+        logger.error('Error loading jobs for shared link:', err);
+      } finally {
+        if (!cancelled) {
+          setIsLoading((prev) => ({ ...prev, jobs: false }));
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs.length]);
+
   // Add effect to handle modal parameter for opening create service modal
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

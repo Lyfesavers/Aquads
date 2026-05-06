@@ -183,6 +183,31 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get a single job by id (public — used by /share/job/:id edge function for OG meta tags)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || !/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).json({ error: 'Invalid job id' });
+    }
+
+    const job = await Job.findById(id)
+      .populate('owner', 'username image')
+      .lean();
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    if (!job.source) job.source = 'user';
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.json(job);
+  } catch (error) {
+    console.error('Error fetching job:', error);
+    return res.status(500).json({ error: 'Failed to fetch job' });
+  }
+});
+
 // Refresh expired job
 router.post('/:id/refresh', auth, async (req, res) => {
   try {
