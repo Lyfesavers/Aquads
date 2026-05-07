@@ -5096,7 +5096,7 @@ const Documentation = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           />
         )}
       </AnimatePresence>

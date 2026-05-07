@@ -570,9 +570,17 @@
   z-index: 0;
 }
 
-.doc-header,
-.doc-sidebar,
+/* Keep doc UI above decorative ::before (z-index: 0).
+   Sidebar + overlay must stack above scrollable main — do not unify z-index across these. */
 .doc-content {
   z-index: 1;
+}
+
+.doc-sidebar {
+  z-index: 40;
+}
+
+.doc-header {
+  z-index: 50;
 }
 
