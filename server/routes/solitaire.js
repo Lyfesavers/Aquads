@@ -56,6 +56,7 @@ async function recordWin(g, io) {
       result: 'Win',
       you: g.score,
       ai: elapsedSec,
+      moves: Math.max(0, Math.floor(Number(g.moves) || 0)),
       grid: gridLabel(g),
       difficulty: difficultyLabel(g),
     });
@@ -366,6 +367,7 @@ router.get('/leaderboard', async (req, res) => {
           username: 1,
           score: '$you',
           timeSec: '$ai',
+          moves: 1,
           mode: '$grid',
           difficulty: 1,
           createdAt: 1,

@@ -261,6 +261,9 @@ function LeaderboardPanel({
                 <span className="aqt-lb-name">{row.username}</span>
                 <span className="aqt-lb-meta">{row.score} pts</span>
                 <span className="aqt-lb-meta">{fmtTime(row.timeSec)}</span>
+                <span className="aqt-lb-meta">
+                  {row.moves != null ? `${row.moves} moves` : '—'}
+                </span>
               </li>
             );
           })}

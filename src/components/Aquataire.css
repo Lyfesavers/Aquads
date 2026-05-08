@@ -409,7 +409,7 @@
 }
 .aqt-lb-row {
   display: grid;
-  grid-template-columns: 24px 1fr auto auto;
+  grid-template-columns: 24px 1fr auto auto auto;
   gap: 8px; align-items: center;
   padding: 5px 7px;
   background: rgba(15, 23, 42, 0.55);

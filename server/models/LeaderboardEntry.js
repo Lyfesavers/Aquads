@@ -8,6 +8,8 @@ const LeaderboardEntrySchema = new mongoose.Schema(
     result: { type: String, enum: ['Win', 'Loss', 'Draw'], required: true },
     you: { type: Number, required: true, min: 0 },
     ai: { type: Number, required: true, min: 0 },
+    // Optional: e.g. Aquataire total moves on a winning game (not all games set this).
+    moves: { type: Number, min: 0 },
     grid: { type: String, required: true }, // e.g., "4x4"
     difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], required: true },
   },
