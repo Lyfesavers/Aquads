@@ -2332,6 +2332,14 @@
     gap: 8px;
   }
 
+  .header-brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+  }
+
   .header-center .aquaswap-logo {
     width: 30px;
     height: 30px;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LiFiWidget, useWidgetEvents, WidgetEvent, ChainId } from '@lifi/widget';
 import logger from '../utils/logger';
+import EtmTagline from './EtmTagline';
 import './AquaSwapEmbed.css';
 
 // Constants - using the same fee structure as the main swap
@@ -289,15 +290,18 @@ const AquaSwapEmbed = () => {
       {/* Compact header - only show if logo is not hidden */}
       {!embedOptions.hideLogo && (
         <div className="embed-header">
-          <div className="embed-title">
-            <img 
-              src="/AquaSwap.svg" 
-              alt="AquaSwap" 
-              className="embed-logo" 
-              width="20" 
-              height="20"
-            />
-            <span>AquaSwap</span>
+          <div className="embed-header-inner">
+            <div className="embed-title">
+              <img 
+                src="/AquaSwap.svg" 
+                alt="AquaSwap" 
+                className="embed-logo" 
+                width="20" 
+                height="20"
+              />
+              <span>AquaSwap</span>
+            </div>
+            <EtmTagline compact className="embed-etm-tagline" />
           </div>
         </div>
       )}

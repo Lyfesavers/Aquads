@@ -13,6 +13,7 @@ import { isValidDeepDiveIntroVideoUrl, normalizeDeepDiveVideoUrlCandidate } from
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
+import EtmTagline from './EtmTagline';
 import ShillTemplatesModal from './ShillTemplatesModal';
 import TradingSignals, { SIGNAL_TYPES } from './TradingSignals';
 import CurrencyConverter from './CurrencyConverter';
@@ -1775,9 +1776,12 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
                 width="28" 
                 height="28"
               />
-              <div className="header-title">
-                <h1>AquaSwap</h1>
-                <p className="header-subtitle">Cross-Chain BexTools</p>
+              <div className="header-brand-text">
+                <div className="header-title">
+                  <h1>AquaSwap</h1>
+                  <p className="header-subtitle">Cross-Chain BexTools</p>
+                </div>
+                <EtmTagline compact />
               </div>
             </div>
           </div>
@@ -1848,7 +1852,8 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             AquaSwap
           </h1>
           <p>The Ultimate Cross-Chain BexTools</p>
-          
+          <EtmTagline className="page-title-etm-tagline" />
+
           {/* Mobile Action Buttons */}
           <div className="header-buttons">
             <button 

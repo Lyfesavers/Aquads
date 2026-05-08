@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import './LandingPage.css';
 import HowItWorksSection from './HowItWorksSection';
+import EtmTagline from './EtmTagline';
 
 // Floating particle component
 const FloatingParticle = ({ delay, size, color, x, y }) => (
@@ -1792,6 +1793,10 @@ const CarouselCard = ({ feature, index }) => {
                   <br />
                   <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Cross-Chain BexTools & Trading</span>
                 </h2>
+
+                <div className="mb-4 flex justify-center lg:justify-start">
+                  <EtmTagline className="landing-etm-tagline" />
+                </div>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
                   Seamless token swapping across multiple chains with professional TradingView charts. Available as Chrome browser extension—swap tokens from any webpage instantly. Cross-chain bridging and professional trading tools.
