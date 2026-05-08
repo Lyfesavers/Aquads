@@ -446,40 +446,68 @@ const FREE_COURSE_FEED_ACCENT = {
   languages: '#fb7185', // rose-400
 };
 
-// Word-aware wrap so long titles render on up to N lines instead of overflowing.
+// Right edge of headline column (~x=500 ... ~1140). Char-only wrapping underestimated
+// DejaVu Sans Bold widths and caused clipped glyphs in the OG PNG.
+const FREE_COURSE_TEXT_RIGHT = 1136;
+const FREE_COURSE_HEADLINE_LEFT = 500;
+const FREE_COURSE_HEADLINE_WIDTH = FREE_COURSE_TEXT_RIGHT - FREE_COURSE_HEADLINE_LEFT;
+
+// Estimate how many Latin characters fit on one line given font-size (px units in SVG).
+// Conservative for embedded DejaVu Sans Bold (+ optional letter-spacing between glyphs).
+function estimateCharsPerSvgLine(columnWidthPx, fontSizePx, letterSpacingPx = 0, bold = true) {
+  // Conservative: Bold DejaVu Sans runs wider than ~0.55em averages (W, M, '&').
+  const multiplier = bold ? 0.62 : 0.53;
+  const avgGlyph = fontSizePx * multiplier;
+  const perChar = avgGlyph + letterSpacingPx;
+  if (perChar <= 0) return 12;
+  return Math.max(6, Math.floor((columnWidthPx + letterSpacingPx) / perChar));
+}
+
+// Word-aware wrap; splits tokens longer than maxCharsPerLine so nothing overflows horizontally.
 function wrapTextToLines(text, maxCharsPerLine, maxLines) {
-  const words = (text || '').split(/\s+/).filter(Boolean);
+  if (!maxLines || maxCharsPerLine < 6) return [];
+  const raw = (text || '').trim();
+  if (!raw) return [];
+
+  function splitWord(word) {
+    if (word.length <= maxCharsPerLine) return [word];
+    const parts = [];
+    for (let i = 0; i < word.length; i += maxCharsPerLine) {
+      parts.push(word.slice(i, i + maxCharsPerLine));
+    }
+    return parts;
+  }
+
+  const tokens = raw.split(/\s+/).filter(Boolean).flatMap(splitWord);
   const lines = [];
-  let current = '';
-  for (const word of words) {
-    if (lines.length === maxLines - 1 && (current + ' ' + word).length > maxCharsPerLine) {
-      // Last line — push current and start the final line, which we'll truncate later.
-      lines.push(current.trim());
-      current = word;
-      continue;
+  let ti = 0;
+  while (ti < tokens.length && lines.length < maxLines) {
+    let line = tokens[ti];
+    ti += 1;
+    while (
+      ti < tokens.length &&
+      `${line} ${tokens[ti]}`.length <= maxCharsPerLine
+    ) {
+      line = `${line} ${tokens[ti]}`;
+      ti += 1;
     }
-    if ((current + ' ' + word).trim().length <= maxCharsPerLine) {
-      current = (current + ' ' + word).trim();
+    lines.push(line);
+  }
+
+  if (ti < tokens.length && lines.length > 0) {
+    let last = lines[lines.length - 1];
+    const ell = '…';
+    last = last.replace(/\s*$/,'');
+    while (last.length + ell.length > maxCharsPerLine && last.length > 4) {
+      last = last.replace(/\s*\S*$/, '').trim();
+    }
+    if (last.length + ell.length <= maxCharsPerLine) {
+      lines[lines.length - 1] = `${last}${ell}`;
     } else {
-      lines.push(current.trim());
-      current = word;
-      if (lines.length >= maxLines) break;
+      lines[lines.length - 1] = last.slice(0, Math.max(1, maxCharsPerLine - ell.length)).trimEnd() + ell;
     }
   }
-  if (current && lines.length < maxLines) {
-    lines.push(current.trim());
-  }
-  // Truncate the last line with ellipsis if we ran out of room
-  if (lines.length === maxLines) {
-    const consumed = lines.join(' ').length;
-    const totalChars = (text || '').length;
-    if (consumed < totalChars - 4) {
-      const last = lines[maxLines - 1];
-      lines[maxLines - 1] = last.length > maxCharsPerLine - 1
-        ? last.slice(0, maxCharsPerLine - 1).replace(/\s+\S*$/, '') + '…'
-        : last + '…';
-    }
-  }
+
   return lines;
 }
 
@@ -513,16 +541,26 @@ router.get('/free-course', async (req, res) => {
     const feedLabel = FREE_COURSE_FEED_LABEL[course.feed] || 'Free Course';
     const accent = FREE_COURSE_FEED_ACCENT[course.feed] || '#38bdf8';
 
-    // Auto-fit the title: shrink font-size + tighten char budget for long titles
-    // so they never overflow the 640px-wide text column.
+    const colW = FREE_COURSE_HEADLINE_WIDTH;
+
+    // Auto-fit the title: shrink font-size; per-line capacity from estimated glyph width.
     const rawTitle = (course.title || '').trim();
     let titleFontSize, titleMaxChars, titleMaxLines, titleLineHeight;
     if (rawTitle.length <= 28) {
-      titleFontSize = 56; titleMaxChars = 22; titleMaxLines = 2; titleLineHeight = 66;
+      titleFontSize = 56;
+      titleMaxLines = 2;
+      titleLineHeight = 62;
+      titleMaxChars = estimateCharsPerSvgLine(colW, titleFontSize);
     } else if (rawTitle.length <= 60) {
-      titleFontSize = 46; titleMaxChars = 26; titleMaxLines = 3; titleLineHeight = 56;
+      titleFontSize = 46;
+      titleMaxLines = 3;
+      titleLineHeight = 52;
+      titleMaxChars = estimateCharsPerSvgLine(colW, titleFontSize);
     } else {
-      titleFontSize = 38; titleMaxChars = 32; titleMaxLines = 4; titleLineHeight = 48;
+      titleFontSize = 38;
+      titleMaxLines = 4;
+      titleLineHeight = 46;
+      titleMaxChars = estimateCharsPerSvgLine(colW, titleFontSize);
     }
     const titleLines = wrapTextToLines(rawTitle, titleMaxChars, titleMaxLines);
 
@@ -541,23 +579,33 @@ router.get('/free-course', async (req, res) => {
 
     const fontCss = getEmbeddedFontFaceCss();
 
-    const titleStartY = 280;
+    const tagline = `Free ${feedLabel} Course`.toUpperCase();
+    const categoryLabel = course.category && course.category !== feedLabel ? course.category : null;
+
+    // Combined feed + category: wrap up to two lines using width-aware budget (letter-spacing eats space).
+    const labelFull = categoryLabel ? `${tagline}  ·  ${categoryLabel.toUpperCase()}` : tagline;
+    const labelLetterSpacingPx = 1.75;
+    const labelFontPx = 17;
+    const labelLineHeightPx = 24;
+    const labelMaxChars = estimateCharsPerSvgLine(colW, labelFontPx, labelLetterSpacingPx, true);
+    const labelLinesWrapped = wrapTextToLines(labelFull, labelMaxChars, 2);
+    const labelBaseY = 196;
+    const labelSvgLines = labelLinesWrapped
+      .map(
+        (line, i) =>
+          `<text x="500" y="${labelBaseY + i * labelLineHeightPx}" ${ogFontAttr()} font-size="${labelFontPx}" font-weight="bold" fill="${accent}" letter-spacing="1.75">${escapeXml(line)}</text>`
+      )
+      .join('\n  ');
+
+    const accentBarY = labelBaseY + (labelLinesWrapped.length - 1) * labelLineHeightPx + 12;
+    const titleStartY = labelBaseY + labelLinesWrapped.length * labelLineHeightPx + 40;
+
     const titleSvg = titleLines
       .map(
         (line, i) =>
           `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="${titleFontSize}" font-weight="bold" fill="#ffffff">${escapeXml(line)}</text>`
       )
       .join('\n  ');
-
-    const tagline = `Free ${feedLabel} Course`.toUpperCase();
-    const categoryLabel = course.category && course.category !== feedLabel ? course.category : null;
-
-    // Combined label rendered as plain colored text (no pill collisions).
-    const labelLine = categoryLabel
-      ? `${tagline}  ·  ${categoryLabel.toUpperCase()}`
-      : tagline;
-    // Truncate the label if it's somehow huge (defensive — keeps it inside the column).
-    const labelDisplay = labelLine.length > 56 ? labelLine.slice(0, 55) + '…' : labelLine;
 
     // Pick a safe Unicode glyph for the placeholder (DejaVu covers these).
     const placeholderGlyphByFeed = {
@@ -629,9 +677,9 @@ router.get('/free-course', async (req, res) => {
        <text x="260" y="365" ${ogFontAttr()} font-size="22" font-weight="bold" fill="rgba(255,255,255,0.85)" text-anchor="middle">${escapeXml(placeholderLabel)}</text>
        <text x="260" y="395" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="middle">FREE COURSE</text>`}
 
-  <!-- Combined feed + category label (single line, plain text — no overlap) -->
-  <text x="500" y="200" ${ogFontAttr()} font-size="18" font-weight="bold" fill="${accent}" letter-spacing="2">${escapeXml(labelDisplay)}</text>
-  <rect x="500" y="215" width="60" height="3" rx="1.5" fill="${accent}" opacity="0.85"/>
+  <!-- Combined feed + category label (wrapped to stay inside headline column) -->
+  ${labelSvgLines}
+  <rect x="500" y="${accentBarY}" width="620" height="3" rx="1.5" fill="${accent}" opacity="0.55"/>
 
   <!-- Headline (course title) -->
   ${titleSvg}

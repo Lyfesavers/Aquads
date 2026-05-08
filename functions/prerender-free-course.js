@@ -91,7 +91,7 @@ function getCourseHtml(course) {
   // Branded OG image with course title headline + Start Free Course CTA + Cursa
   // attribution baked into the PNG. Served via the Netlify edge proxy so strict
   // bots (Telegram/WhatsApp) reliably get it from the apex domain.
-  const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}&ogv=3`;
+  const ogImageUrl = `https://www.aquads.xyz/og/course-card?slug=${encodeURIComponent(course.slug)}&ogv=4`;
   const canonicalUrl = `https://www.aquads.xyz/learn/courses/${course.slug}`;
   const titleWithSuffix = `${course.title} — Free ${feedLabel} Course on Aquads`;
 
