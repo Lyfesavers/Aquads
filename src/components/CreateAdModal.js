@@ -1139,11 +1139,11 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
                     <div className="bg-green-500 p-2 rounded-full">
-                      <FaGift className="text-white" />
+                      <FaChartLine className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">3 Months Free Bubble Bumping</h4>
-                      <p className="text-gray-300 text-sm">Keep your project at the top of our bubble display for maximum visibility. Get access to full features like voting, ranking and being on the main page.</p>
+                      <h4 className="font-semibold text-white">Vote-driven bubble bump</h4>
+                      <p className="text-gray-300 text-sm">100+ bullish votes unlock max bubble size and main-row visibility; organic votes and paid vote boosts both count. Fall below the threshold and your bubble shrinks over time—no timed “free bump” window.</p>
                     </div>
                   </div>
                   

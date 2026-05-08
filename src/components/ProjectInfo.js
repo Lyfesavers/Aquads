@@ -571,10 +571,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
-                3 months free bubble bumping
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
                 PR press release publication
               </li>
               <li className="flex items-center">
