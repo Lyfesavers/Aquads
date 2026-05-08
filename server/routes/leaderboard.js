@@ -61,6 +61,11 @@ router.post('/:game', auth, async (req, res) => {
     if (game === 'sludo') {
       return res.status(403).json({ error: 'Sludo wins are recorded automatically when you finish a game.' });
     }
+    if (game === 'aquataire') {
+      return res.status(403).json({
+        error: 'Aquataire wins are recorded automatically when you complete a server-validated game.',
+      });
+    }
     const { result, you, ai, grid, difficulty } = req.body || {};
     if (!result || you == null || ai == null || !grid || !difficulty) {
       return res.status(400).json({ error: 'Missing required fields' });
