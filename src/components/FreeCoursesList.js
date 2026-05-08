@@ -20,13 +20,6 @@ const FEED_BADGE = {
   languages: 'bg-rose-500/15 text-rose-200 border-rose-400/30',
 };
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-
 function CourseImage({ imageUrl, feed, className = '' }) {
   const [failed, setFailed] = useState(false);
 
@@ -116,10 +109,7 @@ function CourseCard({ course, onShare }) {
           <p className="text-sm leading-relaxed text-gray-400 line-clamp-3">{course.description}</p>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between gap-2 pt-2">
-          <time className="font-mono text-[10px] text-gray-500" dateTime={course.publishedAt}>
-            {formatDate(course.publishedAt)}
-          </time>
+        <div className="mt-4 flex items-center justify-end gap-2 pt-2">
           <Link
             to={detailUrl}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-300 hover:text-blue-200"
