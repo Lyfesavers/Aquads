@@ -102,7 +102,7 @@ export default async (request, context) => {
     // work arrangement / pay context, an "Apply Now →" CTA, and the owner /
     // company avatar. Served through the primary domain (edge-function proxy)
     // so Telegram/WhatsApp/Facebook all fetch from www.aquads.xyz, not Railway.
-    const imageUrl = `https://www.aquads.xyz/og/job-card?id=${encodeURIComponent(jobId)}&ogv=1`;
+    const imageUrl = `https://www.aquads.xyz/og/job-card?id=${encodeURIComponent(jobId)}&ogv=2`;
 
     // Canonical SPA URL — opens marketplace with Jobs view active and the job
     // pre-expanded/highlighted (handled by Marketplace.js URL effect).

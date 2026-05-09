@@ -764,6 +764,51 @@ const JOB_SOURCE_LABEL = {
   web3career: 'Web3.Career',
 };
 
+function isSyndicatedJobSource(source) {
+  return !!(source && JOB_SOURCE_LABEL[source]);
+}
+
+/** Multi-line centered company label when syndicated feeds have no logo (matches in-app avatar treatment). */
+function syndicatedLogoPlaceholderTexts(rawCompanyName, options = {}) {
+  const company = String(rawCompanyName || '').trim();
+  if (!company) return '';
+
+  const circleCx = 260;
+  const circleCy = 315;
+  const colW = options.columnWidthPx ?? 232;
+  const maxLines = options.maxLines ?? 3;
+
+  let fontSize = options.startFontPx ?? 34;
+  let lines = [];
+  const maxBlockPx = options.maxBlockHeightPx ?? 228;
+
+  while (fontSize >= 17) {
+    const maxChars = Math.max(8, estimateCharsPerSvgLine(colW, fontSize, 0, true));
+    lines = wrapTextToLines(company, maxChars, maxLines);
+    if (!lines.length) lines = [company.slice(0, maxChars)];
+    const lineHeight = Math.round(fontSize * 1.12);
+    const block = (lines.length - 1) * lineHeight + Math.round(fontSize * 1.05);
+    if (block <= maxBlockPx) break;
+    fontSize -= 2;
+  }
+
+  const lineHeight = Math.round(fontSize * 1.12);
+  const fillAttr = options.fill ?? '#f8fafc';
+  const firstBaseline =
+    circleCy +
+    Math.round(fontSize * 0.06) -
+    Math.round((((lines.length - 1) * lineHeight) / 2));
+
+  return lines
+    .map(
+      (line, i) =>
+        `<text x="${circleCx}" y="${firstBaseline + i * lineHeight}" ${ogFontAttr()} font-size="${fontSize}" font-weight="bold" fill="${fillAttr}" text-anchor="middle">${escapeXml(
+          line
+        )}</text>`
+    )
+    .join('\n  ');
+}
+
 function formatJobPay(job) {
   if (!job || !job.payAmount || !job.payType) return '';
   if (job.payType === 'percentage') return `${job.payAmount}%`;
@@ -882,6 +927,8 @@ router.get('/job', async (req, res) => {
       });
     }
 
+    const payDisplay = formatJobPay(job);
+
     const fontCss = getEmbeddedFontFaceCss();
 
     // Title starts further down than the course OG to leave room for the
@@ -894,16 +941,27 @@ router.get('/job', async (req, res) => {
       )
       .join('\n  ');
 
-    // Pay pill — only render when we actually have pay info (don't fake it).
-    const payDisplay = formatJobPay(job);
-
-    // Initial for placeholder avatar — first letter of source provider or username.
+    // Single-letter fallback for user postings (or syndicated rows with missing company strings).
     const placeholderLetter = ((
       job.source === 'remotive' ? 'R' :
       job.source === 'himalayas' ? 'H' :
       job.source === 'web3career' ? 'W' :
       (job.ownerUsername || 'A').charAt(0)
     ) || 'A').toUpperCase();
+
+    let avatarInnerContent = '';
+    if (avatarBase64) {
+      avatarInnerContent =
+        `<image x="125" y="180" width="270" height="270" href="${avatarBase64}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`;
+    } else if (isSyndicatedJobSource(job.source) && rawHiringName) {
+      const companyPlaceholder = syndicatedLogoPlaceholderTexts(rawHiringName);
+      avatarInnerContent =
+        companyPlaceholder ||
+        `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`;
+    } else {
+      avatarInnerContent =
+        `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`;
+    }
 
     const svg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
@@ -966,9 +1024,7 @@ router.get('/job', async (req, res) => {
   <!-- Avatar / company logo (left side, circular) -->
   <circle cx="260" cy="315" r="142" fill="url(#avatarBgGrad)" filter="url(#avatarGlow)" opacity="0.85"/>
   <circle cx="260" cy="315" r="135" fill="#0d1124" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
-  ${avatarBase64
-    ? `<image x="125" y="180" width="270" height="270" href="${avatarBase64}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`}
+  ${avatarInnerContent}
 
   <!-- HIRING badge below avatar -->
   <rect x="170" y="475" width="180" height="42" rx="21" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.5)" stroke-width="1"/>
