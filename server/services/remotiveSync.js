@@ -417,6 +417,23 @@ function mapRSSItemToJob(item) {
 }
 
 /**
+ * Remotive does not expose company logos in RSS. Their JSON API uses
+ * `https://remotive.com/job/{id}/logo`; the same URLs work using `jobId` /
+ * trailing id from listing URLs (verified PNG 200).
+ */
+function remotiveCompanyLogoUrl(article) {
+  const jid = article.jobId != null ? String(article.jobId).trim() : '';
+  if (/^\d+$/.test(jid)) return `https://remotive.com/job/${jid}/logo`;
+
+  const link = typeof article.link === 'string' ? article.link.trim() : '';
+  if (!/^https:\/\/(www\.)?remotive\.com\//i.test(link)) return null;
+
+  const fromPath = link.match(/-(\d+)\/?(?:\?.*)?$/);
+  const id = fromPath?.[1];
+  return id && /^\d+$/.test(id) ? `https://remotive.com/job/${id}/logo` : null;
+}
+
+/**
  * Map RSS article fields into the flat shape consumed by {@link mapRSSItemToJob}.
  */
 function rssArticleToItemShape(article) {
@@ -436,7 +453,7 @@ function rssArticleToItemShape(article) {
     contentSnippet: article.contentSnippet || article.content || '',
     company: article.companyTag || article.creator,
     location: article.location,
-    companyLogo: null,
+    companyLogo: remotiveCompanyLogoUrl(article),
     salary: undefined,
   };
 }
