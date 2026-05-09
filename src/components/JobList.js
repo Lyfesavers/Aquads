@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { JobListingAvatar } from './JobListingAvatar';
 import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo, FaShare } from 'react-icons/fa';
 
 const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired, highlightedJobId, onHighlightComplete }) => {
@@ -155,22 +156,8 @@ Best regards,
             {/* Mobile-first responsive layout */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-                {/* Profile image square */}
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-600/50">
-                  <img
-                    src={
-                      isExternalJobBoard(job) && job.companyLogo 
-                        ? job.companyLogo 
-                        : job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`
-                    }
-                    alt={job.ownerUsername}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`;
-                    }}
-                  />
-                </div>
+                {/* Company / poster avatar */}
+                <JobListingAvatar job={job} syndicated={isExternalJobBoard(job)} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { JobListingAvatar } from './JobListingAvatar';
 import { API_URL } from '../services/api';
 import { FaBriefcase, FaMapMarkerAlt, FaDollarSign, FaExternalLinkAlt, FaArrowRight } from 'react-icons/fa';
 
@@ -178,21 +179,13 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
           >
             {/* Job Header */}
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gray-700 overflow-hidden flex-shrink-0">
-                <img
-                  src={
-                    job.companyLogo || 
-                    job.ownerImage || 
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(job.ownerUsername)}&background=random`
-                  }
-                  alt={job.ownerUsername}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.ownerUsername)}&background=random`;
-                  }}
-                />
-              </div>
+              <JobListingAvatar
+                job={job}
+                syndicated={['remotive', 'himalayas', 'web3career'].includes(job.source)}
+                boxClass="w-10 h-10"
+                roundedClass="rounded-lg"
+                compact
+              />
               <div className="flex-1 min-w-0">
                 <h3 className="text-white font-medium text-sm truncate group-hover:text-blue-300 transition-colors">
                   {job.title}

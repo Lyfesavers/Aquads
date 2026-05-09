@@ -190,20 +190,141 @@ function pickWeb3CompanyLogo(job) {
   return null;
 }
 
-function parsePostedDate(job) {
-  const cand = (
-    [
-      job?.posted_date,
-      job?.posted_at,
-      job?.created_at,
-      job?.published_at,
-      job?.updated_at,
-      job?.date,
-    ].find(Boolean) ?? ''
-  ).toString();
+/** Bondex/Web3 Career API mixes snake_case, camelCase, unix timestamps (sec/ms), ISO strings — never guess "today" on failure. */
+const POST_DATE_KEY_ORDER = [
+  'posted_date',
+  'postedDate',
+  'posted_at',
+  'postedAt',
+  'posted_on',
+  'postedOn',
+  'date_posted',
+  'datePosted',
+  'published_at',
+  'publishedAt',
+  'pub_date',
+  'pubDate',
+  'first_published_at',
+  'firstPublishedAt',
+  'listed_at',
+  'listedAt',
+  'job_posted_at',
+  'jobPostedAt',
+  'created_at',
+  'createdAt',
+  'posted',
+];
 
-  const d = new Date(cand);
-  return Number.isNaN(d.getTime()) ? new Date() : d;
+function isPlausiblePostedDate(d) {
+  if (!d || Number.isNaN(d.getTime())) return false;
+  const y = d.getFullYear();
+  const now = new Date();
+  if (y < 2008 || y > now.getFullYear() + 1) return false;
+  return d.getTime() <= now.getTime() + 36 * 60 * 60 * 1000;
+}
+
+/** Convert API datetime primitive to Date, or null. */
+function coercePostedValue(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'boolean') return null;
+
+  if (value instanceof Date) {
+    return isPlausiblePostedDate(value) ? value : null;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    let ms = value;
+    if (Math.abs(ms) < 1e12) ms *= 1000;
+    const d = new Date(ms);
+    return isPlausiblePostedDate(d) ? d : null;
+  }
+
+  if (typeof value === 'string') {
+    const t = value.trim();
+    if (!t || t === 'null' || t === 'undefined') return null;
+
+    if (/^-?\d+(\.\d+)?$/.test(t)) {
+      const num = Number(t);
+      if (!Number.isFinite(num)) return null;
+      return coercePostedValue(num);
+    }
+
+    const parsed = Date.parse(t);
+    if (Number.isNaN(parsed)) return null;
+    const d = new Date(parsed);
+    return isPlausiblePostedDate(d) ? d : null;
+  }
+
+  return null;
+}
+
+const KEY_REJECT = /expires|expire|until|deadline|closes|indexed|scraped|crawl|ttl|expires_at|expiry/i;
+
+/** Scan arbitrary object keys for plausible posted/published-ish fields (excludes expiry / updated-ish when possible). */
+function postedDateFromObjectSlice(ob) {
+  if (!ob || typeof ob !== 'object' || Array.isArray(ob)) return null;
+
+  for (const k of POST_DATE_KEY_ORDER) {
+    if (Object.prototype.hasOwnProperty.call(ob, k)) {
+      const d = coercePostedValue(ob[k]);
+      if (d) return d;
+    }
+  }
+
+  for (const k of Object.keys(ob)) {
+    if (KEY_REJECT.test(k)) continue;
+    const lc = k.toLowerCase();
+    const looksPosted =
+      /posted|published|listing.?date|publish|pub_date|announce|created|opened|posted_at|postedat/.test(
+        lc
+      );
+    const looksStale = /updated|modified|edited|changed|refreshed|synced|touched/i.test(lc);
+    if (!looksPosted && !(/date|time|timestamp/.test(lc) && lc.includes('post'))) continue;
+    if (looksStale && !looksPosted) continue;
+
+    const d = coercePostedValue(ob[k]);
+    if (d) return d;
+  }
+
+  return null;
+}
+
+/**
+ * Canonical "when this listing was originally posted on Web3 Career" — or null if unknown / invalid.
+ */
+function parsePostedDate(job) {
+  if (!job || typeof job !== 'object') return null;
+
+  const primary = postedDateFromObjectSlice(job);
+  if (primary) return primary;
+
+  const nestedObjs = [];
+  for (const v of Object.values(job)) {
+    if (
+      v &&
+      typeof v === 'object' &&
+      !Array.isArray(v) &&
+      !(v instanceof Date) &&
+      Object.keys(v).length > 0
+    ) {
+      nestedObjs.push(v);
+    }
+    if (Array.isArray(v) && v.length && v.every((x) => x && typeof x === 'object' && !Array.isArray(x))) {
+      for (const child of v) nestedObjs.push(child);
+    }
+  }
+
+  for (const ob of nestedObjs) {
+    const d = postedDateFromObjectSlice(ob);
+    if (d) return d;
+  }
+
+  return null;
+}
+
+function postedTimestampForMerge(job) {
+  const d = parsePostedDate(job);
+  return d ? d.getTime() : 0;
 }
 
 function arrangementAndLocation(apiJob) {
@@ -324,7 +445,6 @@ function mapApiJob(job) {
     externalUrl: applyUrl,
     externalId,
     lastSynced: new Date(),
-    createdAt: parsePostedDate(job),
   };
 }
 
@@ -373,8 +493,8 @@ async function gatherJobs(token) {
       const id = deriveExternalId(j);
       if (!id || !coerceApplyUrl(j)) continue;
       const existing = byKey.get(id);
-      const nextPublished = parsePostedDate(j).getTime();
-      if (!existing || nextPublished >= parsePostedDate(existing.raw).getTime()) {
+      const nextPublished = postedTimestampForMerge(j);
+      if (!existing || nextPublished >= postedTimestampForMerge(existing.raw)) {
         byKey.set(id, { raw: j });
       }
     }
@@ -437,6 +557,9 @@ async function syncWeb3CareerJobs() {
     let added = 0;
     let updated = 0;
     let errors = 0;
+    let missingPostedDate = 0;
+    /** First row lacking a resolved posted date — log JSON keys once to reconcile API shape vs parser. */
+    let loggedMissingPostedShape = false;
 
     for (const row of rawJobs) {
       try {
@@ -447,6 +570,8 @@ async function syncWeb3CareerJobs() {
           console.log('[Web3.career Sync] Skipping item with missing title or ID');
           continue;
         }
+
+        const parsedPostedDate = parsePostedDate(row);
 
         const existingJob = await Job.findOne({
           externalId: jobData.externalId,
@@ -464,13 +589,31 @@ async function syncWeb3CareerJobs() {
           existingJob.ownerUsername = jobData.ownerUsername;
           existingJob.companyLogo = jobData.companyLogo;
           existingJob.externalUrl = jobData.externalUrl;
-          existingJob.createdAt = jobData.createdAt;
+          if (parsedPostedDate) {
+            existingJob.createdAt = parsedPostedDate;
+          }
           existingJob.lastSynced = syncStartTime;
           await existingJob.save();
           updated++;
         } else {
-          await new Job(jobData).save();
+          const payload = { ...jobData, lastSynced: syncStartTime };
+          if (parsedPostedDate) {
+            payload.createdAt = parsedPostedDate;
+          }
+          await new Job(payload).save();
           added++;
+        }
+
+        if (!parsedPostedDate) {
+          missingPostedDate++;
+          if (!loggedMissingPostedShape) {
+            loggedMissingPostedShape = true;
+            const keysSample = typeof row === 'object' && row ? Object.keys(row).sort() : [];
+            console.warn(
+              `[Web3.career Sync] No resolved posted date for at least one job (fallback: Mongoose default). Top-level JSON keys:`,
+              keysSample.join(', ') || '(none)'
+            );
+          }
         }
       } catch (error) {
         console.error('[Web3.career Sync] Error processing row:', error.message);
@@ -487,7 +630,10 @@ async function syncWeb3CareerJobs() {
 
     console.log('[Web3.career Sync] Sync completed successfully');
     console.log(
-      `[Web3.career Sync] Added: ${added}, Updated: ${updated}, Removed: ${removed}, Errors: ${errors}`
+      `[Web3.career Sync] Added: ${added}, Updated: ${updated}, Removed: ${removed}, Errors: ${errors}` +
+        (missingPostedDate
+          ? `; ${missingPostedDate} jobs lacked a parseable posted date`
+          : '')
     );
 
     return {
@@ -496,6 +642,7 @@ async function syncWeb3CareerJobs() {
       updated,
       removed,
       errors,
+      missingPostedDate,
       timestamp: syncStartTime,
     };
   } catch (error) {
@@ -513,4 +660,5 @@ module.exports = {
   deriveExternalId,
   coerceApplyUrl,
   mapApiJob,
+  parsePostedDate,
 };
