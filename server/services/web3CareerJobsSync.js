@@ -86,21 +86,108 @@ function deriveExternalId(job) {
   return `w3:h:${h}`;
 }
 
-function normalizeTrustedWeb3LogoUrl(urlString) {
+/**
+ * Prefer https. Allow common job-aggregator / ATS image hosts Web3 listings use.
+ * Browser <img src> only; OG fetch still uses Sharp with timeout (see routes/og).
+ */
+function normalizeTrustedAggregatorLogoUrl(urlString) {
   if (!urlString || typeof urlString !== 'string') return null;
-  const trimmed = urlString.trim();
+  const trimmed = urlString.trim().replace(/^\/\//, 'https://');
   let u;
   try {
-    u = new URL(trimmed);
+    u = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
   } catch {
     return null;
   }
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  if (u.protocol !== 'https:') return null;
+
   const h = u.hostname.replace(/^www\./i, '').toLowerCase();
-  if (h !== 'web3.career' && !h.endsWith('.web3.career')) {
-    return null;
+  if (!h.includes('.')) return null;
+
+  const exactHosts = new Set([
+    'web3.career',
+    'media.licdn.com',
+    'static.licdn.com',
+    'snap.licdn.com',
+    'avatars.githubusercontent.com',
+    'pbs.twimg.com',
+    'lh3.googleusercontent.com',
+    'lh4.googleusercontent.com',
+    'lh5.googleusercontent.com',
+    'lh6.googleusercontent.com',
+  ]);
+
+  if (exactHosts.has(h)) return u.href;
+
+  const suffixOk = [
+    '.web3.career',
+    '.bondex.app',
+    '.licdn.com',
+    '.greenhouse.io',
+    '.lever.co',
+    '.workable.com',
+    '.workableuserdata.com',
+    '.ashbyhq.com',
+    '.recruit.io',
+    '.recruiteecdn.com',
+  ];
+
+  for (const s of suffixOk) {
+    if (h.endsWith(s)) return u.href;
   }
-  return u.href;
+
+  return null;
+}
+
+function collectWeb3LogoCandidates(job) {
+  const urls = [];
+
+  function push(raw) {
+    if (raw == null) return;
+    if (typeof raw !== 'string') return;
+    const t = raw.trim();
+    if (!/^https?:\/\//i.test(t) && !t.startsWith('//')) return;
+    urls.push(t);
+  }
+
+  const keys = [
+    'company_logo_url',
+    'company_logo',
+    'company_image',
+    'company_image_url',
+    'company_icon',
+    'logo',
+    'logo_url',
+    'logoUrl',
+    'brand_logo',
+    'brand_logo_url',
+    'image',
+    'image_url',
+    'employer_logo',
+    'employer_logo_url',
+    'publisher_logo',
+  ];
+
+  for (const k of keys) push(job[k]);
+
+  const comp = job.company;
+  if (comp && typeof comp === 'object' && !Array.isArray(comp)) {
+    push(comp.logo_url);
+    push(comp.logoUrl);
+    push(comp.logo);
+    push(comp.image);
+    push(comp.icon);
+  }
+
+  return urls;
+}
+
+function pickWeb3CompanyLogo(job) {
+  for (const raw of collectWeb3LogoCandidates(job)) {
+    const normalized = normalizeTrustedAggregatorLogoUrl(raw);
+    if (normalized) return normalized;
+  }
+  return null;
 }
 
 function parsePostedDate(job) {
@@ -111,6 +198,7 @@ function parsePostedDate(job) {
       job?.created_at,
       job?.published_at,
       job?.updated_at,
+      job?.date,
     ].find(Boolean) ?? ''
   ).toString();
 
@@ -213,10 +301,7 @@ function mapApiJob(job) {
   const rawRequirements = extractRequirements(description);
   const requirements = formatRequirements(rawRequirements);
 
-  const companyLogoCandidate =
-    job.company_logo || job.logo || job.company_logo_url || job.logo_url || null;
-
-  const companyLogo = normalizeTrustedWeb3LogoUrl(companyLogoCandidate);
+  const companyLogo = pickWeb3CompanyLogo(job);
 
   if (requirements && requirements !== 'See job description for requirements') {
     description = removeRequirementsFromDescription(description);
@@ -343,6 +428,11 @@ async function syncWeb3CareerJobs() {
         timestamp: syncStartTime,
       };
     }
+
+    const withLogoCount = rawJobs.reduce((n, j) => n + (pickWeb3CompanyLogo(j) ? 1 : 0), 0);
+    console.log(
+      `[Web3.career Sync] Merged ${rawJobs.length} jobs; ${withLogoCount} have a CDN logo URL we store`
+    );
 
     let added = 0;
     let updated = 0;
