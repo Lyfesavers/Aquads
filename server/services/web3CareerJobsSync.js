@@ -204,6 +204,10 @@ const POST_DATE_KEY_ORDER = [
   'publishedAt',
   'pub_date',
   'pubDate',
+  /** Bondex/Web3 Careers JSON feeds (logged keys include these; not camelCase variants in practice) */
+  'date_epoch',
+  'dateEpoch',
+  'date',
   'first_published_at',
   'firstPublishedAt',
   'listed_at',
@@ -279,7 +283,14 @@ function postedDateFromObjectSlice(ob) {
         lc
       );
     const looksStale = /updated|modified|edited|changed|refreshed|synced|touched/i.test(lc);
-    if (!looksPosted && !(/date|time|timestamp/.test(lc) && lc.includes('post'))) continue;
+    const barePostingDate =
+      lc === 'date' || lc.endsWith('_epoch') || lc === 'epoch' || /\bposted\b/.test(lc);
+    if (
+      !looksPosted &&
+      !(/date|time|timestamp/.test(lc) && (lc.includes('post') || barePostingDate))
+    ) {
+      continue;
+    }
     if (looksStale && !looksPosted) continue;
 
     const d = coercePostedValue(ob[k]);

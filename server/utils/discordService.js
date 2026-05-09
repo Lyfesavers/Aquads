@@ -22,7 +22,8 @@ const {
   MessageFlags,
   Partials,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
+  Events,
 } = require('discord.js');
 const axios = require('axios');
 const mongoose = require('mongoose');
@@ -1305,7 +1306,7 @@ async function startBot() {
     partials: [Partials.Message, Partials.Channel, Partials.Reaction]
   });
   discordClient = client;
-  client.once('ready', async () => {
+  client.once(Events.ClientReady, async () => {
     console.log(`✅ Discord bot logged in as ${client.user.tag}`);
     if (appId) {
       try {
