@@ -1,7 +1,24 @@
 const Job = require('../models/Job');
 const axios = require('axios');
+const Parser = require('rss-parser');
 
-const REMOTIVE_API_URL = 'https://remotive.com/api/remote-jobs';
+// JSON jobs list (/api/remote-jobs) is capped (~20 rows) and lags RSS publication dates —
+// aggregated category feeds carry current listings + fresh pubDates.
+const REMOTIVE_API_BASE = 'https://remotive.com/api/remote-jobs';
+
+const rssParser = new Parser({
+  customFields: {
+    item: [
+      ['jobId', 'jobId'],
+      ['company', 'companyTag'],
+      ['location', 'location'],
+    ],
+  },
+});
+
+const REQUEST_HEADERS = {
+  'User-Agent': 'Aquads Job Board',
+};
 
 /**
  * Parse salary information from job title or description
@@ -400,26 +417,91 @@ function mapRSSItemToJob(item) {
 }
 
 /**
- * Sync jobs from Remotive API
+ * Map RSS article fields into the flat shape consumed by {@link mapRSSItemToJob}.
+ */
+function rssArticleToItemShape(article) {
+  const id = article.jobId && String(article.jobId).trim();
+  const cat =
+    Array.isArray(article.categories) && article.categories.length > 0
+      ? article.categories[0]
+      : 'General';
+
+  return {
+    title: article.title,
+    link: article.link,
+    guid: id || article.guid || article.link,
+    pubDate: article.isoDate || article.pubDate,
+    category: cat,
+    content: article.content || article.contentSnippet || '',
+    contentSnippet: article.contentSnippet || article.content || '',
+    company: article.companyTag || article.creator,
+    location: article.location,
+    companyLogo: null,
+    salary: undefined,
+  };
+}
+
+/**
+ * Load unique jobs by merging Remotive category RSS feeds.
+ */
+async function fetchRemotiveItemsFromRss() {
+  const catRes = await axios.get(`${REMOTIVE_API_BASE}/categories`, {
+    headers: { ...REQUEST_HEADERS, Accept: 'application/json' },
+    timeout: 30000,
+  });
+
+  const categories = catRes.data?.jobs || [];
+  console.log(`[Remotive Sync] Pulling RSS for ${categories.length} categories`);
+
+  const byDedupeKey = new Map();
+
+  for (const cat of categories) {
+    const slug = cat.slug;
+    if (!slug) continue;
+
+    const feedUrl = `https://remotive.com/remote-jobs/${encodeURIComponent(slug)}/feed`;
+
+    try {
+      const rssRes = await axios.get(feedUrl, {
+        headers: { ...REQUEST_HEADERS, Accept: 'application/rss+xml, application/xml' },
+        timeout: 25000,
+        responseType: 'text',
+      });
+
+      const parsed = await rssParser.parseString(rssRes.data);
+
+      for (const article of parsed.items || []) {
+        const mapped = rssArticleToItemShape(article);
+        const key = mapped.guid || mapped.link;
+        if (!key) continue;
+
+        const prev = byDedupeKey.get(key);
+        const prevPub = prev ? new Date(prev.pubDate || 0).getTime() : 0;
+        const nextPub = new Date(mapped.pubDate || 0).getTime();
+        if (!prev || nextPub > prevPub) {
+          byDedupeKey.set(key, mapped);
+        }
+      }
+    } catch (err) {
+      console.error(`[Remotive Sync] RSS fetch failed (${slug}):`, err.message);
+    }
+  }
+
+  return [...byDedupeKey.values()];
+}
+
+/**
+ * Sync jobs from Remotive (merged category RSS; JSON listing API alone is stale/capped).
  */
 async function syncRemotiveJobs() {
   const syncStartTime = new Date();
   console.log(`[Remotive Sync] Starting sync at ${syncStartTime.toISOString()}`);
   
   try {
-    // Fetch jobs from Remotive API
-    console.log(`[Remotive Sync] Fetching jobs from ${REMOTIVE_API_URL}`);
-    
-    const response = await axios.get(REMOTIVE_API_URL, {
-      headers: {
-        'User-Agent': 'Aquads Job Board',
-        'Accept': 'application/json'
-      },
-      timeout: 30000
-    });
-    
-    if (!response.data || !response.data.jobs) {
-      console.log('[Remotive Sync] No jobs found in API response');
+    const items = await fetchRemotiveItemsFromRss();
+
+    if (!items.length) {
+      console.log('[Remotive Sync] No jobs found after merging RSS feeds');
       return {
         success: true,
         added: 0,
@@ -429,26 +511,9 @@ async function syncRemotiveJobs() {
       };
     }
     
-    // Convert API response to feed format for processing (no limit - get ALL jobs)
-    const feed = {
-      items: response.data.jobs.map(job => ({
-        title: job.title,
-        link: job.url,
-        guid: job.id ? job.id.toString() : job.url,
-        pubDate: job.publication_date,
-        category: job.category,
-        content: job.description,
-        contentSnippet: job.description,
-        company: job.company_name,
-        companyLogo: job.company_logo || job.company_logo_url,
-        salary: job.salary,
-        jobType: job.job_type,
-        location: job.candidate_required_location,
-        tags: job.tags
-      }))
-    };
+    const feed = { items };
     
-    console.log(`[Remotive Sync] Successfully fetched ${feed.items.length} jobs from API`);
+    console.log(`[Remotive Sync] Successfully merged ${feed.items.length} unique jobs from RSS`);
     
     let added = 0;
     let updated = 0;
@@ -477,6 +542,7 @@ async function syncRemotiveJobs() {
           existingJob.ownerUsername = jobData.ownerUsername;
           existingJob.companyLogo = jobData.companyLogo;
           existingJob.externalUrl = jobData.externalUrl;
+          existingJob.createdAt = jobData.createdAt;
           existingJob.lastSynced = syncStartTime;
           await existingJob.save();
           updated++;
