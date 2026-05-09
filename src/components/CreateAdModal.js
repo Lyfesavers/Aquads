@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaRobot, FaSearch } from 'react-icons/fa';
+import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaDiscord, FaRobot, FaSearch } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 import { createAd as apiCreateAd } from '../services/api';
 
@@ -1213,7 +1213,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">1 free raid/day before bump, 20/day once bumped · optional Mintfunnel add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">100+ vote bump · 1 raid/day → 20/day when bumped · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1228,37 +1228,108 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">PR, AMA, trending, custom bots · 5 free raids/day before bump, 20/day once bumped</p>
+                    <p className="text-gray-400 text-xs mt-2">Full launch stack · 5→20 raids/day · PR, AMA, bots & more</p>
                   </button>
                 </div>
 
                 {listingTierChoice === LISTING_TIER_STARTER ? (
                 <div className="bg-gradient-to-br from-green-900/40 to-gray-900/50 border border-green-500/50 rounded-xl p-6 mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
-                    <FaRocket className="mr-3 text-green-400" />
-                    Starter (free)
+                  <h3 className="text-2xl font-bold text-white mb-2 flex items-center flex-wrap gap-2">
+                    <FaRocket className="text-green-400" />
+                    Starter — free base listing
                   </h3>
-                  <p className="text-gray-300 mb-3 text-sm">
-                    No base listing fee. After approval: bubble on the map, bump at <strong className="text-white">100+</strong> bullish votes, <strong className="text-white">1</strong> free raid per day until bumped then <strong className="text-white">20</strong>/day, shared Aquads Telegram/Discord flows (custom branding is Premium).
+                  <p className="text-gray-400 text-sm mb-6">
+                    $0 base fee after approval. Everything below is included; Mintfunnel packages are optional extras (step 2).
                   </p>
-                  <p className="text-gray-500 text-xs">Upgrade to Premium anytime from your dashboard for the full launch stack.</p>
+
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                      <div className="bg-green-500 p-2 rounded-full flex-shrink-0">
+                        <FaCheck className="text-white text-sm" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Live bubble on Aquads</h4>
+                        <p className="text-gray-300 text-sm">Admin review & approval, interactive bubble on the map, multi-chain support, and AquaSwap / BexTools trading integration.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                      <div className="bg-green-500 p-2 rounded-full flex-shrink-0">
+                        <FaChartLine className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Vote-driven bump (free)</h4>
+                        <p className="text-gray-300 text-sm"><strong className="text-white">100+</strong> bullish votes unlock max bubble size and main-row visibility. Organic votes and paid vote boosts both count.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                      <div className="bg-cyan-500 p-2 rounded-full flex-shrink-0">
+                        <FaTwitter className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Coordinated Twitter & Facebook raids</h4>
+                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> free raid per day until your bubble is bumped, then up to <strong className="text-white">20</strong>/day once you hit the vote threshold.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                      <div className="bg-blue-500 p-2 rounded-full flex-shrink-0">
+                        <FaTelegram className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                          Telegram & Discord raid flows
+                          <FaDiscord className="text-indigo-300 text-lg" />
+                        </h4>
+                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. <strong className="text-white">Custom branding</strong> on raid notifications is a <strong className="text-white">Premium</strong> perk when bumped.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-gray-600/80">
+                      <div className="bg-purple-500 p-2 rounded-full flex-shrink-0">
+                        <FaGift className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Optional Mintfunnel PR (paid)</h4>
+                        <p className="text-gray-300 text-sm">Add AquaSplash, AquaRipple, and other partner packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/60 rounded-lg border border-green-500/30">
+                      <div className="bg-emerald-600 p-2 rounded-full flex-shrink-0">
+                        <FaRocket className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Upgrade path</h4>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for PR, AMA, $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-green-900/25 border border-green-500/45 rounded-lg">
+                    <p className="text-green-200 text-sm leading-relaxed">
+                      ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
+                      ✓ Same fair-play rules and bump mechanics as Premium listings
+                    </p>
+                  </div>
                 </div>
                 ) : (
                 <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
-                    <FaRocket className="mr-3 text-blue-400" />
-                    Premium Listing Package — {isAffiliate ? (
-                      <span>
-                        <span className="line-through text-gray-400 ml-2">${PREMIUM_LISTING_FEE_USDC} USDC</span>
-                        <span className="text-green-400 ml-2">${discountedPremiumFee.toFixed(2)} USDC</span>
-                        <span className="bg-green-500 text-white px-2 py-1 rounded text-sm ml-2">5% Affiliate Discount</span>
+                  <h3 className="text-2xl font-bold text-white mb-2 flex flex-wrap items-center gap-2">
+                    <FaRocket className="text-blue-400" />
+                    Premium listing package — {isAffiliate ? (
+                      <span className="flex flex-wrap items-center gap-2 text-lg">
+                        <span className="line-through text-gray-400">${PREMIUM_LISTING_FEE_USDC} USDC</span>
+                        <span className="text-green-400">${discountedPremiumFee.toFixed(2)} USDC</span>
+                        <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs font-semibold">5% affiliate discount</span>
                       </span>
                     ) : (
-                      `$${PREMIUM_LISTING_FEE_USDC} USDC`
+                      <span className="text-lg">${PREMIUM_LISTING_FEE_USDC} USDC</span>
                     )}
                   </h3>
-                <p className="text-gray-300 mb-6">
-                  Includes everything in Starter plus the premium launch services below.
+                <p className="text-gray-300 mb-6 text-sm">
+                  Includes <strong className="text-white">everything in Starter</strong> plus the premium launch services below. Referred users save <strong className="text-white">5%</strong> on the Premium base fee.
                 </p>
                 
                 <div className="space-y-4">
@@ -1307,8 +1378,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <FaTwitter className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">Community Twitter Raids</h4>
-                      <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free raids per day before your Premium bubble is bumped, then up to <strong className="text-white">20</strong>/day once bumped (Starter: 1/day before bump, then 20/day).</p>
+                      <h4 className="font-semibold text-white">Community Twitter & Facebook raids</h4>
+                      <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free coordinated raids per day before your bubble is bumped, then up to <strong className="text-white">20</strong>/day once you reach <strong className="text-white">100+</strong> bullish votes.</p>
                     </div>
                   </div>
                   
@@ -1323,15 +1394,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   </div>
                   
                   <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-blue-900/30 rounded-lg border-2 border-blue-500/50">
-                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-full">
-                      <FaTelegram className="text-white" />
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-2 rounded-full flex-shrink-0">
+                      <FaRobot className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white flex items-center gap-2">
-                        Free Custom Telegram Bot 
-                        <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">NEW!</span>
+                      <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                        Custom Telegram & Discord bots
+                        <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">Included</span>
                       </h4>
-                      <p className="text-gray-300 text-sm">Get your own customizable Telegram bot with custom branding, voting system, raid coordination, and community engagement tools - all managed through our platform!</p>
+                      <p className="text-gray-300 text-sm">Raid coordination and engagement on both platforms. <strong className="text-white">Custom branding</strong> on notifications when your <strong className="text-white">Premium</strong> bubble is <strong className="text-white">bumped</strong> (100+ bullish).</p>
                     </div>
                   </div>
                   
@@ -1358,9 +1429,9 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
-                    ✓ Total Value: Over $1000 in marketing services<br/>
-                    ✓ Your listing will be reviewed and approved by our admins<br/>
-                    ✓ Full refund if rejected for any reason
+                    ✓ Everything in Starter + over $1000 in bundled launch services<br/>
+                    ✓ Admin review & refund if rejected<br/>
+                    ✓ Optional Mintfunnel add-ons still available separately (step 2)
                   </p>
                 </div>
               </div>
