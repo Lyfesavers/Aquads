@@ -556,44 +556,50 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
           {/* Starter listing */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-green-500/50 ring-1 ring-green-500/20">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-green-500/50 ring-1 ring-green-500/20 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Starter listing</h3>
               <div className="text-4xl font-bold text-green-400 mb-2">$0</div>
               <div className="text-gray-400">Base listing fee · USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Bubble on the map after admin approval
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Bubble on the map after admin approval</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                AquaSwap + BexTools path from your bubble (live chart &amp; swap handoff—same funnel Premium uses for trading clicks)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">AquaSwap + BexTools path from your bubble (live chart &amp; swap handoff—same funnel Premium uses for trading clicks)</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Bullish/bearish voting & rankings
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Bullish/bearish voting & rankings</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Bump free at <strong className="text-white">100+</strong> bullish votes (organic + boosts)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Bump free at <strong className="text-white">100+</strong> bullish votes (organic + boosts)
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 20/day</strong>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 20/day</strong>
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">Premium only</strong> once bumped
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">Premium only</strong> once bumped
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Optional Mintfunnel packages paid separately at checkout
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Optional Mintfunnel packages paid separately at checkout</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Upgrade to Premium anytime from your dashboard
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Upgrade to Premium anytime from your dashboard</span>
               </li>
             </ul>
             <button
@@ -607,40 +613,48 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           </div>
 
           {/* Premium listing */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500/60 ring-1 ring-blue-500/25">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500/60 ring-1 ring-blue-500/25 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Premium listing</h3>
               <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
               <div className="text-gray-400">Full launch stack · USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Everything in Starter, plus:
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Everything in Starter, plus:</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                PR press release & premium distribution access
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">PR press release & premium distribution access</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Free AMA, ad campaign exposure, $50 ad credit
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Free AMA, ad campaign exposure, $50 ad credit</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Included <strong className="text-white">BNB / Sol trending + volume</strong> program—scheduled exposure that stacks with AquaSwap/Bex/bot boosts (not organic-only)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Included <strong className="text-white">BNB / Sol trending + volume</strong> program—scheduled exposure that stacks with AquaSwap/Bex/bot boosts (not organic-only)
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                <strong className="text-white">Custom bot branding</strong> when bumped — Premium listing required (same bot features as Starter, plus your logo/video on notifications)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">Custom bot branding</strong> when bumped — Premium listing required (same bot features as Starter, plus your logo/video on notifications)
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 20/day</strong> once bumped
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 20/day</strong> once bumped
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Referred users get <strong className="text-white">5% off</strong> the Premium base fee
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Referred users get <strong className="text-white">5% off</strong> the Premium base fee
+                </span>
               </li>
             </ul>
             <button
@@ -654,36 +668,38 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           </div>
 
           {/* Bump */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Bubble bump</h3>
               <div className="text-4xl font-bold text-green-400 mb-2">100 votes</div>
               <div className="text-gray-400">Bullish threshold (free)</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                <strong className="text-white">100+</strong> bullish votes = bumped bubble (max size, main row)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">100+</strong> bullish votes = bumped bubble (max size, main row)
+                </span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Organic votes and paid vote boosts both count
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Organic votes and paid vote boosts both count</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Below 100 = unbumped (size shrinks over time)
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Below 100 = unbumped (size shrinks over time)</span>
               </li>
-              <li className="flex items-start">
-                <FaTrophy className="text-yellow-400 mr-3 mt-0.5 flex-shrink-0" />
-                Higher raid caps once bumped (see Starter vs Premium cards)
+              <li className="flex items-start gap-3">
+                <FaTrophy className="text-yellow-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Higher raid caps once bumped (see Starter vs Premium cards)</span>
               </li>
-              <li className="flex items-start">
-                <FaStar className="text-amber-400 mr-3 mt-0.5 flex-shrink-0" />
-                <span><strong className="text-white">/setbranding</strong> (custom logo/video pings): Premium only; Starter bubbles use default Aquads styling</span>
+              <li className="flex items-start gap-3">
+                <FaStar className="text-amber-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed"><strong className="text-white">/setbranding</strong> (custom logo/video pings): Premium only; Starter bubbles use default Aquads styling</span>
               </li>
-              <li className="flex items-start">
-                <FaMicrophone className="text-purple-400 mr-3 mt-0.5 flex-shrink-0" />
-                Live yappers & visibility scale with engagement
+              <li className="flex items-start gap-3">
+                <FaMicrophone className="text-purple-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Live yappers & visibility scale with engagement</span>
               </li>
             </ul>
             {userHasProjects && (
@@ -699,28 +715,28 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           </div>
 
           {/* Banner Ads */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Banner Ads</h3>
               <div className="text-4xl font-bold text-blue-400 mb-2">$40-160</div>
               <div className="text-gray-400">USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                24 Hours: $40 USDC
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">24 Hours: $40 USDC</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                3 Days: $80 USDC
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">3 Days: $80 USDC</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                7 Days: $160 USDC
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">7 Days: $160 USDC</span>
               </li>
-              <li className="flex items-start">
-                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Premium placement & high visibility
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Premium placement & high visibility</span>
               </li>
             </ul>
             <button
