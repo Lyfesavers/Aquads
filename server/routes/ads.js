@@ -253,20 +253,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Bump ad specific pricing
-const calculateBumpAmount = (type) => {
-  switch (type) {
-    case 'bump_24h':
-      return 5;  // 5 USDC for 24h bump
-    case 'bump_3d':
-      return 15; // 15 USDC for 3 day bump
-    case 'bump_7d':
-      return 35; // 35 USDC for 7 day bump
-    default:
-      return 5;  // Default to 24h price
-  }
-};
-
 // Upgrade Starter → Premium (same payment verification workflow as new Premium listings)
 router.post('/upgrade-premium', auth, requireEmailVerification, emitAdEvent('update'), async (req, res) => {
   try {
@@ -306,6 +292,33 @@ router.post('/upgrade-premium', auth, requireEmailVerification, emitAdEvent('upd
     ad.chainAddress = chainAddress || null;
 
     await ad.save();
+
+    try {
+      if (currentUser?.referredBy) {
+        await awardListingPoints(req.user.userId);
+      }
+    } catch (pointsErr) {
+      console.error('Upgrade Premium: listing referrer points failed', pointsErr.message);
+    }
+
+    try {
+      const referrerAffiliateId = currentUser?.referredBy;
+      if (referrerAffiliateId && calculatedListingFee > 0) {
+        const commissionRate = await AffiliateEarning.calculateCommissionRate(referrerAffiliateId);
+        const commissionEarned = AffiliateEarning.calculateCommission(calculatedListingFee, commissionRate);
+        await new AffiliateEarning({
+          affiliateId: referrerAffiliateId,
+          referredUserId: req.user.userId,
+          adId: ad._id,
+          adAmount: calculatedListingFee,
+          commissionRate,
+          commissionEarned
+        }).save();
+      }
+    } catch (earnErr) {
+      console.error('Upgrade Premium: affiliate earning failed', earnErr.message);
+    }
+
     invalidateAdsCache();
     socket.getIO().emit('adsUpdated', { type: 'update', ad });
     res.json(ad);
@@ -323,7 +336,6 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       url,
       pairAddress,
       blockchain,
-      referredBy,
       x,
       y,
       preferredSize,
@@ -477,24 +489,24 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       // Don't fail the ad creation if points award fails
     }
 
-    // Check if there's a referral and handle affiliate earnings
-    if (referredBy) {
-      const adAmount = calculateBumpAmount(referredBy);
-      
-      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy);
-      
-      const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
-
-      const affiliateEarning = new AffiliateEarning({
-        affiliateId: referredBy,
-        referredUserId: req.user.userId,
-        adId: savedAd._id,
-        adAmount: adAmount,
-        commissionRate,
-        commissionEarned
-      });
-
-      await affiliateEarning.save();
+    try {
+      const referrerAffiliateId = currentUser.referredBy;
+      const listingCommissionBase =
+        listingTier === LISTING_TIER_PREMIUM ? calculatedListingFee : 0;
+      if (referrerAffiliateId && listingCommissionBase > 0) {
+        const commissionRate = await AffiliateEarning.calculateCommissionRate(referrerAffiliateId);
+        const commissionEarned = AffiliateEarning.calculateCommission(listingCommissionBase, commissionRate);
+        await new AffiliateEarning({
+          affiliateId: referrerAffiliateId,
+          referredUserId: req.user.userId,
+          adId: savedAd._id,
+          adAmount: listingCommissionBase,
+          commissionRate,
+          commissionEarned
+        }).save();
+      }
+    } catch (affiliateErr) {
+      console.error('Ad create: affiliate earning failed', affiliateErr.message);
     }
 
     invalidateAdsCache();
