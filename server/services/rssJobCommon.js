@@ -36,8 +36,18 @@ function parseSalary(title, description) {
 }
 
 function extractCompany(title, item = {}, defaultCompany = 'Company') {
-  if (item.company) return item.company.trim();
-  if (item.creator) return item.creator.trim();
+  const co = item.company;
+  if (typeof co === 'string') {
+    const t = co.trim();
+    if (t) return t;
+  }
+  if (co && typeof co === 'object' && typeof co.name === 'string') {
+    const t = co.name.trim();
+    if (t) return t;
+  }
+  if (typeof item.creator === 'string' && item.creator.trim()) {
+    return item.creator.trim();
+  }
 
   const atPattern = /at\s+([^-–\n]+?)(?:\s*[-–]|$)/i;
   const dashPattern = /^([^-–]+?)\s*[-–]/;

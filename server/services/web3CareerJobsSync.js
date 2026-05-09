@@ -122,6 +122,8 @@ function arrangementAndLocation(apiJob) {
   const remote =
     apiJob?.remote === true ||
     apiJob?.remote === 'true' ||
+    apiJob?.is_remote === true ||
+    apiJob?.is_remote === 'true' ||
     String(apiJob?.remote ?? '').trim() === '1';
 
   const countryRaw =
@@ -194,10 +196,15 @@ function mapApiJob(job) {
 
   const salaryText = typeof job.salary === 'string' ? job.salary : '';
 
-  const company = extractCompany(title, description, {
-    ...job,
-    company: companyRaw || undefined,
-  });
+  // rssJobCommon.extractCompany(title, item, defaultCompany) — NOT (title, description, item).
+  const company = extractCompany(
+    title,
+    {
+      company: companyRaw || undefined,
+      creator: typeof job.creator === 'string' ? job.creator.trim() : undefined,
+    },
+    'Company'
+  );
 
   const salary = parseSalary(`${title}\n${salaryText}`, description);
 
