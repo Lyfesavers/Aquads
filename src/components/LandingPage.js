@@ -1239,7 +1239,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities. Integrated with Remotive & Himalayas.
+                  Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities. Syndicated feeds from Remotive, Himalayas, and Web3.Career (Web3 Jobs API).
                 </p>
                 
                 {/* Stats grid */}
@@ -1248,7 +1248,7 @@ const CarouselCard = ({ feature, index }) => {
                     { icon: '🤖', label: 'AI Matching', value: 'CV Skills' },
                     { icon: '🌍', label: 'Remote/Hybrid', value: 'Flexible' },
                     { icon: '💼', label: 'Hiring/For-Hire', value: 'Both Types' },
-                    { icon: '🔗', label: 'Multi-Source', value: '2 Platforms' }
+                    { icon: '🔗', label: 'Multi-Source', value: '3 Platforms' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -1341,7 +1341,7 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-gray-400 text-xs">Source</span>
-                        <span className="text-amber-400 text-xs">Remotive</span>
+                        <span className="text-amber-400 text-xs">Remotive · Himalayas · Web3</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-xs">Posted</span>

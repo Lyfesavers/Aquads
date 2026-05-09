@@ -14,7 +14,8 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
 
   const isExternalJobBoard = (job) =>
     job.source === 'remotive' ||
-    job.source === 'himalayas';
+    job.source === 'himalayas' ||
+    job.source === 'web3career';
 
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
@@ -206,6 +207,22 @@ Best regards,
                       >
                         <span>via</span>
                         <span className="font-semibold">Himalayas</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                    {job.source === 'web3career' && (
+                      <a
+                        href={job.externalUrl}
+                        target="_blank"
+                        rel="noopener follow"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-0.5 sm:py-1 text-xs bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-full hover:bg-violet-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
+                        title="View on Web3.Career (apply link attribution)"
+                      >
+                        <span>via</span>
+                        <span className="font-semibold">Web3.Career</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -538,6 +555,8 @@ Best regards,
                         ? 'Apply on Remotive'
                         : job.source === 'himalayas'
                         ? 'Apply on Himalayas'
+                        : job.source === 'web3career'
+                        ? 'Apply via Web3.Career'
                         : 'Apply Now'}
                     </span>
                   </button>
@@ -548,6 +567,8 @@ Best regards,
                         ? 'You will be redirected to Remotive.com'
                         : job.source === 'himalayas'
                         ? 'You will be redirected to Himalayas.app'
+                        : job.source === 'web3career'
+                        ? 'You will be redirected using the official Web3.Career apply link'
                         : job.applicationUrl 
                           ? 'You will be redirected to the application page' 
                           : 'Apply via email'}

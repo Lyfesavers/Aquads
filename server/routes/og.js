@@ -761,6 +761,7 @@ const JOB_ARRANGEMENT_ACCENT = {
 const JOB_SOURCE_LABEL = {
   remotive: 'Remotive',
   himalayas: 'Himalayas',
+  web3career: 'Web3.Career',
 };
 
 function formatJobPay(job) {
@@ -819,14 +820,18 @@ router.get('/job', async (req, res) => {
     // hiringLine below), so the bottom attribution is just the syndication
     // source for external boards and is omitted entirely for user posts.
     const sourceLabel = (() => {
-      if (job.source === 'remotive' || job.source === 'himalayas') {
+      if (
+        job.source === 'remotive' ||
+        job.source === 'himalayas' ||
+        job.source === 'web3career'
+      ) {
         return `via ${JOB_SOURCE_LABEL[job.source]}`;
       }
       return '';
     })();
 
     // Hiring entity line shown right above the headline. For external boards
-    // (remotive / himalayas) the sync services store the COMPANY NAME in
+    // (remotive / himalayas / web3career) the sync services store the COMPANY NAME in
     // ownerUsername (see services/remotiveSync.js extractCompany()). For
     // user-posted jobs ownerUsername is the literal poster handle, so we
     // prefix it with "@" to disambiguate.
@@ -896,6 +901,7 @@ router.get('/job', async (req, res) => {
     const placeholderLetter = ((
       job.source === 'remotive' ? 'R' :
       job.source === 'himalayas' ? 'H' :
+      job.source === 'web3career' ? 'W' :
       (job.ownerUsername || 'A').charAt(0)
     ) || 'A').toUpperCase();
 

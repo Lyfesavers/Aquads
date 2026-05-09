@@ -45,6 +45,7 @@ const discordService = require('./utils/discordService');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
+const { syncWeb3CareerJobs } = require('./services/web3CareerJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
 const { syncFreeCourses } = require('./services/freeCoursesSync');
 const { sanitizeForRegex } = require('./utils/security');
@@ -533,6 +534,25 @@ setTimeout(async () => {
     console.error('[Himalayas Sync] Error in initial sync:', error);
   }
 }, 45000); // After Remotive initial sync
+
+// Cron: Web3.career/Bondex API — offset minute to spread load vs Remotive/Himalayas
+cron.schedule('45 */8 * * *', async () => {
+  try {
+    console.log('[Web3.career Sync] Starting scheduled sync...');
+    await syncWeb3CareerJobs();
+  } catch (error) {
+    console.error('[Web3.career Sync] Error in scheduled sync:', error);
+  }
+});
+
+setTimeout(async () => {
+  try {
+    console.log('[Web3.career Sync] Running initial sync on server start...');
+    await syncWeb3CareerJobs();
+  } catch (error) {
+    console.error('[Web3.career Sync] Error in initial sync:', error);
+  }
+}, 62000); // After Himalayas initial sync hook
 
 // Market news (CoinDesk + Sky News world RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {

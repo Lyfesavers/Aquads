@@ -222,12 +222,16 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
                     ? 'bg-blue-500/20 text-blue-400'
                     : job.source === 'himalayas'
                     ? 'bg-emerald-500/20 text-emerald-400'
+                    : job.source === 'web3career'
+                    ? 'bg-violet-500/20 text-violet-300'
                     : 'bg-gray-500/20 text-gray-300'
                 }`}>
                   {job.source === 'remotive'
                     ? 'Remotive'
                     : job.source === 'himalayas'
                     ? 'Himalayas'
+                    : job.source === 'web3career'
+                    ? 'Web3.Career'
                     : job.source}
                 </span>
               )}

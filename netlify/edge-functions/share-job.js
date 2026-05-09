@@ -81,6 +81,8 @@ export default async (request, context) => {
           return 'via Remotive';
         case 'himalayas':
           return 'via Himalayas';
+        case 'web3career':
+          return 'via Web3.Career';
         default:
           return job.ownerUsername ? `by ${job.ownerUsername}` : '';
       }

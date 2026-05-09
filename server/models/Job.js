@@ -65,7 +65,7 @@ const jobSchema = new mongoose.Schema({
   // External job source fields
   source: {
     type: String,
-    enum: ['user', 'remotive', 'himalayas'],
+    enum: ['user', 'remotive', 'himalayas', 'web3career'],
     default: 'user',
     index: true
   },
