@@ -1068,7 +1068,7 @@ async function handleSetBranding(interaction) {
   if (!bumped) {
     const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
     if (starterBump) {
-      return reply(interaction, '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard', true);
+      return reply(interaction, '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard\n\n✅ Starter still has full bot access: raids, votes, boosts & bumps.', true);
     }
     return reply(interaction, '❌ Custom branding requires a bumped Premium listing. https://aquads.xyz', true);
   }
@@ -1640,7 +1640,8 @@ async function startBot() {
           const embed = new EmbedBuilder()
             .setTitle('🎨 Custom Branding')
             .setDescription(
-              '**Premium** bumped listings (100+ bullish votes).\n\n' +
+              '**Premium bumped listings only** (100+ bullish votes).\n\n' +
+              '**Starter:** full bot—raids, votes, boosts, bumps—with default Aquads styling on pings. Upgrade to Premium for `/setbranding`.\n\n' +
               '• `/setbranding` – Image (max 500KB) **or** direct **https://** **.mp4** link (max **5MB**, e.g. **catbox.moe** → **files.catbox.moe** link)\n' +
               '• `/removebranding` – Remove custom branding\n\n' +
               'Shows in vote notifications, /mybubble, and /bubbles.\n\n' +

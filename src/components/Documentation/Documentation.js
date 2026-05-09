@@ -3720,6 +3720,7 @@ For Facebook raid participation:
 - ✅ Vote on projects (earn 20 pts per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after your free daily quota)
+- **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocked **custom** logo/video on notifications via \`/setbranding\` once bumped (**100+ bullish**).
 
 ### Premium Features (listed project + bump tier required)
 
@@ -3790,7 +3791,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 
 | Command | Description |
 |---------|-------------|
-| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**Premium** bumped listings) |
+| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**Premium bumped only** — Starter uses default Aquads styling on pings) |
 | \`/removebranding\` | Remove your custom branding |
 
 ### Group Commands
@@ -3881,7 +3882,9 @@ Purchase boosts via \`/boostvote\`:
 
 ### Custom Branding
 
-**For Premium bumped projects (100+ bullish votes):**
+**Premium bumped projects only** (100+ bullish votes):
+
+- Starter listings use the bot for everything **except** custom notification media—they keep **default Aquads** styling on pings until upgraded.
 - Upload your logo/image (max 500KB, JPG/PNG)
 - Your branding appears on vote notifications
 - Notifications go to 5K+ member trending channel
@@ -3904,7 +3907,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: **Premium** listings unlock **custom bot branding** once bumped (**100+ bullish votes**) and scale coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. **Starter** gets **1** free raid per day until bumped, then up to **20**/day once bumped.
+> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** `/setbranding`; that’s **Premium** once bumped (**100+ bullish**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },

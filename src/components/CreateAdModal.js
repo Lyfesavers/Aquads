@@ -1282,7 +1282,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                           Telegram & Discord raid flows
                           <FaDiscord className="text-indigo-300 text-lg" />
                         </h4>
-                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. <strong className="text-white">Custom branding</strong> on raid notifications is a <strong className="text-white">Premium</strong> perk when bumped.</p>
+                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. Full bot access on Starter—including bumps and vote boosts—with Aquads default styling on notifications. <strong className="text-white">Custom branding</strong> on pings is <strong className="text-white">Premium</strong> only when bumped.</p>
                       </div>
                     </div>
 

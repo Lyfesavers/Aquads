@@ -541,6 +541,17 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Pick <strong className="text-green-300">Starter</strong> for a free bubble listing or <strong className="text-blue-300">Premium</strong> for the full launch stack ($99 USDC). Optional Mintfunnel PR packages are separate—add them when you list or anytime from your dashboard.
           </p>
+          <div className="mt-8 max-w-4xl mx-auto rounded-xl border border-cyan-500/35 bg-gray-900/60 px-6 py-5 text-left">
+            <p className="text-cyan-200/95 text-sm font-semibold uppercase tracking-wide mb-2">Included with every listing (Starter or Premium)</p>
+            <ul className="text-gray-300 text-sm space-y-2 list-disc list-inside">
+              <li>
+                <strong className="text-white">Trading flow:</strong> your bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so degens tap through to live charts and swaps—not just a static banner.
+              </li>
+              <li>
+                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts—Premium adds the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, credits, and custom ping branding when bumped.
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
@@ -558,6 +569,10 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                AquaSwap + BexTools path from your bubble (live chart &amp; swap handoff—same funnel Premium uses for trading clicks)
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 Bullish/bearish voting & rankings
               </li>
               <li className="flex items-start">
@@ -567,6 +582,10 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 20/day</strong>
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">Premium only</strong> once bumped
               </li>
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
@@ -609,11 +628,11 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                BNB & Solana volume + trending (included)
+                Included <strong className="text-white">BNB / Sol trending + volume</strong> program—scheduled exposure that stacks with AquaSwap/Bex/bot boosts (not organic-only)
               </li>
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                Custom Telegram & Discord bot + branding when bumped
+                <strong className="text-white">Custom bot branding</strong> when bumped — Premium listing required (same bot features as Starter, plus your logo/video on notifications)
               </li>
               <li className="flex items-start">
                 <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
@@ -657,6 +676,10 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start">
                 <FaTrophy className="text-yellow-400 mr-3 mt-0.5 flex-shrink-0" />
                 Higher raid caps once bumped (see Starter vs Premium cards)
+              </li>
+              <li className="flex items-start">
+                <FaStar className="text-amber-400 mr-3 mt-0.5 flex-shrink-0" />
+                <span><strong className="text-white">/setbranding</strong> (custom logo/video pings): Premium only; Starter bubbles use default Aquads styling</span>
               </li>
               <li className="flex items-start">
                 <FaMicrophone className="text-purple-400 mr-3 mt-0.5 flex-shrink-0" />

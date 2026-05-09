@@ -1456,7 +1456,9 @@ Vote on projects and view trending bubbles!
   editHelpBranding: async (chatId, messageId) => {
     const message = `🎨 Custom Branding
 
-For **Premium** listings with a **bumped** bubble (100+ bullish votes).
+**Premium listings only**, with a **bumped** bubble (100+ bullish votes).
+
+Starter listings still use the bot for raids, votes, boosts & bumps—Aquads keeps default styling on notifications until you upgrade.
 
 • /setbranding
   Send a photo (JPG/PNG, max 500KB) OR paste a direct https:// .mp4 link (max 5MB, not YouTube)
@@ -5570,7 +5572,7 @@ Tap to update:`;
         const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
         if (starterBump) {
           await telegramService.sendBotMessage(chatId,
-            '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard');
+            '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard\n\n✅ Starter still has full bot access: raids, votes, boosts & bumps—only custom logo/video on notifications is Premium.');
           return;
         }
         await telegramService.sendBotMessage(chatId,
