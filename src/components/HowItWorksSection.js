@@ -26,8 +26,8 @@ const projectSteps = [
     n: '01',
     title: 'List & ignite',
     oneLiner:
-      "$99 Premium listing (or free Starter). Auto-fill from DexScreener (symbol, chain, pair). After approval your bubble joins the map.",
-    perks: ['One-time fee', 'DexScreener auto-fill', '5% off for affiliates'],
+      "$99 Premium listing (or free Starter). DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing from your ad—Premium adds the trending/volume + PR launch stack in the modal.",
+    perks: ['Starter $0 · Premium full stack', 'DexScreener auto-fill', '5% off for affiliates'],
     cta: { label: 'Create your listing', to: '/home?openListProject=true' },
     mockup: 'ignite',
   },

@@ -166,6 +166,23 @@ const ADDON_PACKAGES = [
 const LISTING_TIER_STARTER = 'starter';
 const LISTING_TIER_PREMIUM = 'premium';
 
+/** Mirrors /why-list — shared hooks vs Premium launch stack */
+function SharedListingBenefitsNote({ className = '' }) {
+  return (
+    <div className={`rounded-lg border border-cyan-500/35 bg-gray-900/50 px-4 py-3 text-left text-sm text-gray-300 ${className}`}>
+      <p className="text-cyan-200/95 font-semibold text-xs uppercase tracking-wide mb-2">Included with both Starter &amp; Premium</p>
+      <ul className="space-y-2 list-disc list-inside">
+        <li>
+          <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
+        </li>
+        <li>
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Premium</strong> adds the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code>).
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = null, userAds = [] }) => {
   // Check if user is an affiliate (referred by another user)
   const isAffiliate = currentUser && currentUser.referredBy;
@@ -922,6 +939,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   <strong className="text-white">only those package totals</strong> (same idea as buying add-ons later).{' '}
                   <strong className="text-white">Premium</strong> adds the base listing fee plus any packages you select.
                 </p>
+                <SharedListingBenefitsNote className="mb-4" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -930,7 +948,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">1 free raid/day before bump, 20/day once bumped · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 raid/day → 20/day when bumped · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -947,7 +965,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">5 free raids/day before bump, 20/day once bumped · base fee + optional packages below</p>
+                    <p className="mt-2 text-xs text-gray-400">Adds BNB/Sol trending+volume program, PR/AMA stack, ad credit, custom branding when bumped · 5 raids/day → 20 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1205,6 +1223,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 </div>
               ) : (
                 <>
+                <SharedListingBenefitsNote className="mb-6" />
                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -1213,7 +1232,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">100+ vote bump · 1 raid/day → 20/day when bumped · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 100+ vote bump · 1 raid/day → 20 when bumped · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1228,7 +1247,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">Full launch stack · 5→20 raids/day · PR, AMA, bots & more</p>
+                    <p className="text-gray-400 text-xs mt-2">Full launch stack: PR, AMA, credits, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
                   </button>
                 </div>
 
@@ -1310,6 +1329,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   <div className="mt-6 p-4 bg-green-900/25 border border-green-500/45 rounded-lg">
                     <p className="text-green-200 text-sm leading-relaxed">
                       ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
+                      ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds done-for-you trending/volume + launch bundle<br/>
                       ✓ Same fair-play rules and bump mechanics as Premium listings
                     </p>
                   </div>
@@ -1389,7 +1409,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">BNB & Solana Volume + Trending</h4>
-                      <p className="text-gray-300 text-sm">Volume and trending exposure for BNB Chain and Solana tokens—2 hours per week for 4 weeks, included in your base listing fee. Pairs with our Telegram bot trending boost, HyperSpace, and the rest of Aquads for maximum momentum.</p>
+                      <p className="text-gray-300 text-sm">Volume and trending exposure for BNB Chain and Solana tokens—2 hours per week for 4 weeks, included in your base listing fee. <strong className="text-white">Stacks with</strong> AquaSwap/Bex click-through, Telegram bot trending boost, HyperSpace, raids and the rest of Aquads—this is the paid scheduled sprint, not organic-only bumps.</p>
                     </div>
                   </div>
                   

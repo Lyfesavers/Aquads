@@ -684,9 +684,19 @@ You can pay via:
 - **AquaPay** (crypto) - Solana, Ethereum, Base, Sui
 - **PayPal** (fiat)
 
+### Listing fee & packages
+
+**Starter ($0 base)** and **Premium (USDC — see listing modal)** include the same core trading + discovery surface:
+
+- **AquaSwap** + **BexTools**-style routing from your bubble (live chart & swap handoff)
+- Homepage bubble map + vote rankings + bump at **100+ bullish** (organic votes and vote boosts both count)
+- Raids, vote boosts, Bump Bot — **custom `/setbranding` media on notifications is Premium when bumped** (Starter keeps default Aquads styling)
+
+**Premium** adds the bundled launch stack shown in the modal (e.g. PR / distribution access, AMA where offered, **BNB/Sol trending + volume program**, ad credit, higher pre-bump coordinated raid cap vs Starter).
+
 ### Listing Fee
 
-Base listing fee: Check current pricing in the modal. Add-ons are optional.
+Base listing fee: **$0 Starter** or **Premium USDC base** — check the **List Project** modal. Add-on PR packages are optional.
 
 ### After Submission
 
