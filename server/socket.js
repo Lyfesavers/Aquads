@@ -13,28 +13,7 @@ const HYPERSPACE_ADMIN_ROOM = 'hyperSpaceAdmin';
 // Store connected users
 const connectedUsers = new Map();
 
-// Constants for free raid limits
-const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
-
-// Helper function to check if user has a lifetime-bumped ad in the bubbles
-async function checkUserHasLifetimeBumpedAd(username) {
-  try {
-    const Ad = require('./models/Ad');
-    const lifetimeBumpedAd = await Ad.findOne({
-      owner: username,
-      status: { $in: ['active', 'approved'] }, // Bumped ads have status 'approved'
-      isBumped: true,
-      $or: [
-        { bumpDuration: -1 },           // Lifetime bump indicator
-        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
-      ]
-    });
-    return lifetimeBumpedAd !== null;
-  } catch (error) {
-    console.error('Error checking lifetime bumped ad:', error);
-    return false;
-  }
-}
+const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('./utils/listingTier');
 
 // Initialize the socket.io instance
 function init(server) {
@@ -150,24 +129,21 @@ function init(server) {
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 50);
           
-          // Calculate free raid eligibility using automatic system
-          // Check if user owns an active ad with lifetime bump (20 free raids/day)
-          const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
-          
+          // Calculate free raid eligibility (tier-based daily cap from listingTier.js)
+          const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+
           let freeRaidEligibility;
-          if (hasLifetimeBumpedAd) {
-            // User has a lifetime bumped project - 20 free raids/day
-            const eligibility = user.checkFreeRaidEligibility ? user.checkFreeRaidEligibility(LIFETIME_BUMP_FREE_RAID_LIMIT) : { eligible: true, dailyLimit: LIFETIME_BUMP_FREE_RAID_LIMIT, raidsRemaining: LIFETIME_BUMP_FREE_RAID_LIMIT, raidsUsedToday: 0 };
+          if (dailyLimit > 0) {
+            const eligibility = user.checkFreeRaidEligibility ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: true, dailyLimit, raidsRemaining: dailyLimit, raidsUsedToday: 0 };
             freeRaidEligibility = {
               ...eligibility,
-              eligibilitySource: 'lifetime_bump',
+              eligibilitySource: 'bumped_listing',
               eligible: eligibility.eligible !== false
             };
           } else {
-            // User doesn't have a lifetime bumped project - not eligible for free raids
             freeRaidEligibility = {
               eligible: false,
-              reason: 'List a project in the bubbles and bump for life to get 20 free raids per day!',
+              reason: FREE_RAIDS_REQUIRES_LISTING_REASON,
               dailyLimit: 0,
               raidsRemaining: 0,
               raidsUsedToday: 0,

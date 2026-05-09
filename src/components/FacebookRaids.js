@@ -532,7 +532,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                 onClick={() => setShowFreeRaidForm(true)}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
               >
-                Create Free Raid ({freeRaidEligibility.remainingToday} left today)
+                Create Free Raid ({freeRaidEligibility.raidsRemaining} left today)
               </button>
             )}
             

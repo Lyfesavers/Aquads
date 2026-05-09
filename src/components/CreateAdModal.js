@@ -163,13 +163,18 @@ const ADDON_PACKAGES = [
   }
 ];
 
+const LISTING_TIER_STARTER = 'starter';
+const LISTING_TIER_PREMIUM = 'premium';
+
 const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = null, userAds = [] }) => {
   // Check if user is an affiliate (referred by another user)
   const isAffiliate = currentUser && currentUser.referredBy;
-  const BASE_LISTING_FEE = 199;
+  const PREMIUM_LISTING_FEE_USDC = 99;
   const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
-  const affiliateDiscount = isAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
-  const discountedBaseFee = BASE_LISTING_FEE - affiliateDiscount;
+  const affiliateDiscount = isAffiliate ? PREMIUM_LISTING_FEE_USDC * AFFILIATE_DISCOUNT_RATE : 0;
+  const discountedPremiumFee = PREMIUM_LISTING_FEE_USDC - affiliateDiscount;
+
+  const [listingTierChoice, setListingTierChoice] = useState(LISTING_TIER_PREMIUM);
 
   // Check if user has existing projects
   const userProjects = userAds.filter(ad => ad.owner === currentUser?.username);
@@ -188,8 +193,21 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     return 0;
   };
 
-  // Get base fee - $0 if add-on only, otherwise normal fee
-  const getBaseFee = () => isAddOnOnly ? 0 : discountedBaseFee;
+  const getBaseFee = () => {
+    if (isAddOnOnly) return 0;
+    return listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
+  };
+
+  const handleListingTierSelect = (tier) => {
+    setListingTierChoice(tier);
+    setAppliedDiscount(null);
+    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
+      return sum + (addon ? addon.price : 0);
+    }, 0);
+    const base = tier === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
+    setFormData(prev => ({ ...prev, totalAmount: base + addonTotal }));
+  };
 
   const [formData, setFormData] = useState({
     title: '',
@@ -202,7 +220,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     chainSymbol: '',
     chainAddress: '',
     selectedAddons: preSelectedPackage ? [preSelectedPackage] : [], // Pre-select package if provided
-    totalAmount: discountedBaseFee + getInitialAddonTotal(), // Base listing fee + pre-selected addon
+    totalAmount: discountedPremiumFee + getInitialAddonTotal(),
     isAffiliate: isAffiliate,
     affiliateDiscount: affiliateDiscount
   });
@@ -342,7 +360,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
   const handleSkipAddons = () => {
     // Clear selected add-ons and move to payment
-    const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
+    const baseFee = getBaseFee();
     setFormData(prev => ({
       ...prev,
       selectedAddons: [],
@@ -404,8 +422,29 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       
       // Regular project listing - create Ad first with aquapay-pending
       // Call API directly to get the created ad's ID for the AquaPay URL
+      const listingTier = listingTierChoice === LISTING_TIER_STARTER ? LISTING_TIER_STARTER : LISTING_TIER_PREMIUM;
+      const starterFreeNoPayment = listingTier === LISTING_TIER_STARTER && formData.totalAmount === 0;
+
+      if (starterFreeNoPayment) {
+        await apiCreateAd({
+          ...formData,
+          listingTier,
+          txSignature: 'starter-free',
+          paymentChain: '',
+          chainSymbol: '',
+          chainAddress: '',
+          isAffiliate,
+          affiliateDiscount,
+          discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
+        });
+        onClose();
+        alert('Your Starter listing was submitted for admin approval. You will be notified when it goes live.');
+        return;
+      }
+
       const adDataForApi = {
         ...formData,
+        listingTier,
         txSignature: 'aquapay-pending',
         paymentMethod: 'aquapay',
         paymentChain: 'AquaPay',
@@ -438,6 +477,11 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     // Validate required data before proceeding (only if not add-on only)
     if (!isAddOnOnly && (!formData.title || !formData.logo || !formData.url || !formData.pairAddress)) {
       alert('Please complete all required fields in step 1');
+      return;
+    }
+
+    if (!isAddOnOnly && listingTierChoice === LISTING_TIER_STARTER && formData.totalAmount === 0) {
+      alert('PayPal is not required for a free Starter listing — use “Submit free listing”.');
       return;
     }
 
@@ -491,6 +535,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       // Regular project listing with PayPal
       await onCreateAd({
         ...formData,
+        listingTier: listingTierChoice === LISTING_TIER_STARTER ? LISTING_TIER_STARTER : LISTING_TIER_PREMIUM,
         txSignature: 'paypal',
         paymentMethod: 'paypal',
         paymentChain: 'PayPal',
@@ -528,7 +573,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         return sum + (addon ? addon.price : 0);
       }, 0);
       
-      const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
+      const baseFee = getBaseFee();
       
       return {
         ...prev,
@@ -566,9 +611,10 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
       return sum + (addon ? addon.price : 0);
     }, 0);
+    const base = listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
     setFormData(prev => ({
       ...prev,
-      totalAmount: discountedBaseFee + addonTotal
+      totalAmount: base + addonTotal
     }));
     setStep(1);
   };
@@ -595,7 +641,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const handleDiscountRemoved = () => {
     setAppliedDiscount(null);
     // Recalculate total without discount
-    const baseFee = isAddOnOnly ? 0 : discountedBaseFee;
+    const baseFee = getBaseFee();
     const addonCosts = formData.selectedAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
       return total + (addon ? addon.price : 0);
@@ -615,12 +661,15 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     switch(step) {
       case 1: return 'List New Project';
       case 2: return 'Add-on Packages';
-      case 3: return 'Premium Listing Package';
+      case 3: return 'Listing plan & payment';
       default: return 'List New Project';
     }
   };
 
   const getStepCount = () => isAddOnOnly ? '2' : '3';
+
+  /** Listing-line portion before discounts (used for breakdown UI). */
+  const listingBasePortion = isAddOnOnly ? 0 : (listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee);
 
   return (
     <Modal onClose={onClose} fullScreen={true}>
@@ -866,6 +915,43 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
         {step === 2 && (
           <div className="max-w-4xl mx-auto">
+            {!isAddOnOnly && (
+              <div className="mb-8 rounded-xl border border-gray-600 bg-gray-800/40 p-4 sm:p-5">
+                <p className="mb-4 text-center text-sm text-gray-300">
+                  Pick your listing plan first. <strong className="text-white">Starter</strong> has no base listing fee — if you add Mintfunnel packages below, checkout charges{' '}
+                  <strong className="text-white">only those package totals</strong> (same idea as buying add-ons later).{' '}
+                  <strong className="text-white">Premium</strong> adds the base listing fee plus any packages you select.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleListingTierSelect(LISTING_TIER_STARTER)}
+                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingTierChoice === LISTING_TIER_STARTER ? 'border-green-400 bg-green-900/20' : 'border-gray-600 bg-gray-900/40 hover:border-gray-500'}`}
+                  >
+                    <div className="font-bold text-white">Starter</div>
+                    <div className="mt-1 text-sm text-green-400">Free base listing</div>
+                    <p className="mt-2 text-xs text-gray-400">1 free raid/day before bump, 20/day once bumped · optional packages: pay package prices only</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleListingTierSelect(LISTING_TIER_PREMIUM)}
+                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingTierChoice === LISTING_TIER_PREMIUM ? 'border-blue-400 bg-blue-900/20' : 'border-gray-600 bg-gray-900/40 hover:border-gray-500'}`}
+                  >
+                    <div className="font-bold text-white">Premium</div>
+                    <div className="mt-1 text-sm text-blue-400">
+                      {isAffiliate ? (
+                        <span>
+                          ${discountedPremiumFee.toFixed(2)} USDC <span className="text-gray-500 line-through">${PREMIUM_LISTING_FEE_USDC}</span>
+                        </span>
+                      ) : (
+                        `$${PREMIUM_LISTING_FEE_USDC} USDC`
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-400">5 free raids/day before bump, 20/day once bumped · base fee + optional packages below</p>
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Add-on Packages Header */}
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold text-white mb-4">
@@ -1007,7 +1093,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div className="flex justify-between items-center">
                       <span className="text-white font-medium">Add-ons Total:</span>
                       <span className="text-xl font-bold text-green-400">
-                        ${(formData.totalAmount - discountedBaseFee).toLocaleString()} USDC
+                        ${Math.max(0, formData.totalAmount - listingBasePortion).toLocaleString()} USDC
                       </span>
                     </div>
                   </div>
@@ -1118,22 +1204,61 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   </div>
                 </div>
               ) : (
-                /* Full Listing Package Benefits */
+                <>
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleListingTierSelect(LISTING_TIER_STARTER)}
+                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingTierChoice === LISTING_TIER_STARTER ? 'border-green-400 bg-green-900/20' : 'border-gray-600 bg-gray-800/40 hover:border-gray-500'}`}
+                  >
+                    <div className="font-bold text-white">Starter</div>
+                    <div className="text-green-400 text-sm mt-1">Free base listing</div>
+                    <p className="text-gray-400 text-xs mt-2">1 free raid/day before bump, 20/day once bumped · optional Mintfunnel add-ons</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleListingTierSelect(LISTING_TIER_PREMIUM)}
+                    className={`rounded-xl border-2 p-4 text-left transition-all ${listingTierChoice === LISTING_TIER_PREMIUM ? 'border-blue-400 bg-blue-900/20' : 'border-gray-600 bg-gray-800/40 hover:border-gray-500'}`}
+                  >
+                    <div className="font-bold text-white">Premium</div>
+                    <div className="text-blue-400 text-sm mt-1">
+                      {isAffiliate ? (
+                        <span>${discountedPremiumFee.toFixed(2)} USDC <span className="text-gray-500 line-through ml-1">${PREMIUM_LISTING_FEE_USDC}</span></span>
+                      ) : (
+                        `$${PREMIUM_LISTING_FEE_USDC} USDC`
+                      )}
+                    </div>
+                    <p className="text-gray-400 text-xs mt-2">PR, AMA, trending, custom bots · 5 free raids/day before bump, 20/day once bumped</p>
+                  </button>
+                </div>
+
+                {listingTierChoice === LISTING_TIER_STARTER ? (
+                <div className="bg-gradient-to-br from-green-900/40 to-gray-900/50 border border-green-500/50 rounded-xl p-6 mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                    <FaRocket className="mr-3 text-green-400" />
+                    Starter (free)
+                  </h3>
+                  <p className="text-gray-300 mb-3 text-sm">
+                    No base listing fee. After approval: bubble on the map, bump at <strong className="text-white">100+</strong> bullish votes, <strong className="text-white">1</strong> free raid per day until bumped then <strong className="text-white">20</strong>/day, shared Aquads Telegram/Discord flows (custom branding is Premium).
+                  </p>
+                  <p className="text-gray-500 text-xs">Upgrade to Premium anytime from your dashboard for the full launch stack.</p>
+                </div>
+                ) : (
                 <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
                   <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
                     <FaRocket className="mr-3 text-blue-400" />
-                    Premium Listing Package - {isAffiliate ? (
+                    Premium Listing Package — {isAffiliate ? (
                       <span>
-                        <span className="line-through text-gray-400 ml-2">${BASE_LISTING_FEE} USDC</span>
-                        <span className="text-green-400 ml-2">${discountedBaseFee.toFixed(2)} USDC</span>
+                        <span className="line-through text-gray-400 ml-2">${PREMIUM_LISTING_FEE_USDC} USDC</span>
+                        <span className="text-green-400 ml-2">${discountedPremiumFee.toFixed(2)} USDC</span>
                         <span className="bg-green-500 text-white px-2 py-1 rounded text-sm ml-2">5% Affiliate Discount</span>
                       </span>
                     ) : (
-                      `$${BASE_LISTING_FEE} USDC`
+                      `$${PREMIUM_LISTING_FEE_USDC} USDC`
                     )}
                   </h3>
                 <p className="text-gray-300 mb-6">
-                  Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
+                  Includes everything in Starter plus the premium launch services below.
                 </p>
                 
                 <div className="space-y-4">
@@ -1143,7 +1268,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">Vote-driven bubble bump</h4>
-                      <p className="text-gray-300 text-sm">100+ bullish votes unlock max bubble size and main-row visibility; organic votes and paid vote boosts both count. Fall below the threshold and your bubble shrinks over time—no timed “free bump” window.</p>
+                      <p className="text-gray-300 text-sm">100+ bullish votes unlock max bubble size and main-row visibility; organic votes and paid vote boosts both count.</p>
                     </div>
                   </div>
                   
@@ -1183,7 +1308,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">Community Twitter Raids</h4>
-                      <p className="text-gray-300 text-sm">Access to our coordinated Twitter raid campaigns for viral social media exposure</p>
+                      <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free raids per day before your Premium bubble is bumped, then up to <strong className="text-white">20</strong>/day once bumped (Starter: 1/day before bump, then 20/day).</p>
                     </div>
                   </div>
                   
@@ -1239,6 +1364,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   </p>
                 </div>
               </div>
+                )}
+                </>
               )}
             </div>
 
@@ -1253,25 +1380,27 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       ${formData.totalAmount.toLocaleString()} USDC
                     </span>
                   </div>
-                  {(formData.selectedAddons.length > 0 || isAddOnOnly) && (
+                  {(
                     <div className="mt-2 pt-2 border-t border-gray-600">
                       <div className="text-sm text-gray-300">
                         {!isAddOnOnly && (
                           <>
                             <div className="flex justify-between">
-                              <span>Base Listing:</span>
+                              <span>{listingTierChoice === LISTING_TIER_STARTER ? 'Starter listing:' : 'Premium base listing:'}</span>
                               <span>
-                                {isAffiliate ? (
+                                {listingTierChoice === LISTING_TIER_STARTER ? (
+                                  <span className="text-green-400 font-semibold">$0</span>
+                                ) : isAffiliate ? (
                                   <span>
-                                    <span className="line-through text-gray-400">${BASE_LISTING_FEE}</span>
-                                    <span className="text-green-400 ml-1">${discountedBaseFee.toFixed(2)} USDC</span>
+                                    <span className="line-through text-gray-400">${PREMIUM_LISTING_FEE_USDC}</span>
+                                    <span className="text-green-400 ml-1">${discountedPremiumFee.toFixed(2)} USDC</span>
                                   </span>
                                 ) : (
-                                  `$${BASE_LISTING_FEE} USDC`
+                                  `$${PREMIUM_LISTING_FEE_USDC} USDC`
                                 )}
                               </span>
                             </div>
-                            {isAffiliate && (
+                            {listingTierChoice === LISTING_TIER_PREMIUM && isAffiliate && (
                               <div className="flex justify-between text-green-400">
                                 <span>Affiliate Discount (5%):</span>
                                 <span>-${affiliateDiscount.toFixed(2)} USDC</span>
@@ -1304,8 +1433,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   onDiscountApplied={handleDiscountApplied}
                   onDiscountRemoved={handleDiscountRemoved}
                   originalAmount={formData.totalAmount}
-                  baseAmount={discountedBaseFee}
-                  addonAmount={formData.totalAmount - discountedBaseFee}
+                  baseAmount={listingBasePortion}
+                  addonAmount={Math.max(0, formData.totalAmount - listingBasePortion)}
                   applicableTo="listing"
                   currentUser={currentUser}
                 />
@@ -1328,19 +1457,46 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 )}
 
                 {/* Payment Instructions */}
+                {(!isAddOnOnly && listingTierChoice === LISTING_TIER_STARTER && formData.totalAmount === 0) ? (
+                  <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/50 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Free Starter listing</h4>
+                    <p className="text-gray-300 text-sm">Submit for admin approval — no payment required unless you selected paid add-ons.</p>
+                  </div>
+                ) : (
                 <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/50 rounded-lg p-4">
                   <h4 className="font-semibold text-white mb-2">Pay with Crypto via AquaPay</h4>
                   <p className="text-gray-300 text-sm mb-3">
-                    Click "Pay with Crypto" below to open the AquaPay payment page. The amount will be pre-filled for your convenience.
+                    Click &quot;Pay with Crypto&quot; below to open the AquaPay payment page. The amount will be pre-filled for your convenience.
                   </p>
                   <p className="text-gray-400 text-xs">
                     After payment is completed, an admin will verify and approve your listing.
                   </p>
                 </div>
+                )}
 
                 <div className="space-y-4 pt-4">
                   {/* Payment Method Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3">
+                    {!isAddOnOnly && listingTierChoice === LISTING_TIER_STARTER && formData.totalAmount === 0 ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center text-sm sm:text-base"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <FaSpinner className="animate-spin mr-1.5 sm:mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <FaCheck className="mr-1.5 sm:mr-2" />
+                          Submit free listing
+                        </>
+                      )}
+                    </button>
+                    ) : (
+                    <>
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -1368,6 +1524,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <span className="mr-1.5 sm:mr-2">💳</span>
                       Pay with Card
                     </button>
+                    </>
+                    )}
                   </div>
 
                   <p className="text-gray-400 text-xs sm:text-sm text-center">

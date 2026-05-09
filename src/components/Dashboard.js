@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -1411,6 +1411,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
     : [];
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
+
+  const handleUpgradeListingToPremium = async (ad) => {
+    if (!['active', 'approved'].includes(ad.status)) {
+      alert('Your listing must be approved before upgrading to Premium.');
+      return;
+    }
+    try {
+      const updated = await upgradePremiumListing({
+        adId: ad.id,
+        txSignature: 'aquapay-pending',
+        paymentChain: 'AquaPay',
+        chainSymbol: 'USDC',
+        chainAddress: 'https://aquads.xyz/pay/aquads'
+      });
+      window.open(`https://aquads.xyz/pay/aquads?amount=${updated.totalAmount}&projectId=${updated._id || updated.id}`, '_blank');
+      alert('Complete Premium payment in the opened window. Admins verify Premium upgrades the same way as new paid listings.');
+    } catch (e) {
+      alert(e.message || 'Upgrade failed');
+    }
+  };
   const pendingDeepDiveSubmissions = currentUser?.isAdmin
     ? ads.filter((ad) => {
         const profile = ad.projectProfile;
@@ -3733,9 +3753,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                         <p className="text-sm text-purple-300">
                           Daily free raids remaining
                         </p>
-                        {freeRaidEligibility.eligibilitySource === 'lifetime_bump' && (
+                        {freeRaidEligibility.dailyLimit === 1 && (
                           <p className="text-xs text-green-400 mt-1">
-                            ✓ Bumped bubble active (100+ bullish votes)
+                            Starter listing: 1 coordinated raid/day until you bump (then up to 20/day).
+                          </p>
+                        )}
+                        {freeRaidEligibility.dailyLimit === 5 && (
+                          <p className="text-xs text-green-400 mt-1">
+                            Premium listing: 5 coordinated raids/day until you bump (then up to 20/day).
+                          </p>
+                        )}
+                        {freeRaidEligibility.dailyLimit >= 20 && (
+                          <p className="text-xs text-green-400 mt-1">
+                            Full daily free raid quota active.
                           </p>
                         )}
                       </div>
@@ -3758,9 +3788,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                         </svg>
                       </div>
                       <div>
-                        <h4 className="text-lg font-medium text-white">Get 20 Free Raids Per Day!</h4>
+                        <h4 className="text-lg font-medium text-white">Unlock free coordinated raids</h4>
                         <p className="text-sm text-gray-300 mt-1">
-                          List your project in the bubbles and reach <span className="text-purple-400 font-semibold">100+ bullish votes</span> (bumped) to unlock 20 free raid posts every day.
+                          List an approved project on Aquads. <span className="text-purple-400 font-semibold">Starter</span>: 1 free raid/day until your bubble hits{' '}
+                          <span className="text-purple-400 font-semibold">100+ bullish votes</span> (bumped), then up to 20/day.{' '}
+                          <span className="text-purple-400 font-semibold">Premium</span>: up to 5 free raids/day before bump, then up to 20/day once bumped (100+ bullish votes).
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <a 
@@ -3811,6 +3843,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                             <div className="min-w-0">
                               <h3 className="text-white font-semibold truncate">{ad.title}</h3>
                               <p className="text-gray-400 text-sm truncate">{ad.url}</p>
+                              {ad.listingTier === 'starter' && (
+                                <span className="inline-block mt-1 text-xs bg-green-600/40 text-green-200 px-2 py-0.5 rounded">Starter</span>
+                              )}
+                              {ad.listingTier !== 'starter' && (
+                                <span className="inline-block mt-1 text-xs bg-blue-600/40 text-blue-200 px-2 py-0.5 rounded">Premium</span>
+                              )}
                               {ad.status === 'pending' && (
                                 <p className="text-yellow-500 text-sm">Bump Pending</p>
                               )}
@@ -3846,6 +3884,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                 >
                                   Bump
                                 </button>
+                                {ad.listingTier !== 'starter' && (
                                 <a
                                   href="https://t.me/+6rJbDLqdMxA3ZTUx"
                                   target="_blank"
@@ -3855,6 +3894,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                 >
                                   Book Free AMA
                                 </a>
+                                )}
+                                {ad.listingTier === 'starter' && ['active', 'approved'].includes(ad.status) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpgradeListingToPremium(ad)}
+                                    className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                                  >
+                                    Upgrade to Premium
+                                  </button>
+                                )}
                               </>
                             ) : (
                               <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">

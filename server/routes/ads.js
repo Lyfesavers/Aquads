@@ -17,6 +17,12 @@ const {
   computeShrunkSize,
   BUMP_VOTE_THRESHOLD
 } = require('../utils/bumpFromVotes');
+const {
+  LISTING_TIER_STARTER,
+  LISTING_TIER_PREMIUM,
+  PREMIUM_LISTING_FEE_USDC,
+  getListingTier
+} = require('../utils/listingTier');
 
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
@@ -261,10 +267,76 @@ const calculateBumpAmount = (type) => {
   }
 };
 
+// Upgrade Starter → Premium (same payment verification workflow as new Premium listings)
+router.post('/upgrade-premium', auth, requireEmailVerification, emitAdEvent('update'), async (req, res) => {
+  try {
+    const { adId, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+    if (!adId) {
+      return res.status(400).json({ error: 'adId is required' });
+    }
+
+    const ad = await Ad.findOne({ id: adId, owner: req.user.username });
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    if (!['active', 'approved'].includes(ad.status)) {
+      return res.status(400).json({ error: 'Listing must be live (approved) before upgrading to Premium' });
+    }
+    if (getListingTier(ad) !== LISTING_TIER_STARTER) {
+      return res.status(400).json({ error: 'This listing is already Premium or cannot use this upgrade path' });
+    }
+
+    const currentUser = await User.findById(req.user.userId);
+    const AFFILIATE_DISCOUNT_RATE = 0.05;
+    const userIsAffiliate = Boolean(currentUser?.referredBy);
+    const affiliateDiscountOnPremium = userIsAffiliate ? PREMIUM_LISTING_FEE_USDC * AFFILIATE_DISCOUNT_RATE : 0;
+    const calculatedListingFee = PREMIUM_LISTING_FEE_USDC - affiliateDiscountOnPremium;
+
+    const addonCosts = (ad.selectedAddons || []).reduce((total, addonId) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+      return total + (addon ? addon.price : 0);
+    }, 0);
+
+    ad.listingTier = LISTING_TIER_PREMIUM;
+    ad.listingFee = calculatedListingFee;
+    ad.totalAmount = calculatedListingFee + addonCosts;
+    ad.txSignature = txSignature || 'aquapay-pending';
+    ad.paymentChain = paymentChain || null;
+    ad.chainSymbol = chainSymbol || null;
+    ad.chainAddress = chainAddress || null;
+
+    await ad.save();
+    invalidateAdsCache();
+    socket.getIO().emit('adsUpdated', { type: 'update', ad });
+    res.json(ad);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to upgrade listing', message: error.message });
+  }
+});
+
 // POST route for creating new ad
 router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (req, res) => {
   try {
-    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount, discountCode } = req.body;
+    const {
+      title,
+      logo,
+      url,
+      pairAddress,
+      blockchain,
+      referredBy,
+      x,
+      y,
+      preferredSize,
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress,
+      selectedAddons,
+      isAffiliate,
+      affiliateDiscount,
+      discountCode,
+      listingTier: listingTierRaw
+    } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -278,12 +350,16 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Verify affiliate status and calculate listing fee
-    const BASE_LISTING_FEE = 199;
+    const listingTier = listingTierRaw === LISTING_TIER_STARTER ? LISTING_TIER_STARTER : LISTING_TIER_PREMIUM;
+
     const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
     const userIsAffiliate = Boolean(currentUser.referredBy);
-    const calculatedAffiliateDiscount = userIsAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
-    const calculatedListingFee = BASE_LISTING_FEE - calculatedAffiliateDiscount;
+    const calculatedAffiliateDiscount =
+      listingTier === LISTING_TIER_PREMIUM && userIsAffiliate
+        ? PREMIUM_LISTING_FEE_USDC * AFFILIATE_DISCOUNT_RATE
+        : 0;
+    const calculatedListingFee =
+      listingTier === LISTING_TIER_STARTER ? 0 : PREMIUM_LISTING_FEE_USDC - calculatedAffiliateDiscount;
 
     // Calculate addon costs
     const addonCosts = selectedAddons ? selectedAddons.reduce((total, addonId) => {
@@ -312,7 +388,6 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
           // Apply discount to total amount (base + add-ons)
           discountableAmount = totalBeforeDiscount;
         } else {
-          // Apply discount only to base listing fee
           discountableAmount = calculatedListingFee;
         }
         
@@ -325,6 +400,15 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     }
 
     const finalAmount = totalBeforeDiscount - discountAmount;
+
+    const starterFreeNoPayment =
+      listingTier === LISTING_TIER_STARTER && addonCosts === 0 && finalAmount === 0;
+    if (starterFreeNoPayment) {
+      const sig = (txSignature || '').trim();
+      if (sig && sig !== 'starter-free') {
+        return res.status(400).json({ error: 'Free Starter listings do not require payment' });
+      }
+    }
 
     // Server always uses its own affiliate calculations for security
     // No client-side validation needed since server values are authoritative
@@ -340,13 +424,14 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       x: x || 0,
       y: y || 0,
       owner: req.user.username,
-      txSignature,
+      txSignature: starterFreeNoPayment ? 'starter-free' : txSignature,
       paymentChain,
       chainSymbol,
       chainAddress,
       selectedAddons: selectedAddons || [],
       totalAmount: finalAmount,
-      listingFee: calculatedListingFee, // Base listing fee with affiliate discount applied
+      listingFee: calculatedListingFee,
+      listingTier,
       appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
       discountAmount: discountAmount,
       // All listings go through approval (including admins) for proper tracking
@@ -384,7 +469,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
         user.lastActivity = new Date();
         await user.save();
         
-        if (user.referredBy) {
+        if (user.referredBy && listingTier === LISTING_TIER_PREMIUM) {
           await awardListingPoints(req.user.userId);
         }
       }

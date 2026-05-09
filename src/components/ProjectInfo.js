@@ -205,6 +205,9 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
 
   // Check if user has any projects listed
   const userHasProjects = ads.some(ad => ad.owner === currentUser?.username);
+  const ownerAdsForTier = currentUser ? ads.filter(ad => ad.owner === currentUser.username) : [];
+  const hasOnlyStarterListings =
+    Boolean(currentUser) && ownerAdsForTier.length > 0 && ownerAdsForTier.every(ad => ad.listingTier === 'starter');
 
   // Handle package selection from marketing packages section
   const handlePackageSelect = (packageId) => {
@@ -544,8 +547,8 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           {/* Base Listing */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Base Listing</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$199</div>
+              <h3 className="text-2xl font-bold text-white mb-2">Premium Listing</h3>
+              <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
               <div className="text-gray-400">USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300">
@@ -948,6 +951,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <p className="text-purple-100 text-sm">Track performance and optimize campaigns live</p>
             </div>
           </div>
+                     {hasOnlyStarterListings ? (
+           <p className="text-purple-100 text-sm mb-4 max-w-xl mx-auto">
+             $50 ad-network credit and the CPC launch button are included with <strong className="text-white">Premium</strong> listings. Upgrade from your dashboard or choose Premium when listing.
+           </p>
+         ) : null}
+                     {!hasOnlyStarterListings ? (
                      <button
              onClick={() => {
                if (checkAuthAndOpenModal('cpc')) {
@@ -960,6 +969,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
              Launch CPC Campaign
              <FaArrowRight className="ml-2" />
            </button>
+                     ) : null}
         </div>
       </div>
 

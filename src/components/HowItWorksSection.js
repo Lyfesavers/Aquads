@@ -26,7 +26,7 @@ const projectSteps = [
     n: '01',
     title: 'List & ignite',
     oneLiner:
-      "$199 one-time. Auto-fill from DexScreener (symbol, chain, pair). Your bubble goes live and the flywheel starts the moment you launch.",
+      "$99 Premium listing (or free Starter). Auto-fill from DexScreener (symbol, chain, pair). After approval your bubble joins the map.",
     perks: ['One-time fee', 'DexScreener auto-fill', '5% off for affiliates'],
     cta: { label: 'Create your listing', to: '/home?openListProject=true' },
     mockup: 'ignite',

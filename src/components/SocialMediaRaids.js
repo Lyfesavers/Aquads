@@ -789,7 +789,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         const data = await response.json();
         setFreeRaidEligibility(data);
       } else {
-        setFreeRaidEligibility({ eligible: false, reason: 'List a project and bump for life to get 20 free raids per day!' });
+        setFreeRaidEligibility({
+          eligible: false,
+          reason:
+            'Could not load eligibility. List an approved project: Starter gets 1 free raid/day until bump, then 20/day; Premium gets up to 5/day until bump, then 20/day once bumped.'
+        });
       }
     } catch (error) {
       setFreeRaidEligibility({ eligible: false, reason: 'Error checking eligibility' });
@@ -1335,8 +1339,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         : freeRaidEligibility.reason
                       }
                     </p>
-                    {freeRaidEligibility.eligibilitySource === 'lifetime_bump' && (
-                      <p className="text-xs text-green-300 mt-1">✓ Lifetime Bump Active</p>
+                    {freeRaidEligibility.eligible && freeRaidEligibility.eligibilitySource === 'bumped_listing' && (
+                      <p className="text-xs text-green-300 mt-1">
+                        {freeRaidEligibility.dailyLimit === 1
+                          ? '✓ Starter quota: 1/day (bump for up to 20/day)'
+                          : freeRaidEligibility.dailyLimit === 5
+                          ? '✓ Premium quota: 5/day until bump (then up to 20/day)'
+                          : '✓ Listing qualifies for coordinated free raids'}
+                      </p>
                     )}
                   </div>
                 </div>

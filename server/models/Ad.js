@@ -107,7 +107,13 @@ const adSchema = new mongoose.Schema({
   },
   listingFee: {
     type: Number,
-    default: 199 // $199 USDC
+    default: 99 // Premium base USDC (Starter = 0)
+  },
+  /** starter = free listing; premium = paid package. Omitted on legacy docs = treated as premium in app logic */
+  listingTier: {
+    type: String,
+    enum: ['starter', 'premium'],
+    default: 'premium'
   },
   // Marketing add-on package fields
   selectedAddons: {
@@ -116,7 +122,7 @@ const adSchema = new mongoose.Schema({
   },
   totalAmount: {
     type: Number,
-    default: 199 // Base listing fee + any add-ons
+    default: 99 // Premium base + add-ons; Starter uses 0 + add-ons only
   },
   // Discount code fields
   appliedDiscountCode: {

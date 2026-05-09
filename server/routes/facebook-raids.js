@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const FacebookRaid = require('../models/FacebookRaid');
 const User = require('../models/User');
-const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const pointsModule = require('./points');
@@ -13,28 +12,7 @@ const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
 const { emitRaidUpdate } = require('../socket');
-
-// Constants for free raid limits
-const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
-
-// Helper function to check if user has a lifetime-bumped ad in the bubbles
-async function checkUserHasLifetimeBumpedAd(username) {
-  try {
-    const lifetimeBumpedAd = await Ad.findOne({
-      owner: username,
-      status: { $in: ['active', 'approved'] }, // Bumped ads have status 'approved'
-      isBumped: true,
-      $or: [
-        { bumpDuration: -1 },           // Lifetime bump indicator
-        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
-      ]
-    });
-    return lifetimeBumpedAd !== null;
-  } catch (error) {
-    console.error('Error checking lifetime bumped ad:', error);
-    return false;
-  }
-}
+const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -90,15 +68,13 @@ router.get('/free-eligibility', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check eligibility sources
-    // Check if user has a lifetime bumped project
-    const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
-    
-    if (!hasLifetimeBumpedAd) {
+    const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+
+    if (!dailyLimit) {
       return res.json({
         eligibility: {
           eligible: false,
-          reason: 'You must have an active project with a lifetime bump in the bubbles to create free raids.',
+          reason: FREE_RAIDS_REQUIRES_LISTING_REASON,
           dailyLimit: 0,
           raidsRemaining: 0,
           raidsUsedToday: 0,
@@ -107,9 +83,7 @@ router.get('/free-eligibility', auth, async (req, res) => {
       });
     }
 
-    // User has lifetime bump - 20 free raids per day
-    const dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT;
-    const eligibilitySource = 'lifetime_bump';
+    const eligibilitySource = 'bumped_listing';
 
     // Get current usage
     const eligibility = user.checkFreeRaidEligibility(dailyLimit);
@@ -299,18 +273,16 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Determine eligibility - only lifetime bumped projects get free raids
-    const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
-    
-    if (!hasLifetimeBumpedAd) {
-      return res.status(400).json({ 
-        error: 'Not eligible for free raids. You must have an active project with a lifetime bump in the bubbles.',
-        eligible: false 
+    const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+
+    if (!dailyLimit) {
+      return res.status(400).json({
+        error: FREE_RAIDS_REQUIRES_LISTING_REASON,
+        eligible: false
       });
     }
-    
-    const dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT; // 20 raids for lifetime bumped projects
-    const eligibilitySource = 'lifetime_bump';
+
+    const eligibilitySource = 'bumped_listing';
 
     // Check eligibility with the determined daily limit
     const eligibility = user.checkFreeRaidEligibility(dailyLimit);

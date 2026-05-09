@@ -3715,15 +3715,15 @@ For Facebook raid participation:
 
 ### What You Get (Free)
 
-- ✅ 20 FREE raid posts daily (for **bumped** projects: 100+ bullish votes on your bubble)
+- ✅ FREE raid posts (vote bump threshold applies): **Premium**: up to **5**/day before bump, up to **20**/day once bumped · **Starter (free)**: **1**/day before bump, up to **20**/day once bumped
 - ✅ Complete raids & earn 20 points each
 - ✅ Vote on projects (earn 20 pts per first vote)
 - ✅ View top 10 bubble rankings
-- ✅ Create extra raids (2000 pts each after free daily)
+- ✅ Create extra raids (2000 pts each after your free daily quota)
 
 ### Premium Features (listed project + bump tier required)
 
-When you list your project and it reaches **bumped** status (**100+ bullish votes**):
+When you list your project as **Premium** and it reaches **bumped** status (**100+ bullish votes**):
 - 🔥 Trending across Aquads homepage
 - 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
@@ -3775,7 +3775,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | Command | Description |
 |---------|-------------|
 | \`/raids\` | View all available Twitter & Facebook raids |
-| \`/createraid URL\` | Create a Twitter raid (20 FREE daily when your bubble is **bumped** / 100+ bullish, then 2000 pts) |
+| \`/createraid URL\` | Create a Twitter raid (**Starter**: 1 free/day until bumped, then up to **20/day** · **Premium**: up to **5/day** until bumped, then up to **20/day** · threshold **100+ bullish**, then 2000 pts) |
 | \`/cancelraid URL\` | Cancel a raid you created |
 
 ### Bubble & Voting Commands
@@ -3790,7 +3790,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 
 | Command | Description |
 |---------|-------------|
-| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**bumped** listings only) |
+| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**Premium** bumped listings) |
 | \`/removebranding\` | Remove your custom branding |
 
 ### Group Commands
@@ -3840,7 +3840,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 4. Participants earn 20 points per completion
 
 **Raid Details:**
-- 20 FREE raid posts per day (when your bubble is **bumped**: 100+ bullish votes)
+- FREE raid posts per day: **Starter** **1** until bumped, then up to **20** · **Premium** up to **5** until bumped, then up to **20** (same **100+ bullish** bump threshold)
 - Additional raids cost 2000 points each
 - Raids auto-expire after 48 hours
 - Support both Twitter and Facebook
@@ -3881,7 +3881,7 @@ Purchase boosts via \`/boostvote\`:
 
 ### Custom Branding
 
-**For bumped projects (100+ bullish votes):**
+**For Premium bumped projects (100+ bullish votes):**
 - Upload your logo/image (max 500KB, JPG/PNG)
 - Your branding appears on vote notifications
 - Notifications go to 5K+ member trending channel
@@ -3904,7 +3904,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: List your project and grow **100+ bullish votes** to unlock premium bot features like branding on vote notifications and raid perks tied to bump tier.
+> 💡 **Tip**: **Premium** listings unlock **custom bot branding** once bumped (**100+ bullish votes**) and scale coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. **Starter** gets **1** free raid per day until bumped, then up to **20**/day once bumped.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },

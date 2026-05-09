@@ -332,6 +332,23 @@ export const createAd = async (adData) => {
   return createdAd;
 };
 
+/** Starter → Premium upgrade on an existing listing (same AquaPay / admin verification flow). */
+export const upgradePremiumListing = async ({ adId, txSignature, paymentChain, chainSymbol, chainAddress }) => {
+  const response = await fetch(`${API_URL}/ads/upgrade-premium`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ adId, txSignature, paymentChain, chainSymbol, chainAddress })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || err.message || 'Failed to upgrade listing');
+  }
+  return response.json();
+};
+
 // Update ad
 export const updateAd = async (id, adData) => {
   const response = await fetch(`${API_URL}/ads/${id}`, {

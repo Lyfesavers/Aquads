@@ -18,30 +18,15 @@ const {
   BRANDING_VIDEO_MAX_BYTES,
   BRANDING_VIDEO_URL_GUIDANCE,
 } = require('./brandingMedia');
+const {
+  getFreeRaidDailyLimitForUsername,
+  allowsCustomBranding,
+  getListingTier,
+  LISTING_TIER_STARTER,
+  FREE_RAIDS_REQUIRES_LISTING_REASON
+} = require('./listingTier');
 
-// Constants for free raid limits
-const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
-
-// Helper function to check if user has a lifetime-bumped ad in the bubbles
-async function checkUserHasLifetimeBumpedAd(username) {
-  try {
-    const lifetimeBumpedAd = await Ad.findOne({
-      owner: username,
-      status: { $in: ['active', 'approved'] }, // Bumped ads have status 'approved'
-      isBumped: true,
-      $or: [
-        { bumpDuration: -1 },           // Lifetime bump indicator
-        { bumpExpiresAt: null }         // Another way lifetime bumps are stored
-      ]
-    });
-    return lifetimeBumpedAd !== null;
-  } catch (error) {
-    console.error('Error checking lifetime bumped ad:', error);
-    return false;
-  }
-}
-
-// Get raid creator's custom branding (for white-label: raid + completion use creator's image or video URL when set)
+// (for white-label: raid + completion use creator's image or video URL when set)
 async function getCreatorBrandingFromRaidId(raidId, platform = null) {
   try {
     let raid = null;
@@ -54,7 +39,7 @@ async function getCreatorBrandingFromRaidId(raidId, platform = null) {
     if (!raid || !raid.createdBy) return null;
     const user = await User.findById(raid.createdBy).select('username').lean();
     if (!user) return null;
-    const ad = await Ad.findOne({
+    const ads = await Ad.find({
       owner: user.username,
       isBumped: true,
       status: { $in: ['active', 'approved'] },
@@ -62,7 +47,11 @@ async function getCreatorBrandingFromRaidId(raidId, platform = null) {
         { customBrandingImage: { $exists: true, $ne: null } },
         { customBrandingVideoUrl: { $exists: true, $ne: null } },
       ],
-    }).select('customBrandingImage customBrandingVideoUrl').lean();
+    })
+      .select('customBrandingImage customBrandingVideoUrl listingTier')
+      .limit(12)
+      .lean();
+    const ad = ads.find((a) => allowsCustomBranding(a));
     if (!ad) return null;
     if (projectUsesVideoBranding(ad)) {
       return { videoUrl: ad.customBrandingVideoUrl.trim() };
@@ -1467,7 +1456,7 @@ Vote on projects and view trending bubbles!
   editHelpBranding: async (chatId, messageId) => {
     const message = `🎨 Custom Branding
 
-FREE for all bumped projects!
+For **Premium** listings with a **bumped** bubble (100+ bullish votes).
 
 • /setbranding
   Send a photo (JPG/PNG, max 500KB) OR paste a direct https:// .mp4 link (max 5MB, not YouTube)
@@ -4692,14 +4681,8 @@ Tap to update:`;
       const title = `Twitter Raid by @${user.username}`;
       const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
       
-      // Check if user has free raids available (automatic system based on lifetime bump)
-      const hasLifetimeBumpedAd = await checkUserHasLifetimeBumpedAd(user.username);
-      
-      let dailyLimit = 0;
-      if (hasLifetimeBumpedAd) {
-        dailyLimit = LIFETIME_BUMP_FREE_RAID_LIMIT; // 20 raids for lifetime bumped projects
-      }
-      
+      const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+
       const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
 
       if (eligibility.eligible) {
@@ -4773,9 +4756,9 @@ Tap to update:`;
       if (user.points < POINTS_REQUIRED) {
         let noPointsMessage = `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`;
         
-        // If user doesn't have a lifetime bumped project, suggest getting one
-        if (!hasLifetimeBumpedAd) {
-          noPointsMessage += `\n\n🚀 Want 20 FREE raids per day?\nList your project in the bubbles at https://aquads.xyz and get a Lifetime Bump!`;
+        // No free raid quota left or none qualifies — explain tiers before suggesting points
+        if (!dailyLimit) {
+          noPointsMessage += `\n\n📋 ${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
         }
         
         noPointsMessage += `\n\n💡 Earn points by completing raids: /raids`;
@@ -5572,16 +5555,26 @@ Tap to update:`;
         return;
       }
 
-      // Find their bumped project
-      const bumpedProject = await Ad.findOne({ 
+      const candidates = await Ad.find({
         owner: user.username,
         isBumped: true,
         status: { $in: ['active', 'approved'] }
-      });
-      
+      })
+        .sort({ updatedAt: -1 })
+        .limit(12)
+        .lean();
+
+      const bumpedProject = candidates.find((a) => allowsCustomBranding(a));
+
       if (!bumpedProject) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Custom branding is only available for bumped projects.\n\n🚀 Bump your project at: https://aquads.xyz");
+        const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
+        if (starterBump) {
+          await telegramService.sendBotMessage(chatId,
+            '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard');
+          return;
+        }
+        await telegramService.sendBotMessage(chatId,
+          '❌ Custom branding requires a bumped Premium listing.\n\n🚀 https://aquads.xyz');
         return;
       }
 
@@ -5613,8 +5606,7 @@ Tap to update:`;
         return;
       }
 
-      // Find their bumped project with branding
-      const project = await Ad.findOne({ 
+      const projects = await Ad.find({
         owner: user.username,
         isBumped: true,
         status: { $in: ['active', 'approved'] },
@@ -5622,7 +5614,12 @@ Tap to update:`;
           { customBrandingImage: { $ne: null } },
           { customBrandingVideoUrl: { $ne: null } },
         ],
-      });
+      })
+        .sort({ updatedAt: -1 })
+        .limit(12)
+        .exec();
+
+      const project = projects.find((p) => allowsCustomBranding(p));
       
       if (!project) {
         await telegramService.sendBotMessage(chatId, 

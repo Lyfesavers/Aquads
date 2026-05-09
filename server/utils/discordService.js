@@ -83,22 +83,15 @@ function getEngagementChannelId() {
   return process.env.DISCORD_ENGAGEMENT_CHANNEL_ID || process.env.DISCORD_RAID_CHANNEL_ID || null;
 }
 
-const LIFETIME_BUMP_FREE_RAID_LIMIT = 20;
-const POINTS_REQUIRED_RAID = 2000;
+const {
+  getFreeRaidDailyLimitForUsername,
+  allowsCustomBranding,
+  getListingTier,
+  LISTING_TIER_STARTER,
+  FREE_RAIDS_REQUIRES_LISTING_REASON
+} = require('./listingTier');
 
-async function checkUserHasLifetimeBumpedAd(username) {
-  try {
-    const ad = await Ad.findOne({
-      owner: username,
-      status: { $in: ['active', 'approved'] },
-      isBumped: true,
-      $or: [{ bumpDuration: -1 }, { bumpExpiresAt: null }]
-    });
-    return ad !== null;
-  } catch (e) {
-    return false;
-  }
-}
+const POINTS_REQUIRED_RAID = 2000;
 
 function getChainForBlockchain(blockchain) {
   const chainMap = {
@@ -480,12 +473,16 @@ async function handleBubbles(interaction) {
   const user = await User.findOne({ discordId: discordUserId });
   let brandingAd = null;
   if (user) {
-    brandingAd = await Ad.findOne({
+    const withMedia = await Ad.find({
       owner: user.username,
       isBumped: true,
       status: { $in: ['active', 'approved'] },
       $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
-    }).select('customBrandingImage customBrandingVideoUrl').lean();
+    })
+      .select('customBrandingImage customBrandingVideoUrl listingTier')
+      .limit(12)
+      .lean();
+    brandingAd = withMedia.find((a) => allowsCustomBranding(a)) || null;
   }
   const bumpedBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .select('title logo url bullishVotes bearishVotes owner pairAddress contractAddress blockchain')
@@ -885,8 +882,7 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
   }
   const title = `Twitter Raid by @${user.username}`;
   const description = 'Help boost this tweet! Like, retweet, and comment to earn 20 points.';
-  const hasLifetimeBumped = await checkUserHasLifetimeBumpedAd(user.username);
-  const dailyLimit = hasLifetimeBumped ? LIFETIME_BUMP_FREE_RAID_LIMIT : 0;
+  const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
   const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
   if (eligibility.eligible) {
     const usage = await user.useFreeRaid(dailyLimit);
@@ -920,7 +916,7 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
   }
   if (user.points < POINTS_REQUIRED_RAID) {
     let msg = `❌ Not enough points. You have ${user.points}; need ${POINTS_REQUIRED_RAID}.`;
-    if (!hasLifetimeBumped) msg += '\n\nGet a Lifetime Bump at https://aquads.xyz for 20 free raids/day.';
+    if (!dailyLimit) msg += `\n\n${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
     return { success: false, message: msg + '\n\nEarn points: `/raids`' };
   }
   // User would pay 2000 points — return confirmation so caller can show Yes/No buttons
@@ -1060,13 +1056,21 @@ async function handleSetBranding(interaction) {
   if (!user) {
     return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
-  const bumped = await Ad.findOne({
+  const candidates = await Ad.find({
     owner: user.username,
     isBumped: true,
-    status: { $in: ['active', 'approved'] }
-  });
+    status: { $in: ['active', 'approved'] },
+  })
+    .sort({ updatedAt: -1 })
+    .limit(12);
+
+  const bumped = candidates.find((a) => allowsCustomBranding(a));
   if (!bumped) {
-    return reply(interaction, '❌ Custom branding is only for bumped projects. Bump at https://aquads.xyz', true);
+    const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
+    if (starterBump) {
+      return reply(interaction, '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard', true);
+    }
+    return reply(interaction, '❌ Custom branding requires a bumped Premium listing. https://aquads.xyz', true);
   }
   setState(discordUserId, { action: 'waiting_branding_image', projectId: bumped._id.toString() });
   return reply(
@@ -1082,12 +1086,16 @@ async function handleRemoveBranding(interaction) {
   if (!user) {
     return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`');
   }
-  const project = await Ad.findOne({
+  const projects = await Ad.find({
     owner: user.username,
     isBumped: true,
     status: { $in: ['active', 'approved'] },
     $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
-  });
+  })
+    .sort({ updatedAt: -1 })
+    .limit(12);
+
+  const project = projects.find((p) => allowsCustomBranding(p));
   if (!project) {
     return reply(interaction, "❌ You don't have any custom branding set.", true);
   }
@@ -1632,7 +1640,7 @@ async function startBot() {
           const embed = new EmbedBuilder()
             .setTitle('🎨 Custom Branding')
             .setDescription(
-              'FREE for all bumped projects.\n\n' +
+              '**Premium** bumped listings (100+ bullish votes).\n\n' +
               '• `/setbranding` – Image (max 500KB) **or** direct **https://** **.mp4** link (max **5MB**, e.g. **catbox.moe** → **files.catbox.moe** link)\n' +
               '• `/removebranding` – Remove custom branding\n\n' +
               'Shows in vote notifications, /mybubble, and /bubbles.\n\n' +
