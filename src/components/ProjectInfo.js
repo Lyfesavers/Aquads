@@ -383,7 +383,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Professional PR</h3>
             </div>
             <p className="text-gray-300">
-              Included press release and distribution to premium platforms. Access to CoinDesk, CoinMarketCap, and other tier-1 publications.
+              Included with <strong className="text-white">Premium</strong> listings (press release & tier‑1 distribution access). <strong className="text-white">Starter</strong> listings can add professional PR anytime via the Mintfunnel add‑on packages below.
             </p>
           </div>
 
@@ -461,7 +461,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Community Raids</h3>
             </div>
             <p className="text-gray-300">
-              Organized community engagement campaigns and social media raids. Build momentum and create viral moments that boost your project's visibility and community growth.
+              Organized Twitter/Facebook raids and Telegram/Discord coordination—daily quotas depend on your listing tier (Starter vs Premium). Bumping unlocks higher caps for Starter listings.
             </p>
           </div>
 
@@ -487,7 +487,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Free AMA Services</h3>
             </div>
             <p className="text-gray-300">
-              Access to our network of providers for free AMA (Ask Me Anything) sessions. Connect directly with your community and build trust through transparent communication.
+              Free AMA sessions are included with <strong className="text-white">Premium</strong> listings. Starter listings can upgrade to Premium from the dashboard anytime.
             </p>
           </div>
 
@@ -526,7 +526,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <h3 className="text-xl font-semibold text-white ml-4">BNB & Solana Trending + Volume</h3>
             </div>
             <p className="text-gray-300">
-              Your base listing includes real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum. That hits especially hard alongside our Telegram bot’s trending boost and HyperSpace for your Twitter Spaces, then votes, raids, live streams, yappers, and AquaSwap & BexTools—all together it’s the perfect storm of attention and momentum to help send your token higher.
+              <strong className="text-white">Premium</strong> listings include real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum—alongside our Telegram bot’s trending boost and HyperSpace, votes, raids, live streams, yappers, and AquaSwap & BexTools.
             </p>
           </div>
         </div>
@@ -536,150 +536,143 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Competitive Pricing
+            Listing packages & extras
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Transparent pricing with flexible options to fit any budget and campaign goals.
+            Pick <strong className="text-green-300">Starter</strong> for a free bubble listing or <strong className="text-blue-300">Premium</strong> for the full launch stack ($99 USDC). Optional Mintfunnel PR packages are separate—add them when you list or anytime from your dashboard.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Base Listing */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+          {/* Starter listing */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-green-500/50 ring-1 ring-green-500/20">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Premium Listing</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
-              <div className="text-gray-400">USDC</div>
+              <h3 className="text-2xl font-bold text-white mb-2">Starter listing</h3>
+              <div className="text-4xl font-bold text-green-400 mb-2">$0</div>
+              <div className="text-gray-400">Base listing fee · USDC</div>
             </div>
-            <ul className="space-y-3 text-gray-300">
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Professional review & approval
+            <ul className="space-y-3 text-gray-300 text-sm">
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Bubble on the map after admin approval
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Interactive bubble display
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Bullish/bearish voting & rankings
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Community voting system
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Bump free at <strong className="text-white">100+</strong> bullish votes (organic + boosts)
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Multi-chain support
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 20/day</strong>
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Trading integration
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Optional Mintfunnel packages paid separately at checkout
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                PR press release publication
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Premium platform access
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Free AMA services
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Community Twitter raids
-              </li>
-              <li className="flex items-center">
-                <FaFire className="text-amber-400 mr-3 flex-shrink-0" />
-                <span>
-                  BNB & Solana volume + trending (2 hrs/week × 4 weeks, included)
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FaTelegram className="text-blue-400 mr-3" />
-                <FaDiscord className="text-indigo-400 mr-2" />
-                <span>
-                  Free Custom Telegram & Discord Bot
-                  <span className="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-xs">NEW!</span>
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Paid ad campaign exposure
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                $50 ad credit to run paid ads
-              </li>
-              <li className="flex items-center">
-                <FaMicrophone className="text-purple-400 mr-3" />
-                <span>
-                  Live yappers promote your project on streams & spaces
-                  <span className="ml-2 bg-purple-500 text-white px-2 py-0.5 rounded text-xs">HOT!</span>
-                </span>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Upgrade to Premium anytime from your dashboard
               </li>
             </ul>
-                         <button
-               onClick={handleListProjectClick}
-               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-             >
-               <FaRocket className="mr-2" />
-               List Your Project
-               <FaArrowRight className="ml-2" />
-             </button>
+            <button
+              onClick={handleListProjectClick}
+              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              List as Starter
+              <FaArrowRight className="ml-2" />
+            </button>
           </div>
 
-          {/* Bump Options */}
+          {/* Premium listing */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500/60 ring-1 ring-blue-500/25">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Premium listing</h3>
+              <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
+              <div className="text-gray-400">Full launch stack · USDC</div>
+            </div>
+            <ul className="space-y-3 text-gray-300 text-sm">
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Everything in Starter, plus:
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                PR press release & premium distribution access
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Free AMA, ad campaign exposure, $50 ad credit
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                BNB & Solana volume + trending (included)
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Custom Telegram & Discord bot + branding when bumped
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 20/day</strong> once bumped
+              </li>
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Referred users get <strong className="text-white">5% off</strong> the Premium base fee
+              </li>
+            </ul>
+            <button
+              onClick={handleListProjectClick}
+              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              List as Premium
+              <FaArrowRight className="ml-2" />
+            </button>
+          </div>
+
+          {/* Bump */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Bubble bump</h3>
               <div className="text-4xl font-bold text-green-400 mb-2">100 votes</div>
               <div className="text-gray-400">Bullish threshold (free)</div>
             </div>
-            <ul className="space-y-3 text-gray-300">
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                100+ bullish votes = bumped bubble (max size, main row)
+            <ul className="space-y-3 text-gray-300 text-sm">
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                <strong className="text-white">100+</strong> bullish votes = bumped bubble (max size, main row)
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 Organic votes and paid vote boosts both count
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Drops below 100 = unbumped (size shrinks over time as before)
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Below 100 = unbumped (size shrinks over time)
               </li>
-              <li className="flex items-center">
-                <FaTrophy className="text-yellow-400 mr-3" />
-                Vote ranking & trending across ecosystem
+              <li className="flex items-start">
+                <FaTrophy className="text-yellow-400 mr-3 mt-0.5 flex-shrink-0" />
+                Higher raid caps once bumped (see Starter vs Premium cards)
               </li>
-              <li className="flex items-center">
-                <FaTwitter className="text-blue-400 mr-3" />
-                Free daily community raids
-              </li>
-              <li className="flex items-center">
-                <FaTelegram className="text-blue-400 mr-3" />
-                <FaDiscord className="text-indigo-400 mr-2" />
-                Free custom Telegram & Discord bot
-              </li>
-              <li className="flex items-center">
-                <FaMicrophone className="text-purple-400 mr-3" />
-                <span className="font-semibold">Live yappers promote your project on streams!</span>
-              </li>
-              <li className="flex items-center text-sm text-blue-300">
-                <FaStar className="text-yellow-400 mr-3" />
-                <span className="italic">All Base Listing perks apply when your bubble hits max size from votes.</span>
+              <li className="flex items-start">
+                <FaMicrophone className="text-purple-400 mr-3 mt-0.5 flex-shrink-0" />
+                Live yappers & visibility scale with engagement
               </li>
             </ul>
-                         {userHasProjects && (
-               <button
-                 onClick={handleBumpOptionsClick}
-                 className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-               >
-                 <FaRocket className="mr-2" />
-                 How bumping works
-                 <FaArrowRight className="ml-2" />
-               </button>
-             )}
+            {userHasProjects && (
+              <button
+                onClick={handleBumpOptionsClick}
+                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+              >
+                <FaRocket className="mr-2" />
+                How bumping works
+                <FaArrowRight className="ml-2" />
+              </button>
+            )}
           </div>
 
           {/* Banner Ads */}
@@ -689,36 +682,32 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <div className="text-4xl font-bold text-blue-400 mb-2">$40-160</div>
               <div className="text-gray-400">USDC</div>
             </div>
-            <ul className="space-y-3 text-gray-300">
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
+            <ul className="space-y-3 text-gray-300 text-sm">
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 24 Hours: $40 USDC
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 3 Days: $80 USDC
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                 7 Days: $160 USDC
               </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                Premium placement
-              </li>
-              <li className="flex items-center">
-                <FaCheckCircle className="text-green-400 mr-3" />
-                High visibility
+              <li className="flex items-start">
+                <FaCheckCircle className="text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                Premium placement & high visibility
               </li>
             </ul>
-                         <button
-               onClick={handleBannerAdClick}
-               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-             >
-               <FaRocket className="mr-2" />
-               Create Banner Ad
-               <FaArrowRight className="ml-2" />
-             </button>
+            <button
+              onClick={handleBannerAdClick}
+              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              Create Banner Ad
+              <FaArrowRight className="ml-2" />
+            </button>
           </div>
         </div>
       </div>
@@ -733,7 +722,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
             PR & Marketing Add-on Packages
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-            Amplify your project's reach with guaranteed coverage on the world's leading crypto news platforms.
+            Amplify your project's reach with guaranteed coverage on leading crypto news platforms. Stack these <strong className="text-white">on top of</strong> your Starter or Premium listing—priced separately from the base bubble listing fee.
           </p>
           <div className="mt-4 p-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl max-w-2xl mx-auto">
             <p className="text-white font-semibold text-lg">🎉 Exclusive 5% Discount Through Aquads Partnership</p>
