@@ -177,6 +177,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [jobsPage, setJobsPage] = useState(1);
   const [jobsPagination, setJobsPagination] = useState(null);
   const [isLoadingMoreJobs, setIsLoadingMoreJobs] = useState(false);
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [debouncedJobSearch, setDebouncedJobSearch] = useState('');
+  const [jobWorkArrangement, setJobWorkArrangement] = useState('');
 
 
   const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
@@ -925,29 +928,39 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   };
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedJobSearch(jobSearchTerm.trim()), 350);
+    return () => clearTimeout(t);
+  }, [jobSearchTerm]);
+
+  useEffect(() => {
+    const filters = {
+      ...(jobWorkArrangement ? { workArrangement: jobWorkArrangement } : {}),
+      ...(debouncedJobSearch ? { q: debouncedJobSearch } : {}),
+    };
     const loadJobs = async () => {
       try {
         setIsLoading(prevState => ({ ...prevState, jobs: true }));
-        const response = await fetchJobs(false, 1, 20); // First page, 20 items
-        setJobs(response.jobs || response); // Handle both old and new response format
+        const response = await fetchJobs(false, 1, 20, filters);
+        setJobs(response.jobs || response);
         setJobsPagination(response.pagination || null);
         setJobsPage(1);
         setIsLoading(prevState => ({ ...prevState, jobs: false }));
       } catch (error) {
         logger.error('Error fetching jobs:', error);
-        // No notification needed here - we'll just retry silently
-        
-        // Set up a retry after a slight delay
         setTimeout(() => {
           loadJobs();
         }, 2000);
-        
         setIsLoading(prevState => ({ ...prevState, jobs: false }));
       }
     };
 
     loadJobs();
-  }, []);
+  }, [debouncedJobSearch, jobWorkArrangement]);
+
+  const jobListFilters = {
+    ...(jobWorkArrangement ? { workArrangement: jobWorkArrangement } : {}),
+    ...(debouncedJobSearch ? { q: debouncedJobSearch } : {}),
+  };
 
   const handleLoadMoreJobs = async () => {
     if (!jobsPagination?.hasMore || isLoadingMoreJobs) return;
@@ -955,7 +968,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     try {
       setIsLoadingMoreJobs(true);
       const nextPage = jobsPage + 1;
-      const response = await fetchJobs(false, nextPage, 20);
+      const response = await fetchJobs(false, nextPage, 20, jobListFilters);
       setJobs(prevJobs => [...prevJobs, ...(response.jobs || response)]);
       setJobsPagination(response.pagination || null);
       setJobsPage(nextPage);
@@ -1028,7 +1041,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   };
 
   const handleClearSearch = () => {
-    setSearchTerm('');
+    if (showJobs) {
+      setJobSearchTerm('');
+    } else {
+      setSearchTerm('');
+    }
   };
 
   // Close dropdown when clicking outside
@@ -1354,13 +1371,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search services..."
+                    placeholder={showJobs ? 'Search jobs by title, company, or keywords...' : 'Search services...'}
                     className="w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={showJobs ? jobSearchTerm : searchTerm}
+                    onChange={(e) => (showJobs ? setJobSearchTerm(e.target.value) : setSearchTerm(e.target.value))}
                   />
-                  {searchTerm && (
+                  {(showJobs ? jobSearchTerm : searchTerm) && (
                     <button
+                      type="button"
                       onClick={handleClearSearch}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                     >
@@ -1370,6 +1388,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-0">
+                {!showJobs ? (
+                  <>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
@@ -1410,6 +1430,38 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                   <option value="price-high">Price: High to Low</option>
                   <option value="newest">Newest First</option>
                 </select>
+                  </>
+                ) : (
+                  <>
+                <select
+                  value={jobWorkArrangement}
+                  onChange={(e) => setJobWorkArrangement(e.target.value)}
+                  className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
+                >
+                  <option value="">All work types</option>
+                  <option value="remote">Remote</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="onsite">On-site</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => { setJobSearchTerm(''); setJobWorkArrangement(''); }}
+                  className="px-3 py-3 rounded-lg transition-colors w-full sm:w-auto text-sm bg-gray-700 text-gray-300 hover:bg-gray-600"
+                >
+                  Clear job filters
+                </button>
+                <button
+                  onClick={() => setShowJobs(!showJobs)}
+                  className={`px-3 py-3 rounded-lg transition-colors w-full sm:w-auto text-sm ${
+                    showJobs 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Jobs
+                </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1580,8 +1632,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       )}
                     </>
                   ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      No jobs found. <a href="#" onClick={(e) => {e.preventDefault(); setShowJobModal(true);}} className="text-blue-400 hover:underline">Post a job?</a>
+                    <div className="text-center py-8 text-gray-400 space-y-2">
+                      {(debouncedJobSearch || jobWorkArrangement) ? (
+                        <>
+                          <p>No jobs match your search or filters.</p>
+                          <button
+                            type="button"
+                            onClick={() => { setJobSearchTerm(''); setJobWorkArrangement(''); }}
+                            className="text-blue-400 hover:underline"
+                          >
+                            Clear job filters
+                          </button>
+                        </>
+                      ) : (
+                        <p>
+                          No jobs found.{' '}
+                          <a href="#" onClick={(e) => {e.preventDefault(); setShowJobModal(true);}} className="text-blue-400 hover:underline">Post a job?</a>
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
