@@ -29,7 +29,8 @@ const pfpGenerationSchema = new Schema({
     expression: String,
     aura: String,
     coloredTrait: String,
-    gender: String
+    gender: String,
+    grills: String
   },
   createdAt: {
     type: Date,

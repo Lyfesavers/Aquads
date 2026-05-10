@@ -16,6 +16,9 @@ const STORAGE_CAP = 5;
 // 88 is the standard "visually indistinguishable from PNG" sweet spot for
 // illustrations with flat backgrounds; produces ~300–500 KB per 1024×1024.
 const JPEG_QUALITY = 88;
+// Ultra-rare mouth trait (~3.5%): iced diamond grillz with fanged caps.
+const DIAMOND_FANGED_GRILLS_CHANCE = 0.035;
+const DIAMOND_FANGED_GRILLS_LABEL = 'Iced-out diamond fanged grills';
 
 const traitPool = {
   shell: [
@@ -82,14 +85,20 @@ const traitPool = {
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const generateTraits = () => ({
-  shell: pick(traitPool.shell),
-  clothing: pick(traitPool.clothing),
-  headwear: pick(traitPool.headwear),
-  accessory: pick(traitPool.accessory),
-  expression: pick(traitPool.expression),
-  aura: pick(traitPool.aura)
-});
+const generateTraits = () => {
+  const t = {
+    shell: pick(traitPool.shell),
+    clothing: pick(traitPool.clothing),
+    headwear: pick(traitPool.headwear),
+    accessory: pick(traitPool.accessory),
+    expression: pick(traitPool.expression),
+    aura: pick(traitPool.aura)
+  };
+  if (Math.random() < DIAMOND_FANGED_GRILLS_CHANCE) {
+    t.grills = DIAMOND_FANGED_GRILLS_LABEL;
+  }
+  return t;
+};
 
 const buildPrompt = (t, coloredTrait, gender) => {
   const genderModifiers =
@@ -119,7 +128,11 @@ const buildPrompt = (t, coloredTrait, gender) => {
     'full realistic premium color rendering, vibrant cinematic lighting, luxury collectible quality',
     'STRICT: include ALL traits exactly as described',
     'safe margins, no cropping, fully visible face shell and body',
-    `shell=${t.shell}, clothing=${t.clothing}, headwear=${t.headwear}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}`,
+    `shell=${t.shell}, clothing=${t.clothing}, headwear=${t.headwear}, accessory=${t.accessory}, expression=${t.expression}, aura=${t.aura}${
+      t.grills
+        ? `. ULTRA-RARE MOUTH: ${t.grills} — fully iced diamond dental grillz with sharp prominent fanged canine tooth caps, white-gold or platinum base densely paved with brilliant-cut diamonds, extreme sparkle, luxury hip-hop jewelry aesthetic; grills clearly visible on the turtle's mouth (slight smile or parted lips ok)`
+        : ''
+    }`,
     `solid background color ONLY: ${backgroundName} ${backgroundColor}, no gradients, no white, no patterns, clean flat background. The AQUADS branding text and curved smile logo MUST always be the official Aquads yellow ${textColor} so it contrasts strongly and stays clearly readable.`
   ].join(', ');
 };
@@ -278,7 +291,7 @@ router.post('/generate', auth, async (req, res) => {
 
     const gender = req.body?.gender === 'female' ? 'female' : 'male';
     const t = generateTraits();
-    const traitKeys = Object.keys(t);
+    const traitKeys = Object.keys(t).filter((k) => k !== 'grills');
     const coloredTrait = traitKeys[Math.floor(Math.random() * traitKeys.length)];
     const prompt = buildPrompt(t, coloredTrait, gender);
 

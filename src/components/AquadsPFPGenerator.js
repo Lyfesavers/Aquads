@@ -363,6 +363,9 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
                               {item.traits.coloredTrait && (
                                 <span> · color: {item.traits.coloredTrait}</span>
                               )}
+                              {item.traits.grills && (
+                                <span> · {item.traits.grills}</span>
+                              )}
                             </div>
                           )}
                           <div className="pfp-gallery-actions">
