@@ -57,8 +57,8 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   console.log('Calculating commission rate for user:', user?.username);
   
   if (user?.isVipAffiliate) {
-    console.log('User is VIP affiliate, returning 30%');
-    return 0.30;
+    console.log('User is VIP affiliate, returning 20%');
+    return 0.20;
   }
   
   // Get ad/bump/banner volume from AffiliateEarning
@@ -87,8 +87,8 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   console.log('Total referred volume found:', total, 'USDC (ads:', adTotal, '+ hyperspace:', hsTotal, ')');
   
   let rate;
-  if (total >= 25000) rate = 0.20;
-  else if (total >= 5000) rate = 0.15;
+  // Max volume tier is 15%; 20% is VIP-only (isVipAffiliate) above.
+  if (total >= 5000) rate = 0.15;
   else rate = 0.10;
   
   console.log('Calculated commission rate:', rate);

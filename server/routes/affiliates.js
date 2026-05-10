@@ -210,11 +210,14 @@ router.get('/summary', auth, async (req, res) => {
         ads: { revenue: adRevenue, earned: adEarned, pending: adPending },
         hyperspace: { revenue: hsProfit, earned: hsEarned, pending: hsPending }
       },
-      nextTier: currentRate < 0.20 ? {
-        rate: currentRate === 0.10 ? 0.15 : 0.20,
-        amountNeeded: currentRate === 0.10 ? 5000 : 25000,
-        progress: totalReferredRevenue || 0
-      } : null
+      nextTier:
+        !isVipAffiliate && currentRate === 0.10
+          ? {
+              rate: 0.15,
+              amountNeeded: 5000,
+              progress: totalReferredRevenue || 0
+            }
+          : null
     };
     
     res.json(summary);

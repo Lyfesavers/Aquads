@@ -3523,9 +3523,8 @@ Earn real USDC commissions when your referrals make purchases:
 | Tier | Volume | Rate |
 |------|--------|------|
 | Starter | $0 - $4,999 | 10% |
-| Silver | $5,000 - $24,999 | 15% |
-| Gold | $25,000+ | 20% |
-| VIP | By invitation | 30% |
+| Silver | $5,000+ | 15% |
+| VIP | By invitation only | 20% |
 
 **What Earns Commission:**
 - 🫧 Bubble listings and add-ons (e.g. marketing packages, vote boosts)
@@ -4597,7 +4596,7 @@ For Bitcoin and TRON, users can copy addresses or scan QR codes for manual trans
 ### 6.2. Affiliate Program
 
 - A tiered commission structure rewards affiliates based on the volume of referred sales.
-- Commission rates: 10% for $2,500+ in referrals, 15% for $5,000+, and 20% for $25,000+ in total referrals.
+- Commission rates: 10% below $5,000 in referred volume, 15% for $5,000+, and 20% for VIP affiliates appointed by invitation only.
 - Commission payments are processed once the affiliate balance reaches $100 and are issued in crypto or other agreed-upon methods.
 - Affiliates earn commission on: project listings, add-ons (e.g. marketing packages, vote boosts), banner ads, and HyperSpace (Twitter Space Listeners) orders.
 - HyperSpace commissions are calculated on profit margin, ensuring sustainable affiliate rewards.

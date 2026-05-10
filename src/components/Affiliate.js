@@ -81,15 +81,15 @@ const Affiliate = () => {
                     <ul className="space-y-4">
                       <li className="flex items-center text-gray-300">
                         <span className="text-green-400 font-bold mr-2">Tier 1:</span>
-                        $2,500, you earn a 10% commission.
+                        Below $5,000 in referred volume earns a 10% commission ($0–$4,999).
                       </li>
                       <li className="flex items-center text-gray-300">
                         <span className="text-green-400 font-bold mr-2">Tier 2:</span>
-                        Reach $5,000 you earn a 15% commission.
+                        $5,000+ in referred volume earns a 15% commission.
                       </li>
                       <li className="flex items-center text-gray-300">
-                        <span className="text-green-400 font-bold mr-2">Tier 3:</span>
-                        Reach $25,000 and enjoy a 20% commission rate.
+                        <span className="text-green-400 font-bold mr-2">VIP:</span>
+                        By invitation—you earn a 20% commission rate (appointed by Aquads).
                       </li>
                     </ul>
                     <p className="mt-4 text-gray-300">
@@ -443,7 +443,9 @@ const Affiliate = () => {
                 <ul className="list-disc list-inside space-y-2">
                   <li>Sign Up: Head over to aquads.xyz and create your account. Remember, your username is your referral code!</li>
                   <li>Start Promoting: Use your referral code in your promotions and let the referrals roll in.</li>
-                  <li>Watch Your Earnings Grow: As your referred sales increase, so does your commission percentage—up to 20%!</li>
+                  <li>
+                    Watch your earnings grow: earn <strong className="text-gray-100">USDC commissions</strong> on referred purchases—rates track referred volume (<strong className="text-gray-100">10%</strong> below <strong className="text-gray-100">$5,000</strong>, then <strong className="text-gray-100">15%</strong> from <strong className="text-gray-100">$5,000</strong>). <strong className="text-gray-100">20%</strong> is <strong className="text-gray-100">VIP-only</strong> (invitation).
+                  </li>
                 </ul>
                 
                 <p className="mt-4">By Sharing and using your referral code, you are enrolling in this affiliate program and agreeing to the terms laid out here.</p>

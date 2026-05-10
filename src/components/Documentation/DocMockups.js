@@ -1227,8 +1227,21 @@ export const AffiliateMockup = () => (
           <div className="text-2xl font-bold text-white">47</div>
         </div>
         <div className="bg-gray-800 rounded-lg p-4">
-          <div className="text-gray-400 text-sm">Points Earned</div>
+          <div className="text-gray-400 text-sm">Points balance</div>
           <div className="text-2xl font-bold text-green-400">2,350</div>
+        </div>
+      </div>
+
+      {/* Commission snapshot */}
+      <div className="px-4 pb-4">
+        <div className="bg-cyan-500/10 border border-cyan-500/35 rounded-lg p-4">
+          <h3 className="text-cyan-400 font-medium mb-2">Commission (USDC)</h3>
+          <ul className="text-gray-300 text-xs sm:text-sm space-y-1.5 leading-relaxed">
+            <li>• <span className="text-white font-medium">10%</span> — referred volume $0–$4,999</li>
+            <li>• <span className="text-white font-medium">15%</span> — referred volume $5,000+</li>
+            <li>• <span className="text-white font-medium">20%</span> — VIP only (invitation)</li>
+          </ul>
+          <p className="text-gray-500 text-[11px] mt-3">On qualifying purchases · combined bubbles, banners &amp; HyperSpace (profit).</p>
         </div>
       </div>
 
@@ -1272,14 +1285,14 @@ export const AffiliateMockup = () => (
         </button>
       </div>
 
-      {/* Rewards Info */}
+      {/* Points & rewards */}
       <div className="px-4 pb-4">
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-          <h3 className="text-green-400 font-medium mb-2">Referral Rewards</h3>
-          <ul className="text-gray-300 text-sm space-y-1">
-            <li>• 10 points per new signup</li>
-            <li>• Bonus for verified referrals</li>
-            <li>• Earn when referrals are active</li>
+          <h3 className="text-green-400 font-medium mb-2">Points rewards</h3>
+          <ul className="text-gray-300 text-xs sm:text-sm space-y-1 leading-relaxed">
+            <li>• <strong className="text-gray-100">20 pts</strong> — new signup (email verified)</li>
+            <li>• <strong className="text-gray-100">20 pts</strong> — referred user lists a service or ad</li>
+            <li>• <strong className="text-gray-100">+5 pts</strong> — each time they earn points (referrer bonus)</li>
           </ul>
         </div>
       </div>
