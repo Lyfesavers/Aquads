@@ -573,10 +573,9 @@ setTimeout(async () => {
   }
 }, 50000);
 
-// Free online courses (Cursa.app via rss.app feeds): boot-only sync.
-// Course content is evergreen (titles/descriptions don't change) and we never
-// prune, so we only need to ingest once per server start. To pick up newly
-// added courses from the feed, redeploy / restart the server.
+// Free online courses (Cursa.app via rss.app): upsert into MongoDB on each run.
+// Third-party feeds typically expose only the latest N items; sync often enough
+// that new entries are captured before they roll off the feed.
 setTimeout(async () => {
   try {
     console.log('[FreeCourses Sync] Running initial sync on server start...');
@@ -585,6 +584,18 @@ setTimeout(async () => {
     console.error('[FreeCourses Sync] Error in initial sync:', error);
   }
 }, 55000);
+
+// Once daily UTC — rss feeds usually only include recent items; pick up new entries periodically.
+cron.schedule('30 6 * * *', async () => {
+  try {
+    console.log('[FreeCourses Sync] Starting scheduled sync...');
+    await syncFreeCourses();
+  } catch (error) {
+    console.error('[FreeCourses Sync] Error in scheduled sync:', error);
+  }
+}, {
+  timezone: 'UTC',
+});
 
 // Middleware
 const corsOptions = {
