@@ -126,6 +126,17 @@ const LinkBioPageAds = ({ userId }) => {
   );
 };
 
+/** Gift-card rate: 10,000 affiliate points redeem for $100 CAD */
+const AFFILIATE_POINTS_PER_100_CAD = 10000;
+
+const affiliatePointsBalanceToCad = (points) =>
+  ((Number(points) || 0) * 100) / AFFILIATE_POINTS_PER_100_CAD;
+
+const formatAffiliatePointsCad = (points) =>
+  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(
+    affiliatePointsBalanceToCad(points)
+  );
+
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
@@ -3608,6 +3619,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                       <div>
                         <h4 className="text-lg font-medium text-white">Your Points</h4>
                         <p className="text-3xl font-bold text-blue-400">{pointsInfo.points}</p>
+                        <p className="text-sm text-emerald-400/90 mt-1 font-medium">
+                          ≈ {formatAffiliatePointsCad(pointsInfo.points)} at redemption rate
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          10,000 pts = $100 CAD · Redeem in 10,000 pt increments
+                        </p>
                       </div>
                       <div className="flex space-x-2">
 
