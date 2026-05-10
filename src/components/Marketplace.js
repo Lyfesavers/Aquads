@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
@@ -13,7 +13,7 @@ import CreateBannerModal from './CreateBannerModal';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaCrown, FaCheck, FaFileAlt } from 'react-icons/fa';
+import { FaCrown, FaCheck, FaFileAlt, FaArrowUp } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 import PremiumBadge from './PremiumBadge';
 import PremiumPaymentModal from './PremiumPaymentModal';
@@ -180,6 +180,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [jobSearchTerm, setJobSearchTerm] = useState('');
   const [debouncedJobSearch, setDebouncedJobSearch] = useState('');
   const [jobWorkArrangement, setJobWorkArrangement] = useState('');
+  const marketplaceScrollRef = useRef(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
 
   const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
@@ -1062,8 +1064,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     };
   }, [showUserDropdown]);
 
+  const handleMarketplaceScroll = (e) => {
+    setShowBackToTop(e.currentTarget.scrollTop > 400);
+  };
+
+  const scrollMarketplaceToTop = () => {
+    marketplaceScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
+    <div
+      ref={marketplaceScrollRef}
+      onScroll={handleMarketplaceScroll}
+      className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white"
+    >
       <Helmet>
         <title>Web3 Freelancer Marketplace - Hire Crypto & Blockchain Experts | Aquads</title>
         <meta name="description" content="Find and hire top Web3 freelancers for blockchain development, smart contracts, DeFi, NFTs, and crypto marketing. Pay with crypto on the Aquads marketplace." />
@@ -2106,6 +2120,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             setCvUsername(null);
           }}
         />
+      )}
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={scrollMarketplaceToTop}
+          className="fixed bottom-6 right-6 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          aria-label="Back to top"
+        >
+          <FaArrowUp className="h-5 w-5" aria-hidden />
+        </button>
       )}
     </div>
   );
