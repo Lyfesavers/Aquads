@@ -1587,6 +1587,11 @@ function App() {
       
       // Get the ad details for the notification
       const votedAd = ads.find(ad => ad.id === adId);
+
+      if (data.voteUnchanged) {
+        showNotification(`You're already ${voteType} on this bubble — no change needed.`, 'info');
+        return;
+      }
       
       // Update the ads state with the new vote counts and user's vote
       setAds(prevAds => prevAds.map(ad => {
@@ -1602,11 +1607,19 @@ function App() {
         return next;
       }));
       
-      // Show enhanced notification about vote and points if awarded
+      // Bubble votes: 20 points once per bubble; users can change bullish/bearish anytime
       if (data.pointsAwarded > 0) {
-        showNotification(`Voted ${voteType} successfully! You earned ${data.pointsAwarded} points!`, 'success', votedAd);
+        showNotification(
+          `Voted ${voteType}! +${data.pointsAwarded} points (one time per this bubble). You can change your vote anytime.`,
+          'success',
+          votedAd
+        );
       } else {
-        showNotification(`Voted ${voteType} successfully!`, 'success', votedAd);
+        showNotification(
+          `Vote updated (${voteType}). Points are only awarded the first time you vote on each bubble — switching bullish/bearish does not add more.`,
+          'success',
+          votedAd
+        );
       }
     } catch (error) {
       logger.error('Error voting on ad:', error);
@@ -3088,6 +3101,7 @@ function App() {
                                   }}
                                   disabled={votingAdId === ad.id}
                                   aria-label="Vote bearish"
+                                  title="20 points once per bubble on your first vote here; you can change to bullish anytime."
                                 >
                                   {votingAdId === ad.id ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -3107,6 +3121,7 @@ function App() {
                                   }}
                                   disabled={votingAdId === ad.id}
                                   aria-label="Vote bullish"
+                                  title="20 points once per bubble on your first vote here; you can change to bearish anytime."
                                 >
                                   {votingAdId === ad.id ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

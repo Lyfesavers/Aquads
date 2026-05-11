@@ -3654,7 +3654,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                       <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
                       <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
-                      <p>• Earn 20 points for voting on a project bubble</p>
+                      <p>• Earn 20 points for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
                       <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
                       <p>• Earn 20 points for each new affiliate</p>

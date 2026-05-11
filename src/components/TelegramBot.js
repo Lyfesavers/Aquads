@@ -201,7 +201,7 @@ const TelegramBot = () => {
     {
       icon: FaCoins,
       title: '$100 Per 10K Points',
-      description: 'We pay your community REAL CASH. Participants earn 20 points per raid/vote and can redeem 10,000 points for $100 CAD.',
+      description: 'We pay your community REAL CASH. Participants earn points from raids (e.g. 20 per completion) and a one-time 20 per bubble (first vote only); redeem 10,000 points for $100 CAD.',
       highlight: 'Real cash payouts'
     }
   ];

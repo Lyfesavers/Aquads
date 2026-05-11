@@ -531,7 +531,7 @@ export const TokenVotingMockup = () => (
       </div>
 
       <p className="text-gray-500 text-xs text-center mt-4">
-        You can vote once per project per day
+        20 points once per bubble (first vote); switch bullish/bearish anytime
       </p>
     </div>
   </MockupContainer>

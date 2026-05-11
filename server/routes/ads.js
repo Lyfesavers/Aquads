@@ -690,9 +690,13 @@ router.post('/:id/vote', auth, async (req, res) => {
     // Flag to determine if we need to award points
     let shouldAwardPoints = false;
     
-    // Check if user has already received points for voting on this ad
+    // One-time 20 pts per bubble (web uses `Voted on bubble:`; legacy Telegram used `Voted on project:` + title)
+    const bubblePointsKey = `Voted on bubble: ${adId}`;
+    const legacyProjectTitleReason = ad.title ? `Voted on project: ${ad.title}` : null;
     const alreadyReceivedPoints = user.pointsHistory.some(
-      entry => entry.reason === `Voted on bubble: ${adId}`
+      (entry) =>
+        entry.reason === bubblePointsKey ||
+        (legacyProjectTitleReason && entry.reason === legacyProjectTitleReason)
     );
     
     if (existingVote) {
@@ -700,6 +704,8 @@ router.post('/:id/vote', auth, async (req, res) => {
       if (existingVote.voteType === voteType) {
         return res.json({
           success: true,
+          voteUnchanged: true,
+          pointsAwarded: 0,
           adId: ad.id,
           bullishVotes: ad.bullishVotes,
           bearishVotes: ad.bearishVotes,

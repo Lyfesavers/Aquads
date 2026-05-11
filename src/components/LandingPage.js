@@ -1994,7 +1994,7 @@ const CarouselCard = ({ feature, index }) => {
                   {[
                     { icon: '📊', label: 'Bubble Rankings', value: 'By Votes' },
                     { icon: '🔥', label: 'BexTools Trending', value: 'Multi-Platform' },
-                    { icon: '👍', label: '20 Pts/Vote', value: 'Earn Points' },
+                    { icon: '👍', label: '20 Pts / Bubble', value: 'First Vote Only' },
                     { icon: '🏆', label: 'Top 10 Leaderboard', value: 'Trending' }
                   ].map((item, i) => (
                     <motion.div
@@ -2104,7 +2104,7 @@ const CarouselCard = ({ feature, index }) => {
                     
                     {/* Points Earned */}
                     <div className="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-500/40 text-center py-2 rounded-xl">
-                      <div className="text-xs text-cyan-400 font-semibold">💰 Earn 20 Points Per Vote</div>
+                      <div className="text-xs text-cyan-400 font-semibold">💰 20 pts once per bubble · change vote anytime</div>
                     </div>
                   </div>
                   
@@ -2888,7 +2888,7 @@ const CarouselCard = ({ feature, index }) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '🐦', label: 'Twitter Raids', value: '20 Free Daily' },
-                    { icon: '👍', label: 'Voting for Ranking', value: '20 Pts/Vote' },
+                    { icon: '👍', label: 'Bubble votes', value: '20 pts once' },
                     { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
                     { icon: '🎨', label: 'Custom Branding', value: '5K+ Channel' }
                   ].map((item, i) => (

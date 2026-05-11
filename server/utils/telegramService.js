@@ -4151,7 +4151,7 @@ Tap to update:`;
       });
 
       message += `🌐 View all bubbles at: https://aquads.xyz\n`;
-      message += `💡 Vote on bubbles to earn points!\n\n`;
+      message += `💡 First vote on each bubble earns 20 points (once per bubble); you can change your vote anytime.\n\n`;
       message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
       // Get the video file path
@@ -5488,7 +5488,11 @@ Tap to update:`;
         }
         await project.save();
         await telegramService.sendVoteNotificationToGroup(project);
-        return { success: true, message: `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}` };
+        return {
+          success: true,
+          message:
+            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}\n\n💡 20 points are a one-time reward per bubble (first vote only); switching bullish/bearish updates counts only.`
+        };
       }
 
       if (!project.voterData) project.voterData = [];
@@ -5500,19 +5504,40 @@ Tap to update:`;
       }
       await project.save();
 
-      await User.findByIdAndUpdate(user._id, {
-        $inc: { points: 20 },
-        $push: {
-          pointsHistory: {
-            amount: 20,
-            reason: `Voted on project: ${project.title}`,
-            createdAt: new Date()
+      const bubblePointsKey = `Voted on bubble: ${project.id}`;
+      const legacyProjectTitleReason = `Voted on project: ${project.title}`;
+      const freshUser = await User.findById(user._id).select('pointsHistory').lean();
+      const alreadyReceivedBubblePoints =
+        freshUser?.pointsHistory?.some(
+          (entry) =>
+            entry.reason === bubblePointsKey || entry.reason === legacyProjectTitleReason
+        ) ?? false;
+
+      let pointsLine = '';
+      if (!alreadyReceivedBubblePoints) {
+        await User.findByIdAndUpdate(user._id, {
+          $inc: { points: 20 },
+          $push: {
+            pointsHistory: {
+              amount: 20,
+              reason: bubblePointsKey,
+              createdAt: new Date()
+            }
           }
-        }
-      });
-      await creditReferrerBonus(user._id, `Voted on project: ${project.title}`);
+        });
+        await creditReferrerBonus(user._id, bubblePointsKey);
+        pointsLine = '\n\n💰 +20 points (one time per bubble — your first vote here)';
+      }
+
       await telegramService.sendVoteNotificationToGroup(project);
-      return { success: true, message: `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}` };
+      const tally = `\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`;
+      if (alreadyReceivedBubblePoints) {
+        return {
+          success: true,
+          message: `✅ Voted ${voteType} on ${project.title}!${tally}\n\n💡 No extra points — you already earned the one-time 20 for this bubble (you can still change your vote anytime).`
+        };
+      }
+      return { success: true, message: `✅ Voted ${voteType} on ${project.title}!${pointsLine}${tally}` };
     } catch (error) {
       console.error('processVoteByUser error:', error);
       return { success: false, message: '❌ Error processing vote. Please try again later.' };
