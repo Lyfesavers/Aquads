@@ -690,7 +690,7 @@ You can pay via:
 
 - **AquaSwap** + **BexTools**-style routing from your bubble (live chart & swap handoff)
 - Homepage bubble map + vote rankings + bump at **100+ bullish** (organic votes and vote boosts both count)
-- Raids, vote boosts, Bump Bot — **custom `/setbranding` media on notifications is Premium when bumped** (Starter keeps default Aquads styling)
+- Raids, vote boosts, Bump Bot — **custom \`/setbranding\` media on notifications is Premium when bumped** (Starter keeps default Aquads styling)
 
 **Premium** adds the bundled launch stack shown in the modal (e.g. PR / distribution access, AMA where offered, **BNB/Sol trending + volume program**, ad credit, higher pre-bump coordinated raid cap vs Starter).
 
@@ -3916,7 +3916,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** `/setbranding`; that’s **Premium** once bumped (**100+ bullish**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
+> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** \`/setbranding\`; that’s **Premium** once bumped (**100+ bullish**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },
