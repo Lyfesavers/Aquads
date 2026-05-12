@@ -226,16 +226,17 @@ const PartnerStoreManager = ({ currentUser }) => {
                 <div className="text-gray-400 text-sm">Category</div>
                 <div className="text-white">{partnerStore.storeCategory}</div>
               </div>
-              <div>
-                <div className="text-gray-400 text-sm">Website</div>
+              <div className="flex items-center">
                 <a
                   href={partnerStore.storeWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 flex items-center space-x-1"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700/50 text-blue-400 hover:text-blue-300 hover:bg-gray-600/50 transition-colors"
+                  title="Open store website"
+                  aria-label="Open store website"
                 >
-                  <span>{partnerStore.storeWebsite}</span>
-                  <FaExternalLinkAlt size={12} />
+                  <FaExternalLinkAlt size={16} aria-hidden />
+                  <span className="sr-only">Open store website</span>
                 </a>
               </div>
               <div>
@@ -390,7 +391,7 @@ const PartnerStoreManager = ({ currentUser }) => {
                     <FaTimes />
                   </button>
 
-11                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-gray-300 text-sm font-medium mb-1">
                         Offer Title

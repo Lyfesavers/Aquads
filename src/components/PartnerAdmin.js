@@ -7,6 +7,8 @@ const PartnerAdmin = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState({});
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPartnerId, setEditingPartnerId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
@@ -134,6 +136,8 @@ const PartnerAdmin = ({ currentUser }) => {
           title: '',
           description: '',
           discountCode: '',
+          pointTier: '',
+          discountAmount: '',
           terms: 'Standard terms and conditions apply',
           isActive: true
         }
@@ -166,6 +170,85 @@ const PartnerAdmin = ({ currentUser }) => {
       storeCategory: '',
       discountOffers: []
     });
+    setEditingPartnerId(null);
+  };
+
+  const openEditPartner = (partner) => {
+    setEditingPartnerId(partner._id);
+    setFormData({
+      storeName: partner.partnerStore.storeName || '',
+      storeDescription: partner.partnerStore.storeDescription || '',
+      storeLogo: partner.partnerStore.storeLogo || '',
+      storeWebsite: partner.partnerStore.storeWebsite || '',
+      storeCategory: partner.partnerStore.storeCategory || '',
+      discountOffers: (partner.partnerStore.discountOffers || []).map((offer) => ({
+        _id: offer._id,
+        title: offer.title || '',
+        description: offer.description || '',
+        discountCode: offer.discountCode || '',
+        pointTier: offer.pointTier ?? '',
+        discountAmount: offer.discountAmount || '',
+        terms: offer.terms || 'Standard terms and conditions apply',
+        isActive: offer.isActive !== false
+      }))
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePartner = async (e) => {
+    e.preventDefault();
+    if (!editingPartnerId) return;
+    setSaving(true);
+
+    try {
+      const payload = {
+        storeName: formData.storeName,
+        storeDescription: formData.storeDescription,
+        storeLogo: formData.storeLogo,
+        storeWebsite: formData.storeWebsite,
+        storeCategory: formData.storeCategory,
+        discountOffers: formData.discountOffers.map((offer) => {
+          const row = {
+            title: offer.title,
+            description: offer.description,
+            discountCode: offer.discountCode,
+            pointTier: offer.pointTier === '' || offer.pointTier === undefined ? undefined : Number(offer.pointTier),
+            discountAmount: offer.discountAmount,
+            terms: offer.terms,
+            isActive: offer.isActive !== false
+          };
+          if (offer._id) row._id = offer._id;
+          return row;
+        })
+      };
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/users/admin/update-partner/${editingPartnerId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (response.ok) {
+        alert('Partner store updated successfully!');
+        setShowEditModal(false);
+        resetForm();
+        fetchPartners();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to update partner store');
+      }
+    } catch (error) {
+      console.error('Error updating partner store:', error);
+      alert('Failed to update partner store');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCreatePartner = async (e) => {
@@ -249,7 +332,10 @@ const PartnerAdmin = ({ currentUser }) => {
             {partners.length} {statusFilter} applications
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
             <FaPlus />
@@ -335,23 +421,17 @@ const PartnerAdmin = ({ currentUser }) => {
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <div>
-                        <div className="text-gray-400 text-sm">Website</div>
-                        <a
-                          href={partner.partnerStore.storeWebsite}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 flex items-center space-x-1 text-sm"
-                        >
-                          <span>{partner.partnerStore.storeWebsite}</span>
-                          <FaExternalLinkAlt size={10} />
-                        </a>
-                      </div>
-                      <div>
-                        <div className="text-gray-400 text-sm">Email</div>
-                        <div className="text-white text-sm">{partner.email}</div>
-                      </div>
+                    <div className="flex flex-col justify-center items-start md:items-center min-h-[8rem]">
+                      <a
+                        href={partner.partnerStore.storeWebsite}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-gray-700/50 text-blue-400 hover:text-blue-300 hover:bg-gray-600/50 transition-colors"
+                        title="Open partner website"
+                        aria-label="Open partner website"
+                      >
+                        <FaExternalLinkAlt size={18} />
+                      </a>
                     </div>
                   </div>
 
@@ -388,6 +468,15 @@ const PartnerAdmin = ({ currentUser }) => {
                 <div className="lg:col-span-1">
                   <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
                     <div className="text-gray-300 text-sm font-medium mb-3">Actions</div>
+
+                    <button
+                      type="button"
+                      onClick={() => openEditPartner(partner)}
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+                    >
+                      <FaEdit />
+                      <span>Edit listing</span>
+                    </button>
                     
                     {statusFilter === 'pending' && (
                       <>
@@ -628,6 +717,33 @@ const PartnerAdmin = ({ currentUser }) => {
                             placeholder="DISCOUNT10"
                           />
                         </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Points to redeem
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={offer.pointTier}
+                            onChange={(e) => updateOffer(index, 'pointTier', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Discount label
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.discountAmount}
+                            onChange={(e) => updateOffer(index, 'discountAmount', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 10% off"
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -661,6 +777,241 @@ const PartnerAdmin = ({ currentUser }) => {
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
+                    resetForm();
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <FaTimes />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Partner Modal */}
+      {showEditModal && editingPartnerId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            key={editingPartnerId}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <FaEdit />
+                <span>Edit Partner Store</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdatePartner} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Store Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="storeName"
+                    value={formData.storeName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="Enter store name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Category *
+                  </label>
+                  <select
+                    name="storeCategory"
+                    value={formData.storeCategory}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Store Logo URL *
+                </label>
+                <input
+                  type="url"
+                  name="storeLogo"
+                  value={formData.storeLogo}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Website URL *
+                </label>
+                <input
+                  type="url"
+                  name="storeWebsite"
+                  value={formData.storeWebsite}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="https://store.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Store Description *
+                </label>
+                <textarea
+                  name="storeDescription"
+                  value={formData.storeDescription}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  placeholder="Describe the store and what it offers..."
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white text-lg font-semibold">Discount Offers</h4>
+                  <button
+                    type="button"
+                    onClick={addOffer}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg flex items-center space-x-1 text-sm transition-colors"
+                  >
+                    <FaPlus />
+                    <span>Add Offer</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {formData.discountOffers.map((offer, index) => (
+                    <div
+                      key={offer._id || `new-${index}`}
+                      className="bg-gray-700/50 rounded-lg p-4 relative"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => removeOffer(index)}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                      >
+                        <FaTimes />
+                      </button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Offer Title
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.title}
+                            onChange={(e) => updateOffer(index, 'title', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 10% Off"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Discount Code
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.discountCode}
+                            onChange={(e) => updateOffer(index, 'discountCode', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="DISCOUNT10"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Points to redeem
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={offer.pointTier}
+                            onChange={(e) => updateOffer(index, 'pointTier', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-300 text-sm font-medium mb-1">
+                            Discount label
+                          </label>
+                          <input
+                            type="text"
+                            value={offer.discountAmount}
+                            onChange={(e) => updateOffer(index, 'discountAmount', e.target.value)}
+                            className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                            placeholder="e.g., 10% off"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-gray-300 text-sm font-medium mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          value={offer.description}
+                          onChange={(e) => updateOffer(index, 'description', e.target.value)}
+                          rows={2}
+                          className="w-full bg-gray-600 text-white rounded px-3 py-2 text-sm"
+                          placeholder="Describe this offer..."
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <FaSpinner className="animate-spin" /> : <FaCheck />}
+                  <span>{saving ? 'Saving...' : 'Save changes'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
                     resetForm();
                   }}
                   className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"

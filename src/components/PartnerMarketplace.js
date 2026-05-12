@@ -802,9 +802,10 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                     target="_blank"
                     rel="noopener noreferrer"
                     className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded hover:bg-black/70 transition-colors"
-                    title="Visit Website"
+                    title="Visit partner website"
+                    aria-label="Visit partner website"
                   >
-                    <FaExternalLinkAlt size={12} />
+                    <FaExternalLinkAlt size={12} aria-hidden />
                   </a>
                 </div>
 

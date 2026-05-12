@@ -286,6 +286,8 @@ const userSchema = new Schema({
     discountOffers: [{
       title: String,
       description: String,
+      discountCode: String,
+      pointTier: Number,
       discountAmount: String, // e.g., "10%", "$5 off", "Free shipping"
       terms: {
         type: String,

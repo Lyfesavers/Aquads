@@ -2014,6 +2014,95 @@ router.post('/admin/create-partner', auth, async (req, res) => {
   }
 });
 
+// Admin: Update partner store listing (preserves offer subdocument ids when _id is sent)
+router.patch('/admin/update-partner/:partnerId', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const partner = await User.findById(req.params.partnerId);
+    if (!partner || !partner.partnerStore?.isPartner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    const {
+      storeName,
+      storeDescription,
+      storeLogo,
+      storeWebsite,
+      storeCategory,
+      discountOffers
+    } = req.body;
+
+    const ps = partner.partnerStore;
+
+    if (storeName !== undefined && storeName !== '') ps.storeName = storeName;
+    if (storeDescription !== undefined) ps.storeDescription = storeDescription;
+    if (storeLogo !== undefined) ps.storeLogo = storeLogo;
+    if (storeWebsite !== undefined) ps.storeWebsite = storeWebsite;
+    if (storeCategory !== undefined) ps.storeCategory = storeCategory;
+
+    if (discountOffers !== undefined) {
+      if (!Array.isArray(discountOffers)) {
+        return res.status(400).json({ error: 'discountOffers must be an array' });
+      }
+
+      const incomingIds = new Set(
+        discountOffers.filter((o) => o && o._id).map((o) => String(o._id))
+      );
+
+      const idsToPull = partner.partnerStore.discountOffers
+        .filter((sub) => sub._id && !incomingIds.has(String(sub._id)))
+        .map((sub) => sub._id);
+      idsToPull.forEach((id) => partner.partnerStore.discountOffers.pull(id));
+
+      for (const inc of discountOffers) {
+        if (!inc || typeof inc !== 'object') continue;
+        if (inc._id) {
+          const sub = partner.partnerStore.discountOffers.id(inc._id);
+          if (sub) {
+            if (inc.title !== undefined) sub.title = inc.title;
+            if (inc.description !== undefined) sub.description = inc.description;
+            if (inc.discountCode !== undefined) sub.discountCode = inc.discountCode;
+            if (inc.pointTier !== undefined && inc.pointTier !== '') sub.pointTier = Number(inc.pointTier);
+            if (inc.discountAmount !== undefined) sub.discountAmount = inc.discountAmount;
+            if (inc.terms !== undefined) sub.terms = inc.terms;
+            if (typeof inc.isActive === 'boolean') sub.isActive = inc.isActive;
+          }
+        } else {
+          partner.partnerStore.discountOffers.push({
+            title: inc.title || '',
+            description: inc.description || '',
+            discountCode: inc.discountCode || '',
+            pointTier: inc.pointTier !== undefined && inc.pointTier !== '' ? Number(inc.pointTier) : undefined,
+            discountAmount: inc.discountAmount || '',
+            terms: inc.terms || 'Standard terms and conditions apply',
+            isActive: inc.isActive !== false
+          });
+        }
+      }
+    }
+
+    await partner.save();
+
+    res.json({
+      success: true,
+      message: 'Partner store updated successfully',
+      partner: {
+        id: partner._id,
+        username: partner.username,
+        email: partner.email,
+        partnerStore: partner.partnerStore,
+        createdAt: partner.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating partner store:', error);
+    res.status(500).json({ error: 'Failed to update partner store' });
+  }
+});
+
 // Admin: Delete partner store
 router.delete('/admin/delete-partner/:partnerId', auth, async (req, res) => {
   try {
