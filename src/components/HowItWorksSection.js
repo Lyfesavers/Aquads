@@ -28,7 +28,7 @@ const projectSteps = [
     oneLiner:
       "Free Starter listing—or $99 Premium for the full launch stack. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing from your ad—Premium adds the trending/volume + PR launch stack in the modal.",
     perks: ['Starter $0 · Premium full stack', 'DexScreener auto-fill', '5% off for affiliates'],
-    cta: { label: 'Create your listing', to: '/home?openListProject=true' },
+    cta: { label: 'List token free', to: '/home?openListProject=true' },
     mockup: 'ignite',
   },
   {
@@ -727,7 +727,7 @@ const HowItWorksSection = () => {
               whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(34,211,238,0.5)' }}
               whileTap={{ scale: 0.97 }}
             >
-              🚀 Launch a project
+              List token free
             </motion.span>
           </Link>
           <Link to="/marketplace?modal=list-service">
