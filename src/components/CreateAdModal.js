@@ -948,7 +948,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 raid/day → 20/day when bumped · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · 1 raid/day → 20/day when bumped · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -965,7 +965,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">Adds BNB/Sol trending+volume program, PR/AMA stack, ad credit, custom branding when bumped · 5 raids/day → 20 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">Adds BNB/Sol trending+volume program, PR/AMA stack, 1 complimentary 7-day homepage banner, ad credit, custom branding when bumped · 5 raids/day → 20 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1232,7 +1232,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 100+ vote bump · 1 raid/day → 20 when bumped · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · 100+ vote bump · 1 raid/day → 20 when bumped · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1247,7 +1247,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">Full launch stack: PR, AMA, credits, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">Full launch stack: PR, AMA, 1 complimentary 7-day homepage banner, credits, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
                   </button>
                 </div>
 
@@ -1279,6 +1279,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <div>
                         <h4 className="font-semibold text-white">Vote-driven bump (free)</h4>
                         <p className="text-gray-300 text-sm"><strong className="text-white">100+</strong> bullish votes unlock max bubble size and main-row visibility. Organic votes and paid vote boosts both count.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-amber-500/35">
+                      <div className="bg-amber-500 p-2 rounded-full flex-shrink-0">
+                        <FaBullhorn className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Homepage banner ad spot</h4>
+                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">24-hour</strong> rotating banner placement on Aquads after your listing is approved (premium visibility slot—coordinate timing in your dashboard).</p>
                       </div>
                     </div>
 
@@ -1321,7 +1331,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for PR, AMA, $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1330,6 +1340,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <p className="text-green-200 text-sm leading-relaxed">
                       ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
                       ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds done-for-you trending/volume + launch bundle<br/>
+                      ✓ <strong className="text-green-100">1 complimentary 24-hour homepage banner</strong> ad spot after approval<br/>
                       ✓ Same fair-play rules and bump mechanics as Premium listings
                     </p>
                   </div>
@@ -1360,6 +1371,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div>
                       <h4 className="font-semibold text-white">Vote-driven bubble bump</h4>
                       <p className="text-gray-300 text-sm">100+ bullish votes unlock max bubble size and main-row visibility; organic votes and paid vote boosts both count.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-amber-500/35">
+                    <div className="bg-amber-500 p-2 rounded-full">
+                      <FaBullhorn className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Homepage banner ad spot</h4>
+                      <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">7-day</strong> rotating banner placement on Aquads after your listing is approved (vs <strong className="text-white">24 hours</strong> on Starter)—coordinate creative and timing in your dashboard.</p>
                     </div>
                   </div>
                   
@@ -1450,6 +1471,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
                     ✓ Everything in Starter + over $1000 in bundled launch services<br/>
+                    ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong> (vs 24h on Starter)<br/>
                     ✓ Admin review & refund if rejected<br/>
                     ✓ Optional Mintfunnel add-ons still available separately (step 2)
                   </p>
