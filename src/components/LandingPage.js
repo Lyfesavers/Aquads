@@ -3371,7 +3371,7 @@ const CarouselCard = ({ feature, index }) => {
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Link to="/why-list">
+                  <Link to="/list-token-free">
                     <motion.button
                       className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm md:text-base shadow-lg shadow-pink-500/25"
                       whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(236, 72, 153, 0.5)' }}
@@ -4135,7 +4135,7 @@ const LandingPage = () => {
       title: 'Marketing & PR',
       description: 'Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.',
       gradient: 'from-pink-900/40 to-slate-900/80',
-      link: '/why-list',
+      link: '/list-token-free',
       size: 'wide'
     }
   ];
@@ -4154,20 +4154,29 @@ const LandingPage = () => {
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       <Helmet>
-        <title>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace | Trade, Earn & Build</title>
-        <meta name="description" content="Aquads is the all-in-one Web3 platform: hire crypto freelancers, swap tokens on our DEX, earn with DeFi savings pools, play games, and grow your project with on-chain tools." />
+        <title>Aquads — Free token &amp; crypto project listings, Web3 hub &amp; freelancers</title>
+        <meta
+          name="description"
+          content="List your token or crypto project free on Aquads: interactive bubble map and Bubble Ads. Also hire Web3 freelancers, swap on AquaSwap, use AquaFi, games, and growth tools—in one platform."
+        />
         <link rel="canonical" href="https://www.aquads.xyz/" />
 
-        <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
-        <meta property="og:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
+        <meta property="og:title" content="Aquads — Free token &amp; crypto project listings &amp; Web3 hub" />
+        <meta
+          property="og:description"
+          content="Free project &amp; token listings on a live bubble map, plus freelancers, DEX swaps, DeFi, and creator tools."
+        />
         <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
         <meta property="og:url" content="https://www.aquads.xyz/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Aquads" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
-        <meta name="twitter:description" content="Hire Web3 freelancers, swap tokens, earn DeFi yields, and grow your crypto project - all in one platform." />
+        <meta name="twitter:title" content="Aquads — Free token &amp; crypto project listings &amp; Web3 hub" />
+        <meta
+          name="twitter:description"
+          content="Free project &amp; token listings on a live bubble map, plus freelancers, DEX swaps, DeFi, and creator tools."
+        />
         <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
 
         <script type="application/ld+json">
@@ -4177,7 +4186,8 @@ const LandingPage = () => {
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
             "logo": "https://www.aquads.xyz/logo192.png",
-            "description": "Aquads is the all-in-one Web3 platform for crypto freelancers, token swaps, DeFi savings, and project growth tools.",
+            "description":
+              "Aquads: free crypto and token project listings on a bubble map, plus Web3 freelancers, DEX swaps, DeFi savings, and project growth tools.",
             "sameAs": [
               "https://twitter.com/_Aquads"
             ],
@@ -4195,7 +4205,7 @@ const LandingPage = () => {
             "@type": "WebSite",
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
-            "description": "Web3 Crypto SuperHub & Freelancer Marketplace",
+            "description": "Free token and crypto project listings, Web3 marketplace, DEX, and DeFi hub.",
             "potentialAction": {
               "@type": "SearchAction",
               "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
@@ -4675,7 +4685,7 @@ const LandingPage = () => {
               Home of onchain resumes — where hiring meets onchain
             </p>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              List your crypto project, find verified Web3 freelancers, and connect across 50+ blockchains.
+              List your token or crypto project free on the bubble map, find verified Web3 freelancers, and connect across 50+ blockchains.
             </p>
             <motion.div
               className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8 md:mb-10"

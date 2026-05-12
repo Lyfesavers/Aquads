@@ -34,6 +34,7 @@ export default async (request, context) => {
   // Static pages
   const staticPages = [
     { loc: 'https://www.aquads.xyz/', changefreq: 'daily', priority: '1.0' },
+    { loc: 'https://www.aquads.xyz/home', changefreq: 'daily', priority: '0.95' },
     { loc: 'https://www.aquads.xyz/marketplace', changefreq: 'daily', priority: '0.9' },
     { loc: 'https://www.aquads.xyz/learn', changefreq: 'daily', priority: '0.8' },
     { loc: 'https://www.aquads.xyz/aquaswap', changefreq: 'daily', priority: '0.9' },
@@ -46,7 +47,7 @@ export default async (request, context) => {
     { loc: 'https://www.aquads.xyz/affiliate', changefreq: 'monthly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/aquafi', changefreq: 'weekly', priority: '0.8' },
     { loc: 'https://www.aquads.xyz/partner-rewards', changefreq: 'weekly', priority: '0.7' },
-    { loc: 'https://www.aquads.xyz/why-list', changefreq: 'monthly', priority: '0.6' },
+    { loc: 'https://www.aquads.xyz/list-token-free', changefreq: 'monthly', priority: '0.75' },
     { loc: 'https://www.aquads.xyz/freelancer-benefits', changefreq: 'monthly', priority: '0.6' },
     { loc: 'https://www.aquads.xyz/terms', changefreq: 'monthly', priority: '0.4' },
     { loc: 'https://www.aquads.xyz/privacy-policy', changefreq: 'monthly', priority: '0.4' },

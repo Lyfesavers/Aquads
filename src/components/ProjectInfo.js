@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
@@ -294,6 +295,29 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      <Helmet>
+        <title>List your token free on Aquads — no-fee bubble map listings</title>
+        <meta
+          name="description"
+          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Optional Premium PR add-ons."
+        />
+        <link rel="canonical" href="https://www.aquads.xyz/list-token-free" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.aquads.xyz/list-token-free" />
+        <meta property="og:title" content="List your token free on Aquads — bubble map listings" />
+        <meta
+          property="og:description"
+          content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
+        />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="List your token free on Aquads — bubble map listings" />
+        <meta
+          name="twitter:description"
+          content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
+        />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+      </Helmet>
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Link
@@ -310,11 +334,11 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Why List Your Project on
+              List your token free on
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> Aquads</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Join Aquads BexTools (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
+              Starter bubble map listings have no listing fee—get discovered, earn votes, bump with community support, and route trades through AquaSwap. Optional Premium and PR add-ons when you are ready to scale.
             </p>
                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
                <button

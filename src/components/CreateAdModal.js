@@ -166,7 +166,7 @@ const ADDON_PACKAGES = [
 const LISTING_TIER_STARTER = 'starter';
 const LISTING_TIER_PREMIUM = 'premium';
 
-/** Mirrors /why-list — shared hooks vs Premium launch stack */
+/** Mirrors /list-token-free — shared hooks vs Premium launch stack */
 function SharedListingBenefitsNote({ className = '' }) {
   return (
     <div className={`rounded-lg border border-cyan-500/35 bg-gray-900/50 px-4 py-3 text-left text-sm text-gray-300 ${className}`}>

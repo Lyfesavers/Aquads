@@ -328,7 +328,7 @@ The navigation bar provides quick access to all major sections:
 | **Games** | GameHub with blockchain games |
 | **Paid Ads** | Create banner advertisements |
 | **Learn** | Tutorials, blogs, skill tests |
-| **Why List?** | Benefits of listing your project |
+| **List token free** | Benefits of listing your project for free (bubble map) |
 | **Login/Create Account** | User authentication |
 
 After logging in, you'll see:

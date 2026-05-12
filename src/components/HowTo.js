@@ -619,10 +619,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 Learn
               </Link>
               <Link
-                to="/why-list"
+                to="/list-token-free"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
-                Why List?
+                List token free
               </Link>
 
               {currentUser ? (
@@ -748,10 +748,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 Learn
               </Link>
               <Link
-                to="/why-list"
+                to="/list-token-free"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium text-yellow-400"
               >
-                Why List?
+                List token free
               </Link>
                              {currentUser ? (
                  <>

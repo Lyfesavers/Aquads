@@ -121,6 +121,13 @@
   to = "/service.html"
   status = 200
 
+# Permanent redirect: legacy listing landing → keyword-aligned URL (SEO)
+[[redirects]]
+  from = "/why-list"
+  to = "/list-token-free"
+  status = 301
+  force = true
+
 # Default SPA redirect (keep this last)
 [[redirects]]
   from = "/*"

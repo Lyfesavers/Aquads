@@ -351,13 +351,27 @@ const TokenList = ({ currentUser, showNotification }) => {
   return (
     <div className="container mx-auto p-4">
       <Helmet>
-        <title>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace</title>
-        <meta name="description" content="Advertise your crypto project with our Bubble Ads for free. Track live cryptocurrency prices, market cap, volume, and detailed token information. Get real-time data for Bitcoin, Ethereum, and thousands of altcoins, Find a freelancer for your web3 project." />
-        <meta name="keywords" content="cryptocurrency, crypto prices, bitcoin, ethereum, market cap, trading volume, token information" />
-        <meta property="og:title" content="AQUADS - Dcentralized bubble advertising, Cryptocurrency Market Data, Freelancer marketplace plus more" />
-        <meta property="og:description" content="Bubble Ads and Live cryptocurrency prices, charts, and market data for thousands of tokens with a freelancer marketplace for all web3 professionals." />
+        <title>Free token &amp; crypto project listings | Aquads bubble map</title>
+        <meta
+          name="description"
+          content="List your token or crypto project free on Aquads: live bubble map, Bubble Ads, community votes, and market data for thousands of assets. Explore projects or post a free starter listing."
+        />
+        <link rel="canonical" href="https://www.aquads.xyz/home" />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.aquads.xyz/home" />
+        <meta property="og:title" content="Free token &amp; crypto project listings | Aquads bubble map" />
+        <meta
+          property="og:description"
+          content="Free project listings on an interactive bubble map, plus live crypto prices, market cap, volume, and Web3 marketplace tools."
+        />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Free token &amp; crypto project listings | Aquads bubble map" />
+        <meta
+          name="twitter:description"
+          content="Free project listings on an interactive bubble map, plus live crypto prices, market cap, volume, and Web3 marketplace tools."
+        />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
       </Helmet>
 
       <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">

@@ -500,10 +500,10 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 Learn
               </Link>
               <Link
-                to="/why-list"
+                to="/list-token-free"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
-                Why List?
+                List token free
               </Link>
 
               {currentUser ? (
@@ -629,10 +629,10 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 Learn
               </Link>
               <Link
-                to="/why-list"
+                to="/list-token-free"
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
               >
-                Why List?
+                List token free
               </Link>
                              {currentUser ? (
                  <>

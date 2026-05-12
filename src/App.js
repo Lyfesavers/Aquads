@@ -2752,10 +2752,10 @@ function App() {
                           Learn
                         </Link>
                         <Link
-                          to="/why-list"
+                          to="/list-token-free"
                           className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                         >
-                          Why List?
+                          List token free
                         </Link>
 
                         {currentUser ? (
@@ -2907,12 +2907,12 @@ function App() {
                                   <span className="font-medium">Learn</span>
                                 </Link>
                                 <Link
-                                  to="/why-list"
+                                  to="/list-token-free"
                                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
                                   onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                   <span className="text-lg">✨</span>
-                                  <span className="font-medium">Why List?</span>
+                                  <span className="font-medium">List token free</span>
                                 </Link>
                                 <div className="h-px bg-white/10 my-2" />
                                 <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
@@ -3755,7 +3755,18 @@ function App() {
             />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
-            <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
+            <Route
+              path="/list-token-free"
+              element={
+                <ProjectInfo
+                  currentUser={currentUser}
+                  ads={ads}
+                  onLogin={() => setShowLoginModal(true)}
+                  onCreateAccount={() => setShowCreateAccountModal(true)}
+                />
+              }
+            />
+            <Route path="/why-list" element={<Navigate to="/list-token-free" replace />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
             <Route path="/telegram-bot" element={<TelegramBot />} />
             <Route path="/aquapay" element={<AquaPayInfo />} />
