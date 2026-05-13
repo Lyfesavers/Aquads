@@ -170,7 +170,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
   const [showPointsPopup, setShowPointsPopup] = useState(false);
   const [pointsEarned, setPointsEarned] = useState(0);
 
-  // Buy Crypto Modal state
+  // MoonPay buy/sell modal state
   const [showBuyCryptoModal, setShowBuyCryptoModal] = useState(false);
 
   // Shill Templates Modal state
@@ -1808,9 +1808,9 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               <button 
                 onClick={() => setShowBuyCryptoModal(true)}
                 className="fiat-purchase-button"
-                title="Buy crypto with fiat currency"
+                title="Buy or sell crypto with fiat (MoonPay)"
               >
-                💳 Fiat to Crypto
+                💳 Buy / Sell (Fiat)
               </button>
               <button 
                 onClick={() => navigate('/wallet-analyzer')}
@@ -1875,9 +1875,9 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             <button 
               onClick={() => setShowBuyCryptoModal(true)}
               className="fiat-purchase-button"
-              title="Buy crypto with fiat currency"
+              title="Buy or sell crypto with fiat (MoonPay)"
             >
-              💳 Fiat to Crypto
+              💳 Buy / Sell (Fiat)
             </button>
           </div>
         </div>
@@ -2912,7 +2912,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
         }
       `}</style>
 
-      {/* Buy Crypto Modal */}
+      {/* MoonPay fiat on-ramp / off-ramp modal */}
       <BuyCryptoModal
         isOpen={showBuyCryptoModal}
         onClose={() => setShowBuyCryptoModal(false)}

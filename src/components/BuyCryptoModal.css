@@ -145,6 +145,106 @@
   min-height: 400px;
 }
 
+.modal-content--ramp-choice {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: auto;
+  gap: 1.25rem;
+}
+
+.moonpay-ramp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.moonpay-ramp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.25rem 1.35rem;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  color: #fff;
+  font-family: inherit;
+}
+
+.moonpay-ramp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.55);
+}
+
+.moonpay-ramp-card--sell {
+  background: rgba(123, 97, 255, 0.08);
+  border-color: rgba(123, 97, 255, 0.4);
+}
+
+.moonpay-ramp-card--sell:hover {
+  box-shadow: 0 12px 40px rgba(123, 97, 255, 0.25);
+  border-color: rgba(123, 97, 255, 0.6);
+}
+
+.moonpay-ramp-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin-bottom: 0.85rem;
+  font-size: 1.15rem;
+  background: rgba(0, 212, 255, 0.15);
+  color: #00d4ff;
+}
+
+.moonpay-ramp-card--sell .moonpay-ramp-card__icon {
+  background: rgba(123, 97, 255, 0.2);
+  color: #b8a5ff;
+}
+
+.moonpay-ramp-card__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  background: linear-gradient(135deg, #00d4ff 0%, #7b61ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.moonpay-ramp-card--sell .moonpay-ramp-card__title {
+  background: linear-gradient(135deg, #c4b5fd 0%, #7b61ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.moonpay-ramp-card__desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.45;
+  margin-bottom: 1rem;
+}
+
+.moonpay-ramp-card__cta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(0, 212, 255, 0.95);
+}
+
+.moonpay-ramp-card--sell .moonpay-ramp-card__cta {
+  color: rgba(196, 181, 253, 0.98);
+}
+
 /* MoonPay Loading */
 .moonpay-loading {
   text-align: center;
@@ -237,6 +337,10 @@
   .modal-content {
     padding: 1.5rem;
     min-height: 350px;
+  }
+
+  .moonpay-ramp-grid {
+    grid-template-columns: 1fr;
   }
 
   .moonpay-loading h3 {

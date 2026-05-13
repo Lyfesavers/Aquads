@@ -1,68 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { FaTimes, FaCreditCard } from 'react-icons/fa';
+import { FaTimes, FaExchangeAlt, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import './BuyCryptoModal.css';
 
+const MOONPAY_BRAND_QUERY = 'colorCode=%237D00FF';
+const MOONPAY_BUY_URL = `https://buy.moonpay.com?${MOONPAY_BRAND_QUERY}`;
+const MOONPAY_SELL_URL = `https://sell.moonpay.com?${MOONPAY_BRAND_QUERY}`;
+
+const POPUP_FEATURES =
+  'width=450,height=650,toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes';
+
+function openMoonPayPopup(url, windowName) {
+  const left = (window.screen.width - 450) / 2;
+  const top = (window.screen.height - 650) / 2;
+  const features = `${POPUP_FEATURES},left=${left},top=${top}`;
+  const popup = window.open(url, windowName, features);
+  if (!popup) {
+    alert('Please allow popups to continue with MoonPay');
+  }
+}
+
 const BuyCryptoModal = ({ isOpen, onClose }) => {
-  const moonpayUrl = 'https://buy.moonpay.com?colorCode=%237D00FF';
-  const hasOpenedPopup = useRef(false);
-
-  // Open MoonPay popup once when modal opens
-  useEffect(() => {
-    if (!isOpen) {
-      // Reset ref when modal closes
-      hasOpenedPopup.current = false;
-      return;
-    }
-
-    // Skip if already opened during this session
-    if (hasOpenedPopup.current) {
-      return;
-    }
-
-    // Mark as opened immediately to prevent multiple popups
-    hasOpenedPopup.current = true;
-
-    // Small delay to show modal first
-    const popupTimer = setTimeout(() => {
-      const width = 450;
-      const height = 650;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-      
-      const popup = window.open(
-        moonpayUrl,
-        'MoonPayBuyCrypto',
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
-      );
-
-      if (!popup) {
-        alert('Please allow popups to buy crypto with MoonPay');
-        hasOpenedPopup.current = false; // Reset if failed to open
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(popupTimer);
-    };
-  }, [isOpen, moonpayUrl]);
-
-  // Auto-close modal after 2 seconds (separate effect)
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const closeTimer = setTimeout(() => {
-      onClose();
-    }, 2000);
-
-    return () => {
-      clearTimeout(closeTimer);
-    };
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -74,7 +32,6 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  // Close on ESC key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -90,8 +47,8 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
   }
 
   const modalContent = (
-    <div 
-      className="buy-crypto-modal-overlay" 
+    <div
+      className="buy-crypto-modal-overlay"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -106,53 +63,65 @@ const BuyCryptoModal = ({ isOpen, onClose }) => {
         justifyContent: 'center'
       }}
     >
-      <div 
-        className="buy-crypto-modal" 
+      <div
+        className="buy-crypto-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
           zIndex: 1000000
         }}
       >
-        {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
-            <FaCreditCard className="modal-icon" />
+            <FaExchangeAlt className="modal-icon" aria-hidden />
             <div>
-              <h2>Buy Crypto</h2>
-              <p>Purchase cryptocurrency with fiat currency</p>
+              <h2>Buy & sell crypto</h2>
+              <p>Fiat on-ramp and off-ramp via MoonPay</p>
             </div>
           </div>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
             <FaTimes />
           </button>
         </div>
 
-        {/* MoonPay Loading */}
-        <div className="modal-content">
-          <div className="moonpay-loading">
-            <div className="loading-spinner-large"></div>
-            <h3>Opening MoonPay...</h3>
-            <p>A secure window will open to complete your purchase</p>
-            <div className="loading-features">
-              <div className="feature-item">✓ Credit & Debit Cards</div>
-              <div className="feature-item">✓ Bank Transfers</div>
-              <div className="feature-item">✓ Apple Pay & Google Pay</div>
-              <div className="feature-item">✓ Instant Delivery</div>
-            </div>
-            <p className="popup-note">If the window didn't open, please allow popups and try again</p>
+        <div className="modal-content modal-content--ramp-choice">
+          <div className="moonpay-ramp-grid">
+            <button
+              type="button"
+              className="moonpay-ramp-card moonpay-ramp-card--buy"
+              onClick={() => openMoonPayPopup(MOONPAY_BUY_URL, 'MoonPayBuyCrypto')}
+            >
+              <span className="moonpay-ramp-card__icon" aria-hidden>
+                <FaArrowDown />
+              </span>
+              <span className="moonpay-ramp-card__title">Buy crypto</span>
+              <span className="moonpay-ramp-card__desc">Pay with card, bank, Apple Pay, or Google Pay</span>
+              <span className="moonpay-ramp-card__cta">Open MoonPay — buy</span>
+            </button>
+
+            <button
+              type="button"
+              className="moonpay-ramp-card moonpay-ramp-card--sell"
+              onClick={() => openMoonPayPopup(MOONPAY_SELL_URL, 'MoonPaySellCrypto')}
+            >
+              <span className="moonpay-ramp-card__icon" aria-hidden>
+                <FaArrowUp />
+              </span>
+              <span className="moonpay-ramp-card__title">Sell crypto</span>
+              <span className="moonpay-ramp-card__desc">Convert crypto to fiat where supported</span>
+              <span className="moonpay-ramp-card__cta">Open MoonPay — sell</span>
+            </button>
           </div>
+
+          <p className="popup-note">
+            A secure window will open for the option you choose. Allow popups if nothing appears.
+          </p>
         </div>
       </div>
     </div>
   );
 
-  // Use React Portal to render at document body level
-  return ReactDOM.createPortal(
-    modalContent,
-    document.body
-  );
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default BuyCryptoModal;
-
