@@ -279,7 +279,9 @@ router.get('/analytics', auth, async (req, res) => {
       .sort({ createdAt: -1 });
 
     // Get current user info with fraud detection fields
-    const currentUser = await User.findById(req.user.userId).select('username createdAt affiliateCount ipAddress country deviceFingerprint lastSeen lastActivity isOnline cv');
+    const currentUser = await User.findById(req.user.userId).select(
+      'username createdAt affiliateCount ipAddress country deviceFingerprint lastSeen lastActivity isOnline cv pointsHistory tokenHistory image email emailVerified'
+    );
 
     // Calculate analytics
     const now = new Date();
@@ -374,7 +376,7 @@ router.get('/analytics', auth, async (req, res) => {
       },
       fraudAnalysis: {
         riskScore: fraudAnalysis.riskScore,
-        riskLevel: fraudAnalysis.riskScore >= 75 ? 'high' : fraudAnalysis.riskScore >= 50 ? 'medium' : 'low',
+        riskLevel: fraudAnalysis.riskLevel,
         riskFactors: fraudAnalysis.riskFactors,
         activityScore: fraudAnalysis.activityAnalysis?.score || 0,
         loginFrequency: fraudAnalysis.loginAnalysis?.frequencyScore || 0,

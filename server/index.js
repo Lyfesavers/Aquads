@@ -48,6 +48,7 @@ const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
 const { syncWeb3CareerJobs } = require('./services/web3CareerJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
 const { syncFreeCourses } = require('./services/freeCoursesSync');
+const { runSuspiciousAffiliatesScan } = require('./services/suspiciousAffiliatesScan');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
@@ -502,6 +503,25 @@ setTimeout(async () => {
     console.error('[Remotive Sync] Error in initial sync:', error);
   }
 }, 20000); // Wait 20 seconds after server start
+
+// Suspicious affiliate referrers scan — persisted snapshot for admin Affiliates tab (medium+ risk only). Twice daily UTC.
+cron.schedule('17 */12 * * *', async () => {
+  try {
+    console.log('[SuspiciousAffiliatesScan] Scheduled run...');
+    await runSuspiciousAffiliatesScan({ minAffiliates: 10 });
+  } catch (e) {
+    console.error('[SuspiciousAffiliatesScan] Cron error:', e);
+  }
+});
+
+setTimeout(async () => {
+  try {
+    console.log('[SuspiciousAffiliatesScan] Initial run after server start...');
+    await runSuspiciousAffiliatesScan({ minAffiliates: 10 });
+  } catch (e) {
+    console.error('[SuspiciousAffiliatesScan] Initial run error:', e);
+  }
+}, 60000); // 1 minute — after DB is ready and other boot work has started
 
 // One-time cleanup: retired RSS sources — purge any stale rows from prior syncs.
 setTimeout(async () => {

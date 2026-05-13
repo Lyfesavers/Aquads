@@ -16,11 +16,10 @@ const telegramService = require('../utils/telegramService');
 const { calculateActivityDiversityScore, calculateLoginFrequencyAnalysis, calculateAdvancedFraudScore } = require('../utils/fraudDetection');
 const { validateSearchQuery } = require('../utils/security');
 const { validateSearchQuery: validateSearchQueryMiddleware } = require('../middleware/inputValidation');
-
-// Cache for suspicious users — expires every 5 minutes
-let suspiciousUsersCache = null;
-let suspiciousUsersCacheExpiry = 0;
-const SUSPICIOUS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const {
+  getSnapshotResponse,
+  scheduleRescan
+} = require('../services/suspiciousAffiliatesScan');
 
 // Middleware to check if user is admin
 // auth.js already fetches the user from DB and sets req.user.isAdmin — no second DB lookup needed
@@ -287,80 +286,24 @@ router.get('/search-users', auth, isAdmin, validateSearchQueryMiddleware, async 
   }
 });
 
-// Get users with suspicious patterns
+// Get users with suspicious patterns (precomputed by background job; refresh queues a new scan)
 router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) => {
   try {
-    const { minAffiliates = 10, daysBack = 30, refresh } = req.query;
+    const { minAffiliates = 10, refresh } = req.query;
+    const minAff = parseInt(minAffiliates, 10) || 10;
 
-    // Serve cached result if still fresh and no forced refresh requested
-    const now = Date.now();
-    if (!refresh && suspiciousUsersCache && now < suspiciousUsersCacheExpiry) {
-      return res.json(suspiciousUsersCache);
+    let rescanTriggered = false;
+    if (refresh) {
+      const sched = scheduleRescan(minAff);
+      rescanTriggered = sched.triggered;
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack));
-
-    // Find users with high affiliate counts - Remove date restriction to catch all suspicious patterns
-    const suspiciousUsers = await User.find({
-      affiliateCount: { $gte: parseInt(minAffiliates) }
-    })
-    .select('username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified affiliateCount points affiliates pointsHistory tokenHistory image')
-    .populate({
-      path: 'affiliates',
-      select: 'username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified points',
-      options: { sort: { createdAt: -1 } }
-    })
-    .sort({ affiliateCount: -1 })
-    .limit(100)
-    .lean();
-
-    const flaggedUsers = await Promise.all(suspiciousUsers.map(async user => {
-      // Use enhanced fraud detection
-      const fraudAnalysis = await calculateAdvancedFraudScore(user, user.affiliates);
-
-      return {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        createdAt: user.createdAt,
-        affiliateCount: user.affiliateCount,
-        points: user.points,
-        flags: fraudAnalysis.riskFactors,
-        riskScore: fraudAnalysis.riskScore,
-        // NEW: Enhanced metrics
-        activityScore: fraudAnalysis.activityAnalysis?.score || 0,
-        loginFrequency: fraudAnalysis.loginAnalysis?.frequencyScore || 0,
-        isDormant: fraudAnalysis.loginAnalysis?.isDormant || false,
-        isHighlyDormant: fraudAnalysis.loginAnalysis?.isHighlyDormant || false,
-        daysSinceLastSeen: fraudAnalysis.loginAnalysis?.daysSinceLastActivity || 999,
-        accountAgeDays: fraudAnalysis.loginAnalysis?.accountAgeDays || 0,
-        // Network analysis
-        uniqueIPs: fraudAnalysis.networkAnalysis?.uniqueIPs || 0,
-        uniqueCountries: fraudAnalysis.networkAnalysis?.uniqueCountries || 0,
-        uniqueDevices: fraudAnalysis.networkAnalysis?.uniqueDevices || 0,
-        recentSignups: fraudAnalysis.networkAnalysis?.rapidSignups || 0
-      };
-    }));
-
-    // Sort by risk score
-    flaggedUsers.sort((a, b) => b.riskScore - a.riskScore);
-
-    const result = {
-      suspiciousUsers: flaggedUsers,
-      summary: {
-        totalUsers: flaggedUsers.length,
-        highRisk: flaggedUsers.filter(u => u.riskScore >= 75).length,
-        mediumRisk: flaggedUsers.filter(u => u.riskScore >= 50 && u.riskScore < 75).length,
-        lowRisk: flaggedUsers.filter(u => u.riskScore < 50).length
-      }
-    };
-
-    // Store in cache
-    suspiciousUsersCache = result;
-    suspiciousUsersCacheExpiry = Date.now() + SUSPICIOUS_CACHE_TTL;
-
-    res.json(result);
+    const payload = await getSnapshotResponse(minAffiliates);
+    res.json({
+      ...payload,
+      rescanTriggered,
+      scanRequested: Boolean(refresh)
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch suspicious users' });
   }

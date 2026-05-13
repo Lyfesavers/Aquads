@@ -329,24 +329,12 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
 
     // 2. Affiliate Network Analysis
     if (affiliates && affiliates.length > 0) {
-      const rapidSignups = [];
       const sharedIPs = new Set();
       const inactiveAffiliates = [];
       const unverifiedAffiliates = [];
       const now = new Date();
       
       for (const affiliate of affiliates) {
-        // Check for rapid signups - with null checks
-        const signupTime = affiliate.createdAt ? new Date(affiliate.createdAt) : null;
-        const userSignupTime = user.createdAt ? new Date(user.createdAt) : null;
-        
-        if (signupTime && userSignupTime && !isNaN(signupTime.getTime()) && !isNaN(userSignupTime.getTime())) {
-          const timeDiff = Math.abs(signupTime - userSignupTime) / (1000 * 60 * 60); // hours
-          if (timeDiff < 24) {
-            rapidSignups.push(affiliate._id);
-          }
-        }
-
         // Check for shared IPs using actual affiliate ipAddress field
         if (affiliate.ipAddress) {
           const affiliateIPs = affiliate.ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip);
@@ -393,6 +381,21 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         }
       }
 
+      // Signups that sit in a dense window: ≥3 referrals whose createdAt falls within any 24h span
+      const rapidIdSet = new Set();
+      const withDates = affiliates.filter((a) => a.createdAt);
+      for (let i = 0; i < withDates.length; i++) {
+        const ti = new Date(withDates[i].createdAt).getTime();
+        if (isNaN(ti)) continue;
+        let inWindow = 0;
+        for (let j = 0; j < withDates.length; j++) {
+          const tj = new Date(withDates[j].createdAt).getTime();
+          if (!isNaN(tj) && Math.abs(ti - tj) < 24 * 60 * 60 * 1000) inWindow++;
+        }
+        if (inWindow >= 3) rapidIdSet.add(withDates[i]._id.toString());
+      }
+      const rapidSignups = Array.from(rapidIdSet);
+
       analysis.details.affiliateNetwork = {
         totalAffiliates: affiliates.length,
         rapidSignups: rapidSignups.length,
@@ -404,7 +407,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       };
       
       // Add to networkDiversity for calling code compatibility
-      analysis.details.networkDiversity.rapidSignups = rapidSignups.length;
+      analysis.details.networkDiversity.rapidSignups = rapidSignups.length; // count of affiliates in burst windows
       analysis.details.networkDiversity.totalAffiliates = affiliates.length;
 
       // Flag: Too many rapid signups
@@ -486,14 +489,9 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.riskScore += 0.1; // Small additional penalty for trying to hide fraud with activity
     }
 
-    // 4. Login Pattern Analysis
+    // 4. Login Pattern Analysis (no granular login history in User — frequency score only)
     const loginAnalysis = calculateLoginFrequencyAnalysis(user);
     analysis.details.loginPatterns = loginAnalysis;
-
-    if (loginAnalysis.pattern === 'very_frequent') {
-      analysis.flags.push('suspicious_login_frequency');
-      analysis.riskScore += 0.2;
-    }
 
     // 5. Account Age vs Activity Analysis
     const accountAge = (new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24); // days
@@ -520,9 +518,9 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     // Determine risk level
     analysis.riskScore = Math.min(1, analysis.riskScore);
     
-    if (analysis.riskScore >= 0.7) {
+    if (analysis.riskScore >= 0.75) {
       analysis.riskLevel = 'high';
-    } else if (analysis.riskScore >= 0.4) {
+    } else if (analysis.riskScore >= 0.5) {
       analysis.riskLevel = 'medium';
     } else {
       analysis.riskLevel = 'low';

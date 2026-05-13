@@ -253,6 +253,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
   const [selectedUserAffiliates, setSelectedUserAffiliates] = useState(null);
   const [topAffiliates, setTopAffiliates] = useState([]);
   const [suspiciousUsers, setSuspiciousUsers] = useState([]);
+  const [suspiciousUsersSummary, setSuspiciousUsersSummary] = useState(null);
+  const [suspiciousScanMeta, setSuspiciousScanMeta] = useState(null);
   const [loadingAffiliateData, setLoadingAffiliateData] = useState(false);
   // User affiliate analytics states
   const [affiliateAnalytics, setAffiliateAnalytics] = useState(null);
@@ -315,6 +317,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       setAquaPayStats({ totalReceived: 0, totalTransactions: 0 });
       setAquaPayPaymentHistory([]);
       setAffiliateAnalytics(null);
+      setSuspiciousUsers([]);
+      setSuspiciousUsersSummary(null);
+      setSuspiciousScanMeta(null);
       setClickStats(null);
       setClickTrends(null);
       setRecentClicks([]);
@@ -2051,10 +2056,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
     setLoadingClickStats(false);
   };
 
-  const fetchSuspiciousUsers = async () => {
+  const fetchSuspiciousUsers = async (forceRefresh = false) => {
     setLoadingAffiliateData(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/suspicious-users?minAffiliates=10`, {
+      const refreshQs = forceRefresh ? '&refresh=1' : '';
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/suspicious-users?minAffiliates=10${refreshQs}`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -2063,7 +2069,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       if (response.ok) {
         const data = await response.json();
         setSuspiciousUsers(data.suspiciousUsers);
+        setSuspiciousUsersSummary(data.summary || null);
+        setSuspiciousScanMeta({
+          generatedAt: data.generatedAt,
+          scanInProgress: data.scanInProgress,
+          lastError: data.lastError,
+          note: data.note
+        });
         setLastRefreshTime(new Date());
+        if (forceRefresh) {
+          if (data.rescanTriggered) {
+            showNotification('Full rescan started in the background. Click Refresh again in a few minutes for updated results.', 'info');
+          } else if (data.scanRequested) {
+            showNotification('A rescan is already running. Try again in a moment.', 'info');
+          }
+        }
       } else {
         showNotification('Failed to fetch suspicious users', 'error');
       }
@@ -6077,12 +6097,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                               </tr>
                             </thead>
                             <tbody>
-                              {selectedUserAffiliates.affiliates.map(affiliate => {
-                                                                    // Debug logging to help verify dormant detection
-                                    if (affiliate.isDormant !== undefined) {
-                                      logger.log(`Affiliate ${affiliate.username}: isDormant=${affiliate.isDormant}, isUnverified=${affiliate.isUnverified}, daysSinceLastSeen=${affiliate.daysSinceLastSeen}, loginFrequency=${affiliate.loginFrequency}, hasRealActivityData=${affiliate.hasRealActivityData}, accountAgeDays=${affiliate.accountAgeDays}`);
-                                    }
-                                return (
+                              {selectedUserAffiliates.affiliates.map(affiliate => (
                                 <tr key={affiliate.id} className={`border-b border-gray-600 ${affiliate.isDormant ? 'bg-red-900 bg-opacity-20' : ''} ${affiliate.isUnverified ? 'bg-purple-900 bg-opacity-20' : ''}`}>
                                   <td className="p-2 text-white">{affiliate.username}</td>
                                   <td className="p-2 text-gray-300">{affiliate.email || 'N/A'}</td>
@@ -6147,8 +6162,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                     </span>
                                   </td>
                                 </tr>
-                              );
-                              })}
+                              ))}
                             </tbody>
                           </table>
                         </div>
@@ -6189,12 +6203,31 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
 
                       {/* Suspicious Users */}
                       <div className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="text-lg font-semibold text-white">Suspicious Users</h4>
+                        <div className="flex justify-between items-center mb-2">
+                          <div>
+                            <h4 className="text-lg font-semibold text-white">Suspicious Users</h4>
+                            {suspiciousUsersSummary && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                Medium &amp; high risk only (score 50+). Showing {suspiciousUsersSummary.totalFlagged} of {suspiciousUsersSummary.totalEvaluated} referrers scanned (10+ affiliates).
+                                {suspiciousScanMeta?.generatedAt && (
+                                  <> · Snapshot {new Date(suspiciousScanMeta.generatedAt).toLocaleString()}</>
+                                )}
+                                {suspiciousScanMeta?.scanInProgress && (
+                                  <span className="text-yellow-400"> · Scan in progress…</span>
+                                )}
+                                {suspiciousScanMeta?.lastError && (
+                                  <span className="text-red-400"> · Last error: {suspiciousScanMeta.lastError}</span>
+                                )}
+                              </p>
+                            )}
+                            {suspiciousScanMeta?.note && (
+                              <p className="text-xs text-orange-300 mt-1">{suspiciousScanMeta.note}</p>
+                            )}
+                          </div>
                           <button
-                            onClick={fetchSuspiciousUsers}
+                            onClick={() => fetchSuspiciousUsers(true)}
                             disabled={loadingAffiliateData}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 shrink-0"
                           >
                             {loadingAffiliateData ? 'Loading...' : 'Refresh'}
                           </button>
@@ -6202,18 +6235,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {suspiciousUsers.map(user => (
                             <div key={user.id} className={`bg-gray-600 p-3 rounded border-l-4 ${
-                              user.riskScore >= 75 ? 'border-red-500' : 
-                              user.riskScore >= 50 ? 'border-yellow-500' : 
-                              'border-orange-500'
+                              user.riskScore >= 75 ? 'border-red-500' : 'border-yellow-500'
                             }`}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
                                     <div className="text-white font-medium">{user.username}</div>
                                     <span className={`px-2 py-1 rounded text-xs font-bold ${
-                                      user.riskScore >= 75 ? 'bg-red-500 text-white' : 
-                                      user.riskScore >= 50 ? 'bg-yellow-500 text-black' : 
-                                      'bg-orange-500 text-white'
+                                      user.riskScore >= 75 ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'
                                     }`}>
                                       {user.riskScore}% RISK
                                     </span>
