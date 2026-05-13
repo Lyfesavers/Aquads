@@ -1808,9 +1808,9 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
               <button 
                 onClick={() => setShowBuyCryptoModal(true)}
                 className="fiat-purchase-button"
-                title="Buy or sell crypto with fiat (MoonPay)"
+                title="On-ramp and off-ramp with fiat (MoonPay)"
               >
-                💳 Buy / Sell (Fiat)
+                On/Off Ramp
               </button>
               <button 
                 onClick={() => navigate('/wallet-analyzer')}
@@ -1875,9 +1875,9 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             <button 
               onClick={() => setShowBuyCryptoModal(true)}
               className="fiat-purchase-button"
-              title="Buy or sell crypto with fiat (MoonPay)"
+              title="On-ramp and off-ramp with fiat (MoonPay)"
             >
-              💳 Buy / Sell (Fiat)
+              On/Off Ramp
             </button>
           </div>
         </div>
