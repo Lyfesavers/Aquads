@@ -4629,7 +4629,7 @@ const LandingPage = () => {
         className="relative h-screen flex"
         style={{ opacity: heroOpacity }}
       >
-        <h1 className="absolute top-[4.25rem] sm:top-[4.75rem] md:top-28 left-0 right-0 z-30 mx-auto max-w-3xl px-4 text-center text-[11px] sm:text-xs md:text-sm font-semibold text-slate-300/95 font-display tracking-tight pointer-events-none">
+        <h1 className="sr-only">
           Aquads — free crypto and token listings, Web3 freelancers, swaps, and DeFi tools
         </h1>
         {/* Center divider line */}
