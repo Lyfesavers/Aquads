@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 
-/** Default aggregator (US-heavy index if location geo is ambiguous). */
+/** Documented REST base; `{cc}.jooble.org` requires separate approval from Jooble for most keys. */
 const DEFAULT_JOOBLE_API_ROOT = 'https://jooble.org/api';
 
 /**
@@ -17,13 +17,29 @@ function manualJoobleApiRoot() {
 }
 
 /**
- * Jooble listings are partitioned by regional hosts (same key path as `/api/{key}`).
- * The root `jooble.org` searches often behave like US-centric radius queries; route
- * to the nearest regional API when we can infer a country from free-text location.
+ * Official docs only document `POST https://jooble.org/api/{apiKey}`. Many partner keys get HTTP 403
+ * on `{cc}.jooble.org/api` — the website shows more jobs than this REST endpoint may return/enqueue.
+ *
+ * Regional host selection stays in code but is OFF unless you set `JOOBLE_USE_REGIONAL=true` (and
+ * Jooble confirms your key may use regional bases).
+ */
+function joobleRegionalRulesEnabled() {
+  const v = (process.env.JOOBLE_USE_REGIONAL || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
+let loggedJoobleRegional403Fallback = false;
+
+/**
+ * Resolve API root: manual env override wins; else documented global endpoint unless regional opt-in.
  */
 function resolveJoobleApiRoot(locationRaw) {
   const manual = manualJoobleApiRoot();
   if (manual) return manual;
+
+  if (!joobleRegionalRulesEnabled()) {
+    return DEFAULT_JOOBLE_API_ROOT;
+  }
 
   const text = String(locationRaw || '').trim();
   const l = text.toLowerCase();
@@ -140,9 +156,8 @@ function resolveJoobleApiRoot(locationRaw) {
     },
 
     /*
-     * Jooble publishes many `{cc}.jooble.org/api` fronts; we route by English geography hints.
-     * This list is intentionally broad—not every Jooble site is enumerated; anything we do not
-     * recognise still searches `DEFAULT_JOOBLE_API_ROOT`, and hosts that HTTP 403/404 fall back once.
+     * Host table below runs only when JOOBLE_USE_REGIONAL=true (see docs above). Default deploy uses
+     * jooble.org/api only — no double-request to regional fronts.
      */
     {
       root: 'https://pl.jooble.org/api',
@@ -601,9 +616,12 @@ async function searchJoobleRemoteJobs(opts) {
       apiRoot !== DEFAULT_JOOBLE_API_ROOT &&
       (status === 403 || status === 404)
     ) {
-      console.warn(
-        `[Jooble Search] ${apiRoot} HTTP ${status} — retrying ${DEFAULT_JOOBLE_API_ROOT}`
-      );
+      if (!loggedJoobleRegional403Fallback) {
+        loggedJoobleRegional403Fallback = true;
+        console.warn(
+          `[Jooble Search] Regional host returned HTTP ${status} — retrying documented ${DEFAULT_JOOBLE_API_ROOT} once. Leave JOOBLE_USE_REGIONAL unset/false unless Jooble enables regional API for your key.`
+        );
+      }
       ({ data, status } = await postOnce(DEFAULT_JOOBLE_API_ROOT));
     }
 
