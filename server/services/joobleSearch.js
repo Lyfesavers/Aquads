@@ -116,27 +116,20 @@ async function searchJoobleRemoteJobs(opts) {
     return { jobs: [], totalCount: 0 };
   }
 
+  const locationForApi = opts.location != null ? String(opts.location).trim() : '';
+  if (!locationForApi) {
+    return { jobs: [], totalCount: 0, error: 'missing_location' };
+  }
+
   const page = Math.max(1, parseInt(String(opts.page || '1'), 10) || 1);
   const companysearch =
     opts.companysearch === true || opts.companysearch === 'true' || opts.companysearch === '1';
 
-  /**
-   * Jooble expects a geographic search center/radius — not a standalone "remote" flag.
-   * Remote listings still appear mixed into results depending on indexing and keywords
-   * (see https://help.jooble.org/en/support/solutions/articles/60001448238-rest-api-documentation).
-   * When the user leaves location blank we use JOOBLE_GLOBAL_LOCATION (default "World") so
-   * the query is not locked to a single country; override on Railway if Jooble responds better
-   * to another center (e.g. "United States") per their support guidance.
-   */
-  const userLoc = opts.location != null ? String(opts.location).trim() : '';
-  const locationForApi = userLoc
-    ? userLoc.slice(0, 120)
-    : (process.env.JOOBLE_GLOBAL_LOCATION || 'World').trim().slice(0, 120);
-
+  /** Jooble resolves `location` against real places (see their REST API docs); we never send placeholders like "World". */
   const url = `${JOOBLE_API_BASE}/${encodeURIComponent(apiKey)}`;
   const body = {
     keywords: keywords.slice(0, 480),
-    location: locationForApi,
+    location: locationForApi.slice(0, 120),
     radius: process.env.JOOBLE_RADIUS != null ? String(process.env.JOOBLE_RADIUS) : '80',
     page: String(page),
     companysearch: companysearch ? 'true' : 'false',

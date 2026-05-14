@@ -1411,25 +1411,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                   )}
                 </div>
                 {showJobs && (
-                  <div className="relative mt-2">
-                    <input
-                      type="text"
-                      placeholder="Job location (optional) — city, country, region, or Remote. Leave blank for worldwide (Jooble + all Aquads listings)."
-                      className="w-full px-4 py-2.5 bg-gray-800/40 backdrop-blur-sm rounded-lg text-sm border border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/80"
-                      value={jobLocationTerm}
-                      onChange={(e) => setJobLocationTerm(e.target.value)}
-                      aria-label="Filter jobs by location"
-                    />
-                    {jobLocationTerm && (
-                      <button
-                        type="button"
-                        onClick={() => setJobLocationTerm('')}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
-                        aria-label="Clear location filter"
-                      >
-                        ×
-                      </button>
-                    )}
+                  <div className="mt-2 space-y-1">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Job location — enter a country, city, or region (required to include Jooble in keyword search)"
+                        className="w-full px-4 py-2.5 bg-gray-800/40 backdrop-blur-sm rounded-lg text-sm border border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/80"
+                        value={jobLocationTerm}
+                        onChange={(e) => setJobLocationTerm(e.target.value)}
+                        aria-label="Job search location for Jooble and Aquads filtering"
+                      />
+                      {jobLocationTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setJobLocationTerm('')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
+                          aria-label="Clear location"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 px-0.5">
+                      Aquads listings always load. To merge Jooble results with your keyword search, Jooble needs a real geographic place — add it above.
+                    </p>
                   </div>
                 )}
               </div>

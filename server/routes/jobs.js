@@ -221,6 +221,7 @@ router.get('/', async (req, res) => {
     const useJoobleSearch =
       isPublicRequest &&
       Boolean(joobleKey) &&
+      Boolean(jobLocationParam) &&
       String(listSearchQ || '').trim() &&
       !workArrangement;
 

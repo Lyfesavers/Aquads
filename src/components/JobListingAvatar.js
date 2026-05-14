@@ -5,15 +5,15 @@ function userInitialsAvatarUrl(job) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(raw)}&size=128&bold=true&color=ffffff&background=random`;
 }
 
+/** Company-name tiles for all syndicated feeds match Web3.Career (violet) for a single look. */
+const SYNDICATED_NAME_TILE_SURFACE =
+  'bg-gradient-to-br from-violet-600/55 via-violet-900/35 to-purple-950/70 border-violet-400/40';
+
 const SYNDICATE_SURFACE = {
-  web3career:
-    'bg-gradient-to-br from-violet-600/55 via-violet-900/35 to-purple-950/70 border-violet-400/40',
-  remotive:
-    'bg-gradient-to-br from-blue-600/45 via-slate-800/40 to-slate-950/65 border-blue-400/35',
-  himalayas:
-    'bg-gradient-to-br from-emerald-600/45 via-slate-800/40 to-slate-950/65 border-emerald-400/35',
-  jooble:
-    'bg-gradient-to-br from-amber-600/45 via-slate-800/40 to-slate-950/65 border-amber-400/35',
+  web3career: SYNDICATED_NAME_TILE_SURFACE,
+  remotive: SYNDICATED_NAME_TILE_SURFACE,
+  himalayas: SYNDICATED_NAME_TILE_SURFACE,
+  jooble: SYNDICATED_NAME_TILE_SURFACE,
 };
 
 /**
