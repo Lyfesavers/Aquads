@@ -181,7 +181,7 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
             <div className="flex items-start gap-3 mb-3">
               <JobListingAvatar
                 job={job}
-                syndicated={['remotive', 'himalayas', 'web3career'].includes(job.source)}
+                syndicated={['remotive', 'himalayas', 'web3career', 'jooble'].includes(job.source)}
                 boxClass="w-10 h-10"
                 roundedClass="rounded-lg"
                 compact
@@ -217,6 +217,8 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : job.source === 'web3career'
                     ? 'bg-violet-500/20 text-violet-300'
+                    : job.source === 'jooble'
+                    ? 'bg-amber-500/20 text-amber-300'
                     : 'bg-gray-500/20 text-gray-300'
                 }`}>
                   {job.source === 'remotive'
@@ -225,6 +227,8 @@ const MatchedJobsSection = ({ currentUser, onOpenCV, onViewJobs, onViewJob }) =>
                     ? 'Himalayas'
                     : job.source === 'web3career'
                     ? 'Web3.Career'
+                    : job.source === 'jooble'
+                    ? 'Jooble'
                     : job.source}
                 </span>
               )}

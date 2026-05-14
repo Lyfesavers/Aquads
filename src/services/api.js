@@ -1198,6 +1198,9 @@ export const fetchJobs = async (includeExpired = false, page = 1, limit = 20, fi
     if (filters.q && String(filters.q).trim()) {
       params.append('q', String(filters.q).trim());
     }
+    if (filters.jobLocation && String(filters.jobLocation).trim()) {
+      params.append('jobLocation', String(filters.jobLocation).trim());
+    }
     
     const queryParams = params.toString() ? `?${params.toString()}` : '';
     const response = await fetch(`${API_URL}/jobs${queryParams}`, {

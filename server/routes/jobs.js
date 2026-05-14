@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { findMatchingJobs, canMatchJobs } = require('../utils/jobMatcher');
+const { searchJoobleRemoteJobs } = require('../services/joobleSearch');
 
 // Debug route
 router.get('/test', (req, res) => {
@@ -105,33 +106,60 @@ const applyJobListFilters = (query, workArrangement, qRaw) => {
   }
 };
 
-const makeJobsPublicCacheKey = (page, limit, workArrangement, qRaw) => {
+/**
+ * Optional location filter against Aquads-listed jobs only (Mongo).
+ * Matches substrings against location.city / location.country.
+ */
+const applyJobLocationFilter = (query, locationRaw) => {
+  const loc = String(locationRaw || '').trim();
+  if (!loc) return;
+  const rx = new RegExp(escapeRegex(loc), 'i');
+  const clause = {
+    $or: [{ 'location.country': rx }, { 'location.city': rx }],
+  };
+  if (query.$and && Array.isArray(query.$and)) {
+    query.$and.push(clause);
+  } else {
+    query.$and = [clause];
+  }
+};
+
+const makeJobsPublicCacheKey = (page, limit, workArrangement, qRaw, jobLocRaw = '') => {
   const wa = workArrangement && WORK_ARRANGEMENTS.includes(workArrangement) ? workArrangement : 'all';
   const q = (qRaw || '').trim().slice(0, 200);
   const qEnc = q ? encodeURIComponent(q) : 'none';
-  return `jobs_p${page}_l${limit}_wa${wa}_q${qEnc}`;
+  const jl = String(jobLocRaw || '').trim().slice(0, 120);
+  const jlEnc = jl ? encodeURIComponent(jl) : 'none';
+  return `jobs_p${page}_l${limit}_wa${wa}_q${qEnc}_jl${jlEnc}`;
 };
 
 // Fetch public jobs for a given page/limit and update the cache.
-const fetchAndCachePublicJobs = async (page, limit, cacheKey, mongoQuery) => {
+const fetchPublicJobsFromMongo = async (page, limit, mongoQuery) => {
   const skip = (page - 1) * limit;
   const totalJobs = await Job.countDocuments(mongoQuery);
   const jobs = await Job.find(mongoQuery)
     .populate('owner', 'username image')
-    // Newest first across all sources (source:1 previously pinned cryptojobslist above remotive)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
-  jobs.forEach(j => { if (!j.source) j.source = 'user'; });
-  const responseData = {
+  jobs.forEach((j) => {
+    if (!j.source) j.source = 'user';
+  });
+  return {
     jobs,
     pagination: {
-      total: totalJobs, page, limit,
+      total: totalJobs,
+      page,
+      limit,
       totalPages: Math.ceil(totalJobs / limit),
-      hasMore: skip + jobs.length < totalJobs
-    }
+      hasMore: skip + jobs.length < totalJobs,
+    },
   };
+};
+
+const fetchAndCachePublicJobs = async (page, limit, cacheKey, mongoQuery) => {
+  const responseData = await fetchPublicJobsFromMongo(page, limit, mongoQuery);
   jobsPublicCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
   return responseData;
 };
@@ -146,6 +174,14 @@ router.get('/', async (req, res) => {
       typeof req.query.q === 'string'
         ? req.query.q
         : (typeof req.query.search === 'string' ? req.query.search : '');
+
+    const jobLocationRaw =
+      typeof req.query.jobLocation === 'string'
+        ? req.query.jobLocation
+        : typeof req.query.joobleLocation === 'string'
+          ? req.query.joobleLocation
+          : '';
+    const jobLocationParam = jobLocationRaw.trim();
 
     // Add owner filter if provided
     if (req.query.owner) {
@@ -172,6 +208,7 @@ router.get('/', async (req, res) => {
     }
 
     applyJobListFilters(query, workArrangement, listSearchQ);
+    applyJobLocationFilter(query, jobLocationParam);
 
     // Pagination parameters
     const page = parseInt(req.query.page) || 1;
@@ -180,8 +217,57 @@ router.get('/', async (req, res) => {
 
     // Serve public job listings from cache (owner queries are too specific to cache)
     const isPublicRequest = !req.query.owner && !req.query.includeExpired;
+    const joobleKey = (process.env.JOOBLE_API_KEY || '').trim();
+    const useJoobleSearch =
+      isPublicRequest &&
+      Boolean(joobleKey) &&
+      String(listSearchQ || '').trim() &&
+      !workArrangement;
+
+    if (useJoobleSearch) {
+      const mongoQuery = { status: 'active' };
+      applyJobListFilters(mongoQuery, workArrangement, listSearchQ);
+      applyJobLocationFilter(mongoQuery, jobLocationParam);
+      const qKeywords = String(listSearchQ).trim();
+
+      const [mongoPart, jooblePart] = await Promise.all([
+        fetchPublicJobsFromMongo(page, limit, mongoQuery),
+        searchJoobleRemoteJobs({ keywords: qKeywords, page, location: jobLocationParam }),
+      ]);
+
+      const hint = parseInt(process.env.JOOBLE_PAGE_HINT || '20', 10) || 20;
+      const approxJoobleSeenEnd = (page - 1) * hint + jooblePart.jobs.length;
+      const joobleHasMore =
+        jooblePart.jobs.length > 0 &&
+        Number(jooblePart.totalCount || 0) > approxJoobleSeenEnd;
+      const mongoHasMore = mongoPart.pagination.hasMore;
+
+      const responseData = {
+        jobs: [...mongoPart.jobs, ...jooblePart.jobs],
+        pagination: {
+          total: mongoPart.pagination.total + Number(jooblePart.totalCount || 0),
+          page,
+          limit,
+          totalPages: Math.max(
+            mongoPart.pagination.totalPages,
+            Math.ceil(Number(jooblePart.totalCount || 0) / Math.max(hint, 1))
+          ),
+          hasMore: mongoHasMore || joobleHasMore,
+        },
+        jooble: {
+          count: jooblePart.jobs.length,
+          totalCount: jooblePart.totalCount,
+          hasMore: joobleHasMore,
+          error: jooblePart.error,
+        },
+      };
+
+      res.set('X-Cache', 'MISS');
+      return res.json(responseData);
+    }
+
     if (isPublicRequest) {
-      const cacheKey = makeJobsPublicCacheKey(page, limit, workArrangement, listSearchQ);
+      const cacheKey = makeJobsPublicCacheKey(page, limit, workArrangement, listSearchQ, jobLocationParam);
       const cached = jobsPublicCache.get(cacheKey);
       if (cached) {
         res.set('X-Cache', now - cached.timestamp < JOBS_PUBLIC_CACHE_TTL ? 'HIT' : 'STALE');
@@ -190,6 +276,7 @@ router.get('/', async (req, res) => {
           jobsRefreshing.add(cacheKey);
           const mongoQuery = { status: 'active' };
           applyJobListFilters(mongoQuery, workArrangement, listSearchQ);
+          applyJobLocationFilter(mongoQuery, jobLocationParam);
           fetchAndCachePublicJobs(page, limit, cacheKey, mongoQuery).catch(err =>
             console.error('[Jobs Cache] Background refresh failed:', err.message)
           ).finally(() => { jobsRefreshing.delete(cacheKey); });
@@ -200,6 +287,7 @@ router.get('/', async (req, res) => {
       // No cache — must wait
       const mongoQuery = { status: 'active' };
       applyJobListFilters(mongoQuery, workArrangement, listSearchQ);
+      applyJobLocationFilter(mongoQuery, jobLocationParam);
       const responseData = await fetchAndCachePublicJobs(page, limit, cacheKey, mongoQuery);
       res.set('X-Cache', 'MISS');
       return res.json(responseData);
@@ -349,7 +437,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
 // Pre-warm the public jobs cache on startup so the first visit to the jobs page is fast.
 const warmupJobsCache = async () => {
   try {
-    const cacheKey = makeJobsPublicCacheKey(1, 20, '', '');
+    const cacheKey = makeJobsPublicCacheKey(1, 20, '', '', '');
     const mongoQuery = { status: 'active' };
     const responseData = await fetchAndCachePublicJobs(1, 20, cacheKey, mongoQuery);
     console.log(`[Jobs Cache] Warmed up ${responseData.jobs.length} jobs (${responseData.pagination.total} total)`);

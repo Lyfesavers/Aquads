@@ -16,7 +16,8 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
   const isExternalJobBoard = (job) =>
     job.source === 'remotive' ||
     job.source === 'himalayas' ||
-    job.source === 'web3career';
+    job.source === 'web3career' ||
+    job.source === 'jooble';
 
   // Auto-expand and scroll to highlighted job when it changes
   useEffect(() => {
@@ -77,6 +78,25 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
   };
 
   const handleShareJob = (job) => {
+    /* Jooble rows are ephemeral (not in Mongo); share the outbound posting URL directly. */
+    if (job.source === 'jooble' && job.externalUrl) {
+      const targetUrl = job.externalUrl;
+      if (navigator.share) {
+        navigator
+          .share({
+            title: job.title,
+            text: job.description ? String(job.description).slice(0, 200) : job.title,
+            url: targetUrl,
+          })
+          .catch(() => {
+            fallbackCopy(targetUrl);
+          });
+      } else {
+        fallbackCopy(targetUrl);
+      }
+      return;
+    }
+
     // Use /share/job/:id so social crawlers (Twitter, Facebook, Telegram,
     // Discord, WhatsApp, LinkedIn, Slack, etc.) get the OG meta tags from the
     // Netlify edge function. Real browsers are redirected to the SPA listing.
@@ -210,6 +230,22 @@ Best regards,
                       >
                         <span>via</span>
                         <span className="font-semibold">Web3.Career</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                    {job.source === 'jooble' && job.externalUrl && (
+                      <a
+                        href={job.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-0.5 sm:py-1 text-xs bg-amber-500/20 text-amber-300 border border-amber-500/35 rounded-full hover:bg-amber-500/30 transition-colors flex items-center gap-1 whitespace-nowrap"
+                        title="Listing from Jooble — live search result"
+                      >
+                        <span>via</span>
+                        <span className="font-semibold">Jooble</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -362,7 +398,7 @@ Best regards,
                 )}
                 
                 {/* Admin delete button for external jobs */}
-                {currentUser && currentUser.isAdmin && isExternalJobBoard(job) && (
+                {currentUser && currentUser.isAdmin && isExternalJobBoard(job) && job.source !== 'jooble' && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -434,7 +470,7 @@ Best regards,
 
                 {currentUser && currentUser.isAdmin && (
                   (isUserJob(job) && !isJobOwner(currentUser.userId, job.owner)) ||
-                  isExternalJobBoard(job)
+                  (isExternalJobBoard(job) && job.source !== 'jooble')
                 ) && (
                   <button
                     onClick={(e) => {
@@ -491,15 +527,34 @@ Best regards,
                           ? 'bg-blue-900/30 text-blue-300 border border-blue-500/30'
                           : 'bg-purple-900/30 text-purple-300 border border-purple-500/30'
                       }`}>
-                        {job.workArrangement === 'remote' && '🌍 Remote - Work from anywhere'}
+                        {job.workArrangement === 'remote' &&
+                          (job.source === 'jooble' &&
+                          job.location &&
+                          job.location.country &&
+                          job.location.country !== 'Remote'
+                            ? '🌍 Remote · Check posting for geography'
+                            : '🌍 Remote - Work from anywhere')}
                         {job.workArrangement === 'hybrid' && '🏢 Hybrid - Mix of remote & office'}
                         {job.workArrangement === 'onsite' && '🏛️ On-site - In-office only'}
                       </span>
-                      {(job.workArrangement === 'hybrid' || job.workArrangement === 'onsite') && job.location && job.location.city && (
+                      {(job.workArrangement === 'hybrid' ||
+                        job.workArrangement === 'onsite' ||
+                        (job.source === 'jooble' &&
+                          job.workArrangement === 'remote' &&
+                          job.location &&
+                          (job.location.city || job.location.country) &&
+                          job.location.country !== 'Remote')) &&
+                        job.location && (
                         <div className="mt-2">
                           <p className="text-sm sm:text-base text-gray-300 break-words">
-                            📍 <span className="font-medium">Location:</span> {job.location.city}, {job.location.country}
-                            {job.workArrangement === 'hybrid' && <span className="text-gray-400 ml-1 block sm:inline">(with remote flexibility)</span>}
+                            📍{' '}
+                            <span className="font-medium">Location:</span>{' '}
+                            {job.location.city && job.location.country && job.location.city !== job.location.country
+                              ? `${job.location.city}, ${job.location.country}`
+                              : job.location.country || job.location.city}
+                            {job.workArrangement === 'hybrid' && (
+                              <span className="text-gray-400 ml-1 block sm:inline">(with remote flexibility)</span>
+                            )}
                           </p>
                         </div>
                       )}
@@ -544,6 +599,8 @@ Best regards,
                         ? 'Apply on Himalayas'
                         : job.source === 'web3career'
                         ? 'Apply via Web3.Career'
+                        : job.source === 'jooble'
+                        ? 'Continue on Jooble'
                         : 'Apply Now'}
                     </span>
                   </button>
@@ -556,6 +613,8 @@ Best regards,
                         ? 'You will be redirected to Himalayas.app'
                         : job.source === 'web3career'
                         ? 'You will be redirected using the official Web3.Career apply link'
+                        : job.source === 'jooble'
+                        ? 'You will open this role on Jooble (live search result)'
                         : job.applicationUrl 
                           ? 'You will be redirected to the application page' 
                           : 'Apply via email'}

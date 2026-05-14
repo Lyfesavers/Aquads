@@ -12,6 +12,8 @@ const SYNDICATE_SURFACE = {
     'bg-gradient-to-br from-blue-600/45 via-slate-800/40 to-slate-950/65 border-blue-400/35',
   himalayas:
     'bg-gradient-to-br from-emerald-600/45 via-slate-800/40 to-slate-950/65 border-emerald-400/35',
+  jooble:
+    'bg-gradient-to-br from-amber-600/45 via-slate-800/40 to-slate-950/65 border-amber-400/35',
 };
 
 /**

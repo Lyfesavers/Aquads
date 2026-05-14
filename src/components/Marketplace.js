@@ -179,6 +179,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [isLoadingMoreJobs, setIsLoadingMoreJobs] = useState(false);
   const [jobSearchTerm, setJobSearchTerm] = useState('');
   const [debouncedJobSearch, setDebouncedJobSearch] = useState('');
+  const [jobLocationTerm, setJobLocationTerm] = useState('');
+  const [debouncedJobLocation, setDebouncedJobLocation] = useState('');
   const [jobWorkArrangement, setJobWorkArrangement] = useState('');
   const marketplaceScrollRef = useRef(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -935,9 +937,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   }, [jobSearchTerm]);
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedJobLocation(jobLocationTerm.trim()), 350);
+    return () => clearTimeout(t);
+  }, [jobLocationTerm]);
+
+  useEffect(() => {
     const filters = {
       ...(jobWorkArrangement ? { workArrangement: jobWorkArrangement } : {}),
       ...(debouncedJobSearch ? { q: debouncedJobSearch } : {}),
+      ...(debouncedJobLocation ? { jobLocation: debouncedJobLocation } : {}),
     };
     const loadJobs = async () => {
       try {
@@ -957,11 +965,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     };
 
     loadJobs();
-  }, [debouncedJobSearch, jobWorkArrangement]);
+  }, [debouncedJobSearch, debouncedJobLocation, jobWorkArrangement]);
 
   const jobListFilters = {
     ...(jobWorkArrangement ? { workArrangement: jobWorkArrangement } : {}),
     ...(debouncedJobSearch ? { q: debouncedJobSearch } : {}),
+    ...(debouncedJobLocation ? { jobLocation: debouncedJobLocation } : {}),
   };
 
   const handleLoadMoreJobs = async () => {
@@ -1045,6 +1054,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const handleClearSearch = () => {
     if (showJobs) {
       setJobSearchTerm('');
+      setJobLocationTerm('');
     } else {
       setSearchTerm('');
     }
@@ -1400,6 +1410,28 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                     </button>
                   )}
                 </div>
+                {showJobs && (
+                  <div className="relative mt-2">
+                    <input
+                      type="text"
+                      placeholder="Job location (optional) — city, country, region, or Remote. Leave blank for worldwide (Jooble + all Aquads listings)."
+                      className="w-full px-4 py-2.5 bg-gray-800/40 backdrop-blur-sm rounded-lg text-sm border border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/80"
+                      value={jobLocationTerm}
+                      onChange={(e) => setJobLocationTerm(e.target.value)}
+                      aria-label="Filter jobs by location"
+                    />
+                    {jobLocationTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setJobLocationTerm('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white text-lg leading-none"
+                        aria-label="Clear location filter"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-0">
                 {!showJobs ? (
@@ -1459,7 +1491,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 </select>
                 <button
                   type="button"
-                  onClick={() => { setJobSearchTerm(''); setJobWorkArrangement(''); }}
+                  onClick={() => {
+                    setJobSearchTerm('');
+                    setJobLocationTerm('');
+                    setJobWorkArrangement('');
+                  }}
                   className="px-3 py-3 rounded-lg transition-colors w-full sm:w-auto text-sm bg-gray-700 text-gray-300 hover:bg-gray-600"
                 >
                   Clear job filters
@@ -1647,12 +1683,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                     </>
                   ) : (
                     <div className="text-center py-8 text-gray-400 space-y-2">
-                      {(debouncedJobSearch || jobWorkArrangement) ? (
+                      {(debouncedJobSearch || debouncedJobLocation || jobWorkArrangement) ? (
                         <>
                           <p>No jobs match your search or filters.</p>
                           <button
                             type="button"
-                            onClick={() => { setJobSearchTerm(''); setJobWorkArrangement(''); }}
+                            onClick={() => {
+                              setJobSearchTerm('');
+                              setJobLocationTerm('');
+                              setJobWorkArrangement('');
+                            }}
                             className="text-blue-400 hover:underline"
                           >
                             Clear job filters
