@@ -1433,7 +1433,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       )}
                     </div>
                     <p className="text-xs text-gray-500 px-0.5">
-                      Aquads listings always load. To merge Jooble results with your keyword search, Jooble needs a real geographic place — add it above.
+                      Aquads listings always load. Jooble needs a real place to merge with your keyword search — use a country name or city plus country (for example “London, UK”). Very broad regions (for example “Africa”) are hard for Jooble to geocode; use a specific country or city for better matches.
                     </p>
                   </div>
                 )}
