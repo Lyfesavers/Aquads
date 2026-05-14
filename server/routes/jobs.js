@@ -1,11 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { findMatchingJobs, canMatchJobs } = require('../utils/jobMatcher');
 const { searchJoobleRemoteJobs } = require('../services/joobleSearch');
+const { issueJoobleShareToken, verifyExternalShareToken } = require('../utils/externalJobShareToken');
+
+const joobleShareSignLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { error: 'Too many share-link requests, try again shortly.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Debug route
 router.get('/test', (req, res) => {
@@ -319,6 +329,90 @@ router.get('/', async (req, res) => {
     console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
+});
+
+// Signed OG share for Jooble (no Mongo row). Canonical + redirects point at Jooble.
+router.post('/external-share/sign', joobleShareSignLimiter, (req, res) => {
+  try {
+    const body = req.body || {};
+    const locCity = typeof body.locationCity === 'string' ? body.locationCity.trim() : '';
+    const locCountry = typeof body.locationCountry === 'string' ? body.locationCountry.trim() : '';
+    const locationLine = [locCity, locCountry].filter(Boolean).join(', ');
+
+    const token = issueJoobleShareToken({
+      targetUrl: body.targetUrl || body.externalUrl,
+      title: body.title,
+      company: body.company,
+      description: body.description,
+      workArrangement: body.workArrangement,
+      locationLine,
+      payHint: typeof body.payHint === 'string' ? body.payHint.trim() : body.payHint,
+    });
+    return res.json({ token });
+  } catch (err) {
+    const code = err && err.message;
+    const message =
+      code === 'missing_signing_secret'
+        ? 'Share signing not configured on server'
+        : code === 'invalid_jooble_target_url'
+        ? 'Only HTTPS Jooble job listing URLs are allowed'
+        : 'Could not create share link';
+    return res.status(400).json({ error: message });
+  }
+});
+
+// Netlify edge + crawlers fetch meta for `/share/external-job?token=` here.
+router.get('/external-share/meta', (req, res) => {
+  const meta = verifyExternalShareToken(req.query.token);
+  if (!meta) {
+    return res.status(404).json({ error: 'invalid_or_expired_share' });
+  }
+
+  const JOB_ARR_LABEL = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'On-site' };
+  const arrangementLabel = JOB_ARR_LABEL[meta.workArrangement] || 'Remote';
+
+  const rawDesc =
+    meta.description ||
+    meta.title ||
+    'Discover this role discovered on Aquads — apply on Jooble.';
+  const descriptionSnippet = rawDesc.slice(0, 280);
+
+  const taglineParts = [];
+  taglineParts.push(arrangementLabel);
+  if (meta.payHint) {
+    taglineParts.push(meta.payHint.slice(0, 48));
+  }
+  if (
+    meta.locationLine &&
+    (meta.workArrangement === 'hybrid' || meta.workArrangement === 'onsite')
+  ) {
+    taglineParts.push(meta.locationLine.slice(0, 80));
+  }
+  taglineParts.push(`via Jooble`);
+
+  const finalDescription =
+    `${taglineParts.filter(Boolean).join(' · ')} — ${descriptionSnippet}`.slice(0, 300);
+
+  const titleWithSuffix = `${meta.title.trim()} — ${arrangementLabel} · Job · Aquads`;
+
+  const tokenEnc = encodeURIComponent(req.query.token);
+  const imageUrl =
+    `${process.env.AQUADS_SITE_ORIGIN || 'https://www.aquads.xyz'}/og/external-job-card` +
+    `?token=${tokenEnc}&ogv=1`;
+  const sharePageUrl =
+    `${process.env.AQUADS_SITE_ORIGIN || 'https://www.aquads.xyz'}/share/external-job` +
+    `?token=${tokenEnc}`;
+
+  return res.json({
+    titlePage: titleWithSuffix,
+    descriptionSocial: finalDescription,
+    twitterImageAlt: `${meta.title} — via Aquads × Jooble`,
+    imageUrl,
+    joobleCanonicalUrl: meta.targetUrl,
+    /** Where human click / og:url resolves for attribution */
+    attributionUrl: meta.targetUrl,
+    sharePageUrl,
+  });
 });
 
 // Get a single job by id (public — used by /share/job/:id edge function for OG meta tags)

@@ -61,6 +61,10 @@
   function = "og-job-card"
   path = "/og/job-card"
 
+[[edge_functions]]
+  function = "og-external-job-card"
+  path = "/og/external-job-card"
+
 # GUARANTEED share URL - ALWAYS prerenders (no User-Agent check)
 # Use this URL for sharing: /share/aquaswap?token=xxx&blockchain=xxx
 # Handled by Edge Function which reliably serves meta tags to all bots
@@ -95,6 +99,11 @@
 [[edge_functions]]
   function = "share-job"
   path = "/share/job/*"
+
+# Jooble ephemeral job share primer — OG on Aquads, redirect/canonical to Jooble
+[[edge_functions]]
+  function = "share-external-job"
+  path = "/share/external-job"
 
 # Canonical free course URLs (/learn/courses/:slug): crawlers should hit a course
 # prerender (NOT the blog one). Must be listed BEFORE the broader /learn/* rule

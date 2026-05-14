@@ -1,3 +1,6 @@
+const { verifyExternalShareToken } = require('../utils/externalJobShareToken');
+
+const crypto = require('crypto');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -107,6 +110,11 @@ function escapeXml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+function stripHtmlSnippet(s) {
+  if (!s || typeof s !== 'string') return '';
+  return s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 // Fetch and convert image to base64
@@ -762,6 +770,7 @@ const JOB_SOURCE_LABEL = {
   remotive: 'Remotive',
   himalayas: 'Himalayas',
   web3career: 'Web3.Career',
+  jooble: 'Jooble',
 };
 
 function isSyndicatedJobSource(source) {
@@ -868,7 +877,8 @@ router.get('/job', async (req, res) => {
       if (
         job.source === 'remotive' ||
         job.source === 'himalayas' ||
-        job.source === 'web3career'
+        job.source === 'web3career' ||
+        job.source === 'jooble'
       ) {
         return `via ${JOB_SOURCE_LABEL[job.source]}`;
       }
@@ -946,6 +956,7 @@ router.get('/job', async (req, res) => {
       job.source === 'remotive' ? 'R' :
       job.source === 'himalayas' ? 'H' :
       job.source === 'web3career' ? 'W' :
+      job.source === 'jooble' ? 'J' :
       (job.ownerUsername || 'A').charAt(0)
     ) || 'A').toUpperCase();
 
@@ -1099,6 +1110,209 @@ router.get('/job', async (req, res) => {
     } catch (e) {
       return res.status(500).send('Failed to generate image');
     }
+  }
+});
+
+router.get('/external-job', async (req, res) => {
+  const token = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+  if (!token) {
+    return res.status(400).send('Missing token');
+  }
+  const parsed = verifyExternalShareToken(token);
+  if (!parsed) {
+    return res.status(404).send('Invalid share');
+  }
+
+  const ogv = (req.query.ogv || '1').toString();
+  const cacheKey = `extjob:${crypto.createHash('sha256').update(token).digest('hex').slice(0, 48)}:ogv${ogv}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.set('X-Cache', 'HIT');
+    return res.send(cached.buffer);
+  }
+
+  try {
+    const arrangement = parsed.workArrangement || 'remote';
+    const arrangementLabel = JOB_ARRANGEMENT_LABEL[arrangement] || 'Remote';
+    const accent = JOB_ARRANGEMENT_ACCENT[arrangement] || '#34d399';
+    const locLine = String(parsed.locationLine || '').trim();
+    const sourceLabel = 'via Jooble';
+    const rawHiringName = String(parsed.company || '').trim();
+
+    const hiringLine = (() => {
+      if (!rawHiringName) return '';
+      const display =
+        rawHiringName.length > 36 ? rawHiringName.slice(0, 35) + '…' : rawHiringName;
+      return display;
+    })();
+
+    const contextBits = [arrangementLabel.toUpperCase()];
+    if (
+      locLine &&
+      (arrangement === 'hybrid' ||
+        arrangement === 'onsite' ||
+        arrangement === 'remote')
+    ) {
+      contextBits.push(locLine.toUpperCase().slice(0, 56));
+    }
+    const contextLine = contextBits.join('  ·  ');
+    const contextDisplay = contextLine.length > 56 ? contextLine.slice(0, 55) + '…' : contextLine;
+
+    const payDisplay = stripHtmlSnippet(parsed.payHint || '').slice(0, 72);
+
+    const rawTitle = (parsed.title || 'Job posting').trim();
+    let titleFontSize;
+    let titleMaxChars;
+    let titleMaxLines;
+    let titleLineHeight;
+    if (rawTitle.length <= 28) {
+      titleFontSize = 52;
+      titleMaxChars = 22;
+      titleMaxLines = 2;
+      titleLineHeight = 60;
+    } else if (rawTitle.length <= 60) {
+      titleFontSize = 42;
+      titleMaxChars = 28;
+      titleMaxLines = 3;
+      titleLineHeight = 50;
+    } else {
+      titleFontSize = 34;
+      titleMaxChars = 34;
+      titleMaxLines = 3;
+      titleLineHeight = 42;
+    }
+    const titleLines = wrapTextToLines(rawTitle, titleMaxChars, titleMaxLines);
+    const titleStartY = 300;
+    const titleSvg = titleLines
+      .map(
+        (line, i) =>
+          `<text x="500" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="${titleFontSize}" font-weight="bold" fill="#ffffff">${escapeXml(
+            line
+          )}</text>`
+      )
+      .join('\n  ');
+
+    const placeholderLetter = 'J';
+    let avatarInnerContent = '';
+    if (rawHiringName && isSyndicatedJobSource('jooble')) {
+      const companyPlaceholder = syndicatedLogoPlaceholderTexts(rawHiringName);
+      avatarInnerContent =
+        companyPlaceholder ||
+        `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`;
+    } else {
+      avatarInnerContent =
+        `<text x="260" y="345" ${ogFontAttr()} font-size="120" font-weight="bold" fill="${accent}" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`;
+    }
+
+    const fontCss = getEmbeddedFontFaceCss();
+
+    const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    ${fontCss ? `<style type="text/css"><![CDATA[${fontCss}]]></style>` : ''}
+    <linearGradient id="bgGradX" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a12"/>
+      <stop offset="55%" style="stop-color:#0d1124"/>
+      <stop offset="100%" style="stop-color:#181030"/>
+    </linearGradient>
+    <linearGradient id="accentGradX" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${accent}"/>
+      <stop offset="100%" style="stop-color:#8a2be2"/>
+    </linearGradient>
+    <linearGradient id="ctaGradX" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="avatarBgGradX" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${accent};stop-opacity:0.22"/>
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.18"/>
+    </linearGradient>
+    <clipPath id="avatarClipX">
+      <circle cx="260" cy="315" r="135"/>
+    </clipPath>
+    <filter id="ctaShadowX" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000" flood-opacity="0.4"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="avatarGlowX" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bgGradX)"/>
+  <circle cx="100" cy="100" r="320" fill="rgba(99,102,241,0.05)"/>
+  <circle cx="1100" cy="530" r="260" fill="rgba(139,92,246,0.05)"/>
+
+  <rect x="40" y="40" width="1120" height="2" fill="url(#accentGradX)" opacity="0.7"/>
+  <rect x="40" y="50" width="1120" height="540" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <text x="1120" y="100" ${ogFontAttr()} font-size="30" font-weight="bold" fill="url(#accentGradX)" text-anchor="end">AQUADS JOBS</text>
+  <text x="1120" y="125" ${ogFontAttr()} font-size="15" fill="rgba(255,255,255,0.55)" text-anchor="end">Web3 &amp; Crypto Careers</text>
+
+  <circle cx="260" cy="315" r="142" fill="url(#avatarBgGradX)" filter="url(#avatarGlowX)" opacity="0.85"/>
+  <circle cx="260" cy="315" r="135" fill="#0d1124" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  ${avatarInnerContent}
+
+  <rect x="170" y="475" width="180" height="42" rx="21" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.5)" stroke-width="1"/>
+  <circle cx="195" cy="496" r="5" fill="#22c55e"/>
+  <text x="210" y="503" ${ogFontAttr()} font-size="18" font-weight="bold" fill="#86efac">HIRING NOW</text>
+
+  <text x="500" y="200" ${ogFontAttr()} font-size="18" font-weight="bold" fill="${accent}" letter-spacing="2">${escapeXml(contextDisplay)}</text>
+  <rect x="500" y="215" width="60" height="3" rx="1.5" fill="${accent}" opacity="0.85"/>
+
+  ${hiringLine
+    ? `<text x="500" y="248" ${ogFontAttr()} font-size="22" font-weight="bold" fill="rgba(255,255,255,0.78)">${escapeXml(hiringLine)}</text>`
+    : ''}
+
+  ${titleSvg}
+
+  ${
+    payDisplay
+      ? `<text x="500" y="465" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)" letter-spacing="2">COMPENSATION</text>
+       <text x="500" y="498" ${ogFontAttr()} font-size="32" font-weight="bold" fill="#4ade80">${escapeXml(payDisplay)}</text>`
+      : `<text x="500" y="465" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.4)" letter-spacing="2">COMPENSATION</text>
+       <text x="500" y="498" ${ogFontAttr()} font-size="28" font-weight="bold" fill="rgba(255,255,255,0.7)">Competitive</text>`
+  }
+
+  <g filter="url(#ctaShadowX)">
+    <rect x="820" y="465" width="300" height="68" rx="16" fill="url(#ctaGradX)"/>
+    <text x="850" y="509" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#ffffff">Apply on Jooble</text>
+    <text x="1095" y="509" ${ogFontAttr()} font-size="28" font-weight="bold" fill="#ffffff" text-anchor="end">→</text>
+  </g>
+
+  <text x="1120" y="562" ${ogFontAttr()} font-size="14" fill="rgba(255,255,255,0.45)" text-anchor="end">${escapeXml(sourceLabel)}</text>
+</svg>`;
+
+    const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
+    imageCache.set(cacheKey, { buffer: pngBuffer, timestamp: Date.now() });
+    if (imageCache.size > 100) {
+      const nowTs = Date.now();
+      for (const [key, value] of imageCache.entries()) {
+        if (nowTs - value.timestamp > CACHE_TTL) {
+          imageCache.delete(key);
+        }
+      }
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=600');
+    res.set('X-Cache', 'MISS');
+    return res.send(pngBuffer);
+  } catch (error) {
+    console.error('OG external-job image error:', error);
+    return res.status(500).send('Failed to generate image');
   }
 });
 

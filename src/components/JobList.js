@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { JobListingAvatar } from './JobListingAvatar';
+import { API_URL } from '../services/api';
 import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo, FaShare } from 'react-icons/fa';
 
 const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLoginRequired, highlightedJobId, onHighlightComplete }) => {
@@ -42,6 +43,21 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
     }
   }, [highlightedJobId, onHighlightComplete]);
 
+  /** Jooble merges salary text into description (💰 prefix); forward for OG pay strip. */
+  const extractSalaryHintForShare = (job) => {
+    if (job?.payAmount && job.payType && job.payType !== 'percentage') {
+      try {
+        return `$${Number(job.payAmount).toLocaleString()}/${job.payType}`.slice(0, 72);
+      } catch {
+        return `${job.payAmount}/${job.payType}`.slice(0, 72);
+      }
+    }
+    if (job?.payAmount && job.payType === 'percentage') return `${job.payAmount}%`;
+    const s = String(job?.description || '').trim();
+    const m = s.match(/^💰\s*([^\n]+)/);
+    return m ? m[1].trim().slice(0, 72) : '';
+  };
+
   const toggleExpand = (jobId) => {
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
   };
@@ -78,22 +94,51 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob, onLo
   };
 
   const handleShareJob = (job) => {
-    /* Jooble rows are ephemeral (not in Mongo); share the outbound posting URL directly. */
     if (job.source === 'jooble' && job.externalUrl) {
-      const targetUrl = job.externalUrl;
-      if (navigator.share) {
-        navigator
-          .share({
-            title: job.title,
-            text: job.description ? String(job.description).slice(0, 200) : job.title,
-            url: targetUrl,
-          })
-          .catch(() => {
-            fallbackCopy(targetUrl);
+      (async () => {
+        try {
+          const res = await fetch(`${API_URL}/jobs/external-share/sign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              targetUrl: job.externalUrl,
+              title: job.title,
+              company: job.ownerUsername,
+              description: job.description,
+              workArrangement: job.workArrangement,
+              locationCity: job.location?.city,
+              locationCountry: job.location?.country,
+              payHint: extractSalaryHintForShare(job),
+            }),
           });
-      } else {
-        fallbackCopy(targetUrl);
-      }
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.error || 'share_sign_failed');
+          }
+          if (!data.token) throw new Error('missing_token');
+
+          const sharePrimed = `${window.location.origin}/share/external-job?token=${encodeURIComponent(
+            data.token
+          )}`;
+          const finalShare = currentUser?.username
+            ? `${sharePrimed}&ref=${encodeURIComponent(currentUser.username)}`
+            : sharePrimed;
+
+          if (navigator.share) {
+            navigator
+              .share({
+                title: job.title,
+                text: job.description ? String(job.description).slice(0, 200) : job.title,
+                url: finalShare,
+              })
+              .catch(() => fallbackCopy(finalShare));
+          } else {
+            fallbackCopy(finalShare);
+          }
+        } catch (e) {
+          fallbackCopy(job.externalUrl);
+        }
+      })();
       return;
     }
 
@@ -161,7 +206,9 @@ Best regards,
 
   return (
     <div className="space-y-4">
-      {jobs.map((job) => (
+      {jobs.map((job) => {
+        const salaryHint = extractSalaryHintForShare(job);
+        return (
         <div
           key={job._id}
           data-job-id={job._id}
@@ -259,7 +306,11 @@ Best regards,
                   
                   {/* Pay amount display - shown on mobile below title */}
                   <div className="mt-2 sm:hidden">
-                    {job.payAmount && job.payType ? (
+                    {salaryHint ? (
+                      <div className="text-base font-semibold text-green-400">
+                        💰 {salaryHint}
+                      </div>
+                    ) : job.payAmount && job.payType ? (
                       <div className="text-base font-semibold text-green-400">
                         💰 {job.payType === 'percentage' ? (
                           `${job.payAmount}%`
@@ -310,7 +361,11 @@ Best regards,
               {/* Desktop pay and actions - hidden on mobile */}
               <div className="hidden sm:flex items-center space-x-3 lg:space-x-4 flex-shrink-0">
                 {/* Pay amount display - desktop */}
-                {job.payAmount && job.payType ? (
+                {salaryHint ? (
+                  <div className="text-base lg:text-lg font-semibold text-green-400 whitespace-nowrap">
+                    {salaryHint}
+                  </div>
+                ) : job.payAmount && job.payType ? (
                   <div className="text-base lg:text-lg font-semibold text-green-400 whitespace-nowrap">
                     {job.payType === 'percentage' ? (
                       `${job.payAmount}%`
@@ -675,7 +730,8 @@ Best regards,
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
