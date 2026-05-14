@@ -575,10 +575,11 @@ async function syncRemotiveJobs() {
       }
     }
     
-    // Remove jobs that weren't in this sync (they disappeared from the feed)
+    // Remove jobs not seen in any successful sync for 30+ days (stay in DB if only missing from latest fetch)
+    const retentionCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const removeResult = await Job.deleteMany({
       source: 'remotive',
-      lastSynced: { $lt: syncStartTime }
+      lastSynced: { $lt: retentionCutoff }
     });
     
     const removed = removeResult.deletedCount;
