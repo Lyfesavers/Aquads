@@ -891,6 +891,18 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 required
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
+              <p className="text-sm text-gray-400 mt-2">
+                Upload your logo to a free host such as{' '}
+                <a
+                  href="https://postimages.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline"
+                >
+                  postimages.org
+                </a>{' '}
+                or similar, then copy the <span className="text-gray-300">direct image URL</span> (link that opens only the image) and paste it here.
+              </p>
               {error && fetchStatus !== 'error' && <p className="text-red-500 text-sm mt-1">{error}</p>}
               {previewUrl && (
                 <div className="mt-4 p-4 bg-gray-700 rounded-lg">
