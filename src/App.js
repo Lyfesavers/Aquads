@@ -2151,71 +2151,65 @@ function App() {
     const bubbles = document.querySelectorAll('.bubble-container');
     if (bubbles.length === 0) return;
     
-    // Calculate optimal grid layout based on screen width
     const screenWidth = window.innerWidth;
-    const bubbleSize = parseInt(bubbles[0].style.width) || 60;
-    
-    // Determine optimal number of columns based on screen width
-    // Use more columns for better space utilization
-    let columns;
-    if (screenWidth <= 320) {
-      columns = 4; // For very small screens (iPhone SE etc)
-    } else if (screenWidth <= 375) {
-      columns = 4; // For medium mobile (iPhone X, etc)
-    } else {
-      columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
-    }
-    
-    // Make bubbles smaller to fit more rows
-    let effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 90) : bubbleSize;
-    
-    // Reduce bubble size by 15% to fit more rows vertically
-    effectiveBubbleSize = Math.round(effectiveBubbleSize * 0.85);
-    
-    // Calculate optimal positioning values with minimal gaps
-    const horizontalGap = 5; // Fixed smaller gap between columns
-    const verticalGap = 7; // Increased vertical gap to prevent vote icon overlap with buy signals
-    
-    // Store original positions to restore if needed
+
+    const horizontalGap = 6;
+    const verticalGap = 12; // breathing room below circles for vote / affordances
+    const horizontalMargin = BUBBLE_PADDING;
+
+    // Store original positions to restore if needed (desktop restore path)
     if (!window.originalBubblePositions) {
-      window.originalBubblePositions = Array.from(bubbles).map(bubble => {
-        const transform = bubble.style.transform;
-        return {
-          id: bubble.id,
-          transform: transform
-        };
-      });
+      window.originalBubblePositions = Array.from(bubbles).map(bubble => ({
+        id: bubble.id,
+        transform: bubble.style.transform,
+      }));
     }
-    
-    // Sort bubbles by bullish votes just like desktop view
+
     const sortedBubbles = Array.from(bubbles).sort((a, b) => {
-      // Get the corresponding ad for each bubble using the bubble ID
       const adA = ads.find(ad => ad.id === a.id);
       const adB = ads.find(ad => ad.id === b.id);
-      
-      // If we can't find the ad, put it at the end
       if (!adA) return 1;
       if (!adB) return -1;
-      
-      // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
       if (adA.isBumped && !adB.isBumped) return -1;
       if (!adA.isBumped && adB.isBumped) return 1;
-      
-      // Then sort by bullish votes (highest first)
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
-    
-    // Create a grid layout optimized for mobile
+
+    // Size-aware grid: unbumped bubbles shrink at different rates — use the largest visible
+    // bubble (like "bumped uniformity") plus gaps so spacing never collapses overlaps.
+    const sizesPx = sortedBubbles.map(el => {
+      const fromDom = parseInt(el.style.width, 10);
+      if (!Number.isNaN(fromDom) && fromDom > 0) return fromDom;
+      const linked = ads.find(ad => ad.id === el.id);
+      return linked?.size ?? getMaxSize();
+    });
+    const maxDim = Math.max(MIN_SIZE, ...sizesPx);
+    const cellWidth = maxDim + horizontalGap;
+    const cellHeight = maxDim + verticalGap;
+
+    const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
+    const columns = Math.max(1, Math.floor(usableWidth / Math.max(cellWidth, MIN_SIZE + horizontalGap)));
+
     sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
       const col = index % columns;
-      
-      // Calculate new position with tighter spacing
-      const x = horizontalGap + (col * (effectiveBubbleSize + horizontalGap));
-      // Use row * (bubbleSize + verticalGap) for tighter vertical spacing
-      const y = TOP_PADDING + (row * (effectiveBubbleSize + verticalGap));
-      
-      // Apply the new position directly with CSS transform
+      const bubbleW = sizesPx[index] ?? maxDim;
+
+      let x =
+        horizontalMargin +
+        col * cellWidth +
+        (cellWidth - bubbleW) / 2;
+
+      let y =
+        TOP_PADDING +
+        row * cellHeight +
+        (cellHeight - bubbleW) / 2;
+
+      const maxX = screenWidth - BUBBLE_PADDING - bubbleW;
+      const minY = TOP_PADDING - 2;
+      x = Math.max(BUBBLE_PADDING, Math.min(x, maxX));
+      y = Math.max(minY, y);
+
       bubble.style.transform = `translate(${x}px, ${y}px)`;
     });
   }
