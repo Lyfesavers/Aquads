@@ -1827,15 +1827,15 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Outer pill ≈ MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH (110): big tap circles + roomy icons within column */
+  /* Pill squeezed ~MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH in App.js (92): bear/bull overlap slightly so bumps can go 4-wide on many phones */
   .vote-popup {
-    top: -44px;
+    top: -38px;
     left: 50%;
     right: auto;
     width: auto;
-    max-width: min(calc(100vw - 20px), 110px);
-    padding: 7px;
-    gap: 10px;
+    max-width: min(calc(100vw - 16px), 96px);
+    padding: 8px 7px;
+    gap: 0;
     border-radius: 22px;
     flex-wrap: nowrap;
     justify-content: center;
@@ -1845,26 +1845,34 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   
   .vote-button {
     position: relative;
-    font-size: 17px;
-    width: 43px;
-    height: 43px;
+    font-size: 18px;
+    width: 46px;
+    height: 46px;
     flex-shrink: 0;
-    min-width: 43px;
-    max-width: 43px;
-    min-height: 43px;
-    max-height: 43px;
+    min-width: 46px;
+    max-width: 46px;
+    min-height: 46px;
+    max-height: 46px;
+  }
+
+  .bubble .vote-button.bearish-vote {
+    margin-right: -11px;
+  }
+
+  .bubble .vote-button.bullish-vote {
+    margin-left: -11px;
   }
 
   .bubble .vote-button img {
-    width: 26px !important;
-    height: 26px !important;
+    width: 30px !important;
+    height: 30px !important;
     max-width: none;
     object-fit: contain;
   }
 
   .bubble .vote-button .animate-spin {
-    width: 1.45rem !important;
-    height: 1.45rem !important;
+    width: 1.55rem !important;
+    height: 1.55rem !important;
   }
   
   /* Make vote popup always visible on mobile */
@@ -1874,7 +1882,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     pointer-events: all;
   }
   
-  /* Tap target larger than drawn circle without widening the pill as much */
   .vote-button::after {
     content: '';
     position: absolute;
@@ -1884,7 +1891,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     bottom: -20px;
     z-index: -1;
   }
-  
 
 }
 
