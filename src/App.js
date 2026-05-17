@@ -155,11 +155,11 @@ const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 20; // Padding from edges
 /** Side inset for bubble-map grid only (tighter than BUBBLE_PADDING = less gutter on mobile map). */
-const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 8;
-/** Keep synced with squeezed pill in index2.css (bear/bull overlap slightly so column can stay narrower). */
-const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 92;
-/** Matches `.vote-popup` `top`; row pitch keeps next row votes just under prior BUY row without huge dead air */
-const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 38;
+const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 6;
+/** Min column budget for vote pill; keep ≤ uw/4 on ~390px layouts (pill max-width clamps to bubble). */
+const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 84;
+/** Row step after bubble dia.; must satisfy: ≥ votePopupTopOffset + BUY slack (see `.vote-popup` top in index2.css). */
+const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 78;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
@@ -183,11 +183,11 @@ function resolveMobileBubbleMapColumns(viewportWidth, maxDimGuessPx) {
 
 /** Stable bumped diameter so column count ≠ bubble size — prevents “fewer cols = giant gutters” while keeping bumped ~same scale. Logical `ad.size` unchanged elsewhere. */
 function mobileBumpedMapDiameterPx(ad) {
-  const softCap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.58));
+  const softCap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.62));
   const base = Math.max(
-    Math.round(ad.size * 1.06),
-    Math.round(getMaxSize() * 1.48),
-    MIN_SIZE + 14
+    Math.round(ad.size * 1.085),
+    Math.round(getMaxSize() * 1.56),
+    MIN_SIZE + 16
   );
   return Math.min(softCap, base);
 }
@@ -201,8 +201,8 @@ function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
     const raw = mobileBumpedMapDiameterPx(ad);
     const { columns, usableWidth } = resolveMobileBubbleMapColumns(viewportWidth, raw);
     const cellW = columns > 0 ? usableWidth / columns : usableWidth;
-    // Only shrink bumped circles when they'd exceed the column — keeps density without tiny bumps.
-    return Math.min(raw, Math.max(MIN_SIZE, Math.floor(cellW - 12)));
+    /* Only clip when circle would exceed column; −4 keeps bumped large (was −12 shrinking too much). */
+    return Math.min(raw, Math.max(MIN_SIZE, Math.floor(cellW - 4)));
   }
 
   const colGuessDiameter = Math.max(

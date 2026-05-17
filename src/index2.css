@@ -169,8 +169,10 @@
 }
 
 @media (max-width: 480px) {
-  .bubble-text-curved {
-    top: 12%;
+  .bubble .bubble-text-curved {
+    top: 24%;
+    z-index: 20;
+    pointer-events: none;
   }
   
   .bubble-text-curved span {
@@ -1129,8 +1131,10 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  .bubble-text-curved {
-    top: 12%;
+  .bubble .bubble-text-curved {
+    top: 24%;
+    z-index: 20;
+    pointer-events: none;
   }
   
   .bubble-text-curved span {
@@ -1827,55 +1831,47 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Pill squeezed ~MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH in App.js (92): bear/bull overlap slightly so bumps can go 4-wide on many phones */
+  /* Sit above curved title arc; wider tap targets without negative margins crowding the logo */
   .vote-popup {
-    top: -38px;
+    top: -70px;
     left: 50%;
     right: auto;
     width: auto;
-    max-width: min(calc(100vw - 16px), 96px);
-    padding: 8px 7px;
-    gap: 0;
+    max-width: min(calc(100vw - 12px), 102px);
+    padding: 7px 8px;
+    gap: 8px;
     border-radius: 22px;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
     box-sizing: border-box;
+    z-index: 32;
   }
   
   .vote-button {
     position: relative;
     font-size: 18px;
-    width: 46px;
-    height: 46px;
+    width: 41px;
+    height: 41px;
     flex-shrink: 0;
-    min-width: 46px;
-    max-width: 46px;
-    min-height: 46px;
-    max-height: 46px;
-  }
-
-  .bubble .vote-button.bearish-vote {
-    margin-right: -11px;
-  }
-
-  .bubble .vote-button.bullish-vote {
-    margin-left: -11px;
+    min-width: 41px;
+    max-width: 41px;
+    min-height: 41px;
+    max-height: 41px;
   }
 
   .bubble .vote-button img {
-    width: 30px !important;
-    height: 30px !important;
+    width: 27px !important;
+    height: 27px !important;
     max-width: none;
     object-fit: contain;
   }
 
   .bubble .vote-button .animate-spin {
-    width: 1.55rem !important;
-    height: 1.55rem !important;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
   }
   
-  /* Make vote popup always visible on mobile */
   .bubble .vote-popup {
     transform: translateX(-50%) scale(1);
     opacity: 1;
@@ -1885,10 +1881,10 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   .vote-button::after {
     content: '';
     position: absolute;
-    top: -20px;
-    left: -20px;
-    right: -20px;
-    bottom: -20px;
+    top: -18px;
+    left: -18px;
+    right: -18px;
+    bottom: -18px;
     z-index: -1;
   }
 

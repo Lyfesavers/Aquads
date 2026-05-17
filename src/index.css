@@ -1204,8 +1204,11 @@ body {
 }
 
 @media (max-width: 480px) {
-  .bubble-text-curved {
-    top: 12%;
+  /* Keep title below the elevated vote pill; don’t steal taps meant for bears/bulls */
+  .bubble .bubble-text-curved {
+    top: 24%;
+    z-index: 20;
+    pointer-events: none;
   }
   
   .bubble-text-curved span {
