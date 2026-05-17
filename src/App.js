@@ -160,8 +160,8 @@ const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 3;
 const MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX = 2;
 /** Min column budget (legacy); column math uses packed width + gap above. */
 const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 84;
-/** Row spacing after bubble diameter; paired with `.vote-popup` top in index2.css. */
-const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 42;
+/** Gap between successive bubble rows — disc bottom to next row disc top after per-row tallest bubble (votes/BUY untouched in CSS). */
+const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 14;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
@@ -2269,8 +2269,8 @@ function App() {
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
 
-    // Size-aware grid: unbumped bubbles shrink at different rates — use the largest visible
-    // bubble (like "bumped uniformity") plus gaps so spacing never collapses overlaps.
+    // Size-aware grid: horizontal stride uses viewport max bubble so columns align; vertical
+    // pitch uses each row's tallest bubble so smaller unbumped rows pack under bumped rows cleanly.
     const sizesPx = sortedBubbles.map(el => {
       const fromDom = parseInt(el.style.width, 10);
       if (!Number.isNaN(fromDom) && fromDom > 0) return fromDom;
@@ -2283,34 +2283,49 @@ function App() {
     const { columns, usableWidth } = resolveMobileBubbleMapColumns(screenWidth, maxDim);
     const INTER_GAP = MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX;
     const slotStride = maxDim + INTER_GAP;
-    const rowPitch = maxDim + MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
+    const rowGap = MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
 
-    sortedBubbles.forEach((bubble, index) => {
-      const row = Math.floor(index / columns);
-      const col = index % columns;
-      const bubbleW = sizesPx[index] ?? maxDim;
+    let cumulativeY = TOP_PADDING;
+    let idx = 0;
 
-      const rowBubbleCount = Math.min(columns, sortedBubbles.length - row * columns);
+    while (idx < sortedBubbles.length) {
+      const remaining = sortedBubbles.length - idx;
+      const rowBubbleCount = Math.min(columns, remaining);
+
+      let rowMaxDim = MIN_SIZE;
+      for (let j = 0; j < rowBubbleCount; j += 1) {
+        rowMaxDim = Math.max(rowMaxDim, sizesPx[idx + j] ?? maxDim);
+      }
+
       const rowPackedWidth =
         rowBubbleCount * maxDim +
         Math.max(0, rowBubbleCount - 1) * INTER_GAP;
       const rowClusterStart =
         horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
 
-      let x =
-        rowClusterStart +
-        col * slotStride +
-        (maxDim - bubbleW) / 2;
+      for (let col = 0; col < rowBubbleCount; col += 1) {
+        const index = idx + col;
+        const bubble = sortedBubbles[index];
+        const bubbleW = sizesPx[index] ?? maxDim;
 
-      let y = TOP_PADDING + row * rowPitch;
+        let x =
+          rowClusterStart +
+          col * slotStride +
+          (maxDim - bubbleW) / 2;
 
-      const maxX = screenWidth - horizontalMargin - bubbleW;
-      const minY = TOP_PADDING - 2;
-      x = Math.max(horizontalMargin, Math.min(x, maxX));
-      y = Math.max(minY, y);
+        let y = cumulativeY;
 
-      bubble.style.transform = `translate(${x}px, ${y}px)`;
-    });
+        const maxX = screenWidth - horizontalMargin - bubbleW;
+        const minY = TOP_PADDING - 2;
+        x = Math.max(horizontalMargin, Math.min(x, maxX));
+        y = Math.max(minY, y);
+
+        bubble.style.transform = `translate(${x}px, ${y}px)`;
+      }
+
+      cumulativeY += rowMaxDim + rowGap;
+      idx += rowBubbleCount;
+    }
   }
 
   // Refs for debounced layout updates

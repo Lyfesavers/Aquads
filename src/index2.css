@@ -1831,7 +1831,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Sit above curved title arc; paired with MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP in App.js */
+  /* Sit above curved title arc (mobile map); unchanged when tuning row stacking in App.js */
   .vote-popup {
     top: -48px;
     left: 50%;
