@@ -117,6 +117,15 @@ function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
 
+/** Mobile bubble map visual size (logical `ad.size` unchanged for shrinking math elsewhere). */
+function getBubbleMapDisplaySize(ad, viewportWidth) {
+  if (!ad || viewportWidth > 480) return ad?.size ?? MIN_SIZE;
+  if (!ad.isBumped) return ad.size;
+  const boosted = Math.round(ad.size * 1.12);
+  const cap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.15));
+  return Math.min(Math.max(boosted, ad.size), cap);
+}
+
 // Define blockchain options for filters and display
 const BLOCKCHAIN_OPTIONS = [
   { value: 'all', label: 'All Blockchains' },
@@ -2154,7 +2163,10 @@ function App() {
     const screenWidth = window.innerWidth;
 
     const horizontalGap = 6;
-    const verticalGap = 12; // breathing room below circles for vote / affordances
+    // Reserve footprint for overlays (see index2.css: vote-popup top ~-70px, large pills, BUY badge)
+    const mobileVoteStripMinWidth = 176;
+    const mobileVoteExtentsAboveBubble = 90;
+    const mobileBuyExtentsBelowBubble = 32;
     const horizontalMargin = BUBBLE_PADDING;
 
     // Store original positions to restore if needed (desktop restore path)
@@ -2184,8 +2196,8 @@ function App() {
       return linked?.size ?? getMaxSize();
     });
     const maxDim = Math.max(MIN_SIZE, ...sizesPx);
-    const cellWidth = maxDim + horizontalGap;
-    const cellHeight = maxDim + verticalGap;
+    const cellWidth = Math.max(maxDim + horizontalGap, mobileVoteStripMinWidth);
+    const rowPitch = maxDim + mobileVoteExtentsAboveBubble + mobileBuyExtentsBelowBubble;
 
     const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
     const columns = Math.max(1, Math.floor(usableWidth / Math.max(cellWidth, MIN_SIZE + horizontalGap)));
@@ -2200,10 +2212,8 @@ function App() {
         col * cellWidth +
         (cellWidth - bubbleW) / 2;
 
-      let y =
-        TOP_PADDING +
-        row * cellHeight +
-        (cellHeight - bubbleW) / 2;
+      // Top-align rows: asymmetric overflow (votes up, BUY down) breaks "center in cell".
+      let y = TOP_PADDING + row * rowPitch;
 
       const maxX = screenWidth - BUBBLE_PADDING - bubbleW;
       const minY = TOP_PADDING - 2;
@@ -3041,10 +3051,11 @@ function App() {
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
+                        const bubblePx = getBubbleMapDisplaySize(ad, windowSize.width);
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
-                          ad.size,
+                          bubblePx,
                           windowSize.width,
                           windowSize.height,
                           getVisibleAds(),
@@ -3059,8 +3070,8 @@ function App() {
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
-                              width: `${ad.size}px`,
-                              height: `${ad.size}px`,
+                              width: `${bubblePx}px`,
+                              height: `${bubblePx}px`,
                               transition: 'transform 0.1s ease-out', // Faster transition
                               zIndex: ad.isBumped ? 2 : 1
                             }}
@@ -3157,7 +3168,7 @@ function App() {
                                       />
                                     </defs>
                                     <text 
-                                      fontSize={`${Math.max(ad.size * 0.15, 14)}px`}
+                                      fontSize={`${Math.max(bubblePx * 0.15, 14)}px`}
                                       fill="white"
                                       textAnchor="middle"
                                       dominantBaseline="middle"
