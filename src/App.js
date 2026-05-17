@@ -165,26 +165,39 @@ const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 42;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
-/** Max columns such that cols×bubble + (cols−1)×gap ≤ innerUsablePx (then trim if tight). */
-function maxPackedBubbleColumns(innerUsablePx, bubblePx, gapPx, maxPrefer = 4) {
-  const b = Math.max(MIN_SIZE, bubblePx || MIN_SIZE);
+/**
+ * Largest column count ≤ maxPrefer whose row fits at minimum bubble diameter.
+ * Actual bumped/unbumped sizes clamp into each lane via getMobileBubbleMapDisplaySize — column count must not use the pre-clamp bumped diameter or we never reach 4-up on typical phones (~103px discs).
+ */
+function mobileBubbleMapMaxFeasibleColumns(
+  innerUsablePx,
+  gapPx,
+  maxPrefer = 4,
+  minBubblePx = MIN_SIZE
+) {
   const g = Math.max(0, gapPx);
+  const b = Math.max(MIN_SIZE, minBubblePx);
   if (innerUsablePx <= 0) return 1;
-  let c = Math.min(maxPrefer, Math.max(1, Math.floor((innerUsablePx + g) / (b + g))));
-  while (c > 1 && c * b + Math.max(0, c - 1) * g > innerUsablePx + 1) {
-    c -= 1;
+  let cMax = Math.min(maxPrefer, 4);
+  for (let c = cMax; c >= 1; c -= 1) {
+    const packed = c * b + Math.max(0, c - 1) * g;
+    if (packed <= innerUsablePx + 1) return c;
   }
-  return c;
+  return 1;
 }
 
-/** Resolved column count + usable inner width — packing-based so 4-up fits whenever circle+gap widths allow */
-function resolveMobileBubbleMapColumns(viewportWidth, maxDimGuessPx) {
+/** Resolved column count + usable inner width — prefer 4 columns on mobile whenever min-size lanes fit. */
+function resolveMobileBubbleMapColumns(viewportWidth, _maxDimGuessPx) {
   if (viewportWidth > 480) {
     return { columns: 5, usableWidth: Math.max(0, viewportWidth - BUBBLE_PADDING * 2) };
   }
   const uw = Math.max(0, viewportWidth - MOBILE_BUBBLEMAP_GRID_MARGIN_H * 2);
-  const d = Math.max(maxDimGuessPx ?? MIN_SIZE, MIN_SIZE);
-  const cols = Math.max(1, maxPackedBubbleColumns(uw, d, MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX, 4));
+  const cols = mobileBubbleMapMaxFeasibleColumns(
+    uw,
+    MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
+    4,
+    MIN_SIZE
+  );
   return { columns: cols, usableWidth: uw };
 }
 
@@ -213,7 +226,9 @@ function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
       columns > 0
         ? (usableWidth - Math.max(0, columns - 1) * G) / columns
         : usableWidth;
-    return Math.min(raw, Math.max(MIN_SIZE, Math.floor(uniformSpan - 4)));
+    /** Tight fit into lane — only 1px inset so bumped discs use almost full uniform span when 4-up. */
+    const laneCeil = Math.max(MIN_SIZE, Math.floor(uniformSpan - 1));
+    return Math.min(raw, laneCeil);
   }
 
   const colGuessDiameter = Math.max(
@@ -227,10 +242,14 @@ function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
   const uniformSpan =
     cols > 0 ? (usable - Math.max(0, cols - 1) * G) / cols : usable;
   const fillTarget = Math.max(MIN_SIZE, Math.floor(uniformSpan * 0.92));
+  const laneCap = Math.max(MIN_SIZE, Math.floor(uniformSpan - 1));
 
   return Math.min(
-    Math.max(ad.size, Math.round(uniformSpan * 0.65)),
-    Math.floor(fillTarget * 0.9)
+    laneCap,
+    Math.min(
+      Math.max(ad.size, Math.round(uniformSpan * 0.65)),
+      Math.floor(fillTarget * 0.9)
+    )
   );
 }
 const MERCHANT_WALLET = {
