@@ -117,15 +117,6 @@ function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
 
-/** Mobile bubble map visual size (logical `ad.size` unchanged for shrinking math elsewhere). */
-function getBubbleMapDisplaySize(ad, viewportWidth) {
-  if (!ad || viewportWidth > 480) return ad?.size ?? MIN_SIZE;
-  if (!ad.isBumped) return ad.size;
-  const boosted = Math.round(ad.size * 1.12);
-  const cap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.15));
-  return Math.min(Math.max(boosted, ad.size), cap);
-}
-
 // Define blockchain options for filters and display
 const BLOCKCHAIN_OPTIONS = [
   { value: 'all', label: 'All Blockchains' },
@@ -2163,10 +2154,10 @@ function App() {
     const screenWidth = window.innerWidth;
 
     const horizontalGap = 6;
-    // Reserve footprint for overlays (see index2.css: vote-popup top ~-70px, large pills, BUY badge)
-    const mobileVoteStripMinWidth = 176;
-    const mobileVoteExtentsAboveBubble = 90;
-    const mobileBuyExtentsBelowBubble = 32;
+    // Min column width ≈ vote row in index2.css (36+12+36 + padding) so strips don’t collide; allows 3 cols on ~360px+ and 4 near 480px.
+    const mobileVoteStripMinWidth = 100;
+    const mobileVoteExtentsAboveBubble = 62;
+    const mobileBuyExtentsBelowBubble = 26;
     const horizontalMargin = BUBBLE_PADDING;
 
     // Store original positions to restore if needed (desktop restore path)
@@ -3051,11 +3042,10 @@ function App() {
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
-                        const bubblePx = getBubbleMapDisplaySize(ad, windowSize.width);
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
-                          bubblePx,
+                          ad.size,
                           windowSize.width,
                           windowSize.height,
                           getVisibleAds(),
@@ -3070,8 +3060,8 @@ function App() {
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
-                              width: `${bubblePx}px`,
-                              height: `${bubblePx}px`,
+                              width: `${ad.size}px`,
+                              height: `${ad.size}px`,
                               transition: 'transform 0.1s ease-out', // Faster transition
                               zIndex: ad.isBumped ? 2 : 1
                             }}
@@ -3168,7 +3158,7 @@ function App() {
                                       />
                                     </defs>
                                     <text 
-                                      fontSize={`${Math.max(bubblePx * 0.15, 14)}px`}
+                                      fontSize={`${Math.max(ad.size * 0.15, 14)}px`}
                                       fill="white"
                                       textAnchor="middle"
                                       dominantBaseline="middle"
