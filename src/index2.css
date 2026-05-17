@@ -1837,7 +1837,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     left: 50%;
     right: auto;
     width: auto;
-    max-width: min(calc(100vw - 12px), 102px);
+    max-width: min(calc(100vw - 12px), 118px);
     padding: 6px 8px;
     gap: 8px;
     border-radius: 22px;
@@ -1851,18 +1851,18 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   .vote-button {
     position: relative;
     font-size: 18px;
-    width: 41px;
-    height: 41px;
+    width: 45px;
+    height: 45px;
     flex-shrink: 0;
-    min-width: 41px;
-    max-width: 41px;
-    min-height: 41px;
-    max-height: 41px;
+    min-width: 45px;
+    max-width: 45px;
+    min-height: 45px;
+    max-height: 45px;
   }
 
   .bubble .vote-button img {
-    width: 27px !important;
-    height: 27px !important;
+    width: 31px !important;
+    height: 31px !important;
     max-width: none;
     object-fit: contain;
   }
