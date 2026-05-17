@@ -155,11 +155,13 @@ const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 20; // Padding from edges
 /** Side inset for bubble-map grid only (tighter than BUBBLE_PADDING = less gutter on mobile map). */
-const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 6;
+const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 4;
+/** Fixed gap between column slots when packing horizontally (bubble diameters unchanged). */
+const MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX = 5;
 /** Min column budget for vote pill; keep ≤ uw/4 on ~390px layouts (pill max-width clamps to bubble). */
 const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 84;
-/** Row step after bubble dia.; must satisfy: ≥ votePopupTopOffset + BUY slack (see `.vote-popup` top in index2.css). */
-const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 78;
+/** Row spacing after bubble diameter; paired with `.vote-popup` `top` in index2.css (clearance ≥ |top| + ~10px BUY slack). */
+const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 66;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
@@ -2251,7 +2253,8 @@ function App() {
     });
     const maxDim = Math.max(MIN_SIZE, ...sizesPx);
     const { columns, usableWidth } = resolveMobileBubbleMapColumns(screenWidth, maxDim);
-    const cellWidth = usableWidth / columns;
+    const INTER_GAP = MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX;
+    const slotStride = maxDim + INTER_GAP;
     const rowPitch = maxDim + MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
 
     sortedBubbles.forEach((bubble, index) => {
@@ -2259,12 +2262,18 @@ function App() {
       const col = index % columns;
       const bubbleW = sizesPx[index] ?? maxDim;
 
-      let x =
-        horizontalMargin +
-        col * cellWidth +
-        (cellWidth - bubbleW) / 2;
+      const rowBubbleCount = Math.min(columns, sortedBubbles.length - row * columns);
+      const rowPackedWidth =
+        rowBubbleCount * maxDim +
+        Math.max(0, rowBubbleCount - 1) * INTER_GAP;
+      const rowClusterStart =
+        horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
 
-      // Top-align rows: asymmetric overflow (votes up, BUY down) breaks "center in cell".
+      let x =
+        rowClusterStart +
+        col * slotStride +
+        (maxDim - bubbleW) / 2;
+
       let y = TOP_PADDING + row * rowPitch;
 
       const maxX = screenWidth - horizontalMargin - bubbleW;

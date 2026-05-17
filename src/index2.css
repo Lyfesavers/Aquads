@@ -1833,12 +1833,12 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 @media (max-width: 480px) {
   /* Sit above curved title arc; wider tap targets without negative margins crowding the logo */
   .vote-popup {
-    top: -70px;
+    top: -56px;
     left: 50%;
     right: auto;
     width: auto;
     max-width: min(calc(100vw - 12px), 102px);
-    padding: 7px 8px;
+    padding: 6px 8px;
     gap: 8px;
     border-radius: 22px;
     flex-wrap: nowrap;
