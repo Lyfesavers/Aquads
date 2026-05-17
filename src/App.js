@@ -117,6 +117,16 @@ function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
 
+/** Bubble map rendering only — mobile bumped bubbles read larger; logical `ad.size` unchanged elsewhere. */
+function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
+  if (!ad) return MIN_SIZE;
+  if (viewportWidth > 480) return ad.size;
+  if (!ad.isBumped) return ad.size;
+  const boosted = Math.round(ad.size * 1.12);
+  const cap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.22));
+  return Math.min(Math.max(boosted, ad.size + 2), cap);
+}
+
 // Define blockchain options for filters and display
 const BLOCKCHAIN_OPTIONS = [
   { value: 'all', label: 'All Blockchains' },
@@ -2154,10 +2164,10 @@ function App() {
     const screenWidth = window.innerWidth;
 
     const horizontalGap = 4;
-    // Must stay in sync with compact `.vote-popup` in index2.css (≤480px): ~84px total strip width so 4 cols fit typical ~360–400px layouts.
-    const mobileVoteStripMinWidth = 84;
-    /** Extra pixels below bubble max height before next row anchor (votes sit above bubble; align with popup `top`). */
-    const mobileRowTrailingClearance = 52; // ~ matches vote-popup top:-48px + small slack under BUY
+    // Keep aligned with enlarged mobile `.vote-popup` / `.vote-button` in index2.css (tap-friendly).
+    const mobileVoteStripMinWidth = 120;
+    /** Space from one row’s bubble top to the next (vote strip sits above bubble; aligns with popup `top`). */
+    const mobileRowTrailingClearance = 56;
     const horizontalMargin = BUBBLE_PADDING;
 
     // Store original positions to restore if needed (desktop restore path)
@@ -2184,7 +2194,9 @@ function App() {
       const fromDom = parseInt(el.style.width, 10);
       if (!Number.isNaN(fromDom) && fromDom > 0) return fromDom;
       const linked = ads.find(ad => ad.id === el.id);
-      return linked?.size ?? getMaxSize();
+      return linked
+        ? getMobileBubbleMapDisplaySize(linked, screenWidth)
+        : getMaxSize();
     });
     const maxDim = Math.max(MIN_SIZE, ...sizesPx);
     const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
@@ -3046,10 +3058,11 @@ function App() {
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
+                        const bubblePx = getMobileBubbleMapDisplaySize(ad, windowSize.width);
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
-                          ad.size,
+                          bubblePx,
                           windowSize.width,
                           windowSize.height,
                           getVisibleAds(),
@@ -3064,8 +3077,8 @@ function App() {
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
-                              width: `${ad.size}px`,
-                              height: `${ad.size}px`,
+                              width: `${bubblePx}px`,
+                              height: `${bubblePx}px`,
                               transition: 'transform 0.1s ease-out', // Faster transition
                               zIndex: ad.isBumped ? 2 : 1
                             }}
@@ -3162,7 +3175,7 @@ function App() {
                                       />
                                     </defs>
                                     <text 
-                                      fontSize={`${Math.max(ad.size * 0.15, 14)}px`}
+                                      fontSize={`${Math.max(bubblePx * 0.15, 14)}px`}
                                       fill="white"
                                       textAnchor="middle"
                                       dominantBaseline="middle"

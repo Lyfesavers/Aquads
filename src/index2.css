@@ -1827,16 +1827,16 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Compact strip so bubble map fits 4 columns on typical portrait phones (~360–390px usable). */
+  /* Tap-friendly votes; widths stay loosely in sync with App.js mobileVoteStripMinWidth. */
   .vote-popup {
-    top: -48px;
+    top: -54px;
     left: 50%;
     right: auto;
     width: auto;
     max-width: calc(100vw - 24px);
-    padding: 6px 8px;
-    gap: 9px;
-    border-radius: 18px;
+    padding: 8px 10px;
+    gap: 12px;
+    border-radius: 20px;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
@@ -1845,10 +1845,22 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   
   .vote-button {
     position: relative;
-    font-size: 15px;
-    width: 28px;
-    height: 28px;
+    font-size: 18px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
+  }
+
+  .bubble .vote-button img {
+    width: 23px !important;
+    height: 23px !important;
+    max-width: none;
+  }
+
+  /* Spinners scaled to match larger buttons */
+  .bubble .vote-button .animate-spin {
+    width: 1.35rem !important;
+    height: 1.35rem !important;
   }
   
   /* Make vote popup always visible on mobile */
