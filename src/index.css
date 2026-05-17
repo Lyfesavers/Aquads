@@ -1204,9 +1204,9 @@ body {
 }
 
 @media (max-width: 480px) {
-  /* Keep title below the elevated vote pill; don’t steal taps meant for bears/bulls */
+  /* Higher on the rim so lettering clears the centered logo under the vote strip */
   .bubble .bubble-text-curved {
-    top: 24%;
+    top: 16%;
     z-index: 20;
     pointer-events: none;
   }

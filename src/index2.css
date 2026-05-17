@@ -170,7 +170,7 @@
 
 @media (max-width: 480px) {
   .bubble .bubble-text-curved {
-    top: 24%;
+    top: 16%;
     z-index: 20;
     pointer-events: none;
   }
@@ -1132,7 +1132,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .bubble .bubble-text-curved {
-    top: 24%;
+    top: 16%;
     z-index: 20;
     pointer-events: none;
   }
@@ -1831,9 +1831,9 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Sit above curved title arc; wider tap targets without negative margins crowding the logo */
+  /* Sit above curved title arc; paired with MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP in App.js */
   .vote-popup {
-    top: -56px;
+    top: -48px;
     left: 50%;
     right: auto;
     width: auto;
