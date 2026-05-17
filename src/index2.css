@@ -1827,15 +1827,15 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
-  /* Tap-friendly votes; widths stay loosely in sync with App.js mobileVoteStripMinWidth. */
+  /* Fits ~MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH in App.js so 4 cols works on wider phones without pill overlap */
   .vote-popup {
-    top: -54px;
+    top: -46px;
     left: 50%;
     right: auto;
     width: auto;
     max-width: calc(100vw - 24px);
-    padding: 8px 10px;
-    gap: 12px;
+    padding: 7px 8px;
+    gap: 10px;
     border-radius: 20px;
     flex-wrap: nowrap;
     justify-content: center;
@@ -1845,22 +1845,23 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   
   .vote-button {
     position: relative;
-    font-size: 18px;
-    width: 40px;
-    height: 40px;
+    font-size: 17px;
+    width: 38px;
+    height: 38px;
     flex-shrink: 0;
+    min-width: 38px;
+    min-height: 38px;
   }
 
   .bubble .vote-button img {
-    width: 23px !important;
-    height: 23px !important;
+    width: 21px !important;
+    height: 21px !important;
     max-width: none;
   }
 
-  /* Spinners scaled to match larger buttons */
   .bubble .vote-button .animate-spin {
-    width: 1.35rem !important;
-    height: 1.35rem !important;
+    width: 1.3rem !important;
+    height: 1.3rem !important;
   }
   
   /* Make vote popup always visible on mobile */
@@ -1870,14 +1871,14 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     pointer-events: all;
   }
   
-  /* Increase hit area by adding invisible padding */
+  /* Tap target larger than drawn circle without widening the pill as much */
   .vote-button::after {
     content: '';
     position: absolute;
-    top: -15px;
-    left: -15px;
-    right: -15px;
-    bottom: -15px;
+    top: -18px;
+    left: -18px;
+    right: -18px;
+    bottom: -18px;
     z-index: -1;
   }
   

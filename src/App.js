@@ -117,16 +117,6 @@ function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
 
-/** Bubble map rendering only — mobile bumped bubbles read larger; logical `ad.size` unchanged elsewhere. */
-function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
-  if (!ad) return MIN_SIZE;
-  if (viewportWidth > 480) return ad.size;
-  if (!ad.isBumped) return ad.size;
-  const boosted = Math.round(ad.size * 1.12);
-  const cap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.22));
-  return Math.min(Math.max(boosted, ad.size + 2), cap);
-}
-
 // Define blockchain options for filters and display
 const BLOCKCHAIN_OPTIONS = [
   { value: 'all', label: 'All Blockchains' },
@@ -164,8 +154,48 @@ const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 20; // Padding from edges
+/** Keep in sync with mobile `.vote-popup` width in index2.css (narrow enough for 3 cols on ~340px usable). */
+const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 108;
+/** Gap between successive row anchors (bubble top); keep near `.vote-popup` `top` offset. */
+const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 50;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
+
+/** How many bubble columns on mobile bubble map (3 preferred; 4 when width allows). */
+function estimateMobileBubbleMapColumns(viewportWidth) {
+  if (viewportWidth > 480) return 5;
+  const uw = Math.max(0, viewportWidth - BUBBLE_PADDING * 2);
+  let cols = 4;
+  while (cols > 2 && uw / cols < MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH) {
+    cols -= 1;
+  }
+  if (cols === 2 && uw >= MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH * 3 + 18) cols = 3;
+  return cols;
+}
+
+/** Mobile bubble-map render pixels — bumped rows fill column width so circles & votes aren’t dwarfed by gutters. Logical `ad.size` unchanged elsewhere. */
+function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
+  if (!ad) return MIN_SIZE;
+  if (viewportWidth > 480) return ad.size;
+
+  const cols = estimateMobileBubbleMapColumns(viewportWidth);
+  const usable = Math.max(0, viewportWidth - BUBBLE_PADDING * 2);
+  const cellW = cols > 0 ? usable / cols : usable;
+  const fillTarget = Math.max(MIN_SIZE, Math.floor(cellW * 0.92));
+
+  if (!ad.isBumped) {
+    return Math.min(
+      Math.max(ad.size, Math.round(cellW * 0.65)),
+      Math.floor(fillTarget * 0.9)
+    );
+  }
+
+  const softCap = Math.round(getResponsiveSize(BASE_MAX_SIZE * 1.58));
+  return Math.min(
+    Math.max(Math.round(ad.size * 1.08), fillTarget),
+    Math.max(softCap, fillTarget)
+  );
+}
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -2164,10 +2194,6 @@ function App() {
     const screenWidth = window.innerWidth;
 
     const horizontalGap = 4;
-    // Keep aligned with enlarged mobile `.vote-popup` / `.vote-button` in index2.css (tap-friendly).
-    const mobileVoteStripMinWidth = 120;
-    /** Space from one row’s bubble top to the next (vote strip sits above bubble; aligns with popup `top`). */
-    const mobileRowTrailingClearance = 56;
     const horizontalMargin = BUBBLE_PADDING;
 
     // Store original positions to restore if needed (desktop restore path)
@@ -2200,14 +2226,13 @@ function App() {
     });
     const maxDim = Math.max(MIN_SIZE, ...sizesPx);
     const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
-    const minCell = Math.max(maxDim + horizontalGap, mobileVoteStripMinWidth);
-    let columns = Math.max(1, Math.floor(usableWidth / minCell));
-    // Prefer 4-across when each column is still wide enough for the bubble + vote strip.
-    while (columns < 4 && usableWidth / (columns + 1) >= minCell) {
-      columns += 1;
+    let columns = estimateMobileBubbleMapColumns(screenWidth);
+    const neededMinCell = Math.max(maxDim + horizontalGap, MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH);
+    while (columns > 2 && usableWidth / columns < neededMinCell) {
+      columns -= 1;
     }
     const cellWidth = usableWidth / columns;
-    const rowPitch = maxDim + mobileRowTrailingClearance;
+    const rowPitch = maxDim + MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
 
     sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
