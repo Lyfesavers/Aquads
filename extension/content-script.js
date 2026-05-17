@@ -23,6 +23,8 @@
     'binance smart chain': 'bsc',
     'polygon': 'polygon',
     'matic': 'polygon',
+    'pulsechain': 'pulsechain',
+    'pulse': 'pulsechain',
     'solana': 'solana',
     'sol': 'solana',
     'avalanche': 'avalanche',

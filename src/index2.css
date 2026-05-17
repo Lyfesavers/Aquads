@@ -348,6 +348,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
 }
 
+.bubble-pulsechain {
+  animation: bubble-float 8s ease-in-out infinite, pulsechain-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(46, 220, 170, 0.5), 0 0 20px 5px rgba(46, 220, 170, 0.3), 0 0 30px 7px rgba(46, 220, 170, 0.1);
+}
+
 .bubble-avalanche {
   animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
@@ -378,6 +383,10 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 .bubble-polygon:hover {
   box-shadow: 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
+}
+
+.bubble-pulsechain:hover {
+  box-shadow: 0 0 15px 4px rgba(46, 220, 170, 0.7), 0 0 30px 8px rgba(46, 220, 170, 0.5), 0 0 50px 12px rgba(46, 220, 170, 0.3);
 }
 
 .bubble-avalanche:hover {

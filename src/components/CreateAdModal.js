@@ -844,6 +844,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <option value="ethereum">Ethereum</option>
                 <option value="bsc">Binance Smart Chain</option>
                 <option value="polygon">Polygon</option>
+                <option value="pulsechain">PulseChain</option>
                 <option value="solana">Solana</option>
                 <option value="avalanche">Avalanche</option>
                 <option value="arbitrum">Arbitrum</option>

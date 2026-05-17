@@ -92,6 +92,8 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'bsc': 'bsc',
   'polygon': 'polygon',
   'matic': 'polygon',
+  'pulsechain': 'pulsechain',
+  'pulse': 'pulsechain',
   'solana': 'solana',
   'sol': 'solana',
   'avalanche': 'avalanche',
@@ -462,7 +464,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
           }
           
           // Add common chains as fallback (most meme coins are on these)
-          const commonChains = ['ethereum', 'bsc', 'solana', 'base', 'arbitrum', 'polygon', 'avalanche', 'optimism'];
+          const commonChains = ['ethereum', 'bsc', 'solana', 'base', 'arbitrum', 'polygon', 'pulsechain', 'avalanche', 'optimism'];
           commonChains.forEach(chain => {
             if (!chainsToTry.includes(chain)) chainsToTry.push(chain);
           });
@@ -854,6 +856,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       'ethereum': 'ether',
       'bsc': 'bnb',
       'polygon': 'polygon',
+      'pulsechain': 'pulsechain',
       'solana': 'solana',
       'avalanche': 'avalanche',
       'arbitrum': 'arbitrum',
@@ -904,7 +907,8 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       'avax': 'avalanche',
       'ftm': 'fantom',
       'arb': 'arbitrum',
-      'op': 'optimism'
+      'op': 'optimism',
+      'pulse': 'pulsechain'
     };
     
     const normalizedBlockchain = blockchain.toLowerCase().trim();
@@ -1061,6 +1065,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       'ethereum': 'ether',
       'bsc': 'bnb',
       'polygon': 'polygon',
+      'pulsechain': 'pulsechain',
       'solana': 'solana',
       'avalanche': 'avalanche',
       'arbitrum': 'arbitrum',
@@ -1145,6 +1150,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       'ethereum': 'ether',
       'bsc': 'bnb',
       'polygon': 'polygon',
+      'pulsechain': 'pulsechain',
       'solana': 'solana',
       'avalanche': 'avalanche',
       'arbitrum': 'arbitrum',
@@ -1459,6 +1465,8 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
         'ether': 'ethereum',
         'bnb': 'bsc', 
         'polygon': 'polygon',
+        'pulsechain': 'pulsechain',
+        'pulse': 'pulsechain',
         'solana': 'solana',
         'avalanche': 'avalanche',
         'arbitrum': 'arbitrum',
@@ -2091,7 +2099,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
                       <option value="shib">Shibarium</option>
                       <option value="floki">FlokiFi</option>
                       <option value="babydoge">Baby Doge Chain</option>
-                      <option value="pulse">PulseChain</option>
+                      <option value="pulsechain">PulseChain</option>
                       
                       {/* Enterprise & Institutional */}
                       <option value="quorum">Quorum</option>
