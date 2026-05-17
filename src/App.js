@@ -2153,11 +2153,11 @@ function App() {
     
     const screenWidth = window.innerWidth;
 
-    const horizontalGap = 6;
-    // Min column width ≈ vote row in index2.css (36+12+36 + padding) so strips don’t collide; allows 3 cols on ~360px+ and 4 near 480px.
-    const mobileVoteStripMinWidth = 100;
-    const mobileVoteExtentsAboveBubble = 62;
-    const mobileBuyExtentsBelowBubble = 26;
+    const horizontalGap = 4;
+    // Must stay in sync with compact `.vote-popup` in index2.css (≤480px): ~84px total strip width so 4 cols fit typical ~360–400px layouts.
+    const mobileVoteStripMinWidth = 84;
+    /** Extra pixels below bubble max height before next row anchor (votes sit above bubble; align with popup `top`). */
+    const mobileRowTrailingClearance = 52; // ~ matches vote-popup top:-48px + small slack under BUY
     const horizontalMargin = BUBBLE_PADDING;
 
     // Store original positions to restore if needed (desktop restore path)
@@ -2187,11 +2187,15 @@ function App() {
       return linked?.size ?? getMaxSize();
     });
     const maxDim = Math.max(MIN_SIZE, ...sizesPx);
-    const cellWidth = Math.max(maxDim + horizontalGap, mobileVoteStripMinWidth);
-    const rowPitch = maxDim + mobileVoteExtentsAboveBubble + mobileBuyExtentsBelowBubble;
-
     const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
-    const columns = Math.max(1, Math.floor(usableWidth / Math.max(cellWidth, MIN_SIZE + horizontalGap)));
+    const minCell = Math.max(maxDim + horizontalGap, mobileVoteStripMinWidth);
+    let columns = Math.max(1, Math.floor(usableWidth / minCell));
+    // Prefer 4-across when each column is still wide enough for the bubble + vote strip.
+    while (columns < 4 && usableWidth / (columns + 1) >= minCell) {
+      columns += 1;
+    }
+    const cellWidth = usableWidth / columns;
+    const rowPitch = maxDim + mobileRowTrailingClearance;
 
     sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);

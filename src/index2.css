@@ -1827,15 +1827,16 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (max-width: 480px) {
+  /* Compact strip so bubble map fits 4 columns on typical portrait phones (~360–390px usable). */
   .vote-popup {
-    top: -56px;
+    top: -48px;
     left: 50%;
     right: auto;
     width: auto;
     max-width: calc(100vw - 24px);
-    padding: 7px 12px;
-    gap: 12px;
-    border-radius: 22px;
+    padding: 6px 8px;
+    gap: 9px;
+    border-radius: 18px;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
@@ -1844,9 +1845,9 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   
   .vote-button {
     position: relative;
-    font-size: 18px;
-    width: 36px;
-    height: 36px;
+    font-size: 15px;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
   }
   
