@@ -5,6 +5,7 @@ const BLOCKCHAIN_OPTIONS = [
   { value: 'ethereum', label: 'Ethereum' },
   { value: 'bsc', label: 'Binance Smart Chain' },
   { value: 'polygon', label: 'Polygon' },
+  { value: 'pulsechain', label: 'PulseChain' },
   { value: 'solana', label: 'Solana' },
   { value: 'avalanche', label: 'Avalanche' },
   { value: 'arbitrum', label: 'Arbitrum' },
