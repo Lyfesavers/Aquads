@@ -926,6 +926,18 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 required
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
+              <p className="text-sm text-gray-400 mt-2">
+                Need a site fast? You can create a simple website in about 5 minutes with a free temporary domain on{' '}
+                <a
+                  href="https://lovable.dev/invite/SB5W07K"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline"
+                >
+                  Lovable
+                </a>
+                , then paste the URL here.
+              </p>
             </div>
             <div className="flex justify-end">
               <button
