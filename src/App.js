@@ -3131,7 +3131,7 @@ function App() {
               <div className="flex-1 min-h-0 overflow-y-auto relative z-0">
                 <div className="pt-20">
                   <h1 className="sr-only">
-                    Aquads bubble map — free token listings, discover and promote crypto projects
+                    Aquads launch stack — list new crypto projects on the bubble map, grow, hire, and get paid
                   </h1>
                   {/* Rotating Banner - AquaSwap & Chrome Extension */}
                   <RotatingBanner />

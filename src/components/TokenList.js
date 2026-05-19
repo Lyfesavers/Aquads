@@ -351,25 +351,25 @@ const TokenList = ({ currentUser, showNotification }) => {
   return (
     <div className="container mx-auto p-4">
       <Helmet>
-        <title>Free token &amp; crypto project listings | Aquads bubble map</title>
+        <title>List your token free | Aquads bubble map — launch stack</title>
         <meta
           name="description"
-          content="List your token or crypto project free on Aquads: live bubble map, Bubble Ads, community votes, and market data for thousands of assets. Explore projects or post a free starter listing."
+          content="List your new crypto project free on the Aquads bubble map—your storefront after launch. Community votes, bumps, BexTools trending, and tools to grow in your first 30 days."
         />
         <link rel="canonical" href="https://www.aquads.xyz/home" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.aquads.xyz/home" />
-        <meta property="og:title" content="Free token &amp; crypto project listings | Aquads bubble map" />
+        <meta property="og:title" content="List your token free | Aquads launch stack" />
         <meta
           property="og:description"
-          content="Free project listings on an interactive bubble map, plus live crypto prices, market cap, volume, and Web3 marketplace tools."
+          content="Your project storefront after launch—free bubble listing, community growth, hire help, and AquaPay on one platform."
         />
         <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free token &amp; crypto project listings | Aquads bubble map" />
+        <meta name="twitter:title" content="List your token free | Aquads launch stack" />
         <meta
           name="twitter:description"
-          content="Free project listings on an interactive bubble map, plus live crypto prices, market cap, volume, and Web3 marketplace tools."
+          content="Your project storefront after launch—free bubble listing, community growth, hire help, and AquaPay on one platform."
         />
         <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
       </Helmet>

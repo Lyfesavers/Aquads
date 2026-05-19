@@ -178,35 +178,43 @@ const documentationContent = {
   // Getting Started
   whatIsAquads: {
     title: 'What is Aquads?',
-    description: 'Learn about Aquads - the all-in-one Web3 platform for crypto projects and freelancers.',
+    description: 'Learn about Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid after launch.',
     mockup: <BubbleMapMockup />,
     content: `
 ## Welcome to Aquads
 
-Aquads is a comprehensive Web3 ecosystem designed to connect crypto projects, freelancers, and the broader blockchain community. Our platform offers a unique combination of features that make it easy to promote your project, find work, trade tokens, and engage with the crypto community.
+**Aquads is the launch stack for new crypto projects.** After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need a listing, community tools, launch help, and payments—not five separate platforms. Aquads brings those jobs together for your **first 30 days** and beyond.
+
+### The launch stack (four pillars)
+
+| Pillar | What you do on Aquads |
+|--------|------------------------|
+| **Get listed** | Free bubble on the map; votes, bumps, BexTools trending—your storefront, not a CoinGecko clone |
+| **Grow** | Twitter/Facebook raids, Telegram bot, HyperSpace, banners, PR packages |
+| **Hire** | Freelancer marketplace with escrow, trust scores, and on-chain resumes |
+| **Get paid** | AquaPay links and AquaSwap from your listing—funds to your wallet |
 
 ### The Interactive Bubble Map
 
-The heart of Aquads is our **interactive bubble map** - a dynamic visualization where crypto projects appear as colorful bubbles. Each bubble represents a listed token, with:
+Your **project storefront** is the interactive bubble map—a dynamic visualization where listed tokens appear as colorful bubbles:
 
-- **Size** driven by community engagement; **100+ bullish votes** bumps your bubble (max size, main row)—no separate bump purchase
+- **Size** driven by community engagement; **100+ bullish votes** bumps your bubble (max size, main row)
 - **Color** indicating the blockchain network (Ethereum = Blue, Solana = Purple, BSC = Yellow, etc.)
 - **Position** optimized for visibility based on activity
 
-Click any bubble to view project details, vote, and interact with the community.
+Click any bubble to view project details, vote, and trade via integrated swap routing.
 
-### Core Platform Features
+### Core platform features
 
-| Feature | Description |
-|---------|-------------|
-| **Token Listing** | List your crypto project as an interactive bubble |
-| **Freelancer Hub** | Web3 marketplace for services and jobs |
-| **AquaSwap** | DEX aggregator for cross-chain token swaps |
-| **AquaFi** | Savings pools with competitive APY |
-| **AquaPay** | Crypto payment links and QR codes |
-| **Raids** | Social media marketing campaigns |
-| **GameHub** | Blockchain games platform |
-| **HyperSpace** | Featured advertising space |
+| Feature | Role in the launch stack |
+|---------|---------------------------|
+| **Token listing** | Get listed (bubble map + bumps) |
+| **Raids & Telegram bot** | Grow community after launch |
+| **HyperSpace & PR** | Amplify AMAs and press |
+| **Freelancer marketplace** | Hire launch help (design, mods, dev, marketing) |
+| **AquaPay** | Accept payments (presales, merch, services) |
+| **AquaSwap** | Cross-chain swaps from your listing |
+| **AquaFi, Game Hub, market data** | Supporting tools as you scale past day 30 |
 
 ### Supported Blockchains
 
@@ -218,14 +226,14 @@ Aquads supports 20+ blockchain networks including:
 - Fantom, Cronos, Harmony
 - And many more...
 
-### Why Choose Aquads?
+### Why choose Aquads?
 
-- **All-in-One Platform**: Everything you need in one place
-- **Community-Driven**: Features designed by and for the crypto community
-- **Multi-Chain Support**: Works with 20+ blockchain networks
-- **Transparent Pricing**: No hidden fees on any services
-- **Active Development**: New features added regularly
-- **Earn While You Engage**: Points system rewards participation
+- **One stack, not five tools**: List, grow, hire, and get paid in one place
+- **Built for post-launch**: Focused on what projects need after the token is live
+- **Community-driven**: Votes, raids, and trending designed for real momentum
+- **Multi-chain**: Listings, payments, and swaps across 20+ networks
+- **Transparent pricing**: No hidden fees on core flows
+- **Earn while you engage**: Points reward participation
     `,
     nextPage: { id: 'create-account', title: 'Creating Your Account' },
   },
@@ -4131,11 +4139,11 @@ For widget issues:
   // ===== BUSINESS PLAN (WHITEPAPER) =====
   wpExecutiveSummary: {
     title: 'Executive Summary',
-    description: 'Aquads Business Plan - Executive Summary of the all-in-one Web3 platform.',
+    description: 'Aquads Business Plan — executive summary of the launch stack for new crypto projects.',
     content: `
 ## Aquads Business Plan
 
-### All-in-One Web3 Crypto SuperHub, Freelancer Marketplace, and Game Hub
+### The launch stack for new crypto projects
 
 > **Note:** This is not a token project – no crypto tokens will ever be created.
 
@@ -4143,25 +4151,22 @@ For widget issues:
 
 ## 1. Executive Summary
 
-Aquads is an innovative platform built to serve the rapidly growing Web3 ecosystem by integrating three core components:
+Aquads is the **launch stack for new crypto projects**—everything a team needs in the **first 30 days after a token goes live**, in one platform instead of five disconnected tools.
 
-- A **Dynamic Advertising System** tailored for crypto projects
-- A specialized **Freelancer Marketplace** connecting Web3 professionals with crypto projects
-- A **Token Information Hub** offering real-time cryptocurrency insights
+**Four pillars:**
 
-In addition, Aquads has expanded its offerings with new features:
+- **Get listed** — Dynamic bubble map, vote-driven visibility, bumps, BexTools trending, and swap routing from listings
+- **Grow** — Twitter/Facebook raids, Telegram bot, HyperSpace, banners, and PR packages
+- **Hire** — Freelancer marketplace with booking, escrow, Trust Score, and on-chain resumes (EAS on Base)
+- **Get paid** — AquaPay multi-chain payment links and AquaSwap cross-chain trading
 
-- A dedicated **Game Hub** for crypto and blockchain gaming projects
-- An extensive **How-To & Blog Page** with valuable articles and tutorials
-- A robust **Booking System** complete with watermarking for sent images, enhancing security and professionalism
-- An upgraded **Internal Messaging System** with payment functionality (coming soon)
-- A new **Twitter Raid Feature** that rewards users with points for engaging with Twitter posts
-- **Industry-First Trust Score & Risk Gauge System** - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills
-- **World's First On-Chain Freelancer Resume** - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation
-- **AquaPay - Multi-Chain Payment Link System** - A non-custodial payment solution with competitive 0.5% transaction fees enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks
-- **HyperSpace - Twitter Spaces Listener Boost** - A service enabling projects to boost their Twitter Spaces with real listeners (100-5,000) for durations of 30 minutes to 2 hours, enhancing trending potential and audience reach
+**Supporting capabilities** (post-launch scale and retention):
 
-Our mission is to bridge the gap between crypto projects, service providers, and the broader Web3 community while providing an integrated suite of tools designed to drive growth, foster transparency, and empower all users within the ecosystem.
+- Game Hub, How-To & blog, booking with image watermarking, messaging with payments
+- Market data and AquaFi for teams that outgrow launch week
+- Points and affiliate programs that reward ecosystem participation
+
+Our mission is to help new and relaunching crypto projects **list, grow, hire, and get paid** with transparency—while giving freelancers a crypto-native place to deliver launch work and build portable reputation.
     `,
     prevPage: { id: 'embed-widgets', title: 'Embed Widgets' },
     nextPage: { id: 'wp-business-description', title: 'Business Description' },
@@ -4169,35 +4174,40 @@ Our mission is to bridge the gap between crypto projects, service providers, and
 
   wpBusinessDescription: {
     title: 'Business Description',
-    description: 'The problems Aquads solves and the comprehensive solution it provides.',
+    description: 'The post-launch problem Aquads solves and how the launch stack addresses it.',
     content: `
 ## 2. Business Description
 
 ### 2.1. Problem Statement
 
-The Web3 space is expanding rapidly, yet the ecosystem lacks a unified platform that:
+Thousands of tokens launch every week. Most teams do not fail at deployment—they fail at **what comes next**. Today, a new project typically juggles:
 
-- Provides specialized services in areas such as smart contract development, security audits, marketing, and community management.
-- Integrates dynamic advertising solutions specifically designed for crypto projects.
-- Offers real-time token data and market insights in a centralized, community-driven resource.
-- Caters to the growing demand in blockchain gaming, empowering game developers and enthusiasts.
-- Enables seamless, low-cost cryptocurrency payments without custodial risks or high transaction fees.
-- Supports multi-chain payment processing, allowing users to receive payments across different blockchain networks through a single interface.
+- A **listing or chart site** for visibility (not built for launch-week growth)
+- **Separate tools** for Twitter/Telegram raids and Spaces
+- **Upwork-style marketplaces** that are not crypto-native for logos, mods, and launch marketing
+- **Another product** for payment links and treasury flows
+
+That fragmentation costs time, budget, and momentum in the critical first 30 days.
 
 ### 2.2. The Aquads Solution
 
-Aquads combines a suite of interrelated features into one platform:
+Aquads is one **launch stack** with four integrated pillars:
 
-**Dynamic Advertising System:**
-- Interactive ad displays, vote-driven bubble bumping, and real-time ad management that increase project visibility.
+**Get listed (bubble map & ads):**
+- Interactive bubbles, vote-driven bumping, BexTools trending, and swap routing from listings—your storefront after launch.
 
-**Freelancer Marketplace:**
-- A dedicated space for freelancers with verification, integrated reviews, and streamlined service matching.
+**Grow (community & distribution):**
+- Raids, Telegram automation, HyperSpace, banners, and optional PR—built for the hype phase when most projects go quiet.
 
-**Token Information Hub:**
-- Real-time tracking of crypto prices, community-driven token reviews, and market analytics.
+**Hire (freelancer marketplace):**
+- Verified talent, booking, escrow, Trust Score, and on-chain resumes for launch deliverables.
 
-**New Game Hub:**
+**Get paid (AquaPay & AquaSwap):**
+- Non-custodial payment links and cross-chain swaps; funds go to the project wallet.
+
+**Supporting layers** (scale and retention):
+
+**Game Hub:**
 - A dedicated section for crypto gaming projects where developers and gamers can connect, share experiences, and collaborate on blockchain-based games.
 
 **How-To & Blog Page:**
@@ -4234,9 +4244,9 @@ Aquads combines a suite of interrelated features into one platform:
 
 ### 3.2. Target Audience
 
-- **Crypto Projects & Gaming Startups:** Seeking reliable advertising and specialized freelance talent.
-- **Web3 Freelancers & Agencies:** Offering niche services tailored to the blockchain, crypto, and gaming industries.
-- **Investors & Analysts:** Looking for up-to-date token information and market insights.
+- **New & relaunching crypto projects:** Teams with a live token that need listing, community growth, launch hires, and payments in one stack.
+- **Web3 freelancers & agencies:** Delivering logos, content, mods, dev, and marketing for launch-week clients.
+- **Community leads & moderators:** Running raids, Spaces, and engagement through Aquads growth tools.
     `,
     prevPage: { id: 'wp-business-description', title: 'Business Description' },
     nextPage: { id: 'wp-products-services', title: 'Products & Services' },
@@ -4248,19 +4258,25 @@ Aquads combines a suite of interrelated features into one platform:
     content: `
 ## 4. Products & Services
 
-### 4.1. Core Components
+### 4.1. Launch stack (core)
 
-**Dynamic Advertising System:**
-- **Features:** Dynamic bubble ad sizing, vote-based bump visibility (100+ bullish), real-time performance analytics, and premium ad banners.
-- **Benefits:** Boost project visibility with targeted, performance-based advertising.
+**Get listed — Dynamic bubble map & ads:**
+- **Features:** Bubble listings, vote-based bumps (100+ bullish), premium banners, BexTools sync, DexScreener auto-fill, swap routing from ads.
+- **Benefits:** A project storefront and discovery layer built for post-launch teams—not a generic market-cap directory.
 
-**Freelancer Marketplace:**
-- **Features:** Verified service provider profiles, categorized services, integrated reviews, integrated booking system, Trust Score & Risk Gauge vetting system, On-Chain Resume with EAS attestations.
-- **Benefits:** Streamline the process of finding specialized talent in the Web3 space with unprecedented transparency and verifiable credentials.
+**Grow — Community & distribution:**
+- **Features:** Twitter/Facebook raids, Telegram bot, HyperSpace listener boosts, PR packages, points-driven engagement.
+- **Benefits:** Stay loud in week one without stitching together five growth vendors.
 
-**Token Information Hub:**
-- **Features:** Real-time crypto tracking, community token reviews, market trend analysis.
-- **Benefits:** Empower users with data to make informed decisions.
+**Hire — Freelancer marketplace:**
+- **Features:** Verified profiles, categories, reviews, booking, Trust Score & Risk Gauge, On-Chain Resume (EAS on Base), crypto/fiat escrow.
+- **Benefits:** Hire launch help with crypto-native workflows and verifiable reputation.
+
+**Get paid — AquaPay & AquaSwap:**
+- **Features:** Multi-chain payment links, QR codes, non-custodial settlement, cross-chain swaps, browser extension.
+- **Benefits:** One payment and trading rail that ties listings, services, and community together.
+
+### 4.2. Supporting products
 
 **Game Hub:**
 - **Features:** Dedicated gaming project listings, forums for gamers, voting and developers, NFT asset showcases.
@@ -4274,13 +4290,9 @@ Aquads combines a suite of interrelated features into one platform:
 - **Features:** Robust project scheduling, secure watermarking for images, and an internal messaging system.
 - **Benefits:** Enhance communication, security, and workflow efficiency.
 
-**Twitter Raid Feature:**
-- **Features:** Earn points for engaging with targeted Twitter posts.
-- **Benefits:** Drive community engagement and reward active participation.
-
-**AquaPay Payment Link System:**
-- **Features:** Multi-chain payment pages, wallet integration, payment history tracking, real-time notifications, QR code generation, customizable themes, and competitive 0.5% transaction fees.
-- **Benefits:** Enable seamless cryptocurrency payments for freelancers, creators, and businesses without intermediaries, fees, or custody risks.
+**Market data & AquaFi:**
+- **Features:** Live prices, alerts, and community context; savings/staking for treasuries past launch week.
+- **Benefits:** Supporting tools—not the core pitch—for teams that scale beyond day 30.
     `,
     prevPage: { id: 'wp-market-opportunity', title: 'Market Opportunity' },
     nextPage: { id: 'wp-trust-score', title: 'Trust Score & Risk Gauge' },
@@ -4290,7 +4302,7 @@ Aquads combines a suite of interrelated features into one platform:
     title: 'Trust Score & Risk Gauge',
     description: 'Industry-first comprehensive freelancer vetting system with Trust Score algorithm and Risk Gauge.',
     content: `
-## 4.2. Trust Score & Risk Gauge System
+## 4.3. Trust Score & Risk Gauge System
 
 > **Industry Innovation:** Aquads has developed a sophisticated Trust Score Algorithm and Risk Gauge system that provides clients with transparent, data-driven insights into freelancer reliability.
 

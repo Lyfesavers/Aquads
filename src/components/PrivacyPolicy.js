@@ -7,7 +7,7 @@ const PrivacyPolicy = () => {
     <div className="h-screen overflow-y-auto text-white">
       <Helmet>
         <title>Privacy Policy - Aquads</title>
-        <meta name="description" content="Privacy Policy for Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
+        <meta name="description" content="Privacy Policy for Aquads — the launch stack for new crypto projects (listings, growth tools, marketplace, payments)." />
       </Helmet>
 
       {/* Fixed Background */}

@@ -7,7 +7,7 @@ const Terms = () => {
     <div className="h-screen overflow-y-auto text-white">
       <Helmet>
         <title>Terms & Conditions - Aquads</title>
-        <meta name="description" content="Terms & Conditions for using Aquads - Web3 Crypto SuperHub & Freelancer Marketplace" />
+        <meta name="description" content="Terms & Conditions for Aquads — the launch stack for new crypto projects (listings, growth tools, marketplace, payments)." />
       </Helmet>
 
       {/* Fixed Background */}

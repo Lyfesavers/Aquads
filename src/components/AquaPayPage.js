@@ -1394,7 +1394,7 @@ const AquaPayPage = ({ currentUser }) => {
                 <a href="https://aquads.xyz/aquaswap" className="hover:text-cyan-400 transition-colors">AquaSwap</a>
               </div>
             </div>
-            <p className="text-slate-700 text-xs">© {new Date().getFullYear()} Aquads • Web3 Crypto SuperHub</p>
+            <p className="text-slate-700 text-xs">© {new Date().getFullYear()} Aquads • The launch stack for new crypto projects</p>
           </div>
         </div>
       </footer>

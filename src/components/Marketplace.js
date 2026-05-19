@@ -1089,8 +1089,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white"
     >
       <Helmet>
-        <title>Web3 Freelancer Marketplace - Hire Crypto & Blockchain Experts | Aquads</title>
-        <meta name="description" content="Find and hire top Web3 freelancers for blockchain development, smart contracts, DeFi, NFTs, and crypto marketing. Pay with crypto on the Aquads marketplace." />
+        <title>Hire launch help — Web3 freelancers | Aquads</title>
+        <meta name="description" content="Hire launch help on Aquads: logos, social content, community mods, dev, and marketing for new crypto projects. Book and pay in crypto with escrow." />
         <link rel="canonical" href="https://www.aquads.xyz/marketplace" />
       </Helmet>
 

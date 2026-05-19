@@ -152,30 +152,30 @@ function getDefaultHtml() {
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Aquads — BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub." />
+    <meta name="description" content="Aquads — the launch stack for new crypto projects. List on the bubble map, grow with raids and PR, hire freelancers, and get paid with AquaPay." />
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
-    <meta name="twitter:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta name="twitter:description" content="BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
+    <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects">
+    <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
     
     <!-- Open Graph meta tags -->
-    <meta property="og:title" content="Aquads - Web3 Crypto SuperHub & Freelancer Marketplace">
-    <meta property="og:description" content="BexTools, swap, bubble ads, freelancer marketplace, AquaFi savings & live crypto data. Your all-in-one Web3 hub.">
+    <meta property="og:title" content="Aquads — The launch stack for new crypto projects">
+    <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
     <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
     <meta property="og:url" content="https://aquads.xyz">
     <meta property="og:type" content="website">
     
-    <title>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace</title>
+    <title>Aquads — The launch stack for new crypto projects</title>
     <script>
       // Redirect to the app
       window.location.href = '/learn';
     </script>
   </head>
   <body>
-    <h1>Aquads - Web3 Crypto SuperHub & Freelancer Marketplace</h1>
-    <p>Join the Aquads community - Your all-in-one Web3 Crypto SuperHub and Freelancer marketplace!</p>
+    <h1>Aquads — The launch stack for new crypto projects</h1>
+    <p>List on the bubble map, grow your community, hire launch help, and get paid with AquaPay — your first 30 days in one place.</p>
     <script>
       // Backup redirect
       setTimeout(function() {

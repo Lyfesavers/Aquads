@@ -34,80 +34,63 @@ const Whitepaper = () => {
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads Business Plan</h1>
 
-          <h2 className="text-2xl mb-8">All-in-One Web3 Crypto SuperHub, Freelancer Marketplace, and Game Hub</h2>
+          <h2 className="text-2xl mb-8">The launch stack for new crypto projects</h2>
           <p className="text-yellow-400 italic mb-8">(Note: This is not a token project – no crypto tokens will ever be created.)</p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">1. Executive Summary</h2>
             <p className="mb-4">
-              Aquads is an innovative platform built to serve the rapidly growing Web3 ecosystem by integrating three core components:
+              Aquads is the launch stack for new crypto projects—everything a team needs in the first 30 days after a token goes live, in one platform instead of five disconnected tools.
             </p>
+            <p className="mb-2 font-semibold">Four pillars:</p>
             <ul className="list-disc pl-6 mb-4">
-              <li>A Dynamic Advertising System tailored for crypto projects</li>
-              <li>A specialized Freelancer Marketplace connecting Web3 professionals with crypto projects</li>
-              <li>A Token Information Hub offering real-time cryptocurrency insights</li>
+              <li><strong>Get listed</strong> — Bubble map, vote-driven visibility, bumps, BexTools trending</li>
+              <li><strong>Grow</strong> — Raids, Telegram bot, HyperSpace, banners, PR packages</li>
+              <li><strong>Hire</strong> — Freelancer marketplace with escrow, Trust Score, on-chain resumes (EAS on Base)</li>
+              <li><strong>Get paid</strong> — AquaPay payment links and AquaSwap cross-chain trading</li>
             </ul>
             <p className="mb-4">
-              In addition, Aquads has expanded its offerings with new features:
+              Supporting capabilities include Game Hub, How-To &amp; blog, booking with watermarking, market data, AquaFi, and points/affiliate programs for teams and freelancers that scale past launch week.
             </p>
-            <ul className="list-disc pl-6 mb-4">
-              <li>A dedicated Game Hub for crypto and blockchain gaming projects</li>
-              <li>An extensive How-To & Blog Page with valuable articles and tutorials</li>
-              <li>A robust Booking System complete with watermarking for sent images, enhancing security and professionalism</li>
-              <li>An upgraded Internal Messaging System with payment functionality (coming soon)</li>
-              <li>A new Twitter Raid Feature that rewards users with points for engaging with Twitter posts</li>
-              <li><strong>Industry-First Trust Score & Risk Gauge System</strong> - A comprehensive freelancer vetting algorithm that evaluates ratings, completion rates, KYC status, and verified skills</li>
-              <li><strong>World's First On-Chain Freelancer Resume</strong> - Blockchain-verified credentials using Ethereum Attestation Service (EAS) on Base, enabling portable, tamper-proof professional reputation</li>
-              <li><strong>AquaPay - Multi-Chain Payment Link System</strong> - A non-custodial payment solution with competitive 0.5% transaction fees enabling users to receive cryptocurrency payments via personalized payment links across 8+ blockchain networks</li>
-              <li><strong>HyperSpace - Twitter Spaces Listener Boost</strong> - A service enabling projects to boost their Twitter Spaces with real listeners (100-5,000) for durations of 30 minutes to 2 hours, enhancing trending potential and audience reach</li>
-            </ul>
-            
-
-            
-            <p>Our mission is to bridge the gap between crypto projects, service providers, and the broader Web3 community while providing an integrated suite of tools designed to drive growth, foster transparency, and empower all users within the ecosystem.</p>
+            <p>Our mission is to help new and relaunching crypto projects list, grow, hire, and get paid with transparency—while giving freelancers a crypto-native place to deliver launch work and build portable reputation.</p>
+            <p className="mt-4 text-gray-400 text-sm">The canonical business plan lives at <Link to="/docs#wp-executive-summary" className="text-cyan-400 hover:underline">/docs</Link>.</p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">2. Business Description</h2>
             <h3 className="text-xl font-semibold mb-3">2.1. Problem Statement</h3>
-            <p className="mb-2">The Web3 space is expanding rapidly, yet the ecosystem lacks a unified platform that:</p>
-            <ul className="list-disc pl-6 mb-4">
-              <li>Provides specialized services in areas such as smart contract development, security audits, marketing, and community management.</li>
-              <li>Integrates dynamic advertising solutions specifically designed for crypto projects.</li>
-              <li>Offers real-time token data and market insights in a centralized, community-driven resource.</li>
-              <li>Caters to the growing demand in blockchain gaming, empowering game developers and enthusiasts.</li>
-              <li>Enables seamless, low-cost cryptocurrency payments without custodial risks or high transaction fees.</li>
-              <li>Supports multi-chain payment processing, allowing users to receive payments across different blockchain networks through a single interface.</li>
-            </ul>
+            <p className="mb-4">
+              Thousands of tokens launch every week. Most teams struggle not with deployment but with what comes next—juggling a listing site, raid tools, freelancers, and payments across separate products during the critical first 30 days.
+            </p>
 
             <h3 className="text-xl font-semibold mb-3">2.2. The Aquads Solution</h3>
-            <p className="mb-2">Aquads combines a suite of interrelated features into one platform:</p>
+            <p className="mb-2">Aquads is one launch stack with four pillars:</p>
             
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
+              <h4 className="text-lg font-semibold mb-2">Get listed (bubble map &amp; ads):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Interactive ad displays, vote-driven bubble bump visibility, and real-time ad management that increase project visibility.</li>
+                <li>Interactive bubbles, vote-driven bumps, BexTools trending, and swap routing from listings.</li>
               </ul>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Freelancer Marketplace:</h4>
+              <h4 className="text-lg font-semibold mb-2">Grow (community &amp; distribution):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>A dedicated space for freelancers with verification, integrated reviews, and streamlined service matching.</li>
+                <li>Raids, Telegram bot, HyperSpace, banners, and PR packages for post-launch momentum.</li>
               </ul>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Token Information Hub:</h4>
+              <h4 className="text-lg font-semibold mb-2">Hire (freelancer marketplace):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Real-time tracking of crypto prices, community-driven token reviews, and market analytics.</li>
+                <li>Verified talent, booking, escrow, Trust Score, and on-chain resumes for launch deliverables.</li>
               </ul>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">New Game Hub:</h4>
+              <h4 className="text-lg font-semibold mb-2">Get paid (AquaPay &amp; AquaSwap):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>A dedicated section for crypto gaming projects where developers and gamers can connect, share experiences, and collaborate on blockchain-based games.</li>
+                <li>Non-custodial payment links and cross-chain swaps; funds go to the project wallet.</li>
               </ul>
             </div>
 
@@ -162,7 +145,7 @@ const Whitepaper = () => {
             <ul className="list-disc pl-6 mb-4">
               <li><strong>Crypto Projects & Gaming Startups:</strong> Seeking reliable advertising and specialized freelance talent.</li>
               <li><strong>Web3 Freelancers & Agencies:</strong> Offering niche services tailored to the blockchain, crypto, and gaming industries.</li>
-              <li><strong>Investors & Analysts:</strong> Looking for up-to-date token information and market insights.</li>
+              <li><strong>Community leads:</strong> Running raids, Spaces, and engagement through Aquads growth tools.</li>
             </ul>
           </section>
 
@@ -172,26 +155,26 @@ const Whitepaper = () => {
             <h3 className="text-xl font-semibold mb-3">4.1. Core Components</h3>
             
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
+              <h4 className="text-lg font-semibold mb-2">Get listed (bubble map &amp; ads):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Dynamic bubble ad sizing, vote-based bump visibility (community bullish votes), real-time performance analytics, and premium ad banners.</li>
-                <li><strong>Benefits:</strong> Boost project visibility with targeted, performance-based advertising.</li>
+                <li><strong>Features:</strong> Bubble listings, vote-based bumps, premium banners, BexTools sync.</li>
+                <li><strong>Benefits:</strong> A storefront after launch—not a generic market-cap directory.</li>
               </ul>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Freelancer Marketplace:</h4>
+              <h4 className="text-lg font-semibold mb-2">Hire (freelancer marketplace):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Verified service provider profiles, categorized services, integrated reviews, integrated booking system, Trust Score & Risk Gauge vetting system, On-Chain Resume with EAS attestations.</li>
-                <li><strong>Benefits:</strong> Streamline the process of finding specialized talent in the Web3 space with unprecedented transparency and verifiable credentials.</li>
+                <li><strong>Features:</strong> Verified profiles, booking, escrow, Trust Score, on-chain resumes.</li>
+                <li><strong>Benefits:</strong> Hire launch help with crypto-native workflows.</li>
               </ul>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-lg font-semibold mb-2">Token Information Hub:</h4>
+              <h4 className="text-lg font-semibold mb-2">Get paid (AquaPay &amp; AquaSwap):</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li><strong>Features:</strong> Real-time crypto tracking, community token reviews, market trend analysis.</li>
-                <li><strong>Benefits:</strong> Empower users with data to make informed decisions.</li>
+                <li><strong>Features:</strong> Multi-chain payment links, cross-chain swaps, non-custodial settlement.</li>
+                <li><strong>Benefits:</strong> One payment rail for listings, services, and community.</li>
               </ul>
             </div>
 

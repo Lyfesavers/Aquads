@@ -526,7 +526,7 @@ export default async (request, context) => {
       <a href="${escapeHtml(pageUrl)}" class="cta">
         Trade on Aquads DEX →
       </a>
-      <div class="aquads-brand">Powered by <span>Aquads</span> • Web3 Crypto SuperHub</div>
+      <div class="aquads-brand">Powered by <span>Aquads</span> • Launch stack for new crypto projects</div>
     </div>
   </div>
 </body>
