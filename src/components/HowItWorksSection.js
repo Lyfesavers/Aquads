@@ -583,18 +583,16 @@ const HowItWorksSection = () => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] text-gray-300">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-            How Aquads works
+            How the launch stack works
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
           </div>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white font-display leading-tight">
-            Two paths.{' '}
-            <span className="whitespace-nowrap">One Web3 hub.</span>
+            Launch your project.{' '}
+            <span className="whitespace-nowrap">Or power someone else&apos;s.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            <span className="text-gradient-cyan font-semibold">Projects build momentum.</span>{' '}
-            <span className="text-gradient-purple font-semibold">Freelancers build reputation.</span>
-            <br className="hidden sm:block" />
-            Both compound — when you stay active.
+            <span className="text-gradient-cyan font-semibold">Project teams</span> run the 30-day playbook—list, grow, convert.{' '}
+            <span className="text-gradient-purple font-semibold">Freelancers</span> get hired and build on-chain reputation.
           </p>
         </motion.div>
 
@@ -632,7 +630,7 @@ const HowItWorksSection = () => {
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
             </div>
             <p className="text-gray-400 text-sm mt-1">
-              Momentum, not stagnation. Every perk fuels the flywheel.
+              The 30-day launch playbook. Every perk fuels momentum.
             </p>
           </div>
           <div className="text-left pl-4">
@@ -641,7 +639,7 @@ const HowItWorksSection = () => {
               <span>For freelancers</span>
             </div>
             <p className="text-gray-400 text-sm mt-1">
-              Reputation, on-chain. Every job compounds your trust score.
+              Get hired for launch work. Every job compounds your trust score.
             </p>
           </div>
         </div>

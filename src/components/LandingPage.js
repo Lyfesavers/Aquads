@@ -3996,6 +3996,122 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
   </motion.div>
 );
 
+// Four pillars of the launch stack — maps product surfaces to the "first 30 days" narrative
+const LaunchStackPillars = () => {
+  const pillars = [
+    {
+      step: '01',
+      icon: '🔮',
+      title: 'Get listed',
+      subtitle: 'Your storefront',
+      description: 'Free bubble listing with DexScreener auto-fill. Community votes, bumps, and BexTools trending put you in front of traders—not buried on page 47.',
+      link: '/home?openListProject=true',
+      cta: 'List your token',
+      accent: 'cyan',
+    },
+    {
+      step: '02',
+      icon: '🚀',
+      title: 'Grow community',
+      subtitle: 'Stay loud after launch',
+      description: 'Twitter & Facebook raids, Telegram bot, HyperSpace, banners, and PR packages—built for the hype phase when most projects go quiet.',
+      link: '/telegram-bot',
+      cta: 'Explore growth tools',
+      accent: 'sky',
+    },
+    {
+      step: '03',
+      icon: '👥',
+      title: 'Hire launch help',
+      subtitle: 'Graphics, mods, dev & more',
+      description: 'Web3-native freelancers for logos, social content, community mods, and smart contracts. Book, escrow, and pay in crypto—no Upwork friction.',
+      link: '/marketplace',
+      cta: 'Browse talent',
+      accent: 'purple',
+    },
+    {
+      step: '04',
+      icon: '💸',
+      title: 'Get paid',
+      subtitle: 'Payments & swaps in one stack',
+      description: 'AquaPay links for presales and merch. AquaSwap for cross-chain trading from your listing. Funds go to your wallet—no middleman.',
+      link: '/dashboard/aquapay',
+      cta: 'Set up AquaPay',
+      accent: 'teal',
+    },
+  ];
+
+  const accentClasses = {
+    cyan: 'border-cyan-500/30 hover:border-cyan-400/50 from-cyan-500/10',
+    sky: 'border-sky-500/30 hover:border-sky-400/50 from-sky-500/10',
+    purple: 'border-purple-500/30 hover:border-purple-400/50 from-purple-500/10',
+    teal: 'border-teal-500/30 hover:border-teal-400/50 from-teal-500/10',
+  };
+
+  return (
+    <section className="relative w-full py-12 md:py-20 px-4 md:px-6">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          className="text-center mb-8 md:mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-cyan-400/90 mb-3 font-semibold">
+            Your first 30 days
+          </p>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white font-display leading-tight">
+            One stack.{' '}
+            <span className="text-gradient-cyan">Not five platforms.</span>
+          </h2>
+          <p className="mt-3 text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            After your token launches on Pump.fun, Raydium, or Uniswap—the real work starts.
+            Listing, community, hires, and payments live here.
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {pillars.map((pillar, index) => (
+            <motion.div
+              key={pillar.step}
+              className={`relative flex flex-col p-5 md:p-6 rounded-2xl border bg-gradient-to-br to-slate-950/90 backdrop-blur-sm transition-colors duration-300 ${accentClasses[pillar.accent]}`}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.08, duration: 0.5 }}
+              whileHover={{ y: -4 }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                  {pillar.step}
+                </span>
+                <span className="text-2xl" aria-hidden>{pillar.icon}</span>
+              </motion.div>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{pillar.subtitle}</p>
+              <h3 className="text-lg md:text-xl font-bold text-white font-display mb-2">{pillar.title}</h3>
+              <p className="text-xs sm:text-sm text-gray-400 leading-relaxed flex-grow mb-4">{pillar.description}</p>
+              <Link
+                to={pillar.link}
+                className="text-xs sm:text-sm font-semibold text-cyan-300 hover:text-cyan-200 transition-colors inline-flex items-center gap-1"
+              >
+                {pillar.cta}
+                <span aria-hidden>→</span>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+};
+
 const LandingPage = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showContent, setShowContent] = useState(false);
@@ -4033,92 +4149,101 @@ const LandingPage = () => {
     }
   }, [mobileMenuOpen]);
 
+  // Launch-stack order: storefront → growth → hire → pay → supporting tools
   const features = [
     {
-      icon: '🔗',
-      title: 'On-Chain Resume',
-      description: 'World\'s first blockchain-verified freelancer credentials. Your skills, reputation, and work history permanently stored on Base via Ethereum Attestation Service. Portable, tamper-proof, and truly yours.',
-      gradient: 'from-emerald-900/40 to-slate-900/80',
-      size: 'large',
-      hasVisual: true
+      icon: '🔮',
+      title: 'Dynamic Token Bubbles',
+      description: 'Your project storefront—not a CoinGecko clone. Community votes, bump placement, BexTools trending, and swap routing from your bubble. Where new tokens get discovered after launch.',
+      gradient: 'from-cyan-900/40 to-slate-900/80'
+    },
+    {
+      icon: '🚀',
+      title: 'Twitter Raids',
+      description: 'Coordinated social campaigns to keep momentum in week one. Bumped projects unlock 20 free raids per day—then scale with points.',
+      gradient: 'from-sky-900/40 to-slate-900/80'
     },
     {
       icon: '🤖',
       title: 'Telegram Bot',
-      description: 'Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Exclusive community raid network: when groups opt-in, they automatically receive all raid notifications, maximizing your reach across participating communities. Premium features include custom branding on vote notifications, boost trending services for enhanced visibility, and vote + member boost packages.',
+      description: 'Raid automation across Twitter, Facebook, and opt-in Telegram communities. Custom vote branding, trending boosts, and member packages for projects that need to stay loud.',
       gradient: 'from-indigo-900/40 to-slate-900/80',
       link: '/telegram-bot',
       size: 'wide'
     },
     {
+      icon: '📢',
+      title: 'Marketing & PR',
+      description: 'Press when you are ready to graduate from raids. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ outlets. Packages from $99.',
+      gradient: 'from-pink-900/40 to-slate-900/80',
+      link: '/list-token-free',
+      size: 'wide'
+    },
+    {
       icon: '👥',
       title: 'Freelancer Marketplace',
-      description: 'Web3\'s premier talent marketplace. Complete booking system—get paid for your skills. Browse service listings, receive lead notifications, and connect directly with clients. No monthly fees, only pay for results.',
+      description: 'Hire launch help—logos, social graphics, community mods, dev, and marketing. Book, review, and pay in crypto with escrow. No monthly fees.',
       gradient: 'from-violet-900/40 to-slate-900/80',
       link: '/marketplace'
     },
     {
-      icon: '🎮',
-      title: 'Web3 Game Hub',
-      description: 'Discover and promote blockchain games. Connect developers with gamers.',
-      gradient: 'from-orange-900/40 to-slate-900/80'
-    },
-    {
-      icon: '🚀',
-      title: 'Twitter Raids',
-      description: 'Boost visibility with coordinated social campaigns. Earn points for engagement.',
-      gradient: 'from-sky-900/40 to-slate-900/80'
-    },
-    {
-      icon: '🎧',
-      title: 'HyperSpace',
-      description: 'Boost your Twitter Spaces with real listeners. Choose from 100 to 5,000 listeners for 30min to 2hr durations. 100% safe & undetectable — no risk to your account. Trusted by thousands of brands and influencers worldwide.',
-      gradient: 'from-purple-900/40 to-pink-900/80',
-      link: '/hyperspace'
-    },
-    {
       icon: '💸',
       title: 'AquaPay',
-      description: 'Create a single payment link to receive crypto on any chain. Share it with anyone, anywhere. Funds go directly to your wallet - no middleman, no fees from us. Accept payments on Solana, Ethereum, Base, Polygon, BNB Chain & more. Non-custodial & instant.',
+      description: 'Payment links for presales, merch, and services. Multi-chain, non-custodial, funds straight to your wallet—the rail that ties your launch stack together.',
       gradient: 'from-blue-900/40 to-cyan-900/80',
       link: '/dashboard/aquapay'
     },
     {
-      icon: '🔗',
-      title: 'Link in Bio',
-      description: 'Create a premium links page with custom colors, button styles, and background images. Monetize your page with banner ads — set your own prices, get paid in crypto directly via AquaPay.',
-      gradient: 'from-purple-900/40 to-amber-900/80',
-      link: '/dashboard/linkinbio'
-    },
-    {
-      icon: '🔮',
-      title: 'Dynamic Token Bubbles',
-      description: 'Interactive visualization of crypto projects based on community engagement. BexTools trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.',
-      gradient: 'from-cyan-900/40 to-slate-900/80'
-    },
-    {
       icon: '💱',
       title: 'AquaSwap',
-      description: 'Seamless token swapping across multiple chains with professional TradingView charts. Available as Chrome browser extension—swap tokens from any webpage instantly. Cross-chain bridging and professional trading tools.',
+      description: 'Cross-chain swaps and TradingView charts from your listing and browser extension. Let holders trade without leaving your ecosystem.',
       gradient: 'from-teal-900/40 to-slate-900/80',
       link: '/aquaswap'
     },
     {
+      icon: '🎧',
+      title: 'HyperSpace',
+      description: 'Pack your Twitter Spaces for AMAs and launch calls. 100–5,000 listeners, 30min–2hr—look credible from day one.',
+      gradient: 'from-purple-900/40 to-pink-900/80',
+      link: '/hyperspace'
+    },
+    {
+      icon: '🔗',
+      title: 'Link in Bio',
+      description: 'One link for your X bio: bubble, AquaPay, socials, and banners. Monetize traffic while your community grows.',
+      gradient: 'from-purple-900/40 to-amber-900/80',
+      link: '/dashboard/linkinbio'
+    },
+    {
+      icon: '🔗',
+      title: 'On-Chain Resume',
+      description: 'Verified freelancer credentials on Base (EAS)—so projects hiring launch help can trust who they book.',
+      gradient: 'from-emerald-900/40 to-slate-900/80',
+      size: 'large',
+      hasVisual: true
+    },
+    {
       icon: '⚡',
       title: 'Trust Score System',
-      description: 'AI-powered freelancer vetting with transparent reliability metrics.',
+      description: 'AI-powered vetting and reliability metrics when you hire from the marketplace.',
       gradient: 'from-purple-900/40 to-slate-900/80'
+    },
+    {
+      icon: '🎮',
+      title: 'Web3 Game Hub',
+      description: 'Optional engagement layer—run community game nights to keep holders active after launch week.',
+      gradient: 'from-orange-900/40 to-slate-900/80'
     },
     {
       icon: '📈',
       title: 'Live Market Data',
-      description: 'Real-time token tracking, price alerts, and community-driven reviews.',
+      description: 'Price tracking and alerts for your community—supporting tool, not the core pitch.',
       gradient: 'from-rose-900/40 to-slate-900/80'
     },
     {
       icon: '💼',
       title: 'Job Board',
-      description: 'Post and discover Web3 jobs. Browse hiring and for-hire positions from our platform. AI-powered job matching for freelancers. Remote, hybrid, and onsite opportunities.',
+      description: 'Post longer-term roles when your launch team becomes a real company.',
       gradient: 'from-amber-900/40 to-slate-900/80',
       link: '/marketplace',
       size: 'wide'
@@ -4126,25 +4251,17 @@ const LandingPage = () => {
     {
       icon: '💰',
       title: 'AquaFi',
-      description: 'Savings & Staking Hub. Professional DeFi management with yield farming and staking pools across multiple chains (Ethereum, Base, BNB). Built-in savings calculator. Earn passive income with automated optimization.',
+      description: 'DeFi savings and staking for treasuries that outgrow the launch phase.',
       gradient: 'from-green-900/40 to-slate-900/80',
       link: '/aquafi'
-    },
-    {
-      icon: '📢',
-      title: 'Marketing & PR',
-      description: 'Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.',
-      gradient: 'from-pink-900/40 to-slate-900/80',
-      link: '/list-token-free',
-      size: 'wide'
     }
   ];
 
   const stats = [
-    { value: 50, suffix: '+', label: 'Blockchains Supported' },
-    { value: 170, suffix: '+', label: 'Wallets Integrated' },
-    { value: 100, suffix: '+', label: 'Free Online Certificate Courses' },
-    { value: 30, suffix: '+', label: 'Service Categories' }
+    { value: 30, suffix: '', label: 'Day launch window' },
+    { value: 20, suffix: '/day', label: 'Free raids when bumped' },
+    { value: 30, suffix: '+', label: 'Hire categories' },
+    { value: 50, suffix: '+', label: 'Payment chains' }
   ];
 
   return (
@@ -4154,17 +4271,17 @@ const LandingPage = () => {
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       <Helmet>
-        <title>Aquads — Free token &amp; crypto project listings, Web3 hub &amp; freelancers</title>
+        <title>Aquads — The launch stack for new crypto projects</title>
         <meta
           name="description"
-          content="List your token or crypto project free on Aquads: interactive bubble map and Bubble Ads. Also hire Web3 freelancers, swap on AquaSwap, use AquaFi, games, and growth tools—in one platform."
+          content="After your token launches: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay—all in one launch stack. Free listing."
         />
         <link rel="canonical" href="https://www.aquads.xyz/" />
 
-        <meta property="og:title" content="Aquads — Free token &amp; crypto project listings &amp; Web3 hub" />
+        <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
         <meta
           property="og:description"
-          content="Free project &amp; token listings on a live bubble map, plus freelancers, DEX swaps, DeFi, and creator tools."
+          content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
         />
         <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
         <meta property="og:url" content="https://www.aquads.xyz/" />
@@ -4172,10 +4289,10 @@ const LandingPage = () => {
         <meta property="og:site_name" content="Aquads" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Aquads — Free token &amp; crypto project listings &amp; Web3 hub" />
+        <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
         <meta
           name="twitter:description"
-          content="Free project &amp; token listings on a live bubble map, plus freelancers, DEX swaps, DeFi, and creator tools."
+          content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
         />
         <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
 
@@ -4187,7 +4304,7 @@ const LandingPage = () => {
             "url": "https://www.aquads.xyz",
             "logo": "https://www.aquads.xyz/logo192.png",
             "description":
-              "Aquads: free crypto and token project listings on a bubble map, plus Web3 freelancers, DEX swaps, DeFi savings, and project growth tools.",
+              "Aquads is the launch stack for new crypto projects: bubble listings, growth tools, freelancer marketplace, and AquaPay payments.",
             "sameAs": [
               "https://twitter.com/_Aquads"
             ],
@@ -4205,7 +4322,7 @@ const LandingPage = () => {
             "@type": "WebSite",
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
-            "description": "Free token and crypto project listings, Web3 marketplace, DEX, and DeFi hub.",
+            "description": "The launch stack for new crypto projects—list, grow, hire, and get paid after token launch.",
             "potentialAction": {
               "@type": "SearchAction",
               "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
@@ -4431,10 +4548,10 @@ const LandingPage = () => {
               Log in
             </Link>
             <Link
-              to="/home?showCreateAccount=true"
+              to="/home?openListProject=true"
               className="px-4 py-2 rounded-full text-sm font-bold text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 transition-all shadow-lg shadow-cyan-500/20"
             >
-              Sign up
+              List your token
             </Link>
           </div>
 
@@ -4630,17 +4747,34 @@ const LandingPage = () => {
         style={{ opacity: heroOpacity }}
       >
         <h1 className="sr-only">
-          Aquads — free crypto and token listings, Web3 freelancers, swaps, and DeFi tools
+          Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid
         </h1>
+        <motion.div
+          className="absolute top-16 sm:top-20 md:top-24 left-0 right-0 z-30 text-center px-4 pointer-events-none"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.7 }}
+        >
+          <p className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-[0.35em] text-cyan-400/90 font-semibold mb-1.5 sm:mb-2">
+            The launch stack
+          </p>
+          <p className="text-sm sm:text-base md:text-lg text-white/90 font-display font-bold max-w-lg mx-auto leading-snug">
+            For new crypto projects
+          </p>
+          <p className="hidden sm:block text-[11px] md:text-sm text-gray-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+            List · grow · hire · get paid — your first 30 days in one place
+          </p>
+        </motion.div>
+
         {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
 
         {/* Left side - Projects */}
-        <Link to="/home" className="flex-1 h-full">
+        <Link to="/home?openListProject=true" className="flex-1 h-full">
           <HeroOrb 
             side="left"
-            label="PROJECTS"
-            sublabel="Discover & Promote Crypto Projects"
+            label="LAUNCH YOUR PROJECT"
+            sublabel="List free · grow community · convert holders"
           />
         </Link>
 
@@ -4648,8 +4782,8 @@ const LandingPage = () => {
         <Link to="/marketplace" className="flex-1 h-full">
           <HeroOrb 
             side="right"
-            label="FREELANCERS"
-            sublabel="Web3's Premier Talent Marketplace"
+            label="HIRE LAUNCH HELP"
+            sublabel="Design · mods · marketing · dev"
           />
         </Link>
 
@@ -4680,15 +4814,16 @@ const LandingPage = () => {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white mb-3 md:mb-4 leading-tight font-display">
-              The <span className="text-gradient-cyan">Web3</span> SuperHub for
+              What comes{' '}
+              <span className="text-gradient-cyan">after</span>
               <br />
-              <span className="text-gradient-purple">Projects & Talent</span>
+              <span className="text-gradient-purple">the token launches</span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 italic font-medium max-w-3xl mx-auto mb-4 md:mb-6 leading-relaxed">
-              Home of onchain resumes — where hiring meets onchain
+              Not another chart site. The stack for your first 30 days.
             </p>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              List your token or crypto project free on the bubble map, find verified Web3 freelancers, and connect across 50+ blockchains.
+              Thousands of tokens launch every week on Pump.fun, Raydium, and Uniswap. Most need the same things: a listing, community tools, freelancers, and payments—Aquads is all four.
             </p>
             <motion.div
               className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8 md:mb-10"
@@ -4697,13 +4832,13 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.15, duration: 0.5 }}
             >
-              <Link to="/home?showCreateAccount=true">
+              <Link to="/home?openListProject=true">
                 <motion.span
                   className="inline-flex px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/25"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Create free account
+                  List your token free
                 </motion.span>
               </Link>
               <Link
@@ -4739,6 +4874,8 @@ const LandingPage = () => {
         </div>
       </section>
 
+      <LaunchStackPillars />
+
       {/* How It Works — dual-rail (Projects: momentum / Freelancers: reputation) */}
       <HowItWorksSection />
 
@@ -4752,10 +4889,10 @@ const LandingPage = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-0.5 md:mb-1 font-display">
-              Everything You Need
+              Tools in your launch stack
             </h2>
             <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
-              A complete ecosystem for Web3 projects and professionals tools.
+              Core launch tools first—swipe through. DeFi, games, and more when you outgrow day 30.
             </p>
           </motion.div>
 
@@ -4774,26 +4911,29 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-4 md:mb-6 font-display">
-            Ready to <span className="text-gradient-cyan">Dive In</span>?
+            Ready to <span className="text-gradient-cyan">launch</span>?
           </h2>
+          <p className="text-gray-400 text-sm md:text-base max-w-xl mx-auto mb-6 md:mb-8">
+            Your token is live. Now get listed, grow the community, and hire help—without juggling five platforms.
+          </p>
           
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center flex-wrap">
-            <Link to="/home?showCreateAccount=true">
-              <motion.button
-                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm md:text-lg shadow-lg shadow-emerald-500/30"
-                whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(16, 185, 129, 0.45)' }}
-                whileTap={{ scale: 0.95 }}
-              >
-                ✨ Sign up free
-              </motion.button>
-            </Link>
-            <Link to="/home">
+            <Link to="/home?openListProject=true">
               <motion.button
                 className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-lg glow-cyan"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(34, 211, 238, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
-                🚀 Explore Projects
+                🚀 List your token free
+              </motion.button>
+            </Link>
+            <Link to="/telegram-bot">
+              <motion.button
+                className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm md:text-lg shadow-lg shadow-emerald-500/30"
+                whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(16, 185, 129, 0.45)' }}
+                whileTap={{ scale: 0.95 }}
+              >
+                📣 Growth tools
               </motion.button>
             </Link>
             
@@ -4803,7 +4943,7 @@ const LandingPage = () => {
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(192, 132, 252, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
-                👥 Find Talent
+                👥 Hire launch help
               </motion.button>
             </Link>
           </div>
@@ -4823,7 +4963,7 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
           >
-            No wallet required to browse • Free freelancer profiles
+            Free listing • No wallet required to browse
           </motion.p>
         </motion.div>
       </section>
