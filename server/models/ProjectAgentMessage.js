@@ -22,7 +22,7 @@ const projectAgentMessageSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['instant', 'thinking', 'agent', 'websearch', 'image'],
+    enum: ['instant', 'thinking', 'agent', 'websearch', 'image', 'video'],
     default: 'instant'
   },
   /** True when assistant message has a stored generated image */
@@ -39,6 +39,65 @@ const projectAgentMessageSchema = new mongoose.Schema({
   imageMimeType: {
     type: String,
     default: ''
+  },
+  /** True when assistant message has a stored generated video */
+  hasVideo: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  videoStatus: {
+    type: String,
+    enum: ['queued', 'in_progress', 'completed', 'failed', ''],
+    default: ''
+  },
+  videoOpenaiId: {
+    type: String,
+    default: ''
+  },
+  /** Relative filename under server/data/project-agent-videos */
+  videoStorageKey: {
+    type: String,
+    default: ''
+  },
+  videoMimeType: {
+    type: String,
+    default: 'video/mp4'
+  },
+  videoModel: {
+    type: String,
+    default: ''
+  },
+  videoSize: {
+    type: String,
+    default: ''
+  },
+  videoSeconds: {
+    type: Number,
+    default: 0
+  },
+  /** Requested target length (15–30); may differ from billed seconds after extensions */
+  videoTargetSeconds: {
+    type: Number,
+    default: 0
+  },
+  /** Remaining extension segment lengths (e.g. [8] after a 20s base for 25s target) */
+  videoExtensionQueue: {
+    type: [Number],
+    default: []
+  },
+  videoPrompt: {
+    type: String,
+    default: ''
+  },
+  /** Wallet hold (cents) reserved when the render job started */
+  videoHoldCents: {
+    type: Number,
+    default: 0
+  },
+  videoProgress: {
+    type: Number,
+    default: null
   },
   usage: {
     prompt_tokens: { type: Number, default: 0 },

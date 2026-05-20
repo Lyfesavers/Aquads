@@ -27,6 +27,7 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 - Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch), Create image.
 - **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens.
 - **Create image** — OpenAI image generation, separate cost.
+- **Create video** — OpenAI Sora text-to-video, **15–30 seconds** (per-second billing; wallet hold then settle).
 - Top-up via AquaPay (USDC); 5% load fee on top of credit amount.
 
 ## Suggested first-week checklist

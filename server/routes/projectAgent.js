@@ -1,6 +1,8 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
 const auth = require('../middleware/auth');
 const Ad = require('../models/Ad');
 const ProjectAgentThread = require('../models/ProjectAgentThread');
@@ -10,6 +12,7 @@ const sharp = require('sharp');
 const {
   buildProjectAgentSystemPrompt,
   buildProjectImagePrompt,
+  buildProjectVideoPrompt,
   isPremiumListing
 } = require('../utils/projectAgentContext');
 const {
@@ -42,6 +45,21 @@ const {
   resolveImageModelPricing,
   estimateImageHoldUsd
 } = require('../utils/openaiImageCost');
+const {
+  openaiCreateVideoWithPlan,
+  openaiExtendVideo,
+  openaiRetrieveVideo,
+  openaiDownloadVideoContent
+} = require('../utils/openaiVideo');
+const {
+  calculateVideoGenerationCost,
+  estimateVideoHoldUsd,
+  normalizeModel,
+  normalizeSize,
+  normalizeSeconds,
+  planVideoSegments,
+  USER_VIDEO_SECONDS
+} = require('../utils/openaiVideoCost');
 const ProjectAgentTopup = require('../models/ProjectAgentTopup');
 const {
   grantStarterIfNeeded,
@@ -73,6 +91,21 @@ function buildAquaPayTopupUrl(topup) {
 
 const router = express.Router();
 
+const PROJECT_AGENT_VIDEO_DIR = path.join(__dirname, '../data/project-agent-videos');
+const VIDEO_MAX_BYTES =
+  Number(process.env.PROJECT_AGENT_VIDEO_MAX_BYTES) || 80 * 1024 * 1024;
+
+function ensureVideoDir() {
+  if (!fs.existsSync(PROJECT_AGENT_VIDEO_DIR)) {
+    fs.mkdirSync(PROJECT_AGENT_VIDEO_DIR, { recursive: true });
+  }
+}
+
+function videoFilePath(storageKey) {
+  const safe = path.basename(String(storageKey || ''));
+  return path.join(PROJECT_AGENT_VIDEO_DIR, safe);
+}
+
 const KIMI_BASE = (process.env.KIMI_API_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
 const KIMI_MODEL = process.env.PROJECT_AGENT_MODEL || process.env.KIMI_MODEL || 'kimi-k2.6';
 const CHAT_MODES = ['instant', 'thinking', 'agent'];
@@ -102,6 +135,11 @@ function messageHasImage(m) {
   return typeof b64 === 'string' && b64.length > 100;
 }
 
+function messageHasVideo(m) {
+  if (m?.hasVideo === true) return true;
+  return Boolean(m?.videoStorageKey && m?.videoStatus === 'completed');
+}
+
 function serializeMessage(m) {
   return {
     _id: m._id != null ? String(m._id) : m._id,
@@ -112,7 +150,14 @@ function serializeMessage(m) {
     usage: m.usage,
     costCents: m.costCents,
     createdAt: m.createdAt,
-    hasImage: messageHasImage(m)
+    hasImage: messageHasImage(m),
+    hasVideo: messageHasVideo(m),
+    videoStatus: m.videoStatus || '',
+    videoProgress: m.videoProgress ?? null,
+    videoModel: m.videoModel || '',
+    videoSize: m.videoSize || '',
+    videoSeconds: m.videoSeconds || 0,
+    videoTargetSeconds: m.videoTargetSeconds || m.videoSeconds || 0
   };
 }
 
@@ -129,6 +174,244 @@ async function assertMessageImageAccess(messageId, userId) {
     return { error: 'Not found.', status: 404 };
   }
   return { msg, thread };
+}
+
+async function assertMessageVideoAccess(messageId, userId) {
+  if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    return { error: 'Invalid message id.', status: 400 };
+  }
+  const msg = await ProjectAgentMessage.findById(messageId).select(
+    'threadId hasVideo videoStorageKey videoStatus videoMimeType'
+  );
+  if (!msg?.videoStorageKey || msg.videoStatus !== 'completed') {
+    return { error: 'Video not found.', status: 404 };
+  }
+  const thread = await ProjectAgentThread.findById(msg.threadId).select('userId adId');
+  if (!thread || String(thread.userId) !== String(userId)) {
+    return { error: 'Not found.', status: 404 };
+  }
+  const filePath = videoFilePath(msg.videoStorageKey);
+  if (!fs.existsSync(filePath)) {
+    return { error: 'Video file missing.', status: 404 };
+  }
+  return { msg, thread, filePath };
+}
+
+/**
+ * Poll OpenAI, download MP4, settle wallet hold. Idempotent when already completed.
+ */
+async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
+  if (assistantMsg.hasVideo && assistantMsg.videoStorageKey) {
+    return {
+      status: 'completed',
+      progress: 100,
+      message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
+    };
+  }
+
+  if (assistantMsg.videoStatus === 'failed') {
+    return {
+      status: 'failed',
+      error: assistantMsg.content || 'Video generation failed.',
+      message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
+    };
+  }
+
+  const videoId = assistantMsg.videoOpenaiId;
+  if (!videoId) {
+    return { status: 'failed', error: 'Missing video job id.' };
+  }
+
+  const job = await openaiRetrieveVideo(videoId);
+  const status = String(job.status || 'queued').toLowerCase();
+  const progress = Number(job.progress) || 0;
+
+  if (status === 'failed' || status === 'cancelled' || status === 'expired') {
+    const holdCents = assistantMsg.videoHoldCents || 0;
+    if (holdCents > 0) {
+      await releaseHold(userId, adId, holdCents, {
+        provider: 'openai',
+        mode: 'video',
+        reason: status,
+        videoOpenaiId: videoId
+      });
+    }
+    assistantMsg.videoStatus = 'failed';
+    assistantMsg.videoProgress = progress;
+    assistantMsg.videoHoldCents = 0;
+    assistantMsg.content = job?.error?.message || `Video generation ${status}.`;
+    await assistantMsg.save();
+    return {
+      status: 'failed',
+      progress,
+      error: assistantMsg.content,
+      message: serializeMessage(assistantMsg.toObject())
+    };
+  }
+
+  if (status !== 'completed') {
+    const mappedStatus = status === 'in_progress' ? 'in_progress' : 'queued';
+    assistantMsg.videoStatus = mappedStatus;
+    assistantMsg.videoProgress = progress;
+    await assistantMsg.save();
+    return {
+      status: mappedStatus,
+      progress,
+      message: serializeMessage(assistantMsg.toObject())
+    };
+  }
+
+  const pendingExtensions = Array.isArray(assistantMsg.videoExtensionQueue)
+    ? assistantMsg.videoExtensionQueue.filter((n) => n > 0)
+    : [];
+  if (pendingExtensions.length > 0) {
+    const nextSecs = pendingExtensions[0];
+    try {
+      const extJob = await openaiExtendVideo(assistantMsg.videoOpenaiId, assistantMsg.videoPrompt, {
+        seconds: nextSecs,
+        extendPrompt: `${assistantMsg.videoPrompt || ''} Continue the scene seamlessly with matching motion and style.`
+      });
+      assistantMsg.videoOpenaiId = extJob.id;
+      assistantMsg.videoExtensionQueue = pendingExtensions.slice(1);
+      assistantMsg.videoStatus = String(extJob.status || 'queued').toLowerCase();
+      assistantMsg.videoProgress = Number(extJob.progress) || 0;
+      await assistantMsg.save();
+      return {
+        status: assistantMsg.videoStatus,
+        progress: assistantMsg.videoProgress,
+        message: serializeMessage(assistantMsg.toObject())
+      };
+    } catch (extErr) {
+      console.error('[project-agent] video extension error:', extErr);
+      const holdCents = assistantMsg.videoHoldCents || 0;
+      if (holdCents > 0) {
+        await releaseHold(userId, adId, holdCents, {
+          provider: 'openai',
+          mode: 'video',
+          reason: 'extension_error'
+        });
+      }
+      assistantMsg.videoStatus = 'failed';
+      assistantMsg.videoHoldCents = 0;
+      assistantMsg.content = extErr.message || 'Video extension failed.';
+      await assistantMsg.save();
+      return {
+        status: 'failed',
+        error: assistantMsg.content,
+        message: serializeMessage(assistantMsg.toObject())
+      };
+    }
+  }
+
+  const claim = await ProjectAgentMessage.findOneAndUpdate(
+    {
+      _id: assistantMsg._id,
+      hasVideo: false,
+      videoStatus: { $nin: ['failed', 'completed'] }
+    },
+    { $set: { videoStatus: 'in_progress', videoProgress: progress } },
+    { new: true }
+  );
+
+  if (!claim) {
+    const fresh = await ProjectAgentMessage.findById(assistantMsg._id);
+    if (fresh?.hasVideo) {
+      return {
+        status: 'completed',
+        progress: 100,
+        message: serializeMessage(fresh.toObject())
+      };
+    }
+    return { status: 'in_progress', progress };
+  }
+
+  const holdCents = claim.videoHoldCents || 0;
+  let settleResult;
+  try {
+    const { buffer, mimeType } = await openaiDownloadVideoContent(videoId);
+    if (buffer.length > VIDEO_MAX_BYTES) {
+      throw new Error('Generated video exceeds size limit.');
+    }
+
+    ensureVideoDir();
+    const storageKey = `${String(claim._id)}.mp4`;
+    const filePath = videoFilePath(storageKey);
+    fs.writeFileSync(filePath, buffer);
+
+    const { costUsd, breakdown, method } = calculateVideoGenerationCost(job, {
+      model: claim.videoModel,
+      size: claim.videoSize,
+      seconds: claim.videoSeconds
+    });
+    const videoCostCents = usdToCents(costUsd);
+
+    settleResult = await settleHold(userId, adId, holdCents, videoCostCents, {
+      mode: 'video',
+      provider: 'openai',
+      model: job.model || claim.videoModel,
+      videoOpenaiId: videoId,
+      billingMethod: method,
+      costBreakdown: breakdown,
+      threadId: String(claim.threadId)
+    });
+
+    if (!settleResult?.settled) {
+      fs.unlink(filePath, () => {});
+      await releaseHold(userId, adId, holdCents, {
+        provider: 'openai',
+        mode: 'video',
+        reason: 'insufficient_balance'
+      });
+      claim.videoStatus = 'failed';
+      claim.videoHoldCents = 0;
+      claim.content = 'Insufficient balance to complete video billing.';
+      await claim.save();
+      return {
+        status: 'failed',
+        error: claim.content,
+        code: 'INSUFFICIENT_BALANCE',
+        message: serializeMessage(claim.toObject())
+      };
+    }
+
+    claim.hasVideo = true;
+    claim.videoStatus = 'completed';
+    claim.videoProgress = 100;
+    claim.videoStorageKey = storageKey;
+    claim.videoMimeType = mimeType || 'video/mp4';
+    claim.videoHoldCents = 0;
+    claim.costCents = videoCostCents;
+    claim.content = 'Generated video for your project.';
+    await claim.save();
+
+    return {
+      status: 'completed',
+      progress: 100,
+      costUsd: costUsd.toFixed(6),
+      costCents: videoCostCents,
+      billingMethod: method,
+      balanceUsd: walletResponse(settleResult.wallet).balanceUsd,
+      message: serializeMessage(claim.toObject())
+    };
+  } catch (err) {
+    console.error('[project-agent] video finalize error:', err);
+    if (holdCents > 0) {
+      await releaseHold(userId, adId, holdCents, {
+        provider: 'openai',
+        mode: 'video',
+        reason: 'finalize_error'
+      });
+    }
+    claim.videoStatus = 'failed';
+    claim.videoHoldCents = 0;
+    claim.content = err.message || 'Video download failed.';
+    await claim.save();
+    return {
+      status: 'failed',
+      error: claim.content,
+      message: serializeMessage(claim.toObject())
+    };
+  }
 }
 
 async function loadThread(threadId, userId, adId) {
@@ -180,6 +463,16 @@ router.get('/health', (req, res) => {
     service: 'project-agent',
     configured: !!getKimiKey(),
     imageGenerationConfigured: !!getOpenAiKey(),
+    videoGenerationConfigured: !!getOpenAiKey(),
+    videoModel: process.env.PROJECT_AGENT_VIDEO_MODEL || 'sora-2',
+    videoSecondsOptions: USER_VIDEO_SECONDS,
+    videoSecondsDefault: normalizeSeconds(process.env.PROJECT_AGENT_VIDEO_SECONDS || 15),
+    videoPricingPerSecondUsd: {
+      'sora-2': 0.1,
+      'sora-2-pro_720p': 0.3,
+      'sora-2-pro_1024p': 0.5,
+      'sora-2-pro_1080p': 0.7
+    },
     model: KIMI_MODEL,
     baseUrl: KIMI_BASE,
     imageModel: process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1',
@@ -364,7 +657,25 @@ router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
                 $gt: [{ $strLenCP: { $ifNull: ['$imageJpegBase64', ''] } }, 100]
               }
             }
-          }
+          },
+          hasVideo: {
+            $cond: {
+              if: { $eq: ['$hasVideo', true] },
+              then: true,
+              else: {
+                $and: [
+                  { $gt: [{ $strLenCP: { $ifNull: ['$videoStorageKey', ''] } }, 0] },
+                  { $eq: ['$videoStatus', 'completed'] }
+                ]
+              }
+            }
+          },
+          videoStatus: 1,
+          videoProgress: 1,
+          videoModel: 1,
+          videoSize: 1,
+          videoSeconds: 1,
+          videoTargetSeconds: 1
         }
       }
     ]);
@@ -869,6 +1180,224 @@ router.get('/image/:messageId', auth, async (req, res) => {
   } catch (err) {
     console.error('[project-agent] image serve error:', err);
     res.status(500).json({ error: 'Failed to load image.' });
+  }
+});
+
+const videoLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 4 : 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many video requests. Please wait a moment.' }
+});
+
+/** Start Sora text-to-video (hold wallet, poll /video-status/:messageId for completion) */
+router.post('/generate-video/:adId/:threadId', auth, videoLimiter, async (req, res) => {
+  if (!getOpenAiKey()) {
+    return res.status(503).json({ error: 'Video generation is not configured on the server.' });
+  }
+
+  const userContent = String(req.body?.message || '').trim();
+  if (!userContent || userContent.length > 4000) {
+    return res.status(400).json({ error: 'Describe the video you want (max 4000 characters).' });
+  }
+
+  const videoModel = normalizeModel(
+    req.body?.model || process.env.PROJECT_AGENT_VIDEO_MODEL || 'sora-2'
+  );
+  const videoSize = normalizeSize(
+    req.body?.size || process.env.PROJECT_AGENT_VIDEO_SIZE || '1280x720',
+    videoModel
+  );
+  const videoSeconds = normalizeSeconds(
+    req.body?.seconds || process.env.PROJECT_AGENT_VIDEO_SECONDS || 15
+  );
+  const segmentPlan = planVideoSegments(videoSeconds);
+  const holdUsd = estimateVideoHoldUsd(videoModel, videoSize, videoSeconds);
+  const holdCents = usdToCents(holdUsd);
+
+  try {
+    const { ad, user, error, status, code } = await loadProjectAgentScope(
+      req.params.adId,
+      req.user.username,
+      req.user.userId
+    );
+    if (error) return res.status(status).json({ error, code });
+
+    const { thread, error: tErr, status: tStatus } = await loadThread(
+      req.params.threadId,
+      req.user.userId,
+      ad.id
+    );
+    if (tErr) return res.status(tStatus).json({ error: tErr });
+
+    await grantStarterIfNeeded(req.user.userId, ad.id);
+
+    const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
+      provider: 'openai',
+      mode: 'video',
+      model: videoModel,
+      size: videoSize,
+      seconds: videoSeconds,
+      threadId: String(thread._id),
+      estimatedHoldUsd: holdUsd.toFixed(4)
+    });
+
+    if (!reservation) {
+      const wallet = await getOrCreateWallet(req.user.userId, ad.id);
+      return res.status(402).json({
+        error: `Insufficient balance. Video requires about $${holdUsd.toFixed(2)} available (${videoSeconds}s × ${videoModel}).`,
+        code: 'INSUFFICIENT_BALANCE',
+        balanceUsd: walletResponse(wallet).balanceUsd,
+        requiredUsd: holdUsd.toFixed(2)
+      });
+    }
+
+    await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'user',
+      content: userContent,
+      mode: 'video'
+    });
+
+    const prompt = buildProjectVideoPrompt(ad, userContent, user);
+    let openaiJob;
+    let extensionQueue = segmentPlan.extensions;
+    try {
+      const created = await openaiCreateVideoWithPlan(prompt, {
+        model: videoModel,
+        size: videoSize,
+        targetSeconds: videoSeconds,
+        plan: segmentPlan
+      });
+      openaiJob = created.job;
+      if (created.usedFallback && created.plan?.extensions) {
+        extensionQueue = created.plan.extensions;
+      }
+    } catch (genErr) {
+      await releaseHold(req.user.userId, ad.id, holdCents, {
+        provider: 'openai',
+        reason: 'openai_error',
+        mode: 'video'
+      });
+      throw genErr;
+    }
+
+    const assistantMsg = await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'assistant',
+      content: 'Generating video…',
+      mode: 'video',
+      videoStatus: String(openaiJob.status || 'queued').toLowerCase(),
+      videoOpenaiId: openaiJob.id,
+      videoProgress: Number(openaiJob.progress) || 0,
+      videoModel,
+      videoSize,
+      videoSeconds,
+      videoTargetSeconds: videoSeconds,
+      videoExtensionQueue: extensionQueue,
+      videoPrompt: prompt,
+      videoHoldCents: holdCents
+    });
+
+    if (thread.title === 'New chat') {
+      thread.title = userContent.slice(0, 80) || 'Video';
+      await thread.save();
+    } else {
+      thread.updatedAt = new Date();
+      await thread.save();
+    }
+
+    res.json({
+      userMessage: { role: 'user', content: userContent, mode: 'video' },
+      assistantMessage: serializeMessage(assistantMsg.toObject()),
+      messageId: String(assistantMsg._id),
+      videoOpenaiId: openaiJob.id,
+      status: assistantMsg.videoStatus,
+      progress: assistantMsg.videoProgress,
+      estimatedHoldUsd: holdUsd.toFixed(4),
+      videoModel,
+      videoSize,
+      videoSeconds,
+      balanceUsd: walletResponse(reservation.wallet).balanceUsd
+    });
+  } catch (err) {
+    console.error('[project-agent] generate-video error:', err);
+    const httpStatus = err.status && Number(err.status) >= 400 ? Number(err.status) : 500;
+    res.status(httpStatus).json({
+      error: err.message || 'Video generation failed.'
+    });
+  }
+});
+
+/** Poll video job, finalize billing when OpenAI completes */
+router.get('/video-status/:messageId', auth, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.messageId)) {
+      return res.status(400).json({ error: 'Invalid message id.' });
+    }
+
+    const msg = await ProjectAgentMessage.findById(req.params.messageId);
+    if (!msg || msg.mode !== 'video' || msg.role !== 'assistant') {
+      return res.status(404).json({ error: 'Video job not found.' });
+    }
+
+    const thread = await ProjectAgentThread.findById(msg.threadId).select('userId adId');
+    if (!thread || String(thread.userId) !== String(req.user.userId)) {
+      return res.status(404).json({ error: 'Not found.' });
+    }
+
+    const result = await syncProjectAgentVideoJob(msg, thread.adId, req.user.userId);
+    const httpStatus = result.code === 'INSUFFICIENT_BALANCE' ? 402 : 200;
+    res.status(httpStatus).json(result);
+  } catch (err) {
+    console.error('[project-agent] video-status error:', err);
+    res.status(500).json({ error: 'Failed to check video status.' });
+  }
+});
+
+/** Stream generated video (auth) */
+router.get('/video/:messageId', auth, async (req, res) => {
+  try {
+    const access = await assertMessageVideoAccess(req.params.messageId, req.user.userId);
+    if (access.error) return res.status(access.status).json({ error: access.error });
+
+    const stat = fs.statSync(access.filePath);
+    const mime = access.msg.videoMimeType || 'video/mp4';
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    return fs.createReadStream(access.filePath).pipe(res);
+  } catch (err) {
+    console.error('[project-agent] video serve error:', err);
+    res.status(500).json({ error: 'Failed to load video.' });
+  }
+});
+
+/** Download generated video as attachment */
+router.get('/download-video/:messageId', auth, async (req, res) => {
+  try {
+    const access = await assertMessageVideoAccess(req.params.messageId, req.user.userId);
+    if (access.error) return res.status(access.status).json({ error: access.error });
+
+    const meta = await ProjectAgentMessage.findById(req.params.messageId)
+      .select('createdAt')
+      .lean();
+    const stamp = meta?.createdAt
+      ? new Date(meta.createdAt).toISOString().replace(/[:.]/g, '-')
+      : Date.now().toString();
+    const filename = `aquads-skipper-video-${stamp}.mp4`;
+    const stat = fs.statSync(access.filePath);
+    const mime = access.msg.videoMimeType || 'video/mp4';
+
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'private, no-cache');
+    return fs.createReadStream(access.filePath).pipe(res);
+  } catch (err) {
+    console.error('[project-agent] video download error:', err);
+    res.status(500).json({ error: 'Failed to download video.' });
   }
 });
 

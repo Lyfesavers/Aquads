@@ -128,6 +128,27 @@ function isPremiumListing(ad) {
   return getListingTier(ad) === LISTING_TIER_PREMIUM;
 }
 
+/** OpenAI Sora prompt with light project branding context */
+function buildProjectVideoPrompt(ad, userPrompt, user = null) {
+  const profile = ad.projectProfile || {};
+  const bits = ad.isFreelancerScope
+    ? [
+        `Short marketing clip for Web3 freelancer "${user?.username || ad.title}".`,
+        user?.cv?.summary ? `Profile: ${trimBlock(user.cv.summary, 400)}.` : '',
+        `User request: ${trimBlock(userPrompt, 2000)}`,
+        'Cinematic motion, clear subject, no logos of other brands, no real public figures, no misleading profit claims.'
+      ]
+    : [
+        `Short promotional video for Web3/crypto project "${ad.title}".`,
+        ad.blockchain ? `Blockchain/ecosystem: ${ad.blockchain}.` : '',
+        profile.mission ? `Mission: ${trimBlock(profile.mission, 400)}.` : '',
+        `User request: ${trimBlock(userPrompt, 2000)}`,
+        'Dynamic camera, readable composition, suitable for social. No stock watermarks.',
+        'Do not depict guaranteed profits or misleading financial claims unless explicitly requested.'
+      ];
+  return bits.filter(Boolean).join(' ');
+}
+
 /** OpenAI image prompt with light project branding context */
 function buildProjectImagePrompt(ad, userPrompt, user = null) {
   const profile = ad.projectProfile || {};
@@ -152,6 +173,7 @@ function buildProjectImagePrompt(ad, userPrompt, user = null) {
 module.exports = {
   buildProjectAgentSystemPrompt,
   buildProjectImagePrompt,
+  buildProjectVideoPrompt,
   isPremiumListing,
   getMaxSystemChars
 };

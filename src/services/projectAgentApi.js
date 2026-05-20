@@ -109,8 +109,54 @@ export async function generateProjectAgentImage({ adId, threadId, token, message
   return data;
 }
 
+export async function generateProjectAgentVideo({
+  adId,
+  threadId,
+  token,
+  message,
+  model,
+  size,
+  seconds
+}) {
+  const res = await fetch(
+    `${API_URL}/project-agent/generate-video/${encodeURIComponent(adId)}/${encodeURIComponent(threadId)}`,
+    {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({ message, model, size, seconds })
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'Video generation failed');
+    err.code = data.code;
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+export async function fetchProjectAgentVideoStatus(messageId, token) {
+  const res = await fetch(
+    `${API_URL}/project-agent/video-status/${encodeURIComponent(messageId)}`,
+    { headers: authHeaders(token) }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'Failed to check video status');
+    err.code = data.code;
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
 export function projectAgentImageUrl(messageId, token) {
   return `${API_URL}/project-agent/image/${encodeURIComponent(messageId)}`;
+}
+
+export function projectAgentVideoUrl(messageId) {
+  return `${API_URL}/project-agent/video/${encodeURIComponent(messageId)}`;
 }
 
 /** Fetch image bytes with auth for <img src={blobUrl}> */
@@ -124,8 +170,23 @@ export async function fetchProjectAgentImageBlob(messageId, token) {
   return res.blob();
 }
 
+/** Fetch video bytes with auth for <video src={blobUrl}> */
+export async function fetchProjectAgentVideoBlob(messageId, token) {
+  const res = await fetch(projectAgentVideoUrl(messageId), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    throw new Error('Failed to load video');
+  }
+  return res.blob();
+}
+
 export function projectAgentImageDownloadUrl(messageId) {
   return `${API_URL}/project-agent/download/${encodeURIComponent(messageId)}`;
+}
+
+export function projectAgentVideoDownloadUrl(messageId) {
+  return `${API_URL}/project-agent/download-video/${encodeURIComponent(messageId)}`;
 }
 
 /** Trigger browser download (auth + Content-Disposition attachment). */
@@ -140,6 +201,34 @@ export async function downloadProjectAgentImage(messageId, token) {
 
   const blob = await res.blob();
   let filename = `aquads-project-agent-${messageId}.jpg`;
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="([^"]+)"/i);
+  if (match?.[1]) {
+    filename = match[1];
+  }
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadProjectAgentVideo(messageId, token) {
+  const res = await fetch(projectAgentVideoDownloadUrl(messageId), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to download video');
+  }
+
+  const blob = await res.blob();
+  let filename = `aquads-skipper-video-${messageId}.mp4`;
   const disposition = res.headers.get('Content-Disposition') || '';
   const match = disposition.match(/filename="([^"]+)"/i);
   if (match?.[1]) {

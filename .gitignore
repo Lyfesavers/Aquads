@@ -30,3 +30,6 @@ server/.env
 !.env.example
 *.log
 logs/
+
+# Skipper Agent generated videos (stored on disk)
+server/data/project-agent-videos/*.mp4

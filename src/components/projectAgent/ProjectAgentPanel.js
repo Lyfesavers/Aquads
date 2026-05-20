@@ -8,10 +8,13 @@ import {
   fetchProjectAgentMessages,
   streamProjectAgentChat,
   generateProjectAgentImage,
+  generateProjectAgentVideo,
+  fetchProjectAgentVideoStatus,
   createProjectAgentTopup,
   fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
 import ProjectAgentMessageImage from './ProjectAgentMessageImage';
+import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
 import './ProjectAgent.css';
@@ -24,15 +27,29 @@ const MODES = [
     label: 'Agent',
     hint: 'Web search, Python code & URL fetch ($0.005/search + tokens)'
   },
-  { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' }
+  { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' },
+  {
+    id: 'video',
+    label: 'Create video',
+    hint: 'Sora 15s or 30s clips (~$0.10/s at 720p; wallet hold then actual settle)'
+  }
 ];
+
+const VIDEO_SECONDS_OPTIONS = [15, 30];
+
+const VIDEO_POLL_MS = 12_000;
+const VIDEO_POLL_MAX = 80;
 
 function normalizeAgentMessages(msgs, generateData) {
   const list = (msgs || []).map((m) => ({
     ...m,
     _id: m._id != null ? String(m._id) : m._id,
     hasImage: Boolean(
-      m.hasImage || (m.role === 'assistant' && m.mode === 'image' && m._id)
+      m.hasImage || (m.role === 'assistant' && m.mode === 'image' && m._id && m.hasImage)
+    ),
+    hasVideo: Boolean(
+      m.hasVideo ||
+        (m.role === 'assistant' && m.mode === 'video' && (m.hasVideo || m.videoStatus === 'completed'))
     )
   }));
 
@@ -41,18 +58,31 @@ function normalizeAgentMessages(msgs, generateData) {
   if (!messageId) return list;
 
   const id = String(messageId);
-  const enriched = {
-    ...(assistant || {}),
-    _id: id,
-    role: 'assistant',
-    mode: 'image',
-    hasImage: true,
-    content: assistant?.content || 'Generated image for your project.'
-  };
+  const isVideo = (assistant?.mode || generateData?.assistantMessage?.mode) === 'video';
+
+  const enriched = isVideo
+    ? {
+        ...(assistant || {}),
+        _id: id,
+        role: 'assistant',
+        mode: 'video',
+        hasVideo: Boolean(assistant?.hasVideo || generateData?.status === 'completed'),
+        videoStatus: assistant?.videoStatus || generateData?.status || 'queued',
+        videoProgress: assistant?.videoProgress ?? generateData?.progress ?? null,
+        content: assistant?.content || 'Generating video…'
+      }
+    : {
+        ...(assistant || {}),
+        _id: id,
+        role: 'assistant',
+        mode: 'image',
+        hasImage: true,
+        content: assistant?.content || 'Generated image for your project.'
+      };
 
   const idx = list.findIndex((m) => String(m._id) === id);
   if (idx >= 0) {
-    list[idx] = { ...list[idx], ...enriched, hasImage: true };
+    list[idx] = { ...list[idx], ...enriched };
   } else {
     list.push(enriched);
   }
@@ -60,7 +90,16 @@ function normalizeAgentMessages(msgs, generateData) {
 }
 
 function messageShowsImage(m) {
-  return Boolean(m?._id && (m.hasImage || (m.role === 'assistant' && m.mode === 'image')));
+  return Boolean(m?._id && m.hasImage && m.mode === 'image');
+}
+
+function messageShowsVideo(m) {
+  return Boolean(m?._id && m.mode === 'video' && m.role === 'assistant');
+}
+
+function videoJobInFlight(m) {
+  const s = m?.videoStatus;
+  return s === 'queued' || s === 'in_progress' || (!s && !m?.hasVideo);
 }
 
 const LOAD_FEE_RATE = 0.05;
@@ -94,6 +133,7 @@ export default function ProjectAgentPanel({
   const [threadId, setThreadId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [mode, setMode] = useState('instant');
+  const [videoSeconds, setVideoSeconds] = useState(15);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -109,7 +149,15 @@ export default function ProjectAgentPanel({
   const [topupOpen, setTopupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
+  const videoPollAbortRef = useRef(null);
   const topupPreview = previewTopupClient(topupCreditUsd);
+
+  const updateVideoMessage = useCallback((messageId, patch) => {
+    const id = String(messageId);
+    setMessages((prev) =>
+      prev.map((m) => (String(m._id) === id ? { ...m, ...patch, _id: id } : m))
+    );
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -158,6 +206,66 @@ export default function ProjectAgentPanel({
     setWallet(w);
     return w;
   }, [token, adId]);
+
+  const pollVideoJob = useCallback(
+    async (messageId) => {
+      if (!token) return;
+      const id = String(messageId);
+      videoPollAbortRef.current = id;
+
+      for (let attempt = 0; attempt < VIDEO_POLL_MAX; attempt += 1) {
+        if (videoPollAbortRef.current !== id) return;
+
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, VIDEO_POLL_MS));
+        }
+
+        try {
+          const data = await fetchProjectAgentVideoStatus(id, token);
+          if (data.message) {
+            updateVideoMessage(id, data.message);
+          } else {
+            updateVideoMessage(id, {
+              videoStatus: data.status,
+              videoProgress: data.progress ?? null,
+              hasVideo: data.status === 'completed'
+            });
+          }
+
+          if (data.status === 'completed') {
+            setLastCost({
+              costUsd: data.costUsd,
+              balanceUsd: data.balanceUsd,
+              billingMethod: data.billingMethod
+            });
+            if (data.balanceUsd != null) {
+              setWallet((w) => (w ? { ...w, balanceUsd: data.balanceUsd } : w));
+            }
+            await refreshWallet();
+            videoPollAbortRef.current = null;
+            return;
+          }
+
+          if (data.status === 'failed') {
+            setError(data.error || 'Video generation failed');
+            if (data.code === 'INSUFFICIENT_BALANCE') {
+              await refreshWallet();
+            }
+            videoPollAbortRef.current = null;
+            return;
+          }
+        } catch (e) {
+          setError(e.message || 'Failed to check video status');
+          videoPollAbortRef.current = null;
+          return;
+        }
+      }
+
+      setError('Video is taking longer than expected. Check back in this chat in a few minutes.');
+      videoPollAbortRef.current = null;
+    },
+    [token, updateVideoMessage, refreshWallet]
+  );
 
   useEffect(() => {
     if (searchParams.get('topup') !== 'success' || !token || !adId) return;
@@ -254,6 +362,24 @@ export default function ProjectAgentPanel({
     };
   }, [token, adId, threadId]);
 
+  useEffect(() => {
+    if (!token) return undefined;
+    const pending = messages.find(
+      (m) => m.role === 'assistant' && m.mode === 'video' && videoJobInFlight(m)
+    );
+    if (!pending?._id) return undefined;
+
+    const id = String(pending._id);
+    if (videoPollAbortRef.current === id) return undefined;
+
+    pollVideoJob(id);
+    return () => {
+      if (videoPollAbortRef.current === id) {
+        videoPollAbortRef.current = null;
+      }
+    };
+  }, [messages, token, pollVideoJob]);
+
   const handleTopup = async () => {
     if (!token || !adId || topupLoading) return;
     const preview = previewTopupClient(topupCreditUsd);
@@ -328,6 +454,41 @@ export default function ProjectAgentPanel({
     }
   };
 
+  const handleSendVideo = async (text) => {
+    setError('');
+    setLastCost(null);
+    setStreamingContent('Starting video render…');
+
+    try {
+      const data = await generateProjectAgentVideo({
+        adId,
+        threadId,
+        token,
+        message: text,
+        seconds: videoSeconds
+      });
+
+      const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
+      setMessages(normalizeAgentMessages(msgs, data));
+
+      if (data.balanceUsd != null) {
+        setWallet((w) => (w ? { ...w, balanceUsd: data.balanceUsd } : w));
+      }
+
+      const messageId = data.messageId || data.assistantMessage?._id;
+      if (messageId) {
+        pollVideoJob(String(messageId));
+      }
+    } catch (e) {
+      setError(e.message || 'Video generation failed');
+      if (e.code === 'INSUFFICIENT_BALANCE') {
+        await refreshWallet();
+      }
+    } finally {
+      setStreamingContent('');
+    }
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || !token || !adId || !threadId || sending) return;
@@ -343,6 +504,15 @@ export default function ProjectAgentPanel({
     if (mode === 'image') {
       try {
         await handleSendImage(text);
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
+    if (mode === 'video') {
+      try {
+        await handleSendVideo(text);
       } finally {
         setSending(false);
       }
@@ -634,6 +804,13 @@ export default function ProjectAgentPanel({
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
                 {messageShowsImage(m) && token ? (
                   <ProjectAgentMessageImage messageId={String(m._id)} token={token} />
+                ) : messageShowsVideo(m) && token ? (
+                  <ProjectAgentMessageVideo
+                    messageId={String(m._id)}
+                    token={token}
+                    status={m.videoStatus}
+                    progress={m.videoProgress}
+                  />
                 ) : m.role === 'assistant' ? (
                   <ProjectAgentMessageBody
                     content={m.content}
@@ -691,6 +868,31 @@ export default function ProjectAgentPanel({
               </p>
             )}
 
+            {mode === 'video' && (
+              <div className="project-agent-video-options">
+                <label className="project-agent-video-options-label" htmlFor="pa-video-seconds">
+                  Length
+                </label>
+                <select
+                  id="pa-video-seconds"
+                  className="project-agent-video-seconds-select"
+                  value={videoSeconds}
+                  onChange={(e) => setVideoSeconds(Number(e.target.value))}
+                  disabled={sending}
+                  aria-label="Video length in seconds"
+                >
+                  {VIDEO_SECONDS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}s
+                    </option>
+                  ))}
+                </select>
+                <span className="project-agent-video-options-hint">
+                  30s uses stitched segments (~32s billed max).
+                </span>
+              </div>
+            )}
+
             <div className="project-agent-input-row">
             <textarea
               value={input}
@@ -698,9 +900,11 @@ export default function ProjectAgentPanel({
               placeholder={
                 mode === 'image'
                   ? 'Describe the image you want (e.g. Twitter banner, logo concept)…'
-                  : mode === 'agent'
-                    ? 'Research, code, or fetch URLs — or ask Aquads how-to (uses platform guide)…'
-                    : 'Ask about your project…'
+                  : mode === 'video'
+                    ? 'Describe the clip (15s or 30s)…'
+                    : mode === 'agent'
+                      ? 'Research, code, or fetch URLs — or ask Aquads how-to (uses platform guide)…'
+                      : 'Ask about your project…'
               }
               rows={2}
               onKeyDown={(e) => {
@@ -717,7 +921,7 @@ export default function ProjectAgentPanel({
               onClick={handleSend}
               disabled={sending || !input.trim()}
             >
-              {sending ? '…' : mode === 'image' ? 'Create' : 'Send'}
+              {sending ? '…' : mode === 'image' || mode === 'video' ? 'Create' : 'Send'}
             </button>
             </div>
           </div>
