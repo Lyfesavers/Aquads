@@ -1,8 +1,8 @@
 const { isAquadsPlatformQuestion } = require('./aquadsPlatformDetect');
 const { KIMI_WEB_SEARCH_TOOL, webSearchToolResult } = require('./kimiWebSearch');
 
-/** Formula URIs to try (optional). Web search always uses builtin $web_search. */
-const DEFAULT_FORMULA_URIS = ['moonshot/code_runner:latest', 'moonshot/fetch:latest'];
+/** Optional Formula URIs. Web search is always builtin $web_search. Empty = no formula probes. */
+const DEFAULT_FORMULA_URIS = [];
 
 const KIMI_BUILTIN_WEB_SEARCH = KIMI_WEB_SEARCH_TOOL;
 
@@ -34,9 +34,10 @@ function formulaApiUrl(baseUrl, uri, suffix) {
 
 function parseFormulaUris() {
   const raw = process.env.PROJECT_AGENT_AGENT_FORMULAS;
-  const list = raw
-    ? raw.split(',').map((s) => normalizeFormulaUri(s.trim())).filter(Boolean)
-    : DEFAULT_FORMULA_URIS.map(normalizeFormulaUri);
+  const list =
+    raw !== undefined && raw !== null
+      ? raw.split(',').map((s) => normalizeFormulaUri(s.trim())).filter(Boolean)
+      : DEFAULT_FORMULA_URIS.map(normalizeFormulaUri);
   return [...new Set(list)].filter((u) => !u.includes('web-search'));
 }
 
@@ -73,7 +74,6 @@ async function loadAgentTools(apiKey, baseUrl) {
     if (!res.ok) {
       const msg = data?.error?.message || data?.message || `Failed to load tools (${res.status})`;
       skippedFormulas.push(`${uri}: ${msg}`);
-      console.warn(`[project-agent] Skipping formula ${uri}: ${msg}`);
       continue;
     }
 
@@ -83,7 +83,6 @@ async function loadAgentTools(apiKey, baseUrl) {
       if (!name) continue;
       if (name === 'web_search') continue;
       if (toolToUri[name]) {
-        console.warn(`[project-agent] Duplicate tool "${name}", keeping first mapping`);
         continue;
       }
       toolToUri[name] = uri;
@@ -211,7 +210,9 @@ async function runKimiAgentChat({
   }
 
   if (skippedFormulas.length) {
-    console.warn('[project-agent] Agent formulas skipped:', skippedFormulas.join('; '));
+    console.log(
+      `[project-agent] Agent optional tools unavailable (OK): ${skippedFormulas.join('; ')}. Using builtin $web_search.`
+    );
   }
 
   const working = [...messages];

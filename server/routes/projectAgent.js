@@ -206,12 +206,14 @@ router.get('/health', (req, res) => {
     webSearchCallUsd: getWebSearchCallUsd(),
     agentTools: {
       webSearch: 'builtin:$web_search',
-      optionalFormulas: (
-        process.env.PROJECT_AGENT_AGENT_FORMULAS || 'moonshot/code_runner:latest,moonshot/fetch:latest'
-      )
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
+      optionalFormulas:
+        process.env.PROJECT_AGENT_AGENT_FORMULAS !== undefined
+          ? process.env.PROJECT_AGENT_AGENT_FORMULAS.split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+      optionalFormulasHint:
+        'Set PROJECT_AGENT_AGENT_FORMULAS=moonshot/fetch:latest (comma-separated) if your Kimi key supports Formula tools'
     },
     limits: getLimits()
   });
