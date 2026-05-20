@@ -299,7 +299,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         <title>List your token free on Aquads — no-fee bubble map listings</title>
         <meta
           name="description"
-          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Optional Premium PR add-ons."
+          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Premium adds Skipper Agent AI ($5 starter credit) plus the full launch stack."
         />
         <link rel="canonical" href="https://www.aquads.xyz/list-token-free" />
         <meta property="og:type" content="website" />
@@ -572,7 +572,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 <strong className="text-white">Trading flow:</strong> your bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so degens tap through to live charts and swaps—not just a static banner.
               </li>
               <li>
-                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts—Premium adds the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, credits, and custom ping branding when bumped.
+                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts—Premium adds <strong className="text-white">Skipper Agent</strong> (AI co-pilot with <strong className="text-white">$5</strong> starter wallet credit), the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, credits, and custom ping branding when bumped.
               </li>
             </ul>
           </div>
@@ -684,6 +684,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
                   Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 20/day</strong> once bumped
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">Skipper Agent</strong> — Premium AI co-pilot for launch copy, plans, images &amp; web research; <strong className="text-white">$5</strong> prepaid starter credit on your listing wallet (top up anytime)
                 </span>
               </li>
               <li className="flex items-start gap-3">

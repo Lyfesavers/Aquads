@@ -176,7 +176,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Premium</strong> adds the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code>).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Premium</strong> adds <strong className="text-white">Skipper Agent</strong> (<strong className="text-white">$5</strong> starter AI wallet credit), the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code>).
         </li>
       </ul>
     </div>
@@ -990,7 +990,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">Adds BNB/Sol trending+volume program, PR/AMA stack, 1 complimentary 7-day homepage banner, ad credit, custom branding when bumped · 5 raids/day → 20 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">Skipper Agent AI + $5 starter credit · BNB/Sol trending+volume · PR/AMA · 7-day banner · ad credit · custom branding when bumped · 5 raids/day → 20 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1272,7 +1272,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">Full launch stack: PR, AMA, 1 complimentary 7-day homepage banner, credits, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">Skipper Agent + $5 AI credit · PR, AMA, 7-day banner, ad credit, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
                   </button>
                 </div>
 
@@ -1356,7 +1356,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for <strong className="text-white">Skipper Agent</strong> (<strong className="text-white">$5</strong> starter AI credit), PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1491,11 +1491,27 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <p className="text-gray-300 text-sm">Get $50 in free advertising credits to run ads on our partner platform across 1500+ platforms including Forbes, CoinTelegraph, and so much more</p>
                     </div>
                   </div>
+
+                  <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-cyan-900/25 rounded-lg border-2 border-cyan-500/50">
+                    <div className="bg-gradient-to-r from-cyan-500 to-teal-500 p-2 rounded-full flex-shrink-0">
+                      <FaRobot className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                        Skipper Agent
+                        <span className="bg-cyan-600 text-white px-2 py-0.5 rounded text-xs">Premium only</span>
+                      </h4>
+                      <p className="text-gray-300 text-sm">
+                        Your project&apos;s AI co-pilot on Aquads — marketing copy, launch checklists, image generation, and optional live web search. Includes a <strong className="text-white">$5</strong> prepaid starter balance on your listing wallet when you go live (pay-as-you-go after that; top up via AquaPay).
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
                     ✓ Everything in Starter + over $1000 in bundled launch services<br/>
+                    ✓ <strong className="text-green-200">Skipper Agent</strong> with <strong className="text-green-200">$5</strong> starter AI wallet credit (Premium only)<br/>
                     ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong> (vs 24h on Starter)<br/>
                     ✓ Admin review & refund if rejected<br/>
                     ✓ Optional Mintfunnel add-ons still available separately (step 2)
