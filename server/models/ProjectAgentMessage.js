@@ -25,6 +25,12 @@ const projectAgentMessageSchema = new mongoose.Schema({
     enum: ['instant', 'thinking', 'agent', 'image'],
     default: 'instant'
   },
+  /** True when assistant message has a stored generated image */
+  hasImage: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
   /** JPEG base64 when mode is image (assistant message) */
   imageJpegBase64: {
     type: String,

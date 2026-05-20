@@ -61,9 +61,15 @@ function getOpenAiKey() {
   return key && String(key).trim() ? String(key).trim() : null;
 }
 
+function messageHasImage(m) {
+  if (m?.hasImage === true) return true;
+  const b64 = m?.imageJpegBase64;
+  return typeof b64 === 'string' && b64.length > 100;
+}
+
 function serializeMessage(m) {
-  const row = {
-    _id: m._id,
+  return {
+    _id: m._id != null ? String(m._id) : m._id,
     role: m.role,
     content: m.content,
     reasoningContent: m.reasoningContent,
@@ -71,9 +77,8 @@ function serializeMessage(m) {
     usage: m.usage,
     costCents: m.costCents,
     createdAt: m.createdAt,
-    hasImage: Boolean(m.imageJpegBase64)
+    hasImage: messageHasImage(m)
   };
-  return row;
 }
 
 async function assertMessageImageAccess(messageId, userId) {
@@ -283,12 +288,30 @@ router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
     );
     if (tErr) return res.status(tStatus).json({ error: tErr });
 
-    const messages = await ProjectAgentMessage.find({ threadId: thread._id })
-      .sort({ createdAt: 1 })
-      .select(
-        'role content reasoningContent mode usage costCents createdAt imageJpegBase64 imageMimeType'
-      )
-      .lean();
+    const messages = await ProjectAgentMessage.aggregate([
+      { $match: { threadId: thread._id } },
+      { $sort: { createdAt: 1 } },
+      {
+        $project: {
+          role: 1,
+          content: 1,
+          reasoningContent: 1,
+          mode: 1,
+          usage: 1,
+          costCents: 1,
+          createdAt: 1,
+          hasImage: {
+            $cond: {
+              if: { $eq: ['$hasImage', true] },
+              then: true,
+              else: {
+                $gt: [{ $strLenCP: { $ifNull: ['$imageJpegBase64', ''] } }, 100]
+              }
+            }
+          }
+        }
+      }
+    ]);
 
     res.json({
       thread,
@@ -666,6 +689,7 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
       role: 'assistant',
       content: 'Generated image for your project.',
       mode: 'image',
+      hasImage: true,
       imageJpegBase64: jpegBase64,
       imageMimeType: 'image/jpeg',
       costCents: imageCostCents

@@ -20,6 +20,42 @@ const MODES = [
   { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' }
 ];
 
+function normalizeAgentMessages(msgs, generateData) {
+  const list = (msgs || []).map((m) => ({
+    ...m,
+    _id: m._id != null ? String(m._id) : m._id,
+    hasImage: Boolean(
+      m.hasImage || (m.role === 'assistant' && m.mode === 'image' && m._id)
+    )
+  }));
+
+  const assistant = generateData?.assistantMessage;
+  const messageId = generateData?.messageId || assistant?._id;
+  if (!messageId) return list;
+
+  const id = String(messageId);
+  const enriched = {
+    ...(assistant || {}),
+    _id: id,
+    role: 'assistant',
+    mode: 'image',
+    hasImage: true,
+    content: assistant?.content || 'Generated image for your project.'
+  };
+
+  const idx = list.findIndex((m) => String(m._id) === id);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...enriched, hasImage: true };
+  } else {
+    list.push(enriched);
+  }
+  return list;
+}
+
+function messageShowsImage(m) {
+  return Boolean(m?._id && (m.hasImage || (m.role === 'assistant' && m.mode === 'image')));
+}
+
 export default function ProjectAgentPanel({
   currentUser,
   initialAdId = null,
@@ -133,7 +169,7 @@ export default function ProjectAgentPanel({
     (async () => {
       try {
         const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-        if (!cancelled) setMessages(msgs || []);
+        if (!cancelled) setMessages(normalizeAgentMessages(msgs));
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
@@ -171,7 +207,7 @@ export default function ProjectAgentPanel({
       });
 
       const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-      setMessages(msgs || []);
+      setMessages(normalizeAgentMessages(msgs, data));
 
       setLastCost({
         costUsd: data.costUsd,
@@ -400,8 +436,8 @@ export default function ProjectAgentPanel({
           <div className="project-agent-messages">
             {messages.map((m, i) => (
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
-                {m.hasImage && m._id && token ? (
-                  <ProjectAgentMessageImage messageId={m._id} token={token} />
+                {messageShowsImage(m) && token ? (
+                  <ProjectAgentMessageImage messageId={String(m._id)} token={token} />
                 ) : m.role === 'assistant' ? (
                   <ProjectAgentMessageBody
                     content={m.content}

@@ -9,16 +9,25 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
   const [src, setSrc] = useState('');
   const [failed, setFailed] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const id = messageId != null ? String(messageId) : '';
 
   useEffect(() => {
-    if (!messageId || !token) return undefined;
+    if (!id || !token) return undefined;
     let cancelled = false;
     let objectUrl = '';
 
+    setFailed(false);
+    setSrc('');
+
     (async () => {
       try {
-        const blob = await fetchProjectAgentImageBlob(messageId, token);
+        const blob = await fetchProjectAgentImageBlob(id, token);
         if (cancelled) return;
+        if (!blob?.size) {
+          if (!cancelled) setFailed(true);
+          return;
+        }
         objectUrl = URL.createObjectURL(blob);
         setSrc(objectUrl);
       } catch {
@@ -30,22 +39,37 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [messageId, token]);
+  }, [id, token, retryKey]);
 
   const handleDownload = useCallback(async () => {
-    if (!messageId || !token || downloading) return;
+    if (!id || !token || downloading) return;
     setDownloading(true);
     try {
-      await downloadProjectAgentImage(messageId, token);
+      await downloadProjectAgentImage(id, token);
     } catch {
       /* ignore — user can retry */
     } finally {
       setDownloading(false);
     }
-  }, [messageId, token, downloading]);
+  }, [id, token, downloading]);
 
   if (failed) {
-    return <p className="project-agent-meta">Image unavailable</p>;
+    return (
+      <p className="project-agent-meta">
+        Image could not load.{' '}
+        <button
+          type="button"
+          className="project-agent-image-retry"
+          onClick={() => {
+            setFailed(false);
+            setSrc('');
+            setRetryKey((k) => k + 1);
+          }}
+        >
+          Retry
+        </button>
+      </p>
+    );
   }
 
   if (!src) {

@@ -9,7 +9,9 @@ export default function ProjectAgentPage({ currentUser }) {
   return (
     <div className="project-agent-page">
       <nav className="project-agent-page-nav">
-        <Link to="/home">← Back to Aquads</Link>
+        <Link to="/home" className="project-agent-page-back">
+          ← Back to Aquads home
+        </Link>
       </nav>
       <div className="project-agent-page-inner">
         <ProjectAgentPanel
