@@ -47,8 +47,8 @@ export default function ProjectAgentFab({ currentUser }) {
         type="button"
         className="project-agent-fab"
         onClick={() => setOpen(true)}
-        aria-label="Open Project Agent"
-        title="Aquads Project Agent"
+        aria-label="Open Aquads Project Agent"
+        title="Project Agent — for Premium listings"
       >
         <span>AI</span>
         <span>Agent</span>

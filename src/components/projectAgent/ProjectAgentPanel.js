@@ -471,8 +471,8 @@ export default function ProjectAgentPanel({
             </button>
           </div>
 
-          <p className="project-agent-last-cost">
-            Add funds (5% fee on load) — checkout coming soon.{' '}
+          <p className="project-agent-last-cost project-agent-footer-hint">
+            Balance top-up via AquaPay — coming soon (5% load fee).{' '}
             <Link to="/dashboard">Dashboard</Link>
           </p>
         </div>

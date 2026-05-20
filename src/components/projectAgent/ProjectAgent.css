@@ -535,6 +535,11 @@
   padding: 0 12px 8px;
 }
 
+.project-agent-footer-hint {
+  text-align: center;
+  line-height: 1.45;
+}
+
 .project-agent-image-wrap {
   margin-top: 4px;
 }
