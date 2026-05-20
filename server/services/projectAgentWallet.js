@@ -4,6 +4,8 @@ const { usdToCents, centsToUsd } = require('../utils/kimiCost');
 
 const ProjectAgentTopup = require('../models/ProjectAgentTopup');
 
+const { getStarterGrantCentsForAdId } = require('../utils/projectAgentScope');
+
 const STARTER_GRANT_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
 const LOAD_FEE_RATE = Number(process.env.PROJECT_AGENT_LOAD_FEE_RATE) || 0.05;
 
@@ -39,10 +41,11 @@ async function getOrCreateWallet(userId, adId) {
 async function grantStarterIfNeeded(userId, adId) {
   const wallet = await getOrCreateWallet(userId, adId);
   if (wallet.starterGranted) {
-    return { wallet, granted: false };
+    return { wallet, granted: false, grantCents: 0 };
   }
 
-  wallet.balanceCents += STARTER_GRANT_CENTS;
+  const grantCents = getStarterGrantCentsForAdId(adId);
+  wallet.balanceCents += grantCents;
   wallet.starterGranted = true;
   wallet.starterGrantedAt = new Date();
   await wallet.save();
@@ -51,12 +54,14 @@ async function grantStarterIfNeeded(userId, adId) {
     userId,
     adId,
     type: 'starter_grant',
-    amountCents: STARTER_GRANT_CENTS,
+    amountCents: grantCents,
     balanceAfterCents: wallet.balanceCents,
-    meta: { note: 'Premium listing Project Agent starter credit' }
+    meta: {
+      note: adId === 'freelancer' ? 'Freelancer Skipper Agent trial credit' : 'Premium listing Skipper Agent starter credit'
+    }
   });
 
-  return { wallet, granted: true, grantCents: STARTER_GRANT_CENTS };
+  return { wallet, granted: true, grantCents };
 }
 
 /**
@@ -203,12 +208,15 @@ async function deductUsage(userId, adId, costCents, meta = {}) {
   return { wallet, ledger };
 }
 
-function walletResponse(wallet) {
+function walletResponse(wallet, opts = {}) {
+  const grantCents =
+    opts.starterGrantCents != null ? opts.starterGrantCents : getStarterGrantCentsForAdId(wallet.adId);
   return {
     balanceCents: wallet.balanceCents,
     balanceUsd: centsToUsd(wallet.balanceCents),
     starterGranted: wallet.starterGranted,
-    starterGrantUsd: (STARTER_GRANT_CENTS / 100).toFixed(2)
+    starterGrantUsd: (grantCents / 100).toFixed(2),
+    scope: wallet.adId === 'freelancer' ? 'freelancer' : 'premium'
   };
 }
 

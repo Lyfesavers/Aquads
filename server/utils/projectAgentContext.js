@@ -14,55 +14,90 @@ function trimBlock(text, max = 4000) {
 }
 
 /**
- * Build system prompt from listing + mode.
- * @param {import('../models/Ad').Ad} ad
- * @param {'instant'|'thinking'|'agent'|'websearch'} mode — websearch kept for legacy messages
+ * Build system prompt from listing or freelancer workspace + mode.
+ * @param {object} ad
+ * @param {'instant'|'thinking'|'agent'|'websearch'} mode
+ * @param {object} [user] — required for freelancer scope (cv context)
  */
-function buildProjectAgentSystemPrompt(ad, mode) {
+function buildProjectAgentSystemPrompt(ad, mode, user = null) {
   const profile = ad.projectProfile || {};
-  const tier = getListingTier(ad);
+  const isFreelancer = Boolean(ad.isFreelancerScope);
 
-  const lines = [
-    'You are Skipper Agent, the Aquads AI co-pilot for crypto/Web3 project teams.',
-    'You help with marketing copy, documentation drafts, launch checklists, and project messaging.',
-    'Ground answers in the project context below. If information is missing, say so.',
-    'You cannot browse aquads.xyz directly; use the Aquads platform guide below for product how-to.',
-    'Do not provide financial advice, price predictions, or guarantees. Outputs are drafts for human review.',
-    ''
-  ];
+  const lines = isFreelancer
+    ? [
+        'You are Skipper Agent, the Aquads AI co-pilot for Web3 freelancers.',
+        'Help with proposals, client messaging, portfolio copy, skill positioning, and marketplace presence on Aquads.',
+        'Ground answers in the freelancer profile below. If information is missing, say so.',
+        'You cannot browse aquads.xyz directly; use the Aquads platform guide below for product how-to.',
+        'Do not provide financial advice or guarantees. Outputs are drafts for human review.',
+        ''
+      ]
+    : [
+        'You are Skipper Agent, the Aquads AI co-pilot for crypto/Web3 project teams.',
+        'You help with marketing copy, documentation drafts, launch checklists, and project messaging.',
+        'Ground answers in the project context below. If information is missing, say so.',
+        'You cannot browse aquads.xyz directly; use the Aquads platform guide below for product how-to.',
+        'Do not provide financial advice, price predictions, or guarantees. Outputs are drafts for human review.',
+        ''
+      ];
 
   const playbook = loadAquadsPlaybook();
   if (playbook) {
     lines.push('## Aquads platform guide', playbook, '');
   }
 
-  lines.push(
-    '## Project',
-    `Name: ${trimBlock(ad.title, 200)}`,
-    `Blockchain: ${trimBlock(ad.blockchain || 'unknown', 80)}`,
-    `Listing tier: ${tier}`,
-    `URL: ${trimBlock(ad.url, 500)}`,
-    `Pair: ${trimBlock(ad.pairAddress, 200)}`
-  );
+  if (isFreelancer && user) {
+    const cv = user.cv || {};
+    lines.push('## Freelancer profile', `Username: ${trimBlock(user.username, 80)}`);
+    if (cv.fullName) lines.push(`Name: ${trimBlock(cv.fullName, 120)}`);
+    if (cv.summary) lines.push('', '### Summary', trimBlock(cv.summary));
+    if (Array.isArray(cv.skills) && cv.skills.length) {
+      lines.push('', '### Skills', cv.skills.slice(0, 24).map((s) => trimBlock(s, 80)).join(', '));
+    }
+    if (Array.isArray(cv.experience) && cv.experience.length) {
+      lines.push('', '### Experience');
+      cv.experience.slice(0, 8).forEach((e) => {
+        lines.push(
+          `- ${trimBlock(e.position, 80)} at ${trimBlock(e.company, 80)}: ${trimBlock(e.description, 300)}`
+        );
+      });
+    }
+    if (Array.isArray(cv.education) && cv.education.length) {
+      lines.push('', '### Education');
+      cv.education.slice(0, 6).forEach((e) => {
+        lines.push(`- ${trimBlock(e.degree, 80)} — ${trimBlock(e.institution, 120)} (${trimBlock(e.field, 80)})`);
+      });
+    }
+  } else {
+    const tier = getListingTier(ad);
+    lines.push(
+      '## Project',
+      `Name: ${trimBlock(ad.title, 200)}`,
+      `Blockchain: ${trimBlock(ad.blockchain || 'unknown', 80)}`,
+      `Listing tier: ${tier}`,
+      `URL: ${trimBlock(ad.url, 500)}`,
+      `Pair: ${trimBlock(ad.pairAddress, 200)}`
+    );
 
-  if (profile.about) lines.push('', '### About', trimBlock(profile.about));
-  if (profile.mission) lines.push('', '### Mission', trimBlock(profile.mission));
-  if (profile.recentUpdate) lines.push('', '### Recent update', trimBlock(profile.recentUpdate));
+    if (profile.about) lines.push('', '### About', trimBlock(profile.about));
+    if (profile.mission) lines.push('', '### Mission', trimBlock(profile.mission));
+    if (profile.recentUpdate) lines.push('', '### Recent update', trimBlock(profile.recentUpdate));
 
-  if (Array.isArray(profile.milestones) && profile.milestones.length) {
-    lines.push('', '### Milestones');
-    profile.milestones.slice(0, 12).forEach((m) => {
-      lines.push(
-        `- ${trimBlock(m.title, 120)} (${trimBlock(m.status, 40)}): ${trimBlock(m.summary, 300)}`
-      );
-    });
-  }
+    if (Array.isArray(profile.milestones) && profile.milestones.length) {
+      lines.push('', '### Milestones');
+      profile.milestones.slice(0, 12).forEach((m) => {
+        lines.push(
+          `- ${trimBlock(m.title, 120)} (${trimBlock(m.status, 40)}): ${trimBlock(m.summary, 300)}`
+        );
+      });
+    }
 
-  if (Array.isArray(profile.team) && profile.team.length) {
-    lines.push('', '### Team');
-    profile.team.slice(0, 10).forEach((m) => {
-      lines.push(`- ${trimBlock(m.name, 80)} — ${trimBlock(m.role, 80)}: ${trimBlock(m.bio, 200)}`);
-    });
+    if (Array.isArray(profile.team) && profile.team.length) {
+      lines.push('', '### Team');
+      profile.team.slice(0, 10).forEach((m) => {
+        lines.push(`- ${trimBlock(m.name, 80)} — ${trimBlock(m.role, 80)}: ${trimBlock(m.bio, 200)}`);
+      });
+    }
   }
 
   if (mode === 'agent' || mode === 'websearch') {
@@ -94,9 +129,16 @@ function isPremiumListing(ad) {
 }
 
 /** OpenAI image prompt with light project branding context */
-function buildProjectImagePrompt(ad, userPrompt) {
+function buildProjectImagePrompt(ad, userPrompt, user = null) {
   const profile = ad.projectProfile || {};
-  const bits = [
+  const bits = ad.isFreelancerScope
+    ? [
+        `Professional personal-brand visual for Web3 freelancer "${user?.username || ad.title}".`,
+        user?.cv?.summary ? `Profile: ${trimBlock(user.cv.summary, 400)}.` : '',
+        `User request: ${trimBlock(userPrompt, 2000)}`,
+        'High quality, sharp, suitable for profile or social. No stock watermarks.'
+      ]
+    : [
     `Professional marketing visual for Web3/crypto project "${ad.title}".`,
     ad.blockchain ? `Blockchain/ecosystem: ${ad.blockchain}.` : '',
     profile.mission ? `Mission: ${trimBlock(profile.mission, 400)}.` : '',

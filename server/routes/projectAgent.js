@@ -13,6 +13,12 @@ const {
   isPremiumListing
 } = require('../utils/projectAgentContext');
 const {
+  FREELANCER_SCOPE_AD_ID,
+  userHasFreelancerAccess,
+  loadProjectAgentScope
+} = require('../utils/projectAgentScope');
+const User = require('../models/User');
+const {
   kimiUsageToUsd,
   usdToCents,
   centsToUsd,
@@ -125,26 +131,6 @@ async function assertMessageImageAccess(messageId, userId) {
   return { msg, thread };
 }
 
-async function loadOwnedPremiumAd(adId, username) {
-  const ad = await Ad.findOne({
-    id: adId,
-    owner: username,
-    status: { $in: ['active', 'approved'] }
-  }).lean();
-
-  if (!ad) {
-    return { error: 'Listing not found or you do not own this project.', status: 404 };
-  }
-  if (!isPremiumListing(ad)) {
-    return {
-      error: 'Skipper Agent is included with Premium listings. Upgrade this project to Premium to unlock.',
-      status: 403,
-      code: 'PREMIUM_REQUIRED'
-    };
-  }
-  return { ad };
-}
-
 async function loadThread(threadId, userId, adId) {
   const thread = await ProjectAgentThread.findOne({
     _id: threadId,
@@ -215,12 +201,19 @@ router.get('/health', (req, res) => {
       optionalFormulasHint:
         'Set PROJECT_AGENT_AGENT_FORMULAS=moonshot/fetch:latest (comma-separated) if your Kimi key supports Formula tools'
     },
-    limits: getLimits()
+    limits: getLimits(),
+    starterGrants: {
+      premiumUsd: ((Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500) / 100).toFixed(2),
+      freelancerUsd: ((Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) || 100) / 100).toFixed(2),
+      freelancerScopeAdId: FREELANCER_SCOPE_AD_ID
+    }
   });
 });
 
 router.get('/eligible', auth, async (req, res) => {
   try {
+    const dbUser = await User.findById(req.user.userId).select('userType image username').lean();
+
     const ads = await Ad.find({
       owner: req.user.username,
       status: { $in: ['active', 'approved'] }
@@ -234,8 +227,20 @@ router.get('/eligible', auth, async (req, res) => {
         id: a.id,
         title: a.title,
         logo: a.logo,
-        blockchain: a.blockchain
+        blockchain: a.blockchain,
+        scope: 'premium'
       }));
+
+    if (userHasFreelancerAccess(dbUser?.userType)) {
+      eligible.unshift({
+        id: FREELANCER_SCOPE_AD_ID,
+        title: 'My freelancer workspace',
+        logo: dbUser?.image || '',
+        blockchain: '',
+        scope: 'freelancer',
+        starterUsd: '1.00'
+      });
+    }
 
     res.json({ eligible, hasAccess: eligible.length > 0 });
   } catch (err) {
@@ -246,14 +251,14 @@ router.get('/eligible', auth, async (req, res) => {
 
 router.get('/wallet/:adId', auth, async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     const { wallet, granted, grantCents } = await grantStarterIfNeeded(req.user.userId, ad.id);
 
     res.json({
-      ad: { id: ad.id, title: ad.title, logo: ad.logo },
-      ...walletResponse(wallet),
+      ad: { id: ad.id, title: ad.title, logo: ad.logo, scope: ad.isFreelancerScope ? 'freelancer' : 'premium' },
+      ...walletResponse(wallet, { starterGrantCents: grantCents || undefined }),
       starterJustGranted: granted,
       grantCents: granted ? grantCents : 0,
       loadFeeRate: LOAD_FEE_RATE
@@ -266,7 +271,7 @@ router.get('/wallet/:adId', auth, async (req, res) => {
 
 router.get('/ledger/:adId', auth, async (req, res) => {
   try {
-    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
@@ -287,7 +292,7 @@ router.get('/ledger/:adId', auth, async (req, res) => {
 
 router.get('/threads/:adId', auth, async (req, res) => {
   try {
-    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     const threads = await ProjectAgentThread.find({
@@ -308,7 +313,7 @@ router.get('/threads/:adId', auth, async (req, res) => {
 
 router.post('/threads/:adId', auth, async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     await grantStarterIfNeeded(req.user.userId, ad.id);
@@ -329,7 +334,7 @@ router.post('/threads/:adId', auth, async (req, res) => {
 
 router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
   try {
-    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -398,7 +403,11 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
   let holdCents = 0;
 
   try {
-    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, user, error, status, code } = await loadProjectAgentScope(
+      req.params.adId,
+      req.user.username,
+      req.user.userId
+    );
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -417,7 +426,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       .lean();
     history.reverse();
 
-    const systemPrompt = buildProjectAgentSystemPrompt(ad, storedMode);
+    const systemPrompt = buildProjectAgentSystemPrompt(ad, storedMode, user);
     const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
     const maxTokens = resolveMaxOutputTokens({
       mode: storedMode,
@@ -661,7 +670,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
   } catch (err) {
     if (holdCents > 0) {
       try {
-        const { ad } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+        const { ad } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
         if (ad) {
           await releaseHold(req.user.userId, ad.id, holdCents, {
             provider: 'kimi',
@@ -710,7 +719,11 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
   const holdCents = usdToCents(holdUsd);
 
   try {
-    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, user, error, status, code } = await loadProjectAgentScope(
+      req.params.adId,
+      req.user.username,
+      req.user.userId
+    );
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -748,7 +761,7 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
       mode: 'image'
     });
 
-    const prompt = buildProjectImagePrompt(ad, userContent);
+    const prompt = buildProjectImagePrompt(ad, userContent, user);
     let pngBase64;
     let usage;
     let quality;
@@ -890,7 +903,7 @@ router.get('/download/:messageId', auth, async (req, res) => {
 /** Create AquaPay checkout for wallet top-up (credit + 5% fee on top) */
 router.post('/topup/:adId', auth, async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
     const creditUsd = Number(req.body?.amountUsd);
