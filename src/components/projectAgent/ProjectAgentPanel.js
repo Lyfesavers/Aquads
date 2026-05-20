@@ -20,6 +20,11 @@ const MODES = [
   { id: 'instant', label: 'Instant', hint: 'Quick responses' },
   { id: 'thinking', label: 'Thinking', hint: 'Deeper reasoning' },
   { id: 'agent', label: 'Agent', hint: 'Plans & deliverables' },
+  {
+    id: 'websearch',
+    label: 'Web search',
+    hint: 'Live web search ($0.005/search + tokens; thinking off)'
+  },
   { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' }
 ];
 
@@ -95,6 +100,7 @@ export default function ProjectAgentPanel({
   const [streamingReasoning, setStreamingReasoning] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [lastCost, setLastCost] = useState(null);
+  const [searchStatus, setSearchStatus] = useState('');
   const [topupCreditUsd, setTopupCreditUsd] = useState('20');
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupNotice, setTopupNotice] = useState('');
@@ -330,6 +336,7 @@ export default function ProjectAgentPanel({
     setStreamingContent('');
     setStreamingReasoning('');
     setLastCost(null);
+    setSearchStatus('');
 
     if (mode === 'image') {
       try {
@@ -353,21 +360,36 @@ export default function ProjectAgentPanel({
         message: text,
         mode,
         onEvent: (evt) => {
+          if (evt.type === 'searching') {
+            setSearchStatus(
+              evt.searchNumber > 1
+                ? `Searching the web (${evt.searchNumber})…`
+                : 'Searching the web…'
+            );
+          }
           if (evt.type === 'reasoning') {
             reasoning += evt.delta || '';
             setStreamingReasoning(reasoning);
           }
           if (evt.type === 'content') {
+            setSearchStatus('');
             content += evt.delta || '';
             setStreamingContent(content);
           }
           if (evt.type === 'done') {
-            setLastCost({ costUsd: evt.costUsd, balanceUsd: evt.balanceUsd });
+            setSearchStatus('');
+            setLastCost({
+              costUsd: evt.costUsd,
+              balanceUsd: evt.balanceUsd,
+              webSearchCalls: evt.webSearchCalls,
+              toolUsd: evt.toolUsd
+            });
             if (evt.balanceUsd != null) {
               setWallet((w) => (w ? { ...w, balanceUsd: evt.balanceUsd } : w));
             }
           }
           if (evt.type === 'error') {
+            setSearchStatus('');
             setError(evt.error || 'Error');
           }
         }
@@ -610,11 +632,14 @@ export default function ProjectAgentPanel({
                 )}
               </div>
             ))}
+            {sending && searchStatus && !streamingContent && (
+              <p className="project-agent-search-status">{searchStatus}</p>
+            )}
             {sending && (streamingReasoning || streamingContent) && (
               <div className="project-agent-msg assistant">
                 <ProjectAgentMessageBody
                   content={streamingContent}
-                  reasoningContent={streamingReasoning}
+                  reasoningContent={mode === 'websearch' ? '' : streamingReasoning}
                   isStreaming
                 />
               </div>
@@ -625,8 +650,17 @@ export default function ProjectAgentPanel({
           <div className="project-agent-composer">
             {lastCost && (
               <p className="project-agent-last-cost">
-                Last message: −${parseFloat(lastCost.costUsd).toFixed(4)} · Balance $
-                {lastCost.balanceUsd}
+                Last message: −${parseFloat(lastCost.costUsd).toFixed(4)}
+                {lastCost.webSearchCalls > 0 && (
+                  <>
+                    {' '}
+                    ({lastCost.webSearchCalls} search
+                    {lastCost.webSearchCalls === 1 ? '' : 'es'}
+                    {lastCost.toolUsd ? ` · tool $${lastCost.toolUsd}` : ''})
+                  </>
+                )}
+                {' '}
+                · Balance ${lastCost.balanceUsd}
               </p>
             )}
 
@@ -643,7 +677,9 @@ export default function ProjectAgentPanel({
               placeholder={
                 mode === 'image'
                   ? 'Describe the image you want (e.g. Twitter banner, logo concept)…'
-                  : 'Ask about your project…'
+                  : mode === 'websearch'
+                    ? 'Ask anything (live web + Aquads guide). e.g. What should I do after listing?'
+                    : 'Ask about your project…'
               }
               rows={2}
               onKeyDown={(e) => {
@@ -660,7 +696,7 @@ export default function ProjectAgentPanel({
               onClick={handleSend}
               disabled={sending || !input.trim()}
             >
-              {sending ? '…' : mode === 'image' ? 'Create' : 'Send'}
+              {sending ? '…' : mode === 'image' ? 'Create' : mode === 'websearch' ? 'Search' : 'Send'}
             </button>
             </div>
           </div>

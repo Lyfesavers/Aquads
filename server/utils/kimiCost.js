@@ -93,6 +93,63 @@ function estimateKimiChatHoldCents(opts = {}) {
   return usdToCents(estimateKimiChatHoldUsd(opts));
 }
 
+/** Kimi $web_search per successful call — https://platform.kimi.ai/docs/pricing/tools */
+function getWebSearchCallUsd() {
+  const n = Number(process.env.PROJECT_AGENT_WEB_SEARCH_CALL_USD);
+  return Number.isFinite(n) && n >= 0 ? n : 0.005;
+}
+
+function mergeKimiUsage(usages = []) {
+  const merged = { prompt_tokens: 0, completion_tokens: 0, cached_tokens: 0, total_tokens: 0 };
+  for (const u of usages) {
+    if (!u) continue;
+    merged.prompt_tokens += Math.max(0, Number(u.prompt_tokens) || 0);
+    merged.completion_tokens += Math.max(0, Number(u.completion_tokens) || 0);
+    merged.cached_tokens += Math.max(0, Number(u.cached_tokens) || 0);
+    merged.total_tokens += Math.max(0, Number(u.total_tokens) || 0);
+  }
+  if (!merged.total_tokens) {
+    merged.total_tokens = merged.prompt_tokens + merged.completion_tokens;
+  }
+  return merged;
+}
+
+/**
+ * Total chat cost: summed token usage across tool-loop legs + $web_search call fees.
+ */
+function kimiChatCostUsd({ usages = [], webSearchCalls = 0, modelId = 'kimi-k2.6' }) {
+  const usage = mergeKimiUsage(usages);
+  const tokenUsd = kimiUsageToUsd(usage, modelId);
+  const calls = Math.max(0, Number(webSearchCalls) || 0);
+  const toolUsd = calls * getWebSearchCallUsd();
+  return {
+    usage,
+    tokenUsd,
+    toolUsd,
+    webSearchCalls: calls,
+    totalUsd: tokenUsd + toolUsd
+  };
+}
+
+/**
+ * Pre-flight hold for web search mode (multi-round + large search context + tool fees).
+ */
+function estimateKimiWebSearchHoldUsd(opts = {}) {
+  const { input, output } = resolveModelPricing(opts.modelId || 'kimi-k2.6');
+  const baseHold = estimateKimiChatHoldUsd({ ...opts, mode: 'instant' });
+  const searchTokens =
+    Number(process.env.PROJECT_AGENT_WEB_SEARCH_TOKEN_ESTIMATE) || 12000;
+  const maxSearches = Math.max(1, Number(process.env.PROJECT_AGENT_WEB_SEARCH_MAX_CALLS) || 2);
+  const searchInputUsd = (searchTokens * input) / 1_000_000;
+  const toolFees = maxSearches * getWebSearchCallUsd();
+  const buffer = Number(process.env.PROJECT_AGENT_WEB_SEARCH_HOLD_BUFFER) || 1.35;
+  return (baseHold * 1.75 + searchInputUsd + toolFees) * buffer;
+}
+
+function estimateKimiWebSearchHoldCents(opts = {}) {
+  return usdToCents(estimateKimiWebSearchHoldUsd(opts));
+}
+
 module.exports = {
   MODEL_PRICING_PER_M,
   resolveModelPricing,
@@ -101,5 +158,10 @@ module.exports = {
   centsToUsd,
   approximateTokens,
   estimateKimiChatHoldUsd,
-  estimateKimiChatHoldCents
+  estimateKimiChatHoldCents,
+  getWebSearchCallUsd,
+  mergeKimiUsage,
+  kimiChatCostUsd,
+  estimateKimiWebSearchHoldUsd,
+  estimateKimiWebSearchHoldCents
 };

@@ -667,6 +667,23 @@
   padding: 0 12px 8px;
 }
 
+.project-agent-search-status {
+  margin: 0 16px 8px;
+  font-size: 0.8rem;
+  color: var(--pa-accent);
+  animation: project-agent-search-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes project-agent-search-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .project-agent-footer-hint {
   text-align: center;
   line-height: 1.45;

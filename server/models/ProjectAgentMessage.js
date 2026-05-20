@@ -22,7 +22,7 @@ const projectAgentMessageSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['instant', 'thinking', 'agent', 'image'],
+    enum: ['instant', 'thinking', 'agent', 'websearch', 'image'],
     default: 'instant'
   },
   /** True when assistant message has a stored generated image */
@@ -44,7 +44,8 @@ const projectAgentMessageSchema = new mongoose.Schema({
     prompt_tokens: { type: Number, default: 0 },
     completion_tokens: { type: Number, default: 0 },
     cached_tokens: { type: Number, default: 0 },
-    total_tokens: { type: Number, default: 0 }
+    total_tokens: { type: Number, default: 0 },
+    web_search_calls: { type: Number, default: 0 }
   },
   costCents: {
     type: Number,

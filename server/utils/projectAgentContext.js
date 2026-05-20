@@ -1,4 +1,5 @@
 const { getListingTier, LISTING_TIER_PREMIUM } = require('./listingTier');
+const { loadAquadsPlaybook } = require('./aquadsPlaybook');
 
 const MAX_SYSTEM_CHARS = 24000;
 
@@ -11,7 +12,7 @@ function trimBlock(text, max = 4000) {
 /**
  * Build system prompt from listing + mode.
  * @param {import('../models/Ad').Ad} ad
- * @param {'instant'|'thinking'|'agent'} mode
+ * @param {'instant'|'thinking'|'agent'|'websearch'} mode
  */
 function buildProjectAgentSystemPrompt(ad, mode) {
   const profile = ad.projectProfile || {};
@@ -21,15 +22,24 @@ function buildProjectAgentSystemPrompt(ad, mode) {
     'You are Skipper Agent, the Aquads AI co-pilot for crypto/Web3 project teams.',
     'You help with marketing copy, documentation drafts, launch checklists, and project messaging.',
     'Ground answers in the project context below. If information is missing, say so.',
+    'You cannot browse aquads.xyz directly; use the Aquads platform guide below for product how-to.',
     'Do not provide financial advice, price predictions, or guarantees. Outputs are drafts for human review.',
-    '',
+    ''
+  ];
+
+  const playbook = loadAquadsPlaybook();
+  if (playbook) {
+    lines.push('## Aquads platform guide', playbook, '');
+  }
+
+  lines.push(
     '## Project',
     `Name: ${trimBlock(ad.title, 200)}`,
     `Blockchain: ${trimBlock(ad.blockchain || 'unknown', 80)}`,
     `Listing tier: ${tier}`,
     `URL: ${trimBlock(ad.url, 500)}`,
     `Pair: ${trimBlock(ad.pairAddress, 200)}`
-  ];
+  );
 
   if (profile.about) lines.push('', '### About', trimBlock(profile.about));
   if (profile.mission) lines.push('', '### Mission', trimBlock(profile.mission));
@@ -51,7 +61,15 @@ function buildProjectAgentSystemPrompt(ad, mode) {
     });
   }
 
-  if (mode === 'agent') {
+  if (mode === 'websearch') {
+    lines.push(
+      '',
+      '## Mode: Web search',
+      'You have live internet search via the $web_search tool. Use it when the user needs current public information, news, or facts not in the Aquads guide.',
+      'For Aquads product steps (listing, bumps, raids, AquaPay, Premium, Skipper), prefer the Aquads platform guide above; search only if that is insufficient.',
+      'Thinking is disabled in this mode. Cite sources briefly when search was used.'
+    );
+  } else if (mode === 'agent') {
     lines.push(
       '',
       '## Mode: Agent',

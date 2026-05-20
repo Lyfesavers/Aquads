@@ -18,8 +18,13 @@ const {
   centsToUsd,
   resolveModelPricing,
   estimateKimiChatHoldCents,
-  estimateKimiChatHoldUsd
+  estimateKimiChatHoldUsd,
+  estimateKimiWebSearchHoldCents,
+  estimateKimiWebSearchHoldUsd,
+  kimiChatCostUsd,
+  getWebSearchCallUsd
 } = require('../utils/kimiCost');
+const { runKimiWebSearchChat } = require('../utils/kimiWebSearch');
 const { openaiGenerateImage } = require('../utils/openaiImage');
 const {
   calculateImageGenerationCost,
@@ -61,6 +66,7 @@ const KIMI_BASE = (process.env.KIMI_API_BASE_URL || 'https://api.moonshot.ai/v1'
 const KIMI_MODEL = process.env.PROJECT_AGENT_MODEL || process.env.KIMI_MODEL || 'kimi-k2.6';
 const MAX_HISTORY_MESSAGES = 40;
 const CHAT_MAX_TOKENS = 8192;
+const CHAT_MODES = ['instant', 'thinking', 'agent', 'websearch'];
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -183,7 +189,8 @@ router.get('/health', (req, res) => {
       inputUsd: pricing.input,
       outputUsd: pricing.output,
       cachedUsd: pricing.cached
-    }
+    },
+    webSearchCallUsd: getWebSearchCallUsd()
   });
 });
 
@@ -348,9 +355,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     return res.status(503).json({ error: 'Skipper Agent is not configured on the server.' });
   }
 
-  const mode = ['instant', 'thinking', 'agent'].includes(req.body?.mode)
-    ? req.body.mode
-    : 'instant';
+  const mode = CHAT_MODES.includes(req.body?.mode) ? req.body.mode : 'instant';
   const userContent = String(req.body?.message || '').trim();
   if (!userContent || userContent.length > 32000) {
     return res.status(400).json({ error: 'Message is required (max 32k characters).' });
@@ -381,26 +386,30 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     const systemPrompt = buildProjectAgentSystemPrompt(ad, mode);
     const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
 
-    holdCents = estimateKimiChatHoldCents({
+    const holdOpts = {
       systemPrompt,
       messages: kimiMessages,
       maxTokens: CHAT_MAX_TOKENS,
       modelId: KIMI_MODEL,
-      mode
-    });
+      mode: mode === 'websearch' ? 'instant' : mode
+    };
+
+    holdCents =
+      mode === 'websearch'
+        ? estimateKimiWebSearchHoldCents(holdOpts)
+        : estimateKimiChatHoldCents({ ...holdOpts, mode });
+
+    const estimatedHoldUsd =
+      mode === 'websearch'
+        ? estimateKimiWebSearchHoldUsd(holdOpts)
+        : estimateKimiChatHoldUsd({ ...holdOpts, mode });
 
     const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
       provider: 'kimi',
       mode,
       model: KIMI_MODEL,
       threadId: String(thread._id),
-      estimatedHoldUsd: estimateKimiChatHoldUsd({
-        systemPrompt,
-        messages: kimiMessages,
-        maxTokens: CHAT_MAX_TOKENS,
-        modelId: KIMI_MODEL,
-        mode
-      }).toFixed(4)
+      estimatedHoldUsd: estimatedHoldUsd.toFixed(4)
     });
 
     if (!reservation) {
@@ -420,38 +429,6 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       mode
     });
 
-    const kimiBody = {
-      model: KIMI_MODEL,
-      messages: kimiMessages,
-      stream: true,
-      stream_options: { include_usage: true },
-      max_tokens: CHAT_MAX_TOKENS,
-      thinking: modeToThinking(mode)
-    };
-
-    const kimiRes = await fetch(`${KIMI_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(kimiBody)
-    });
-
-    if (!kimiRes.ok) {
-      await releaseHold(req.user.userId, ad.id, holdCents, {
-        provider: 'kimi',
-        reason: 'kimi_error'
-      });
-      holdCents = 0;
-      const errData = await kimiRes.json().catch(() => ({}));
-      const msg = errData?.error?.message || 'AI request failed';
-      console.error('[project-agent] Kimi error:', kimiRes.status, msg);
-      return res.status(kimiRes.status >= 400 && kimiRes.status < 600 ? kimiRes.status : 502).json({
-        error: msg
-      });
-    }
-
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
@@ -460,7 +437,10 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     let fullContent = '';
     let fullReasoning = '';
     let usage = null;
-    let buffer = '';
+    let webSearchCalls = 0;
+    let costUsd = 0;
+    let costCents = 0;
+    let costBreakdown = null;
 
     const send = (obj) => {
       res.write(`data: ${JSON.stringify(obj)}\n\n`);
@@ -468,57 +448,131 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
 
     send({ type: 'start', mode });
 
-    const reader = kimiRes.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-        const payload = trimmed.slice(5).trim();
-        if (payload === '[DONE]') continue;
-
-        let parsed;
-        try {
-          parsed = JSON.parse(payload);
-        } catch {
-          continue;
+    if (mode === 'websearch') {
+      try {
+        const searchResult = await runKimiWebSearchChat({
+          apiKey,
+          baseUrl: KIMI_BASE,
+          model: KIMI_MODEL,
+          messages: kimiMessages,
+          maxTokens: CHAT_MAX_TOKENS,
+          send
+        });
+        fullContent = searchResult.content || '';
+        webSearchCalls = searchResult.webSearchCalls || 0;
+        costBreakdown = kimiChatCostUsd({
+          usages: searchResult.usages,
+          webSearchCalls,
+          modelId: KIMI_MODEL
+        });
+        usage = {
+          ...costBreakdown.usage,
+          web_search_calls: webSearchCalls
+        };
+        costUsd = costBreakdown.totalUsd;
+        costCents = usdToCents(costUsd);
+      } catch (searchErr) {
+        await releaseHold(req.user.userId, ad.id, holdCents, {
+          provider: 'kimi',
+          reason: 'kimi_websearch_error'
+        });
+        holdCents = 0;
+        if (!res.headersSent) {
+          return res.status(searchErr.status >= 400 && searchErr.status < 600 ? searchErr.status : 502).json({
+            error: searchErr.message || 'Web search failed'
+          });
         }
+        send({ type: 'error', error: searchErr.message || 'Web search failed' });
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+    } else {
+      const kimiBody = {
+        model: KIMI_MODEL,
+        messages: kimiMessages,
+        stream: true,
+        stream_options: { include_usage: true },
+        max_tokens: CHAT_MAX_TOKENS,
+        thinking: modeToThinking(mode)
+      };
 
-        if (parsed.usage) {
-          usage = parsed.usage;
-        }
+      const kimiRes = await fetch(`${KIMI_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(kimiBody)
+      });
 
-        const delta = parsed.choices?.[0]?.delta;
-        if (!delta) continue;
+      if (!kimiRes.ok) {
+        await releaseHold(req.user.userId, ad.id, holdCents, {
+          provider: 'kimi',
+          reason: 'kimi_error'
+        });
+        holdCents = 0;
+        const errData = await kimiRes.json().catch(() => ({}));
+        const msg = errData?.error?.message || 'AI request failed';
+        console.error('[project-agent] Kimi error:', kimiRes.status, msg);
+        send({ type: 'error', error: msg });
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
 
-        if (delta.reasoning_content) {
-          fullReasoning += delta.reasoning_content;
-          send({ type: 'reasoning', delta: delta.reasoning_content });
-        }
-        if (delta.content) {
-          fullContent += delta.content;
-          send({ type: 'content', delta: delta.content });
+      let buffer = '';
+      const reader = kimiRes.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+          const payload = trimmed.slice(5).trim();
+          if (payload === '[DONE]') continue;
+
+          let parsed;
+          try {
+            parsed = JSON.parse(payload);
+          } catch {
+            continue;
+          }
+
+          if (parsed.usage) {
+            usage = parsed.usage;
+          }
+
+          const delta = parsed.choices?.[0]?.delta;
+          if (!delta) continue;
+
+          if (delta.reasoning_content) {
+            fullReasoning += delta.reasoning_content;
+            send({ type: 'reasoning', delta: delta.reasoning_content });
+          }
+          if (delta.content) {
+            fullContent += delta.content;
+            send({ type: 'content', delta: delta.content });
+          }
         }
       }
-    }
 
-    const costUsd = kimiUsageToUsd(usage || {}, KIMI_MODEL);
-    const costCents = usdToCents(costUsd);
+      costUsd = kimiUsageToUsd(usage || {}, KIMI_MODEL);
+      costCents = usdToCents(costUsd);
+    }
 
     const settleResult = await settleHold(req.user.userId, ad.id, holdCents, costCents, {
       mode,
       model: KIMI_MODEL,
       usage: usage || {},
       threadId: String(thread._id),
-      provider: 'kimi'
+      provider: 'kimi',
+      webSearchCalls
     });
     holdCents = 0;
 
@@ -552,6 +606,9 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       usage: usage || {},
       costUsd: costUsd.toFixed(6),
       costCents,
+      webSearchCalls: mode === 'websearch' ? webSearchCalls : undefined,
+      toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,
+      tokenUsd: costBreakdown ? costBreakdown.tokenUsd.toFixed(6) : undefined,
       balanceUsd: settleResult
         ? walletResponse(settleResult.wallet).balanceUsd
         : undefined
