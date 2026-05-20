@@ -1037,7 +1037,7 @@ const AquaPayPage = ({ currentUser }) => {
             }}
             className="w-full py-3 mb-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-medium rounded-xl transition-all"
           >
-            Back to Project Agent
+            Back to Skipper Agent
           </button>
         ) : null}
 

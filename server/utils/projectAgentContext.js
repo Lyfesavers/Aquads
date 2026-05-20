@@ -18,7 +18,7 @@ function buildProjectAgentSystemPrompt(ad, mode) {
   const tier = getListingTier(ad);
 
   const lines = [
-    'You are Aquads Project Agent, an AI assistant for crypto/Web3 project teams.',
+    'You are Skipper Agent, the Aquads AI co-pilot for crypto/Web3 project teams.',
     'You help with marketing copy, documentation drafts, launch checklists, and project messaging.',
     'Ground answers in the project context below. If information is missing, say so.',
     'Do not provide financial advice, price predictions, or guarantees. Outputs are drafts for human review.',

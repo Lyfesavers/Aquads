@@ -13,6 +13,7 @@ import {
 } from '../../services/projectAgentApi';
 import ProjectAgentMessageImage from './ProjectAgentMessageImage';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
+import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
 import './ProjectAgent.css';
 
 const MODES = [
@@ -109,7 +110,7 @@ export default function ProjectAgentPanel({
   useEffect(() => {
     if (!token) {
       setLoading(false);
-      setGateError('Log in to use Project Agent.');
+      setGateError(`Log in to use ${SKIPPER_AGENT_NAME}.`);
       return;
     }
 
@@ -123,7 +124,7 @@ export default function ProjectAgentPanel({
         setEligible(list || []);
         if (!list?.length) {
           setGateError(
-            'Project Agent is included with Premium listings. Upgrade a project to Premium to unlock.'
+            `${SKIPPER_AGENT_NAME} is included with Premium listings. Upgrade a project to Premium to unlock.`
           );
           setLoading(false);
           return;
@@ -401,7 +402,7 @@ export default function ProjectAgentPanel({
     return (
       <div className="project-agent-root">
         <div className="project-agent-gate">
-          <p>Log in to use Aquads Project Agent.</p>
+          <p>Log in to use Aquads {SKIPPER_AGENT_NAME}.</p>
         </div>
       </div>
     );
@@ -410,7 +411,7 @@ export default function ProjectAgentPanel({
   if (loading) {
     return (
       <div className="project-agent-root">
-        <div className="project-agent-empty">Loading Project Agent…</div>
+        <div className="project-agent-empty">Loading {SKIPPER_AGENT_NAME}…</div>
       </div>
     );
   }
@@ -434,7 +435,14 @@ export default function ProjectAgentPanel({
     <div className="project-agent-root">
       <header className="project-agent-header">
         {adMeta?.logo && <img src={adMeta.logo} alt="" />}
-        <h2>{adMeta?.title || 'Project Agent'}</h2>
+        <h2>
+          <span className="project-agent-header-title">
+            {adMeta?.title || SKIPPER_AGENT_NAME}
+          </span>
+          {adMeta?.title ? (
+            <span className="project-agent-header-badge">{SKIPPER_AGENT_NAME}</span>
+          ) : null}
+        </h2>
         <button
           type="button"
           className={`project-agent-balance project-agent-balance-btn ${balanceLow ? 'low' : ''}`}

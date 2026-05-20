@@ -44,9 +44,26 @@
   font-weight: 600;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+  overflow: hidden;
+}
+
+.project-agent-header-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.project-agent-header-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pa-accent);
+  opacity: 0.9;
 }
 
 .project-agent-balance {
@@ -491,33 +508,84 @@
   height: 100%;
 }
 
-/* FAB */
+/* FAB — Skipper Agent */
 .project-agent-fab {
   position: fixed;
+  overflow: hidden;
   bottom: max(20px, env(safe-area-inset-bottom, 0px));
   right: max(16px, env(safe-area-inset-right, 0px));
   z-index: var(--pa-z-fab);
   touch-action: manipulation;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg, #0891b2, #22d3ee);
-  color: #041016;
-  font-weight: 800;
-  font-size: 0.65rem;
-  letter-spacing: 0.02em;
-  box-shadow: 0 8px 32px rgba(34, 211, 238, 0.35);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  background: linear-gradient(145deg, #0e7490 0%, #22d3ee 55%, #67e8f9 100%);
+  color: #041016;
+  box-shadow:
+    0 4px 24px rgba(34, 211, 238, 0.4),
+    0 0 0 1px rgba(4, 16, 22, 0.15) inset;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.project-agent-fab-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 55%);
+  pointer-events: none;
+}
+
+.project-agent-fab-icon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.project-agent-fab-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  align-items: flex-start;
+  line-height: 1.05;
+  text-align: left;
+}
+
+.project-agent-fab-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.project-agent-fab-role {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.82;
 }
 
 .project-agent-fab:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 36px rgba(34, 211, 238, 0.5),
+    0 0 0 1px rgba(4, 16, 22, 0.12) inset;
+}
+
+.project-agent-fab:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.project-agent-fab:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 3px;
 }
 
 .project-agent-drawer-backdrop {
@@ -891,9 +959,22 @@
   }
 
   .project-agent-fab {
-    width: 52px;
-    height: 52px;
-    font-size: 0.6rem;
+    min-height: 48px;
+    padding: 7px 14px 7px 10px;
+    gap: 8px;
+  }
+
+  .project-agent-fab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .project-agent-fab-name {
+    font-size: 0.88rem;
+  }
+
+  .project-agent-fab-role {
+    font-size: 0.58rem;
   }
 
   .project-agent-drawer {

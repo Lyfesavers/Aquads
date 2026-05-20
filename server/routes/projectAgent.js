@@ -127,7 +127,7 @@ async function loadOwnedPremiumAd(adId, username) {
   }
   if (!isPremiumListing(ad)) {
     return {
-      error: 'Project Agent is included with Premium listings. Upgrade this project to Premium to unlock.',
+      error: 'Skipper Agent is included with Premium listings. Upgrade this project to Premium to unlock.',
       status: 403,
       code: 'PREMIUM_REQUIRED'
     };
@@ -345,7 +345,7 @@ router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
 router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
   const apiKey = getKimiKey();
   if (!apiKey) {
-    return res.status(503).json({ error: 'Project Agent is not configured on the server.' });
+    return res.status(503).json({ error: 'Skipper Agent is not configured on the server.' });
   }
 
   const mode = ['instant', 'thinking', 'agent'].includes(req.body?.mode)
