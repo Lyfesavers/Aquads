@@ -16,6 +16,34 @@ export async function fetchProjectAgentEligible(token) {
   return data;
 }
 
+export async function createProjectAgentTopup(adId, token, amountUsd) {
+  const res = await fetch(
+    `${API_URL}/project-agent/topup/${encodeURIComponent(adId)}`,
+    {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({ amountUsd })
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'Failed to start top-up');
+    err.code = data.code;
+    throw err;
+  }
+  return data;
+}
+
+export async function fetchProjectAgentTopupStatus(topupId, token) {
+  const res = await fetch(
+    `${API_URL}/project-agent/topup-status/${encodeURIComponent(topupId)}`,
+    { headers: authHeaders(token) }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to load top-up status');
+  return data;
+}
+
 export async function fetchProjectAgentWallet(adId, token) {
   const res = await fetch(`${API_URL}/project-agent/wallet/${encodeURIComponent(adId)}`, {
     headers: authHeaders(token)

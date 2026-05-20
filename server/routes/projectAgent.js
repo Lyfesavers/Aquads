@@ -26,6 +26,7 @@ const {
   resolveImageModelPricing,
   estimateImageHoldUsd
 } = require('../utils/openaiImageCost');
+const ProjectAgentTopup = require('../models/ProjectAgentTopup');
 const {
   grantStarterIfNeeded,
   reserveBalance,
@@ -33,8 +34,26 @@ const {
   settleHold,
   walletResponse,
   getOrCreateWallet,
+  computeTopupPricing,
   LOAD_FEE_RATE
 } = require('../services/projectAgentWallet');
+
+const AQUADS_PUBLIC_ORIGIN = (process.env.AQUADS_PUBLIC_URL || 'https://www.aquads.xyz').replace(
+  /\/$/,
+  ''
+);
+
+function buildAquaPayTopupUrl(topup) {
+  const returnUrl = topup.returnPath.startsWith('http')
+    ? topup.returnPath
+    : `${AQUADS_PUBLIC_ORIGIN}${topup.returnPath}`;
+  const params = new URLSearchParams({
+    amount: String(topup.payUsd),
+    projectAgentTopupId: topup.topupId,
+    returnUrl
+  });
+  return `${AQUADS_PUBLIC_ORIGIN}/pay/aquads?${params.toString()}`;
+}
 
 const router = express.Router();
 
@@ -769,33 +788,87 @@ router.get('/download/:messageId', auth, async (req, res) => {
   }
 });
 
-/** Top-up placeholder — payment integration can wire here later */
+/** Create AquaPay checkout for wallet top-up (credit + 5% fee on top) */
 router.post('/topup/:adId', auth, async (req, res) => {
   try {
-    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
     if (error) return res.status(status).json({ error, code });
 
-    const amountUsd = Number(req.body?.amountUsd);
-    if (!Number.isFinite(amountUsd) || amountUsd < 5 || amountUsd > 500) {
+    const creditUsd = Number(req.body?.amountUsd);
+    if (!Number.isFinite(creditUsd) || creditUsd < 5 || creditUsd > 500) {
       return res.status(400).json({
-        error: 'Top-up amount must be between $5 and $500.',
+        error: 'Load amount must be between $5 and $500.',
         loadFeeRate: LOAD_FEE_RATE
       });
     }
 
-    return res.status(501).json({
-      error: 'Balance top-up checkout is coming soon. Contact support to add funds in the meantime.',
-      code: 'TOPUP_NOT_ENABLED',
+    const pricing = computeTopupPricing(creditUsd);
+    const topupId = `pat_${new mongoose.Types.ObjectId().toString()}`;
+    const returnPath = `/project-agent/${encodeURIComponent(ad.id)}?topup=success&topupId=${encodeURIComponent(topupId)}`;
+
+    const topup = await ProjectAgentTopup.create({
+      topupId,
+      userId: req.user.userId,
+      username: req.user.username,
+      adId: ad.id,
+      status: 'pending',
+      creditUsd: pricing.creditUsd,
+      creditCents: pricing.creditCents,
+      feeUsd: pricing.feeUsd,
+      feeCents: pricing.feeCents,
+      payUsd: pricing.payUsd,
+      payCents: pricing.payCents,
+      returnPath
+    });
+
+    const aquaPayUrl = buildAquaPayTopupUrl(topup);
+
+    res.json({
+      topupId: topup.topupId,
+      aquaPayUrl,
+      returnPath: topup.returnPath,
       loadFeeRate: LOAD_FEE_RATE,
       preview: {
-        payUsd: amountUsd,
-        feeUsd: Number((amountUsd * LOAD_FEE_RATE).toFixed(2)),
-        creditUsd: Number((amountUsd * (1 - LOAD_FEE_RATE)).toFixed(2))
+        creditUsd: pricing.creditUsd,
+        feeUsd: pricing.feeUsd,
+        payUsd: pricing.payUsd
       }
     });
   } catch (err) {
     console.error('[project-agent] topup error:', err);
     res.status(500).json({ error: 'Top-up failed.' });
+  }
+});
+
+/** Poll top-up status after AquaPay (optional) */
+router.get('/topup-status/:topupId', auth, async (req, res) => {
+  try {
+    const topup = await ProjectAgentTopup.findOne({
+      topupId: req.params.topupId,
+      userId: req.user.userId
+    }).lean();
+
+    if (!topup) {
+      return res.status(404).json({ error: 'Top-up not found.' });
+    }
+
+    let balanceUsd = null;
+    if (topup.status === 'paid') {
+      const wallet = await getOrCreateWallet(topup.userId, topup.adId);
+      balanceUsd = walletResponse(wallet).balanceUsd;
+    }
+
+    res.json({
+      topupId: topup.topupId,
+      status: topup.status,
+      creditUsd: topup.creditUsd,
+      payUsd: topup.payUsd,
+      feeUsd: topup.feeUsd,
+      balanceUsd
+    });
+  } catch (err) {
+    console.error('[project-agent] topup-status error:', err);
+    res.status(500).json({ error: 'Failed to load top-up status.' });
   }
 });
 

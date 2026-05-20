@@ -177,8 +177,18 @@ const AquaPayPage = ({ currentUser }) => {
   const hyperspaceOrderId = urlParams.get('hyperspaceOrderId');
   const linkBioAdId = urlParams.get('linkBioAdId');
   const voteBoostId = urlParams.get('voteBoostId');
+  const projectAgentTopupId = urlParams.get('projectAgentTopupId');
+  const returnUrl = urlParams.get('returnUrl');
   const urlAmount = urlParams.get('amount');
-  const isLockedPayment = !!(bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId || voteBoostId);
+  const isLockedPayment = !!(
+    bannerId ||
+    bumpId ||
+    tokenPurchaseId ||
+    hyperspaceOrderId ||
+    linkBioAdId ||
+    voteBoostId ||
+    projectAgentTopupId
+  );
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -871,7 +881,8 @@ const AquaPayPage = ({ currentUser }) => {
         tokenPurchaseId: tokenPurchaseId || null,
         hyperspaceOrderId: hyperspaceOrderId || null,
         linkBioAdId: linkBioAdId || null,
-        voteBoostId: voteBoostId || null
+        voteBoostId: voteBoostId || null,
+        projectAgentTopupId: projectAgentTopupId || null
       });
 
       // Fire emails in background (don't await) - won't block close or bog down UX
@@ -899,7 +910,20 @@ const AquaPayPage = ({ currentUser }) => {
       }
 
       // Close window immediately for auto-approved payment flows; don't wait for emails
-      if ((bannerId || bumpId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId || voteBoostId) && response.data.approvedItem) {
+      if (
+        (bannerId ||
+          bumpId ||
+          tokenPurchaseId ||
+          hyperspaceOrderId ||
+          linkBioAdId ||
+          voteBoostId ||
+          projectAgentTopupId) &&
+        response.data.approvedItem
+      ) {
+        if (projectAgentTopupId && returnUrl) {
+          window.location.href = returnUrl;
+          return;
+        }
         if (window.opener) {
           window.close();
         }
@@ -1005,6 +1029,18 @@ const AquaPayPage = ({ currentUser }) => {
           </a>
         )}
         
+        {projectAgentTopupId && returnUrl ? (
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = returnUrl;
+            }}
+            className="w-full py-3 mb-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-medium rounded-xl transition-all"
+          >
+            Back to Project Agent
+          </button>
+        ) : null}
+
         <button onClick={resetPayment} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">
           Make Another Payment
         </button>

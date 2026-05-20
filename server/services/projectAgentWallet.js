@@ -2,8 +2,26 @@ const ProjectAgentWallet = require('../models/ProjectAgentWallet');
 const ProjectAgentLedger = require('../models/ProjectAgentLedger');
 const { usdToCents, centsToUsd } = require('../utils/kimiCost');
 
+const ProjectAgentTopup = require('../models/ProjectAgentTopup');
+
 const STARTER_GRANT_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
 const LOAD_FEE_RATE = Number(process.env.PROJECT_AGENT_LOAD_FEE_RATE) || 0.05;
+
+/** Fee on top: pay creditUsd + 5% → full creditUsd lands in wallet */
+function computeTopupPricing(creditUsd) {
+  const credit = Math.round(Number(creditUsd) * 100) / 100;
+  const fee = Math.round(credit * LOAD_FEE_RATE * 100) / 100;
+  const pay = Math.round((credit + fee) * 100) / 100;
+  return {
+    creditUsd: credit,
+    feeUsd: fee,
+    payUsd: pay,
+    creditCents: usdToCents(credit),
+    feeCents: usdToCents(fee),
+    payCents: usdToCents(pay),
+    loadFeeRate: LOAD_FEE_RATE
+  };
+}
 
 async function getOrCreateWallet(userId, adId) {
   let wallet = await ProjectAgentWallet.findOne({ userId, adId });
@@ -194,15 +212,70 @@ function walletResponse(wallet) {
   };
 }
 
+/**
+ * Credit wallet after AquaPay top-up (idempotent if topup already paid).
+ */
+async function creditTopupFromPayment(topup, paymentMeta = {}) {
+  if (!topup) return null;
+
+  if (topup.status === 'paid') {
+    const wallet = await getOrCreateWallet(topup.userId, topup.adId);
+    return { wallet, topup, alreadyPaid: true };
+  }
+
+  const wallet = await getOrCreateWallet(topup.userId, topup.adId);
+  wallet.balanceCents += topup.creditCents;
+  await wallet.save();
+
+  await ProjectAgentLedger.create({
+    userId: topup.userId,
+    adId: topup.adId,
+    type: 'topup',
+    amountCents: topup.creditCents,
+    balanceAfterCents: wallet.balanceCents,
+    meta: {
+      topupId: topup.topupId,
+      payUsd: topup.payUsd,
+      feeUsd: topup.feeUsd,
+      creditUsd: topup.creditUsd,
+      ...paymentMeta
+    }
+  });
+
+  if (topup.feeCents > 0) {
+    await ProjectAgentLedger.create({
+      userId: topup.userId,
+      adId: topup.adId,
+      type: 'topup_fee',
+      amountCents: 0,
+      balanceAfterCents: wallet.balanceCents,
+      meta: {
+        topupId: topup.topupId,
+        feeUsd: topup.feeUsd,
+        feeCents: topup.feeCents,
+        note: 'Load fee collected via AquaPay (not deducted from balance)'
+      }
+    });
+  }
+
+  topup.status = 'paid';
+  topup.paidAt = new Date();
+  await topup.save();
+
+  return { wallet, topup, alreadyPaid: false };
+}
+
 module.exports = {
   STARTER_GRANT_CENTS,
   LOAD_FEE_RATE,
+  computeTopupPricing,
   getOrCreateWallet,
   grantStarterIfNeeded,
   reserveBalance,
   releaseHold,
   settleHold,
   deductUsage,
+  creditTopupFromPayment,
   walletResponse,
   usdToCents,
   centsToUsd

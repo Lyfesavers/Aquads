@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   fetchProjectAgentEligible,
   fetchProjectAgentWallet,
@@ -7,7 +7,9 @@ import {
   createProjectAgentThread,
   fetchProjectAgentMessages,
   streamProjectAgentChat,
-  generateProjectAgentImage
+  generateProjectAgentImage,
+  createProjectAgentTopup,
+  fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
 import ProjectAgentMessageImage from './ProjectAgentMessageImage';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
@@ -56,6 +58,19 @@ function messageShowsImage(m) {
   return Boolean(m?._id && (m.hasImage || (m.role === 'assistant' && m.mode === 'image')));
 }
 
+const LOAD_FEE_RATE = 0.05;
+
+function previewTopupClient(creditUsd) {
+  const credit = Math.round(Number(creditUsd) * 100) / 100;
+  if (!Number.isFinite(credit) || credit < 5) return null;
+  const fee = Math.round(credit * LOAD_FEE_RATE * 100) / 100;
+  return {
+    creditUsd: credit,
+    feeUsd: fee,
+    payUsd: Math.round((credit + fee) * 100) / 100
+  };
+}
+
 export default function ProjectAgentPanel({
   currentUser,
   initialAdId = null,
@@ -79,7 +94,12 @@ export default function ProjectAgentPanel({
   const [streamingReasoning, setStreamingReasoning] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [lastCost, setLastCost] = useState(null);
+  const [topupCreditUsd, setTopupCreditUsd] = useState('20');
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [topupNotice, setTopupNotice] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
+  const topupPreview = previewTopupClient(topupCreditUsd);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,6 +148,50 @@ export default function ProjectAgentPanel({
     setWallet(w);
     return w;
   }, [token, adId]);
+
+  useEffect(() => {
+    if (searchParams.get('topup') !== 'success' || !token || !adId) return;
+
+    const topupId = searchParams.get('topupId');
+    setTopupNotice('Checking your payment…');
+
+    let cancelled = false;
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        if (topupId) {
+          const status = await fetchProjectAgentTopupStatus(topupId, token);
+          if (cancelled) return;
+          if (status.status === 'paid') {
+            await refreshWallet();
+            setTopupNotice(`$${status.creditUsd} added to your balance.`);
+            const next = new URLSearchParams(searchParams);
+            next.delete('topup');
+            next.delete('topupId');
+            setSearchParams(next, { replace: true });
+            return;
+          }
+        } else {
+          await refreshWallet();
+          if (!cancelled) setTopupNotice('Balance updated.');
+        }
+      } catch {
+        if (!cancelled) setTopupNotice('Payment received — refresh balance if needed.');
+      }
+
+      attempts += 1;
+      if (attempts < 12 && !cancelled) {
+        window.setTimeout(poll, 2500);
+      }
+    };
+
+    poll();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, token, adId, setSearchParams, refreshWallet]);
 
   const loadThreads = useCallback(async () => {
     if (!token || !adId) return;
@@ -178,6 +242,31 @@ export default function ProjectAgentPanel({
       cancelled = true;
     };
   }, [token, adId, threadId]);
+
+  const handleTopup = async () => {
+    if (!token || !adId || topupLoading) return;
+    const preview = previewTopupClient(topupCreditUsd);
+    if (!preview) {
+      setError('Enter an amount between $5 and $500.');
+      return;
+    }
+
+    setTopupLoading(true);
+    setError('');
+    setTopupNotice('');
+
+    try {
+      const data = await createProjectAgentTopup(adId, token, preview.creditUsd);
+      window.open(data.aquaPayUrl, '_blank', 'noopener,noreferrer');
+      setTopupNotice(
+        `Complete payment of $${data.preview.payUsd} on AquaPay (includes $${data.preview.feeUsd} fee). Balance updates when confirmed.`
+      );
+    } catch (e) {
+      setError(e.message || 'Could not start top-up');
+    } finally {
+      setTopupLoading(false);
+    }
+  };
 
   const handleNewChat = async () => {
     if (!token || !adId) return;
@@ -507,10 +596,42 @@ export default function ProjectAgentPanel({
             </button>
           </div>
 
-          <p className="project-agent-last-cost project-agent-footer-hint">
-            Balance top-up via AquaPay — coming soon (5% load fee).{' '}
-            <Link to="/dashboard">Dashboard</Link>
-          </p>
+          <div className="project-agent-topup">
+            <p className="project-agent-topup-title">Add balance</p>
+            <div className="project-agent-topup-row">
+              <label className="project-agent-topup-label" htmlFor="pa-topup-amount">
+                Load amount (USD)
+              </label>
+              <input
+                id="pa-topup-amount"
+                type="number"
+                min={5}
+                max={500}
+                step={1}
+                value={topupCreditUsd}
+                onChange={(e) => setTopupCreditUsd(e.target.value)}
+                className="project-agent-topup-input"
+              />
+              <button
+                type="button"
+                className="project-agent-topup-btn"
+                onClick={handleTopup}
+                disabled={topupLoading || !topupPreview}
+              >
+                {topupLoading ? '…' : 'Pay with AquaPay'}
+              </button>
+            </div>
+            {topupPreview && (
+              <p className="project-agent-topup-preview">
+                Pay <strong>${topupPreview.payUsd.toFixed(2)}</strong> →{' '}
+                <strong>${topupPreview.creditUsd.toFixed(2)}</strong> credit (
+                {LOAD_FEE_RATE * 100}% fee ${topupPreview.feeUsd.toFixed(2)} on top)
+              </p>
+            )}
+            {topupNotice && (
+              <p className="project-agent-topup-notice">{topupNotice}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

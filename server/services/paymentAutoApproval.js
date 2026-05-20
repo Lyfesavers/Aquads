@@ -18,7 +18,23 @@ const paymentAutoApproval = {
    * @returns {Object|null} - Approved item or null
    */
   async processPayment(paymentData) {
-    const { bannerId, bumpId, projectId, tokenPurchaseId, hyperspaceOrderId, linkBioAdId, voteBoostId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername } = paymentData;
+    const {
+      bannerId,
+      bumpId,
+      projectId,
+      tokenPurchaseId,
+      hyperspaceOrderId,
+      linkBioAdId,
+      voteBoostId,
+      projectAgentTopupId,
+      recipientSlug,
+      amount,
+      txHash,
+      chain,
+      token,
+      senderAddress,
+      senderUsername
+    } = paymentData;
 
     // Link in Bio ads pay the influencer directly (not 'aquads'), so handle before the slug check
     if (linkBioAdId) {
@@ -95,6 +111,18 @@ const paymentAutoApproval = {
     if (voteBoostId) {
       return await this.handleVoteBoostPayment({
         voteBoostId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+    }
+
+    if (projectAgentTopupId) {
+      return await this.handleProjectAgentTopupPayment({
+        projectAgentTopupId,
         amount,
         txHash,
         chain,
@@ -641,6 +669,110 @@ const paymentAutoApproval = {
       return { type: 'voteBoost', id: boost._id, status: boost.status };
     } catch (error) {
       console.error('Error recording vote boost AquaPay payment:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Project Agent wallet top-up (AquaPay → aquads).
+   * User pays credit + 5% fee; full credit is added to balance.
+   */
+  async handleProjectAgentTopupPayment({
+    projectAgentTopupId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername
+  }) {
+    try {
+      const ProjectAgentTopup = require('../models/ProjectAgentTopup');
+      const { creditTopupFromPayment } = require('./projectAgentWallet');
+
+      const topup = await ProjectAgentTopup.findOne({ topupId: projectAgentTopupId });
+      if (!topup) {
+        console.log(`Project Agent topup ${projectAgentTopupId} not found`);
+        return null;
+      }
+
+      if (topup.status === 'paid') {
+        return {
+          type: 'projectAgentTopup',
+          id: topup.topupId,
+          status: 'paid',
+          creditUsd: topup.creditUsd,
+          alreadyProcessed: true
+        };
+      }
+
+      if (topup.status !== 'pending') {
+        console.log(`Project Agent topup ${projectAgentTopupId} status is ${topup.status}`);
+        return null;
+      }
+
+      const existingTx = await ProjectAgentTopup.findOne({ txHash, status: 'paid' });
+      if (existingTx) {
+        console.log(`Project Agent topup tx ${txHash} already used for ${existingTx.topupId}`);
+        return null;
+      }
+
+      if (senderUsername && topup.username) {
+        if (senderUsername.toLowerCase() !== topup.username.toLowerCase()) {
+          console.log(
+            `Project Agent topup ${projectAgentTopupId} payer mismatch: expected ${topup.username}, got ${senderUsername}`
+          );
+          return null;
+        }
+      }
+
+      const paymentAmount = parseFloat(amount);
+      const expectedPay = parseFloat(topup.payUsd);
+      if (!Number.isFinite(paymentAmount) || Math.abs(paymentAmount - expectedPay) > 0.06) {
+        console.log(
+          `Project Agent topup ${projectAgentTopupId} amount mismatch: expected ${expectedPay}, got ${paymentAmount}`
+        );
+        return null;
+      }
+
+      const transactionVerified = await this.verifyTransaction(txHash, chain);
+      if (!transactionVerified) {
+        console.log(
+          `Project Agent topup ${projectAgentTopupId} transaction verification failed for ${txHash} on ${chain}`
+        );
+        return null;
+      }
+
+      topup.txHash = txHash;
+      topup.paymentChain = chain;
+      topup.paymentToken = token || null;
+
+      const result = await creditTopupFromPayment(topup, {
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername
+      });
+
+      if (!result) {
+        return null;
+      }
+
+      console.log(
+        `Project Agent topup ${projectAgentTopupId} paid: $${topup.creditUsd} credited (fee $${topup.feeUsd})`
+      );
+
+      return {
+        type: 'projectAgentTopup',
+        id: topup.topupId,
+        status: 'paid',
+        creditUsd: topup.creditUsd,
+        balanceUsd: (result.wallet.balanceCents / 100).toFixed(2),
+        alreadyProcessed: result.alreadyPaid
+      };
+    } catch (error) {
+      console.error('Error processing Project Agent topup payment:', error);
       return null;
     }
   },
