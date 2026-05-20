@@ -1,3 +1,10 @@
+/* Above site header (~200000); below global modals (~300000) */
+:root {
+  --pa-z-backdrop: 210000;
+  --pa-z-drawer: 210001;
+  --pa-z-fab: 210002;
+}
+
 .project-agent-root {
   --pa-bg: #0c0f14;
   --pa-surface: #141a22;
@@ -456,7 +463,7 @@
   position: fixed;
   bottom: max(20px, env(safe-area-inset-bottom, 0px));
   right: max(16px, env(safe-area-inset-right, 0px));
-  z-index: 9990;
+  z-index: var(--pa-z-fab);
   touch-action: manipulation;
   width: 56px;
   height: 56px;
@@ -484,7 +491,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  z-index: 9991;
+  z-index: var(--pa-z-backdrop);
 }
 
 .project-agent-drawer {
@@ -496,7 +503,7 @@
   max-width: 100vw;
   height: 100vh;
   height: 100dvh;
-  z-index: 9992;
+  z-index: var(--pa-z-drawer);
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
   padding-top: env(safe-area-inset-top, 0px);
 }
