@@ -872,7 +872,6 @@ app.use('/api/freelancer-escrow', require('./routes/freelancerEscrow'));
 app.use('/api/wallet-analyzer', walletAnalyzerRoutes);
 app.use('/api/pfp-generator', require('./routes/pfpGenerator'));
 app.use('/api/hyperspace', require('./routes/hyperspace'));
-app.use('/api/threadtalk', require('./routes/threadtalk'));
 app.use('/api/project-agent', require('./routes/projectAgent'));
 
 // OG image generation routes (for social media previews)
