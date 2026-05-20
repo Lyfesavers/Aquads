@@ -481,6 +481,17 @@ async function loadThread(threadId, userId, adId) {
   return { thread };
 }
 
+async function listProjectAgentThreads(userId, adId) {
+  return ProjectAgentThread.find({
+    userId,
+    adId
+  })
+    .sort({ updatedAt: -1 })
+    .limit(50)
+    .select('title createdAt updatedAt')
+    .lean();
+}
+
 function modeToThinking(mode) {
   return mode === 'instant' ? { type: 'disabled' } : { type: 'enabled' };
 }
@@ -643,14 +654,7 @@ router.get('/threads/:adId', auth, async (req, res) => {
     const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
     if (error) return res.status(status).json({ error, code });
 
-    const threads = await ProjectAgentThread.find({
-      userId: req.user.userId,
-      adId: req.params.adId
-    })
-      .sort({ updatedAt: -1 })
-      .limit(50)
-      .select('title createdAt updatedAt')
-      .lean();
+    const threads = await listProjectAgentThreads(req.user.userId, req.params.adId);
 
     res.json({ threads });
   } catch (err) {
@@ -683,7 +687,7 @@ router.post('/threads/:adId', auth, async (req, res) => {
 /** Delete a conversation and its messages (auth — owner only) */
 router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
   try {
-    const { error, status, code } = await loadProjectAgentScope(
+    const { ad, error, status, code } = await loadProjectAgentScope(
       req.params.adId,
       req.user.username,
       req.user.userId
@@ -714,7 +718,30 @@ router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
     await ProjectAgentMessage.deleteMany({ threadId: thread._id });
     await ProjectAgentThread.deleteOne({ _id: thread._id, userId: req.user.userId });
 
-    res.json({ ok: true, deletedId: String(thread._id) });
+    let threads = await listProjectAgentThreads(req.user.userId, req.params.adId);
+
+    if (threads.length === 0) {
+      await grantStarterIfNeeded(req.user.userId, ad.id);
+      const replacement = await ProjectAgentThread.create({
+        userId: req.user.userId,
+        adId: ad.id,
+        title: 'New chat'
+      });
+      threads = [
+        {
+          _id: replacement._id,
+          title: replacement.title,
+          createdAt: replacement.createdAt,
+          updatedAt: replacement.updatedAt
+        }
+      ];
+    }
+
+    res.json({
+      ok: true,
+      deletedId: String(thread._id),
+      threads
+    });
   } catch (err) {
     console.error('[project-agent] delete thread error:', err);
     res.status(500).json({ error: 'Failed to delete conversation.' });

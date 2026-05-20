@@ -487,30 +487,51 @@ export default function ProjectAgentPanel({
     if (!token || !adId || !id || deletingThreadId) return;
     if (!window.confirm('Delete this chat? This cannot be undone.')) return;
 
+    const wasActive = String(threadId) === id;
+    const snapshot = {
+      threads: [...threads],
+      threadId,
+      messages: [...messages],
+      streamingContent,
+      streamingReasoning
+    };
+
+    const nextThreads = threads.filter((t) => String(t._id) !== id);
+    setThreads(nextThreads);
     setDeletingThreadId(id);
     setError('');
-    if (String(threadId) === id) {
+
+    if (wasActive) {
       videoPollAbortRef.current = null;
       videoPollRunningRef.current = null;
+      setMessages([]);
+      setStreamingContent('');
+      setStreamingReasoning('');
+      if (nextThreads.length > 0) {
+        setThreadId(nextThreads[0]._id);
+      } else {
+        setThreadId(null);
+      }
     }
 
     try {
-      await deleteProjectAgentThread(adId, id, token);
-      const list = (await loadThreads()) || [];
+      const data = await deleteProjectAgentThread(adId, id, token);
+      const list = data.threads || [];
+      setThreads(list);
 
-      if (String(threadId) === id) {
-        setMessages([]);
-        setStreamingContent('');
-        setStreamingReasoning('');
+      if (wasActive) {
         if (list.length > 0) {
           setThreadId(list[0]._id);
         } else {
-          const { thread } = await createProjectAgentThread(adId, token);
-          setThreads([thread]);
-          setThreadId(thread._id);
+          setThreadId(null);
         }
       }
     } catch (err) {
+      setThreads(snapshot.threads);
+      setThreadId(snapshot.threadId);
+      setMessages(snapshot.messages);
+      setStreamingContent(snapshot.streamingContent);
+      setStreamingReasoning(snapshot.streamingReasoning);
       setError(err.message || 'Could not delete chat');
     } finally {
       setDeletingThreadId(null);

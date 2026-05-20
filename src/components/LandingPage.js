@@ -2171,7 +2171,7 @@ const CarouselCard = ({ feature, index }) => {
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🆓', label: '5 Free Daily', value: 'For Projects' },
+                    { icon: '🆓', label: '20 Free Daily', value: 'Bumped Projects' },
                     { icon: '💎', label: '2000 Points', value: 'After Free' },
                     { icon: '💰', label: '20 Pts/Raid', value: 'Earn Points' },
                     { icon: '⏱️', label: '48hr Expiry', value: 'Auto-Expires' }
@@ -2254,8 +2254,8 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div className="bg-white/5 rounded-xl p-3 text-center">
                         <div className="text-gray-400 text-xs mb-1">Free Raids</div>
-                        <div className="text-2xl font-bold text-green-400">5</div>
-                        <div className="text-gray-500 text-xs mt-1">Daily</div>
+                        <div className="text-2xl font-bold text-green-400">20</div>
+                        <div className="text-gray-500 text-xs mt-1">Daily (bumped)</div>
                       </div>
                     </div>
                     
