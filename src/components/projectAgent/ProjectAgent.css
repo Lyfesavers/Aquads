@@ -549,6 +549,7 @@
   flex-shrink: 0;
   width: 28px;
   height: 28px;
+  object-fit: contain;
 }
 
 .project-agent-fab-label {

@@ -11,22 +11,12 @@ import './ProjectAgent.css';
 
 function SkipperFabIcon() {
   return (
-    <svg
+    <img
+      src="/Skipper logo.svg"
+      alt=""
       className="project-agent-fab-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.75" />
-      <circle cx="12" cy="12" r="2.25" fill="currentColor" />
-      <path
-        d="M12 3v2.25M12 18.75V21M3 12h2.25M18.75 12H21M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
+    />
   );
 }
 
