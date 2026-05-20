@@ -4754,7 +4754,7 @@ const LandingPage = () => {
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
 
         {/* Left side - Projects */}
-        <Link to="/home?openListProject=true" className="flex-1 h-full">
+        <Link to="/home" className="flex-1 h-full">
           <HeroOrb 
             side="left"
             label="LIST YOUR PROJECT"
