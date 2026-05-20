@@ -955,7 +955,12 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
           messages: kimiMessages,
           maxTokens,
           userMessage: userContent,
-          send
+          send,
+          agentContext: {
+            userId: req.user.userId,
+            username: req.user.username,
+            emailVerified: req.user.emailVerified
+          }
         });
         fullContent = agentResult.content || '';
         webSearchCalls = agentResult.webSearchCalls || 0;

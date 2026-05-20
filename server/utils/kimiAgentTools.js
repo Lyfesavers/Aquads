@@ -1,10 +1,65 @@
 const { isAquadsPlatformQuestion } = require('./aquadsPlatformDetect');
 const { KIMI_WEB_SEARCH_TOOL, webSearchToolResult } = require('./kimiWebSearch');
+const {
+  lookupTokenForListing,
+  submitStarterListingViaAgent
+} = require('../services/projectAgentListStarter');
 
 /** Optional Formula URIs. Web search is always builtin $web_search. Empty = no formula probes. */
 const DEFAULT_FORMULA_URIS = [];
 
 const KIMI_BUILTIN_WEB_SEARCH = KIMI_WEB_SEARCH_TOOL;
+
+const AQUADS_LOOKUP_TOKEN_TOOL = {
+  type: 'function',
+  function: {
+    name: 'lookup_token_for_listing',
+    description:
+      'Look up token symbol, blockchain, and pair address from a contract address (CA) or pair address (PA) using DexScreener. Use before submitting a Starter listing or to confirm token details with the user.',
+    parameters: {
+      type: 'object',
+      properties: {
+        token_or_pair_address: {
+          type: 'string',
+          description: 'Token contract address or DEX pair address'
+        }
+      },
+      required: ['token_or_pair_address']
+    }
+  }
+};
+
+const AQUADS_SUBMIT_STARTER_TOOL = {
+  type: 'function',
+  function: {
+    name: 'submit_starter_listing',
+    description:
+      'Submit a free Starter bubble-map listing on Aquads for the logged-in user. Resolves token metadata from CA/PA, applies the user-provided logo URL, and creates a pending listing for admin approval. Starter tier only — never Premium or paid add-ons.',
+    parameters: {
+      type: 'object',
+      properties: {
+        token_or_pair_address: {
+          type: 'string',
+          description: 'Token contract address (CA) or DEX pair address (PA)'
+        },
+        logo_url: {
+          type: 'string',
+          description: 'Direct HTTPS URL to the project logo image (png/jpg/gif/webp)'
+        },
+        website_url: {
+          type: 'string',
+          description:
+            'Project website URL. Required when DexScreener has no website — ask the user first.'
+        }
+      },
+      required: ['token_or_pair_address', 'logo_url']
+    }
+  }
+};
+
+function isAquadsListingToolName(name) {
+  return name === 'lookup_token_for_listing' || name === 'submit_starter_listing';
+}
 
 const { getLimits } = require('./projectAgentLimits');
 
@@ -243,7 +298,7 @@ async function executeFormulaTool(apiKey, baseUrl, formulaUri, functionName, arg
  * @param {object} opts.toolCall
  * @param {Record<string, string>} opts.toolToUri
  */
-async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolToUri }) {
+async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolToUri, agentContext }) {
   if (toolName === '$web_search') {
     let args = {};
     try {
@@ -252,6 +307,31 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
       args = {};
     }
     return JSON.stringify(webSearchToolResult(args));
+  }
+
+  if (isAquadsListingToolName(toolName)) {
+    if (!agentContext?.userId || !agentContext?.username) {
+      return JSON.stringify({ success: false, error: 'Listing tools require a logged-in verified user.' });
+    }
+    let args = {};
+    try {
+      args = JSON.parse(toolCall.function?.arguments || '{}');
+    } catch {
+      args = {};
+    }
+    const address = args.token_or_pair_address;
+    if (toolName === 'lookup_token_for_listing') {
+      const result = await lookupTokenForListing(address);
+      return JSON.stringify(result);
+    }
+    const result = await submitStarterListingViaAgent({
+      userId: agentContext.userId,
+      username: agentContext.username,
+      tokenOrPairAddress: address,
+      logoUrl: args.logo_url,
+      websiteUrl: args.website_url
+    });
+    return JSON.stringify(result);
   }
 
   const uri = toolToUri[toolName];
@@ -276,6 +356,10 @@ function toolStatusLabel(toolName) {
     case '$web_search':
     case 'web_search':
       return 'Searching the web';
+    case 'lookup_token_for_listing':
+      return 'Looking up token on DexScreener';
+    case 'submit_starter_listing':
+      return 'Submitting Starter listing';
     case 'code_runner':
       return 'Running Python code';
     case 'fetch':
@@ -292,10 +376,15 @@ async function runKimiAgentChat({
   messages,
   maxTokens,
   userMessage = '',
-  send
+  send,
+  agentContext = null
 }) {
   const { tools: loadedTools, toolToUri, skippedFormulas } = await loadAgentTools(apiKey, baseUrl);
   let tools = loadedTools;
+
+  if (agentContext?.userId && agentContext?.username) {
+    tools = [...tools, AQUADS_LOOKUP_TOKEN_TOOL, AQUADS_SUBMIT_STARTER_TOOL];
+  }
 
   if (isAquadsPlatformQuestion(userMessage)) {
     tools = tools.filter((t) => {
@@ -376,7 +465,8 @@ async function runKimiAgentChat({
           baseUrl,
           toolName: name,
           toolCall,
-          toolToUri
+          toolToUri,
+          agentContext
         });
 
         if (isWebSearchToolName(name)) {

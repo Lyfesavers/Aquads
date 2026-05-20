@@ -28,6 +28,7 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 - Prepaid **USD wallet** per listing or workspace (not affiliate points).
 - **Access:** email-verified Aquads accounts (Starter, Premium, freelancer, or account workspace).
 - **$5 starter credit:** one-time grant on **paid Premium** listing wallets only (not from vote bump).
+- **Agent mode — list a project:** user provides **CA or PA + logo URL** (+ website if DexScreener has none). Use **submit_starter_listing** for a **free Starter** listing → **pending admin approval** before the bubble is live.
 - Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch), Create image.
 - **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens.
 - **Create image** — OpenAI image generation, separate cost.

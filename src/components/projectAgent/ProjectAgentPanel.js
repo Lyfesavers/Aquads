@@ -26,7 +26,7 @@ const MODES = [
   {
     id: 'agent',
     label: 'Agent',
-    hint: 'Web search, Python code & URL fetch ($0.005/search + tokens)'
+    hint: 'Web search, list Starter projects, code & URL fetch ($0.005/search + tokens)'
   },
   { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' },
   {
@@ -1063,7 +1063,7 @@ export default function ProjectAgentPanel({
                   : mode === 'video'
                     ? 'Describe the clip (15s or 30s)…'
                     : mode === 'agent'
-                      ? 'Research, code, or fetch URLs — or ask Aquads how-to (uses platform guide)…'
+                      ? 'List a project: paste CA/PA + logo URL (and website if needed). Or research, code, fetch URLs…'
                       : 'Ask about your project…'
               }
               rows={2}
