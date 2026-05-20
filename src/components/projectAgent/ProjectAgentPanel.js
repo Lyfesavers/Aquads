@@ -97,6 +97,7 @@ export default function ProjectAgentPanel({
   const [topupCreditUsd, setTopupCreditUsd] = useState('20');
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupNotice, setTopupNotice] = useState('');
+  const [topupOpen, setTopupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
   const topupPreview = previewTopupClient(topupCreditUsd);
@@ -153,6 +154,7 @@ export default function ProjectAgentPanel({
     if (searchParams.get('topup') !== 'success' || !token || !adId) return;
 
     const topupId = searchParams.get('topupId');
+    setTopupOpen(true);
     setTopupNotice('Checking your payment…');
 
     let cancelled = false;
@@ -433,9 +435,14 @@ export default function ProjectAgentPanel({
       <header className="project-agent-header">
         {adMeta?.logo && <img src={adMeta.logo} alt="" />}
         <h2>{adMeta?.title || 'Project Agent'}</h2>
-        <span className={`project-agent-balance ${balanceLow ? 'low' : ''}`}>
+        <button
+          type="button"
+          className={`project-agent-balance project-agent-balance-btn ${balanceLow ? 'low' : ''}`}
+          onClick={() => setTopupOpen((o) => !o)}
+          title="Add funds"
+        >
           ${wallet?.balanceUsd ?? '—'}
-        </span>
+        </button>
         {onClose && (
           <button
             type="button"
@@ -480,6 +487,13 @@ export default function ProjectAgentPanel({
         <button type="button" className="primary" onClick={handleNewChat}>
           New chat
         </button>
+        <button
+          type="button"
+          className={`project-agent-topup-trigger ${topupOpen ? 'active' : ''}`}
+          onClick={() => setTopupOpen((o) => !o)}
+        >
+          Add funds
+        </button>
         {onExpand && (
           <button type="button" onClick={onExpand}>
             Expand
@@ -499,8 +513,53 @@ export default function ProjectAgentPanel({
         </select>
       </div>
 
+      {topupOpen && (
+        <div className="project-agent-topup project-agent-topup--bar">
+          <div className="project-agent-topup-row project-agent-topup-row--compact">
+            <input
+              id="pa-topup-amount"
+              type="number"
+              min={5}
+              max={500}
+              step={1}
+              value={topupCreditUsd}
+              onChange={(e) => setTopupCreditUsd(e.target.value)}
+              className="project-agent-topup-input"
+              aria-label="Load amount in USD"
+              placeholder="USD"
+            />
+            <button
+              type="button"
+              className="project-agent-topup-btn"
+              onClick={handleTopup}
+              disabled={topupLoading || !topupPreview}
+            >
+              {topupLoading ? '…' : 'Pay'}
+            </button>
+            <button
+              type="button"
+              className="project-agent-topup-close"
+              onClick={() => setTopupOpen(false)}
+              aria-label="Close add funds"
+            >
+              ✕
+            </button>
+          </div>
+          {topupPreview && (
+            <p className="project-agent-topup-preview">
+              Pay <strong>${topupPreview.payUsd.toFixed(2)}</strong> →{' '}
+              <strong>${topupPreview.creditUsd.toFixed(2)}</strong> credit (+{LOAD_FEE_RATE * 100}%
+              fee)
+            </p>
+          )}
+          {topupNotice && (
+            <p className="project-agent-topup-notice">{topupNotice}</p>
+          )}
+        </div>
+      )}
+
       {wallet?.starterJustGranted && (
-        <p className="project-agent-last-cost" style={{ color: '#22d3ee' }}>
+        <p className="project-agent-last-cost project-agent-starter-banner" style={{ color: '#22d3ee' }}>
           ${wallet.starterGrantUsd} starter credit added for this Premium listing.
         </p>
       )}
@@ -555,20 +614,21 @@ export default function ProjectAgentPanel({
             <div ref={messagesEndRef} />
           </div>
 
-          {lastCost && (
-            <p className="project-agent-last-cost">
-              Last message: −${parseFloat(lastCost.costUsd).toFixed(4)} · Balance $
-              {lastCost.balanceUsd}
-            </p>
-          )}
+          <div className="project-agent-composer">
+            {lastCost && (
+              <p className="project-agent-last-cost">
+                Last message: −${parseFloat(lastCost.costUsd).toFixed(4)} · Balance $
+                {lastCost.balanceUsd}
+              </p>
+            )}
 
-          {error && (
-            <p className="project-agent-last-cost" style={{ color: '#f87171' }}>
-              {error}
-            </p>
-          )}
+            {error && (
+              <p className="project-agent-last-cost project-agent-composer-error">
+                {error}
+              </p>
+            )}
 
-          <div className="project-agent-input-row">
+            <div className="project-agent-input-row">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -594,43 +654,7 @@ export default function ProjectAgentPanel({
             >
               {sending ? '…' : mode === 'image' ? 'Create' : 'Send'}
             </button>
-          </div>
-
-          <div className="project-agent-topup">
-            <p className="project-agent-topup-title">Add balance</p>
-            <div className="project-agent-topup-row">
-              <label className="project-agent-topup-label" htmlFor="pa-topup-amount">
-                Load amount (USD)
-              </label>
-              <input
-                id="pa-topup-amount"
-                type="number"
-                min={5}
-                max={500}
-                step={1}
-                value={topupCreditUsd}
-                onChange={(e) => setTopupCreditUsd(e.target.value)}
-                className="project-agent-topup-input"
-              />
-              <button
-                type="button"
-                className="project-agent-topup-btn"
-                onClick={handleTopup}
-                disabled={topupLoading || !topupPreview}
-              >
-                {topupLoading ? '…' : 'Pay with AquaPay'}
-              </button>
             </div>
-            {topupPreview && (
-              <p className="project-agent-topup-preview">
-                Pay <strong>${topupPreview.payUsd.toFixed(2)}</strong> →{' '}
-                <strong>${topupPreview.creditUsd.toFixed(2)}</strong> credit (
-                {LOAD_FEE_RATE * 100}% fee ${topupPreview.feeUsd.toFixed(2)} on top)
-              </p>
-            )}
-            {topupNotice && (
-              <p className="project-agent-topup-notice">{topupNotice}</p>
-            )}
           </div>
         </div>
       </div>

@@ -56,6 +56,23 @@
   white-space: nowrap;
 }
 
+.project-agent-balance-btn {
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.project-agent-balance-btn:hover,
+.project-agent-balance-btn:focus-visible {
+  background: var(--pa-accent-dim);
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
 .project-agent-balance.low {
   color: #fbbf24;
 }
@@ -138,6 +155,23 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
+}
+
+.project-agent-composer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--pa-border);
+  background: var(--pa-bg);
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+}
+
+.project-agent-composer-error {
+  color: #f87171 !important;
+}
+
+.project-agent-starter-banner {
+  flex-shrink: 0;
+  padding-top: 8px;
 }
 
 .project-agent-messages {
@@ -366,7 +400,6 @@
   display: flex;
   gap: 8px;
   padding: 12px;
-  border-top: 1px solid var(--pa-border);
   flex-shrink: 0;
   align-items: flex-end;
 }
@@ -551,6 +584,13 @@
   margin: 0 auto;
   height: calc(100vh - 48px);
   height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.project-agent-page-inner > .project-agent-root {
+  flex: 1;
+  min-height: 0;
 }
 
 .project-agent-last-cost {
@@ -565,10 +605,74 @@
   color: #94a8c4;
 }
 
+.project-agent-topup-trigger {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.project-agent-topup-trigger.active {
+  background: var(--pa-accent-dim);
+  border-color: rgba(34, 211, 238, 0.35);
+  color: var(--pa-accent);
+}
+
 .project-agent-topup {
   padding: 10px 12px 12px;
   border-top: 1px solid var(--pa-border);
   flex-shrink: 0;
+}
+
+.project-agent-topup--bar {
+  padding: 8px 12px;
+  border-top: none;
+  border-bottom: 1px solid var(--pa-border);
+}
+
+.project-agent-topup-row--compact {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.project-agent-topup-row--compact .project-agent-topup-input {
+  flex: 1 1 72px;
+  min-width: 64px;
+  min-height: 36px;
+  padding: 6px 8px;
+}
+
+.project-agent-topup-row--compact .project-agent-topup-btn {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 12px;
+}
+
+.project-agent-topup-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--pa-border);
+  border-radius: 10px;
+  background: var(--pa-surface);
+  color: var(--pa-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.project-agent-topup-close:hover {
+  color: var(--pa-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.project-agent-topup--bar .project-agent-topup-preview {
+  margin: 6px 0 0;
+}
+
+.project-agent-topup--bar .project-agent-topup-notice {
+  margin: 6px 0 0;
 }
 
 .project-agent-topup-title {
