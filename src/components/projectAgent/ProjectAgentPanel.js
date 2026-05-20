@@ -82,8 +82,11 @@ export default function ProjectAgentPanel({
   initialAdId = null,
   compact = false,
   onExpand,
-  onClose
+  onClose,
+  showBackLink = false
 }) {
+  const fullPage = !compact;
+  const rootClass = `project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`;
   const token = currentUser?.token;
   const [eligible, setEligible] = useState([]);
   const [adId, setAdId] = useState(initialAdId);
@@ -422,7 +425,7 @@ export default function ProjectAgentPanel({
 
   if (!currentUser) {
     return (
-      <div className="project-agent-root">
+      <div className={rootClass}>
         <div className="project-agent-gate">
           <p>Log in to use Aquads {SKIPPER_AGENT_NAME}.</p>
         </div>
@@ -432,7 +435,7 @@ export default function ProjectAgentPanel({
 
   if (loading) {
     return (
-      <div className="project-agent-root">
+      <div className={rootClass}>
         <div className="project-agent-empty">Loading {SKIPPER_AGENT_NAME}…</div>
       </div>
     );
@@ -440,7 +443,7 @@ export default function ProjectAgentPanel({
 
   if (gateError) {
     return (
-      <div className="project-agent-root">
+      <div className={rootClass}>
         <div className="project-agent-gate">
           <p>{gateError}</p>
           <p style={{ marginTop: 12 }}>
@@ -452,11 +455,15 @@ export default function ProjectAgentPanel({
   }
 
   const adMeta = eligible.find((a) => a.id === adId) || wallet?.ad;
-  const fullPage = !compact;
 
   return (
-    <div className={`project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`}>
+    <div className={rootClass}>
       <header className="project-agent-header">
+        {showBackLink && (
+          <Link to="/home" className="project-agent-back-link" title="Back to Aquads home">
+            ← Home
+          </Link>
+        )}
         {adMeta?.logo && <img src={adMeta.logo} alt="" />}
         <h2>
           <span className="project-agent-header-title">

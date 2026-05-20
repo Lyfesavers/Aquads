@@ -613,54 +613,49 @@
 }
 
 .project-agent-page {
+  position: fixed;
+  inset: 0;
+  width: 100%;
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--pa-bg);
+  z-index: var(--pa-z-drawer);
 }
 
-.project-agent-page-nav {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--pa-border);
-  background: var(--pa-bg);
-  flex-shrink: 0;
+.project-agent-page > .project-agent-root--fullpage {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.project-agent-page .project-agent-page-nav a,
-.project-agent-page-back {
+.project-agent-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  margin-right: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--pa-border);
+  background: var(--pa-surface);
   color: #f1f5f9 !important;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  white-space: nowrap;
+  touch-action: manipulation;
 }
 
-.project-agent-page-nav a:hover,
-.project-agent-page-nav a:focus-visible,
-.project-agent-page-back:hover,
-.project-agent-page-back:focus-visible {
-  color: var(--pa-accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.project-agent-back-link:hover,
+.project-agent-back-link:focus-visible {
+  color: var(--pa-accent) !important;
+  border-color: rgba(34, 211, 238, 0.35);
+  background: var(--pa-accent-dim);
 }
 
-.project-agent-page-inner {
-  flex: 1;
-  min-height: 0;
-  max-width: 1100px;
-  width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.project-agent-page-inner > .project-agent-root,
 .project-agent-root--fullpage {
   flex: 1;
   min-height: 0;
@@ -682,9 +677,27 @@
 }
 
 .project-agent-root--fullpage .project-agent-threads {
+  width: min(280px, 32vw);
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.project-agent-root--fullpage .project-agent-header {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
+
+.project-agent-root--fullpage .project-agent-toolbar {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+.project-agent-root--fullpage .project-agent-composer {
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
 }
 
 .project-agent-root--fullpage .project-agent-main {
@@ -1045,14 +1058,8 @@
     width: 100%;
   }
 
-  .project-agent-page-nav {
-    padding: 10px 12px;
-    padding-top: max(10px, env(safe-area-inset-top, 0px));
-  }
-
-  .project-agent-page-inner {
-    flex: 1;
-    min-height: 0;
+  .project-agent-root--fullpage .project-agent-threads {
+    width: min(240px, 38vw);
   }
 
   .project-agent-image-btn {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ProjectAgentPanel from './ProjectAgentPanel';
 import './ProjectAgent.css';
 
@@ -19,18 +19,12 @@ export default function ProjectAgentPage({ currentUser }) {
 
   return (
     <div className="project-agent-page">
-      <nav className="project-agent-page-nav">
-        <Link to="/home" className="project-agent-page-back">
-          ← Back to Aquads home
-        </Link>
-      </nav>
-      <div className="project-agent-page-inner">
-        <ProjectAgentPanel
-          currentUser={currentUser}
-          initialAdId={adId || null}
-          onExpand={null}
-        />
-      </div>
+      <ProjectAgentPanel
+        currentUser={currentUser}
+        initialAdId={adId || null}
+        onExpand={null}
+        showBackLink
+      />
     </div>
   );
 }

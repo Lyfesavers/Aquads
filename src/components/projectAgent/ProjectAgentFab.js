@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchProjectAgentEligible } from '../../services/projectAgentApi';
 import ProjectAgentPanel from './ProjectAgentPanel';
 import {
@@ -32,8 +32,10 @@ function SkipperFabIcon() {
 
 export default function ProjectAgentFab({ currentUser }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showFab, setShowFab] = useState(false);
   const [open, setOpen] = useState(false);
+  const onFullPage = location.pathname.startsWith('/project-agent');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -65,7 +67,7 @@ export default function ProjectAgentFab({ currentUser }) {
     };
   }, [currentUser?.token]);
 
-  if (!showFab) return null;
+  if (!showFab || onFullPage) return null;
 
   return (
     <>
