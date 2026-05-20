@@ -24,8 +24,8 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 ## Skipper Agent billing
 
 - Prepaid **USD wallet** per Premium listing (not affiliate points).
-- Chat modes: Instant, Thinking, Agent, **Web search** (live search, higher cost).
-- **Web search** — Kimi `$web_search` plus token usage; ~$0.005 per search call plus model tokens.
+- Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch), Create image.
+- **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens.
 - **Create image** — OpenAI image generation, separate cost.
 - Top-up via AquaPay (USDC); 5% load fee on top of credit amount.
 

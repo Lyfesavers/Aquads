@@ -12,7 +12,7 @@ function trimBlock(text, max = 4000) {
 /**
  * Build system prompt from listing + mode.
  * @param {import('../models/Ad').Ad} ad
- * @param {'instant'|'thinking'|'agent'|'websearch'} mode
+ * @param {'instant'|'thinking'|'agent'|'websearch'} mode — websearch kept for legacy messages
  */
 function buildProjectAgentSystemPrompt(ad, mode) {
   const profile = ad.projectProfile || {};
@@ -61,20 +61,15 @@ function buildProjectAgentSystemPrompt(ad, mode) {
     });
   }
 
-  if (mode === 'websearch') {
-    lines.push(
-      '',
-      '## Mode: Web search',
-      'You have live internet search via the $web_search tool. Use it when the user needs current public information, news, or facts not in the Aquads guide.',
-      'For Aquads product steps (listing, bumps, raids, AquaPay, Premium, Skipper), prefer the Aquads platform guide above; search only if that is insufficient.',
-      'Thinking is disabled in this mode. Cite sources briefly when search was used.'
-    );
-  } else if (mode === 'agent') {
+  if (mode === 'agent' || mode === 'websearch') {
     lines.push(
       '',
       '## Mode: Agent',
-      'Break complex requests into clear steps. Propose concrete deliverables (posts, doc sections, checklists).',
-      'Prefer actionable outputs the team can ship this week.'
+      'You have official tools: web_search (live public info), code_runner (Python analysis/plots/files), and fetch (read a URL as markdown).',
+      'Choose tools autonomously when they help; do not name tools in the reply unless the user asks.',
+      'For Aquads product how-to (listing, bumps, raids, AquaPay, Premium, Skipper), use only the Aquads platform guide above — do not web-search aquads.xyz.',
+      'Break complex requests into clear steps. Propose concrete deliverables (posts, doc sections, checklists, code outputs).',
+      'Cite sources briefly when search or fetch was used. Thinking is disabled while tools run.'
     );
   } else if (mode === 'instant') {
     lines.push('', '## Mode: Instant', 'Be concise and practical.');

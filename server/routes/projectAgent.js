@@ -19,12 +19,12 @@ const {
   resolveModelPricing,
   estimateKimiChatHoldCents,
   estimateKimiChatHoldUsd,
-  estimateKimiWebSearchHoldCents,
-  estimateKimiWebSearchHoldUsd,
+  estimateKimiAgentHoldCents,
+  estimateKimiAgentHoldUsd,
   kimiChatCostUsd,
   getWebSearchCallUsd
 } = require('../utils/kimiCost');
-const { runKimiWebSearchChat } = require('../utils/kimiWebSearch');
+const { runKimiAgentChat } = require('../utils/kimiAgentTools');
 const { openaiGenerateImage } = require('../utils/openaiImage');
 const {
   calculateImageGenerationCost,
@@ -66,7 +66,8 @@ const KIMI_BASE = (process.env.KIMI_API_BASE_URL || 'https://api.moonshot.ai/v1'
 const KIMI_MODEL = process.env.PROJECT_AGENT_MODEL || process.env.KIMI_MODEL || 'kimi-k2.6';
 const MAX_HISTORY_MESSAGES = 40;
 const CHAT_MAX_TOKENS = 8192;
-const CHAT_MODES = ['instant', 'thinking', 'agent', 'websearch'];
+const CHAT_MODES = ['instant', 'thinking', 'agent'];
+const LEGACY_CHAT_MODES = ['websearch'];
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -157,6 +158,15 @@ function modeToThinking(mode) {
   return mode === 'instant' ? { type: 'disabled' } : { type: 'enabled' };
 }
 
+function isAgentToolsMode(mode) {
+  return mode === 'agent' || mode === 'websearch';
+}
+
+function normalizeChatMode(mode) {
+  if (mode === 'websearch') return 'agent';
+  return mode;
+}
+
 function buildKimiMessages(systemPrompt, history, userContent) {
   const messages = [{ role: 'system', content: systemPrompt }];
   for (const m of history) {
@@ -190,7 +200,11 @@ router.get('/health', (req, res) => {
       outputUsd: pricing.output,
       cachedUsd: pricing.cached
     },
-    webSearchCallUsd: getWebSearchCallUsd()
+    webSearchCallUsd: getWebSearchCallUsd(),
+    agentFormulas: (process.env.PROJECT_AGENT_AGENT_FORMULAS || 'moonshot/web-search:latest,moonshot/code_runner:latest,moonshot/fetch:latest')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
   });
 });
 
@@ -355,7 +369,13 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     return res.status(503).json({ error: 'Skipper Agent is not configured on the server.' });
   }
 
-  const mode = CHAT_MODES.includes(req.body?.mode) ? req.body.mode : 'instant';
+  const rawMode = req.body?.mode;
+  const mode = CHAT_MODES.includes(rawMode)
+    ? rawMode
+    : LEGACY_CHAT_MODES.includes(rawMode)
+      ? 'agent'
+      : 'instant';
+  const storedMode = normalizeChatMode(mode);
   const userContent = String(req.body?.message || '').trim();
   if (!userContent || userContent.length > 32000) {
     return res.status(400).json({ error: 'Message is required (max 32k characters).' });
@@ -383,7 +403,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       .lean();
     history.reverse();
 
-    const systemPrompt = buildProjectAgentSystemPrompt(ad, mode);
+    const systemPrompt = buildProjectAgentSystemPrompt(ad, storedMode);
     const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
 
     const holdOpts = {
@@ -391,22 +411,20 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       messages: kimiMessages,
       maxTokens: CHAT_MAX_TOKENS,
       modelId: KIMI_MODEL,
-      mode: mode === 'websearch' ? 'instant' : mode
+      mode: isAgentToolsMode(storedMode) ? 'instant' : storedMode
     };
 
-    holdCents =
-      mode === 'websearch'
-        ? estimateKimiWebSearchHoldCents(holdOpts)
-        : estimateKimiChatHoldCents({ ...holdOpts, mode });
+    holdCents = isAgentToolsMode(storedMode)
+      ? estimateKimiAgentHoldCents(holdOpts)
+      : estimateKimiChatHoldCents({ ...holdOpts, mode: storedMode });
 
-    const estimatedHoldUsd =
-      mode === 'websearch'
-        ? estimateKimiWebSearchHoldUsd(holdOpts)
-        : estimateKimiChatHoldUsd({ ...holdOpts, mode });
+    const estimatedHoldUsd = isAgentToolsMode(storedMode)
+      ? estimateKimiAgentHoldUsd(holdOpts)
+      : estimateKimiChatHoldUsd({ ...holdOpts, mode: storedMode });
 
     const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
       provider: 'kimi',
-      mode,
+      mode: storedMode,
       model: KIMI_MODEL,
       threadId: String(thread._id),
       estimatedHoldUsd: estimatedHoldUsd.toFixed(4)
@@ -426,7 +444,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       threadId: thread._id,
       role: 'user',
       content: userContent,
-      mode
+      mode: storedMode
     });
 
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -446,22 +464,23 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       res.write(`data: ${JSON.stringify(obj)}\n\n`);
     };
 
-    send({ type: 'start', mode });
+    send({ type: 'start', mode: storedMode });
 
-    if (mode === 'websearch') {
+    if (isAgentToolsMode(storedMode)) {
       try {
-        const searchResult = await runKimiWebSearchChat({
+        const agentResult = await runKimiAgentChat({
           apiKey,
           baseUrl: KIMI_BASE,
           model: KIMI_MODEL,
           messages: kimiMessages,
           maxTokens: CHAT_MAX_TOKENS,
+          userMessage: userContent,
           send
         });
-        fullContent = searchResult.content || '';
-        webSearchCalls = searchResult.webSearchCalls || 0;
+        fullContent = agentResult.content || '';
+        webSearchCalls = agentResult.webSearchCalls || 0;
         costBreakdown = kimiChatCostUsd({
-          usages: searchResult.usages,
+          usages: agentResult.usages,
           webSearchCalls,
           modelId: KIMI_MODEL
         });
@@ -471,18 +490,18 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
         };
         costUsd = costBreakdown.totalUsd;
         costCents = usdToCents(costUsd);
-      } catch (searchErr) {
+      } catch (agentErr) {
         await releaseHold(req.user.userId, ad.id, holdCents, {
           provider: 'kimi',
-          reason: 'kimi_websearch_error'
+          reason: 'kimi_agent_error'
         });
         holdCents = 0;
         if (!res.headersSent) {
-          return res.status(searchErr.status >= 400 && searchErr.status < 600 ? searchErr.status : 502).json({
-            error: searchErr.message || 'Web search failed'
+          return res.status(agentErr.status >= 400 && agentErr.status < 600 ? agentErr.status : 502).json({
+            error: agentErr.message || 'Agent request failed'
           });
         }
-        send({ type: 'error', error: searchErr.message || 'Web search failed' });
+        send({ type: 'error', error: agentErr.message || 'Agent request failed' });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -493,7 +512,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
         stream: true,
         stream_options: { include_usage: true },
         max_tokens: CHAT_MAX_TOKENS,
-        thinking: modeToThinking(mode)
+        thinking: modeToThinking(storedMode)
       };
 
       const kimiRes = await fetch(`${KIMI_BASE}/chat/completions`, {
@@ -567,7 +586,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     }
 
     const settleResult = await settleHold(req.user.userId, ad.id, holdCents, costCents, {
-      mode,
+      mode: storedMode,
       model: KIMI_MODEL,
       usage: usage || {},
       threadId: String(thread._id),
@@ -588,7 +607,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       role: 'assistant',
       content: fullContent,
       reasoningContent: fullReasoning,
-      mode,
+      mode: storedMode,
       usage: usage || {},
       costCents
     });
@@ -606,7 +625,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       usage: usage || {},
       costUsd: costUsd.toFixed(6),
       costCents,
-      webSearchCalls: mode === 'websearch' ? webSearchCalls : undefined,
+      webSearchCalls: isAgentToolsMode(storedMode) ? webSearchCalls : undefined,
       toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,
       tokenUsd: costBreakdown ? costBreakdown.tokenUsd.toFixed(6) : undefined,
       balanceUsd: settleResult

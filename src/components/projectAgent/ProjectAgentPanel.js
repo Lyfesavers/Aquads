@@ -19,11 +19,10 @@ import './ProjectAgent.css';
 const MODES = [
   { id: 'instant', label: 'Instant', hint: 'Quick responses' },
   { id: 'thinking', label: 'Thinking', hint: 'Deeper reasoning' },
-  { id: 'agent', label: 'Agent', hint: 'Plans & deliverables' },
   {
-    id: 'websearch',
-    label: 'Web search',
-    hint: 'Live web search ($0.005/search + tokens; thinking off)'
+    id: 'agent',
+    label: 'Agent',
+    hint: 'Web search, Python code & URL fetch ($0.005/search + tokens)'
   },
   { id: 'image', label: 'Create image', hint: 'Generate a visual from your prompt' }
 ];
@@ -363,6 +362,10 @@ export default function ProjectAgentPanel({
         message: text,
         mode,
         onEvent: (evt) => {
+          if (evt.type === 'tool') {
+            const label = evt.label || evt.tool || 'Tool';
+            setSearchStatus(evt.round > 1 ? `${label} (step ${evt.round})…` : `${label}…`);
+          }
           if (evt.type === 'searching') {
             setSearchStatus(
               evt.searchNumber > 1
@@ -647,7 +650,7 @@ export default function ProjectAgentPanel({
               <div className="project-agent-msg assistant">
                 <ProjectAgentMessageBody
                   content={streamingContent}
-                  reasoningContent={mode === 'websearch' ? '' : streamingReasoning}
+                  reasoningContent={mode === 'agent' ? '' : streamingReasoning}
                   isStreaming
                 />
               </div>
@@ -685,8 +688,8 @@ export default function ProjectAgentPanel({
               placeholder={
                 mode === 'image'
                   ? 'Describe the image you want (e.g. Twitter banner, logo concept)…'
-                  : mode === 'websearch'
-                    ? 'Ask anything (live web + Aquads guide). e.g. What should I do after listing?'
+                  : mode === 'agent'
+                    ? 'Research, code, or fetch URLs — or ask Aquads how-to (uses platform guide)…'
                     : 'Ask about your project…'
               }
               rows={2}
@@ -704,7 +707,7 @@ export default function ProjectAgentPanel({
               onClick={handleSend}
               disabled={sending || !input.trim()}
             >
-              {sending ? '…' : mode === 'image' ? 'Create' : mode === 'websearch' ? 'Search' : 'Send'}
+              {sending ? '…' : mode === 'image' ? 'Create' : 'Send'}
             </button>
             </div>
           </div>

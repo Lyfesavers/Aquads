@@ -150,6 +150,18 @@ function estimateKimiWebSearchHoldCents(opts = {}) {
   return usdToCents(estimateKimiWebSearchHoldUsd(opts));
 }
 
+/** Agent mode (web_search + code_runner + fetch tool loop) */
+function estimateKimiAgentHoldUsd(opts = {}) {
+  const base = estimateKimiWebSearchHoldUsd(opts);
+  const extra = Number(process.env.PROJECT_AGENT_AGENT_HOLD_EXTRA_USD) || 0.02;
+  const buffer = Number(process.env.PROJECT_AGENT_AGENT_HOLD_BUFFER) || 1.2;
+  return base * buffer + extra;
+}
+
+function estimateKimiAgentHoldCents(opts = {}) {
+  return usdToCents(estimateKimiAgentHoldUsd(opts));
+}
+
 module.exports = {
   MODEL_PRICING_PER_M,
   resolveModelPricing,
@@ -163,5 +175,7 @@ module.exports = {
   mergeKimiUsage,
   kimiChatCostUsd,
   estimateKimiWebSearchHoldUsd,
-  estimateKimiWebSearchHoldCents
+  estimateKimiWebSearchHoldCents,
+  estimateKimiAgentHoldUsd,
+  estimateKimiAgentHoldCents
 };

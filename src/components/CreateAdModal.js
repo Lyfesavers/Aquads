@@ -1502,7 +1502,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         <span className="bg-cyan-600 text-white px-2 py-0.5 rounded text-xs">Premium only</span>
                       </h4>
                       <p className="text-gray-300 text-sm">
-                        Your project&apos;s AI co-pilot on Aquads — marketing copy, launch checklists, image generation, and optional live web search. Includes a <strong className="text-white">$5</strong> prepaid starter balance on your listing wallet when you go live (pay-as-you-go after that; top up via AquaPay).
+                        Your project&apos;s AI co-pilot on Aquads — marketing copy, launch checklists, image generation, and an Agent mode with web search, code, and URL fetch. Includes a <strong className="text-white">$5</strong> prepaid starter balance on your listing wallet when you go live (pay-as-you-go after that; top up via AquaPay).
                       </p>
                     </div>
                   </div>
