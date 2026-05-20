@@ -1,10 +1,10 @@
 const { isAquadsPlatformQuestion } = require('./aquadsPlatformDetect');
+const { KIMI_WEB_SEARCH_TOOL, webSearchToolResult } = require('./kimiWebSearch');
 
-const DEFAULT_FORMULA_URIS = [
-  'moonshot/web-search:latest',
-  'moonshot/code_runner:latest',
-  'moonshot/fetch:latest'
-];
+/** Formula URIs to try (optional). Web search always uses builtin $web_search. */
+const DEFAULT_FORMULA_URIS = ['moonshot/code_runner:latest', 'moonshot/fetch:latest'];
+
+const KIMI_BUILTIN_WEB_SEARCH = KIMI_WEB_SEARCH_TOOL;
 
 const MAX_AGENT_ROUNDS = Math.max(
   2,
@@ -13,7 +13,7 @@ const MAX_AGENT_ROUNDS = Math.max(
 
 const TOOLS_CACHE_MS = Math.max(60_000, Number(process.env.PROJECT_AGENT_TOOLS_CACHE_MS) || 600_000);
 
-/** @type {{ tools: object[], toolToUri: Record<string, string>, loadedAt: number } | null} */
+/** @type {{ tools: object[], toolToUri: Record<string, string>, skippedFormulas: string[], loadedAt: number } | null} */
 let toolsCache = null;
 
 function normalizeFormulaUri(uri) {
@@ -24,12 +24,23 @@ function normalizeFormulaUri(uri) {
   return u;
 }
 
+/** Kimi expects /formulas/moonshot/web-search:latest/... — do not encode / or : */
+function formulaApiUrl(baseUrl, uri, suffix) {
+  const normalized = normalizeFormulaUri(uri);
+  const base = String(baseUrl || '').replace(/\/$/, '');
+  return `${base}/formulas/${normalized}${suffix}`;
+}
+
 function parseFormulaUris() {
   const raw = process.env.PROJECT_AGENT_AGENT_FORMULAS;
   const list = raw
     ? raw.split(',').map((s) => normalizeFormulaUri(s.trim())).filter(Boolean)
     : DEFAULT_FORMULA_URIS.map(normalizeFormulaUri);
-  return [...new Set(list)];
+  return [...new Set(list)].filter((u) => !u.includes('web-search'));
+}
+
+function isWebSearchToolName(name) {
+  return name === '$web_search' || name === 'web_search';
 }
 
 /**
@@ -38,44 +49,49 @@ function parseFormulaUris() {
  */
 async function loadAgentTools(apiKey, baseUrl) {
   if (toolsCache && Date.now() - toolsCache.loadedAt < TOOLS_CACHE_MS) {
-    return { tools: toolsCache.tools, toolToUri: toolsCache.toolToUri };
+    return {
+      tools: toolsCache.tools,
+      toolToUri: toolsCache.toolToUri,
+      skippedFormulas: toolsCache.skippedFormulas
+    };
   }
 
   const uris = parseFormulaUris();
-  const allTools = [];
+  const allTools = [KIMI_BUILTIN_WEB_SEARCH];
   const toolToUri = {};
+  const skippedFormulas = [];
+
   const headers = {
     Authorization: `Bearer ${apiKey}`
   };
 
   for (const uri of uris) {
-    const res = await fetch(`${baseUrl}/formulas/${encodeURIComponent(uri)}/tools`, {
-      headers
-    });
+    const url = formulaApiUrl(baseUrl, uri, '/tools');
+    const res = await fetch(url, { headers });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data?.error?.message || data?.message || `Failed to load tools (${res.status})`;
-      throw new Error(`Formula tools ${uri}: ${msg}`);
+      skippedFormulas.push(`${uri}: ${msg}`);
+      console.warn(`[project-agent] Skipping formula ${uri}: ${msg}`);
+      continue;
     }
 
     for (const tool of data.tools || []) {
       const func = tool?.function;
       const name = func?.name;
       if (!name) continue;
+      if (name === 'web_search') continue;
       if (toolToUri[name]) {
-        throw new Error(`Duplicate agent tool name "${name}" across formulas`);
+        console.warn(`[project-agent] Duplicate tool "${name}", keeping first mapping`);
+        continue;
       }
       toolToUri[name] = uri;
       allTools.push(tool);
     }
   }
 
-  if (!allTools.length) {
-    throw new Error('No Kimi agent tools available for this API key');
-  }
-
-  toolsCache = { tools: allTools, toolToUri, loadedAt: Date.now() };
-  return { tools: allTools, toolToUri };
+  toolsCache = { tools: allTools, toolToUri, skippedFormulas, loadedAt: Date.now() };
+  return { tools: allTools, toolToUri, skippedFormulas };
 }
 
 /**
@@ -99,15 +115,8 @@ function extractFiberOutput(fiber) {
   return typeof out === 'string' ? out : JSON.stringify(out);
 }
 
-/**
- * @param {string} apiKey
- * @param {string} baseUrl
- * @param {string} formulaUri
- * @param {string} functionName
- * @param {string} argumentsJson - raw JSON string from model tool call
- */
 async function executeFormulaTool(apiKey, baseUrl, formulaUri, functionName, argumentsJson) {
-  const res = await fetch(`${baseUrl}/formulas/${encodeURIComponent(formulaUri)}/fibers`, {
+  const res = await fetch(formulaApiUrl(baseUrl, formulaUri, '/fibers'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -127,9 +136,45 @@ async function executeFormulaTool(apiKey, baseUrl, formulaUri, functionName, arg
   return extractFiberOutput(fiber);
 }
 
-/** User-facing status for SSE */
+/**
+ * @param {object} opts
+ * @param {string} opts.apiKey
+ * @param {string} opts.baseUrl
+ * @param {string} opts.toolName
+ * @param {object} opts.toolCall
+ * @param {Record<string, string>} opts.toolToUri
+ */
+async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolToUri }) {
+  if (toolName === '$web_search') {
+    let args = {};
+    try {
+      args = JSON.parse(toolCall.function?.arguments || '{}');
+    } catch {
+      args = {};
+    }
+    return JSON.stringify(webSearchToolResult(args));
+  }
+
+  const uri = toolToUri[toolName];
+  if (!uri) {
+    if (toolName === 'web_search') {
+      let args = {};
+      try {
+        args = JSON.parse(toolCall.function?.arguments || '{}');
+      } catch {
+        args = {};
+      }
+      return JSON.stringify(webSearchToolResult(args));
+    }
+    return JSON.stringify({ error: `Tool not available on this API key: ${toolName}` });
+  }
+
+  return executeFormulaTool(apiKey, baseUrl, uri, toolName, toolCall.function?.arguments || '{}');
+}
+
 function toolStatusLabel(toolName) {
   switch (toolName) {
+    case '$web_search':
     case 'web_search':
       return 'Searching the web';
     case 'code_runner':
@@ -141,17 +186,6 @@ function toolStatusLabel(toolName) {
   }
 }
 
-/**
- * Run Kimi agent tool loop (Formula tools), stream answer via send().
- * @param {object} opts
- * @param {string} opts.apiKey
- * @param {string} opts.baseUrl
- * @param {string} opts.model
- * @param {Array} opts.messages
- * @param {number} opts.maxTokens
- * @param {string} [opts.userMessage] - latest user text (Aquads playbook routing)
- * @param {(evt: object) => void} opts.send
- */
 async function runKimiAgentChat({
   apiKey,
   baseUrl,
@@ -161,13 +195,22 @@ async function runKimiAgentChat({
   userMessage = '',
   send
 }) {
-  let { tools, toolToUri } = await loadAgentTools(apiKey, baseUrl);
+  const { tools: loadedTools, toolToUri, skippedFormulas } = await loadAgentTools(apiKey, baseUrl);
+  let tools = loadedTools;
 
   if (isAquadsPlatformQuestion(userMessage)) {
-    tools = tools.filter((t) => t?.function?.name !== 'web_search');
-    for (const name of Object.keys(toolToUri)) {
-      if (name === 'web_search') delete toolToUri[name];
-    }
+    tools = tools.filter((t) => {
+      const n = t?.function?.name;
+      return !isWebSearchToolName(n);
+    });
+  }
+
+  if (!tools.length) {
+    throw new Error('No agent tools available. Check KIMI_API_KEY and PROJECT_AGENT_AGENT_FORMULAS.');
+  }
+
+  if (skippedFormulas.length) {
+    console.warn('[project-agent] Agent formulas skipped:', skippedFormulas.join('; '));
   }
 
   const working = [...messages];
@@ -219,32 +262,31 @@ async function runKimiAgentChat({
           label: toolStatusLabel(name),
           round: toolRound
         });
-        if (name === 'web_search') {
+        if (isWebSearchToolName(name)) {
           send({ type: 'searching', searchNumber: webSearchCalls + 1 });
         }
 
-        const uri = toolToUri[name];
-        if (!uri) {
-          working.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            content: JSON.stringify({ error: `Unsupported tool: ${name}` })
-          });
-          continue;
-        }
+        const result = await executeAgentToolCall({
+          apiKey,
+          baseUrl,
+          toolName: name,
+          toolCall,
+          toolToUri
+        });
 
-        const argsStr = toolCall.function?.arguments || '{}';
-        const result = await executeFormulaTool(apiKey, baseUrl, uri, name, argsStr);
-
-        if (name === 'web_search') {
+        if (isWebSearchToolName(name)) {
           webSearchCalls += 1;
         }
 
-        working.push({
+        const toolMsg = {
           role: 'tool',
           tool_call_id: toolCall.id,
           content: result
-        });
+        };
+        if (name === '$web_search') {
+          toolMsg.name = '$web_search';
+        }
+        working.push(toolMsg);
       }
       continue;
     }
@@ -257,13 +299,12 @@ async function runKimiAgentChat({
       }
     }
 
-    return { content, usages, webSearchCalls, toolRounds: toolRound };
+    return { content, usages, webSearchCalls, toolRounds: toolRound, skippedFormulas };
   }
 
   throw new Error('Agent took too many steps. Try a shorter or simpler request.');
 }
 
-/** Clear cached tool definitions (e.g. after deploy config change). */
 function clearAgentToolsCache() {
   toolsCache = null;
 }
@@ -273,5 +314,6 @@ module.exports = {
   loadAgentTools,
   clearAgentToolsCache,
   normalizeFormulaUri,
+  formulaApiUrl,
   DEFAULT_FORMULA_URIS
 };

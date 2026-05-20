@@ -65,7 +65,7 @@ function buildProjectAgentSystemPrompt(ad, mode) {
     lines.push(
       '',
       '## Mode: Agent',
-      'You have official tools: web_search (live public info), code_runner (Python analysis/plots/files), and fetch (read a URL as markdown).',
+      'You have tools: $web_search (live public info), and when available code_runner (Python) and fetch (URL to markdown).',
       'Choose tools autonomously when they help; do not name tools in the reply unless the user asks.',
       'For Aquads product how-to (listing, bumps, raids, AquaPay, Premium, Skipper), use only the Aquads platform guide above — do not web-search aquads.xyz.',
       'Break complex requests into clear steps. Propose concrete deliverables (posts, doc sections, checklists, code outputs).',

@@ -201,10 +201,15 @@ router.get('/health', (req, res) => {
       cachedUsd: pricing.cached
     },
     webSearchCallUsd: getWebSearchCallUsd(),
-    agentFormulas: (process.env.PROJECT_AGENT_AGENT_FORMULAS || 'moonshot/web-search:latest,moonshot/code_runner:latest,moonshot/fetch:latest')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    agentTools: {
+      webSearch: 'builtin:$web_search',
+      optionalFormulas: (
+        process.env.PROJECT_AGENT_AGENT_FORMULAS || 'moonshot/code_runner:latest,moonshot/fetch:latest'
+      )
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    }
   });
 });
 
