@@ -44,7 +44,14 @@ function getLimits() {
       500000,
       100000
     ),
-    maxAgentRounds: clampInt(process.env.PROJECT_AGENT_AGENT_MAX_ROUNDS, 2, 48, 24),
+    maxAgentRounds: clampInt(process.env.PROJECT_AGENT_AGENT_MAX_ROUNDS, 2, 48, 32),
+    /** Stop new searches and force a final answer (prevents 20+ search spirals) */
+    maxWebSearchesPerMessage: clampInt(
+      process.env.PROJECT_AGENT_MAX_WEB_SEARCHES_PER_MESSAGE,
+      3,
+      40,
+      15
+    ),
     maxSystemChars: clampInt(process.env.PROJECT_AGENT_MAX_SYSTEM_CHARS, 8000, 120000, 48000),
     /** Pre-hold: estimated web searches in a heavy agent run */
     agentHoldMaxSearchesEstimate: clampInt(

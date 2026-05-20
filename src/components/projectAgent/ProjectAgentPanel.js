@@ -373,6 +373,9 @@ export default function ProjectAgentPanel({
                 : 'Searching the web…'
             );
           }
+          if (evt.type === 'wrap_up') {
+            setSearchStatus('Wrapping up your answer…');
+          }
           if (evt.type === 'reasoning') {
             reasoning += evt.delta || '';
             setStreamingReasoning(reasoning);
@@ -388,7 +391,8 @@ export default function ProjectAgentPanel({
               costUsd: evt.costUsd,
               balanceUsd: evt.balanceUsd,
               webSearchCalls: evt.webSearchCalls,
-              toolUsd: evt.toolUsd
+              toolUsd: evt.toolUsd,
+              agentTruncated: evt.agentTruncated
             });
             if (evt.balanceUsd != null) {
               setWallet((w) => (w ? { ...w, balanceUsd: evt.balanceUsd } : w));
@@ -669,6 +673,9 @@ export default function ProjectAgentPanel({
                     {lastCost.webSearchCalls === 1 ? '' : 'es'}
                     {lastCost.toolUsd ? ` · tool $${lastCost.toolUsd}` : ''})
                   </>
+                )}
+                {lastCost.agentTruncated && (
+                  <> · partial (step limit — try a narrower ask)</>
                 )}
                 {' '}
                 · Balance ${lastCost.balanceUsd}

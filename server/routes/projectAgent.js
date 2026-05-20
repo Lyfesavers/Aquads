@@ -479,6 +479,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     let costUsd = 0;
     let costCents = 0;
     let costBreakdown = null;
+    let agentResult = null;
 
     const send = (obj) => {
       res.write(`data: ${JSON.stringify(obj)}\n\n`);
@@ -488,7 +489,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
 
     if (isAgentToolsMode(storedMode)) {
       try {
-        const agentResult = await runKimiAgentChat({
+        agentResult = await runKimiAgentChat({
           apiKey,
           baseUrl: KIMI_BASE,
           model: KIMI_MODEL,
@@ -648,6 +649,8 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       webSearchCalls: isAgentToolsMode(storedMode) ? webSearchCalls : undefined,
       toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,
       tokenUsd: costBreakdown ? costBreakdown.tokenUsd.toFixed(6) : undefined,
+      agentTruncated: agentResult?.truncated || false,
+      agentTruncateReason: agentResult?.truncateReason,
       balanceUsd: settleResult
         ? walletResponse(settleResult.wallet).balanceUsd
         : undefined

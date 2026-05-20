@@ -45,6 +45,105 @@ function isWebSearchToolName(name) {
   return name === '$web_search' || name === 'web_search';
 }
 
+function getKimiRequestTimeoutMs() {
+  const n = Number(process.env.PROJECT_AGENT_KIMI_TIMEOUT_MS);
+  return Number.isFinite(n) && n >= 30_000 ? n : 180_000;
+}
+
+/**
+ * @param {object} opts
+ * @param {string} opts.apiKey
+ * @param {string} opts.baseUrl
+ * @param {string} opts.model
+ * @param {Array} opts.messages
+ * @param {number} opts.maxTokens
+ * @param {object[]|undefined} opts.tools
+ */
+async function kimiChatCompletion({ apiKey, baseUrl, model, messages, maxTokens, tools }) {
+  const body = {
+    model,
+    messages,
+    max_tokens: maxTokens,
+    thinking: { type: 'disabled' }
+  };
+  if (tools && tools.length) {
+    body.tools = tools;
+  }
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(getKimiRequestTimeoutMs())
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error?.message || `AI request failed (${res.status})`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.kimi = data;
+    throw err;
+  }
+  return data;
+}
+
+const WRAP_UP_USER_MESSAGE =
+  'You have used the maximum tool steps allowed for this request. Do not call any more tools. ' +
+  'Using only information already gathered above, write your complete final answer now. ' +
+  'If something is missing, say what you could not verify.';
+
+/**
+ * One final completion without tools so the user still gets an answer.
+ */
+async function finalizeAgentAnswer({
+  apiKey,
+  baseUrl,
+  model,
+  working,
+  maxTokens,
+  usages,
+  webSearchCalls,
+  toolRound,
+  send,
+  reason
+}) {
+  send({ type: 'wrap_up', reason });
+  const messages = [...working, { role: 'user', content: WRAP_UP_USER_MESSAGE }];
+  const data = await kimiChatCompletion({
+    apiKey,
+    baseUrl,
+    model,
+    messages,
+    maxTokens,
+    tools: undefined
+  });
+
+  if (data.usage) {
+    usages.push(data.usage);
+  }
+
+  const content = data.choices?.[0]?.message?.content || '';
+  if (content) {
+    const chunkSize = 120;
+    for (let i = 0; i < content.length; i += chunkSize) {
+      send({ type: 'content', delta: content.slice(i, i + chunkSize) });
+    }
+  }
+
+  return {
+    content,
+    usages,
+    webSearchCalls,
+    toolRounds: toolRound,
+    truncated: true,
+    truncateReason: reason
+  };
+}
+
 /**
  * @param {string} apiKey
  * @param {string} baseUrl
@@ -220,31 +319,34 @@ async function runKimiAgentChat({
   let webSearchCalls = 0;
   let toolRound = 0;
 
-  const maxRounds = getMaxAgentRounds();
-  for (let round = 0; round < maxRounds; round += 1) {
-    const res = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: working,
-        max_tokens: maxTokens,
-        thinking: { type: 'disabled' },
-        tools
-      })
-    });
+  const limits = getLimits();
+  const maxRounds = limits.maxAgentRounds;
+  const maxWebSearches = limits.maxWebSearchesPerMessage;
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data?.error?.message || `AI request failed (${res.status})`;
-      const err = new Error(msg);
-      err.status = res.status;
-      err.kimi = data;
-      throw err;
+  for (let round = 0; round < maxRounds; round += 1) {
+    if (webSearchCalls >= maxWebSearches) {
+      return finalizeAgentAnswer({
+        apiKey,
+        baseUrl,
+        model,
+        working,
+        maxTokens,
+        usages,
+        webSearchCalls,
+        toolRound,
+        send,
+        reason: 'max_web_searches'
+      });
     }
+
+    const data = await kimiChatCompletion({
+      apiKey,
+      baseUrl,
+      model,
+      messages: working,
+      maxTokens,
+      tools
+    });
 
     if (data.usage) {
       usages.push(data.usage);
@@ -291,6 +393,21 @@ async function runKimiAgentChat({
         }
         working.push(toolMsg);
       }
+
+      if (webSearchCalls >= maxWebSearches) {
+        return finalizeAgentAnswer({
+          apiKey,
+          baseUrl,
+          model,
+          working,
+          maxTokens,
+          usages,
+          webSearchCalls,
+          toolRound,
+          send,
+          reason: 'max_web_searches'
+        });
+      }
       continue;
     }
 
@@ -305,7 +422,18 @@ async function runKimiAgentChat({
     return { content, usages, webSearchCalls, toolRounds: toolRound, skippedFormulas };
   }
 
-  throw new Error('Agent took too many steps. Try a shorter or simpler request.');
+  return finalizeAgentAnswer({
+    apiKey,
+    baseUrl,
+    model,
+    working,
+    maxTokens,
+    usages,
+    webSearchCalls,
+    toolRound,
+    send,
+    reason: 'max_rounds'
+  });
 }
 
 function clearAgentToolsCache() {
