@@ -4093,7 +4093,7 @@ const LaunchStackPillars = () => {
                   {pillar.step}
                 </span>
                 <span className="text-2xl" aria-hidden>{pillar.icon}</span>
-              </motion.div>
+              </div>
               <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{pillar.subtitle}</p>
               <h3 className="text-lg md:text-xl font-bold text-white font-display mb-2">{pillar.title}</h3>
               <p className="text-xs sm:text-sm text-gray-400 leading-relaxed flex-grow mb-4">{pillar.description}</p>
@@ -4107,7 +4107,7 @@ const LaunchStackPillars = () => {
             </motion.div>
           ))}
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 };
