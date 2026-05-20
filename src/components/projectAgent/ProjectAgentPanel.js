@@ -452,9 +452,10 @@ export default function ProjectAgentPanel({
   }
 
   const adMeta = eligible.find((a) => a.id === adId) || wallet?.ad;
+  const fullPage = !compact;
 
   return (
-    <div className="project-agent-root">
+    <div className={`project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`}>
       <header className="project-agent-header">
         {adMeta?.logo && <img src={adMeta.logo} alt="" />}
         <h2>

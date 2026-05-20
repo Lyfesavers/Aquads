@@ -610,7 +610,9 @@
 }
 
 .project-agent-page {
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--pa-bg);
@@ -650,15 +652,57 @@
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  height: calc(100vh - 48px);
-  height: calc(100dvh - 48px);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.project-agent-page-inner > .project-agent-root {
+.project-agent-page-inner > .project-agent-root,
+.project-agent-root--fullpage {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+/* Full page: one scroll surface (messages only); header + composer stay fixed in column */
+.project-agent-root--fullpage .project-agent-header,
+.project-agent-root--fullpage .project-agent-toolbar,
+.project-agent-root--fullpage .project-agent-topup--bar,
+.project-agent-root--fullpage .project-agent-starter-banner {
+  flex-shrink: 0;
+}
+
+.project-agent-root--fullpage .project-agent-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-agent-root--fullpage .project-agent-threads {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.project-agent-root--fullpage .project-agent-main {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-agent-root--fullpage .project-agent-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.project-agent-root--fullpage .project-agent-composer {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .project-agent-last-cost {
@@ -1004,7 +1048,8 @@
   }
 
   .project-agent-page-inner {
-    height: calc(100dvh - 44px);
+    flex: 1;
+    min-height: 0;
   }
 
   .project-agent-image-btn {
