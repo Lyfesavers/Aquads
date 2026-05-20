@@ -4022,7 +4022,7 @@ const LaunchStackPillars = () => {
     {
       step: '03',
       icon: '👥',
-      title: 'Hire launch help',
+      title: 'Hire help',
       subtitle: 'Graphics, mods, dev & more',
       description: 'Web3-native freelancers for logos, social content, community mods, and smart contracts. Book, escrow, and pay in crypto—no Upwork friction.',
       link: '/marketplace',
@@ -4182,7 +4182,7 @@ const LandingPage = () => {
     {
       icon: '👥',
       title: 'Freelancer Marketplace',
-      description: 'Hire launch help—logos, social graphics, community mods, dev, and marketing. Book, review, and pay in crypto with escrow. No monthly fees.',
+      description: 'Hire help—logos, social graphics, community mods, dev, and marketing. Book, review, and pay in crypto with escrow. No monthly fees.',
       gradient: 'from-violet-900/40 to-slate-900/80',
       link: '/marketplace'
     },
@@ -4259,7 +4259,7 @@ const LandingPage = () => {
 
   const stats = [
     { value: 30, suffix: '', label: 'Day launch window' },
-    { value: 20, suffix: '/day', label: 'Free raids when bumped' },
+    { value: 150, suffix: '+', label: 'Wallet integrations' },
     { value: 30, suffix: '+', label: 'Hire categories' },
     { value: 50, suffix: '+', label: 'Payment chains' }
   ];
@@ -4766,7 +4766,7 @@ const LandingPage = () => {
         <Link to="/marketplace" className="flex-1 h-full">
           <HeroOrb 
             side="right"
-            label="HIRE GROWTH HELP"
+            label="HIRE HELP"
             sublabel="Design · mods · marketing · dev"
           />
         </Link>
@@ -4927,7 +4927,7 @@ const LandingPage = () => {
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(192, 132, 252, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
               >
-                👥 Hire launch help
+                👥 Hire help
               </motion.button>
             </Link>
           </div>
