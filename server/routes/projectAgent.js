@@ -94,6 +94,8 @@ const router = express.Router();
 const PROJECT_AGENT_VIDEO_DIR = path.join(__dirname, '../data/project-agent-videos');
 const VIDEO_MAX_BYTES =
   Number(process.env.PROJECT_AGENT_VIDEO_MAX_BYTES) || 80 * 1024 * 1024;
+/** Prevent duplicate background finalize runs for the same message */
+const videoFinalizeInFlight = new Set();
 
 function ensureVideoDir() {
   if (!fs.existsSync(PROJECT_AGENT_VIDEO_DIR)) {
@@ -198,13 +200,113 @@ async function assertMessageVideoAccess(messageId, userId) {
 }
 
 /**
- * Poll OpenAI, download MP4, settle wallet hold. Idempotent when already completed.
+ * Download MP4, save to disk, settle wallet — runs outside the HTTP poll (Railway timeouts).
+ */
+async function finalizeVideoAssetInBackground(messageId, adId, userId, openaiVideoId) {
+  const id = String(messageId);
+  if (videoFinalizeInFlight.has(id)) return;
+  videoFinalizeInFlight.add(id);
+
+  try {
+    const claim = await ProjectAgentMessage.findById(messageId);
+    if (!claim || claim.hasVideo || claim.videoStatus === 'failed') return;
+
+    const holdCents = claim.videoHoldCents || 0;
+    const job = await openaiRetrieveVideo(openaiVideoId);
+
+    const { buffer, mimeType } = await openaiDownloadVideoContent(openaiVideoId);
+    if (buffer.length > VIDEO_MAX_BYTES) {
+      throw new Error('Generated video exceeds size limit.');
+    }
+
+    ensureVideoDir();
+    const storageKey = `${id}.mp4`;
+    const filePath = videoFilePath(storageKey);
+    fs.writeFileSync(filePath, buffer);
+
+    const { costUsd, breakdown, method } = calculateVideoGenerationCost(job, {
+      model: claim.videoModel,
+      size: claim.videoSize,
+      seconds: claim.videoSeconds
+    });
+    const videoCostCents = usdToCents(costUsd);
+
+    const settleResult = await settleHold(userId, adId, holdCents, videoCostCents, {
+      mode: 'video',
+      provider: 'openai',
+      model: job.model || claim.videoModel,
+      videoOpenaiId: openaiVideoId,
+      billingMethod: method,
+      costBreakdown: breakdown,
+      threadId: String(claim.threadId)
+    });
+
+    if (!settleResult?.settled) {
+      fs.unlink(filePath, () => {});
+      if (holdCents > 0) {
+        await releaseHold(userId, adId, holdCents, {
+          provider: 'openai',
+          mode: 'video',
+          reason: 'insufficient_balance'
+        });
+      }
+      claim.videoStatus = 'failed';
+      claim.videoHoldCents = 0;
+      claim.content = 'Insufficient balance to complete video billing.';
+      await claim.save();
+      return;
+    }
+
+    claim.hasVideo = true;
+    claim.videoStatus = 'completed';
+    claim.videoProgress = 100;
+    claim.videoStorageKey = storageKey;
+    claim.videoMimeType = mimeType || 'video/mp4';
+    claim.videoHoldCents = 0;
+    claim.costCents = videoCostCents;
+    claim.content = 'Generated video for your project.';
+    await claim.save();
+  } catch (err) {
+    console.error('[project-agent] video background finalize error:', err);
+    const claim = await ProjectAgentMessage.findById(messageId);
+    if (!claim) return;
+    const holdCents = claim.videoHoldCents || 0;
+    if (holdCents > 0) {
+      await releaseHold(userId, adId, holdCents, {
+        provider: 'openai',
+        mode: 'video',
+        reason: 'finalize_error'
+      });
+    }
+    claim.videoStatus = 'failed';
+    claim.videoHoldCents = 0;
+    claim.content = err.message || 'Video download failed.';
+    await claim.save();
+  } finally {
+    videoFinalizeInFlight.delete(id);
+  }
+}
+
+function scheduleVideoFinalize(messageId, adId, userId, openaiVideoId) {
+  setImmediate(() => {
+    finalizeVideoAssetInBackground(messageId, adId, userId, openaiVideoId).catch((err) => {
+      console.error('[project-agent] unhandled video finalize:', err);
+    });
+  });
+}
+
+/**
+ * Poll OpenAI; heavy download/billing runs in background. Idempotent when already completed.
  */
 async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
   if (assistantMsg.hasVideo && assistantMsg.videoStorageKey) {
     return {
       status: 'completed',
       progress: 100,
+      costCents: assistantMsg.costCents || 0,
+      costUsd: assistantMsg.costCents
+        ? (assistantMsg.costCents / 100).toFixed(6)
+        : undefined,
       message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
     };
   }
@@ -213,6 +315,14 @@ async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
     return {
       status: 'failed',
       error: assistantMsg.content || 'Video generation failed.',
+      message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
+    };
+  }
+
+  if (assistantMsg.videoStatus === 'finalizing') {
+    return {
+      status: 'finalizing',
+      progress: assistantMsg.videoProgress ?? 100,
       message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
     };
   }
@@ -307,9 +417,9 @@ async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
     {
       _id: assistantMsg._id,
       hasVideo: false,
-      videoStatus: { $nin: ['failed', 'completed'] }
+      videoStatus: { $nin: ['failed', 'completed', 'finalizing'] }
     },
-    { $set: { videoStatus: 'in_progress', videoProgress: progress } },
+    { $set: { videoStatus: 'finalizing', videoProgress: 100 } },
     { new: true }
   );
 
@@ -322,96 +432,24 @@ async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
         message: serializeMessage(fresh.toObject())
       };
     }
+    if (fresh?.videoStatus === 'finalizing') {
+      scheduleVideoFinalize(fresh._id, adId, userId, fresh.videoOpenaiId || videoId);
+      return {
+        status: 'finalizing',
+        progress: fresh.videoProgress ?? 100,
+        message: serializeMessage(fresh.toObject())
+      };
+    }
     return { status: 'in_progress', progress };
   }
 
-  const holdCents = claim.videoHoldCents || 0;
-  let settleResult;
-  try {
-    const { buffer, mimeType } = await openaiDownloadVideoContent(videoId);
-    if (buffer.length > VIDEO_MAX_BYTES) {
-      throw new Error('Generated video exceeds size limit.');
-    }
+  scheduleVideoFinalize(claim._id, adId, userId, videoId);
 
-    ensureVideoDir();
-    const storageKey = `${String(claim._id)}.mp4`;
-    const filePath = videoFilePath(storageKey);
-    fs.writeFileSync(filePath, buffer);
-
-    const { costUsd, breakdown, method } = calculateVideoGenerationCost(job, {
-      model: claim.videoModel,
-      size: claim.videoSize,
-      seconds: claim.videoSeconds
-    });
-    const videoCostCents = usdToCents(costUsd);
-
-    settleResult = await settleHold(userId, adId, holdCents, videoCostCents, {
-      mode: 'video',
-      provider: 'openai',
-      model: job.model || claim.videoModel,
-      videoOpenaiId: videoId,
-      billingMethod: method,
-      costBreakdown: breakdown,
-      threadId: String(claim.threadId)
-    });
-
-    if (!settleResult?.settled) {
-      fs.unlink(filePath, () => {});
-      await releaseHold(userId, adId, holdCents, {
-        provider: 'openai',
-        mode: 'video',
-        reason: 'insufficient_balance'
-      });
-      claim.videoStatus = 'failed';
-      claim.videoHoldCents = 0;
-      claim.content = 'Insufficient balance to complete video billing.';
-      await claim.save();
-      return {
-        status: 'failed',
-        error: claim.content,
-        code: 'INSUFFICIENT_BALANCE',
-        message: serializeMessage(claim.toObject())
-      };
-    }
-
-    claim.hasVideo = true;
-    claim.videoStatus = 'completed';
-    claim.videoProgress = 100;
-    claim.videoStorageKey = storageKey;
-    claim.videoMimeType = mimeType || 'video/mp4';
-    claim.videoHoldCents = 0;
-    claim.costCents = videoCostCents;
-    claim.content = 'Generated video for your project.';
-    await claim.save();
-
-    return {
-      status: 'completed',
-      progress: 100,
-      costUsd: costUsd.toFixed(6),
-      costCents: videoCostCents,
-      billingMethod: method,
-      balanceUsd: walletResponse(settleResult.wallet).balanceUsd,
-      message: serializeMessage(claim.toObject())
-    };
-  } catch (err) {
-    console.error('[project-agent] video finalize error:', err);
-    if (holdCents > 0) {
-      await releaseHold(userId, adId, holdCents, {
-        provider: 'openai',
-        mode: 'video',
-        reason: 'finalize_error'
-      });
-    }
-    claim.videoStatus = 'failed';
-    claim.videoHoldCents = 0;
-    claim.content = err.message || 'Video download failed.';
-    await claim.save();
-    return {
-      status: 'failed',
-      error: claim.content,
-      message: serializeMessage(claim.toObject())
-    };
-  }
+  return {
+    status: 'finalizing',
+    progress: 100,
+    message: serializeMessage(claim.toObject())
+  };
 }
 
 async function loadThread(threadId, userId, adId) {

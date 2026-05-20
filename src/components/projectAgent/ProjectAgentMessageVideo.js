@@ -11,6 +11,7 @@ export default function ProjectAgentMessageVideo({ messageId, token, status, pro
   const id = String(messageId);
   const isReady = status === 'completed';
   const isFailed = status === 'failed';
+  const isFinalizing = status === 'finalizing';
   const inFlight = !isReady && !isFailed;
 
   useEffect(() => {
@@ -59,7 +60,8 @@ export default function ProjectAgentMessageVideo({ messageId, token, status, pro
     const pct = progress != null && !Number.isNaN(Number(progress)) ? Math.round(Number(progress)) : null;
     return (
       <p className="project-agent-meta project-agent-video-progress">
-        Generating video…{pct != null ? ` ${pct}%` : ''}
+        {isFinalizing ? 'Saving video…' : 'Generating video…'}
+        {pct != null && !isFinalizing ? ` ${pct}%` : ''}
       </p>
     );
   }

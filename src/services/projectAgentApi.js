@@ -137,10 +137,17 @@ export async function generateProjectAgentVideo({
 }
 
 export async function fetchProjectAgentVideoStatus(messageId, token) {
-  const res = await fetch(
-    `${API_URL}/project-agent/video-status/${encodeURIComponent(messageId)}`,
-    { headers: authHeaders(token) }
-  );
+  let res;
+  try {
+    res = await fetch(
+      `${API_URL}/project-agent/video-status/${encodeURIComponent(messageId)}`,
+      { headers: authHeaders(token) }
+    );
+  } catch (networkErr) {
+    const err = new Error(networkErr?.message || 'Failed to fetch');
+    err.cause = networkErr;
+    throw err;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || 'Failed to check video status');

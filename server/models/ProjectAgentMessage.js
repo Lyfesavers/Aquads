@@ -48,7 +48,7 @@ const projectAgentMessageSchema = new mongoose.Schema({
   },
   videoStatus: {
     type: String,
-    enum: ['queued', 'in_progress', 'completed', 'failed', ''],
+    enum: ['queued', 'in_progress', 'finalizing', 'completed', 'failed', ''],
     default: ''
   },
   videoOpenaiId: {

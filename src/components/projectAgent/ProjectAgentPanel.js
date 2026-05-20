@@ -99,7 +99,12 @@ function messageShowsVideo(m) {
 
 function videoJobInFlight(m) {
   const s = m?.videoStatus;
-  return s === 'queued' || s === 'in_progress' || (!s && !m?.hasVideo);
+  return (
+    s === 'queued' ||
+    s === 'in_progress' ||
+    s === 'finalizing' ||
+    (!s && !m?.hasVideo)
+  );
 }
 
 const LOAD_FEE_RATE = 0.05;
@@ -254,7 +259,19 @@ export default function ProjectAgentPanel({
             videoPollAbortRef.current = null;
             return;
           }
+
+          if (data.status === 'finalizing') {
+            setStreamingContent('Saving your video…');
+          }
         } catch (e) {
+          const transient =
+            e?.message === 'Failed to fetch' ||
+            e?.name === 'TypeError' ||
+            e?.message?.includes('NetworkError');
+          if (transient) {
+            setStreamingContent('Still working — reconnecting…');
+            continue;
+          }
           setError(e.message || 'Failed to check video status');
           videoPollAbortRef.current = null;
           return;
