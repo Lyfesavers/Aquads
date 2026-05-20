@@ -936,6 +936,8 @@ export default function ProjectAgentPanel({
                     token={token}
                     status={m.videoStatus}
                     progress={m.videoProgress}
+                    createdAt={m.createdAt}
+                    videoSeconds={m.videoTargetSeconds || m.videoSeconds}
                   />
                 ) : m.role === 'assistant' ? (
                   <ProjectAgentMessageBody
