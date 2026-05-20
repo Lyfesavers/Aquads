@@ -1,0 +1,778 @@
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
+const auth = require('../middleware/auth');
+const Ad = require('../models/Ad');
+const ProjectAgentThread = require('../models/ProjectAgentThread');
+const ProjectAgentMessage = require('../models/ProjectAgentMessage');
+const ProjectAgentLedger = require('../models/ProjectAgentLedger');
+const sharp = require('sharp');
+const {
+  buildProjectAgentSystemPrompt,
+  buildProjectImagePrompt,
+  isPremiumListing
+} = require('../utils/projectAgentContext');
+const {
+  kimiUsageToUsd,
+  usdToCents,
+  centsToUsd,
+  resolveModelPricing,
+  estimateKimiChatHoldCents,
+  estimateKimiChatHoldUsd
+} = require('../utils/kimiCost');
+const { openaiGenerateImage } = require('../utils/openaiImage');
+const {
+  calculateImageGenerationCost,
+  resolveImageModelPricing,
+  estimateImageHoldUsd
+} = require('../utils/openaiImageCost');
+const {
+  grantStarterIfNeeded,
+  reserveBalance,
+  releaseHold,
+  settleHold,
+  walletResponse,
+  getOrCreateWallet,
+  LOAD_FEE_RATE
+} = require('../services/projectAgentWallet');
+
+const router = express.Router();
+
+const KIMI_BASE = (process.env.KIMI_API_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
+const KIMI_MODEL = process.env.PROJECT_AGENT_MODEL || process.env.KIMI_MODEL || 'kimi-k2.6';
+const MAX_HISTORY_MESSAGES = 40;
+const CHAT_MAX_TOKENS = 8192;
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 30 : 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many agent requests. Please wait a moment.' }
+});
+
+function getKimiKey() {
+  const key = process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
+  return key && String(key).trim() ? String(key).trim() : null;
+}
+
+function getOpenAiKey() {
+  const key = process.env.OPENAI_API_KEY;
+  return key && String(key).trim() ? String(key).trim() : null;
+}
+
+function serializeMessage(m) {
+  const row = {
+    _id: m._id,
+    role: m.role,
+    content: m.content,
+    reasoningContent: m.reasoningContent,
+    mode: m.mode,
+    usage: m.usage,
+    costCents: m.costCents,
+    createdAt: m.createdAt,
+    hasImage: Boolean(m.imageJpegBase64)
+  };
+  return row;
+}
+
+async function assertMessageImageAccess(messageId, userId) {
+  if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    return { error: 'Invalid message id.', status: 400 };
+  }
+  const msg = await ProjectAgentMessage.findById(messageId).select('threadId imageJpegBase64 imageMimeType');
+  if (!msg?.imageJpegBase64) {
+    return { error: 'Image not found.', status: 404 };
+  }
+  const thread = await ProjectAgentThread.findById(msg.threadId).select('userId adId');
+  if (!thread || String(thread.userId) !== String(userId)) {
+    return { error: 'Not found.', status: 404 };
+  }
+  return { msg, thread };
+}
+
+async function loadOwnedPremiumAd(adId, username) {
+  const ad = await Ad.findOne({
+    id: adId,
+    owner: username,
+    status: { $in: ['active', 'approved'] }
+  }).lean();
+
+  if (!ad) {
+    return { error: 'Listing not found or you do not own this project.', status: 404 };
+  }
+  if (!isPremiumListing(ad)) {
+    return {
+      error: 'Project Agent is included with Premium listings. Upgrade this project to Premium to unlock.',
+      status: 403,
+      code: 'PREMIUM_REQUIRED'
+    };
+  }
+  return { ad };
+}
+
+async function loadThread(threadId, userId, adId) {
+  const thread = await ProjectAgentThread.findOne({
+    _id: threadId,
+    userId,
+    adId
+  });
+  if (!thread) {
+    return { error: 'Conversation not found.', status: 404 };
+  }
+  return { thread };
+}
+
+function modeToThinking(mode) {
+  return mode === 'instant' ? { type: 'disabled' } : { type: 'enabled' };
+}
+
+function buildKimiMessages(systemPrompt, history, userContent) {
+  const messages = [{ role: 'system', content: systemPrompt }];
+  for (const m of history) {
+    if (m.role === 'user') {
+      messages.push({ role: 'user', content: m.content });
+    } else if (m.role === 'assistant') {
+      const msg = { role: 'assistant', content: m.content || '' };
+      if (m.reasoningContent) {
+        msg.reasoning_content = m.reasoningContent;
+      }
+      messages.push(msg);
+    }
+  }
+  messages.push({ role: 'user', content: userContent });
+  return messages;
+}
+
+router.get('/health', (req, res) => {
+  const pricing = resolveModelPricing(KIMI_MODEL);
+  res.json({
+    ok: true,
+    service: 'project-agent',
+    configured: !!getKimiKey(),
+    imageGenerationConfigured: !!getOpenAiKey(),
+    model: KIMI_MODEL,
+    baseUrl: KIMI_BASE,
+    imageModel: process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1',
+    imagePricingPerM: resolveImageModelPricing(process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1'),
+    pricingPerM: {
+      inputUsd: pricing.input,
+      outputUsd: pricing.output,
+      cachedUsd: pricing.cached
+    }
+  });
+});
+
+router.get('/eligible', auth, async (req, res) => {
+  try {
+    const ads = await Ad.find({
+      owner: req.user.username,
+      status: { $in: ['active', 'approved'] }
+    })
+      .select('id title logo listingTier blockchain')
+      .lean();
+
+    const eligible = ads
+      .filter((a) => isPremiumListing(a))
+      .map((a) => ({
+        id: a.id,
+        title: a.title,
+        logo: a.logo,
+        blockchain: a.blockchain
+      }));
+
+    res.json({ eligible, hasAccess: eligible.length > 0 });
+  } catch (err) {
+    console.error('[project-agent] eligible error:', err);
+    res.status(500).json({ error: 'Failed to load eligible projects.' });
+  }
+});
+
+router.get('/wallet/:adId', auth, async (req, res) => {
+  try {
+    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const { wallet, granted, grantCents } = await grantStarterIfNeeded(req.user.userId, ad.id);
+
+    res.json({
+      ad: { id: ad.id, title: ad.title, logo: ad.logo },
+      ...walletResponse(wallet),
+      starterJustGranted: granted,
+      grantCents: granted ? grantCents : 0,
+      loadFeeRate: LOAD_FEE_RATE
+    });
+  } catch (err) {
+    console.error('[project-agent] wallet error:', err);
+    res.status(500).json({ error: 'Failed to load wallet.' });
+  }
+});
+
+router.get('/ledger/:adId', auth, async (req, res) => {
+  try {
+    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const entries = await ProjectAgentLedger.find({
+      userId: req.user.userId,
+      adId: req.params.adId
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    res.json({ entries });
+  } catch (err) {
+    console.error('[project-agent] ledger error:', err);
+    res.status(500).json({ error: 'Failed to load ledger.' });
+  }
+});
+
+router.get('/threads/:adId', auth, async (req, res) => {
+  try {
+    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const threads = await ProjectAgentThread.find({
+      userId: req.user.userId,
+      adId: req.params.adId
+    })
+      .sort({ updatedAt: -1 })
+      .limit(50)
+      .select('title createdAt updatedAt')
+      .lean();
+
+    res.json({ threads });
+  } catch (err) {
+    console.error('[project-agent] threads error:', err);
+    res.status(500).json({ error: 'Failed to load conversations.' });
+  }
+});
+
+router.post('/threads/:adId', auth, async (req, res) => {
+  try {
+    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    await grantStarterIfNeeded(req.user.userId, ad.id);
+
+    const title = String(req.body?.title || 'New chat').trim().slice(0, 200) || 'New chat';
+    const thread = await ProjectAgentThread.create({
+      userId: req.user.userId,
+      adId: ad.id,
+      title
+    });
+
+    res.status(201).json({ thread });
+  } catch (err) {
+    console.error('[project-agent] create thread error:', err);
+    res.status(500).json({ error: 'Failed to create conversation.' });
+  }
+});
+
+router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
+  try {
+    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const { thread, error: tErr, status: tStatus } = await loadThread(
+      req.params.threadId,
+      req.user.userId,
+      req.params.adId
+    );
+    if (tErr) return res.status(tStatus).json({ error: tErr });
+
+    const messages = await ProjectAgentMessage.find({ threadId: thread._id })
+      .sort({ createdAt: 1 })
+      .select(
+        'role content reasoningContent mode usage costCents createdAt imageJpegBase64 imageMimeType'
+      )
+      .lean();
+
+    res.json({
+      thread,
+      messages: messages.map((m) => serializeMessage(m))
+    });
+  } catch (err) {
+    console.error('[project-agent] messages error:', err);
+    res.status(500).json({ error: 'Failed to load messages.' });
+  }
+});
+
+router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
+  const apiKey = getKimiKey();
+  if (!apiKey) {
+    return res.status(503).json({ error: 'Project Agent is not configured on the server.' });
+  }
+
+  const mode = ['instant', 'thinking', 'agent'].includes(req.body?.mode)
+    ? req.body.mode
+    : 'instant';
+  const userContent = String(req.body?.message || '').trim();
+  if (!userContent || userContent.length > 32000) {
+    return res.status(400).json({ error: 'Message is required (max 32k characters).' });
+  }
+
+  let holdCents = 0;
+
+  try {
+    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const { thread, error: tErr, status: tStatus } = await loadThread(
+      req.params.threadId,
+      req.user.userId,
+      ad.id
+    );
+    if (tErr) return res.status(tStatus).json({ error: tErr });
+
+    await grantStarterIfNeeded(req.user.userId, ad.id);
+
+    const history = await ProjectAgentMessage.find({ threadId: thread._id })
+      .sort({ createdAt: -1 })
+      .limit(MAX_HISTORY_MESSAGES)
+      .select('role content reasoningContent')
+      .lean();
+    history.reverse();
+
+    const systemPrompt = buildProjectAgentSystemPrompt(ad, mode);
+    const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
+
+    holdCents = estimateKimiChatHoldCents({
+      systemPrompt,
+      messages: kimiMessages,
+      maxTokens: CHAT_MAX_TOKENS,
+      modelId: KIMI_MODEL,
+      mode
+    });
+
+    const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
+      provider: 'kimi',
+      mode,
+      model: KIMI_MODEL,
+      threadId: String(thread._id),
+      estimatedHoldUsd: estimateKimiChatHoldUsd({
+        systemPrompt,
+        messages: kimiMessages,
+        maxTokens: CHAT_MAX_TOKENS,
+        modelId: KIMI_MODEL,
+        mode
+      }).toFixed(4)
+    });
+
+    if (!reservation) {
+      const wallet = await getOrCreateWallet(req.user.userId, ad.id);
+      return res.status(402).json({
+        error: 'Insufficient balance for this message. Add funds or try a shorter conversation.',
+        code: 'INSUFFICIENT_BALANCE',
+        balanceUsd: walletResponse(wallet).balanceUsd,
+        requiredUsd: centsToUsd(holdCents)
+      });
+    }
+
+    await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'user',
+      content: userContent,
+      mode
+    });
+
+    const kimiBody = {
+      model: KIMI_MODEL,
+      messages: kimiMessages,
+      stream: true,
+      stream_options: { include_usage: true },
+      max_tokens: CHAT_MAX_TOKENS,
+      thinking: modeToThinking(mode)
+    };
+
+    const kimiRes = await fetch(`${KIMI_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(kimiBody)
+    });
+
+    if (!kimiRes.ok) {
+      await releaseHold(req.user.userId, ad.id, holdCents, {
+        provider: 'kimi',
+        reason: 'kimi_error'
+      });
+      holdCents = 0;
+      const errData = await kimiRes.json().catch(() => ({}));
+      const msg = errData?.error?.message || 'AI request failed';
+      console.error('[project-agent] Kimi error:', kimiRes.status, msg);
+      return res.status(kimiRes.status >= 400 && kimiRes.status < 600 ? kimiRes.status : 502).json({
+        error: msg
+      });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    let fullContent = '';
+    let fullReasoning = '';
+    let usage = null;
+    let buffer = '';
+
+    const send = (obj) => {
+      res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    };
+
+    send({ type: 'start', mode });
+
+    const reader = kimiRes.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === '[DONE]') continue;
+
+        let parsed;
+        try {
+          parsed = JSON.parse(payload);
+        } catch {
+          continue;
+        }
+
+        if (parsed.usage) {
+          usage = parsed.usage;
+        }
+
+        const delta = parsed.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.reasoning_content) {
+          fullReasoning += delta.reasoning_content;
+          send({ type: 'reasoning', delta: delta.reasoning_content });
+        }
+        if (delta.content) {
+          fullContent += delta.content;
+          send({ type: 'content', delta: delta.content });
+        }
+      }
+    }
+
+    const costUsd = kimiUsageToUsd(usage || {}, KIMI_MODEL);
+    const costCents = usdToCents(costUsd);
+
+    const settleResult = await settleHold(req.user.userId, ad.id, holdCents, costCents, {
+      mode,
+      model: KIMI_MODEL,
+      usage: usage || {},
+      threadId: String(thread._id),
+      provider: 'kimi'
+    });
+    holdCents = 0;
+
+    if (!settleResult?.settled && costCents > 0) {
+      send({
+        type: 'error',
+        error: 'Could not settle full usage cost. Please add funds.'
+      });
+    }
+
+    await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'assistant',
+      content: fullContent,
+      reasoningContent: fullReasoning,
+      mode,
+      usage: usage || {},
+      costCents
+    });
+
+    if (thread.title === 'New chat' && fullContent) {
+      thread.title = userContent.slice(0, 80) || 'Chat';
+      await thread.save();
+    } else {
+      thread.updatedAt = new Date();
+      await thread.save();
+    }
+
+    send({
+      type: 'done',
+      usage: usage || {},
+      costUsd: costUsd.toFixed(6),
+      costCents,
+      balanceUsd: settleResult
+        ? walletResponse(settleResult.wallet).balanceUsd
+        : undefined
+    });
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    if (holdCents > 0) {
+      try {
+        const { ad } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+        if (ad) {
+          await releaseHold(req.user.userId, ad.id, holdCents, {
+            provider: 'kimi',
+            reason: 'server_error'
+          });
+        }
+      } catch (releaseErr) {
+        console.error('[project-agent] hold release failed:', releaseErr);
+      }
+    }
+    console.error('[project-agent] chat error:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Server error during chat.' });
+    }
+    try {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: 'Server error' })}\n\n`);
+      res.end();
+    } catch {
+      /* ignore */
+    }
+  }
+});
+
+const imageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 8 : 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many image requests. Please wait a moment.' }
+});
+
+/** Generate image via OpenAI (Create image mode) — billed from project wallet */
+router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, res) => {
+  if (!getOpenAiKey()) {
+    return res.status(503).json({ error: 'Image generation is not configured on the server.' });
+  }
+
+  const userContent = String(req.body?.message || '').trim();
+  if (!userContent || userContent.length > 4000) {
+    return res.status(400).json({ error: 'Describe the image you want (max 4000 characters).' });
+  }
+
+  const imageModel = process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1';
+  const imageQuality = process.env.PROJECT_AGENT_IMAGE_QUALITY || 'medium';
+  const holdUsd = estimateImageHoldUsd(imageModel, imageQuality);
+  const holdCents = usdToCents(holdUsd);
+
+  try {
+    const { ad, error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const { thread, error: tErr, status: tStatus } = await loadThread(
+      req.params.threadId,
+      req.user.userId,
+      ad.id
+    );
+    if (tErr) return res.status(tStatus).json({ error: tErr });
+
+    await grantStarterIfNeeded(req.user.userId, ad.id);
+
+    const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
+      provider: 'openai',
+      mode: 'image',
+      model: imageModel,
+      quality: imageQuality,
+      threadId: String(thread._id),
+      estimatedHoldUsd: holdUsd.toFixed(4)
+    });
+
+    if (!reservation) {
+      const wallet = await getOrCreateWallet(req.user.userId, ad.id);
+      return res.status(402).json({
+        error: `Insufficient balance. Image generation requires about $${holdUsd.toFixed(2)} available.`,
+        code: 'INSUFFICIENT_BALANCE',
+        balanceUsd: walletResponse(wallet).balanceUsd,
+        requiredUsd: holdUsd.toFixed(2)
+      });
+    }
+
+    await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'user',
+      content: userContent,
+      mode: 'image'
+    });
+
+    const prompt = buildProjectImagePrompt(ad, userContent);
+    let pngBase64;
+    let usage;
+    let quality;
+    let model;
+    try {
+      ({ base64: pngBase64, usage, quality, model } = await openaiGenerateImage(prompt, {
+        model: imageModel,
+        quality: imageQuality
+      }));
+    } catch (genErr) {
+      await releaseHold(req.user.userId, ad.id, holdCents, {
+        provider: 'openai',
+        reason: 'openai_error'
+      });
+      throw genErr;
+    }
+
+    const { costUsd, breakdown, method } = calculateImageGenerationCost(usage, model || imageModel, quality);
+    const imageCostCents = usdToCents(costUsd);
+
+    let jpegBase64;
+    try {
+      const jpegBuffer = await sharp(Buffer.from(pngBase64, 'base64'))
+        .jpeg({ quality: 88, mozjpeg: true })
+        .toBuffer();
+      jpegBase64 = jpegBuffer.toString('base64');
+    } catch (encodeErr) {
+      console.error('[project-agent] image encode failed', encodeErr);
+      await settleHold(req.user.userId, ad.id, holdCents, imageCostCents, {
+        provider: 'openai',
+        reason: 'encode_error',
+        mode: 'image'
+      });
+      return res.status(500).json({ error: 'Failed to process generated image.' });
+    }
+
+    const settleResult = await settleHold(req.user.userId, ad.id, holdCents, imageCostCents, {
+      mode: 'image',
+      provider: 'openai',
+      model: model || imageModel,
+      usage: usage || {},
+      billingMethod: method,
+      costBreakdown: breakdown,
+      threadId: String(thread._id)
+    });
+
+    if (!settleResult?.settled) {
+      return res.status(402).json({
+        error: 'Insufficient balance for image generation.',
+        code: 'INSUFFICIENT_BALANCE'
+      });
+    }
+
+    const assistantMsg = await ProjectAgentMessage.create({
+      threadId: thread._id,
+      role: 'assistant',
+      content: 'Generated image for your project.',
+      mode: 'image',
+      imageJpegBase64: jpegBase64,
+      imageMimeType: 'image/jpeg',
+      costCents: imageCostCents
+    });
+
+    if (thread.title === 'New chat') {
+      thread.title = userContent.slice(0, 80) || 'Image';
+      await thread.save();
+    } else {
+      thread.updatedAt = new Date();
+      await thread.save();
+    }
+
+    res.json({
+      userMessage: { role: 'user', content: userContent, mode: 'image' },
+      assistantMessage: serializeMessage(assistantMsg.toObject()),
+      messageId: String(assistantMsg._id),
+      costUsd: costUsd.toFixed(6),
+      costCents: imageCostCents,
+      billingMethod: method,
+      usage: usage || {},
+      costBreakdown: breakdown,
+      balanceUsd: walletResponse(settleResult.wallet).balanceUsd
+    });
+  } catch (err) {
+    console.error('[project-agent] generate-image error:', err);
+    const status = err.status && Number(err.status) >= 400 ? Number(err.status) : 500;
+    res.status(status).json({
+      error: err.message || 'Image generation failed.'
+    });
+  }
+});
+
+/** Serve generated image (auth — user must own thread) */
+router.get('/image/:messageId', auth, async (req, res) => {
+  try {
+    const access = await assertMessageImageAccess(req.params.messageId, req.user.userId);
+    if (access.error) return res.status(access.status).json({ error: access.error });
+
+    const buf = Buffer.from(access.msg.imageJpegBase64, 'base64');
+    const mime = access.msg.imageMimeType || 'image/jpeg';
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Length', buf.length);
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    return res.end(buf);
+  } catch (err) {
+    console.error('[project-agent] image serve error:', err);
+    res.status(500).json({ error: 'Failed to load image.' });
+  }
+});
+
+/** Download generated image as attachment (auth — reliable save on mobile) */
+router.get('/download/:messageId', auth, async (req, res) => {
+  try {
+    const access = await assertMessageImageAccess(req.params.messageId, req.user.userId);
+    if (access.error) return res.status(access.status).json({ error: access.error });
+
+    const msg = await ProjectAgentMessage.findById(req.params.messageId)
+      .select('createdAt')
+      .lean();
+    const buf = Buffer.from(access.msg.imageJpegBase64, 'base64');
+    const mime = access.msg.imageMimeType || 'image/jpeg';
+    const ext = mime.includes('png') ? 'png' : 'jpg';
+    const stamp = msg?.createdAt
+      ? new Date(msg.createdAt).toISOString().replace(/[:.]/g, '-')
+      : Date.now().toString();
+    const filename = `aquads-project-agent-${stamp}.${ext}`;
+
+    res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Length', buf.length);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'private, no-cache');
+    return res.end(buf);
+  } catch (err) {
+    console.error('[project-agent] image download error:', err);
+    res.status(500).json({ error: 'Failed to download image.' });
+  }
+});
+
+/** Top-up placeholder — payment integration can wire here later */
+router.post('/topup/:adId', auth, async (req, res) => {
+  try {
+    const { error, status, code } = await loadOwnedPremiumAd(req.params.adId, req.user.username);
+    if (error) return res.status(status).json({ error, code });
+
+    const amountUsd = Number(req.body?.amountUsd);
+    if (!Number.isFinite(amountUsd) || amountUsd < 5 || amountUsd > 500) {
+      return res.status(400).json({
+        error: 'Top-up amount must be between $5 and $500.',
+        loadFeeRate: LOAD_FEE_RATE
+      });
+    }
+
+    return res.status(501).json({
+      error: 'Balance top-up checkout is coming soon. Contact support to add funds in the meantime.',
+      code: 'TOPUP_NOT_ENABLED',
+      loadFeeRate: LOAD_FEE_RATE,
+      preview: {
+        payUsd: amountUsd,
+        feeUsd: Number((amountUsd * LOAD_FEE_RATE).toFixed(2)),
+        creditUsd: Number((amountUsd * (1 - LOAD_FEE_RATE)).toFixed(2))
+      }
+    });
+  } catch (err) {
+    console.error('[project-agent] topup error:', err);
+    res.status(500).json({ error: 'Top-up failed.' });
+  }
+});
+
+module.exports = router;

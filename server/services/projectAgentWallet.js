@@ -1,0 +1,209 @@
+const ProjectAgentWallet = require('../models/ProjectAgentWallet');
+const ProjectAgentLedger = require('../models/ProjectAgentLedger');
+const { usdToCents, centsToUsd } = require('../utils/kimiCost');
+
+const STARTER_GRANT_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
+const LOAD_FEE_RATE = Number(process.env.PROJECT_AGENT_LOAD_FEE_RATE) || 0.05;
+
+async function getOrCreateWallet(userId, adId) {
+  let wallet = await ProjectAgentWallet.findOne({ userId, adId });
+  if (!wallet) {
+    wallet = await ProjectAgentWallet.create({
+      userId,
+      adId,
+      balanceCents: 0,
+      starterGranted: false
+    });
+  }
+  return wallet;
+}
+
+async function grantStarterIfNeeded(userId, adId) {
+  const wallet = await getOrCreateWallet(userId, adId);
+  if (wallet.starterGranted) {
+    return { wallet, granted: false };
+  }
+
+  wallet.balanceCents += STARTER_GRANT_CENTS;
+  wallet.starterGranted = true;
+  wallet.starterGrantedAt = new Date();
+  await wallet.save();
+
+  await ProjectAgentLedger.create({
+    userId,
+    adId,
+    type: 'starter_grant',
+    amountCents: STARTER_GRANT_CENTS,
+    balanceAfterCents: wallet.balanceCents,
+    meta: { note: 'Premium listing Project Agent starter credit' }
+  });
+
+  return { wallet, granted: true, grantCents: STARTER_GRANT_CENTS };
+}
+
+/**
+ * Atomically reserve balance before an upstream API call. Returns null if insufficient.
+ */
+async function reserveBalance(userId, adId, reserveCents, meta = {}) {
+  if (reserveCents <= 0) {
+    const wallet = await getOrCreateWallet(userId, adId);
+    return { wallet, reservedCents: 0 };
+  }
+
+  const wallet = await ProjectAgentWallet.findOneAndUpdate(
+    { userId, adId, balanceCents: { $gte: reserveCents } },
+    { $inc: { balanceCents: -reserveCents } },
+    { new: true }
+  );
+  if (!wallet) {
+    return null;
+  }
+
+  await ProjectAgentLedger.create({
+    userId,
+    adId,
+    type: 'hold',
+    amountCents: -reserveCents,
+    balanceAfterCents: wallet.balanceCents,
+    meta
+  });
+
+  return { wallet, reservedCents: reserveCents };
+}
+
+/** Refund a hold when the upstream call never completed or failed. */
+async function releaseHold(userId, adId, holdCents, meta = {}) {
+  if (holdCents <= 0) {
+    const wallet = await getOrCreateWallet(userId, adId);
+    return { wallet };
+  }
+
+  const wallet = await ProjectAgentWallet.findOneAndUpdate(
+    { userId, adId },
+    { $inc: { balanceCents: holdCents } },
+    { new: true }
+  );
+  if (!wallet) {
+    return null;
+  }
+
+  await ProjectAgentLedger.create({
+    userId,
+    adId,
+    type: 'hold_release',
+    amountCents: holdCents,
+    balanceAfterCents: wallet.balanceCents,
+    meta: { ...meta, reason: meta.reason || 'cancelled' }
+  });
+
+  return { wallet };
+}
+
+/**
+ * Settle a prior hold against actual usage (refund unused hold; deduct overage if any).
+ */
+async function settleHold(userId, adId, holdCents, actualCents, meta = {}) {
+  const hold = Math.max(0, Number(holdCents) || 0);
+  const actual = Math.max(0, Number(actualCents) || 0);
+  const refundCents = Math.max(0, hold - actual);
+  const overageCents = Math.max(0, actual - hold);
+
+  let wallet = await ProjectAgentWallet.findOne({ userId, adId });
+  if (!wallet) {
+    return null;
+  }
+
+  if (refundCents > 0) {
+    wallet = await ProjectAgentWallet.findOneAndUpdate(
+      { userId, adId },
+      { $inc: { balanceCents: refundCents } },
+      { new: true }
+    );
+    await ProjectAgentLedger.create({
+      userId,
+      adId,
+      type: 'hold_release',
+      amountCents: refundCents,
+      balanceAfterCents: wallet.balanceCents,
+      meta: { ...meta, holdCents: hold, actualCents: actual, refunded: refundCents }
+    });
+  }
+
+  if (actual > 0) {
+    await ProjectAgentLedger.create({
+      userId,
+      adId,
+      type: 'usage',
+      amountCents: -actual,
+      balanceAfterCents: wallet.balanceCents,
+      meta: { ...meta, holdCents: hold, settledFromHold: true }
+    });
+  }
+
+  if (overageCents > 0) {
+    const extra = await deductUsage(userId, adId, overageCents, {
+      ...meta,
+      overage: true,
+      holdCents: hold,
+      actualCents: actual
+    });
+    if (!extra) {
+      return { wallet, settled: false, overageCents, actualCents: actual };
+    }
+    wallet = extra.wallet;
+  }
+
+  return { wallet, settled: true, actualCents: actual, refundCents };
+}
+
+/**
+ * Deduct usage cost in cents. Returns null if insufficient balance.
+ */
+async function deductUsage(userId, adId, costCents, meta = {}) {
+  if (costCents <= 0) {
+    const wallet = await getOrCreateWallet(userId, adId);
+    return { wallet, ledger: null };
+  }
+
+  const wallet = await ProjectAgentWallet.findOne({ userId, adId });
+  if (!wallet || wallet.balanceCents < costCents) {
+    return null;
+  }
+
+  wallet.balanceCents -= costCents;
+  await wallet.save();
+
+  const ledger = await ProjectAgentLedger.create({
+    userId,
+    adId,
+    type: 'usage',
+    amountCents: -costCents,
+    balanceAfterCents: wallet.balanceCents,
+    meta
+  });
+
+  return { wallet, ledger };
+}
+
+function walletResponse(wallet) {
+  return {
+    balanceCents: wallet.balanceCents,
+    balanceUsd: centsToUsd(wallet.balanceCents),
+    starterGranted: wallet.starterGranted,
+    starterGrantUsd: (STARTER_GRANT_CENTS / 100).toFixed(2)
+  };
+}
+
+module.exports = {
+  STARTER_GRANT_CENTS,
+  LOAD_FEE_RATE,
+  getOrCreateWallet,
+  grantStarterIfNeeded,
+  reserveBalance,
+  releaseHold,
+  settleHold,
+  deductUsage,
+  walletResponse,
+  usdToCents,
+  centsToUsd
+};

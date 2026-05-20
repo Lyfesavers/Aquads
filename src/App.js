@@ -77,6 +77,8 @@ const Aquataire = lazy(() => import('./components/Aquataire'));
 
 const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
+const ProjectAgentPage = lazy(() => import('./components/projectAgent/ProjectAgentPage'));
+const ProjectAgentFab = lazy(() => import('./components/projectAgent/ProjectAgentFab'));
 const TelegramBot = lazy(() => import('./components/TelegramBot'));
 const PublicResume = lazy(() => import('./components/PublicResume'));
 const LinkInBio = lazy(() => import('./components/LinkInBio'));
@@ -2686,6 +2688,11 @@ function App() {
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <DesktopInstallPrompt />
+        {currentUser && (
+          <Suspense fallback={null}>
+            <ProjectAgentFab currentUser={currentUser} />
+          </Suspense>
+        )}
         <Suspense fallback={
           <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #111827, #000000)' }}>
             <div style={{ textAlign: 'center' }}>
@@ -3885,6 +3892,10 @@ function App() {
             <Route path="/aquapay" element={<AquaPayInfo />} />
             <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />
             <Route path="/docs" element={<Documentation />} />
+            <Route
+              path="/project-agent/:adId?"
+              element={<ProjectAgentPage currentUser={currentUser} />}
+            />
         </Routes>
         </Suspense>
         {showEmailVerificationModal && pendingVerificationEmail && (
