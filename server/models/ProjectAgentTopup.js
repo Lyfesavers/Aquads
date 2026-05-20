@@ -58,8 +58,7 @@ const projectAgentTopupSchema = new mongoose.Schema({
   },
   txHash: {
     type: String,
-    default: null,
-    sparse: true
+    default: null
   },
   paymentChain: {
     type: String,
