@@ -193,7 +193,10 @@
 
 .project-agent-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 16px;
   display: flex;
   flex-direction: column;
