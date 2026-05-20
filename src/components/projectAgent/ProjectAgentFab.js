@@ -37,7 +37,7 @@ export default function ProjectAgentFab({ currentUser }) {
   }, [open]);
 
   useEffect(() => {
-    if (!currentUser?.token) {
+    if (!currentUser?.token || currentUser?.emailVerified === false) {
       setShowFab(false);
       return;
     }
@@ -55,7 +55,7 @@ export default function ProjectAgentFab({ currentUser }) {
     return () => {
       cancelled = true;
     };
-  }, [currentUser?.token]);
+  }, [currentUser?.token, currentUser?.emailVerified]);
 
   if (!showFab || onFullPage) return null;
 

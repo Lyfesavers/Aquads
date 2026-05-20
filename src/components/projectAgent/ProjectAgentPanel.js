@@ -194,18 +194,25 @@ export default function ProjectAgentPanel({
       setGateError(`Log in to use ${SKIPPER_AGENT_NAME}.`);
       return;
     }
+    if (currentUser?.emailVerified === false) {
+      setLoading(false);
+      setGateError('Verify your email to use Skipper Agent.');
+      return;
+    }
 
     let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         setGateError('');
-        const { eligible: list } = await fetchProjectAgentEligible(token);
+        const { eligible: list, code } = await fetchProjectAgentEligible(token);
         if (cancelled) return;
         setEligible(list || []);
-        if (!list?.length) {
+        if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
           setGateError(
-            `${SKIPPER_AGENT_NAME} is available on Premium listings ($5 starter credit) or freelancer accounts ($1 trial).`
+            code === 'EMAIL_VERIFICATION_REQUIRED'
+              ? 'Verify your email to use Skipper Agent.'
+              : `${SKIPPER_AGENT_NAME} is available to verified Aquads accounts. List a project or verify your email to get started.`
           );
           setLoading(false);
           return;
@@ -223,7 +230,7 @@ export default function ProjectAgentPanel({
     return () => {
       cancelled = true;
     };
-  }, [token, initialAdId]);
+  }, [token, initialAdId, currentUser?.emailVerified]);
 
   const refreshWallet = useCallback(async () => {
     if (!token || !adId) return;
@@ -743,7 +750,7 @@ export default function ProjectAgentPanel({
         <div className="project-agent-gate">
           <p>{gateError}</p>
           <p style={{ marginTop: 12 }}>
-            <Link to="/list-token-free">List or upgrade a project (Premium)</Link>
+            <Link to="/list-token-free">List a project</Link>
             {' · '}
             <Link to="/freelancer-benefits">Freelancer on Aquads</Link>
           </p>
@@ -911,7 +918,11 @@ export default function ProjectAgentPanel({
       {wallet?.starterJustGranted && (
         <p className="project-agent-last-cost project-agent-starter-banner" style={{ color: '#22d3ee' }}>
           ${wallet.starterGrantUsd} starter credit added
-          {adId === 'freelancer' ? ' for your freelancer trial.' : ' for this Premium listing.'}
+          {adId === 'freelancer'
+            ? ' for your freelancer trial.'
+            : wallet?.scope === 'premium' || wallet?.ad?.scope === 'premium'
+              ? ' for this Premium listing.'
+              : '.'}
         </p>
       )}
 

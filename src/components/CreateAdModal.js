@@ -176,7 +176,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Premium</strong> adds <strong className="text-white">Skipper Agent</strong> (<strong className="text-white">$5</strong> starter AI wallet credit), the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code>).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds a <strong className="text-white">$5</strong> Skipper AI wallet credit plus the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -990,7 +990,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">Skipper Agent AI + $5 starter credit · BNB/Sol trending+volume · PR/AMA · 7-day banner · ad credit · custom branding when bumped · 5 raids/day → 20 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · BNB/Sol trending+volume · PR/AMA · 7-day banner · ad credit · custom branding when bumped · 5 raids/day → 20 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1272,7 +1272,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">Skipper Agent + $5 AI credit · PR, AMA, 7-day banner, ad credit, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
                   </button>
                 </div>
 
@@ -1336,7 +1336,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                           Telegram & Discord raid flows
                           <FaDiscord className="text-indigo-300 text-lg" />
                         </h4>
-                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. Full bot access on Starter—including bumps and vote boosts—with Aquads default styling on notifications. <strong className="text-white">Custom branding</strong> on pings is <strong className="text-white">Premium</strong> only when bumped.</p>
+                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. Full bot access on Starter—including bumps and vote boosts—with Aquads default styling on notifications. <strong className="text-white">Custom branding</strong> on pings requires <strong className="text-white">paid Premium</strong> when bumped (vote bump alone does not unlock it).</p>
                       </div>
                     </div>
 
@@ -1350,13 +1350,23 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                     </div>
 
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-cyan-500/35">
+                      <div className="bg-cyan-500 p-2 rounded-full flex-shrink-0">
+                        <FaRobot className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Skipper Agent (verified accounts)</h4>
+                        <p className="text-gray-300 text-sm">AI co-pilot for copy, checklists, images &amp; Agent mode (web search, code, URL fetch). Available on all verified accounts — pay-as-you-go wallet; top up via AquaPay. The <strong className="text-white">$5</strong> starter AI credit is included with <strong className="text-white">paid Premium</strong> only (vote bump does not grant it).</p>
+                      </div>
+                    </div>
+
                     <div className="flex items-start space-x-4 p-4 bg-gray-800/60 rounded-lg border border-green-500/30">
                       <div className="bg-emerald-600 p-2 rounded-full flex-shrink-0">
                         <FaRocket className="text-white" />
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">Premium</strong> anytime from your dashboard for <strong className="text-white">Skipper Agent</strong> (<strong className="text-white">$5</strong> starter AI credit), PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1468,7 +1478,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         Custom Telegram & Discord bots
                         <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">Included</span>
                       </h4>
-                      <p className="text-gray-300 text-sm">Raid coordination and engagement on both platforms. <strong className="text-white">Custom branding</strong> on notifications when your <strong className="text-white">Premium</strong> bubble is <strong className="text-white">bumped</strong> (100+ bullish).</p>
+                      <p className="text-gray-300 text-sm">Raid coordination and engagement on both platforms. <strong className="text-white">Custom branding</strong> on notifications when your <strong className="text-white">paid Premium</strong> bubble is <strong className="text-white">bumped</strong> (100+ bullish votes).</p>
                     </div>
                   </div>
                   
@@ -1498,11 +1508,11 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
-                        Skipper Agent
-                        <span className="bg-cyan-600 text-white px-2 py-0.5 rounded text-xs">Premium only</span>
+                        Skipper Agent — $5 AI wallet credit
+                        <span className="bg-cyan-600 text-white px-2 py-0.5 rounded text-xs">Paid Premium</span>
                       </h4>
                       <p className="text-gray-300 text-sm">
-                        Your project&apos;s AI co-pilot on Aquads — marketing copy, launch checklists, image generation, and an Agent mode with web search, code, and URL fetch. Includes a <strong className="text-white">$5</strong> prepaid starter balance on your listing wallet when you go live (pay-as-you-go after that; top up via AquaPay).
+                        Skipper is available to all verified Aquads accounts (pay-as-you-go). <strong className="text-white">Paid Premium</strong> includes a one-time <strong className="text-white">$5</strong> prepaid balance on your listing wallet — marketing copy, launch checklists, image generation, and Agent mode with web search, code, and URL fetch. Top up anytime via AquaPay after that.
                       </p>
                     </div>
                   </div>
@@ -1511,7 +1521,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
                     ✓ Everything in Starter + over $1000 in bundled launch services<br/>
-                    ✓ <strong className="text-green-200">Skipper Agent</strong> with <strong className="text-green-200">$5</strong> starter AI wallet credit (Premium only)<br/>
+                    ✓ <strong className="text-green-200">$5</strong> Skipper AI wallet credit on paid Premium (Skipper access itself is on all verified accounts)<br/>
                     ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong> (vs 24h on Starter)<br/>
                     ✓ Admin review & refund if rejected<br/>
                     ✓ Optional Mintfunnel add-ons still available separately (step 2)

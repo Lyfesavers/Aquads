@@ -26,8 +26,8 @@ const projectSteps = [
     n: '01',
     title: 'List & ignite',
     oneLiner:
-      "Free Starter listing—or $99 Premium for the full launch stack. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing from your ad—Premium adds the trending/volume + PR launch stack in the modal.",
-    perks: ['Starter $0 · Premium full stack', 'DexScreener auto-fill', '5% off for affiliates'],
+      "Free Starter listing—or $99 paid Premium for the full launch stack. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing. Skipper Agent on verified accounts; $5 AI credit on paid Premium.",
+    perks: ['Starter $0 · Paid Premium stack', 'Skipper on verified accounts', '5% off for affiliates'],
     cta: { label: 'List token free', to: '/home?openListProject=true' },
     mockup: 'ignite',
   },

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const Ad = require('../models/Ad');
 const ProjectAgentThread = require('../models/ProjectAgentThread');
 const ProjectAgentMessage = require('../models/ProjectAgentMessage');
@@ -12,15 +13,17 @@ const sharp = require('sharp');
 const {
   buildProjectAgentSystemPrompt,
   buildProjectImagePrompt,
-  buildProjectVideoPrompt,
-  isPremiumListing
+  buildProjectVideoPrompt
 } = require('../utils/projectAgentContext');
 const {
   FREELANCER_SCOPE_AD_ID,
+  ACCOUNT_SCOPE_AD_ID,
   userHasFreelancerAccess,
+  resolveAgentScopeLabel,
   loadProjectAgentScope
 } = require('../utils/projectAgentScope');
 const User = require('../models/User');
+const { getListingTier, LISTING_TIER_PREMIUM } = require('../utils/listingTier');
 const {
   kimiUsageToUsd,
   usdToCents,
@@ -564,13 +567,24 @@ router.get('/health', (req, res) => {
     starterGrants: {
       premiumUsd: ((Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500) / 100).toFixed(2),
       freelancerUsd: ((Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) || 100) / 100).toFixed(2),
-      freelancerScopeAdId: FREELANCER_SCOPE_AD_ID
+      freelancerScopeAdId: FREELANCER_SCOPE_AD_ID,
+      accountScopeAdId: ACCOUNT_SCOPE_AD_ID
     }
   });
 });
 
-router.get('/eligible', auth, async (req, res) => {
+router.use(auth, requireEmailVerification);
+
+router.get('/eligible', async (req, res) => {
   try {
+    if (!req.user.emailVerified) {
+      return res.json({
+        eligible: [],
+        hasAccess: false,
+        code: 'EMAIL_VERIFICATION_REQUIRED'
+      });
+    }
+
     const dbUser = await User.findById(req.user.userId).select('userType image username').lean();
 
     const ads = await Ad.find({
@@ -580,15 +594,14 @@ router.get('/eligible', auth, async (req, res) => {
       .select('id title logo listingTier blockchain')
       .lean();
 
-    const eligible = ads
-      .filter((a) => isPremiumListing(a))
-      .map((a) => ({
-        id: a.id,
-        title: a.title,
-        logo: a.logo,
-        blockchain: a.blockchain,
-        scope: 'premium'
-      }));
+    const eligible = ads.map((a) => ({
+      id: a.id,
+      title: a.title,
+      logo: a.logo,
+      blockchain: a.blockchain,
+      scope: getListingTier(a) === LISTING_TIER_PREMIUM ? 'premium' : 'starter',
+      starterUsd: getListingTier(a) === LISTING_TIER_PREMIUM ? '5.00' : null
+    }));
 
     if (userHasFreelancerAccess(dbUser?.userType)) {
       eligible.unshift({
@@ -601,23 +614,34 @@ router.get('/eligible', auth, async (req, res) => {
       });
     }
 
-    res.json({ eligible, hasAccess: eligible.length > 0 });
+    if (eligible.length === 0) {
+      eligible.push({
+        id: ACCOUNT_SCOPE_AD_ID,
+        title: 'My workspace',
+        logo: dbUser?.image || '',
+        blockchain: '',
+        scope: 'account'
+      });
+    }
+
+    res.json({ eligible, hasAccess: true });
   } catch (err) {
     console.error('[project-agent] eligible error:', err);
     res.status(500).json({ error: 'Failed to load eligible projects.' });
   }
 });
 
-router.get('/wallet/:adId', auth, async (req, res) => {
+router.get('/wallet/:adId', async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
-    const { wallet, granted, grantCents } = await grantStarterIfNeeded(req.user.userId, ad.id);
+    const { wallet, granted, grantCents } = await grantStarterIfNeeded(req.user.userId, ad);
 
+    const scope = resolveAgentScopeLabel(ad);
     res.json({
-      ad: { id: ad.id, title: ad.title, logo: ad.logo, scope: ad.isFreelancerScope ? 'freelancer' : 'premium' },
-      ...walletResponse(wallet, { starterGrantCents: grantCents || undefined }),
+      ad: { id: ad.id, title: ad.title, logo: ad.logo, scope },
+      ...walletResponse(wallet, { starterGrantCents: grantCents || undefined, scope, ad }),
       starterJustGranted: granted,
       grantCents: granted ? grantCents : 0,
       loadFeeRate: LOAD_FEE_RATE
@@ -628,9 +652,9 @@ router.get('/wallet/:adId', auth, async (req, res) => {
   }
 });
 
-router.get('/ledger/:adId', auth, async (req, res) => {
+router.get('/ledger/:adId', async (req, res) => {
   try {
-    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
@@ -649,9 +673,9 @@ router.get('/ledger/:adId', auth, async (req, res) => {
   }
 });
 
-router.get('/threads/:adId', auth, async (req, res) => {
+router.get('/threads/:adId', async (req, res) => {
   try {
-    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const threads = await listProjectAgentThreads(req.user.userId, req.params.adId);
@@ -663,12 +687,12 @@ router.get('/threads/:adId', auth, async (req, res) => {
   }
 });
 
-router.post('/threads/:adId', auth, async (req, res) => {
+router.post('/threads/:adId', async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
-    await grantStarterIfNeeded(req.user.userId, ad.id);
+    await grantStarterIfNeeded(req.user.userId, ad);
 
     const title = String(req.body?.title || 'New chat').trim().slice(0, 200) || 'New chat';
     const thread = await ProjectAgentThread.create({
@@ -685,13 +709,9 @@ router.post('/threads/:adId', auth, async (req, res) => {
 });
 
 /** Delete a conversation and its messages (auth — owner only) */
-router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
+router.delete('/threads/:adId/:threadId', async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadProjectAgentScope(
-      req.params.adId,
-      req.user.username,
-      req.user.userId
-    );
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -721,7 +741,7 @@ router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
     let threads = await listProjectAgentThreads(req.user.userId, req.params.adId);
 
     if (threads.length === 0) {
-      await grantStarterIfNeeded(req.user.userId, ad.id);
+      await grantStarterIfNeeded(req.user.userId, ad);
       const replacement = await ProjectAgentThread.create({
         userId: req.user.userId,
         adId: ad.id,
@@ -748,9 +768,9 @@ router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
   }
 });
 
-router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
+router.get('/threads/:adId/:threadId/messages', async (req, res) => {
   try {
-    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -813,7 +833,7 @@ router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
   }
 });
 
-router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
+router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
   const apiKey = getKimiKey();
   if (!apiKey) {
     return res.status(503).json({ error: 'Skipper Agent is not configured on the server.' });
@@ -837,11 +857,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
   let holdCents = 0;
 
   try {
-    const { ad, user, error, status, code } = await loadProjectAgentScope(
-      req.params.adId,
-      req.user.username,
-      req.user.userId
-    );
+    const { ad, user, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -851,7 +867,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
     );
     if (tErr) return res.status(tStatus).json({ error: tErr });
 
-    await grantStarterIfNeeded(req.user.userId, ad.id);
+    await grantStarterIfNeeded(req.user.userId, ad);
 
     const history = await ProjectAgentMessage.find({ threadId: thread._id })
       .sort({ createdAt: -1 })
@@ -1104,7 +1120,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
   } catch (err) {
     if (holdCents > 0) {
       try {
-        const { ad } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+        const { ad } = await loadProjectAgentScope(req.params.adId, req.user);
         if (ad) {
           await releaseHold(req.user.userId, ad.id, holdCents, {
             provider: 'kimi',
@@ -1137,7 +1153,7 @@ const imageLimiter = rateLimit({
 });
 
 /** Generate image via OpenAI (Create image mode) — billed from project wallet */
-router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, res) => {
+router.post('/generate-image/:adId/:threadId', imageLimiter, async (req, res) => {
   if (!getOpenAiKey()) {
     return res.status(503).json({ error: 'Image generation is not configured on the server.' });
   }
@@ -1153,11 +1169,7 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
   const holdCents = usdToCents(holdUsd);
 
   try {
-    const { ad, user, error, status, code } = await loadProjectAgentScope(
-      req.params.adId,
-      req.user.username,
-      req.user.userId
-    );
+    const { ad, user, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -1167,7 +1179,7 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
     );
     if (tErr) return res.status(tStatus).json({ error: tErr });
 
-    await grantStarterIfNeeded(req.user.userId, ad.id);
+    await grantStarterIfNeeded(req.user.userId, ad);
 
     const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
       provider: 'openai',
@@ -1289,7 +1301,7 @@ router.post('/generate-image/:adId/:threadId', auth, imageLimiter, async (req, r
 });
 
 /** Serve generated image (auth — user must own thread) */
-router.get('/image/:messageId', auth, async (req, res) => {
+router.get('/image/:messageId', async (req, res) => {
   try {
     const access = await assertMessageImageAccess(req.params.messageId, req.user.userId);
     if (access.error) return res.status(access.status).json({ error: access.error });
@@ -1315,7 +1327,7 @@ const videoLimiter = rateLimit({
 });
 
 /** Start Sora text-to-video (hold wallet, poll /video-status/:messageId for completion) */
-router.post('/generate-video/:adId/:threadId', auth, videoLimiter, async (req, res) => {
+router.post('/generate-video/:adId/:threadId', videoLimiter, async (req, res) => {
   if (!getOpenAiKey()) {
     return res.status(503).json({ error: 'Video generation is not configured on the server.' });
   }
@@ -1340,11 +1352,7 @@ router.post('/generate-video/:adId/:threadId', auth, videoLimiter, async (req, r
   const holdCents = usdToCents(holdUsd);
 
   try {
-    const { ad, user, error, status, code } = await loadProjectAgentScope(
-      req.params.adId,
-      req.user.username,
-      req.user.userId
-    );
+    const { ad, user, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const { thread, error: tErr, status: tStatus } = await loadThread(
@@ -1354,7 +1362,7 @@ router.post('/generate-video/:adId/:threadId', auth, videoLimiter, async (req, r
     );
     if (tErr) return res.status(tStatus).json({ error: tErr });
 
-    await grantStarterIfNeeded(req.user.userId, ad.id);
+    await grantStarterIfNeeded(req.user.userId, ad);
 
     const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
       provider: 'openai',
@@ -1454,7 +1462,7 @@ router.post('/generate-video/:adId/:threadId', auth, videoLimiter, async (req, r
 });
 
 /** Poll video job, finalize billing when OpenAI completes */
-router.get('/video-status/:messageId', auth, async (req, res) => {
+router.get('/video-status/:messageId', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.messageId)) {
       return res.status(400).json({ error: 'Invalid message id.' });
@@ -1480,7 +1488,7 @@ router.get('/video-status/:messageId', auth, async (req, res) => {
 });
 
 /** Stream generated video (auth) */
-router.get('/video/:messageId', auth, async (req, res) => {
+router.get('/video/:messageId', async (req, res) => {
   try {
     const access = await assertMessageVideoAccess(req.params.messageId, req.user.userId);
     if (access.error) return res.status(access.status).json({ error: access.error });
@@ -1498,7 +1506,7 @@ router.get('/video/:messageId', auth, async (req, res) => {
 });
 
 /** Download generated video as attachment */
-router.get('/download-video/:messageId', auth, async (req, res) => {
+router.get('/download-video/:messageId', async (req, res) => {
   try {
     const access = await assertMessageVideoAccess(req.params.messageId, req.user.userId);
     if (access.error) return res.status(access.status).json({ error: access.error });
@@ -1525,7 +1533,7 @@ router.get('/download-video/:messageId', auth, async (req, res) => {
 });
 
 /** Download generated image as attachment (auth — reliable save on mobile) */
-router.get('/download/:messageId', auth, async (req, res) => {
+router.get('/download/:messageId', async (req, res) => {
   try {
     const access = await assertMessageImageAccess(req.params.messageId, req.user.userId);
     if (access.error) return res.status(access.status).json({ error: access.error });
@@ -1553,9 +1561,9 @@ router.get('/download/:messageId', auth, async (req, res) => {
 });
 
 /** Create AquaPay checkout for wallet top-up (credit + 5% fee on top) */
-router.post('/topup/:adId', auth, async (req, res) => {
+router.post('/topup/:adId', async (req, res) => {
   try {
-    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);
+    const { ad, error, status, code } = await loadProjectAgentScope(req.params.adId, req.user);
     if (error) return res.status(status).json({ error, code });
 
     const creditUsd = Number(req.body?.amountUsd);
@@ -1605,7 +1613,7 @@ router.post('/topup/:adId', auth, async (req, res) => {
 });
 
 /** Poll top-up status after AquaPay (optional) */
-router.get('/topup-status/:topupId', auth, async (req, res) => {
+router.get('/topup-status/:topupId', async (req, res) => {
   try {
     const topup = await ProjectAgentTopup.findOne({
       topupId: req.params.topupId,

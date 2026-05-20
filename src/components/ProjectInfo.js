@@ -299,7 +299,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         <title>List your token free on Aquads — no-fee bubble map listings</title>
         <meta
           name="description"
-          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Premium adds Skipper Agent AI ($5 starter credit) plus the full launch stack."
+          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Skipper Agent on all verified accounts (pay-as-you-go). Paid Premium adds a $5 Skipper AI credit plus the full launch stack."
         />
         <link rel="canonical" href="https://www.aquads.xyz/list-token-free" />
         <meta property="og:type" content="website" />
@@ -572,9 +572,15 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 <strong className="text-white">Trading flow:</strong> your bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so degens tap through to live charts and swaps—not just a static banner.
               </li>
               <li>
-                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts—Premium adds <strong className="text-white">Skipper Agent</strong> (AI co-pilot with <strong className="text-white">$5</strong> starter wallet credit), the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, credits, and custom ping branding when bumped.
+                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts.
+              </li>
+              <li>
+                <strong className="text-white">Skipper Agent:</strong> available on all <strong className="text-white">verified</strong> Aquads accounts — pay-as-you-go AI wallet (top up via AquaPay). <strong className="text-white">Paid Premium</strong> adds a <strong className="text-white">$5</strong> starter AI credit; vote bump alone does not upgrade listing tier.
               </li>
             </ul>
+            <p className="text-gray-400 text-xs mt-3">
+              <strong className="text-white">Paid Premium</strong> also includes the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, ad credits, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
+            </p>
           </div>
         </div>
 
@@ -620,7 +626,13 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">Premium only</strong> once bumped
+                  Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">paid Premium only</strong> once bumped
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">Skipper Agent</strong> — verified accounts; pay-as-you-go AI wallet (top up via AquaPay)
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -629,7 +641,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Upgrade to Premium anytime from your dashboard</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Upgrade to paid Premium anytime from your dashboard</span>
               </li>
             </ul>
             <button
@@ -689,7 +701,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">Skipper Agent</strong> — Premium AI co-pilot for launch copy, plans, images &amp; web research; <strong className="text-white">$5</strong> prepaid starter credit on your listing wallet (top up anytime)
+                  <strong className="text-white">$5 Skipper AI wallet credit</strong> — one-time prepaid balance on paid Premium (Skipper access itself is on all verified accounts)
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -737,11 +749,15 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaStar className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed"><strong className="text-white">/setbranding</strong> (custom logo/video pings): Premium only; Starter bubbles use default Aquads styling</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Bump improves visibility &amp; raid caps — it does <strong className="text-white">not</strong> upgrade you to paid Premium features</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaStar className="text-amber-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed"><strong className="text-white">/setbranding</strong> (custom logo/video pings): paid Premium only when bumped; Starter bubbles use default Aquads styling</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaMicrophone className="text-purple-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Live yappers & visibility scale with engagement</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Live yappers &amp; visibility scale with engagement</span>
               </li>
             </ul>
             {userHasProjects && (

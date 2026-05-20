@@ -23,6 +23,7 @@ const {
   PREMIUM_LISTING_FEE_USDC,
   getListingTier
 } = require('../utils/listingTier');
+const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
 
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
@@ -292,6 +293,12 @@ router.post('/upgrade-premium', auth, requireEmailVerification, emitAdEvent('upd
     ad.chainAddress = chainAddress || null;
 
     await ad.save();
+
+    try {
+      await grantStarterIfNeeded(req.user.userId, ad);
+    } catch (grantErr) {
+      console.error('Upgrade Premium: Skipper Agent bonus failed', grantErr.message);
+    }
 
     try {
       if (currentUser?.referredBy) {

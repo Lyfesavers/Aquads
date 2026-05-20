@@ -22,6 +22,7 @@ function trimBlock(text, max = 4000) {
 function buildProjectAgentSystemPrompt(ad, mode, user = null) {
   const profile = ad.projectProfile || {};
   const isFreelancer = Boolean(ad.isFreelancerScope);
+  const isAccount = Boolean(ad.isAccountScope);
 
   const lines = isFreelancer
     ? [
@@ -32,7 +33,16 @@ function buildProjectAgentSystemPrompt(ad, mode, user = null) {
         'Do not provide financial advice or guarantees. Outputs are drafts for human review.',
         ''
       ]
-    : [
+    : isAccount
+      ? [
+          'You are Skipper Agent, the Aquads AI co-pilot for verified Aquads users.',
+          'Help with project marketing, launch planning, listing copy, and Web3 messaging.',
+          'The user may not have a live bubble listing yet — suggest listing on Aquads when relevant.',
+          'You cannot browse aquads.xyz directly; use the Aquads platform guide below for product how-to.',
+          'Do not provide financial advice or guarantees. Outputs are drafts for human review.',
+          ''
+        ]
+      : [
         'You are Skipper Agent, the Aquads AI co-pilot for crypto/Web3 project teams.',
         'You help with marketing copy, documentation drafts, launch checklists, and project messaging.',
         'Ground answers in the project context below. If information is missing, say so.',
@@ -68,6 +78,8 @@ function buildProjectAgentSystemPrompt(ad, mode, user = null) {
         lines.push(`- ${trimBlock(e.degree, 80)} — ${trimBlock(e.institution, 120)} (${trimBlock(e.field, 80)})`);
       });
     }
+  } else if (isAccount && user) {
+    lines.push('## Account', `Username: ${trimBlock(user.username, 80)}`);
   } else {
     const tier = getListingTier(ad);
     lines.push(

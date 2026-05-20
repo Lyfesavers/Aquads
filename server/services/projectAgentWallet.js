@@ -4,7 +4,10 @@ const { usdToCents, centsToUsd } = require('../utils/kimiCost');
 
 const ProjectAgentTopup = require('../models/ProjectAgentTopup');
 
-const { getStarterGrantCentsForAdId } = require('../utils/projectAgentScope');
+const {
+  getStarterGrantCentsForAd,
+  resolveAgentScopeLabel
+} = require('../utils/projectAgentScope');
 
 const STARTER_GRANT_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
 const LOAD_FEE_RATE = Number(process.env.PROJECT_AGENT_LOAD_FEE_RATE) || 0.05;
@@ -38,13 +41,29 @@ async function getOrCreateWallet(userId, adId) {
   return wallet;
 }
 
-async function grantStarterIfNeeded(userId, adId) {
+function starterGrantNote(ad) {
+  if (ad?.isFreelancerScope) return 'Freelancer Skipper Agent trial credit';
+  if (ad?.isAccountScope) return 'Account workspace — no starter credit';
+  if (resolveAgentScopeLabel(ad) === 'premium') {
+    return 'Premium listing Skipper Agent starter credit';
+  }
+  return 'Skipper Agent workspace';
+}
+
+/**
+ * Grant one-time starter credit when eligible (Premium listing or freelancer trial).
+ * @param {string} userId
+ * @param {object|string} ad — listing/ad scope object, or legacy ad id string
+ */
+async function grantStarterIfNeeded(userId, ad) {
+  const adId = typeof ad === 'string' ? ad : ad.id;
+  const grantCents = getStarterGrantCentsForAd(ad);
   const wallet = await getOrCreateWallet(userId, adId);
-  if (wallet.starterGranted) {
+
+  if (wallet.starterGranted || grantCents <= 0) {
     return { wallet, granted: false, grantCents: 0 };
   }
 
-  const grantCents = getStarterGrantCentsForAdId(adId);
   wallet.balanceCents += grantCents;
   wallet.starterGranted = true;
   wallet.starterGrantedAt = new Date();
@@ -57,7 +76,7 @@ async function grantStarterIfNeeded(userId, adId) {
     amountCents: grantCents,
     balanceAfterCents: wallet.balanceCents,
     meta: {
-      note: adId === 'freelancer' ? 'Freelancer Skipper Agent trial credit' : 'Premium listing Skipper Agent starter credit'
+      note: typeof ad === 'object' ? starterGrantNote(ad) : 'Skipper Agent starter credit'
     }
   });
 
@@ -210,13 +229,22 @@ async function deductUsage(userId, adId, costCents, meta = {}) {
 
 function walletResponse(wallet, opts = {}) {
   const grantCents =
-    opts.starterGrantCents != null ? opts.starterGrantCents : getStarterGrantCentsForAdId(wallet.adId);
+    opts.starterGrantCents != null
+      ? opts.starterGrantCents
+      : getStarterGrantCentsForAd(opts.ad || wallet.adId);
+  const scope =
+    opts.scope ||
+    (wallet.adId === 'freelancer'
+      ? 'freelancer'
+      : wallet.adId === 'account'
+        ? 'account'
+        : 'listing');
   return {
     balanceCents: wallet.balanceCents,
     balanceUsd: centsToUsd(wallet.balanceCents),
     starterGranted: wallet.starterGranted,
     starterGrantUsd: (grantCents / 100).toFixed(2),
-    scope: wallet.adId === 'freelancer' ? 'freelancer' : 'premium'
+    scope
   };
 }
 

@@ -5,25 +5,29 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 ## After listing on the bubble map
 
 1. **Complete the listing** — Logo, description, socials, pair URL. Strong profiles get more clicks.
-2. **Votes & bump** — Encourage bullish votes; **100+ bullish votes** (organic + vote boosts) bumps the bubble (larger, main row).
+2. **Votes & bump** — Encourage bullish votes; **100+ bullish votes** (organic + vote boosts) bumps the bubble (larger, main row). **Bump is not a paid Premium upgrade** — it only affects visibility and raid caps.
 3. **Link in bio** — `aquads.xyz/links/username` — one page for all project links.
-4. **Dashboard** — Manage listing, bookings, link-in-bio, AquaPay, affiliate stats (Premium).
+4. **Dashboard** — Manage listing, bookings, link-in-bio, AquaPay, affiliate stats.
 5. **Raids** — Twitter/X, Telegram, Facebook raids for community tasks and points.
 6. **Banner ads** — Optional paid homepage banners.
 7. **AquaSwap** — Swap handoff from the bubble (BexTools-style routing).
 8. **AquaPay** — Crypto payment links; accept USDC etc. to your wallet.
 9. **Marketplace** — Freelancer services and bookings for creative/dev work.
 10. **HyperSpace / games / learn** — Extra discovery and engagement surfaces.
-11. **Skipper Agent** (Premium) — AI co-pilot for copy, plans, images (prepaid wallet).
+11. **Skipper Agent** — AI co-pilot for copy, plans, images (prepaid wallet). Available to **email-verified Aquads accounts**; pay-as-you-go. **$5 starter AI credit** on **paid Premium** listings only.
 
 ## Listing tiers
 
-- **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble.
-- **Premium (paid)** — Adds Skipper Agent, deeper dashboard tools, and Premium positioning. Check the List Project modal for current USDC pricing.
+- **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble. **Skipper Agent** included for verified accounts (pay-as-you-go wallet; top up via AquaPay). No $5 starter credit.
+- **Premium (paid listing — ~$99 USDC)** — Adds **$5 Skipper Agent starter wallet credit**, PR/AMA bundle, BNB/Sol trending+volume program, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
+
+**Important:** **Premium** means the **paid listing package**, not vote bump. A Starter project bumped at 100+ votes keeps Starter tier benefits unless they pay to upgrade.
 
 ## Skipper Agent billing
 
-- Prepaid **USD wallet** per Premium listing (not affiliate points).
+- Prepaid **USD wallet** per listing or workspace (not affiliate points).
+- **Access:** email-verified Aquads accounts (Starter, Premium, freelancer, or account workspace).
+- **$5 starter credit:** one-time grant on **paid Premium** listing wallets only (not from vote bump).
 - Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch), Create image.
 - **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens.
 - **Create image** — OpenAI image generation, separate cost.

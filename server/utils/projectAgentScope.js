@@ -1,41 +1,84 @@
 const Ad = require('../models/Ad');
 const User = require('../models/User');
-const { isPremiumListing } = require('./projectAgentContext');
+const { getListingTier, LISTING_TIER_PREMIUM, LISTING_TIER_STARTER } = require('./listingTier');
 
 /** Reserved wallet/thread scope id (not a bubble listing). */
 const FREELANCER_SCOPE_AD_ID = 'freelancer';
+/** Verified users with no live listing yet. */
+const ACCOUNT_SCOPE_AD_ID = 'account';
 
 const FREELANCER_STARTER_CENTS = Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) || 100;
+const PREMIUM_STARTER_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
 
 function isFreelancerScopeAdId(adId) {
   return String(adId) === FREELANCER_SCOPE_AD_ID;
+}
+
+function isAccountScopeAdId(adId) {
+  return String(adId) === ACCOUNT_SCOPE_AD_ID;
 }
 
 function userHasFreelancerAccess(userType) {
   return userType === 'freelancer' || userType === 'both';
 }
 
-function getStarterGrantCentsForAdId(adId) {
-  return isFreelancerScopeAdId(adId)
-    ? FREELANCER_STARTER_CENTS
-    : Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
+function resolveAgentScopeLabel(ad) {
+  if (!ad) return 'account';
+  if (ad.isFreelancerScope) return 'freelancer';
+  if (ad.isAccountScope) return 'account';
+  return getListingTier(ad) === LISTING_TIER_PREMIUM ? LISTING_TIER_PREMIUM : LISTING_TIER_STARTER;
 }
 
 /**
- * Resolve Premium listing or freelancer trial workspace.
- * @param {string} adId
- * @param {string} username
- * @param {import('mongoose').Types.ObjectId|string} userId
+ * Starter wallet credit in cents (0 = pay-as-you-go until Premium bonus).
+ * @param {object|string} adOrId — listing/ad scope object, or legacy ad id string
  */
-async function loadProjectAgentScope(adId, username, userId) {
+function getStarterGrantCentsForAd(adOrId) {
+  const adId = typeof adOrId === 'string' ? adOrId : adOrId?.id;
   if (isFreelancerScopeAdId(adId)) {
-    const user = await User.findById(userId).select('username userType cv image').lean();
-    if (!user) {
+    return FREELANCER_STARTER_CENTS;
+  }
+  if (isAccountScopeAdId(adId)) {
+    return 0;
+  }
+  if (typeof adOrId === 'object' && adOrId != null) {
+    return getListingTier(adOrId) === LISTING_TIER_PREMIUM ? PREMIUM_STARTER_CENTS : 0;
+  }
+  return 0;
+}
+
+/** @deprecated use getStarterGrantCentsForAd */
+function getStarterGrantCentsForAdId(adId) {
+  return getStarterGrantCentsForAd(adId);
+}
+
+/**
+ * Resolve listing, freelancer, or account workspace for Skipper Agent.
+ * Requires email-verified account.
+ * @param {string} adId
+ * @param {{ username: string, userId: string, emailVerified?: boolean }} user
+ */
+async function loadProjectAgentScope(adId, user) {
+  const username = user?.username;
+  const userId = user?.userId;
+  const emailVerified = Boolean(user?.emailVerified);
+
+  if (!emailVerified) {
+    return {
+      error: 'Verify your email to use Skipper Agent.',
+      status: 403,
+      code: 'EMAIL_VERIFICATION_REQUIRED'
+    };
+  }
+
+  if (isFreelancerScopeAdId(adId)) {
+    const dbUser = await User.findById(userId).select('username userType cv image').lean();
+    if (!dbUser) {
       return { error: 'User not found.', status: 404 };
     }
-    if (!userHasFreelancerAccess(user.userType)) {
+    if (!userHasFreelancerAccess(dbUser.userType)) {
       return {
-        error: 'Skipper Agent freelancer trial is for freelancer accounts.',
+        error: 'Skipper Agent freelancer workspace is for freelancer accounts.',
         status: 403,
         code: 'FREELANCER_REQUIRED'
       };
@@ -43,8 +86,8 @@ async function loadProjectAgentScope(adId, username, userId) {
 
     const ad = {
       id: FREELANCER_SCOPE_AD_ID,
-      title: `${user.username} — Freelancer`,
-      logo: user.image || '',
+      title: `${dbUser.username} — Freelancer`,
+      logo: dbUser.image || '',
       blockchain: '',
       url: '',
       pairAddress: '',
@@ -53,7 +96,28 @@ async function loadProjectAgentScope(adId, username, userId) {
       projectProfile: {}
     };
 
-    return { ad, user, scope: 'freelancer' };
+    return { ad, user: dbUser, scope: 'freelancer' };
+  }
+
+  if (isAccountScopeAdId(adId)) {
+    const dbUser = await User.findById(userId).select('username image').lean();
+    if (!dbUser) {
+      return { error: 'User not found.', status: 404 };
+    }
+
+    const ad = {
+      id: ACCOUNT_SCOPE_AD_ID,
+      title: `${dbUser.username} — Workspace`,
+      logo: dbUser.image || '',
+      blockchain: '',
+      url: '',
+      pairAddress: '',
+      listingTier: 'account',
+      isAccountScope: true,
+      projectProfile: {}
+    };
+
+    return { ad, user: dbUser, scope: 'account' };
   }
 
   const ad = await Ad.findOne({
@@ -65,21 +129,20 @@ async function loadProjectAgentScope(adId, username, userId) {
   if (!ad) {
     return { error: 'Listing not found or you do not own this project.', status: 404 };
   }
-  if (!isPremiumListing(ad)) {
-    return {
-      error: 'Skipper Agent is included with Premium listings. Upgrade this project to Premium to unlock.',
-      status: 403,
-      code: 'PREMIUM_REQUIRED'
-    };
-  }
-  return { ad, scope: 'premium' };
+
+  return { ad, scope: resolveAgentScopeLabel(ad) };
 }
 
 module.exports = {
   FREELANCER_SCOPE_AD_ID,
+  ACCOUNT_SCOPE_AD_ID,
   FREELANCER_STARTER_CENTS,
+  PREMIUM_STARTER_CENTS,
   isFreelancerScopeAdId,
+  isAccountScopeAdId,
   userHasFreelancerAccess,
+  resolveAgentScopeLabel,
+  getStarterGrantCentsForAd,
   getStarterGrantCentsForAdId,
   loadProjectAgentScope
 };
