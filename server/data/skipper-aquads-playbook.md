@@ -18,8 +18,8 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 
 ## Listing tiers
 
-- **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble. **Skipper Agent** included for verified accounts (pay-as-you-go wallet; top up via AquaPay). No $5 starter credit.
-- **Premium (paid listing — ~$99 USDC)** — Adds **$5 Skipper Agent starter wallet credit**, PR/AMA bundle, BNB/Sol trending+volume program, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
+- **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble. **Skipper Agent** with a one-time **$1** trial credit per workspace/listing (top up via AquaPay after).
+- **Premium (paid listing — ~$99 USDC)** — Adds **$5 Skipper Agent starter wallet credit** (tops up from $1 → $5 if trial was already granted on that listing), PR/AMA bundle, BNB/Sol trending+volume program, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
 
 **Important:** **Premium** means the **paid listing package**, not vote bump. A Starter project bumped at 100+ votes keeps Starter tier benefits unless they pay to upgrade.
 
@@ -27,7 +27,8 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 
 - Prepaid **USD wallet** per listing or workspace (not affiliate points).
 - **Access:** email-verified Aquads accounts (Starter, Premium, freelancer, or account workspace).
-- **$5 starter credit:** one-time grant on **paid Premium** listing wallets only (not from vote bump).
+- **$1 trial credit:** one-time per Skipper wallet (account workspace, Starter listing, or freelancer workspace).
+- **$5 starter credit:** paid **Premium** listing wallets (top-up from $1 → $5 if they already used the trial on that listing).
 - **Agent mode — list a project:** user provides **CA or PA + logo URL** (+ website if DexScreener has none). Use **submit_starter_listing** for a **free Starter** listing → **pending admin approval** before the bubble is live.
 - Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch), Create image.
 - **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens.

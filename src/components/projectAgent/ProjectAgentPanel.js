@@ -922,7 +922,7 @@ export default function ProjectAgentPanel({
             ? ' for your freelancer trial.'
             : wallet?.scope === 'premium' || wallet?.ad?.scope === 'premium'
               ? ' for this Premium listing.'
-              : '.'}
+              : ' for your Skipper trial.'}
         </p>
       )}
 

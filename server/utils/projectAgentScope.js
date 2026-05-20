@@ -7,7 +7,12 @@ const FREELANCER_SCOPE_AD_ID = 'freelancer';
 /** Verified users with no live listing yet. */
 const ACCOUNT_SCOPE_AD_ID = 'account';
 
-const FREELANCER_STARTER_CENTS = Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) || 100;
+/** One-time trial credit for verified users (account workspace, Starter listings, freelancers). */
+const TRIAL_STARTER_CENTS =
+  Number(process.env.PROJECT_AGENT_TRIAL_STARTER_CENTS) ||
+  Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) ||
+  100;
+const FREELANCER_STARTER_CENTS = TRIAL_STARTER_CENTS;
 const PREMIUM_STARTER_CENTS = Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500;
 
 function isFreelancerScopeAdId(adId) {
@@ -36,13 +41,13 @@ function resolveAgentScopeLabel(ad) {
 function getStarterGrantCentsForAd(adOrId) {
   const adId = typeof adOrId === 'string' ? adOrId : adOrId?.id;
   if (isFreelancerScopeAdId(adId)) {
-    return FREELANCER_STARTER_CENTS;
+    return TRIAL_STARTER_CENTS;
   }
   if (isAccountScopeAdId(adId)) {
-    return 0;
+    return TRIAL_STARTER_CENTS;
   }
   if (typeof adOrId === 'object' && adOrId != null) {
-    return getListingTier(adOrId) === LISTING_TIER_PREMIUM ? PREMIUM_STARTER_CENTS : 0;
+    return getListingTier(adOrId) === LISTING_TIER_PREMIUM ? PREMIUM_STARTER_CENTS : TRIAL_STARTER_CENTS;
   }
   return 0;
 }
@@ -136,6 +141,7 @@ async function loadProjectAgentScope(adId, user) {
 module.exports = {
   FREELANCER_SCOPE_AD_ID,
   ACCOUNT_SCOPE_AD_ID,
+  TRIAL_STARTER_CENTS,
   FREELANCER_STARTER_CENTS,
   PREMIUM_STARTER_CENTS,
   isFreelancerScopeAdId,

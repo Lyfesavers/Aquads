@@ -43,44 +43,62 @@ async function getOrCreateWallet(userId, adId) {
 
 function starterGrantNote(ad) {
   if (ad?.isFreelancerScope) return 'Freelancer Skipper Agent trial credit';
-  if (ad?.isAccountScope) return 'Account workspace — no starter credit';
+  if (ad?.isAccountScope) return 'Skipper Agent trial credit';
   if (resolveAgentScopeLabel(ad) === 'premium') {
     return 'Premium listing Skipper Agent starter credit';
   }
-  return 'Skipper Agent workspace';
+  return 'Skipper Agent trial credit';
+}
+
+async function sumStarterGrantCents(userId, adId) {
+  const rows = await ProjectAgentLedger.find({ userId, adId, type: 'starter_grant' })
+    .select('amountCents')
+    .lean();
+  return rows.reduce((sum, row) => sum + Math.max(0, Number(row.amountCents) || 0), 0);
 }
 
 /**
- * Grant one-time starter credit when eligible (Premium listing or freelancer trial).
+ * Grant starter credit up to the tier cap (trial $1 or Premium $5). Top-ups on upgrade
+ * when a Starter wallet already received the $1 trial.
  * @param {string} userId
  * @param {object|string} ad — listing/ad scope object, or legacy ad id string
  */
 async function grantStarterIfNeeded(userId, ad) {
   const adId = typeof ad === 'string' ? ad : ad.id;
-  const grantCents = getStarterGrantCentsForAd(ad);
+  const grantTarget = getStarterGrantCentsForAd(ad);
   const wallet = await getOrCreateWallet(userId, adId);
 
-  if (wallet.starterGranted || grantCents <= 0) {
+  if (grantTarget <= 0) {
     return { wallet, granted: false, grantCents: 0 };
   }
 
-  wallet.balanceCents += grantCents;
-  wallet.starterGranted = true;
-  wallet.starterGrantedAt = new Date();
+  const alreadyGranted = await sumStarterGrantCents(userId, adId);
+  const toGrant = Math.max(0, grantTarget - alreadyGranted);
+  if (toGrant <= 0) {
+    return { wallet, granted: false, grantCents: 0 };
+  }
+
+  wallet.balanceCents += toGrant;
+  if (!wallet.starterGranted) {
+    wallet.starterGranted = true;
+    wallet.starterGrantedAt = new Date();
+  }
   await wallet.save();
 
   await ProjectAgentLedger.create({
     userId,
     adId,
     type: 'starter_grant',
-    amountCents: grantCents,
+    amountCents: toGrant,
     balanceAfterCents: wallet.balanceCents,
     meta: {
-      note: typeof ad === 'object' ? starterGrantNote(ad) : 'Skipper Agent starter credit'
+      note: typeof ad === 'object' ? starterGrantNote(ad) : 'Skipper Agent starter credit',
+      grantTargetCents: grantTarget,
+      previouslyGrantedCents: alreadyGranted
     }
   });
 
-  return { wallet, granted: true, grantCents };
+  return { wallet, granted: true, grantCents: toGrant };
 }
 
 /**

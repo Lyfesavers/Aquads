@@ -18,6 +18,7 @@ const {
 const {
   FREELANCER_SCOPE_AD_ID,
   ACCOUNT_SCOPE_AD_ID,
+  TRIAL_STARTER_CENTS,
   userHasFreelancerAccess,
   resolveAgentScopeLabel,
   loadProjectAgentScope
@@ -566,7 +567,8 @@ router.get('/health', (req, res) => {
     limits: getLimits(),
     starterGrants: {
       premiumUsd: ((Number(process.env.PROJECT_AGENT_STARTER_CENTS) || 500) / 100).toFixed(2),
-      freelancerUsd: ((Number(process.env.PROJECT_AGENT_FREELANCER_STARTER_CENTS) || 100) / 100).toFixed(2),
+      trialUsd: (TRIAL_STARTER_CENTS / 100).toFixed(2),
+      freelancerUsd: (TRIAL_STARTER_CENTS / 100).toFixed(2),
       freelancerScopeAdId: FREELANCER_SCOPE_AD_ID,
       accountScopeAdId: ACCOUNT_SCOPE_AD_ID
     }
@@ -600,7 +602,7 @@ router.get('/eligible', async (req, res) => {
       logo: a.logo,
       blockchain: a.blockchain,
       scope: getListingTier(a) === LISTING_TIER_PREMIUM ? 'premium' : 'starter',
-      starterUsd: getListingTier(a) === LISTING_TIER_PREMIUM ? '5.00' : null
+      starterUsd: getListingTier(a) === LISTING_TIER_PREMIUM ? '5.00' : '1.00'
     }));
 
     if (userHasFreelancerAccess(dbUser?.userType)) {
@@ -620,7 +622,8 @@ router.get('/eligible', async (req, res) => {
         title: 'My workspace',
         logo: dbUser?.image || '',
         blockchain: '',
-        scope: 'account'
+        scope: 'account',
+        starterUsd: '1.00'
       });
     }
 
