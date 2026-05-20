@@ -5,6 +5,7 @@ import {
   fetchProjectAgentWallet,
   fetchProjectAgentThreads,
   createProjectAgentThread,
+  deleteProjectAgentThread,
   fetchProjectAgentMessages,
   streamProjectAgentChat,
   generateProjectAgentImage,
@@ -152,6 +153,7 @@ export default function ProjectAgentPanel({
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupNotice, setTopupNotice] = useState('');
   const [topupOpen, setTopupOpen] = useState(false);
+  const [deletingThreadId, setDeletingThreadId] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
   const videoPollAbortRef = useRef(null);
@@ -436,6 +438,42 @@ export default function ProjectAgentPanel({
     }
   };
 
+  const handleDeleteThread = async (targetThreadId, e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const id = String(targetThreadId || threadId || '');
+    if (!token || !adId || !id || deletingThreadId) return;
+    if (!window.confirm('Delete this chat? This cannot be undone.')) return;
+
+    setDeletingThreadId(id);
+    setError('');
+    if (String(threadId) === id) {
+      videoPollAbortRef.current = null;
+    }
+
+    try {
+      await deleteProjectAgentThread(adId, id, token);
+      const list = (await loadThreads()) || [];
+
+      if (String(threadId) === id) {
+        setMessages([]);
+        setStreamingContent('');
+        setStreamingReasoning('');
+        if (list.length > 0) {
+          setThreadId(list[0]._id);
+        } else {
+          const { thread } = await createProjectAgentThread(adId, token);
+          setThreads([thread]);
+          setThreadId(thread._id);
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Could not delete chat');
+    } finally {
+      setDeletingThreadId(null);
+    }
+  };
+
   const handleSendImage = async (text) => {
     setError('');
     setLastCost(null);
@@ -691,18 +729,32 @@ export default function ProjectAgentPanel({
 
       <div className="project-agent-toolbar">
         {compact && threads.length > 0 && (
-          <select
-            className="project-agent-thread-select"
-            value={threadId || ''}
-            onChange={(e) => setThreadId(e.target.value)}
-            aria-label="Conversation"
-          >
-            {threads.map((t) => (
-              <option key={t._id} value={t._id}>
-                {t.title || 'Chat'}
-              </option>
-            ))}
-          </select>
+          <div className="project-agent-thread-select-wrap">
+            <select
+              className="project-agent-thread-select"
+              value={threadId || ''}
+              onChange={(e) => setThreadId(e.target.value)}
+              aria-label="Conversation"
+            >
+              {threads.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.title || 'Chat'}
+                </option>
+              ))}
+            </select>
+            {threadId && (
+              <button
+                type="button"
+                className="project-agent-thread-delete"
+                onClick={(e) => handleDeleteThread(threadId, e)}
+                disabled={deletingThreadId === threadId}
+                aria-label="Delete this chat"
+                title="Delete chat"
+              >
+                ×
+              </button>
+            )}
+          </div>
         )}
         {eligible.length > 1 && (
           <select
@@ -803,14 +855,28 @@ export default function ProjectAgentPanel({
         {!compact && (
           <nav className="project-agent-threads" aria-label="Conversations">
             {threads.map((t) => (
-              <button
+              <div
                 key={t._id}
-                type="button"
-                className={t._id === threadId ? 'active' : ''}
-                onClick={() => setThreadId(t._id)}
+                className={`project-agent-thread-row${t._id === threadId ? ' active' : ''}`}
               >
-                {t.title || 'Chat'}
-              </button>
+                <button
+                  type="button"
+                  className="project-agent-thread-select-btn"
+                  onClick={() => setThreadId(t._id)}
+                >
+                  <span className="project-agent-thread-title">{t.title || 'Chat'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="project-agent-thread-delete"
+                  onClick={(e) => handleDeleteThread(t._id, e)}
+                  disabled={deletingThreadId === t._id}
+                  aria-label={`Delete ${t.title || 'chat'}`}
+                  title="Delete chat"
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </nav>
         )}

@@ -663,6 +663,47 @@ router.post('/threads/:adId', auth, async (req, res) => {
   }
 });
 
+/** Delete a conversation and its messages (auth — owner only) */
+router.delete('/threads/:adId/:threadId', auth, async (req, res) => {
+  try {
+    const { error, status, code } = await loadProjectAgentScope(
+      req.params.adId,
+      req.user.username,
+      req.user.userId
+    );
+    if (error) return res.status(status).json({ error, code });
+
+    const { thread, error: tErr, status: tStatus } = await loadThread(
+      req.params.threadId,
+      req.user.userId,
+      req.params.adId
+    );
+    if (tErr) return res.status(tStatus).json({ error: tErr });
+
+    const msgs = await ProjectAgentMessage.find({ threadId: thread._id })
+      .select('videoStorageKey')
+      .lean();
+
+    for (const m of msgs) {
+      if (!m.videoStorageKey) continue;
+      const filePath = videoFilePath(m.videoStorageKey);
+      try {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      } catch (unlinkErr) {
+        console.warn('[project-agent] video file unlink failed:', unlinkErr.message);
+      }
+    }
+
+    await ProjectAgentMessage.deleteMany({ threadId: thread._id });
+    await ProjectAgentThread.deleteOne({ _id: thread._id, userId: req.user.userId });
+
+    res.json({ ok: true, deletedId: String(thread._id) });
+  } catch (err) {
+    console.error('[project-agent] delete thread error:', err);
+    res.status(500).json({ error: 'Failed to delete conversation.' });
+  }
+});
+
 router.get('/threads/:adId/:threadId/messages', auth, async (req, res) => {
   try {
     const { error, status, code } = await loadProjectAgentScope(req.params.adId, req.user.username, req.user.userId);

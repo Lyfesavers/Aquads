@@ -147,23 +147,89 @@
   }
 }
 
-.project-agent-threads button {
+.project-agent-thread-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--pa-border);
+}
+
+.project-agent-thread-row.active,
+.project-agent-thread-row:hover {
+  background: var(--pa-accent-dim);
+}
+
+.project-agent-thread-select-btn {
+  flex: 1;
+  min-width: 0;
   display: block;
-  width: 100%;
   text-align: left;
-  padding: 10px 12px;
+  padding: 10px 8px 10px 12px;
   border: none;
   background: transparent;
   color: var(--pa-muted);
   font-size: 0.8rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--pa-border);
 }
 
-.project-agent-threads button.active,
-.project-agent-threads button:hover {
-  background: var(--pa-accent-dim);
+.project-agent-thread-row.active .project-agent-thread-select-btn,
+.project-agent-thread-row:hover .project-agent-thread-select-btn {
   color: var(--pa-text);
+}
+
+.project-agent-thread-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-agent-thread-delete {
+  flex-shrink: 0;
+  width: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--pa-muted);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.project-agent-thread-row:hover .project-agent-thread-delete,
+.project-agent-thread-delete:hover:not(:disabled) {
+  opacity: 1;
+  color: #f87171;
+}
+
+.project-agent-thread-delete:disabled {
+  opacity: 0.25;
+  cursor: wait;
+}
+
+.project-agent-thread-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: min(200px, 42vw);
+}
+
+.project-agent-thread-select-wrap .project-agent-thread-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-agent-thread-select-wrap .project-agent-thread-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  opacity: 0.65;
+}
+
+.project-agent-thread-select-wrap .project-agent-thread-delete:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .project-agent-main {

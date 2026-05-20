@@ -77,6 +77,19 @@ export async function createProjectAgentThread(adId, token, title = 'New chat') 
   return data;
 }
 
+export async function deleteProjectAgentThread(adId, threadId, token) {
+  const res = await fetch(
+    `${API_URL}/project-agent/threads/${encodeURIComponent(adId)}/${encodeURIComponent(threadId)}`,
+    {
+      method: 'DELETE',
+      headers: authHeaders(token)
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to delete conversation');
+  return data;
+}
+
 export async function fetchProjectAgentMessages(adId, threadId, token) {
   const res = await fetch(
     `${API_URL}/project-agent/threads/${encodeURIComponent(adId)}/${encodeURIComponent(threadId)}/messages`,
