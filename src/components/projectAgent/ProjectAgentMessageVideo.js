@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-  fetchProjectAgentVideoBlob,
-  downloadProjectAgentVideo
-} from '../../services/projectAgentApi';
+import { fetchProjectAgentVideoBlob } from '../../services/projectAgentApi';
 
 export default function ProjectAgentMessageVideo({ messageId, token, status, progress }) {
   const [blobUrl, setBlobUrl] = useState('');
   const [loadError, setLoadError] = useState('');
-  const [downloading, setDownloading] = useState(false);
   const id = String(messageId);
   const isReady = status === 'completed';
   const isFailed = status === 'failed';
@@ -40,17 +36,6 @@ export default function ProjectAgentMessageVideo({ messageId, token, status, pro
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [id, token, isReady]);
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      await downloadProjectAgentVideo(id, token);
-    } catch (e) {
-      setLoadError(e.message || 'Download failed');
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   if (isFailed) {
     return <p className="project-agent-meta project-agent-video-failed">Video generation failed.</p>;
@@ -97,17 +82,6 @@ export default function ProjectAgentMessageVideo({ messageId, token, status, pro
   return (
     <div className="project-agent-video-wrap">
       <video className="project-agent-video-player" src={blobUrl} controls playsInline preload="metadata" />
-      <div className="project-agent-image-actions">
-        <button
-          type="button"
-          className="project-agent-image-btn project-agent-image-btn--download"
-          onClick={handleDownload}
-          disabled={downloading}
-          title="Download video"
-        >
-          {downloading ? '…' : 'Download'}
-        </button>
-      </div>
     </div>
   );
 }
