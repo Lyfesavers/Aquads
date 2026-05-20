@@ -4747,24 +4747,8 @@ const LandingPage = () => {
         style={{ opacity: heroOpacity }}
       >
         <h1 className="sr-only">
-          Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid
+          Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid after your token is live
         </h1>
-        <motion.div
-          className="absolute top-16 sm:top-20 md:top-24 left-0 right-0 z-30 text-center px-4 pointer-events-none"
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.7 }}
-        >
-          <p className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-[0.35em] text-cyan-400/90 font-semibold mb-1.5 sm:mb-2">
-            The launch stack
-          </p>
-          <p className="text-sm sm:text-base md:text-lg text-white/90 font-display font-bold max-w-lg mx-auto leading-snug">
-            For new crypto projects
-          </p>
-          <p className="hidden sm:block text-[11px] md:text-sm text-gray-500 max-w-md mx-auto mt-1.5 leading-relaxed">
-            List · grow · hire · get paid — your first 30 days in one place
-          </p>
-        </motion.div>
 
         {/* Center divider line */}
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent z-20" />
@@ -4773,8 +4757,8 @@ const LandingPage = () => {
         <Link to="/home?openListProject=true" className="flex-1 h-full">
           <HeroOrb 
             side="left"
-            label="LAUNCH YOUR PROJECT"
-            sublabel="List free · grow community · convert holders"
+            label="LIST YOUR PROJECT"
+            sublabel="Token already live? Free bubble listing · grow · convert"
           />
         </Link>
 
@@ -4782,7 +4766,7 @@ const LandingPage = () => {
         <Link to="/marketplace" className="flex-1 h-full">
           <HeroOrb 
             side="right"
-            label="HIRE LAUNCH HELP"
+            label="HIRE GROWTH HELP"
             sublabel="Design · mods · marketing · dev"
           />
         </Link>
