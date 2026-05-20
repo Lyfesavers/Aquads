@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   fetchProjectAgentEligible,
@@ -39,7 +39,7 @@ const MODES = [
 const VIDEO_SECONDS_OPTIONS = [15, 30];
 
 const VIDEO_POLL_MS = 12_000;
-const VIDEO_POLL_MAX = 80;
+const VIDEO_POLL_MAX = 90;
 
 function normalizeAgentMessages(msgs, generateData) {
   const list = (msgs || []).map((m) => ({
@@ -157,18 +157,36 @@ export default function ProjectAgentPanel({
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
   const videoPollAbortRef = useRef(null);
+  const videoPollRunningRef = useRef(null);
+  const messageCountRef = useRef(0);
   const topupPreview = previewTopupClient(topupCreditUsd);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
     setMessages((prev) =>
-      prev.map((m) => (String(m._id) === id ? { ...m, ...patch, _id: id } : m))
+      prev.map((m) => {
+        if (String(m._id) !== id) return m;
+        const next = { ...m, ...patch, _id: id };
+        if (
+          m.videoStatus === next.videoStatus &&
+          m.videoProgress === next.videoProgress &&
+          m.hasVideo === next.hasVideo &&
+          m.content === next.content
+        ) {
+          return m;
+        }
+        return next;
+      })
     );
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent, streamingReasoning]);
+    const count = messages.length;
+    const grew = count > messageCountRef.current;
+    messageCountRef.current = count;
+    if (!grew && !streamingContent && !streamingReasoning) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: grew ? 'smooth' : 'auto' });
+  }, [messages.length, streamingContent, streamingReasoning]);
 
   useEffect(() => {
     if (!token) {
@@ -218,70 +236,92 @@ export default function ProjectAgentPanel({
     async (messageId) => {
       if (!token) return;
       const id = String(messageId);
+      if (videoPollRunningRef.current === id) return;
+
+      videoPollRunningRef.current = id;
       videoPollAbortRef.current = id;
 
-      for (let attempt = 0; attempt < VIDEO_POLL_MAX; attempt += 1) {
-        if (videoPollAbortRef.current !== id) return;
+      try {
+        for (let attempt = 0; attempt < VIDEO_POLL_MAX; attempt += 1) {
+          if (videoPollAbortRef.current !== id) return;
 
-        if (attempt > 0) {
-          await new Promise((r) => setTimeout(r, VIDEO_POLL_MS));
+          if (attempt > 0) {
+            await new Promise((r) => setTimeout(r, VIDEO_POLL_MS));
+          }
+          if (videoPollAbortRef.current !== id) return;
+
+          try {
+            const data = await fetchProjectAgentVideoStatus(id, token);
+            if (data.message) {
+              updateVideoMessage(id, data.message);
+            } else {
+              updateVideoMessage(id, {
+                videoStatus: data.status,
+                videoProgress: data.progress ?? null,
+                hasVideo: data.status === 'completed'
+              });
+            }
+
+            if (data.status === 'completed') {
+              setStreamingContent('');
+              setLastCost({
+                costUsd: data.costUsd,
+                balanceUsd: data.balanceUsd,
+                billingMethod: data.billingMethod
+              });
+              if (data.balanceUsd != null) {
+                setWallet((w) => (w ? { ...w, balanceUsd: data.balanceUsd } : w));
+              }
+              await refreshWallet();
+              return;
+            }
+
+            if (data.status === 'failed') {
+              setStreamingContent('');
+              setError(data.error || 'Video generation failed');
+              if (data.code === 'INSUFFICIENT_BALANCE') {
+                await refreshWallet();
+              }
+              return;
+            }
+
+            if (data.status === 'finalizing') {
+              setStreamingContent('Saving your video…');
+            } else if (attempt > 0) {
+              setStreamingContent('');
+            }
+          } catch (e) {
+            if (e?.code === 'TOKEN_EXPIRED' || e?.status === 401) {
+              setStreamingContent('Refreshing session…');
+              await new Promise((r) => setTimeout(r, 2000));
+              continue;
+            }
+            const transient =
+              e?.message === 'Failed to fetch' ||
+              e?.name === 'TypeError' ||
+              e?.message?.includes('NetworkError');
+            if (transient) {
+              setStreamingContent('Still working — reconnecting…');
+              continue;
+            }
+            setStreamingContent('');
+            setError(e.message || 'Failed to check video status');
+            return;
+          }
         }
 
-        try {
-          const data = await fetchProjectAgentVideoStatus(id, token);
-          if (data.message) {
-            updateVideoMessage(id, data.message);
-          } else {
-            updateVideoMessage(id, {
-              videoStatus: data.status,
-              videoProgress: data.progress ?? null,
-              hasVideo: data.status === 'completed'
-            });
-          }
-
-          if (data.status === 'completed') {
-            setLastCost({
-              costUsd: data.costUsd,
-              balanceUsd: data.balanceUsd,
-              billingMethod: data.billingMethod
-            });
-            if (data.balanceUsd != null) {
-              setWallet((w) => (w ? { ...w, balanceUsd: data.balanceUsd } : w));
-            }
-            await refreshWallet();
-            videoPollAbortRef.current = null;
-            return;
-          }
-
-          if (data.status === 'failed') {
-            setError(data.error || 'Video generation failed');
-            if (data.code === 'INSUFFICIENT_BALANCE') {
-              await refreshWallet();
-            }
-            videoPollAbortRef.current = null;
-            return;
-          }
-
-          if (data.status === 'finalizing') {
-            setStreamingContent('Saving your video…');
-          }
-        } catch (e) {
-          const transient =
-            e?.message === 'Failed to fetch' ||
-            e?.name === 'TypeError' ||
-            e?.message?.includes('NetworkError');
-          if (transient) {
-            setStreamingContent('Still working — reconnecting…');
-            continue;
-          }
-          setError(e.message || 'Failed to check video status');
+        setStreamingContent('');
+        setError(
+          'Video is taking longer than expected. Leave this chat open or return in a few minutes — progress continues on the server.'
+        );
+      } finally {
+        if (videoPollRunningRef.current === id) {
+          videoPollRunningRef.current = null;
+        }
+        if (videoPollAbortRef.current === id) {
           videoPollAbortRef.current = null;
-          return;
         }
       }
-
-      setError('Video is taking longer than expected. Check back in this chat in a few minutes.');
-      videoPollAbortRef.current = null;
     },
     [token, updateVideoMessage, refreshWallet]
   );
@@ -381,23 +421,25 @@ export default function ProjectAgentPanel({
     };
   }, [token, adId, threadId]);
 
-  useEffect(() => {
-    if (!token) return undefined;
+  const pendingVideoMessageId = useMemo(() => {
     const pending = messages.find(
       (m) => m.role === 'assistant' && m.mode === 'video' && videoJobInFlight(m)
     );
-    if (!pending?._id) return undefined;
+    return pending?._id ? String(pending._id) : null;
+  }, [messages]);
 
-    const id = String(pending._id);
-    if (videoPollAbortRef.current === id) return undefined;
+  useEffect(() => {
+    if (!token || !threadId || !pendingVideoMessageId) return undefined;
+    if (videoPollRunningRef.current === pendingVideoMessageId) return undefined;
 
-    pollVideoJob(id);
+    pollVideoJob(pendingVideoMessageId);
+
     return () => {
-      if (videoPollAbortRef.current === id) {
+      if (videoPollAbortRef.current === pendingVideoMessageId) {
         videoPollAbortRef.current = null;
       }
     };
-  }, [messages, token, pollVideoJob]);
+  }, [threadId, token, pollVideoJob, pendingVideoMessageId]);
 
   const handleTopup = async () => {
     if (!token || !adId || topupLoading) return;
@@ -449,6 +491,7 @@ export default function ProjectAgentPanel({
     setError('');
     if (String(threadId) === id) {
       videoPollAbortRef.current = null;
+      videoPollRunningRef.current = null;
     }
 
     try {

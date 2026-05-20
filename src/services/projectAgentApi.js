@@ -1,10 +1,24 @@
 import { API_URL } from './api';
 
+/** Prefer localStorage so long polls survive token refresh (React state can lag). */
+function readStoredToken() {
+  try {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return '';
+    const user = JSON.parse(raw);
+    return user?.token ? String(user.token) : '';
+  } catch {
+    return '';
+  }
+}
+
 function authHeaders(token) {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`
-  };
+  const bearer = readStoredToken() || token || '';
+  const headers = { 'Content-Type': 'application/json' };
+  if (bearer) {
+    headers.Authorization = `Bearer ${bearer}`;
+  }
+  return headers;
 }
 
 export async function fetchProjectAgentEligible(token) {
@@ -163,7 +177,7 @@ export async function fetchProjectAgentVideoStatus(messageId, token) {
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(data.error || 'Failed to check video status');
+    const err = new Error(data.message || data.error || 'Failed to check video status');
     err.code = data.code;
     err.status = res.status;
     throw err;
@@ -182,7 +196,7 @@ export function projectAgentVideoUrl(messageId) {
 /** Fetch image bytes with auth for <img src={blobUrl}> */
 export async function fetchProjectAgentImageBlob(messageId, token) {
   const res = await fetch(projectAgentImageUrl(messageId, token), {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: authHeaders(token)
   });
   if (!res.ok) {
     throw new Error('Failed to load image');
@@ -193,7 +207,7 @@ export async function fetchProjectAgentImageBlob(messageId, token) {
 /** Fetch video bytes with auth for <video src={blobUrl}> */
 export async function fetchProjectAgentVideoBlob(messageId, token) {
   const res = await fetch(projectAgentVideoUrl(messageId), {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: authHeaders(token)
   });
   if (!res.ok) {
     throw new Error('Failed to load video');

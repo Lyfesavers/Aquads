@@ -1872,7 +1872,7 @@ function App() {
       try {
         const freshUser = await verifyToken(cu.token);
         if (cancelled) return;
-        if (freshUser) {
+        if (freshUser && typeof freshUser === 'object') {
           setCurrentUser((prev) => {
             if (!prev?.token) return prev;
             let merged = {
@@ -1889,7 +1889,7 @@ function App() {
             }
             return prev;
           });
-        } else {
+        } else if (freshUser === false) {
           setCurrentUser(null);
         }
       } catch (error) {

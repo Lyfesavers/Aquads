@@ -62,6 +62,12 @@ export default function ProjectAgentMessageVideo({ messageId, token, status, pro
       <p className="project-agent-meta project-agent-video-progress">
         {isFinalizing ? 'Saving video…' : 'Generating video…'}
         {pct != null && !isFinalizing ? ` ${pct}%` : ''}
+        {pct === 0 && !isFinalizing ? (
+          <span className="project-agent-video-progress-hint">
+            {' '}
+            (Sora often stays at 0% for several minutes — this is normal)
+          </span>
+        ) : null}
       </p>
     );
   }

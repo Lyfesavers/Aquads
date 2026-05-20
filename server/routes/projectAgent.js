@@ -96,6 +96,9 @@ const VIDEO_MAX_BYTES =
   Number(process.env.PROJECT_AGENT_VIDEO_MAX_BYTES) || 80 * 1024 * 1024;
 /** Prevent duplicate background finalize runs for the same message */
 const videoFinalizeInFlight = new Set();
+/** Throttle OpenAI status polls (frontend may retry; avoid hammering Sora API) */
+const videoOpenAiPollMinMs = Number(process.env.PROJECT_AGENT_VIDEO_OPENAI_POLL_MS) || 10_000;
+const videoOpenAiLastPoll = new Map();
 
 function ensureVideoDir() {
   if (!fs.existsSync(PROJECT_AGENT_VIDEO_DIR)) {
@@ -331,6 +334,20 @@ async function syncProjectAgentVideoJob(assistantMsg, adId, userId) {
   if (!videoId) {
     return { status: 'failed', error: 'Missing video job id.' };
   }
+
+  const msgKey = String(assistantMsg._id);
+  const lastPoll = videoOpenAiLastPoll.get(msgKey) || 0;
+  const now = Date.now();
+  if (now - lastPoll < videoOpenAiPollMinMs) {
+    const cachedStatus =
+      assistantMsg.videoStatus === 'in_progress' ? 'in_progress' : 'queued';
+    return {
+      status: cachedStatus,
+      progress: assistantMsg.videoProgress ?? 0,
+      message: serializeMessage(assistantMsg.toObject ? assistantMsg.toObject() : assistantMsg)
+    };
+  }
+  videoOpenAiLastPoll.set(msgKey, now);
 
   const job = await openaiRetrieveVideo(videoId);
   const status = String(job.status || 'queued').toLowerCase();

@@ -141,8 +141,8 @@ window.fetch = async function(url, options = {}) {
   // can auto-set multipart/form-data with the correct boundary
   const isFormData = options.body instanceof FormData;
   const headers = {
-    ...authHeader,
     ...(options.headers || {}),
+    ...authHeader
   };
   if (!isFormData) {
     headers['Content-Type'] = options.headers?.['Content-Type'] || 'application/json';
@@ -485,7 +485,7 @@ export const loginWithGoogle = async (idToken) => {
 // The caller (App.js) is responsible for updating React state and localStorage.
 export const verifyToken = async (token) => {
   try {
-    if (!token) return null;
+    if (!token) return false;
 
     const response = await fetch(`${API_URL}/verify-token`, {
       method: 'GET',
@@ -495,8 +495,13 @@ export const verifyToken = async (token) => {
       }
     });
 
+    if (response.status === 401 || response.status === 403) {
+      return false;
+    }
+
     if (!response.ok) {
-      throw new Error('Token verification failed');
+      logger.error('Token verification error: HTTP', response.status);
+      return null;
     }
 
     const data = await response.json();
@@ -506,7 +511,7 @@ export const verifyToken = async (token) => {
       return { ...serverUser, token };
     }
 
-    return null;
+    return false;
   } catch (error) {
     logger.error('Token verification error:', error);
     return null;
