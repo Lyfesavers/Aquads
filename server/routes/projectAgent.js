@@ -25,6 +25,11 @@ const {
   getWebSearchCallUsd
 } = require('../utils/kimiCost');
 const { runKimiAgentChat } = require('../utils/kimiAgentTools');
+const {
+  getLimits,
+  resolveMaxOutputTokens,
+  maxOutputTokensForMode
+} = require('../utils/projectAgentLimits');
 const { openaiGenerateImage } = require('../utils/openaiImage');
 const {
   calculateImageGenerationCost,
@@ -64,14 +69,12 @@ const router = express.Router();
 
 const KIMI_BASE = (process.env.KIMI_API_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
 const KIMI_MODEL = process.env.PROJECT_AGENT_MODEL || process.env.KIMI_MODEL || 'kimi-k2.6';
-const MAX_HISTORY_MESSAGES = 40;
-const CHAT_MAX_TOKENS = 8192;
 const CHAT_MODES = ['instant', 'thinking', 'agent'];
 const LEGACY_CHAT_MODES = ['websearch'];
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 30 : 120,
+  max: getLimits().chatRateLimitPerMinute,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many agent requests. Please wait a moment.' }
@@ -209,7 +212,8 @@ router.get('/health', (req, res) => {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
-    }
+    },
+    limits: getLimits()
   });
 });
 
@@ -382,8 +386,11 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
       : 'instant';
   const storedMode = normalizeChatMode(mode);
   const userContent = String(req.body?.message || '').trim();
-  if (!userContent || userContent.length > 32000) {
-    return res.status(400).json({ error: 'Message is required (max 32k characters).' });
+  const limits = getLimits();
+  if (!userContent || userContent.length > limits.maxUserMessageChars) {
+    return res.status(400).json({
+      error: `Message is required (max ${limits.maxUserMessageChars.toLocaleString()} characters).`
+    });
   }
 
   let holdCents = 0;
@@ -403,20 +410,26 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
 
     const history = await ProjectAgentMessage.find({ threadId: thread._id })
       .sort({ createdAt: -1 })
-      .limit(MAX_HISTORY_MESSAGES)
+      .limit(limits.maxHistoryMessages)
       .select('role content reasoningContent')
       .lean();
     history.reverse();
 
     const systemPrompt = buildProjectAgentSystemPrompt(ad, storedMode);
     const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
+    const maxTokens = resolveMaxOutputTokens({
+      mode: storedMode,
+      systemPrompt,
+      messages: kimiMessages
+    });
 
     const holdOpts = {
       systemPrompt,
       messages: kimiMessages,
-      maxTokens: CHAT_MAX_TOKENS,
+      maxTokens,
       modelId: KIMI_MODEL,
-      mode: isAgentToolsMode(storedMode) ? 'instant' : storedMode
+      mode: isAgentToolsMode(storedMode) ? 'instant' : storedMode,
+      agentMaxRounds: isAgentToolsMode(storedMode) ? limits.maxAgentRounds : undefined
     };
 
     holdCents = isAgentToolsMode(storedMode)
@@ -478,7 +491,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
           baseUrl: KIMI_BASE,
           model: KIMI_MODEL,
           messages: kimiMessages,
-          maxTokens: CHAT_MAX_TOKENS,
+          maxTokens,
           userMessage: userContent,
           send
         });
@@ -516,7 +529,7 @@ router.post('/chat/:adId/:threadId', auth, chatLimiter, async (req, res) => {
         messages: kimiMessages,
         stream: true,
         stream_options: { include_usage: true },
-        max_tokens: CHAT_MAX_TOKENS,
+        max_tokens: maxTokens,
         thinking: modeToThinking(storedMode)
       };
 

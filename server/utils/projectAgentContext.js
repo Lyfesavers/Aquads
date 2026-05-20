@@ -1,7 +1,11 @@
 const { getListingTier, LISTING_TIER_PREMIUM } = require('./listingTier');
 const { loadAquadsPlaybook } = require('./aquadsPlaybook');
 
-const MAX_SYSTEM_CHARS = 24000;
+const { getLimits } = require('./projectAgentLimits');
+
+function getMaxSystemChars() {
+  return getLimits().maxSystemChars;
+}
 
 function trimBlock(text, max = 4000) {
   if (!text) return '';
@@ -78,8 +82,9 @@ function buildProjectAgentSystemPrompt(ad, mode) {
   }
 
   let system = lines.join('\n');
-  if (system.length > MAX_SYSTEM_CHARS) {
-    system = `${system.slice(0, MAX_SYSTEM_CHARS)}\n…[context truncated]`;
+  const maxSystem = getMaxSystemChars();
+  if (system.length > maxSystem) {
+    system = `${system.slice(0, maxSystem)}\n…[context truncated]`;
   }
   return system;
 }
@@ -106,5 +111,5 @@ module.exports = {
   buildProjectAgentSystemPrompt,
   buildProjectImagePrompt,
   isPremiumListing,
-  MAX_SYSTEM_CHARS
+  getMaxSystemChars
 };

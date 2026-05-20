@@ -6,10 +6,11 @@ const DEFAULT_FORMULA_URIS = ['moonshot/code_runner:latest', 'moonshot/fetch:lat
 
 const KIMI_BUILTIN_WEB_SEARCH = KIMI_WEB_SEARCH_TOOL;
 
-const MAX_AGENT_ROUNDS = Math.max(
-  2,
-  Math.min(16, Number(process.env.PROJECT_AGENT_AGENT_MAX_ROUNDS) || 12)
-);
+const { getLimits } = require('./projectAgentLimits');
+
+function getMaxAgentRounds() {
+  return getLimits().maxAgentRounds;
+}
 
 const TOOLS_CACHE_MS = Math.max(60_000, Number(process.env.PROJECT_AGENT_TOOLS_CACHE_MS) || 600_000);
 
@@ -218,7 +219,8 @@ async function runKimiAgentChat({
   let webSearchCalls = 0;
   let toolRound = 0;
 
-  for (let round = 0; round < MAX_AGENT_ROUNDS; round += 1) {
+  const maxRounds = getMaxAgentRounds();
+  for (let round = 0; round < maxRounds; round += 1) {
     const res = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
