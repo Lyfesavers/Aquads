@@ -1220,8 +1220,14 @@ const AquaPayPage = ({ currentUser }) => {
                   <p className="text-slate-500 text-xs">Instant<br/>transfers</p>
                 </div>
                 <div>
-                  <div className="text-lg mb-1">{feeDetails ? '💎' : '🛡️'}</div>
-                  <p className="text-slate-500 text-xs">{feeDetails ? 'Low 0.5%' : 'No fees'}<br/>{feeDetails ? 'fee' : 'from us'}</p>
+                  <div className="text-lg mb-1">{feeDetails ? '💎' : '🔒'}</div>
+                  <p className="text-slate-500 text-xs">
+                    {feeDetails ? (
+                      <>Low 0.5%<br />platform fee</>
+                    ) : (
+                      <>Non-custodial<br />direct to wallet</>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
