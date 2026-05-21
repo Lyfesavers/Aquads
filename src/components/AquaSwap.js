@@ -730,12 +730,7 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
         setActiveTokenName(nameParam);
         setActiveTokenSymbol(nameParam); // Use name as symbol for bubbles
       }
-      
-      // Update URL to /share/aquaswap so when users copy and share, metadata displays correctly
-      const sharePath = `/share/aquaswap?token=${encodeURIComponent(tokenParam)}&blockchain=${encodeURIComponent(blockchainParam)}`;
-      if (!window.location.pathname.startsWith('/share/aquaswap')) {
-        window.history.replaceState({}, document.title, sharePath);
-      }
+      // Browser URL → /share/aquaswap is applied by updateAquaswapUrl once token/chain state settles
     }
 
     // Fetch featured services on mount
@@ -962,8 +957,9 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       searchParams.set('blockchain', getBlockchainParamForChain(chainValue));
     }
     const newSearch = searchParams.toString();
-    const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash || ''}`;
-    window.history.replaceState({}, '', newUrl);
+    // /share/aquaswap so copy-paste from the address bar matches Shill links (OG preview card).
+    const newUrl = `/share/aquaswap${newSearch ? `?${newSearch}` : ''}${window.location.hash || ''}`;
+    navigate(newUrl, { replace: true });
   };
 
   // Enhanced search functionality
