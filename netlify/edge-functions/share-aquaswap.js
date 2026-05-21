@@ -118,7 +118,7 @@ export default async (request, context) => {
 
     // Branded card: serve via aquads.xyz proxy so Telegram/WhatsApp fetch the same PNG as X
     // (direct *.railway.app image URLs are often skipped or time out in Telegram's crawler)
-    const ogImageUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=7`;
+    const ogImageUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=8`;
     const sharePageUrl = `https://www.aquads.xyz/share/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
 
     // Format numbers
@@ -130,13 +130,17 @@ export default async (request, context) => {
     };
 
     const formatPrice = (p) => {
-      if (p === 0) return '$0';
-      if (p < 0.00000001) return `$${p.toExponential(2)}`;
-      if (p < 0.0001) return `$${p.toFixed(10).replace(/\.?0+$/, '')}`;
-      if (p < 0.01) return `$${p.toFixed(6)}`;
-      if (p < 1) return `$${p.toFixed(4)}`;
-      if (p < 1000) return `$${p.toFixed(2)}`;
-      return `$${p.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+      const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
+      const toSub = (n) => String(n).split('').map((d) => SUBSCRIPT[Number(d)] ?? d).join('');
+      const n = Number(p);
+      if (!Number.isFinite(n) || n === 0) return '$0';
+      if (n >= 1000) return `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+      if (n >= 1) return `$${n.toFixed(2)}`;
+      if (n >= 0.01) return `$${n.toFixed(4)}`;
+      if (n >= 0.0001) return `$${n.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')}`;
+      const m = n.toFixed(24).match(/^0\.(0+)([1-9]\d*)/);
+      if (!m) return `$${n.toExponential(2)}`;
+      return `$0.0${toSub(m[1].length)}${m[2].slice(0, 4)}`;
     };
 
     const formatAge = (timestamp) => {

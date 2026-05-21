@@ -26,6 +26,7 @@ const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
+const { formatDexPrice } = require('./utils/formatDexPrice');
 
 
 // Middleware
@@ -307,12 +308,7 @@ app.get('/aquaswap', async (req, res, next) => {
           return `$${num.toFixed(2)}`;
         };
         
-        const formatPrice = (price) => {
-          if (price < 0.00001) return `$${price.toExponential(2)}`;
-          if (price < 0.01) return `$${price.toFixed(6)}`;
-          if (price < 1) return `$${price.toFixed(4)}`;
-          return `$${price.toFixed(2)}`;
-        };
+        const formatPrice = (price) => formatDexPrice(price);
         
         // Create formatted title and description
         const priceChangeSign = priceChange24h >= 0 ? '+' : '';

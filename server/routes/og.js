@@ -1,6 +1,7 @@
 const { verifyExternalShareToken } = require('../utils/externalJobShareToken');
 const { findListingForToken } = require('../utils/listingLogoLookup');
 const { fetchBestDexPair } = require('../utils/dexPairLookup');
+const { formatDexPrice } = require('../utils/formatDexPrice');
 
 const crypto = require('crypto');
 const express = require('express');
@@ -92,15 +93,9 @@ function formatNum(n) {
   return `$${n.toFixed(2)}`;
 }
 
-// Format price
+// Format price (DexScreener-style; used by OG card PNG)
 function formatPrice(p) {
-  if (!p || p === 0) return '$0';
-  if (p < 0.00000001) return `$${p.toExponential(2)}`;
-  if (p < 0.0001) return `$${p.toFixed(8)}`;
-  if (p < 0.01) return `$${p.toFixed(6)}`;
-  if (p < 1) return `$${p.toFixed(4)}`;
-  if (p < 1000) return `$${p.toFixed(2)}`;
-  return `$${p.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+  return formatDexPrice(p);
 }
 
 // Escape XML special characters
@@ -224,7 +219,7 @@ router.get('/aquaswap', async (req, res) => {
   }
 
   // Check cache
-  const cacheKey = `aquaswap:v4:${token}-${blockchain}`;
+  const cacheKey = `aquaswap:v5:${token}-${blockchain}`;
   const cached = imageCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     res.set('Content-Type', 'image/png');

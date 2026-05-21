@@ -1,6 +1,24 @@
 // Netlify function to prerender AquaSwap token pages for social media crawlers
 const fetch = require('node-fetch');
 
+function formatDexPrice(price) {
+  const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
+  const toSubscript = (num) =>
+    String(num)
+      .split('')
+      .map((d) => SUBSCRIPT[Number(d)] ?? d)
+      .join('');
+  const p = Number(price);
+  if (!Number.isFinite(p) || p === 0) return '$0';
+  if (p >= 1000) return `$${p.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+  if (p >= 1) return `$${p.toFixed(2)}`;
+  if (p >= 0.01) return `$${p.toFixed(4)}`;
+  if (p >= 0.0001) return `$${p.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')}`;
+  const match = p.toFixed(24).match(/^0\.(0+)([1-9]\d*)/);
+  if (!match) return `$${p.toExponential(2)}`;
+  return `$0.0${toSubscript(match[1].length)}${match[2].slice(0, 4)}`;
+}
+
 exports.handler = async (event, context) => {
   console.log('=== PRERENDER-AQUASWAP CALLED ===');
   
@@ -57,7 +75,7 @@ exports.handler = async (event, context) => {
     const liquidity = pair.liquidity?.usd || 0;
     const tokenImage = pair.info?.imageUrl || 'https://www.aquads.xyz/logo712.png';
     // Same branded OG card as /share/aquaswap, served via aquads.xyz for Telegram etc.
-    const ogCardUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}&ogv=7`;
+    const ogCardUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}&ogv=8`;
     
     console.log('Token found:', symbol, 'Image:', tokenImage);
     
@@ -69,12 +87,7 @@ exports.handler = async (event, context) => {
       return `$${n.toFixed(2)}`;
     };
     
-    const formatPrice = (p) => {
-      if (p < 0.00001) return `$${p.toExponential(2)}`;
-      if (p < 0.01) return `$${p.toFixed(6)}`;
-      if (p < 1) return `$${p.toFixed(4)}`;
-      return `$${p.toFixed(2)}`;
-    };
+    const formatPrice = (p) => formatDexPrice(p);
     
     const changeSign = priceChange24h >= 0 ? '+' : '';
     const title = `$${symbol} │ ${formatPrice(priceUsd)} │ ${changeSign}${priceChange24h.toFixed(1)}% 24h`;
