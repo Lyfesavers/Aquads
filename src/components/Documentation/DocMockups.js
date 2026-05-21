@@ -1585,6 +1585,85 @@ export const BubbleAdsMockup = () => (
   </MockupContainer>
 );
 
+// Skipper Agent panel mockup
+export const SkipperAgentMockup = () => (
+  <MockupContainer title="Skipper Agent">
+    <div className="bg-gray-800 rounded-xl border border-cyan-500/30 overflow-hidden max-w-md mx-auto shadow-lg">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-900/80">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
+            S
+          </div>
+          <div>
+            <div className="text-white text-sm font-semibold">Skipper Agent</div>
+            <div className="text-cyan-400/80 text-[10px]">Your Aquads AI co-pilot</div>
+          </div>
+        </div>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+          Verified
+        </span>
+      </div>
+
+      <div className="px-3 py-2 flex gap-1.5 flex-wrap border-b border-gray-700/80">
+        {['Instant', 'Thinking', 'Agent', 'Image', 'Video'].map((m, i) => (
+          <button
+            key={m}
+            type="button"
+            className={`text-[10px] px-2 py-1 rounded-md ${
+              i === 2
+                ? 'bg-cyan-600/40 text-cyan-100 border border-cyan-500/50'
+                : 'bg-gray-700/80 text-gray-400 border border-gray-600'
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-4 space-y-3 min-h-[140px]">
+        <div className="flex justify-end">
+          <div className="bg-cyan-600/30 text-cyan-50 text-xs px-3 py-2 rounded-lg max-w-[85%] border border-cyan-500/20">
+            Draft a launch tweet for our Solana memecoin
+          </div>
+        </div>
+        <div className="flex justify-start">
+          <div className="bg-gray-700 text-gray-200 text-xs px-3 py-2 rounded-lg max-w-[90%]">
+            Here&apos;s a punchy launch thread hook plus 3 follow-up tweets…
+          </div>
+        </div>
+      </div>
+
+      <div className="px-3 pb-2 flex items-center justify-between text-[10px] text-gray-500">
+        <span>Wallet: $4.12</span>
+        <button type="button" className="text-cyan-400 hover:text-cyan-300">
+          Top up via AquaPay
+        </button>
+      </div>
+
+      <div className="px-3 pb-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Ask Skipper…"
+            className="flex-1 bg-gray-900 text-gray-300 text-xs px-3 py-2 rounded-lg border border-gray-600"
+            readOnly
+          />
+          <button type="button" className="bg-cyan-500 text-white text-xs px-3 py-2 rounded-lg font-medium">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-4 flex justify-end">
+      <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-cyan-400/40">
+        <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">S</span>
+        Skipper
+      </div>
+    </div>
+  </MockupContainer>
+);
+
 // Export all mockups
 export default {
   CreateAccountMockup,
@@ -1607,6 +1686,7 @@ export default {
   AffiliateMockup,
   TokenListingMockup,
   TelegramBotMockup,
-  BubbleAdsMockup
+  BubbleAdsMockup,
+  SkipperAgentMockup
 };
 

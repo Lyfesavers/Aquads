@@ -6,7 +6,7 @@ import {
   FaSearch, FaChevronRight, FaChevronDown, FaChevronLeft, 
   FaHome, FaBook, FaRocket, FaCoins, FaBriefcase, FaExchangeAlt,
   FaCreditCard, FaBullhorn, FaGamepad, FaHandshake, FaTelegram,
-  FaCog, FaLightbulb, FaExclamationTriangle, FaInfoCircle, FaCheckCircle,
+  FaCog, FaLightbulb, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRobot,
   FaBars, FaTimes, FaMoon, FaSun, FaExternalLinkAlt, FaCopy
 } from 'react-icons/fa';
 import './Documentation.css';
@@ -33,7 +33,8 @@ import {
   TokenListingMockup,
   TelegramBotMockup,
   BubbleAdsMockup,
-  LinkInBioMockup
+  LinkInBioMockup,
+  SkipperAgentMockup
 } from './DocMockups';
 
 // Documentation content structure with all Aquads features
@@ -49,6 +50,14 @@ const documentationStructure = [
       { id: 'dashboard', title: 'Using the Dashboard', content: 'dashboard' },
       { id: 'profile-setup', title: 'Profile Setup', content: 'profileSetup' },
       { id: 'link-in-bio', title: 'Link in Bio Tool', content: 'linkInBioTool' },
+    ]
+  },
+  {
+    id: 'skipper-agent',
+    title: 'Skipper Agent',
+    icon: FaRobot,
+    children: [
+      { id: 'skipper-overview', title: 'Overview & Guide', content: 'skipperAgent' },
     ]
   },
   {
@@ -214,6 +223,7 @@ Click any bubble to view project details, vote, and trade via integrated swap ro
 | **Freelancer marketplace** | Hire launch help (design, mods, dev, marketing) |
 | **AquaPay** | Accept payments (presales, merch, services) |
 | **AquaSwap** | Cross-chain swaps from your listing |
+| **Skipper Agent** | AI co-pilot for copy, plans, images, and Aquads how-to (verified accounts) |
 | **AquaFi, Game Hub, market data** | Supporting tools as you scale past day 30 |
 
 ### Supported Blockchains
@@ -366,6 +376,7 @@ After logging in, you'll see:
 | **AquaSwap** | /aquaswap | DEX aggregator for swaps |
 | **AquaFi** | /aquafi | Savings pools |
 | **AquaPay** | /aquapay | Payment link creation |
+| **Skipper Agent** | FAB + /project-agent | AI co-pilot (verified accounts) |
 | **Learn** | /learn | Videos, blogs, skill tests |
 | **Partner Rewards** | /partner-rewards | Exclusive partner deals |
 
@@ -628,6 +639,122 @@ Copy your URL from the Link in bio panel and share it on:
 > 💡 **Tip**: Use one strong background image and high contrast colors for the most premium look.
     `,
     prevPage: { id: 'profile-setup', title: 'Profile Setup' },
+    nextPage: { id: 'skipper-overview', title: 'Skipper Agent' },
+  },
+
+  skipperAgent: {
+    title: 'Skipper Agent',
+    description: 'Aquads AI co-pilot for marketing copy, launch plans, images, video, and platform how-to — pay-as-you-go on verified accounts.',
+    mockup: <SkipperAgentMockup />,
+    content: `
+## Skipper Agent
+
+**Skipper Agent** is Aquads' AI co-pilot for Web3 project teams and freelancers. Use it for announcement copy, launch checklists, raid drafts, visuals, short video clips, and step-by-step help with Aquads features (listings, bumps, raids, AquaPay, Premium packages, and more).
+
+### Who can use Skipper
+
+| Requirement | Details |
+|-------------|---------|
+| **Account** | Logged-in Aquads user |
+| **Verification** | **Email verified** (required) |
+| **Billing** | Prepaid **USD wallet** per workspace — not affiliate points |
+
+Skipper is available on all **email-verified** accounts. You do not need a paid Premium listing to open Skipper; Premium adds a larger **starter wallet credit** (see below).
+
+### How to open Skipper
+
+1. **Log in** and **verify your email**
+2. Look for the **Skipper** floating button (bottom corner) on most Aquads pages
+3. Open the panel, pick your **workspace** (listing, freelancer, or account), and start a chat
+4. Optional full-page view: \`/project-agent\` (or \`/project-agent/[listingId]\` when tied to a project)
+
+> 💡 **Tip**: After topping up your Skipper wallet via AquaPay, use **Back to Skipper Agent** on the payment screen to return to your chat.
+
+### Workspaces
+
+Skipper keeps separate chat history and wallet balance per workspace:
+
+| Workspace | Best for |
+|-----------|----------|
+| **Project listing** | Token/project teams with a bubble on the map |
+| **Freelancer** | Freelancer accounts offering services |
+| **Account** | General Aquads use when you are not in a listing context |
+
+Switch workspaces from the header in the Skipper panel when you have more than one eligible scope.
+
+### Chat modes
+
+| Mode | What it does |
+|------|----------------|
+| **Instant** | Fast answers for quick questions |
+| **Thinking** | Deeper reasoning for plans and longer drafts |
+| **Agent** | Research-style help: web search, code snippets, URL fetch, and **free Starter listing** submission (see below) |
+| **Create image** | Generate a visual from your prompt (deducted from wallet) |
+| **Create video** | Short clips — **15** or **30** seconds (wallet hold, then settle when complete) |
+
+Choose the mode before you send. **Agent** is best for multi-step Aquads tasks; **Instant** / **Thinking** are best for copy and strategy.
+
+### What Skipper can help with
+
+- Twitter / Telegram announcement drafts
+- Launch-week checklists and timelines
+- Shill and raid copy ideas
+- Explaining Aquads features (bubble map, bumps, raids, link-in-bio, banners, AquaPay)
+- **Create image** — logos, banners, social creatives (describe style and dimensions in your prompt)
+- **Create video** — short promo clips (pick 15s or 30s in the UI)
+
+### List a free Starter project (Agent mode)
+
+In **Agent** mode, you can submit a **free Starter** listing without filling the full modal by hand:
+
+1. Provide your **contract address (CA)** or **pair address (PA)**
+2. Provide a **direct logo URL** (GIF or PNG)
+3. Add a **website URL** if DexScreener does not already show one
+4. Skipper submits the listing → status **pending admin approval** → bubble goes live after approval
+
+Same rules apply as the normal List Project flow: accurate pair data, professional logo, and honest project info.
+
+### Wallet, credits & top-ups
+
+Skipper uses a **prepaid USD wallet** (separate from affiliate points):
+
+| Credit | When you get it |
+|--------|-----------------|
+| **$1 trial** | One-time per Skipper wallet (account, Starter listing, or freelancer workspace) |
+| **$5 starter** | **Paid Premium** listing — included with the Premium package; may increase balance from $1 → $5 on that listing if you already received the trial |
+
+**Pay-as-you-go:** Each chat, Agent task, image, or video deducts from your wallet based on usage. Longer jobs (e.g. video) may place a **hold** first, then **settle** to the actual cost when finished.
+
+**Top up:** Open **Top up wallet** inside Skipper → pay via **AquaPay** (USDC). A **5% load fee** applies on top of the credit amount you choose (minimum top-up shown in the panel).
+
+> ⚠️ **Important**: **Premium** means the **paid listing package**, not vote bump. A Starter project bumped at 100+ votes keeps Starter tier unless you pay to upgrade.
+
+### Skipper vs listing tiers
+
+| Tier | Skipper access |
+|------|----------------|
+| **Starter (free listing)** | Full Skipper access + **$1** trial credit per listing wallet |
+| **Premium (paid listing)** | Full Skipper access + **$5** starter wallet credit (see List Project modal for current USDC price) |
+
+**Paid Premium** also includes the bundled launch stack (PR/AMA where offered, BNB/Sol trending program, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
+
+### Suggested first-week workflow
+
+- [ ] Verify email and open Skipper from the FAB
+- [ ] Complete listing profile (logo, links, description)
+- [ ] Draft launch announcement copy with Skipper
+- [ ] Set up link-in-bio and share your bubble map link
+- [ ] Plan 1–2 raids for launch buzz
+- [ ] Create an AquaPay link if you accept payments
+- [ ] Top up Skipper wallet if trial credit runs low
+
+### Boundaries
+
+- Skipper does **not** provide financial advice, price targets, or guaranteed returns
+- Aquads features and pricing can change — confirm current packages in **List Project** or your **Dashboard**
+- Generated media is for marketing help; always review before posting
+    `,
+    prevPage: { id: 'link-in-bio', title: 'Link in Bio Tool' },
     nextPage: { id: 'listing-token', title: 'Listing Your Token' },
   },
   
@@ -701,9 +828,9 @@ You can pay via:
 - **Complimentary homepage banner** after approval: **24 hours** on **Starter**, **7 days** on **Premium** (rotating placement—see List Project flow)
 - Raids, vote boosts, Bump Bot — **custom \`/setbranding\` media on notifications is paid Premium when bumped** (Starter keeps default Aquads styling). **Vote bump (100+ bullish) does not upgrade listing tier.**
 
-**Skipper Agent** is available on all **email-verified** Aquads accounts (pay-as-you-go wallet; top up via AquaPay).
+**Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled launch stack shown in the modal (e.g. **$5 Skipper AI wallet credit**, PR / distribution access, AMA where offered, **BNB/Sol trending + volume program**, ad credit, higher pre-bump coordinated raid cap vs Starter, and a **7-day** complimentary homepage banner vs **24 hours** on Starter).
+**Paid Premium** adds the bundled launch stack (e.g. **$5 Skipper wallet credit**, PR / AMA, **BNB/Sol trending + volume**, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
 
 ### Listing Fee
 
@@ -733,7 +860,7 @@ Already have a listing? You can:
 - Have your pair address ready
 - Engage with voters to grow your bubble
     `,
-    prevPage: { id: 'profile-setup', title: 'Profile Setup' },
+    prevPage: { id: 'skipper-overview', title: 'Skipper Agent' },
     nextPage: { id: 'bubble-ads', title: 'Bubble Ads System' },
   },
   
