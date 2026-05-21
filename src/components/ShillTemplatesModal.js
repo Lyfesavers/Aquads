@@ -61,7 +61,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
                 name: data.pair.baseToken?.name || '',
                 priceUsd: data.pair.priceUsd,
                 priceChange24h: data.pair.priceChange?.h24,
-                logo: data.pair.info?.imageUrl
+                ...(hasLogo ? {} : { logo: data.pair.info?.imageUrl }),
               });
             }
           }
@@ -90,7 +90,7 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
   ).toUpperCase().replace(/[^A-Z0-9]/g, ''); // Clean up symbol
   const pairAddress = tokenData?.pairAddress || tokenData?.address || '';
   const blockchain = tokenData?.chainId || tokenData?.blockchain || tokenData?.chain || 'ethereum';
-  const tokenLogo = fetchedTokenInfo?.logo || tokenData?.logo || tokenData?.image || null;
+  const tokenLogo = tokenData?.logo || tokenData?.image || fetchedTokenInfo?.logo || null;
   const priceUsd = (fetchedTokenInfo?.priceUsd || tokenData?.priceUsd) ? parseFloat(fetchedTokenInfo?.priceUsd || tokenData?.priceUsd).toFixed(6) : null;
   const priceChange = (fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h) ? parseFloat(fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h).toFixed(2) : null;
 

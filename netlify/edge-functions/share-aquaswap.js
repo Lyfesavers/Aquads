@@ -118,7 +118,7 @@ export default async (request, context) => {
 
     // Branded card: serve via aquads.xyz proxy so Telegram/WhatsApp fetch the same PNG as X
     // (direct *.railway.app image URLs are often skipped or time out in Telegram's crawler)
-    const ogImageUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=4`;
+    const ogImageUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}&ogv=6`;
     const sharePageUrl = `https://www.aquads.xyz/share/aquaswap?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(rawBlockchain)}`;
 
     // Format numbers

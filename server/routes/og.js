@@ -1,4 +1,5 @@
 const { verifyExternalShareToken } = require('../utils/externalJobShareToken');
+const { findListingLogoForToken } = require('../utils/listingLogoLookup');
 
 const crypto = require('crypto');
 const express = require('express');
@@ -117,6 +118,31 @@ function stripHtmlSnippet(s) {
   return s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// librsvg (Sharp's SVG rasterizer) only paints PNG/JPEG in embedded <image> tags.
+const LIBSVG_SAFE_ACCEPT = 'image/png,image/jpeg,image/jpg,image/pjpeg,image/*;q=0.8';
+
+function toLibsvgSafeImageUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('dexscreener.com')) {
+      parsed.searchParams.set('format', 'png');
+      return parsed.toString();
+    }
+  } catch {
+    // fall through to string replace
+  }
+  if (/format=auto/i.test(url)) {
+    return url.replace(/format=auto/i, 'format=png');
+  }
+  return url;
+}
+
+function isLibsvgSafeContentType(contentType) {
+  const ct = (contentType || '').toLowerCase();
+  return ct.includes('png') || ct.includes('jpeg') || ct.includes('jpg');
+}
+
 // Fetch and convert image to base64
 // IMPORTANT: librsvg (used by Sharp to rasterise SVG) only decodes PNG/JPEG inside
 // <image href="data:..."> — it CANNOT handle WebP/AVIF/GIF. Cursa, Cloudflare image
@@ -124,8 +150,10 @@ function stripHtmlSnippet(s) {
 // blank box. Pass `normalize: true` to first re-encode the fetched bytes through
 // Sharp into a PNG (or fitted PNG) so the embedded image always paints.
 async function fetchImageAsBase64(url, options = {}) {
+  const fetchUrl = options.normalize ? toLibsvgSafeImageUrl(url) : url;
+
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get(fetchUrl, {
       responseType: 'arraybuffer',
       timeout: options.timeout || 5000,
       headers: {
@@ -133,7 +161,9 @@ async function fetchImageAsBase64(url, options = {}) {
           options.userAgent ||
           'Mozilla/5.0 (compatible; Aquads-OG-Generator/1.0; +https://aquads.xyz)',
         ...(options.referer ? { Referer: options.referer } : {}),
-        Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        Accept: options.normalize
+          ? (options.accept || LIBSVG_SAFE_ACCEPT)
+          : 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
       },
       maxRedirects: 5,
       validateStatus: (s) => s >= 200 && s < 400,
@@ -158,15 +188,20 @@ async function fetchImageAsBase64(url, options = {}) {
         buffer = await pipeline.png().toBuffer();
         contentType = 'image/png';
       } catch (normErr) {
-        console.error('Image normalize failed, using raw bytes:', normErr.message);
-        // fall through with original buffer/contentType
+        console.error('Image normalize failed:', fetchUrl, '→', normErr.message);
+        if (isLibsvgSafeContentType(contentType)) {
+          // Already PNG/JPEG — embed as-is for librsvg even if Sharp couldn't re-encode.
+          const base64 = buffer.toString('base64');
+          return `data:${contentType};base64,${base64}`;
+        }
+        return null;
       }
     }
 
     const base64 = buffer.toString('base64');
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
-    console.error('Failed to fetch image:', url, '→', error.message);
+    console.error('Failed to fetch image:', fetchUrl, '→', error.message);
     return null;
   }
 }
@@ -180,7 +215,7 @@ router.get('/aquaswap', async (req, res) => {
   }
 
   // Check cache
-  const cacheKey = `${token}-${blockchain}`;
+  const cacheKey = `aquaswap:v3:${token}-${blockchain}`;
   const cached = imageCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     res.set('Content-Type', 'image/png');
@@ -232,9 +267,15 @@ router.get('/aquaswap', async (req, res) => {
     const liquidity = tokenData?.liquidity?.usd || 0;
     const volume24h = tokenData?.volume?.h24 || 0;
     const fdv = tokenData?.fdv || 0;
-    const tokenImageUrl = tokenData?.info?.imageUrl || null;
 
-    // Fetch token logo as base64 — normalize to PNG so librsvg can render WebP/AVIF from DEXScreener
+    // Prefer Aquads listing logo (uploaded by project) over DEX CDN (often AVIF/WebP).
+    const listingLogoUrl =
+      (await findListingLogoForToken(token, blockchain)) ||
+      (tokenData?.baseToken?.address
+        ? await findListingLogoForToken(tokenData.baseToken.address, blockchain)
+        : null);
+    const tokenImageUrl = listingLogoUrl || tokenData?.info?.imageUrl || null;
+
     let logoBase64 = null;
     if (tokenImageUrl) {
       logoBase64 = await fetchImageAsBase64(tokenImageUrl, {
