@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
     const liquidity = pair.liquidity?.usd || 0;
     const tokenImage = pair.info?.imageUrl || 'https://www.aquads.xyz/logo712.png';
     // Same branded OG card as /share/aquaswap, served via aquads.xyz for Telegram etc.
-    const ogCardUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}&ogv=6`;
+    const ogCardUrl = `https://www.aquads.xyz/og/aquaswap-card?token=${encodeURIComponent(tokenAddress)}&blockchain=${encodeURIComponent(blockchain)}&ogv=7`;
     
     console.log('Token found:', symbol, 'Image:', tokenImage);
     

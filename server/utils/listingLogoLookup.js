@@ -36,21 +36,17 @@ function chainVariants(blockchain) {
   return [...variants];
 }
 
-/**
- * Find an Aquads bubble listing logo by pair/token address (+ optional chain).
- * Prefers active/approved listings; bumped listings sort first.
- */
-async function findListingLogoForToken(tokenAddress, blockchain) {
+async function findListingForToken(tokenAddress, blockchain) {
   const addr = (tokenAddress || '').trim();
   if (!addr) return null;
 
   const addrRegex = new RegExp(`^${escapeRegex(addr)}$`, 'i');
   const baseQuery = {
     status: { $in: ['active', 'approved'] },
-    logo: { $exists: true, $nin: [null, ''] },
     pairAddress: addrRegex,
   };
   const sort = { isBumped: -1, bullishVotes: -1 };
+  const select = 'logo title pairAddress blockchain';
 
   const variants = chainVariants(blockchain);
   if (variants.length) {
@@ -59,14 +55,19 @@ async function findListingLogoForToken(tokenAddress, blockchain) {
       ...baseQuery,
       blockchain: { $in: chainRegexes },
     })
-      .select('logo')
+      .select(select)
       .sort(sort)
       .lean();
-    if (matched?.logo) return matched.logo;
+    if (matched) return matched;
   }
 
-  const matched = await Ad.findOne(baseQuery).select('logo').sort(sort).lean();
-  return matched?.logo || null;
+  return Ad.findOne(baseQuery).select(select).sort(sort).lean();
 }
 
-module.exports = { findListingLogoForToken };
+/** @deprecated use findListingForToken */
+async function findListingLogoForToken(tokenAddress, blockchain) {
+  const listing = await findListingForToken(tokenAddress, blockchain);
+  return listing?.logo || null;
+}
+
+module.exports = { findListingForToken, findListingLogoForToken };

@@ -1,5 +1,6 @@
 const { verifyExternalShareToken } = require('../utils/externalJobShareToken');
-const { findListingLogoForToken } = require('../utils/listingLogoLookup');
+const { findListingForToken } = require('../utils/listingLogoLookup');
+const { fetchBestDexPair } = require('../utils/dexPairLookup');
 
 const crypto = require('crypto');
 const express = require('express');
@@ -118,6 +119,14 @@ function stripHtmlSnippet(s) {
   return s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function listingSymbolFromTitle(title) {
+  const cleaned = String(title || '')
+    .trim()
+    .replace(/^\$+/, '')
+    .replace(/[^A-Za-z0-9]/g, '');
+  return cleaned || null;
+}
+
 // librsvg (Sharp's SVG rasterizer) only paints PNG/JPEG in embedded <image> tags.
 const LIBSVG_SAFE_ACCEPT = 'image/png,image/jpeg,image/jpg,image/pjpeg,image/*;q=0.8';
 
@@ -215,7 +224,7 @@ router.get('/aquaswap', async (req, res) => {
   }
 
   // Check cache
-  const cacheKey = `aquaswap:v3:${token}-${blockchain}`;
+  const cacheKey = `aquaswap:v4:${token}-${blockchain}`;
   const cached = imageCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     res.set('Content-Type', 'image/png');
@@ -229,38 +238,27 @@ router.get('/aquaswap', async (req, res) => {
     const mappedChain = chainMapping[blockchain.toLowerCase()] || blockchain.toLowerCase();
     const chain = chainInfo[mappedChain] || { name: blockchain, color: '#00d4ff' };
 
-    // Fetch token data from DEXScreener
-    let tokenData = null;
-    
-    // Try pairs endpoint first
-    try {
-      const pairsUrl = `https://api.dexscreener.com/latest/dex/pairs/${mappedChain}/${token}`;
-      const pairsRes = await axios.get(pairsUrl, { timeout: 8000 });
-      if (pairsRes.data.pair) {
-        tokenData = pairsRes.data.pair;
-      } else if (pairsRes.data.pairs && pairsRes.data.pairs.length > 0) {
-        tokenData = pairsRes.data.pairs[0];
-      }
-    } catch (e) {
-      console.log('Pairs endpoint failed, trying tokens endpoint');
+    let listing = await findListingForToken(token, blockchain);
+
+    let tokenData = await fetchBestDexPair(token, blockchain, chainMapping);
+
+    if (!tokenData && listing?.pairAddress && listing.pairAddress.toLowerCase() !== token.toLowerCase()) {
+      tokenData = await fetchBestDexPair(
+        listing.pairAddress,
+        listing.blockchain || blockchain,
+        chainMapping
+      );
     }
 
-    // Try tokens endpoint if pairs didn't work
-    if (!tokenData) {
-      try {
-        const tokensUrl = `https://api.dexscreener.com/latest/dex/tokens/${token}`;
-        const tokensRes = await axios.get(tokensUrl, { timeout: 8000 });
-        if (tokensRes.data.pairs && tokensRes.data.pairs.length > 0) {
-          tokenData = tokensRes.data.pairs[0];
-        }
-      } catch (e) {
-        console.log('Tokens endpoint also failed');
-      }
+    if (!listing && tokenData?.baseToken?.address) {
+      listing = await findListingForToken(tokenData.baseToken.address, blockchain);
     }
 
-    // Default values if no data found
-    const symbol = tokenData?.baseToken?.symbol || 'TOKEN';
-    const name = tokenData?.baseToken?.name || symbol;
+    const symbol =
+      tokenData?.baseToken?.symbol ||
+      listingSymbolFromTitle(listing?.title) ||
+      'TOKEN';
+    const name = tokenData?.baseToken?.name || listing?.title || symbol;
     const priceUsd = parseFloat(tokenData?.priceUsd) || 0;
     const priceChange24h = tokenData?.priceChange?.h24 || 0;
     const marketCap = tokenData?.marketCap || tokenData?.fdv || 0;
@@ -268,12 +266,7 @@ router.get('/aquaswap', async (req, res) => {
     const volume24h = tokenData?.volume?.h24 || 0;
     const fdv = tokenData?.fdv || 0;
 
-    // Prefer Aquads listing logo (uploaded by project) over DEX CDN (often AVIF/WebP).
-    const listingLogoUrl =
-      (await findListingLogoForToken(token, blockchain)) ||
-      (tokenData?.baseToken?.address
-        ? await findListingLogoForToken(tokenData.baseToken.address, blockchain)
-        : null);
+    const listingLogoUrl = listing?.logo || null;
     const tokenImageUrl = listingLogoUrl || tokenData?.info?.imageUrl || null;
 
     let logoBase64 = null;
