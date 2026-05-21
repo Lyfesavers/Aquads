@@ -3109,7 +3109,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
     'aqua_ripple': 'AquaRipple ($284)',
     'aqua_wave': 'AquaWave ($1,329)',
     'aqua_flow': 'AquaFlow ($2,754)',
-    'aqua_storm': 'AquaStorm ($6,174)'
+    'aqua_storm': 'AquaStorm ($6,174)',
+    'aqua_tidal': 'AquaTidal ($12,349)',
+    'aqua_legend': 'AquaLegend ($20,899)'
+  };
+
+  const formatListingPaymentStatus = (listing) => {
+    const sig = listing.txSignature || '';
+    if (sig === 'starter-free') return { label: 'Free Starter (no payment)', className: 'text-cyan-400' };
+    if (sig === 'aquapay-pending') return { label: 'AquaPay — pending payment', className: 'text-yellow-400' };
+    if (sig === 'paypal') return { label: 'PayPal', className: 'text-blue-400' };
+    if (sig) return { label: 'Crypto / on-chain', className: 'text-green-400' };
+    return { label: 'Not provided', className: 'text-gray-400' };
   };
 
   // HyperSpace order management functions - using sockets for real-time updates
@@ -5361,66 +5372,155 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                           No pending bubble listings to approve
                         </div>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-gray-600">
-                                <th className="px-4 py-2 text-left text-white">Project</th>
-                                <th className="px-4 py-2 text-left text-white">Owner</th>
-                                <th className="px-4 py-2 text-left text-white">Payment</th>
-                                <th className="px-4 py-2 text-left text-white">Date</th>
-                                <th className="px-4 py-2 text-left text-white">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {pendingListings.map((listing) => (
-                                <tr key={listing.id} className="border-b border-gray-600">
-                                  <td className="px-4 py-3">
-                                    <div className="flex items-center">
-                                      <img src={listing.logo} alt={listing.title} className="w-8 h-8 rounded-full mr-3" loading="lazy" onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }} />
-                                      <div>
-                                        <div className="font-medium text-white">{listing.title}</div>
-                                        <div className="text-sm text-gray-400">
-                                          <a href={listing.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
-                                            {listing.url?.replace(/(^\w+:|^)\/\//, '')}
+                        <div className="space-y-4">
+                          {pendingListings.map((listing) => {
+                            const listingId = listing.id || listing._id;
+                            const paymentStatus = formatListingPaymentStatus(listing);
+                            const tierLabel = listing.listingTier === 'starter' ? 'Starter (free)' : 'Premium';
+                            return (
+                              <div key={listingId} className="bg-gray-800 rounded-lg p-5 border border-cyan-500/30">
+                                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                                  <div className="flex items-start gap-4">
+                                    <img
+                                      src={listing.logo}
+                                      alt={listing.title}
+                                      className="w-16 h-16 rounded-full object-cover border border-gray-600 shrink-0"
+                                      loading="lazy"
+                                      onError={(e) => { e.target.src = 'https://placehold.co/64x64?text=?'; }}
+                                    />
+                                    <div>
+                                      <h4 className="font-bold text-white text-lg">{listing.title}</h4>
+                                      <p className="text-sm text-gray-400">
+                                        Owner: <span className="text-white">{listing.owner}</span>
+                                      </p>
+                                      <p className="text-sm text-gray-400">
+                                        Listing ID: <span className="text-gray-300 font-mono text-xs">{listingId}</span>
+                                      </p>
+                                      <span className={`inline-block mt-2 px-2 py-0.5 rounded text-xs font-medium ${
+                                        listing.listingTier === 'starter'
+                                          ? 'bg-cyan-500/20 text-cyan-300'
+                                          : 'bg-purple-500/20 text-purple-300'
+                                      }`}>
+                                        {tierLabel}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 shrink-0">
+                                    <button
+                                      onClick={() => handleApproveListing(listingId)}
+                                      disabled={approvingListingId === listingId || approvingListingId !== null}
+                                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {approvingListingId === listingId && <FaSpinner className="animate-spin" />}
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => openRejectModal(listing)}
+                                      disabled={approvingListingId !== null}
+                                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div className="bg-gray-900 rounded-lg p-4">
+                                    <h5 className="text-sm font-semibold text-gray-300 mb-3 border-b border-gray-600 pb-2">Project details (form)</h5>
+                                    <dl className="space-y-2 text-sm">
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400 shrink-0">Website URL</dt>
+                                        <dd className="text-right">
+                                          <a href={listing.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
+                                            {listing.url}
                                           </a>
+                                        </dd>
+                                      </div>
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400 shrink-0">Logo URL</dt>
+                                        <dd className="text-right">
+                                          <a href={listing.logo} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all text-xs">
+                                            {listing.logo}
+                                          </a>
+                                        </dd>
+                                      </div>
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400 shrink-0">Blockchain</dt>
+                                        <dd className="text-white capitalize">{listing.blockchain || '—'}</dd>
+                                      </div>
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400 shrink-0">Pair address</dt>
+                                        <dd className="text-gray-300 font-mono text-xs break-all text-right">{listing.pairAddress || '—'}</dd>
+                                      </div>
+                                    </dl>
+                                  </div>
+
+                                  <div className="bg-gray-900 rounded-lg p-4">
+                                    <h5 className="text-sm font-semibold text-gray-300 mb-3 border-b border-gray-600 pb-2">Payment &amp; pricing</h5>
+                                    <dl className="space-y-2 text-sm">
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400">Payment status</dt>
+                                        <dd className={paymentStatus.className}>{paymentStatus.label}</dd>
+                                      </div>
+                                      {listing.paymentChain && (
+                                        <div className="flex justify-between gap-4">
+                                          <dt className="text-gray-400">Payment chain</dt>
+                                          <dd className="text-purple-400">{listing.paymentChain}{listing.chainSymbol ? ` (${listing.chainSymbol})` : ''}</dd>
                                         </div>
+                                      )}
+                                      {listing.chainAddress && (
+                                        <div className="flex justify-between gap-4">
+                                          <dt className="text-gray-400">Pay-to / link</dt>
+                                          <dd className="text-gray-300 text-xs break-all text-right max-w-[60%]">{listing.chainAddress}</dd>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400">Listing fee</dt>
+                                        <dd className="text-white">${(listing.listingFee ?? 0).toLocaleString()} USDC</dd>
                                       </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3 text-gray-300">{listing.owner}</td>
-                                  <td className="px-4 py-3 text-gray-300">
-                                    <div className="text-sm">
-                                      <div>Chain: {listing.paymentChain}</div>
-                                      <div className="text-gray-400 text-xs truncate max-w-[160px]" title={listing.txSignature}>
-                                        Tx: {listing.txSignature?.substring(0, 8)}...
+                                      <div className="flex justify-between gap-4">
+                                        <dt className="text-gray-400">Total charged</dt>
+                                        <dd className="text-green-400 font-bold">${(listing.totalAmount ?? 0).toLocaleString()} USDC</dd>
                                       </div>
+                                      {listing.discountAmount > 0 && (
+                                        <div className="flex justify-between gap-4">
+                                          <dt className="text-gray-400">Discount</dt>
+                                          <dd className="text-yellow-400">
+                                            -${listing.discountAmount}
+                                            {listing.appliedDiscountCode ? ` (${listing.appliedDiscountCode})` : ''}
+                                          </dd>
+                                        </div>
+                                      )}
+                                    </dl>
+                                  </div>
+                                </div>
+
+                                {listing.selectedAddons?.length > 0 && (
+                                  <div className="bg-gray-900 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-semibold text-gray-300 mb-2">Marketing add-ons</h5>
+                                    <div className="flex flex-wrap gap-2">
+                                      {listing.selectedAddons.map((addonId) => (
+                                        <span key={addonId} className="bg-orange-500/10 text-orange-300 px-3 py-1 rounded text-sm">
+                                          {ADDON_PACKAGE_NAMES[addonId] || addonId}
+                                        </span>
+                                      ))}
                                     </div>
-                                  </td>
-                                  <td className="px-4 py-3 text-gray-300">{new Date(listing.createdAt).toLocaleDateString()}</td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex space-x-2">
-                                      <button 
-                                        onClick={() => handleApproveListing(listing.id)} 
-                                        disabled={approvingListingId === listing.id || approvingListingId !== null}
-                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                      >
-                                        {approvingListingId === listing.id && <FaSpinner className="animate-spin" />}
-                                        Approve
-                                      </button>
-                                      <button 
-                                        onClick={() => openRejectModal(listing)} 
-                                        disabled={approvingListingId !== null}
-                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        Reject
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                                  </div>
+                                )}
+
+                                {listing.txSignature && listing.txSignature !== 'starter-free' && (
+                                  <div className="bg-gray-900 rounded-lg p-3 mb-4">
+                                    <p className="text-sm text-gray-400">Transaction / payment reference</p>
+                                    <p className="text-xs text-gray-300 font-mono break-all bg-gray-950 p-2 rounded mt-1">{listing.txSignature}</p>
+                                  </div>
+                                )}
+
+                                <p className="text-xs text-gray-500">
+                                  Submitted: {new Date(listing.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
