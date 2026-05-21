@@ -170,7 +170,7 @@ const AquaPayPage = ({ currentUser }) => {
   // Get payment context IDs and amount from URL search params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const bannerId = urlParams.get('bannerId');
-  const bumpId = urlParams.get('bumpId');
+  const legacyBumpLink = urlParams.has('bumpId');
   const projectId = urlParams.get('projectId');
   const addonOrderId = urlParams.get('addonOrderId');
   const tokenPurchaseId = urlParams.get('tokenPurchaseId');
@@ -182,13 +182,15 @@ const AquaPayPage = ({ currentUser }) => {
   const urlAmount = urlParams.get('amount');
   const isLockedPayment = !!(
     bannerId ||
-    bumpId ||
+    projectId ||
+    addonOrderId ||
     tokenPurchaseId ||
     hyperspaceOrderId ||
     linkBioAdId ||
     voteBoostId ||
     projectAgentTopupId
   );
+  const isCheckoutPayment = isLockedPayment;
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -206,6 +208,8 @@ const AquaPayPage = ({ currentUser }) => {
   const [txHash, setTxHash] = useState(null);
   const [txStatus, setTxStatus] = useState(null);
   const [txError, setTxError] = useState(null);
+  const [recordStatus, setRecordStatus] = useState(null);
+  const [recordError, setRecordError] = useState(null);
   
   const [copied, setCopied] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -267,8 +271,16 @@ const AquaPayPage = ({ currentUser }) => {
       setSelectedToken('usdc'); // Default to USDC if amount is pre-filled
     }
     
+    if (legacyBumpLink) {
+      setError(
+        'Paid bumps are no longer available. Bubbles bump automatically at 100+ bullish votes (organic votes and vote boosts both count).'
+      );
+      setLoading(false);
+      return;
+    }
+
     if (slug) fetchPaymentPage();
-  }, [slug]);
+  }, [slug, legacyBumpLink]);
 
   useEffect(() => {
     if (walletConnected) {
@@ -683,7 +695,7 @@ const AquaPayPage = ({ currentUser }) => {
             const paymentReceipt = await paymentTx.wait();
             if (paymentReceipt.status === 1) {
               setTxStatus('success');
-              await recordPayment(txHash);
+              await recordPayment(paymentTx.hash);
             } else {
               throw new Error('Payment transaction failed');
             }
@@ -835,7 +847,7 @@ const AquaPayPage = ({ currentUser }) => {
         setTxHash(sig);
         setTxStatus('pending');
         await connection.confirmTransaction(sig);
-        setTxStatus('success'); 
+        setTxStatus('success');
         await recordPayment(sig);
       }
     } catch (err) { 
@@ -868,26 +880,71 @@ const AquaPayPage = ({ currentUser }) => {
   };
 
   const recordPayment = async (hash) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/aquapay/payment`, {
-        recipientSlug: slug, txHash: hash, chain: selectedChain,
-        token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
-        amount: parseFloat(amount), senderAddress: walletAddress,
-        senderUsername: currentUser?.username, message,
-        bannerId: bannerId || null,
-        bumpId: bumpId || null,
-        projectId: projectId || null,
-        addonOrderId: addonOrderId || null,
-        tokenPurchaseId: tokenPurchaseId || null,
-        hyperspaceOrderId: hyperspaceOrderId || null,
-        linkBioAdId: linkBioAdId || null,
-        voteBoostId: voteBoostId || null,
-        projectAgentTopupId: projectAgentTopupId || null
-      });
+    setRecordStatus('recording');
+    setRecordError(null);
 
-      // Fire emails in background (don't await) - won't block close or bog down UX
-      if (response.data.recipientEmail) {
-        emailService.sendAquaPayPaymentNotification(response.data.recipientEmail, {
+    const payload = {
+      recipientSlug: slug,
+      txHash: hash,
+      chain: selectedChain,
+      token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
+      amount: parseFloat(amount),
+      senderAddress: walletAddress,
+      senderUsername: currentUser?.username,
+      message,
+      bannerId: bannerId || null,
+      projectId: projectId || null,
+      addonOrderId: addonOrderId || null,
+      tokenPurchaseId: tokenPurchaseId || null,
+      hyperspaceOrderId: hyperspaceOrderId || null,
+      linkBioAdId: linkBioAdId || null,
+      voteBoostId: voteBoostId || null,
+      projectAgentTopupId: projectAgentTopupId || null
+    };
+
+    const maxAttempts = 3;
+    let lastError = null;
+    let response = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        response = await axios.post(`${API_URL}/api/aquapay/payment`, payload, { timeout: 45000 });
+        lastError = null;
+        break;
+      } catch (e) {
+        lastError = e;
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+        }
+      }
+    }
+
+    if (!response?.data?.success) {
+      const msg =
+        lastError?.response?.data?.error ||
+        lastError?.message ||
+        'Payment was sent on-chain but could not be confirmed with Aquads. Save your transaction link and contact support.';
+      setRecordStatus('record_failed');
+      setRecordError(msg);
+      return { ok: false, error: msg };
+    }
+
+    setRecordStatus('recorded');
+
+    const expectsAutoActivate = Boolean(
+      bannerId || tokenPurchaseId || hyperspaceOrderId || linkBioAdId || voteBoostId || projectAgentTopupId
+    );
+    if (expectsAutoActivate && !response.data.approvedItem && !response.data.alreadyRecorded) {
+      setRecordStatus('record_failed');
+      setRecordError(
+        'Payment was verified on-chain but your order could not be activated automatically. Please contact support with your transaction link below.'
+      );
+      return { ok: false, partial: true, response: response.data };
+    }
+
+    if (response.data.recipientEmail) {
+      emailService
+        .sendAquaPayPaymentNotification(response.data.recipientEmail, {
           recipientName: response.data.recipientName,
           amount: parseFloat(amount),
           token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
@@ -895,10 +952,12 @@ const AquaPayPage = ({ currentUser }) => {
           senderAddress: walletAddress,
           txHash: hash,
           message: message || null
-        }).catch(() => {});
-      }
-      if (payerEmail && payerEmail.trim()) {
-        emailService.sendAquaPayReceipt(payerEmail.trim(), {
+        })
+        .catch(() => {});
+    }
+    if (payerEmail && payerEmail.trim()) {
+      emailService
+        .sendAquaPayReceipt(payerEmail.trim(), {
           recipientName: response.data.recipientName,
           amount: parseFloat(amount),
           token: selectedToken === 'usdc' ? 'USDC' : chainConfig?.symbol,
@@ -906,36 +965,45 @@ const AquaPayPage = ({ currentUser }) => {
           senderAddress: walletAddress,
           txHash: hash,
           message: message || null
-        }).catch(() => {});
-      }
+        })
+        .catch(() => {});
+    }
 
-      // Close window immediately for auto-approved payment flows; don't wait for emails
-      if (
-        (bannerId ||
-          bumpId ||
-          tokenPurchaseId ||
-          hyperspaceOrderId ||
-          linkBioAdId ||
-          voteBoostId ||
-          projectAgentTopupId) &&
-        response.data.approvedItem
-      ) {
-        if (projectAgentTopupId && returnUrl) {
-          window.location.href = returnUrl;
-          return;
-        }
-        if (window.opener) {
-          window.close();
-        }
+    const needsAutoClose =
+      bannerId ||
+      tokenPurchaseId ||
+      hyperspaceOrderId ||
+      linkBioAdId ||
+      voteBoostId ||
+      projectAgentTopupId;
+
+    const checkoutNeedsApproval =
+      (projectId || addonOrderId) && response.data.approvedItem?.paymentRecorded;
+
+    if (needsAutoClose && response.data.approvedItem) {
+      if (projectAgentTopupId && returnUrl) {
+        window.location.href = returnUrl;
+        return { ok: true, response: response.data };
       }
-    } catch (e) { /* Silent fail - payment already succeeded on chain */ }
+      if (window.opener) {
+        window.close();
+      }
+    }
+
+    if (checkoutNeedsApproval) {
+      return { ok: true, response: response.data, awaitingAdmin: true };
+    }
+
+    return { ok: true, response: response.data };
   };
 
   const copyAddress = () => { navigator.clipboard.writeText(recipientAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const resetPayment = () => { 
-    setTxHash(null); 
-    setTxStatus(null); 
-    setTxError(null); 
+  const resetPayment = () => {
+    setTxHash(null);
+    setTxStatus(null);
+    setTxError(null);
+    setRecordStatus(null);
+    setRecordError(null);
     setAmount(''); 
     setMessage(''); 
     setPayerEmail('');
@@ -1005,7 +1073,42 @@ const AquaPayPage = ({ currentUser }) => {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-white mb-2">Payment Successful</h1>
-        <p className="text-slate-400 mb-6">Your payment has been sent successfully</p>
+        <p className="text-slate-400 mb-4">Your payment has been sent on the blockchain.</p>
+
+        {recordStatus === 'recording' && (
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 mb-4 text-sm text-cyan-200">
+            Confirming payment with Aquads…
+          </div>
+        )}
+
+        {recordStatus === 'record_failed' && recordError && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4 text-left text-sm text-amber-200">
+            <p className="font-medium text-amber-100 mb-1">Action needed</p>
+            <p>{recordError}</p>
+            <p className="mt-2 text-amber-300/80 text-xs">
+              Your funds were sent on-chain. Keep the explorer link below — support can reconcile with that transaction ID.
+            </p>
+            <button
+              type="button"
+              onClick={() => recordPayment(txHash)}
+              className="mt-3 w-full py-2 bg-amber-600/80 hover:bg-amber-500 text-white rounded-lg text-sm font-medium"
+            >
+              Retry confirmation
+            </button>
+          </div>
+        )}
+
+        {recordStatus === 'recorded' && isCheckoutPayment && (projectId || addonOrderId) && (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mb-4 text-sm text-blue-200">
+            Payment received. Your order is in the admin queue for final approval.
+          </div>
+        )}
+
+        {recordStatus === 'recorded' && voteBoostId && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 mb-4 text-sm text-emerald-200">
+            Vote boost payment confirmed. Your boost should activate shortly in Telegram or Discord.
+          </div>
+        )}
         
         <div className="bg-slate-800/50 rounded-xl p-4 mb-6 text-left space-y-3">
           <div className="flex justify-between">

@@ -183,28 +183,6 @@ function init(server) {
       }
     });
 
-    // Handle admin requesting pending bump requests
-    socket.on('requestPendingBumpRequests', async (userData) => {
-      if (userData && userData.isAdmin) {
-        try {
-          const BumpRequest = require('./models/BumpRequest');
-          
-          // Get all pending bump requests
-          const bumpRequests = await BumpRequest.find({ status: 'pending' }).sort({ createdAt: -1 }).lean();
-          
-          // Send all pending bump requests to this admin
-          socket.emit('pendingBumpRequestsLoaded', {
-            bumpRequests,
-            total: bumpRequests.length
-          });
-          
-        } catch (error) {
-          console.error('Error fetching pending bump requests for admin:', error);
-          socket.emit('pendingBumpRequestsError', { error: 'Failed to fetch pending bump requests' });
-        }
-      }
-    });
-
     // Handle admin requesting pending vote boost requests
     socket.on('requestPendingVoteBoosts', async (userData) => {
       if (userData && userData.isAdmin) {
@@ -1022,6 +1000,12 @@ function init(server) {
         return;
       }
 
+      const { verifySocketUserId } = require('./utils/socketAuth');
+      if (!verifySocketUserId(socket, userData.userId)) {
+        socket.emit('aquaPaySettingsError', { error: 'Unauthorized' });
+        return;
+      }
+
       try {
         const User = require('./models/User');
         const user = await User.findById(userData.userId).select('username image aquaPay').lean();
@@ -1083,6 +1067,12 @@ function init(server) {
     socket.on('updateAquaPaySettings', async (data) => {
       if (!data || !data.userId) {
         socket.emit('aquaPaySettingsError', { error: 'User authentication required' });
+        return;
+      }
+
+      const { verifySocketUserId } = require('./utils/socketAuth');
+      if (!verifySocketUserId(socket, data.userId)) {
+        socket.emit('aquaPaySettingsError', { error: 'Unauthorized' });
         return;
       }
 
@@ -1236,6 +1226,12 @@ function init(server) {
         return;
       }
 
+      const { verifySocketUserId } = require('./utils/socketAuth');
+      if (!verifySocketUserId(socket, data.userId)) {
+        socket.emit('aquaPaySlugCheckResult', { available: false, reason: 'Unauthorized' });
+        return;
+      }
+
       try {
         const User = require('./models/User');
         const slug = data.slug.toLowerCase().trim();
@@ -1334,15 +1330,6 @@ function emitTokenUpdate(type, tokens) {
   }
   
   io.emit('tokensUpdated', { type, tokens });
-}
-
-// Utility function to emit bump request updates
-function emitBumpRequestUpdate(type, bumpRequest) {
-  if (!io) {
-    return;
-  }
-  
-  io.emit('bumpRequestUpdated', { type, bumpRequest });
 }
 
 // Utility function to emit raid updates (create/cancel for Twitter and Facebook)
@@ -1652,7 +1639,6 @@ module.exports = {
   getIO: () => getIO(),
   emitAdUpdate,
   emitTokenUpdate,
-  emitBumpRequestUpdate,
   getOnlineUsersCount,
   isUserOnline,
   getConnectedUsers,

@@ -10,8 +10,6 @@ import {
   loginUser, 
   loginWithGoogle,
   register as apiRegister,
-  approveBumpRequest,
-  rejectBumpRequest,
   verifyToken,
   pingServer,
   API_URL,
@@ -1559,30 +1557,6 @@ function App() {
     }
   };
 
-  const handleRejectBump = async (adId, reason) => {
-    try {
-      if (!currentUser?.isAdmin) {
-        showNotification('Only admins can reject bump requests', 'error');
-        return;
-      }
-
-      const ad = ads.find(a => a.id === adId);
-      if (!ad) {
-        showNotification('Ad not found!', 'error');
-        return;
-      }
-
-      const result = await rejectBumpRequest(adId, currentUser.username, reason);
-      if (result.ad) {
-        setAds(prevAds => prevAds.map(a => (a.id === adId ? result.ad : a)));
-      }
-      showNotification('Bump request rejected successfully!', 'success');
-    } catch (error) {
-      logger.error('Error rejecting bump:', error);
-      showNotification(error.message || 'Failed to reject bump request', 'error');
-    }
-  };
-
   const handleDeleteAd = async (adId) => {
     try {
       await apiDeleteAd(adId);
@@ -1635,19 +1609,6 @@ function App() {
     } catch (error) {
       logger.error('Error updating ad:', error);
       showNotification('Failed to update ad. Please try again.', 'error');
-    }
-  };
-
-  const handleApproveBump = async (adId) => {
-    try {
-      if (!currentUser?.isAdmin) {
-        showNotification('Only admins can approve bump requests', 'error');
-        return;
-      }
-      await approveBumpRequest(adId, currentUser.username);
-    } catch (error) {
-      logger.error('Error approving bump:', error);
-      showNotification(error.message || 'Failed to approve bump request', 'error');
     }
   };
 
@@ -1784,20 +1745,9 @@ function App() {
       }
     });
 
-    // Listen for bump request approval (after successful payment)
-    socket.on('bumpRequestUpdate', (data) => {
-      if (data.type === 'approve' && data.bumpRequest) {
-        const bumpOwner = data.bumpRequest.owner;
-        if (currentUser && bumpOwner === currentUser.username) {
-          showNotification('Your bump request has been approved! Your ad is now bumped.', 'success');
-        }
-      }
-    });
-
     return () => {
       socket.off('adVoteUpdated');
       socket.off('tokenPurchaseApproved');
-      socket.off('bumpRequestUpdate');
     };
   }, [currentUser]);
 
@@ -2709,8 +2659,6 @@ function App() {
               currentUser={currentUser}
               onDeleteAd={handleDeleteAd}
               onEditAd={handleEditAd}
-              onRejectBump={handleRejectBump}
-              onApproveBump={handleApproveBump}
               activeBookingId={activeBookingId}
               setActiveBookingId={setActiveBookingId}
               onLogin={() => setShowLoginModal(true)}

@@ -16,9 +16,7 @@ const http = require('http');
 const compression = require('compression');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
-const BumpRequest = require('./models/BumpRequest');
 const VoteBoost = require('./models/VoteBoost');
-const bumpRoutes = require('./routes/bumps');
 const voteBoostRoutes = require('./routes/vote-boosts');
 const bannerAdsRoutes = require('./routes/bannerAds');
 const linkBioAdsRoutes = require('./routes/linkBioAds');
@@ -833,7 +831,6 @@ process.on('SIGINT', async () => {
 });
 
 // Routes
-app.use('/api/bumps', bumpRoutes);
 app.use('/api/vote-boosts', voteBoostRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/ads', require('./routes/ads'));

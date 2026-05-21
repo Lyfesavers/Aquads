@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const BannerAd = require('../models/BannerAd');
 const Ad = require('../models/Ad');
 const User = require('../models/User');
@@ -6,6 +7,10 @@ const HyperSpaceAffiliateEarning = require('../models/HyperSpaceAffiliateEarning
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
 const { emitTokenPurchaseApproved, emitUserTokenBalanceUpdate, emitAffiliateEarningUpdate } = require('../socket');
+const {
+  verifyTransactionSucceeded,
+  amountsClose
+} = require('./paymentVerification');
 
 /**
  * Auto-approval handler for different payment types
@@ -20,20 +25,21 @@ const paymentAutoApproval = {
   async processPayment(paymentData) {
     const {
       bannerId,
-      bumpId,
       projectId,
       tokenPurchaseId,
       hyperspaceOrderId,
       linkBioAdId,
       voteBoostId,
       projectAgentTopupId,
+      addonOrderId,
       recipientSlug,
       amount,
       txHash,
       chain,
       token,
       senderAddress,
-      senderUsername
+      senderUsername,
+      skipOnChainVerify = false
     } = paymentData;
 
     // Link in Bio ads pay the influencer directly (not 'aquads'), so handle before the slug check
@@ -46,7 +52,8 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
@@ -64,20 +71,8 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
-      });
-    }
-
-    // Handle bump payments
-    if (bumpId) {
-      return await this.handleBumpPayment({
-        bumpId,
-        amount,
-        txHash,
-        chain,
-        token,
-        senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
@@ -90,7 +85,8 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
@@ -103,7 +99,8 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
@@ -116,7 +113,8 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
@@ -128,14 +126,36 @@ const paymentAutoApproval = {
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify
       });
     }
 
-    // TODO: Handle project listing payments
-    // if (projectId) {
-    //   return await this.handleProjectPayment({ projectId, ... });
-    // }
+    if (addonOrderId) {
+      return await this.handleAddonOrderPayment({
+        addonOrderId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername,
+        skipOnChainVerify
+      });
+    }
+
+    if (projectId) {
+      return await this.handleProjectPayment({
+        projectId,
+        amount,
+        txHash,
+        chain,
+        token,
+        senderAddress,
+        senderUsername,
+        skipOnChainVerify
+      });
+    }
 
     return null;
   },
@@ -143,7 +163,16 @@ const paymentAutoApproval = {
   /**
    * Handle banner ad payment auto-approval
    */
-  async handleBannerPayment({ bannerId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+  async handleBannerPayment({
+    bannerId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
     try {
       const banner = await BannerAd.findById(bannerId).populate('owner', 'username');
 
@@ -164,16 +193,17 @@ const paymentAutoApproval = {
       const expectedAmount = this.calculateBannerAmount(banner.duration);
       const paymentAmount = parseFloat(amount);
 
-      if (paymentAmount !== expectedAmount) {
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
         console.log(`Banner ad ${banner._id} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
         return null;
       }
 
-      // Verify transaction on-chain
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(`Banner ad ${banner._id} transaction verification failed for ${txHash} on ${chain}`);
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(`Banner ad ${banner._id} transaction verification failed for ${txHash} on ${chain}`);
+          return null;
+        }
       }
 
       // Auto-approve the banner
@@ -194,29 +224,6 @@ const paymentAutoApproval = {
   },
 
   /**
-   * Handle bump payment auto-approval
-   */
-  async handleBumpPayment({ bumpId }) {
-    console.log(
-      `[AquaPay] Ignoring bump payment (bumpId=${bumpId}) — paid bumps are disabled; bumps use 100+ bullish votes.`
-    );
-    return null;
-  },
-
-  /**
-   * Calculate expected bump amount from duration and discount
-   */
-  calculateBumpAmount(duration, discountAmount = 0) {
-    // Lifetime bump is 99 USDC
-    if (duration === -1) {
-      return 99 - discountAmount;
-    }
-    // For other durations, use the same logic as in bumps.js route
-    // Currently only lifetime is supported, so default to 99
-    return 99 - discountAmount;
-  },
-
-  /**
    * Calculate expected banner amount from duration
    */
   calculateBannerAmount(duration) {
@@ -233,7 +240,16 @@ const paymentAutoApproval = {
   /**
    * Handle token purchase payment auto-approval
    */
-  async handleTokenPurchasePayment({ tokenPurchaseId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+  async handleTokenPurchasePayment({
+    tokenPurchaseId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
     try {
       const tokenPurchase = await TokenPurchase.findById(tokenPurchaseId).populate('userId', 'username');
 
@@ -254,16 +270,17 @@ const paymentAutoApproval = {
       const expectedAmount = parseFloat(tokenPurchase.cost);
       const paymentAmount = parseFloat(amount);
 
-      if (paymentAmount !== expectedAmount) {
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
         console.log(`Token purchase ${tokenPurchase._id} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
         return null;
       }
 
-      // Verify transaction on-chain
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(`Token purchase ${tokenPurchase._id} transaction verification failed for ${txHash} on ${chain}`);
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(`Token purchase ${tokenPurchase._id} transaction verification failed for ${txHash} on ${chain}`);
+          return null;
+        }
       }
 
       // Auto-approve the token purchase
@@ -367,7 +384,16 @@ const paymentAutoApproval = {
    * Verifies payment on-chain, then auto-places order with Socialplug so it goes to delivering.
    * PayPal orders are not auto-placed; they stay pending_approval for admin.
    */
-  async handleHyperSpacePayment({ hyperspaceOrderId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+  async handleHyperSpacePayment({
+    hyperspaceOrderId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
     try {
       const HyperSpaceOrder = require('../models/HyperSpaceOrder');
       const socialplugService = require('./socialplugService');
@@ -392,16 +418,17 @@ const paymentAutoApproval = {
       const expectedAmount = parseFloat(order.customerPrice);
       const paymentAmount = parseFloat(amount);
 
-      if (paymentAmount !== expectedAmount) {
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
         console.log(`HyperSpace order ${hyperspaceOrderId} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
         return null;
       }
 
-      // Verify transaction on-chain
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(`HyperSpace order ${hyperspaceOrderId} transaction verification failed for ${txHash} on ${chain}`);
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(`HyperSpace order ${hyperspaceOrderId} transaction verification failed for ${txHash} on ${chain}`);
+          return null;
+        }
       }
 
       // Update payment info
@@ -552,7 +579,17 @@ const paymentAutoApproval = {
    * Handle Link in Bio banner ad payment auto-approval.
    * Unlike other payments, these go to the influencer's wallet (not 'aquads').
    */
-  async handleLinkBioAdPayment({ linkBioAdId, recipientSlug, amount, txHash, chain, token, senderAddress, senderUsername }) {
+  async handleLinkBioAdPayment({
+    linkBioAdId,
+    recipientSlug,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
     try {
       const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 
@@ -586,16 +623,17 @@ const paymentAutoApproval = {
       // Verify exact payment amount
       const expectedAmount = parseFloat(ad.price);
       const paymentAmount = parseFloat(amount);
-      if (paymentAmount !== expectedAmount) {
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
         console.log(`Link bio ad ${ad._id}: amount mismatch - expected ${expectedAmount}, received ${paymentAmount}`);
         return null;
       }
 
-      // Verify transaction on-chain
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(`Link bio ad ${ad._id}: transaction verification failed for ${txHash} on ${chain}`);
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(`Link bio ad ${ad._id}: transaction verification failed for ${txHash} on ${chain}`);
+          return null;
+        }
       }
 
       // Auto-approve the ad
@@ -624,7 +662,16 @@ const paymentAutoApproval = {
   /**
    * Record vote boost payment from AquaPay (pending request was created in bot with placeholder tx).
    */
-  async handleVoteBoostPayment({ voteBoostId, amount, txHash, chain, token, senderAddress, senderUsername }) {
+  async handleVoteBoostPayment({
+    voteBoostId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
     try {
       const VoteBoost = require('../models/VoteBoost');
       const { emitVoteBoostUpdate } = require('../socket');
@@ -641,21 +688,27 @@ const paymentAutoApproval = {
 
       const expectedAmount = parseFloat(boost.price);
       const paymentAmount = parseFloat(amount);
-      if (paymentAmount !== expectedAmount) {
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
         console.log(`Vote boost ${voteBoostId} payment amount mismatch: expected ${expectedAmount}, received ${paymentAmount}`);
         return null;
       }
 
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(`Vote boost ${voteBoostId} transaction verification failed for ${txHash} on ${chain}`);
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(`Vote boost ${voteBoostId} transaction verification failed for ${txHash} on ${chain}`);
+          return null;
+        }
       }
 
       boost.txSignature = txHash;
       boost.paymentChain = chain;
       boost.chainSymbol = token || 'USDC';
       boost.chainAddress = senderAddress || null;
+      boost.status = 'active';
+      boost.approvedAt = new Date();
+      boost.processedBy = 'aquapay';
+      boost.lastVoteAt = new Date();
       await boost.save();
 
       const ad = await Ad.findOne({ id: boost.adId }).lean();
@@ -684,7 +737,8 @@ const paymentAutoApproval = {
     chain,
     token,
     senderAddress,
-    senderUsername
+    senderUsername,
+    skipOnChainVerify = false
   }) {
     try {
       const ProjectAgentTopup = require('../models/ProjectAgentTopup');
@@ -735,12 +789,14 @@ const paymentAutoApproval = {
         return null;
       }
 
-      const transactionVerified = await this.verifyTransaction(txHash, chain);
-      if (!transactionVerified) {
-        console.log(
-          `Project Agent topup ${projectAgentTopupId} transaction verification failed for ${txHash} on ${chain}`
-        );
-        return null;
+      if (!skipOnChainVerify) {
+        const transactionVerified = await this.verifyTransaction(txHash, chain);
+        if (!transactionVerified) {
+          console.log(
+            `Project Agent topup ${projectAgentTopupId} transaction verification failed for ${txHash} on ${chain}`
+          );
+          return null;
+        }
       }
 
       topup.txHash = txHash;
@@ -778,40 +834,142 @@ const paymentAutoApproval = {
   },
 
   /**
-   * Verify transaction on-chain
+   * Attach verified payment to a pending project listing (admin still approves listing).
+   */
+  async handleProjectPayment({
+    projectId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
+    try {
+      let ad = await Ad.findOne({ id: projectId });
+      if (!ad && mongoose.isValidObjectId(projectId)) {
+        ad = await Ad.findById(projectId);
+      }
+
+      if (!ad || ad.status !== 'pending' || ad.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      if (senderUsername && ad.owner && senderUsername.toLowerCase() !== ad.owner.toLowerCase()) {
+        console.log(`Project ${ad.id} payer mismatch: expected ${ad.owner}, got ${senderUsername}`);
+        return null;
+      }
+
+      const expectedAmount = parseFloat(ad.totalAmount);
+      const paymentAmount = parseFloat(amount);
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
+        console.log(`Project ${ad.id} amount mismatch: expected ${expectedAmount}, got ${paymentAmount}`);
+        return null;
+      }
+
+      if (!skipOnChainVerify) {
+        const ok = await this.verifyTransaction(txHash, chain);
+        if (!ok) return null;
+      }
+
+      ad.txSignature = txHash;
+      ad.paymentChain = chain;
+      ad.chainSymbol = token || 'USDC';
+      ad.chainAddress = senderAddress || '';
+      await ad.save();
+
+      try {
+        const socket = require('../socket');
+        socket.getIO().emit('newPendingAd', {
+          ad,
+          paymentReceived: true,
+          createdAt: new Date()
+        });
+      } catch (socketErr) {
+        console.error('handleProjectPayment socket emit:', socketErr.message);
+      }
+
+      console.log(`Project listing ${ad.id} payment recorded on ${chain} (${paymentAmount})`);
+      return { type: 'project', id: ad.id, status: ad.status, paymentRecorded: true };
+    } catch (error) {
+      console.error('Error recording project payment:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Attach verified payment to a pending addon order (admin still approves order).
+   */
+  async handleAddonOrderPayment({
+    addonOrderId,
+    amount,
+    txHash,
+    chain,
+    token,
+    senderAddress,
+    senderUsername,
+    skipOnChainVerify = false
+  }) {
+    try {
+      const AddonOrder = require('../models/AddonOrder');
+      let order = await AddonOrder.findOne({ id: addonOrderId });
+      if (!order && mongoose.isValidObjectId(addonOrderId)) {
+        order = await AddonOrder.findById(addonOrderId);
+      }
+
+      if (!order || order.status !== 'pending' || order.txSignature !== 'aquapay-pending') {
+        return null;
+      }
+
+      if (senderUsername && order.owner && senderUsername.toLowerCase() !== order.owner.toLowerCase()) {
+        console.log(`Addon order ${order.id} payer mismatch: expected ${order.owner}, got ${senderUsername}`);
+        return null;
+      }
+
+      const expectedAmount = parseFloat(order.totalAmount);
+      const paymentAmount = parseFloat(amount);
+      if (!amountsClose(paymentAmount, expectedAmount, 0.05)) {
+        console.log(`Addon order ${order.id} amount mismatch: expected ${expectedAmount}, got ${paymentAmount}`);
+        return null;
+      }
+
+      if (!skipOnChainVerify) {
+        const ok = await this.verifyTransaction(txHash, chain);
+        if (!ok) return null;
+      }
+
+      order.txSignature = txHash;
+      order.paymentChain = chain;
+      order.chainSymbol = token || 'USDC';
+      order.chainAddress = senderAddress || '';
+      await order.save();
+
+      try {
+        const socket = require('../socket');
+        socket.getIO().emit('newPendingAddonOrder', {
+          order,
+          paymentReceived: true,
+          createdAt: new Date()
+        });
+      } catch (socketErr) {
+        console.error('handleAddonOrderPayment socket emit:', socketErr.message);
+      }
+
+      console.log(`Addon order ${order.id} payment recorded on ${chain} (${paymentAmount})`);
+      return { type: 'addonOrder', id: order.id, status: order.status, paymentRecorded: true };
+    } catch (error) {
+      console.error('Error recording addon order payment:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Verify transaction confirmed on-chain (status only; full payment checks run in paymentVerification).
    */
   async verifyTransaction(txHash, chain) {
     try {
-      if (chain === 'solana') {
-        const axios = require('axios');
-        const SOLANA_RPC = 'https://solana-rpc.publicnode.com';
-
-        const statusResponse = await axios.post(SOLANA_RPC, {
-          jsonrpc: '2.0',
-          id: Date.now(),
-          method: 'getSignatureStatuses',
-          params: [[txHash]]
-        }, { timeout: 10000 });
-
-        const status = statusResponse.data?.result?.value?.[0];
-        return status && !status.err && (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized');
-      } else if (['ethereum', 'base', 'polygon', 'arbitrum', 'bnb'].includes(chain)) {
-        const { ethers } = require('ethers');
-        const rpcUrls = {
-          ethereum: 'https://ethereum.publicnode.com',
-          base: 'https://mainnet.base.org',
-          polygon: 'https://polygon-rpc.com',
-          arbitrum: 'https://arb1.arbitrum.io/rpc',
-          bnb: 'https://bsc-dataseed.binance.org'
-        };
-
-        const provider = new ethers.JsonRpcProvider(rpcUrls[chain] || rpcUrls.ethereum);
-        const receipt = await provider.getTransactionReceipt(txHash);
-        return receipt && receipt.status === 1;
-      } else {
-        // For other chains, trust frontend verification
-        return true;
-      }
+      return await verifyTransactionSucceeded(txHash, chain);
     } catch (error) {
       console.error(`Error verifying transaction ${txHash} on ${chain}:`, error.message);
       return false;

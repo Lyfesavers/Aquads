@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -137,12 +137,8 @@ const formatAffiliatePointsCad = (points) =>
     affiliatePointsBalanceToCad(points)
   );
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
-  const [bumpRequests, setBumpRequests] = useState([]);
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bannerAds, setBannerAds] = useState([]);
-  const [rejectReason, setRejectReason] = useState('');
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedBumpRequest, setSelectedBumpRequest] = useState(null);
   const [selectedAd, setSelectedAd] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [affiliateInfo, setAffiliateInfo] = useState(null);
@@ -205,7 +201,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
   const [approvingListingId, setApprovingListingId] = useState(null);
   const [isRejectingListing, setIsRejectingListing] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
-  const [activeAdminSection, setActiveAdminSection] = useState('bumps');
+  const [activeAdminSection, setActiveAdminSection] = useState('listings');
+
+  useEffect(() => {
+    if (activeAdminSection === 'bumps') setActiveAdminSection('listings');
+  }, [activeAdminSection]);
   const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
   const [pendingTokenPurchases, setPendingTokenPurchases] = useState([]);
   // Vote boost approval states
@@ -301,7 +301,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       setUserJobs([]);
       setPremiumRequests([]);
       setBannerAds([]);
-      setBumpRequests([]);
       setPendingRedemptions([]);
       setPendingTwitterRaids([]);
       setTwitterRaidSelectedKeys([]);
@@ -588,16 +587,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       }
     }, 250));
     
-    // Bump requests (300ms)
-    timers.push(setTimeout(() => {
-      if (socket) {
-        socket.emit('requestPendingBumpRequests', {
-          isAdmin: currentUser.isAdmin,
-          userId
-        });
-      }
-    }, 300));
-    
     return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, socket, activeTab]);
 
@@ -767,38 +756,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
     };
   }, [socket, currentUser, activeTab]);
 
-  // Socket listeners for bump request updates
-  useEffect(() => {
-    if (!socket || !currentUser?.isAdmin) return;
-
-    const handleBumpRequestUpdate = (data) => {
-      const { type, bumpRequest } = data;
-      
-      if (type === 'create') {
-        // Add new bump request to the list
-        setBumpRequests(prevRequests => {
-          // Check if it already exists to avoid duplicates
-          const exists = prevRequests.some(req => req._id === bumpRequest._id);
-          if (!exists) {
-            return [bumpRequest, ...prevRequests];
-          }
-          return prevRequests;
-        });
-      } else if (type === 'approve' || type === 'reject') {
-        // Remove processed bump request from the list
-        setBumpRequests(prevRequests => 
-          prevRequests.filter(req => req._id !== bumpRequest._id)
-        );
-      }
-    };
-
-    socket.on('bumpRequestUpdated', handleBumpRequestUpdate);
-
-    return () => {
-      socket.off('bumpRequestUpdated', handleBumpRequestUpdate);
-    };
-  }, [socket, currentUser]);
-
   // Socket listeners for vote boost updates
   useEffect(() => {
     if (!socket || !currentUser?.isAdmin) return;
@@ -882,14 +839,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
 
     const handlePendingCompletionsError = (error) => {
       setLoadingTwitterRaids(false);
-    };
-
-    const handlePendingBumpRequestsLoaded = (data) => {
-      setBumpRequests(data.bumpRequests);
-    };
-
-    const handlePendingBumpRequestsError = (error) => {
-      console.error('Error loading initial bump requests via socket:', error);
     };
 
     // Service approval socket handlers
@@ -1012,9 +961,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     socket.on('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
-    socket.on('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
-    socket.on('pendingBumpRequestsError', handlePendingBumpRequestsError);
-    
     // Service approval socket listeners
     socket.on('serviceApproved', handleServiceApproved);
     socket.on('serviceRejected', handleServiceRejected);
@@ -1048,9 +994,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
       socket.off('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
-      socket.off('pendingBumpRequestsLoaded', handlePendingBumpRequestsLoaded);
-      socket.off('pendingBumpRequestsError', handlePendingBumpRequestsError);
-      
       // Service approval socket cleanup
       socket.off('serviceApproved', handleServiceApproved);
       socket.off('serviceRejected', handleServiceRejected);
@@ -1207,74 +1150,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
 
 
 
-  const handleReject = (ad) => {
-    setSelectedBumpRequest(ad);
-    setShowRejectModal(true);
-  };
-
-  const confirmReject = async () => {
-    if (selectedBumpRequest) {
-      try {
-        const response = await fetch(`${API_URL}/bumps/reject`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify({ 
-            adId: selectedBumpRequest.id, 
-            processedBy: currentUser.userId,
-            reason: rejectReason 
-          })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to reject bump request');
-        }
-        
-        const result = await response.json();
-        
-        // Socket event will automatically update the bump requests list
-        setShowRejectModal(false);
-        setRejectReason('');
-        setSelectedBumpRequest(null);
-        
-        alert(result.message || 'Bump request rejected successfully!');
-      } catch (error) {
-        alert('Error rejecting bump request: ' + error.message);
-      }
-    }
-  };
-
-  const handleApprove = async (ad) => {
-    try {
-      const response = await fetch(`${API_URL}/bumps/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({ 
-          adId: ad.id, 
-          processedBy: currentUser.userId
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to approve bump request');
-      }
-      
-      const result = await response.json();
-      
-      // Socket event will automatically update the bump requests list
-      alert(result.message || 'Bump request approved successfully!');
-    } catch (error) {
-      alert('Error approving bump request: ' + error.message);
-    }
-  };
-
   const fetchBannerAds = async () => {
     try {
       const response = await fetch(`${API_URL}/bannerAds`, {
@@ -1417,14 +1292,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
       alert(error.message || 'Failed to update banner ad. Please try again.');
     }
   };
-
-  // Separate pending bump ads for admin
-  const pendingBumpAds = currentUser?.isAdmin 
-    ? bumpRequests.map(request => {
-        const ad = ads.find(ad => ad.id === request.adId);
-        return ad ? { ...ad, bumpRequest: request } : null;
-      }).filter(Boolean)
-    : [];
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
 
@@ -3309,7 +3176,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
   };
 
   const adminSubSections = [
-    { id: 'bumps', label: 'Bump Approvals', icon: '📈', badge: pendingBumpAds.length },
     { id: 'voteboosts', label: 'Vote Boosts', icon: '🗳️', badge: pendingVoteBoosts.length },
     { id: 'banners', label: 'Banner Mgmt', icon: '🎯', badge: bannerAds.filter(b => b.status === 'pending').length },
     { id: 'giftcards', label: 'Redemptions', icon: '🎁', badge: pendingRedemptions.length },
@@ -3898,7 +3764,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                 <span className="inline-block mt-1 text-xs bg-blue-600/40 text-blue-200 px-2 py-0.5 rounded">Premium</span>
                               )}
                               {ad.status === 'pending' && (
-                                <p className="text-yellow-500 text-sm">Bump Pending</p>
+                                <p className="text-yellow-500 text-sm">Listing pending</p>
                               )}
                             </div>
                           </div>
@@ -3955,7 +3821,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                               </>
                             ) : (
                               <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">
-                                Bump Pending
+                                Listing pending
                               </span>
                             )}
                             <button
@@ -4692,167 +4558,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
 
           {activeTab === 'admin' && currentUser.isAdmin && (
             <div>
-                {activeAdminSection === 'bumps' && (
-                  <div>
-                    <h3 className="text-2xl font-semibold text-white mb-6">Pending Bump Approvals</h3>
-                    {pendingBumpAds.length === 0 ? (
-                      <p className="text-gray-400 text-center py-8">No pending bump approvals.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {pendingBumpAds.map(ad => {
-                          // Calculate duration display
-                          const getDurationDisplay = (durationMs) => {
-                            if (durationMs === -1) return 'Lifetime';
-                            const days = durationMs / (24 * 60 * 60 * 1000);
-                            return `${days} days`;
-                          };
-
-                          // Calculate price based on duration
-                          const getPrice = (durationMs) => {
-                            if (durationMs === -1) return 99;
-                            return 0;
-                          };
-
-                          const originalPrice = getPrice(ad.bumpRequest.duration);
-                          const discountAmount = ad.bumpRequest.discountAmount || 0;
-                          const finalPrice = originalPrice - discountAmount;
-                          const isPayPal = ad.bumpRequest.txSignature === 'paypal';
-
-                          return (
-                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                              {/* Left side - Ad Info */}
-                              <div className="flex items-start space-x-4">
-                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded flex-shrink-0" loading="lazy" />
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-white font-semibold text-base sm:text-lg mb-1">{ad.title}</h4>
-                                  <p className="text-gray-400 text-sm mb-1">
-                                    <span className="font-medium">Owner:</span> {ad.owner}
-                                  </p>
-                                  <p className="text-gray-400 text-xs sm:text-sm">
-                                    <span className="font-medium">Requested:</span> {new Date(ad.bumpRequest.createdAt).toLocaleString()}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Right side - Payment & Bump Details */}
-                              <div className="flex flex-col items-start sm:items-end gap-3">
-                                {/* Bump Details */}
-                                <div className="bg-gray-800 rounded-lg p-3 w-full sm:w-auto sm:min-w-[250px]">
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-gray-400">Duration:</span>
-                                      <span className="text-white font-semibold">{getDurationDisplay(ad.bumpRequest.duration)}</span>
-                                    </div>
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-gray-400">Payment Method:</span>
-                                      <span className={`font-semibold ${isPayPal ? 'text-yellow-400' : 'text-blue-400'}`}>
-                                        {isPayPal ? '💳 PayPal/Card' : '🔗 Crypto'}
-                                      </span>
-                                    </div>
-                                    {ad.bumpRequest.appliedDiscountCode && (
-                                      <div className="flex justify-between gap-4">
-                                        <span className="text-gray-400">Discount Code:</span>
-                                        <span className="text-green-400 font-semibold">{ad.bumpRequest.appliedDiscountCode}</span>
-                                      </div>
-                                    )}
-                                    <div className="border-t border-gray-700 pt-2 mt-2">
-                                      {discountAmount > 0 && (
-                                        <div className="flex justify-between gap-4 mb-1">
-                                          <span className="text-gray-400">Original Price:</span>
-                                          <span className="text-gray-400 line-through">${originalPrice}</span>
-                                        </div>
-                                      )}
-                                      <div className="flex justify-between gap-4">
-                                        <span className="text-gray-400 font-medium">Total Price:</span>
-                                        <span className="text-green-400 font-bold text-base">
-                                          ${finalPrice} {isPayPal ? 'USD' : 'USDC'}
-                                        </span>
-                                      </div>
-                                      {discountAmount > 0 && (
-                                        <p className="text-xs text-green-400 mt-1 text-right">
-                                          Saved ${discountAmount}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Transaction Link & Actions */}
-                                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                  {!isPayPal ? (
-                                    <a 
-                                      href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer" 
-                                      className="text-blue-400 hover:text-blue-300 text-sm text-center sm:text-right hover:underline"
-                                    >
-                                      🔍 View Transaction
-                                    </a>
-                                  ) : (
-                                    <p className="text-yellow-400 text-sm text-center sm:text-right">
-                                      💳 PayPal Payment - Verify manually
-                                    </p>
-                                  )}
-                                  <div className="flex gap-2">
-                                    <button 
-                                      onClick={() => handleApprove(ad)} 
-                                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold transition-colors"
-                                    >
-                                      ✓ Approve
-                                    </button>
-                                    <button 
-                                      onClick={() => handleReject(ad)} 
-                                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition-colors"
-                                    >
-                                      ✗ Reject
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    
-                    {/* Reject Modal */}
-                    {showRejectModal && (
-                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-                          <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
-                          <textarea
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="Enter reason for rejection (optional)"
-                            className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
-                            rows="3"
-                          />
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => {
-                                setShowRejectModal(false);
-                                setRejectReason('');
-                                setSelectedBumpRequest(null);
-                              }}
-                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={confirmReject}
-                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                            >
-                              Confirm Reject
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {activeAdminSection === 'voteboosts' && (
                   <div>
                     <h3 className="text-2xl font-semibold text-white mb-6">🗳️ Pending Vote Boost Approvals</h3>
@@ -5548,7 +5253,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                   <p className="text-gray-400 text-sm">{ad.url}</p>
                                   <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
                                   {ad.status === 'pending' && (
-                                    <p className="text-yellow-500 text-sm">Bump Pending</p>
+                                    <p className="text-yellow-500 text-sm">Listing pending</p>
                                   )}
                                 </div>
                               </div>
@@ -5591,7 +5296,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onRejectBu
                                   </>
                                 ) : (
                                   <span className="text-yellow-500 px-3 py-1">
-                                    Bump Pending
+                                    Listing pending
                                   </span>
                                 )}
                                 <button onClick={() => handleOpenEditAdModal(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">

@@ -7,7 +7,6 @@ const ServiceReview = require('../models/ServiceReview');
 const Game = require('../models/Game');
 const TwitterRaid = require('../models/TwitterRaid');
 const TokenPurchase = require('../models/TokenPurchase');
-const BumpRequest = require('../models/BumpRequest');
 const mongoose = require('mongoose');
 
 const calculateActivityDiversityScore = async (userInput) => {

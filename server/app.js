@@ -17,7 +17,6 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const adsRoutes = require('./routes/ads');
 const addonOrdersRoutes = require('./routes/addonOrders');
-const bumpRoutes = require('./routes/bumps');
 const tokensRoutes = require('./routes/tokens');
 const reviewsRoutes = require('./routes/reviews');
 const blogsRoutes = require('./routes/blogs');
@@ -506,7 +505,6 @@ app.use('/api/blogs', blogsRoutes);
 app.use('/api/market-news', require('./routes/marketNews'));
 app.use('/api/ads', adsRoutes);
 app.use('/api/addon-orders', addonOrdersRoutes);
-app.use('/api/bumps', bumpRoutes);
 app.use('/api/tokens', tokensRoutes);
 app.use('/api/reviews', reviewsRoutes);
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap

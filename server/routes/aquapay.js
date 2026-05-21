@@ -2,20 +2,27 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { emitAquaPayPaymentReceived } = require('../socket');
+const { getSolanaRpcList } = require('../config/rpc');
+const { verifyAquaPayPayment } = require('../services/paymentVerification');
+const {
+  findExistingPaymentByTxHash,
+  resolveCheckoutPaymentExpectation,
+  getRecipientWalletForChain
+} = require('../services/aquaPayPayment');
+const { amountsClose } = require('../services/paymentVerification');
 
 // Get public payment page data (PUBLIC - no auth required)
 router.get('/page/:slug', async (req, res) => {
   try {
     const slug = req.params.slug.toLowerCase().trim();
 
-    // First try to find by payment slug
     let user = await User.findOne({ 'aquaPay.paymentSlug': slug })
       .select('username image aquaPay')
       .lean();
 
-    // If not found by slug, try username
     if (!user) {
-      user = await User.findOne({ username: { $regex: new RegExp(`^${slug}$`, 'i') } })
+      const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      user = await User.findOne({ username: { $regex: new RegExp(`^${escaped}$`, 'i') } })
         .select('username image aquaPay')
         .lean();
     }
@@ -24,12 +31,10 @@ router.get('/page/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Payment page not found' });
     }
 
-    // Check if AquaPay is enabled
     if (!user.aquaPay?.isEnabled) {
       return res.status(404).json({ error: 'Payment page not found or not enabled' });
     }
 
-    // Check if at least one wallet is set
     const hasWallet = user.aquaPay.wallets && (
       user.aquaPay.wallets.solana ||
       user.aquaPay.wallets.ethereum ||
@@ -41,7 +46,6 @@ router.get('/page/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Payment page not configured' });
     }
 
-    // Return public payment page data
     res.json({
       success: true,
       paymentPage: {
@@ -64,7 +68,7 @@ router.get('/page/:slug', async (req, res) => {
   }
 });
 
-// Record a payment (called after successful transaction)
+// Record a payment (after successful on-chain transaction)
 router.post('/payment', async (req, res) => {
   try {
     const {
@@ -77,26 +81,49 @@ router.post('/payment', async (req, res) => {
       senderAddress,
       senderUsername,
       message,
-      bannerId, // Optional: for banner ad payments
-      bumpId,   // Optional: for bump payments
-      projectId, // Optional: for project listing payments (for admin reference)
-      addonOrderId, // Optional: for addon order payments (for admin reference)
-      tokenPurchaseId, // Optional: for token purchase payments
-      hyperspaceOrderId, // Optional: for HyperSpace Twitter Space listener orders
-      linkBioAdId, // Optional: for Link in Bio banner ad payments
-      voteBoostId, // Optional: vote boost checkout from Telegram/Discord bot
-      projectAgentTopupId // Optional: Project Agent wallet top-up
+      bannerId,
+      projectId,
+      addonOrderId,
+      tokenPurchaseId,
+      hyperspaceOrderId,
+      linkBioAdId,
+      voteBoostId,
+      projectAgentTopupId
     } = req.body;
 
-    if (!recipientSlug || !txHash || !chain || !amount) {
+    if (req.body.bumpId) {
+      return res.status(400).json({
+        error:
+          'Paid bumps are no longer available. Bubbles bump automatically at 100+ bullish votes (organic votes and vote boosts both count).'
+      });
+    }
+
+    if (!recipientSlug || !txHash || !chain || amount == null) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Find recipient - include email for notification
+    const normalizedTxHash = String(txHash).trim();
+    if (normalizedTxHash.length < 8) {
+      return res.status(400).json({ error: 'Invalid transaction hash' });
+    }
+
+    const existing = await findExistingPaymentByTxHash(normalizedTxHash);
+    if (existing?.duplicate) {
+      return res.json({
+        success: true,
+        message: 'Payment already recorded',
+        alreadyRecorded: true,
+        recipientEmail: existing.user?.email || null,
+        recipientName: existing.user?.aquaPay?.displayName || existing.user?.username || null,
+        approvedItem: null
+      });
+    }
+
     let user = await User.findOne({ 'aquaPay.paymentSlug': recipientSlug.toLowerCase() })
       .select('username email aquaPay');
     if (!user) {
-      user = await User.findOne({ username: { $regex: new RegExp(`^${recipientSlug}$`, 'i') } })
+      const escaped = recipientSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      user = await User.findOne({ username: { $regex: new RegExp(`^${escaped}$`, 'i') } })
         .select('username email aquaPay');
     }
 
@@ -104,12 +131,66 @@ router.post('/payment', async (req, res) => {
       return res.status(404).json({ error: 'Recipient not found' });
     }
 
-    // Add payment to history
+    const expectation = await resolveCheckoutPaymentExpectation(req.body, user);
+    if (expectation.error) {
+      return res.status(400).json({ error: expectation.error });
+    }
+
+    const recipientAddress =
+      expectation.recipientAddress || getRecipientWalletForChain(user.aquaPay, chain);
+
+    if (!recipientAddress) {
+      return res.status(400).json({ error: 'Recipient wallet not configured for this network' });
+    }
+
+    const expectedAmount = expectation.expectedAmount ?? parseFloat(amount);
+    const tolerance = expectation.amountTolerance ?? 0.05;
+    const paymentAmount = parseFloat(amount);
+
+    if (!amountsClose(paymentAmount, expectedAmount, tolerance)) {
+      return res.status(400).json({
+        error: `Payment amount must be ${expectedAmount}. Received ${paymentAmount}.`
+      });
+    }
+
+    const hasCheckoutContext = Boolean(
+      bannerId ||
+        projectId ||
+        addonOrderId ||
+        tokenPurchaseId ||
+        hyperspaceOrderId ||
+        linkBioAdId ||
+        voteBoostId ||
+        projectAgentTopupId
+    );
+
+    const verification = await verifyAquaPayPayment({
+      txHash: normalizedTxHash,
+      chain,
+      token,
+      amount: expectedAmount,
+      recipientAddress,
+      requireFee: expectation.requireFee !== false
+    });
+
+    if (!verification.verified) {
+      if (verification.manual && !hasCheckoutContext) {
+        return res.status(400).json({
+          error:
+            verification.reason ||
+            'This network requires manual payment confirmation. Contact the recipient with your transaction ID.'
+        });
+      }
+      return res.status(400).json({
+        error: verification.reason || 'Payment could not be verified on chain'
+      });
+    }
+
     const payment = {
-      txHash,
+      txHash: normalizedTxHash,
       chain,
       token: token || 'UNKNOWN',
-      amount: parseFloat(amount),
+      amount: paymentAmount,
       amountUSD: amountUSD ? parseFloat(amountUSD) : null,
       senderAddress,
       senderUsername: senderUsername || null,
@@ -117,7 +198,6 @@ router.post('/payment', async (req, res) => {
       createdAt: new Date()
     };
 
-    // Initialize arrays/objects if needed
     if (!user.aquaPay.paymentHistory) {
       user.aquaPay.paymentHistory = [];
     }
@@ -125,13 +205,11 @@ router.post('/payment', async (req, res) => {
       user.aquaPay.stats = { totalReceived: 0, totalTransactions: 0 };
     }
 
-    // Add to history (keep last 100)
     user.aquaPay.paymentHistory.unshift(payment);
     if (user.aquaPay.paymentHistory.length > 100) {
       user.aquaPay.paymentHistory = user.aquaPay.paymentHistory.slice(0, 100);
     }
 
-    // Update stats
     user.aquaPay.stats.totalTransactions += 1;
     if (amountUSD) {
       user.aquaPay.stats.totalReceived += parseFloat(amountUSD);
@@ -140,13 +218,11 @@ router.post('/payment', async (req, res) => {
 
     await user.save();
 
-    // Process auto-approval for various payment types (banner, bump, project, token purchase, hyperspace, etc.)
-    // This is handled by a separate service to keep aquapay.js clean
     let approvedItem = null;
     if (
       bannerId ||
-      bumpId ||
       projectId ||
+      addonOrderId ||
       tokenPurchaseId ||
       hyperspaceOrderId ||
       linkBioAdId ||
@@ -156,36 +232,37 @@ router.post('/payment', async (req, res) => {
       const paymentAutoApproval = require('../services/paymentAutoApproval');
       approvedItem = await paymentAutoApproval.processPayment({
         bannerId,
-        bumpId,
         projectId,
+        addonOrderId,
         tokenPurchaseId,
         hyperspaceOrderId,
         linkBioAdId,
         voteBoostId,
         projectAgentTopupId,
         recipientSlug,
-        amount,
-        txHash,
+        amount: paymentAmount,
+        txHash: normalizedTxHash,
         chain,
         token,
         senderAddress,
-        senderUsername
+        senderUsername,
+        skipOnChainVerify: true
       });
     }
 
-    // Emit real-time notification to recipient
     emitAquaPayPaymentReceived({
       recipientId: user._id.toString(),
-      payment: payment,
+      payment,
       stats: user.aquaPay.stats
     });
 
     res.json({
       success: true,
       message: 'Payment recorded successfully',
+      recorded: true,
       recipientEmail: user.email || null,
       recipientName: user.aquaPay.displayName || user.username,
-      approvedItem // Return approved item info if any
+      approvedItem
     });
   } catch (error) {
     console.error('Error recording payment:', error);
@@ -194,27 +271,13 @@ router.post('/payment', async (req, res) => {
 });
 
 // Solana RPC Proxy (avoids CORS/rate-limit issues from browser)
-const SOLANA_RPCS_MAINNET = [
-  'https://solana-rpc.publicnode.com',
-  'https://solana-mainnet.rpc.extrnode.com', 
-  'https://api.mainnet-beta.solana.com',
-  'https://solana.blockdaemon.com/rpc/mainnet',
-  'https://rpc.ankr.com/solana'
-];
-
-const SOLANA_RPCS_DEVNET = [
-  'https://api.devnet.solana.com',
-  'https://rpc.ankr.com/solana_devnet'
-];
-
 router.post('/solana-rpc', async (req, res) => {
   try {
     const { method, params, network } = req.body;
-    
-    // Only allow specific safe methods
+
     const allowedMethods = [
-      'getLatestBlockhash', 
-      'sendTransaction', 
+      'getLatestBlockhash',
+      'sendTransaction',
       'confirmTransaction',
       'getSignatureStatuses',
       'getBalance',
@@ -222,45 +285,46 @@ router.post('/solana-rpc', async (req, res) => {
       'getMultipleAccounts',
       'getTokenAccountsByOwner'
     ];
-    
+
     if (!allowedMethods.includes(method)) {
       return res.status(400).json({ error: 'Method not allowed' });
     }
 
-    // Use devnet RPCs if requested or if ESCROW_MODE is testnet
-    const useDevnet = network === 'devnet' || (network === 'testnet');
-    const rpcList = useDevnet ? SOLANA_RPCS_DEVNET : SOLANA_RPCS_MAINNET;
+    const useDevnet = network === 'devnet' || network === 'testnet';
+    const rpcList = getSolanaRpcList(useDevnet);
 
     let lastError = null;
     const axios = require('axios');
-    
-    // For devnet, retry the full list up to 3 times since rate limits are transient
     const maxRounds = useDevnet ? 3 : 1;
-    
+
     for (let round = 0; round < maxRounds; round++) {
-      if (round > 0) await new Promise(r => setTimeout(r, 1500 * round));
-      
+      if (round > 0) await new Promise((r) => setTimeout(r, 1500 * round));
+
       for (let i = 0; i < rpcList.length; i++) {
         const rpcUrl = rpcList[i];
         try {
-          const response = await axios.post(rpcUrl, {
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method,
-            params: params || []
-          }, {
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
+          const response = await axios.post(
+            rpcUrl,
+            {
+              jsonrpc: '2.0',
+              id: Date.now(),
+              method,
+              params: params || []
             },
-            timeout: useDevnet ? 25000 : 15000
-          });
-          
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+              },
+              timeout: useDevnet ? 25000 : 15000
+            }
+          );
+
           if (response.data?.error) {
             lastError = response.data.error.message || JSON.stringify(response.data.error);
             continue;
           }
-          
+
           return res.json(response.data);
         } catch (rpcError) {
           lastError = rpcError.response?.data?.error?.message || rpcError.message;
@@ -268,12 +332,14 @@ router.post('/solana-rpc', async (req, res) => {
         }
       }
     }
-    
-    // All RPCs and retries failed
-    console.error(`All Solana RPCs failed (${useDevnet ? 'devnet' : 'mainnet'}) after ${maxRounds} rounds. Last error:`, lastError);
-    res.status(503).json({ 
+
+    console.error(
+      `All Solana RPCs failed (${useDevnet ? 'devnet' : 'mainnet'}) after ${maxRounds} rounds. Last error:`,
+      lastError
+    );
+    res.status(503).json({
       error: 'Solana network temporarily unavailable. Please try again.',
-      details: lastError 
+      details: lastError
     });
   } catch (error) {
     console.error('Solana RPC proxy error:', error);
