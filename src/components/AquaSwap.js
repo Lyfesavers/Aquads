@@ -2930,13 +2930,20 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
       <ShillTemplatesModal
         isOpen={showShillModal}
         onClose={() => setShowShillModal(false)}
-        tokenData={{
-          name: activeTokenName || 'Token',
-          symbol: activeTokenSymbol || activeTokenName || 'TOKEN',
-          pairAddress: tokenSearch,
-          chainId: selectedChain,
-          blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain
-        }}
+        tokenData={(() => {
+          const activePair =
+            tokenPairs.find((pair) => pair.pairAddress === tokenSearch) || tokenPairs[0] || null;
+          return {
+            name: activeTokenName || 'Token',
+            symbol: activeTokenSymbol || activeTokenName || 'TOKEN',
+            pairAddress: tokenSearch,
+            chainId: selectedChain,
+            blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain,
+            logo: activePair?.logo || null,
+            priceUsd: activePair?.priceUsd ?? null,
+            priceChange24h: activePair?.priceChange24h ?? null
+          };
+        })()}
         currentUser={currentUser}
       />
     </div>

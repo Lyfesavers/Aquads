@@ -46,9 +46,11 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
       const chain = chainMapping[rawChain.toLowerCase()] || rawChain.toLowerCase();
       
       const hasSymbol = tokenData?.symbol && tokenData.symbol !== 'TOKEN' && tokenData.symbol !== tokenData.name;
-      
-      if (isOpen && pairAddr && !hasSymbol) {
-        setIsLoadingToken(true);
+      const hasLogo = !!(tokenData?.logo || tokenData?.image);
+      const hasPrice = tokenData?.priceUsd != null && tokenData?.priceUsd !== '';
+
+      if (isOpen && pairAddr && (!hasSymbol || !hasLogo || !hasPrice)) {
+        setIsLoadingToken(!hasSymbol);
         try {
           const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${chain}/${pairAddr}`);
           if (response.ok) {

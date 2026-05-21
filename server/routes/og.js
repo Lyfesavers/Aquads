@@ -234,10 +234,14 @@ router.get('/aquaswap', async (req, res) => {
     const fdv = tokenData?.fdv || 0;
     const tokenImageUrl = tokenData?.info?.imageUrl || null;
 
-    // Fetch token logo as base64
+    // Fetch token logo as base64 — normalize to PNG so librsvg can render WebP/AVIF from DEXScreener
     let logoBase64 = null;
     if (tokenImageUrl) {
-      logoBase64 = await fetchImageAsBase64(tokenImageUrl);
+      logoBase64 = await fetchImageAsBase64(tokenImageUrl, {
+        timeout: 8000,
+        normalize: true,
+        fit: { width: 240, height: 240, fit: 'cover' },
+      });
     }
 
     // Determine price change color and arrow
