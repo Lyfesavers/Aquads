@@ -196,6 +196,10 @@ const documentationContent = {
 
 After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need a listing, community tools, launch help, and payments—not five separate platforms. Aquads brings those jobs together in one place.
 
+### The growth flywheel
+
+**List, grow, hire, and get paid** are not a one-time checklist—they are a continuous **flywheel**. Each turn makes the next easier: votes and raids lift visibility, visibility attracts community and talent, hires and payments fund the next push, and every delivery compounds trust on both sides of the marketplace. **Momentum builds while you keep moving; the wheel only stalls when you stop engaging.**
+
 ### The growth hub (four pillars)
 
 | Pillar | What you do on Aquads |
@@ -4291,6 +4295,8 @@ For widget issues:
 
 Aquads is a **multi-tool, multi-chain growth hub for crypto projects and freelancers** — listings, community growth, hiring, and payments in one platform, with a focus on the **first 30 days after a token goes live**.
 
+The platform is built as a **growth flywheel**: list, grow, hire, and get paid reinforce one another—votes and raids lift visibility, visibility brings hires and payments, and every delivery compounds trust and reach. Momentum keeps building while you keep engaging; the wheel only slows when a team stops showing up.
+
 **Four pillars:**
 
 - **Get listed** — Dynamic bubble map, vote-driven visibility, bumps, BexTools trending, and swap routing from listings
@@ -4329,7 +4335,7 @@ That fragmentation costs time, budget, and momentum in the critical first 30 day
 
 ### 2.2. The Aquads Solution
 
-Aquads is one **growth hub** with four integrated pillars:
+Aquads is one **growth hub** with four integrated pillars that form a **growth flywheel**—each pillar feeds the next, and momentum compounds as long as teams and freelancers keep engaging.
 
 **Get listed (bubble map & ads):**
 - Interactive bubbles, vote-driven bumping, BexTools trending, and swap routing from listings—your storefront after launch.

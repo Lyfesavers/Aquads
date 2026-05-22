@@ -42,6 +42,9 @@ const Whitepaper = () => {
             <p className="mb-4">
               Aquads is a multi-tool, multi-chain growth hub for crypto projects and freelancers — listings, community growth, hiring, and payments in one platform, with a focus on the first 30 days after a token goes live.
             </p>
+            <p className="mb-4">
+              The platform is built as a <strong>growth flywheel</strong>: list, grow, hire, and get paid reinforce one another—votes and raids lift visibility, visibility brings hires and payments, and every delivery compounds trust and reach. Momentum keeps building while you keep engaging; the wheel only slows when a team stops showing up.
+            </p>
             <p className="mb-2 font-semibold">Four pillars:</p>
             <ul className="list-disc pl-6 mb-4">
               <li><strong>Get listed</strong> — Bubble map, vote-driven visibility, bumps, BexTools trending</li>
