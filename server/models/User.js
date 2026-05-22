@@ -134,6 +134,11 @@ const userSchema = new Schema({
     trim: true,
     maxlength: 2048
   },
+  linkInBioBackgroundColor: {
+    type: String,
+    default: null,
+    trim: true
+  },
   linkInBioAdsEnabled: {
     type: Boolean,
     default: false

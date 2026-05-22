@@ -34,7 +34,7 @@ const tempTokenStore = new Map();
 const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
 const LINK_IN_BIO_PUBLIC_SELECT =
-  'username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified';
+  'username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified';
 
 /** Exact URL username first (Mongo usernames are case-sensitive; regex+i can return the wrong row). */
 async function findUserForPublicLinkInBio(usernameParam) {
@@ -392,6 +392,7 @@ router.post('/login', validateLogin, async (req, res) => {
       linkInBioButtonTranslucent: linkBioBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(linkBioBtnLook.shape, linkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
       linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
@@ -521,6 +522,7 @@ router.post('/login/google', async (req, res) => {
       linkInBioButtonTranslucent: googleLinkBioBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(googleLinkBioBtnLook.shape, googleLinkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTagline: user.linkInBioTagline || null,
       linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
       linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
@@ -701,6 +703,10 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
         }
       }
     }
+    if (req.body.linkInBioBackgroundColor !== undefined) {
+      const hex = String(req.body.linkInBioBackgroundColor || '').trim();
+      update.linkInBioBackgroundColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
+    }
     if (req.body.linkInBioAdsEnabled !== undefined) {
       update.linkInBioAdsEnabled = req.body.linkInBioAdsEnabled === true;
     }
@@ -724,7 +730,7 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioAdsEnabled linkInBioAdPricing').lean();
+    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing').lean();
 
     const savedLook = resolveLinkInBioButtonLook(updated);
     res.json({
@@ -739,6 +745,7 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       linkInBioButtonTranslucent: savedLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(savedLook.shape, savedLook.fill),
       linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundColor: updated.linkInBioBackgroundColor || null,
       linkInBioAdsEnabled: Boolean(updated.linkInBioAdsEnabled),
       linkInBioAdPricing: updated.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }
     });
@@ -862,6 +869,10 @@ router.put('/profile', auth, async (req, res) => {
           } catch (_) {}
         }
       }
+      if (req.body.linkInBioBackgroundColor !== undefined) {
+        const hex = String(req.body.linkInBioBackgroundColor || '').trim();
+        user.linkInBioBackgroundColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
+      }
     }
 
     // Update password if provided
@@ -907,7 +918,8 @@ router.put('/profile', auth, async (req, res) => {
       linkInBioButtonFill: profileBtnLook.fill,
       linkInBioButtonTranslucent: profileBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(profileBtnLook.shape, profileBtnLook.fill),
-      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null
+      linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundColor: user.linkInBioBackgroundColor || null
     };
 
     res.json(userData);
@@ -1312,6 +1324,10 @@ router.get('/links/:username', async (req, res) => {
     const backgroundImageUrl = (user.linkInBioBackgroundImageUrl && typeof user.linkInBioBackgroundImageUrl === 'string' && user.linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(user.linkInBioBackgroundImageUrl.trim()))
       ? user.linkInBioBackgroundImageUrl.trim()
       : null;
+    const backgroundColorTrim = typeof user.linkInBioBackgroundColor === 'string' ? user.linkInBioBackgroundColor.trim() : '';
+    const backgroundColor = (backgroundColorTrim && /^#[0-9A-Fa-f]{3,6}$/.test(backgroundColorTrim))
+      ? backgroundColorTrim
+      : null;
 
     const hasAquaPay = user.aquaPay?.isEnabled && user.aquaPay?.paymentSlug && (
       user.aquaPay?.wallets?.solana ||
@@ -1335,6 +1351,7 @@ router.get('/links/:username', async (req, res) => {
       linkInBioButtonTranslucent: btnLook.translucent,
       linkInBioButtonStyle: buttonStyle,
       linkInBioBackgroundImageUrl: backgroundImageUrl,
+      linkInBioBackgroundColor: backgroundColor,
       linkInBioAdsEnabled: adsEnabled,
       linkInBioAdPricing: adsEnabled ? (user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }) : null,
       aquaPaySlug: adsEnabled ? (user.aquaPay.paymentSlug || user.username.toLowerCase()) : null

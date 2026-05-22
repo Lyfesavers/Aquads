@@ -12,6 +12,11 @@ const PRESET_COLORS = [
   '#f43f5e', '#fb923c', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#1e3a5f'
 ];
 
+const BACKGROUND_COLOR_PRESETS = [
+  '#0c0f1a', '#0a0e18', '#060910', '#111827', '#0f172a', '#18181b', '#1e1b4b', '#1a1a2e',
+  '#134e4a', '#1e3a5f', '#312e81', '#3f1d1d', '#422006', '#14532d', '#1e293b', '#27272a'
+];
+
 const BUTTON_SHAPE_OPTIONS = [
   { id: 'rounded', label: 'Rounded', desc: 'Classic app-icon corners' },
   { id: 'pill', label: 'Soft squircle', desc: 'Extra-rounded tile shape' }
@@ -33,6 +38,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [buttonFill, setButtonFill] = useState('bordered');
   const [buttonTranslucent, setButtonTranslucent] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  const [backgroundColor, setBackgroundColor] = useState('');
+  const [backgroundColorCustom, setBackgroundColorCustom] = useState('');
   const [adsEnabled, setAdsEnabled] = useState(false);
   const [adPricing, setAdPricing] = useState({ day: 10, threeDays: 20, sevenDays: 40 });
   const [tagline, setTagline] = useState('');
@@ -69,6 +76,15 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     setButtonTranslucent(look.translucent);
     const bg = currentUser?.linkInBioBackgroundImageUrl;
     setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
+    const bgColor = currentUser?.linkInBioBackgroundColor;
+    if (bgColor && /^#[0-9A-Fa-f]{3,6}$/.test(bgColor)) {
+      setBackgroundColor(bgColor);
+      if (!BACKGROUND_COLOR_PRESETS.includes(bgColor.toLowerCase())) setBackgroundColorCustom(bgColor);
+      else setBackgroundColorCustom('');
+    } else {
+      setBackgroundColor('');
+      setBackgroundColorCustom('');
+    }
   }, [
     currentUser?.linkInBioAccentColor,
     currentUser?.linkInBioButtonColor,
@@ -76,7 +92,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     currentUser?.linkInBioButtonFill,
     currentUser?.linkInBioButtonTranslucent,
     currentUser?.linkInBioButtonStyle,
-    currentUser?.linkInBioBackgroundImageUrl
+    currentUser?.linkInBioBackgroundImageUrl,
+    currentUser?.linkInBioBackgroundColor
   ]);
 
   useEffect(() => {
@@ -152,6 +169,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
       ? buttonColorCustom.trim()
       : (buttonColor || null);
+    const bgHex = (backgroundColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(backgroundColorCustom.trim()))
+      ? backgroundColorCustom.trim()
+      : (backgroundColor || null);
     const payload = {
       bioLinks: sanitized,
       linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
@@ -161,6 +181,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       linkInBioButtonFill: buttonFill,
       linkInBioButtonTranslucent: buttonTranslucent,
       linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
+      linkInBioBackgroundColor: bgHex || null,
       linkInBioAdsEnabled: adsEnabled,
       linkInBioAdPricing: {
         day: Math.max(1, adPricing.day || 10),
@@ -292,14 +313,58 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
         </div>
       )}
 
-      {/* Background image */}
+      {/* Background image & color */}
       <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
         <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
           <FaImage className="text-cyan-400" />
-          Background image
+          Page background
         </h3>
-        <p className="text-gray-400 text-sm mb-3">Full-screen image behind your link-in-bio page. Use a direct image URL (e.g. from Imgur or Cloudinary).</p>
-        <p className="text-gray-500 text-xs mb-3"><strong>Recommended dimensions:</strong> 1920×1080 or larger (16:9 works on all screens). The image will be scaled to cover the whole screen and cropped if needed. Leave empty for the default gradient.</p>
+        <p className="text-gray-400 text-sm mb-3">Set a background color or full-screen image. If both are set, the image takes priority.</p>
+
+        <div className="mb-5">
+          <p className="text-gray-300 text-sm font-medium mb-2">Background color</p>
+          <p className="text-gray-500 text-xs mb-2">Used when no background image is set. Default is the Aquads dark gradient.</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => { setBackgroundColor(''); setBackgroundColorCustom(''); }}
+              className={`px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all ${!backgroundColor && !backgroundColorCustom ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 text-gray-400 hover:border-gray-500'}`}
+            >
+              Default gradient
+            </button>
+            {BACKGROUND_COLOR_PRESETS.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => { setBackgroundColor(hex); setBackgroundColorCustom(''); }}
+                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${backgroundColor.toLowerCase() === hex ? 'border-white ring-2 ring-white/50' : 'border-gray-600 hover:border-gray-500'}`}
+                style={{ backgroundColor: hex }}
+                title={hex}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={backgroundColor || backgroundColorCustom || '#0c0f1a'}
+              onChange={(e) => { setBackgroundColor(e.target.value); setBackgroundColorCustom(e.target.value); }}
+              className="w-10 h-10 rounded cursor-pointer border border-gray-600 bg-transparent"
+            />
+            <input
+              type="text"
+              placeholder="#0c0f1a"
+              value={backgroundColorCustom}
+              onChange={(e) => {
+                setBackgroundColorCustom(e.target.value);
+                if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setBackgroundColor(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <p className="text-gray-300 text-sm font-medium mb-2">Background image</p>
+        <p className="text-gray-500 text-xs mb-3"><strong>Recommended dimensions:</strong> 1920×1080 or larger (16:9 works on all screens). The image will be scaled to cover the whole screen and cropped if needed. Leave empty to use your background color or the default gradient.</p>
         <input
           type="url"
           placeholder="https://example.com/your-image.jpg"
@@ -319,6 +384,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Accent color</p>
+          <p className="text-gray-500 text-xs mb-2">Controls link icon color, social icons, highlights, and glow effects.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {PRESET_COLORS.map((hex) => (
               <button
@@ -353,7 +419,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Button color</p>
-          <p className="text-gray-500 text-xs mb-2">Optional. Leave “Same as main” to use the main color for link tiles.</p>
+          <p className="text-gray-500 text-xs mb-2">Optional. Tile backgrounds and borders. Leave “Same as main” to match the accent color.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             <button
               type="button"

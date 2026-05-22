@@ -277,6 +277,37 @@ function contrastOnTintHex(hex) {
   return relativeLuminanceFromHex(hex) > 0.55 ? 'rgba(15, 17, 24, 0.92)' : 'rgba(255, 255, 255, 0.96)';
 }
 
+function darkenHex(hex, amount = 0.35) {
+  let h = normalizeHex(hex).replace(/^#/, '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const mix = (n) => Math.max(0, Math.min(255, Math.round(n * (1 - amount))));
+  const r = mix(parseInt(h.slice(0, 2), 16));
+  const g = mix(parseInt(h.slice(2, 4), 16));
+  const b = mix(parseInt(h.slice(4, 6), 16));
+  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function buildPageBackgroundFromHex(hex) {
+  const base = normalizeHex(hex);
+  return `linear-gradient(165deg, ${base} 0%, ${darkenHex(base, 0.28)} 42%, ${darkenHex(base, 0.52)} 100%)`;
+}
+
+const DEFAULT_PAGE_BACKGROUND = 'linear-gradient(165deg, #0c0f1a 0%, #0a0e18 40%, #060910 100%)';
+
+/** Accent color drives icon glyphs; chip only when filled tile matches accent and needs contrast. */
+function getLinkIconPresentation(accentHex, buttonHex, fill, translucent) {
+  const accent = normalizeHex(accentHex);
+  const button = normalizeHex(buttonHex);
+  const needsChip = fill === 'filled' && !translucent && accent.toLowerCase() === button.toLowerCase();
+  return {
+    iconColor: accent,
+    needsChip,
+    chipStyle: {
+      backgroundColor: relativeLuminanceFromHex(accent) > 0.55 ? 'rgba(15, 17, 24, 0.38)' : 'rgba(255, 255, 255, 0.14)'
+    }
+  };
+}
+
 /** App-tile surface for the full-width icon grid (rich gradient + glass). */
 function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBackgroundImage }) {
   const hx = normalizeHex(buttonHex);
@@ -285,7 +316,6 @@ function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBack
   let border = `1px solid ${hexToRgba(hx, hasBackgroundImage ? 0.55 : 0.4)}`;
   let backdropFilter = 'none';
   let boxShadow = `0 8px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.2)`;
-  let iconColor = theme.accent;
 
   if (fill === 'filled') {
     if (translucent) {
@@ -293,12 +323,10 @@ function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBack
       border = `1px solid ${hexToRgba(hx, 0.65)}`;
       backdropFilter = 'blur(20px) saturate(1.2)';
       boxShadow = `0 10px 40px ${hexToRgba(hx, 0.28)}, 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2)`;
-      iconColor = contrastOnTintHex(hx);
     } else {
       background = `linear-gradient(155deg, ${hexToRgba(hx, 1)} 0%, ${hx} 45%, ${hexToRgba(hx, 0.78)} 100%)`;
       border = `1px solid ${hexToRgba(hx, 0.85)}`;
       boxShadow = `0 10px 36px ${hexToRgba(hx, 0.35)}, 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.15)`;
-      iconColor = contrastOnTintHex(hx);
     }
   } else if (fill === 'minimal') {
     background = hasBackgroundImage
@@ -323,7 +351,7 @@ function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBack
     }
   }
 
-  return { background, border, backdropFilter, boxShadow, iconColor, borderRadius: radius };
+  return { background, border, backdropFilter, boxShadow, borderRadius: radius };
 }
 
 // Load distinctive fonts (Syne + DM Sans) for this page only
@@ -474,7 +502,7 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioBackgroundImageUrl, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
+  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioBackgroundImageUrl, linkInBioBackgroundColor, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
   const sortedLinks = Array.isArray(bioLinks)
     ? [...bioLinks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     : [];
@@ -487,9 +515,16 @@ const LinkInBio = () => {
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
+  const backgroundColorHex = (linkInBioBackgroundColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioBackgroundColor)) ? linkInBioBackgroundColor : null;
+  const pageBackground = hasBackgroundImage
+    ? 'transparent'
+    : backgroundColorHex
+      ? buildPageBackgroundFromHex(backgroundColorHex)
+      : DEFAULT_PAGE_BACKGROUND;
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
   const btnLook = resolveLinkInBioButtonLook(data);
+  const iconPresentation = getLinkIconPresentation(accentHex, buttonHex, btnLook.fill, btnLook.translucent);
   const tileSurface = getAppTileSurface({
     fill: btnLook.fill,
     translucent: btnLook.translucent,
@@ -499,7 +534,9 @@ const LinkInBio = () => {
     theme,
     hasBackgroundImage
   });
-  const labelColor = btnLook.fill === 'filled' && !btnLook.translucent ? 'rgba(255, 255, 255, 0.92)' : 'rgba(226, 232, 240, 0.92)';
+  const labelColor = btnLook.fill === 'filled' && !btnLook.translucent
+    ? contrastOnTintHex(buttonHex)
+    : 'rgba(226, 232, 240, 0.92)';
 
   return (
     <motion.div
@@ -508,7 +545,7 @@ const LinkInBio = () => {
       transition={{ duration: 0.4 }}
       className="min-h-screen flex flex-col items-center px-4 py-12 pb-20 relative overflow-hidden"
       style={{
-        background: hasBackgroundImage ? 'transparent' : 'linear-gradient(165deg, #0c0f1a 0%, #0a0e18 40%, #060910 100%)',
+        background: pageBackground,
         fontFamily: "'DM Sans', sans-serif"
       }}
     >
@@ -619,11 +656,11 @@ const LinkInBio = () => {
                   title={link.title || 'Social link'}
                   className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
                   style={{
-                    background: hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.48 : 0.88),
-                    color: normalizeHex(buttonHex),
-                    border: `1px solid ${hexToRgba(normalizeHex(accentHex), hasBackgroundImage ? 0.75 : 1)}`,
+                    background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.42)' : 'rgba(255, 255, 255, 0.07)',
+                    color: normalizeHex(accentHex),
+                    border: `1px solid ${hexToRgba(normalizeHex(accentHex), 0.55)}`,
                     backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
-                    boxShadow: `0 0 0 1px ${theme.badgeBorder}`
+                    boxShadow: `0 4px 18px rgba(0, 0, 0, 0.28), 0 0 0 1px ${theme.badgeBorder}`
                   }}
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.96 }}
@@ -701,13 +738,28 @@ const LinkInBio = () => {
                         }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <IconComponent
-                          className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
-                          style={{
-                            color: tileSurface.iconColor,
-                            filter: `drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))`
-                          }}
-                        />
+                        {iconPresentation.needsChip ? (
+                          <span
+                            className="flex items-center justify-center rounded-[18%] w-[52%] h-[52%]"
+                            style={iconPresentation.chipStyle}
+                          >
+                            <IconComponent
+                              className="w-[62%] h-[62%] transition-transform duration-300 group-hover:scale-110"
+                              style={{
+                                color: iconPresentation.iconColor,
+                                filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))'
+                              }}
+                            />
+                          </span>
+                        ) : (
+                          <IconComponent
+                            className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
+                            style={{
+                              color: iconPresentation.iconColor,
+                              filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))'
+                            }}
+                          />
+                        )}
                       </div>
                     </div>
                     <span
