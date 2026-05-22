@@ -1081,6 +1081,10 @@ export default function ProjectAgentPanel({
 
             {mode === 'video' && (
               <div className="project-agent-video-options">
+                <p className="project-agent-video-retention-text project-agent-video-retention-text--composer">
+                  Clips are kept temporarily in chat. Save each video from the player when it finishes — we
+                  do not store them long-term yet.
+                </p>
                 <label className="project-agent-video-options-label" htmlFor="pa-video-seconds">
                   Length
                 </label>

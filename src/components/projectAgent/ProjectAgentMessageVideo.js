@@ -5,6 +5,34 @@ import useLazyInView from './useLazyInView';
 
 const STATUS_TICK_MS = 4000;
 
+function VideoRetentionNotice({ variant = 'active', onRetry }) {
+  if (variant === 'unavailable') {
+    return (
+      <div className="project-agent-video-retention project-agent-video-retention--unavailable">
+        <p className="project-agent-video-retention-title">Clip no longer available</p>
+        <p className="project-agent-video-retention-text">
+          This video is no longer on our servers. Skipper keeps clips temporarily for in-chat playback
+          only — save future videos from the player as soon as they finish so you keep a permanent copy.
+        </p>
+        {onRetry ? (
+          <button type="button" className="project-agent-image-retry" onClick={onRetry}>
+            Try again
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="project-agent-video-retention">
+      <p className="project-agent-video-retention-text">
+        <strong>Save your clip.</strong> Videos in chat are kept temporarily and may be removed after
+        platform updates. Use the player controls to download and keep a permanent copy on your device.
+      </p>
+    </div>
+  );
+}
+
 function buildGeneratingPhases(videoSeconds) {
   const estimate = getVideoRenderEstimate(videoSeconds);
   return [
@@ -137,7 +165,12 @@ function VideoGeneratingStatus({ status, progress, createdAt, videoSeconds }) {
         <p className="project-agent-video-generating-hint">
           Estimated time: ~{estimate.label}. {estimate.generatingHint}
         </p>
-      ) : null}
+      ) : (
+        <p className="project-agent-video-generating-hint">
+          When playback starts, save the file from the player — Skipper keeps clips temporarily and they
+          may not be available later.
+        </p>
+      )}
     </div>
   );
 }
@@ -199,21 +232,15 @@ export default function ProjectAgentMessageVideo({
 
   if (loadError) {
     return (
-      <p className="project-agent-meta">
-        {loadError}{' '}
-        <button
-          type="button"
-          className="project-agent-image-retry"
-          onClick={() => {
-            invalidateProjectAgentMedia(id, 'video');
-            setLoadError('');
-            setBlobUrl('');
-            setRetryKey((k) => k + 1);
-          }}
-        >
-          Retry
-        </button>
-      </p>
+      <VideoRetentionNotice
+        variant="unavailable"
+        onRetry={() => {
+          invalidateProjectAgentMedia(id, 'video');
+          setLoadError('');
+          setBlobUrl('');
+          setRetryKey((k) => k + 1);
+        }}
+      />
     );
   }
 
@@ -241,6 +268,7 @@ export default function ProjectAgentMessageVideo({
 
   return (
     <div ref={containerRef} className="project-agent-video-wrap">
+      <VideoRetentionNotice variant="active" />
       <video
         className="project-agent-video-player"
         src={blobUrl}

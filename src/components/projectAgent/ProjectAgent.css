@@ -1032,6 +1032,47 @@
   margin-top: 4px;
 }
 
+.project-agent-video-retention {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--pa-accent) 28%, var(--pa-border));
+  background: color-mix(in srgb, var(--pa-accent) 6%, var(--pa-surface));
+}
+
+.project-agent-video-retention--unavailable {
+  border-color: color-mix(in srgb, #fbbf24 35%, var(--pa-border));
+  background: color-mix(in srgb, #fbbf24 8%, var(--pa-surface));
+}
+
+.project-agent-video-retention-title {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.project-agent-video-retention-text {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--pa-muted, #94a3b8);
+}
+
+.project-agent-video-retention-text strong {
+  color: var(--pa-text, #e2e8f0);
+  font-weight: 600;
+}
+
+.project-agent-video-retention-text--composer {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.project-agent-video-retention--unavailable .project-agent-image-retry {
+  margin-top: 10px;
+}
+
 .project-agent-video-player {
   display: block;
   max-width: 100%;
