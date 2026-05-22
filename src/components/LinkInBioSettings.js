@@ -413,7 +413,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Accent color</p>
-          <p className="text-gray-500 text-xs mb-2">Controls link icon color, social icons, highlights, and glow effects.</p>
+          <p className="text-gray-500 text-xs mb-2">Controls link icon color, social icon color, highlights, and glow effects.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {PRESET_COLORS.map((hex) => (
               <button
@@ -448,7 +448,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Button color</p>
-          <p className="text-gray-500 text-xs mb-2">Optional. Tile backgrounds and borders. Leave “Same as main” to match the accent color.</p>
+          <p className="text-gray-500 text-xs mb-2">Optional. Tile backgrounds and social circle fills. Leave “Same as main” to match the accent color.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             <button
               type="button"

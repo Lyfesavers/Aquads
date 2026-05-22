@@ -169,6 +169,42 @@ function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBack
   return { background, border, backdropFilter, boxShadow, borderRadius: radius };
 }
 
+/** Social row circles: button color fill + accent color icon & ring. */
+function getSocialCircleStyle({ fill, translucent, buttonHex, accentHex, hasBackgroundImage }) {
+  const btn = normalizeHex(buttonHex);
+  const accent = normalizeHex(accentHex);
+  const sameColor = btn.toLowerCase() === accent.toLowerCase();
+  let background = `linear-gradient(145deg, ${hexToRgba(btn, 0.9)} 0%, ${hexToRgba(btn, 0.62)} 100%)`;
+  let border = `1px solid ${hexToRgba(accent, 0.8)}`;
+  let backdropFilter = 'none';
+  let boxShadow = `0 4px 16px ${hexToRgba(btn, 0.32)}, 0 0 0 1px ${hexToRgba(accent, 0.22)}, inset 0 1px 0 rgba(255, 255, 255, 0.16)`;
+
+  if (fill === 'filled') {
+    background = translucent ? hexToRgba(btn, 0.48) : btn;
+    border = `2px solid ${hexToRgba(accent, 0.92)}`;
+    if (translucent) backdropFilter = 'blur(12px) saturate(1.15)';
+    boxShadow = `0 4px 18px ${hexToRgba(btn, 0.38)}, 0 0 0 1px ${hexToRgba(accent, 0.28)}`;
+  } else if (fill === 'minimal') {
+    background = hasBackgroundImage ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.18)';
+    border = `2px solid ${hexToRgba(accent, 0.92)}`;
+    if (translucent) backdropFilter = 'blur(10px)';
+    boxShadow = `0 4px 14px rgba(0, 0, 0, 0.28), 0 0 0 1px ${hexToRgba(accent, 0.2)}`;
+  } else if (translucent) {
+    background = hexToRgba(btn, hasBackgroundImage ? 0.42 : 0.34);
+    border = `1px solid ${hexToRgba(accent, 0.72)}`;
+    backdropFilter = 'blur(12px) saturate(1.1)';
+  } else {
+    background = hexToRgba(btn, hasBackgroundImage ? 0.68 : 0.82);
+  }
+
+  let iconColor = accent;
+  if (fill === 'filled' && !translucent && sameColor) {
+    iconColor = contrastOnTintHex(btn);
+  }
+
+  return { background, border, backdropFilter, boxShadow, iconColor };
+}
+
 // Load distinctive fonts (Syne + DM Sans) for this page only
 const fontLink = document.createElement('link');
 fontLink.rel = 'stylesheet';
@@ -356,6 +392,13 @@ const LinkInBio = () => {
       ? contrastOnTintHex(buttonHex)
       : 'rgba(226, 232, 240, 0.92)';
   const taglineColor = textColorHex || undefined;
+  const socialCircleStyle = getSocialCircleStyle({
+    fill: btnLook.fill,
+    translucent: btnLook.translucent,
+    buttonHex,
+    accentHex,
+    hasBackgroundImage
+  });
 
   return (
     <motion.div
@@ -474,16 +517,15 @@ const LinkInBio = () => {
                 title={link.title || 'Social link'}
                 className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
                 style={{
-                  background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.42)' : 'rgba(255, 255, 255, 0.07)',
-                  color: normalizeHex(accentHex),
-                  border: `1px solid ${hexToRgba(normalizeHex(accentHex), 0.55)}`,
-                  backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
-                  boxShadow: `0 4px 18px rgba(0, 0, 0, 0.28), 0 0 0 1px ${theme.badgeBorder}`
+                  background: socialCircleStyle.background,
+                  border: socialCircleStyle.border,
+                  backdropFilter: socialCircleStyle.backdropFilter,
+                  boxShadow: socialCircleStyle.boxShadow
                 }}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.96 }}
               >
-                <BioLinkIcon link={link} url={link.url} className="w-5 h-5" iconColor={normalizeHex(accentHex)} />
+                <BioLinkIcon link={link} url={link.url} className="w-5 h-5" iconColor={socialCircleStyle.iconColor} />
               </motion.a>
             ))}
           </motion.div>
