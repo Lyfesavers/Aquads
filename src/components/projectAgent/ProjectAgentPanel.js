@@ -18,6 +18,10 @@ import ProjectAgentMessageImage from './ProjectAgentMessageImage';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
+import {
+  getVideoPollMaxAttempts,
+  getVideoRenderEstimate
+} from './projectAgentVideoEstimates';
 import './ProjectAgent.css';
 
 const MODES = [
@@ -32,14 +36,13 @@ const MODES = [
   {
     id: 'video',
     label: 'Create video',
-    hint: '15s or 30s clips (~$0.10/s at 720p; wallet hold then actual settle)'
+    hint: '15s (~10–20 min) or 30s (~25–40 min) · ~$0.10/s at 720p; wallet hold then settle'
   }
 ];
 
 const VIDEO_SECONDS_OPTIONS = [15, 30];
 
 const VIDEO_POLL_MS = 12_000;
-const VIDEO_POLL_MAX = 90;
 
 function normalizeAgentMessages(msgs, generateData) {
   const list = (msgs || []).map((m) => ({
@@ -240,16 +243,18 @@ export default function ProjectAgentPanel({
   }, [token, adId]);
 
   const pollVideoJob = useCallback(
-    async (messageId) => {
+    async (messageId, seconds = 15) => {
       if (!token) return;
       const id = String(messageId);
+      const pollMax = getVideoPollMaxAttempts(seconds);
+      const estimate = getVideoRenderEstimate(seconds);
       if (videoPollRunningRef.current === id) return;
 
       videoPollRunningRef.current = id;
       videoPollAbortRef.current = id;
 
       try {
-        for (let attempt = 0; attempt < VIDEO_POLL_MAX; attempt += 1) {
+        for (let attempt = 0; attempt < pollMax; attempt += 1) {
           if (videoPollAbortRef.current !== id) return;
 
           if (attempt > 0) {
@@ -319,7 +324,7 @@ export default function ProjectAgentPanel({
 
         setStreamingContent('');
         setError(
-          'Video is taking longer than expected. Leave this chat open or return in a few minutes — progress continues on the server.'
+          `Video is taking longer than expected for a ${seconds}s clip (typical: ~${estimate.label}). Leave this chat open or return in a few minutes — progress continues on the server.`
         );
       } finally {
         if (videoPollRunningRef.current === id) {
@@ -428,25 +433,29 @@ export default function ProjectAgentPanel({
     };
   }, [token, adId, threadId]);
 
-  const pendingVideoMessageId = useMemo(() => {
+  const pendingVideoJob = useMemo(() => {
     const pending = messages.find(
       (m) => m.role === 'assistant' && m.mode === 'video' && videoJobInFlight(m)
     );
-    return pending?._id ? String(pending._id) : null;
+    if (!pending?._id) return null;
+    return {
+      id: String(pending._id),
+      seconds: pending.videoTargetSeconds || pending.videoSeconds || 15
+    };
   }, [messages]);
 
   useEffect(() => {
-    if (!token || !threadId || !pendingVideoMessageId) return undefined;
-    if (videoPollRunningRef.current === pendingVideoMessageId) return undefined;
+    if (!token || !threadId || !pendingVideoJob?.id) return undefined;
+    if (videoPollRunningRef.current === pendingVideoJob.id) return undefined;
 
-    pollVideoJob(pendingVideoMessageId);
+    pollVideoJob(pendingVideoJob.id, pendingVideoJob.seconds);
 
     return () => {
-      if (videoPollAbortRef.current === pendingVideoMessageId) {
+      if (videoPollAbortRef.current === pendingVideoJob.id) {
         videoPollAbortRef.current = null;
       }
     };
-  }, [threadId, token, pollVideoJob, pendingVideoMessageId]);
+  }, [threadId, token, pollVideoJob, pendingVideoJob]);
 
   const handleTopup = async () => {
     if (!token || !adId || topupLoading) return;
@@ -603,7 +612,7 @@ export default function ProjectAgentPanel({
 
       const messageId = data.messageId || data.assistantMessage?._id;
       if (messageId) {
-        pollVideoJob(String(messageId));
+        pollVideoJob(String(messageId), videoSeconds);
       }
     } catch (e) {
       setError(e.message || 'Video generation failed');
@@ -1048,7 +1057,7 @@ export default function ProjectAgentPanel({
                   ))}
                 </select>
                 <span className="project-agent-video-options-hint">
-                  30s uses stitched segments (~32s billed max).
+                  {getVideoRenderEstimate(videoSeconds).composerHint}
                 </span>
               </div>
             )}

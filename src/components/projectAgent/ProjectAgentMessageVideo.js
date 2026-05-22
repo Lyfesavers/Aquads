@@ -1,17 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchProjectAgentVideoBlob } from '../../services/projectAgentApi';
+import { getVideoRenderEstimate } from './projectAgentVideoEstimates';
 
 const STATUS_TICK_MS = 4000;
 
-const GENERATING_PHASES = [
-  { afterSec: 0, text: 'Sending your prompt…' },
-  { afterSec: 20, text: 'Rendering frames — this step is slow but active' },
-  { afterSec: 90, text: 'Still generating — progress often stays at 0% for several minutes' },
-  { afterSec: 180, text: 'Building motion and lighting — no action needed on your side' },
-  { afterSec: 360, text: 'Long render in progress — 15s clips commonly take 10–20 minutes' },
-  { afterSec: 600, text: 'Still working — we check progress every few seconds automatically' },
-  { afterSec: 900, text: 'Almost there — finishing touches on the server' }
-];
+function buildGeneratingPhases(videoSeconds) {
+  const estimate = getVideoRenderEstimate(videoSeconds);
+  return [
+    { afterSec: 0, text: 'Sending your prompt…' },
+    { afterSec: 20, text: 'Rendering frames — this step is slow but active' },
+    { afterSec: 90, text: 'Still generating — progress often stays at 0% for several minutes' },
+    { afterSec: 180, text: 'Building motion and lighting — no action needed on your side' },
+    { afterSec: 360, text: estimate.longPhaseText },
+    { afterSec: 600, text: 'Still working — we check progress every few seconds automatically' },
+    { afterSec: 900, text: 'Almost there — finishing touches on the server' }
+  ];
+}
 
 const FINALIZING_PHASES = [
   { afterSec: 0, text: 'Render complete — downloading your clip…' },
@@ -51,7 +55,8 @@ function VideoGeneratingStatus({ status, progress, createdAt, videoSeconds }) {
       ? Math.min(100, Math.max(0, Math.round(Number(progress))))
       : null;
 
-  const phases = isFinalizing ? FINALIZING_PHASES : GENERATING_PHASES;
+  const estimate = useMemo(() => getVideoRenderEstimate(videoSeconds), [videoSeconds]);
+  const phases = isFinalizing ? FINALIZING_PHASES : buildGeneratingPhases(videoSeconds);
   const baseText = pickPhaseText(phases, elapsedSec);
   const eligibleTexts = phases.filter((p) => elapsedSec >= p.afterSec).map((p) => p.text);
   const rotateList = eligibleTexts.length ? eligibleTexts : [baseText];
@@ -127,9 +132,9 @@ function VideoGeneratingStatus({ status, progress, createdAt, videoSeconds }) {
         )}
       </p>
 
-      {!isFinalizing && elapsedSec < 120 ? (
+      {!isFinalizing ? (
         <p className="project-agent-video-generating-hint">
-          Typical wait: about 5–20 min for a 15s video. You can keep this chat open or come back later.
+          Estimated time: ~{estimate.label}. {estimate.generatingHint}
         </p>
       ) : null}
     </div>
