@@ -37,23 +37,45 @@ export default function ProjectAgentFab({ currentUser }) {
   }, [open]);
 
   useEffect(() => {
-    if (!currentUser?.token || currentUser?.emailVerified === false) {
+    const token = currentUser?.token;
+    if (!token) {
       setShowFab(false);
-      return;
+      return undefined;
     }
 
     let cancelled = false;
-    (async () => {
+
+    const checkAccess = async () => {
       try {
-        const { hasAccess } = await fetchProjectAgentEligible(currentUser.token);
-        if (!cancelled) setShowFab(!!hasAccess);
+        const data = await fetchProjectAgentEligible(token);
+        if (cancelled) return;
+        if (data.code === 'EMAIL_VERIFICATION_REQUIRED' || data.hasAccess === false) {
+          setShowFab(false);
+          return;
+        }
+        setShowFab(true);
       } catch {
-        if (!cancelled) setShowFab(false);
+        // Transient network/auth errors — do not permanently hide; retry on focus.
       }
-    })();
+    };
+
+    checkAccess();
+
+    const recheck = () => {
+      if (!cancelled) checkAccess();
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') recheck();
+    };
+
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [currentUser?.token, currentUser?.emailVerified]);
 
