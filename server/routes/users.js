@@ -17,6 +17,7 @@ const auditLogger = require('../utils/auditLogger');
 const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
+const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -56,7 +57,12 @@ function sanitizeBioLinkItems(raw) {
     const title = (item && typeof item.title === 'string') ? item.title.trim().slice(0, 80) : 'Link';
     let url = (item && typeof item.url === 'string') ? item.url.trim() : '';
     if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-    return { title: title || 'Link', url: url || '#', order: i };
+    const iconKey = sanitizeBioLinkIconKey(item?.iconKey);
+    const iconImageUrl = sanitizeBioLinkIconImageUrl(item?.iconImageUrl);
+    const row = { title: title || 'Link', url: url || '#', order: i };
+    if (iconKey) row.iconKey = iconKey;
+    if (iconImageUrl) row.iconImageUrl = iconImageUrl;
+    return row;
   }).filter((item) => item.url && item.url !== '#');
 }
 

@@ -3,194 +3,9 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
+import { BioLinkIcon } from '../utils/linkInBioIcons';
 import CreateLinkBioAdModal from './CreateLinkBioAdModal';
-import {
-  FaBullhorn,
-  FaExternalLinkAlt,
-  FaDiscord,
-  FaTwitter,
-  FaTelegram,
-  FaGithub,
-  FaYoutube,
-  FaInstagram,
-  FaLinkedin,
-  FaReddit,
-  FaTwitch,
-  FaSpotify,
-  FaFacebook,
-  FaWhatsapp,
-  FaTiktok,
-  FaSnapchat,
-  FaPinterest,
-  FaTumblr,
-  FaMedium,
-  FaSoundcloud,
-  FaPatreon,
-  FaVimeo,
-  FaDribbble,
-  FaBehance,
-  FaFigma,
-  FaSlack,
-  FaWeixin,
-  FaLine,
-  FaSignal,
-  FaMastodon,
-  FaEtsy,
-  FaPaypal,
-  FaAmazon,
-  FaApple,
-  FaGoogle,
-  FaMicrosoft,
-  FaSkype,
-  FaCodepen,
-  FaArtstation,
-  FaBandcamp,
-  FaDeezer,
-  FaAudible,
-  FaBlogger,
-  FaWordpress,
-  FaKickstarter,
-  FaDeviantart,
-  FaGoodreads,
-  FaImdb,
-  FaStrava,
-  FaMeetup,
-  FaFoursquare,
-  FaYelp,
-  FaQuora,
-  FaStackOverflow,
-  FaDev,
-  FaDropbox,
-  FaFlickr,
-  FaUnsplash,
-  FaShopify,
-  FaEbay,
-  FaItchIo,
-  FaMixcloud,
-  FaLastfm,
-  FaSquarespace,
-  FaWix,
-  FaViber,
-  FaVk,
-  FaWeibo,
-  FaXing,
-  FaYahoo,
-  FaProductHunt,
-  FaRocketchat,
-  FaTrello,
-  FaUber,
-  FaLyft,
-  FaAirbnb,
-  FaTripadvisor,
-  FaGuilded,
-  FaGitlab,
-  FaStripe
-} from 'react-icons/fa';
-
-// Map URL hostname to social icon (all major platforms people use)
-const getSocialIcon = (url) => {
-  if (!url || typeof url !== 'string') return FaExternalLinkAlt;
-  try {
-    const u = new URL(url);
-    const host = (u.hostname || '').toLowerCase().replace(/^www\./, '');
-    // Social & messaging
-    if (host.includes('discord')) return FaDiscord;
-    if (host.includes('guilded')) return FaGuilded;
-    if (host.includes('x.com') || host === 'twitter.com') return FaTwitter;
-    if (host.includes('t.me') || host.includes('telegram')) return FaTelegram;
-    if (host.includes('whatsapp') || host.includes('wa.me')) return FaWhatsapp;
-    if (host.includes('weixin') || host.includes('wechat')) return FaWeixin;
-    if (host.includes('line.me') || host.includes('line.naver')) return FaLine;
-    if (host.includes('signal.') || host.includes('signalmessenger')) return FaSignal;
-    if (host.includes('messenger') || host.includes('fb.com') || host.includes('fb.me') || host.includes('facebook')) return FaFacebook;
-    if (host.includes('mastodon') || host.includes('mstdn')) return FaMastodon;
-    if (host.includes('slack')) return FaSlack;
-    if (host.includes('skype')) return FaSkype;
-    if (host.includes('viber')) return FaViber;
-    if (host.includes('rocket.chat') || host.includes('rocketchat')) return FaRocketchat;
-    // Short-form & video
-    if (host.includes('tiktok')) return FaTiktok;
-    if (host.includes('youtube') || host.includes('youtu.be')) return FaYoutube;
-    if (host.includes('vimeo')) return FaVimeo;
-    if (host.includes('twitch')) return FaTwitch;
-    if (host.includes('dailymotion')) return FaExternalLinkAlt; // no icon in our set
-    // Photo & visual
-    if (host.includes('instagram')) return FaInstagram;
-    if (host.includes('snapchat')) return FaSnapchat;
-    if (host.includes('pinterest')) return FaPinterest;
-    if (host.includes('flickr')) return FaFlickr;
-    if (host.includes('unsplash')) return FaUnsplash;
-    if (host.includes('deviantart')) return FaDeviantart;
-    if (host.includes('artstation')) return FaArtstation;
-    if (host.includes('dribbble')) return FaDribbble;
-    if (host.includes('behance')) return FaBehance;
-    if (host.includes('figma')) return FaFigma;
-    // Dev & tech
-    if (host.includes('github')) return FaGithub;
-    if (host.includes('gitlab')) return FaGitlab;
-    if (host.includes('bitbucket')) return FaExternalLinkAlt;
-    if (host.includes('codepen')) return FaCodepen;
-    if (host.includes('stackoverflow') || host.includes('stackexchange')) return FaStackOverflow;
-    if (host.includes('dev.to')) return FaDev;
-    if (host.includes('itch.io')) return FaItchIo;
-    // Blog & writing
-    if (host.includes('medium')) return FaMedium;
-    if (host.includes('tumblr')) return FaTumblr;
-    if (host.includes('blogger')) return FaBlogger;
-    if (host.includes('wordpress')) return FaWordpress;
-    if (host.includes('substack')) return FaExternalLinkAlt;
-    if (host.includes('ghost.org')) return FaExternalLinkAlt;
-    // Music & audio
-    if (host.includes('spotify')) return FaSpotify;
-    if (host.includes('soundcloud')) return FaSoundcloud;
-    if (host.includes('bandcamp')) return FaBandcamp;
-    if (host.includes('deezer')) return FaDeezer;
-    if (host.includes('audible')) return FaAudible;
-    if (host.includes('mixcloud')) return FaMixcloud;
-    if (host.includes('last.fm')) return FaLastfm;
-    if (host.includes('apple.com/music') || host.includes('music.apple')) return FaApple;
-    // Biz & support
-    if (host.includes('linkedin')) return FaLinkedin;
-    if (host.includes('patreon')) return FaPatreon;
-    if (host.includes('kickstarter')) return FaKickstarter;
-    if (host.includes('paypal')) return FaPaypal;
-    if (host.includes('stripe')) return FaStripe;
-    // Shopping & marketplaces
-    if (host.includes('etsy')) return FaEtsy;
-    if (host.includes('amazon')) return FaAmazon;
-    if (host.includes('shopify')) return FaShopify;
-    if (host.includes('ebay')) return FaEbay;
-    // Local & travel
-    if (host.includes('airbnb')) return FaAirbnb;
-    if (host.includes('tripadvisor')) return FaTripadvisor;
-    if (host.includes('yelp')) return FaYelp;
-    if (host.includes('foursquare')) return FaFoursquare;
-    if (host.includes('meetup')) return FaMeetup;
-    if (host.includes('uber')) return FaUber;
-    if (host.includes('lyft')) return FaLyft;
-    // Other communities & content
-    if (host.includes('reddit')) return FaReddit;
-    if (host.includes('quora')) return FaQuora;
-    if (host.includes('producthunt')) return FaProductHunt;
-    if (host.includes('goodreads')) return FaGoodreads;
-    if (host.includes('imdb')) return FaImdb;
-    if (host.includes('strava')) return FaStrava;
-    if (host.includes('trello')) return FaTrello;
-    // Storage & productivity
-    if (host.includes('dropbox')) return FaDropbox;
-    if (host.includes('google')) return FaGoogle;
-    if (host.includes('microsoft')) return FaMicrosoft;
-    // Sites & builders
-    if (host.includes('squarespace')) return FaSquarespace;
-    if (host.includes('wix')) return FaWix;
-    // More international
-    if (host.includes('vk.com') || host === 'vk') return FaVk;
-    if (host.includes('weibo')) return FaWeibo;
-    if (host.includes('xing')) return FaXing;
-    if (host.includes('yahoo')) return FaYahoo;
-  } catch (_) {}
-  return FaExternalLinkAlt;
-};
+import { FaBullhorn } from 'react-icons/fa';
 
 /**
  * Only “classic” social / community profile URLs go in the compact icon row.
@@ -643,32 +458,29 @@ const LinkInBio = () => {
             role="list"
             aria-label="Social links"
           >
-            {socialLinks.map((link, i) => {
-              const IconComponent = getSocialIcon(link.url);
-              return (
-                <motion.a
-                  key={`social-${i}-${link.url}`}
-                  role="listitem"
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={link.title || 'Social link'}
-                  title={link.title || 'Social link'}
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
-                  style={{
-                    background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.42)' : 'rgba(255, 255, 255, 0.07)',
-                    color: normalizeHex(accentHex),
-                    border: `1px solid ${hexToRgba(normalizeHex(accentHex), 0.55)}`,
-                    backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
-                    boxShadow: `0 4px 18px rgba(0, 0, 0, 0.28), 0 0 0 1px ${theme.badgeBorder}`
-                  }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.96 }}
-                >
-                  <IconComponent className="w-5 h-5" />
-                </motion.a>
-              );
-            })}
+            {socialLinks.map((link, i) => (
+              <motion.a
+                key={`social-${i}-${link.url}`}
+                role="listitem"
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.title || 'Social link'}
+                title={link.title || 'Social link'}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all duration-300 hover:scale-110"
+                style={{
+                  background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.42)' : 'rgba(255, 255, 255, 0.07)',
+                  color: normalizeHex(accentHex),
+                  border: `1px solid ${hexToRgba(normalizeHex(accentHex), 0.55)}`,
+                  backdropFilter: hasBackgroundImage ? 'blur(12px)' : 'none',
+                  boxShadow: `0 4px 18px rgba(0, 0, 0, 0.28), 0 0 0 1px ${theme.badgeBorder}`
+                }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                <BioLinkIcon link={link} url={link.url} className="w-5 h-5" iconColor={normalizeHex(accentHex)} />
+              </motion.a>
+            ))}
           </motion.div>
         ) : null}
         </div>
@@ -687,8 +499,13 @@ const LinkInBio = () => {
               aria-label="Links"
             >
               {buttonLinks.map((link, i) => {
-                const IconComponent = getSocialIcon(link.url);
                 const title = (link.title || '').trim() || 'Link';
+                const tileIconProps = {
+                  link,
+                  url: link.url,
+                  iconColor: iconPresentation.iconColor,
+                  style: { filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))' }
+                };
                 return (
                   <motion.a
                     key={`tile-${i}-${link.url}`}
@@ -743,21 +560,15 @@ const LinkInBio = () => {
                             className="flex items-center justify-center rounded-[18%] w-[52%] h-[52%]"
                             style={iconPresentation.chipStyle}
                           >
-                            <IconComponent
+                            <BioLinkIcon
+                              {...tileIconProps}
                               className="w-[62%] h-[62%] transition-transform duration-300 group-hover:scale-110"
-                              style={{
-                                color: iconPresentation.iconColor,
-                                filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))'
-                              }}
                             />
                           </span>
                         ) : (
-                          <IconComponent
+                          <BioLinkIcon
+                            {...tileIconProps}
                             className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
-                            style={{
-                              color: iconPresentation.iconColor,
-                              filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))'
-                            }}
                           />
                         )}
                       </div>

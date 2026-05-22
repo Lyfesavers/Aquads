@@ -100,7 +100,9 @@ const userSchema = new Schema({
   bioLinks: [{
     title: { type: String, required: true, trim: true, maxlength: 80 },
     url: { type: String, required: true, trim: true },
-    order: { type: Number, default: 0 }
+    order: { type: Number, default: 0 },
+    iconKey: { type: String, default: null, trim: true, maxlength: 40 },
+    iconImageUrl: { type: String, default: null, trim: true, maxlength: 2048 }
   }],
   linkInBioTagline: {
     type: String,

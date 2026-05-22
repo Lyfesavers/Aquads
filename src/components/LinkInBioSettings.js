@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio, socket } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
+import { BioLinkIcon, LINK_IN_BIO_ICON_PICKER, LINK_IN_BIO_ICON_GROUPS, getEffectiveIconPickerId } from '../utils/linkInBioIcons';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 30;
@@ -133,7 +134,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       showNotification?.(`Maximum ${MAX_LINKS} links allowed`, 'error');
       return;
     }
-    setBioLinks(prev => [...prev, { title: '', url: '', order: prev.length }]);
+    setBioLinks(prev => [...prev, { title: '', url: '', order: prev.length, iconKey: null, iconImageUrl: '' }]);
   };
 
   const removeLink = (index) => {
@@ -155,11 +156,18 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
   const save = async () => {
     const sanitized = bioLinks
-      .map((l, i) => ({
-        title: (l.title || '').trim().slice(0, 80) || 'Link',
-        url: (l.url || '').trim(),
-        order: i
-      }))
+      .map((l, i) => {
+        const row = {
+          title: (l.title || '').trim().slice(0, 80) || 'Link',
+          url: (l.url || '').trim(),
+          order: i
+        };
+        const iconKey = typeof l.iconKey === 'string' ? l.iconKey.trim().toLowerCase() : '';
+        if (iconKey && iconKey !== 'auto') row.iconKey = iconKey;
+        const iconImage = (l.iconImageUrl || '').trim();
+        if (iconImage && /^https?:\/\//i.test(iconImage)) row.iconImageUrl = iconImage;
+        return row;
+      })
       .filter(l => l.url);
     if (sanitized.some(l => !/^https?:\/\//i.test(l.url))) {
       showNotification?.('All URLs must start with https:// (or http://)', 'error');
@@ -538,18 +546,21 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
           </button>
         </div>
         <p className="text-gray-500 text-xs mb-4">
-          Major social profile links (X, Instagram, Discord, YouTube, TikTok, etc.) show as a compact icon row under your short bio. Everything else—including GitHub, Spotify, shops, Google Docs—appears as app-style tiles in a full-width grid (with icons when we recognize the site). Keep labels short for best results.
+          Social profile links show as a compact row under your bio. Other links use app-style tiles. When a URL isn&apos;t recognized, pick one of our custom icons below—or paste your own logo URL.
         </p>
 
         {bioLinks.length === 0 ? (
           <p className="text-gray-500 text-sm py-4">No links yet. Add your first link above.</p>
         ) : (
           <ul className="space-y-3">
-            {bioLinks.map((link, index) => (
+            {bioLinks.map((link, index) => {
+              const activeIconId = getEffectiveIconPickerId(link, link.url);
+              return (
               <li
                 key={index}
-                className="flex items-center gap-2 p-3 rounded-lg bg-gray-700/50 border border-gray-600/50"
+                className="p-3 rounded-lg bg-gray-700/50 border border-gray-600/50"
               >
+                <div className="flex items-center gap-2">
                 <div className="flex flex-col gap-0.5">
                   <button type="button" onClick={() => moveLink(index, 'up')} disabled={index === 0} className="text-gray-500 hover:text-white p-0.5 disabled:opacity-30" aria-label="Move up">
                     <FaChevronUp className="w-4 h-4" />
@@ -557,6 +568,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
                   <button type="button" onClick={() => moveLink(index, 'down')} disabled={index === bioLinks.length - 1} className="text-gray-500 hover:text-white p-0.5 disabled:opacity-30" aria-label="Move down">
                     <FaChevronDown className="w-4 h-4" />
                   </button>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-gray-800/80 border border-gray-600/60 flex items-center justify-center flex-shrink-0 text-cyan-400">
+                  <BioLinkIcon link={link} url={link.url} className="w-5 h-5" iconColor="#22d3ee" />
                 </div>
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input
@@ -591,8 +605,64 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
                 >
                   <FaTrash className="w-4 h-4" />
                 </button>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-600/40">
+                  <p className="text-xs text-gray-500 mb-2">Tile icon — used when the URL isn&apos;t auto-detected</p>
+                  {LINK_IN_BIO_ICON_GROUPS.map((group) => (
+                    <div key={group} className="mb-2.5 last:mb-0">
+                      <p className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">{group}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {LINK_IN_BIO_ICON_PICKER.filter((opt) => (opt.group || 'Other') === group).map((opt) => {
+                          const isSelected = activeIconId !== 'custom-image' && activeIconId === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              title={opt.label}
+                              onClick={() => {
+                                setBioLinks((prev) => prev.map((l, i) => (
+                                  i === index
+                                    ? {
+                                      ...l,
+                                      iconKey: opt.id === 'auto' ? null : opt.id,
+                                      iconImageUrl: opt.id !== 'auto' ? '' : (l.iconImageUrl || '')
+                                    }
+                                    : l
+                                )));
+                              }}
+                              className={`flex-shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center transition-all ${isSelected ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300' : 'border-gray-600 bg-gray-800/60 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+                            >
+                              {opt.imageSrc ? (
+                                <img src={opt.imageSrc} alt="" className="w-5 h-5 object-contain" />
+                              ) : (
+                                <opt.Icon className="w-4 h-4" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-2">
+                    <input
+                      type="url"
+                      placeholder="Or paste a custom logo image URL"
+                      value={link.iconImageUrl || ''}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setBioLinks((prev) => prev.map((l, i) => (
+                          i === index
+                            ? { ...l, iconImageUrl: v, iconKey: v.trim() ? null : l.iconKey }
+                            : l
+                        )));
+                      }}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-xs focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
 
