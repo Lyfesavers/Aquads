@@ -562,12 +562,15 @@ const LinkInBio = () => {
                           >
                             <BioLinkIcon
                               {...tileIconProps}
+                              tile
+                              tileInChip
                               className="w-[62%] h-[62%] transition-transform duration-300 group-hover:scale-110"
                             />
                           </span>
                         ) : (
                           <BioLinkIcon
                             {...tileIconProps}
+                            tile
                             className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
                           />
                         )}

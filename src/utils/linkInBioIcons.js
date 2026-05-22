@@ -188,14 +188,19 @@ export function getEffectiveIconPickerId(link, url) {
   return 'auto';
 }
 
-export function BioLinkIcon({ link, url, className, style, iconColor }) {
+export function BioLinkIcon({ link, url, className, style, iconColor, tile = false, tileInChip = false }) {
   const resolved = resolveBioLinkIcon(link, url);
   if (resolved.type === 'image') {
+    const imageClass = tile
+      ? (tileInChip
+        ? 'w-[78%] h-[78%] transition-transform duration-300 group-hover:scale-110'
+        : 'w-[58%] h-[58%] transition-transform duration-300 group-hover:scale-110')
+      : className;
     return (
       <img
         src={resolved.src}
         alt=""
-        className={className}
+        className={imageClass}
         style={{ ...style, objectFit: 'contain' }}
         referrerPolicy="no-referrer"
         loading="lazy"
@@ -204,6 +209,11 @@ export function BioLinkIcon({ link, url, className, style, iconColor }) {
   }
   const Icon = resolved.Icon || IconLink;
   return <Icon className={className} style={{ ...style, color: iconColor || style?.color }} />;
+}
+
+export function getIconPickerLabel(iconId) {
+  const opt = LINK_IN_BIO_ICON_PICKER.find((o) => o.id === iconId);
+  return opt?.label || 'Auto-detect';
 }
 
 export { IconAuto, IconLink };

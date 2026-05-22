@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio, socket } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
-import { BioLinkIcon, LINK_IN_BIO_ICON_PICKER, LINK_IN_BIO_ICON_GROUPS, getEffectiveIconPickerId } from '../utils/linkInBioIcons';
+import { BioLinkIcon, LINK_IN_BIO_ICON_PICKER, LINK_IN_BIO_ICON_GROUPS, getEffectiveIconPickerId, getIconPickerLabel } from '../utils/linkInBioIcons';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
 const MAX_LINKS = 30;
@@ -607,42 +607,41 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
                 </button>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-600/40">
-                  <p className="text-xs text-gray-500 mb-2">Tile icon — used when the URL isn&apos;t auto-detected</p>
-                  {LINK_IN_BIO_ICON_GROUPS.map((group) => (
-                    <div key={group} className="mb-2.5 last:mb-0">
-                      <p className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">{group}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {LINK_IN_BIO_ICON_PICKER.filter((opt) => (opt.group || 'Other') === group).map((opt) => {
-                          const isSelected = activeIconId !== 'custom-image' && activeIconId === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              title={opt.label}
-                              onClick={() => {
-                                setBioLinks((prev) => prev.map((l, i) => (
-                                  i === index
-                                    ? {
-                                      ...l,
-                                      iconKey: opt.id === 'auto' ? null : opt.id,
-                                      iconImageUrl: opt.id !== 'auto' ? '' : (l.iconImageUrl || '')
-                                    }
-                                    : l
-                                )));
-                              }}
-                              className={`flex-shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center transition-all ${isSelected ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300' : 'border-gray-600 bg-gray-800/60 text-gray-400 hover:border-gray-500 hover:text-white'}`}
-                            >
-                              {opt.imageSrc ? (
-                                <img src={opt.imageSrc} alt="" className="w-5 h-5 object-contain" />
-                              ) : (
-                                <opt.Icon className="w-4 h-4" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                  <p className="text-xs text-gray-500 mb-2">Tile icon — when the URL isn&apos;t auto-detected</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <select
+                      value={activeIconId === 'custom-image' ? 'custom-image' : activeIconId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom-image') return;
+                        setBioLinks((prev) => prev.map((l, i) => (
+                          i === index
+                            ? {
+                              ...l,
+                              iconKey: val === 'auto' ? null : val,
+                              iconImageUrl: val !== 'auto' ? '' : (l.iconImageUrl || '')
+                            }
+                            : l
+                        )));
+                      }}
+                      disabled={activeIconId === 'custom-image'}
+                      className="flex-1 px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {activeIconId === 'custom-image' && (
+                        <option value="custom-image">Custom image URL</option>
+                      )}
+                      {LINK_IN_BIO_ICON_GROUPS.map((group) => (
+                        <optgroup key={group} label={group}>
+                          {LINK_IN_BIO_ICON_PICKER.filter((opt) => (opt.group || 'Other') === group).map((opt) => (
+                            <option key={opt.id} value={opt.id}>{opt.label}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <span className="text-xs text-gray-500 sm:w-36 sm:text-right flex-shrink-0">
+                      {activeIconId === 'custom-image' ? 'Using custom URL' : getIconPickerLabel(activeIconId)}
+                    </span>
+                  </div>
                   <div className="mt-2">
                     <input
                       type="url"
