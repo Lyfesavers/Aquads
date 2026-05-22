@@ -13,14 +13,14 @@ const PRESET_COLORS = [
 ];
 
 const BUTTON_SHAPE_OPTIONS = [
-  { id: 'rounded', label: 'Rounded', desc: 'Soft corners' },
-  { id: 'pill', label: 'Pill', desc: 'Fully rounded ends' }
+  { id: 'rounded', label: 'Rounded', desc: 'Classic app-icon corners' },
+  { id: 'pill', label: 'Soft squircle', desc: 'Extra-rounded tile shape' }
 ];
 
 const BUTTON_FILL_OPTIONS = [
-  { id: 'bordered', label: 'Bordered', desc: 'Solid bar + accent border' },
-  { id: 'filled', label: 'Filled', desc: 'Solid accent fill' },
-  { id: 'minimal', label: 'Outline', desc: 'Border only, transparent center' }
+  { id: 'bordered', label: 'Bordered', desc: 'Dark tile + accent edge' },
+  { id: 'filled', label: 'Filled', desc: 'Rich accent gradient fill' },
+  { id: 'minimal', label: 'Outline', desc: 'Transparent with accent border' }
 ];
 
 const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) => {
@@ -313,9 +313,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       <div className="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
         <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
           <FaPalette className="text-cyan-400" />
-          Color & button style
+          Color & tile style
         </h3>
-        <p className="text-gray-400 text-sm mb-4">Pick your accent color and how link buttons look on your page.</p>
+        <p className="text-gray-400 text-sm mb-4">Pick your accent color and how app-style link tiles look on your page.</p>
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Accent color</p>
@@ -353,7 +353,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="mb-5">
           <p className="text-gray-300 text-sm font-medium mb-2">Button color</p>
-          <p className="text-gray-500 text-xs mb-2">Optional. Leave “Same as main” to use the main color for link buttons.</p>
+          <p className="text-gray-500 text-xs mb-2">Optional. Leave “Same as main” to use the main color for link tiles.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             <button
               type="button"
@@ -395,8 +395,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
 
         <div className="space-y-4">
           <div>
-            <p className="text-gray-300 text-sm font-medium mb-1">Button shape</p>
-            <p className="text-gray-500 text-xs mb-2">Combine with fill below.</p>
+            <p className="text-gray-300 text-sm font-medium mb-1">Tile shape</p>
+            <p className="text-gray-500 text-xs mb-2">How rounded each app-style icon tile appears.</p>
             <div className="flex flex-wrap gap-2">
               {BUTTON_SHAPE_OPTIONS.map((opt) => (
                 <button
@@ -412,8 +412,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
             </div>
           </div>
           <div>
-            <p className="text-gray-300 text-sm font-medium mb-1">Button fill</p>
-            <p className="text-gray-500 text-xs mb-2">Default is solid (not see-through). Turn on glass below if you want.</p>
+            <p className="text-gray-300 text-sm font-medium mb-1">Tile fill</p>
+            <p className="text-gray-500 text-xs mb-2">Default is solid. Turn on glass below for a frosted look.</p>
             <div className="flex flex-wrap gap-2">
               {BUTTON_FILL_OPTIONS.map((opt) => (
                 <button
@@ -437,7 +437,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
             />
             <span>
               <span className="text-gray-200 text-sm font-medium block">Translucent / glass</span>
-              <span className="text-gray-500 text-xs">Softer, blurred see-through buttons. Off = fully solid colors (recommended).</span>
+              <span className="text-gray-500 text-xs">Softer, blurred see-through tiles. Off = fully solid colors (recommended).</span>
             </span>
           </label>
         </div>
@@ -472,7 +472,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
           </button>
         </div>
         <p className="text-gray-500 text-xs mb-4">
-          Major social profile links (X, Instagram, Discord, YouTube, TikTok, etc.) show as a compact icon row under your short bio. Everything else—including GitHub, Spotify, shops, Google Docs—stays as full-width buttons (with icons on the buttons when we recognize the site).
+          Major social profile links (X, Instagram, Discord, YouTube, TikTok, etc.) show as a compact icon row under your short bio. Everything else—including GitHub, Spotify, shops, Google Docs—appears as app-style tiles in a full-width grid (with icons when we recognize the site). Keep labels short for best results.
         </p>
 
         {bioLinks.length === 0 ? (

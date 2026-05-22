@@ -194,7 +194,7 @@ const getSocialIcon = (url) => {
 
 /**
  * Only “classic” social / community profile URLs go in the compact icon row.
- * Other recognized URLs (GitHub, Spotify, Google, shops, etc.) stay full-width buttons but still get their icon on the button.
+ * Other recognized URLs (GitHub, Spotify, shops, etc.) show as app-style tiles in the full-width grid.
  */
 const isClassicSocialBioUrl = (url) => {
   if (!url || typeof url !== 'string') return false;
@@ -277,51 +277,53 @@ function contrastOnTintHex(hex) {
   return relativeLuminanceFromHex(hex) > 0.55 ? 'rgba(15, 17, 24, 0.92)' : 'rgba(255, 255, 255, 0.96)';
 }
 
-/** Solid by default; translucent enables glass (blur + rgba). */
-function getLinkButtonSurface({ fill, translucent, buttonHex, buttonTheme, theme, hasBackgroundImage }) {
+/** App-tile surface for the full-width icon grid (rich gradient + glass). */
+function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBackgroundImage }) {
   const hx = normalizeHex(buttonHex);
-  let background = '#161b22';
-  let border = `1px solid ${hexToRgba(hx, 0.42)}`;
+  const radius = shape === 'pill' ? '28%' : '22%';
+  let background = `linear-gradient(155deg, ${hexToRgba(hx, 0.42)} 0%, rgba(18, 22, 32, 0.96) 55%, rgba(10, 12, 18, 0.98) 100%)`;
+  let border = `1px solid ${hexToRgba(hx, hasBackgroundImage ? 0.55 : 0.4)}`;
   let backdropFilter = 'none';
+  let boxShadow = `0 8px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.2)`;
+  let iconColor = theme.accent;
 
   if (fill === 'filled') {
     if (translucent) {
-      background = hasBackgroundImage ? theme.accentFilled : hexToRgba(hx, 0.32);
-      border = `1px solid ${hexToRgba(hx, 0.55)}`;
-      backdropFilter = 'blur(12px)';
+      background = `linear-gradient(155deg, ${hexToRgba(hx, 0.72)} 0%, ${hexToRgba(hx, 0.38)} 100%)`;
+      border = `1px solid ${hexToRgba(hx, 0.65)}`;
+      backdropFilter = 'blur(20px) saturate(1.2)';
+      boxShadow = `0 10px 40px ${hexToRgba(hx, 0.28)}, 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2)`;
+      iconColor = contrastOnTintHex(hx);
     } else {
-      background = hx;
-      border = `1px solid ${hexToRgba(hx, 0.9)}`;
+      background = `linear-gradient(155deg, ${hexToRgba(hx, 1)} 0%, ${hx} 45%, ${hexToRgba(hx, 0.78)} 100%)`;
+      border = `1px solid ${hexToRgba(hx, 0.85)}`;
+      boxShadow = `0 10px 36px ${hexToRgba(hx, 0.35)}, 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.15)`;
+      iconColor = contrastOnTintHex(hx);
     }
   } else if (fill === 'minimal') {
-    background = 'transparent';
-    border = `2px solid ${hx}`;
+    background = hasBackgroundImage
+      ? `linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0.35) 100%)`
+      : 'linear-gradient(155deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.55) 100%)';
+    border = `2px solid ${hexToRgba(hx, translucent ? 0.75 : 0.9)}`;
+    if (translucent) backdropFilter = 'blur(16px)';
+    boxShadow = `0 6px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08)`;
   } else {
     if (translucent) {
-      background = hasBackgroundImage ? theme.accentFilled : 'rgba(255, 255, 255, 0.06)';
-      border = `1px solid ${hasBackgroundImage ? theme.accent : buttonTheme.badgeBorder}`;
-      backdropFilter = 'blur(12px)';
+      background = hasBackgroundImage
+        ? `linear-gradient(155deg, ${hexToRgba(hx, 0.35)} 0%, rgba(0, 0, 0, 0.55) 100%)`
+        : `linear-gradient(155deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.65) 100%)`;
+      border = `1px solid ${hexToRgba(hx, 0.55)}`;
+      backdropFilter = 'blur(20px) saturate(1.15)';
+      boxShadow = `0 10px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.14)`;
     } else {
-      background = hasBackgroundImage ? '#0e1018' : '#161b22';
+      background = hasBackgroundImage
+        ? `linear-gradient(155deg, ${hexToRgba(hx, 0.28)} 0%, rgba(14, 16, 24, 0.94) 100%)`
+        : `linear-gradient(155deg, rgba(32, 38, 52, 0.98) 0%, rgba(14, 17, 26, 0.98) 100%)`;
       border = `1px solid ${hexToRgba(hx, hasBackgroundImage ? 0.5 : 0.38)}`;
     }
   }
 
-  return { background, border, backdropFilter };
-}
-
-function getLinkButtonIconChipStyle({ fill, translucent, buttonHex, buttonTheme, theme }) {
-  const hx = normalizeHex(buttonHex);
-  if (fill === 'filled' && !translucent) {
-    return { color: theme.accent, backgroundColor: 'rgba(0, 0, 0, 0.22)' };
-  }
-  if (fill === 'minimal') {
-    return { color: theme.accent, backgroundColor: hexToRgba(hx, translucent ? 0.12 : 0.14) };
-  }
-  return {
-    color: theme.accent,
-    backgroundColor: translucent ? buttonTheme.accentHover : 'rgba(0, 0, 0, 0.28)'
-  };
+  return { background, border, backdropFilter, boxShadow, iconColor, borderRadius: radius };
 }
 
 // Load distinctive fonts (Syne + DM Sans) for this page only
@@ -338,9 +340,14 @@ const container = {
   }
 };
 
-const item = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0 }
+const gridItem = {
+  hidden: { opacity: 0, scale: 0.82, y: 12 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 380, damping: 26 }
+  }
 };
 
 const LinkInBio = () => {
@@ -425,12 +432,15 @@ const LinkInBio = () => {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] rounded-full bg-cyan-500/[0.04] blur-[80px]" />
           <div className="absolute bottom-0 right-0 w-[70%] h-[50%] rounded-full bg-blue-500/[0.03] blur-[100px]" />
         </div>
-        <div className="relative flex flex-col items-center gap-6">
+        <div className="relative flex flex-col items-center gap-6 w-full">
           <div className="w-28 h-28 rounded-full bg-white/5 animate-pulse" style={{ boxShadow: '0 0 60px rgba(34, 211, 238, 0.08)' }} />
           <div className="h-6 w-44 rounded-full bg-white/10 animate-pulse" />
-          <div className="flex flex-col gap-3 w-full max-w-sm">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 rounded-2xl bg-white/5 animate-pulse" />
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3.5 sm:gap-5 w-full max-w-2xl px-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <div className="w-full aspect-square rounded-[22%] bg-white/5 animate-pulse" />
+                <div className="h-2.5 w-3/4 rounded-full bg-white/5 animate-pulse" />
+              </div>
             ))}
           </div>
         </div>
@@ -480,28 +490,16 @@ const LinkInBio = () => {
   const theme = buildThemeFromAccent(accentHex);
   const buttonTheme = buildThemeFromAccent(buttonHex);
   const btnLook = resolveLinkInBioButtonLook(data);
-  const radiusClass = btnLook.shape === 'pill' ? 'rounded-full' : 'rounded-2xl';
-  const buttonSurface = getLinkButtonSurface({
+  const tileSurface = getAppTileSurface({
     fill: btnLook.fill,
     translucent: btnLook.translucent,
+    shape: btnLook.shape,
     buttonHex,
     buttonTheme,
     theme,
     hasBackgroundImage
   });
-  const iconChipStyle = getLinkButtonIconChipStyle({
-    fill: btnLook.fill,
-    translucent: btnLook.translucent,
-    buttonHex,
-    buttonTheme,
-    theme
-  });
-  const accentNorm = normalizeHex(accentHex).toLowerCase();
-  const buttonNorm = normalizeHex(buttonHex).toLowerCase();
-  const linkTitleColor =
-    btnLook.fill === 'filled' && !btnLook.translucent && accentNorm === buttonNorm
-      ? contrastOnTintHex(accentHex)
-      : theme.accent;
+  const labelColor = btnLook.fill === 'filled' && !btnLook.translucent ? 'rgba(255, 255, 255, 0.92)' : 'rgba(226, 232, 240, 0.92)';
 
   return (
     <motion.div
@@ -549,7 +547,9 @@ const LinkInBio = () => {
         </div>
       )}
 
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {/* Profile header — centered narrow column */}
+        <div className="w-full max-w-md flex flex-col items-center">
         {/* Avatar with soft glow ring */}
         <motion.div
           initial={{ opacity: 0, scale: 0.92 }}
@@ -580,7 +580,7 @@ const LinkInBio = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
-          className={`text-2xl font-semibold text-white tracking-tight text-center ${taglineText || hasSocialLinks ? 'mb-2' : 'mb-10'}`}
+          className={`text-2xl font-semibold text-white tracking-tight text-center ${taglineText || hasSocialLinks ? 'mb-2' : hasButtonLinks ? 'mb-6' : 'mb-10'}`}
           style={{ fontFamily: "'Syne', sans-serif", letterSpacing: '-0.02em' }}
         >
           {displayName}
@@ -602,7 +602,7 @@ const LinkInBio = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.22, duration: 0.35 }}
-            className="flex flex-wrap justify-center gap-2.5 w-full mb-8 px-1"
+            className="flex flex-wrap justify-center gap-2.5 w-full mb-6 px-1"
             role="list"
             aria-label="Social links"
           >
@@ -634,74 +634,105 @@ const LinkInBio = () => {
             })}
           </motion.div>
         ) : null}
+        </div>
 
-        {/* Links — staggered entrance + premium hover */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="w-full space-y-3"
-        >
-          {hasButtonLinks ? (
-            buttonLinks.map((link, i) => {
-              const IconComponent = getSocialIcon(link.url);
-              return (
-                <motion.a
-                  key={`btn-${i}-${link.url}`}
-                  variants={item}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`group flex items-center justify-between w-full px-5 py-4 text-left relative overflow-hidden transition-all duration-300 ${radiusClass}`}
-                  style={{
-                    background: buttonSurface.background,
-                    border: buttonSurface.border,
-                    backdropFilter: buttonSurface.backdropFilter
-                  }}
-                  whileHover={{
-                    scale: 1.02,
-                    y: -2,
-                    transition: { duration: 0.2 }
-                  }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  {/* Hover shine sweep — button color */}
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: `linear-gradient(105deg, transparent 0%, ${buttonTheme.shine} 45%, ${buttonTheme.shine} 55%, transparent 100%)`,
-                      backgroundSize: '200% 100%',
-                      animation: 'linkInBioShine 0.6s ease-out'
-                    }}
-                  />
-                  <span className="relative flex items-center gap-3 min-w-0 flex-1 pr-3">
-                    <span
-                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 group-hover:opacity-100"
-                      style={iconChipStyle}
-                    >
-                      <IconComponent className="w-5 h-5" />
-                    </span>
-                    <span className="font-bold truncate" style={{ fontFamily: "'DM Sans', sans-serif", color: linkTitleColor }}>
-                      {link.title}
-                    </span>
-                  </span>
-                  <span
-                    className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    style={{ color: linkTitleColor }}
+        {/* App-style link grid — full page width */}
+        {hasButtonLinks ? (
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="w-full px-4 sm:px-6 md:px-8 mt-2 mb-4"
+          >
+            <div
+              className="w-full max-w-2xl mx-auto grid grid-cols-3 sm:grid-cols-4 gap-x-3.5 gap-y-5 sm:gap-x-5 sm:gap-y-7"
+              role="list"
+              aria-label="Links"
+            >
+              {buttonLinks.map((link, i) => {
+                const IconComponent = getSocialIcon(link.url);
+                const title = (link.title || '').trim() || 'Link';
+                return (
+                  <motion.a
+                    key={`tile-${i}-${link.url}`}
+                    role="listitem"
+                    variants={gridItem}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={title}
+                    title={title}
+                    className="group flex flex-col items-center gap-2 sm:gap-2.5 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    style={{ outlineColor: hexToRgba(normalizeHex(accentHex), 0.65) }}
+                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.94 }}
                   >
-                    <FaExternalLinkAlt className="w-4 h-4" />
-                  </span>
-                </motion.a>
-              );
-            })
-          ) : !hasAnyLinks ? (
-            <motion.p variants={item} className="text-slate-500 text-center py-10 text-sm">
-              No links yet.
-            </motion.p>
-          ) : null}
-        </motion.div>
+                    <div
+                      className="relative w-full aspect-square overflow-hidden transition-all duration-300 group-hover:brightness-110"
+                      style={{
+                        borderRadius: tileSurface.borderRadius,
+                        background: tileSurface.background,
+                        border: tileSurface.border,
+                        backdropFilter: tileSurface.backdropFilter,
+                        boxShadow: tileSurface.boxShadow
+                      }}
+                    >
+                      {/* iOS-style top gloss */}
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 28%, transparent 52%, rgba(0,0,0,0.18) 100%)'
+                        }}
+                      />
+                      {/* Accent shimmer on hover */}
+                      <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(115deg, transparent 30%, ${buttonTheme.shine} 50%, transparent 70%)`,
+                          backgroundSize: '200% 100%',
+                          animation: 'linkInBioShine 0.75s ease-out'
+                        }}
+                      />
+                      {/* Hover glow ring */}
+                      <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                        style={{
+                          boxShadow: `inset 0 0 0 1px ${hexToRgba(normalizeHex(buttonHex), 0.55)}, 0 0 28px ${hexToRgba(normalizeHex(buttonHex), 0.35)}`
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <IconComponent
+                          className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
+                          style={{
+                            color: tileSurface.iconColor,
+                            filter: `drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))`
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span
+                      className="w-full text-center text-[11px] sm:text-xs font-semibold leading-tight line-clamp-2 px-0.5"
+                      style={{ fontFamily: "'DM Sans', sans-serif", color: labelColor }}
+                    >
+                      {title}
+                    </span>
+                  </motion.a>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : !hasAnyLinks ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-slate-500 text-center py-10 text-sm w-full max-w-md"
+          >
+            No links yet.
+          </motion.p>
+        ) : null}
 
-        {/* Banner Ad Display — pill-shaped horizontal at bottom */}
+        {/* Footer — centered narrow column */}
+        <div className="w-full max-w-md flex flex-col items-center">
         {currentAd && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -806,6 +837,7 @@ const LinkInBio = () => {
             />
           </a>
         </motion.div>
+        </div>
       </div>
 
       {/* Ad purchase modal */}
