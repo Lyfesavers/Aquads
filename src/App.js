@@ -1323,7 +1323,7 @@ function App() {
     trackClick('paid_ads_button', window.location.pathname);
     
     const popup = window.open(
-      'https://mintfunnel.co/crypto-ad-network/?ref=Aquads',
+      'https://app.mintfunnel.co?ref=KA3IIME5',
       'mintfunnel-platform',
       'width=' + window.screen.width + ',height=' + window.screen.height + ',scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no,directories=no'
     );
@@ -3441,7 +3441,7 @@ function App() {
                           draggable="false"
                         />
                         <a 
-                          href="https://coinbound.io/marketing-plan/?ref=Aquads" 
+                          href="https://app.mintfunnel.co?ref=KA3IIME5" 
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => trackClick('free_marketing_banner', window.location.pathname)}

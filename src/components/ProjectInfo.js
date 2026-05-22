@@ -223,7 +223,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
   // Open MintFunnel platform in full-screen popup
   const openMintFunnelPlatform = () => {
     const popup = window.open(
-      'https://mintfunnel.co/crypto-ad-network/?ref=Aquads',
+      'https://app.mintfunnel.co?ref=KA3IIME5',
       'mintfunnel-platform',
       'width=' + window.screen.width + ',height=' + window.screen.height + ',scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no,directories=no'
     );
