@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchProjectAgentVideoBlob } from '../../services/projectAgentApi';
+import { getProjectAgentVideoBlobUrl, invalidateProjectAgentMedia } from '../../services/projectAgentMediaCache';
 import { getVideoRenderEstimate } from './projectAgentVideoEstimates';
+import useLazyInView from './useLazyInView';
 
 const STATUS_TICK_MS = 4000;
 
@@ -151,27 +152,26 @@ export default function ProjectAgentMessageVideo({
 }) {
   const [blobUrl, setBlobUrl] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const [containerRef, inView] = useLazyInView('320px');
   const id = String(messageId);
   const isReady = status === 'completed';
   const isFailed = status === 'failed';
   const inFlight = !isReady && !isFailed;
 
   useEffect(() => {
-    if (!isReady || !token || !id) {
-      setBlobUrl('');
+    if (!isReady || !token || !id || !inView) {
+      if (!isReady) setBlobUrl('');
       return undefined;
     }
 
     let cancelled = false;
-    let objectUrl = '';
 
     (async () => {
       try {
         setLoadError('');
-        const blob = await fetchProjectAgentVideoBlob(id, token);
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
+        const objectUrl = await getProjectAgentVideoBlobUrl(id, token);
+        if (!cancelled) setBlobUrl(objectUrl);
       } catch {
         if (!cancelled) setLoadError('Video could not load.');
       }
@@ -179,9 +179,8 @@ export default function ProjectAgentMessageVideo({
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [id, token, isReady]);
+  }, [id, token, isReady, inView, retryKey]);
 
   if (isFailed) {
     return <p className="project-agent-meta project-agent-video-failed">Video generation failed.</p>;
@@ -206,8 +205,10 @@ export default function ProjectAgentMessageVideo({
           type="button"
           className="project-agent-image-retry"
           onClick={() => {
+            invalidateProjectAgentMedia(id, 'video');
             setLoadError('');
             setBlobUrl('');
+            setRetryKey((k) => k + 1);
           }}
         >
           Retry
@@ -218,7 +219,10 @@ export default function ProjectAgentMessageVideo({
 
   if (!blobUrl) {
     return (
-      <div className="project-agent-video-generating project-agent-video-generating--loading-file">
+      <div
+        ref={containerRef}
+        className="project-agent-video-generating project-agent-video-generating--loading-file"
+      >
         <div className="project-agent-video-generating-visual" aria-hidden="true">
           <div className="project-agent-video-generating-bars">
             <span />
@@ -228,14 +232,22 @@ export default function ProjectAgentMessageVideo({
             <span />
           </div>
         </div>
-        <p className="project-agent-video-generating-status">Loading video for playback…</p>
+        <p className="project-agent-video-generating-status">
+          {inView ? 'Loading video for playback…' : 'Video ready — scroll to load'}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="project-agent-video-wrap">
-      <video className="project-agent-video-player" src={blobUrl} controls playsInline preload="metadata" />
+    <div ref={containerRef} className="project-agent-video-wrap">
+      <video
+        className="project-agent-video-player"
+        src={blobUrl}
+        controls
+        playsInline
+        preload="metadata"
+      />
     </div>
   );
 }

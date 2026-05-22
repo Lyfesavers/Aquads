@@ -95,9 +95,16 @@ export default function ProjectAgentFab({ currentUser }) {
               currentUser={currentUser}
               compact
               onClose={() => setOpen(false)}
-              onExpand={() => {
+              onExpand={(session) => {
                 setOpen(false);
-                navigate('/project-agent');
+                const ad = session?.adId ? encodeURIComponent(session.adId) : '';
+                const thread = session?.threadId
+                  ? encodeURIComponent(String(session.threadId))
+                  : '';
+                const path = ad
+                  ? `/project-agent/${ad}${thread ? `?thread=${thread}` : ''}`
+                  : '/project-agent';
+                navigate(path, { state: { projectAgentSession: session } });
               }}
             />
           </div>

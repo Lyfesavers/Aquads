@@ -127,6 +127,8 @@ function previewTopupClient(creditUsd) {
 export default function ProjectAgentPanel({
   currentUser,
   initialAdId = null,
+  initialThreadId = null,
+  restoredSession = null,
   compact = false,
   onExpand,
   onClose,
@@ -135,16 +137,20 @@ export default function ProjectAgentPanel({
   const fullPage = !compact;
   const rootClass = `project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`;
   const token = currentUser?.token;
-  const [eligible, setEligible] = useState([]);
-  const [adId, setAdId] = useState(initialAdId);
-  const [wallet, setWallet] = useState(null);
-  const [threads, setThreads] = useState([]);
-  const [threadId, setThreadId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [mode, setMode] = useState('instant');
+  const [eligible, setEligible] = useState(() => restoredSession?.eligible || []);
+  const [adId, setAdId] = useState(() => initialAdId || restoredSession?.adId || null);
+  const [wallet, setWallet] = useState(() => restoredSession?.wallet || null);
+  const [threads, setThreads] = useState(() => restoredSession?.threads || []);
+  const [threadId, setThreadId] = useState(
+    () => initialThreadId || restoredSession?.threadId || null
+  );
+  const [messages, setMessages] = useState(() =>
+    restoredSession?.messages ? normalizeAgentMessages(restoredSession.messages) : []
+  );
+  const [mode, setMode] = useState(() => restoredSession?.mode || 'instant');
   const [videoSeconds, setVideoSeconds] = useState(15);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !restoredSession);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [gateError, setGateError] = useState('');
@@ -162,6 +168,11 @@ export default function ProjectAgentPanel({
   const videoPollAbortRef = useRef(null);
   const videoPollRunningRef = useRef(null);
   const messageCountRef = useRef(0);
+  const skipMessagesFetchRef = useRef(
+    restoredSession?.threadId && restoredSession?.messages?.length
+      ? String(restoredSession.threadId)
+      : null
+  );
   const topupPreview = previewTopupClient(topupCreditUsd);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
@@ -206,7 +217,7 @@ export default function ProjectAgentPanel({
     let cancelled = false;
     (async () => {
       try {
-        setLoading(true);
+        if (!restoredSession) setLoading(true);
         setGateError('');
         const { eligible: list, code } = await fetchProjectAgentEligible(token);
         if (cancelled) return;
@@ -220,9 +231,11 @@ export default function ProjectAgentPanel({
           setLoading(false);
           return;
         }
-        const pick =
-          initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : list[0].id;
-        setAdId(pick);
+        if (!adId) {
+          const pick =
+            initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : list[0].id;
+          setAdId(pick);
+        }
       } catch (e) {
         if (!cancelled) setGateError(e.message || 'Failed to load');
       } finally {
@@ -233,7 +246,7 @@ export default function ProjectAgentPanel({
     return () => {
       cancelled = true;
     };
-  }, [token, initialAdId, currentUser?.emailVerified]);
+  }, [token, initialAdId, adId, currentUser?.emailVerified, restoredSession]);
 
   const refreshWallet = useCallback(async () => {
     if (!token || !adId) return;
@@ -393,14 +406,24 @@ export default function ProjectAgentPanel({
   useEffect(() => {
     if (!token || !adId) return;
     let cancelled = false;
+
     (async () => {
       try {
         setError('');
         await refreshWallet();
         const list = await loadThreads();
         if (cancelled) return;
+
         if (list?.length) {
-          setThreadId(list[0]._id);
+          setThreads(list);
+          setThreadId((current) => {
+            if (current && list.some((t) => String(t._id) === String(current))) {
+              return current;
+            }
+            const preferred =
+              initialThreadId && list.find((t) => String(t._id) === String(initialThreadId));
+            return preferred ? preferred._id : list[0]._id;
+          });
         } else {
           const { thread } = await createProjectAgentThread(adId, token);
           if (!cancelled) {
@@ -415,10 +438,16 @@ export default function ProjectAgentPanel({
     return () => {
       cancelled = true;
     };
-  }, [token, adId, refreshWallet, loadThreads]);
+  }, [token, adId, refreshWallet, loadThreads, initialThreadId]);
 
   useEffect(() => {
     if (!token || !adId || !threadId) return;
+    const tid = String(threadId);
+    if (skipMessagesFetchRef.current === tid) {
+      skipMessagesFetchRef.current = null;
+      return undefined;
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -861,7 +890,20 @@ export default function ProjectAgentPanel({
           Add funds
         </button>
         {onExpand && (
-          <button type="button" onClick={onExpand}>
+          <button
+            type="button"
+            onClick={() =>
+              onExpand({
+                adId,
+                threadId,
+                threads,
+                messages,
+                wallet,
+                mode,
+                eligible
+              })
+            }
+          >
             Expand
           </button>
         )}

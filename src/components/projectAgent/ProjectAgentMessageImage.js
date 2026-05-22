@@ -1,35 +1,30 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaDownload } from 'react-icons/fa';
+import { downloadProjectAgentImage } from '../../services/projectAgentApi';
 import {
-  fetchProjectAgentImageBlob,
-  downloadProjectAgentImage
-} from '../../services/projectAgentApi';
+  getProjectAgentImageBlobUrl,
+  invalidateProjectAgentMedia
+} from '../../services/projectAgentMediaCache';
+import useLazyInView from './useLazyInView';
 
 export default function ProjectAgentMessageImage({ messageId, token, alt = 'Generated image' }) {
   const [src, setSrc] = useState('');
   const [failed, setFailed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [containerRef, inView] = useLazyInView();
   const id = messageId != null ? String(messageId) : '';
 
   useEffect(() => {
-    if (!id || !token) return undefined;
+    if (!id || !token || !inView) return undefined;
     let cancelled = false;
-    let objectUrl = '';
 
     setFailed(false);
-    setSrc('');
 
     (async () => {
       try {
-        const blob = await fetchProjectAgentImageBlob(id, token);
-        if (cancelled) return;
-        if (!blob?.size) {
-          if (!cancelled) setFailed(true);
-          return;
-        }
-        objectUrl = URL.createObjectURL(blob);
-        setSrc(objectUrl);
+        const objectUrl = await getProjectAgentImageBlobUrl(id, token);
+        if (!cancelled) setSrc(objectUrl);
       } catch {
         if (!cancelled) setFailed(true);
       }
@@ -37,9 +32,8 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [id, token, retryKey]);
+  }, [id, token, retryKey, inView]);
 
   const handleDownload = useCallback(async () => {
     if (!id || !token || downloading) return;
@@ -61,6 +55,7 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
           type="button"
           className="project-agent-image-retry"
           onClick={() => {
+            invalidateProjectAgentMedia(id, 'image');
             setFailed(false);
             setSrc('');
             setRetryKey((k) => k + 1);
@@ -73,12 +68,16 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
   }
 
   if (!src) {
-    return <p className="project-agent-meta">Loading image…</p>;
+    return (
+      <div ref={containerRef} className="project-agent-media-placeholder">
+        <p className="project-agent-meta">{inView ? 'Loading image…' : 'Image'}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="project-agent-image-wrap">
-      <img className="project-agent-generated-img" src={src} alt={alt} />
+    <div ref={containerRef} className="project-agent-image-wrap">
+      <img className="project-agent-generated-img" src={src} alt={alt} loading="lazy" />
       <div className="project-agent-image-actions">
         <button
           type="button"

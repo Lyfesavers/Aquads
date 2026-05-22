@@ -1,10 +1,16 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import ProjectAgentPanel from './ProjectAgentPanel';
 import './ProjectAgent.css';
 
 export default function ProjectAgentPage({ currentUser }) {
-  const { adId } = useParams();
+  const { adId: routeAdId } = useParams();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const restoredSession = location.state?.projectAgentSession || null;
+  const queryThreadId = searchParams.get('thread');
+  const initialAdId = routeAdId || restoredSession?.adId || null;
+  const initialThreadId = queryThreadId || restoredSession?.threadId || null;
 
   useEffect(() => {
     const htmlPrev = document.documentElement.style.overflow;
@@ -21,7 +27,9 @@ export default function ProjectAgentPage({ currentUser }) {
     <div className="project-agent-page">
       <ProjectAgentPanel
         currentUser={currentUser}
-        initialAdId={adId || null}
+        initialAdId={initialAdId}
+        initialThreadId={initialThreadId}
+        restoredSession={restoredSession}
         onExpand={null}
         showBackLink
       />
