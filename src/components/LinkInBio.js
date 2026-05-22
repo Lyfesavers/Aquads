@@ -102,6 +102,16 @@ function darkenHex(hex, amount = 0.35) {
   return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
 }
 
+function lightenHex(hex, amount = 0.28) {
+  let h = normalizeHex(hex).replace(/^#/, '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const mix = (n) => Math.min(255, Math.round(n + (255 - n) * amount));
+  const r = mix(parseInt(h.slice(0, 2), 16));
+  const g = mix(parseInt(h.slice(2, 4), 16));
+  const b = mix(parseInt(h.slice(4, 6), 16));
+  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function buildPageBackgroundFromHex(hex) {
   const base = normalizeHex(hex);
   return `linear-gradient(165deg, ${base} 0%, ${darkenHex(base, 0.28)} 42%, ${darkenHex(base, 0.52)} 100%)`;
@@ -167,6 +177,32 @@ function getAppTileSurface({ fill, translucent, shape, buttonHex, theme, hasBack
   }
 
   return { background, border, backdropFilter, boxShadow, borderRadius: radius };
+}
+
+/** Premium bezel: chrome outer frame + accent gold inset ring (AI mockup style). */
+function getTilePremiumFrame(accentHex, shape) {
+  const accent = normalizeHex(accentHex);
+  const accentLight = lightenHex(accent, 0.32);
+  const accentDark = darkenHex(accent, 0.18);
+  const outerRadius = shape === 'pill' ? '30%' : '24%';
+  const goldRadius = shape === 'pill' ? '27%' : '21%';
+  const innerRadius = shape === 'pill' ? '24%' : '18%';
+
+  return {
+    innerRadius,
+    outer: {
+      borderRadius: outerRadius,
+      background: 'linear-gradient(145deg, #eef1f6 0%, #b8bec8 22%, #5c6370 52%, #989faa 78%, #d7dbe3 100%)',
+      boxShadow: '0 10px 28px rgba(0, 0, 0, 0.48), 0 3px 8px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -2px 0 rgba(0, 0, 0, 0.38)',
+      padding: '4px'
+    },
+    goldRing: {
+      borderRadius: goldRadius,
+      background: `linear-gradient(135deg, ${accentLight} 0%, ${accent} 42%, ${accentDark} 100%)`,
+      boxShadow: `0 0 14px ${hexToRgba(accent, 0.42)}, inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.22)`,
+      padding: '2.5px'
+    }
+  };
 }
 
 /** Social row circles: button color fill + accent color icon & ring. */
@@ -399,6 +435,7 @@ const LinkInBio = () => {
     accentHex,
     hasBackgroundImage
   });
+  const tileFrame = getTilePremiumFrame(accentHex, btnLook.shape);
 
   return (
     <motion.div
@@ -569,15 +606,23 @@ const LinkInBio = () => {
                     whileTap={{ scale: 0.94 }}
                   >
                     <div
-                      className="relative w-full aspect-square overflow-hidden transition-all duration-300 group-hover:brightness-110"
-                      style={{
-                        borderRadius: tileSurface.borderRadius,
-                        background: tileSurface.background,
-                        border: tileSurface.border,
-                        backdropFilter: tileSurface.backdropFilter,
-                        boxShadow: tileSurface.boxShadow
-                      }}
+                      className="relative w-full aspect-square transition-all duration-300 group-hover:brightness-110 group-hover:drop-shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+                      style={tileFrame.outer}
                     >
+                      <div
+                        className="w-full h-full transition-all duration-300 group-hover:brightness-105"
+                        style={tileFrame.goldRing}
+                      >
+                        <div
+                          className="relative w-full h-full overflow-hidden"
+                          style={{
+                            borderRadius: tileFrame.innerRadius,
+                            background: tileSurface.background,
+                            border: tileSurface.border,
+                            backdropFilter: tileSurface.backdropFilter,
+                            boxShadow: tileSurface.boxShadow
+                          }}
+                        >
                       {/* iOS-style top gloss */}
                       <div
                         className="absolute inset-0 pointer-events-none"
@@ -598,7 +643,7 @@ const LinkInBio = () => {
                       <div
                         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                         style={{
-                          boxShadow: `inset 0 0 0 1px ${hexToRgba(normalizeHex(buttonHex), 0.55)}, 0 0 28px ${hexToRgba(normalizeHex(buttonHex), 0.35)}`
+                          boxShadow: `inset 0 0 0 1px ${hexToRgba(normalizeHex(accentHex), 0.65)}, 0 0 24px ${hexToRgba(normalizeHex(accentHex), 0.4)}`
                         }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -621,6 +666,8 @@ const LinkInBio = () => {
                             className="w-[38%] h-[38%] transition-transform duration-300 group-hover:scale-110"
                           />
                         )}
+                      </div>
+                        </div>
                       </div>
                     </div>
                     <span
