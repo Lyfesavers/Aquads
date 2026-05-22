@@ -4,9 +4,9 @@ import { fetchProjectAgentVideoBlob } from '../../services/projectAgentApi';
 const STATUS_TICK_MS = 4000;
 
 const GENERATING_PHASES = [
-  { afterSec: 0, text: 'Sending your prompt to Sora…' },
-  { afterSec: 20, text: 'Rendering frames on OpenAI — this step is slow but active' },
-  { afterSec: 90, text: 'Still generating — Sora often stays at 0% for several minutes' },
+  { afterSec: 0, text: 'Sending your prompt…' },
+  { afterSec: 20, text: 'Rendering frames — this step is slow but active' },
+  { afterSec: 90, text: 'Still generating — progress often stays at 0% for several minutes' },
   { afterSec: 180, text: 'Building motion and lighting — no action needed on your side' },
   { afterSec: 360, text: 'Long render in progress — 15s clips commonly take 10–20 minutes' },
   { afterSec: 600, text: 'Still working — we check progress every few seconds automatically' },
@@ -14,7 +14,7 @@ const GENERATING_PHASES = [
 ];
 
 const FINALIZING_PHASES = [
-  { afterSec: 0, text: 'Sora finished — downloading your clip…' },
+  { afterSec: 0, text: 'Render complete — downloading your clip…' },
   { afterSec: 8, text: 'Saving video to your chat…' },
   { afterSec: 20, text: 'Preparing playback — just a moment' }
 ];

@@ -32,7 +32,7 @@ const MODES = [
   {
     id: 'video',
     label: 'Create video',
-    hint: 'Sora 15s or 30s clips (~$0.10/s at 720p; wallet hold then actual settle)'
+    hint: '15s or 30s clips (~$0.10/s at 720p; wallet hold then actual settle)'
   }
 ];
 
