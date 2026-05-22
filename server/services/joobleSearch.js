@@ -1,11 +1,6 @@
 const axios = require('axios');
 const crypto = require('crypto');
-const {
-  parseSalary,
-  extractRequirements,
-  formatRequirements,
-  removeRequirementsFromDescription,
-} = require('./rssJobCommon');
+const { parseSalary } = require('./rssJobCommon');
 
 /** Documented REST base; `{cc}.jooble.org` requires separate approval from Jooble for most keys. */
 const DEFAULT_JOOBLE_API_ROOT = 'https://jooble.org/api';
@@ -586,13 +581,9 @@ function mapJoobleJobToListing(raw) {
     snippet ||
     'Preview from Jooble — open the listing on Jooble for the full job description, requirements, and application details.';
 
-  const rawRequirements = extractRequirements(description);
-  let requirements = formatRequirements(rawRequirements);
-  if (requirements && requirements !== 'See job description for requirements') {
-    description = removeRequirementsFromDescription(description);
-  } else {
-    requirements = 'See job description for requirements';
-  }
+  // Jooble only returns a short snippet — do not split into requirements (RSS helper
+  // would duplicate the first ~600 chars under Requirements while Description keeps all).
+  const requirements = 'See job description for requirements';
 
   let payAmount = null;
   let payType = null;
