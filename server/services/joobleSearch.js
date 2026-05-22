@@ -1,5 +1,11 @@
 const axios = require('axios');
 const crypto = require('crypto');
+const {
+  parseSalary,
+  extractRequirements,
+  formatRequirements,
+  removeRequirementsFromDescription,
+} = require('./rssJobCommon');
 
 /** Documented REST base; `{cc}.jooble.org` requires separate approval from Jooble for most keys. */
 const DEFAULT_JOOBLE_API_ROOT = 'https://jooble.org/api';
@@ -492,12 +498,71 @@ function splitJoobleLocation(locationStr) {
   return { city: '', country: raw };
 }
 
-function stripSnippetHtml(snippet) {
-  if (!snippet || typeof snippet !== 'string') return '';
-  return snippet
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+/**
+ * Jooble returns large numeric ids (> Number.MAX_SAFE_INTEGER). JSON.parse rounds them,
+ * so two different jobs can share the same id — never use raw.id for React keys (_id).
+ */
+function stableJoobleListingKey(link) {
+  return crypto.createHash('sha256').update(String(link).trim()).digest('hex').slice(0, 24);
+}
+
+/** Prefer id embedded in Jooble listing URL (string-safe). */
+function joobleIdFromLink(link) {
+  const m = String(link || '').match(/\/jdp\/(\d+)/i);
+  return m ? m[1] : '';
+}
+
+function decodeHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, '–')
+    .replace(/&#8212;/g, '—')
+    .replace(/&#8230;/g, '...')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+function normalizeJoobleSnippet(raw) {
+  const candidates = [
+    raw.snippet,
+    raw.description,
+    raw.jobDescription,
+    raw.desc,
+    raw.content,
+  ];
+  let text = '';
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) {
+      text = c;
+      break;
+    }
+  }
+  if (!text) return '';
+
+  text = decodeHtmlEntities(text);
+  text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<[^>]+>/g, ' ');
+  // Jooble search previews often wrap with ellipsis markers
+  text = text
+    .replace(/^\s*(?:\.\.\.|…)\s*/g, '')
+    .replace(/\s*(?:\.\.\.|…)\s*$/g, '')
+    .replace(/\s*&\s*#?\s*160;\s*/gi, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  return text;
 }
 
 /**
@@ -506,24 +571,47 @@ function stripSnippetHtml(snippet) {
  */
 function mapJoobleJobToListing(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const id = raw.id != null ? String(raw.id).trim() : '';
   const link =
     typeof raw.link === 'string' && /^https?:\/\//i.test(raw.link.trim()) ? raw.link.trim() : '';
   if (!link) return null;
 
   const company = String(raw.company || 'Company').trim() || 'Company';
-  const snippet = stripSnippetHtml(raw.snippet || '');
+  const snippet = normalizeJoobleSnippet(raw);
   const salaryStr = typeof raw.salary === 'string' ? raw.salary.trim() : '';
   const title = String(raw.title || 'Job posting').trim() || 'Job posting';
   const locParts = splitJoobleLocation(raw.location || '');
-  const workArrangement = inferWorkArrangement(raw.location, raw.snippet);
+  const workArrangement = inferWorkArrangement(raw.location, snippet);
 
-  let description = snippet || 'Search result from Jooble. Open the posting for full details.';
-  if (salaryStr) {
+  let description =
+    snippet ||
+    'Preview from Jooble — open the listing on Jooble for the full job description, requirements, and application details.';
+
+  const rawRequirements = extractRequirements(description);
+  let requirements = formatRequirements(rawRequirements);
+  if (requirements && requirements !== 'See job description for requirements') {
+    description = removeRequirementsFromDescription(description);
+  } else {
+    requirements = 'See job description for requirements';
+  }
+
+  let payAmount = null;
+  let payType = null;
+  const parsedPay = parseSalary(`${title}\n${salaryStr}`, description);
+  if (parsedPay) {
+    payAmount = parsedPay.payAmount;
+    payType = parsedPay.payType;
+  }
+
+  if (salaryStr && !String(description).startsWith('💰')) {
     description = `💰 ${salaryStr}\n\n${description}`;
   }
 
-  const externalKey = id || crypto.createHash('sha256').update(link).digest('hex').slice(0, 24);
+  const listingKey = stableJoobleListingKey(link);
+  const linkId = joobleIdFromLink(link);
+  const externalId =
+    linkId ||
+    (typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : '') ||
+    listingKey;
 
   let createdAt = new Date();
   if (raw.updated) {
@@ -532,12 +620,12 @@ function mapJoobleJobToListing(raw) {
   }
 
   return {
-    _id: `jooble:${externalKey}`,
+    _id: `jooble:${listingKey}`,
     title,
     description,
-    requirements: 'See job description for requirements',
-    payAmount: null,
-    payType: null,
+    requirements,
+    payAmount,
+    payType,
     jobType: 'hiring',
     workArrangement,
     location: {
@@ -550,7 +638,7 @@ function mapJoobleJobToListing(raw) {
     status: 'active',
     source: 'jooble',
     externalUrl: link,
-    externalId: id || externalKey,
+    externalId,
     createdAt,
     owner: null,
   };
@@ -637,10 +725,17 @@ async function searchJoobleRemoteJobs(opts) {
     const list = Array.isArray(data.jobs) ? data.jobs : [];
     const mapped = [];
     const seenLinks = new Set();
+    const seenIds = new Set();
     for (const row of list) {
       const m = mapJoobleJobToListing(row);
-      if (m && m.externalUrl && !seenLinks.has(m.externalUrl)) {
+      if (
+        m &&
+        m.externalUrl &&
+        !seenLinks.has(m.externalUrl) &&
+        !seenIds.has(m._id)
+      ) {
         seenLinks.add(m.externalUrl);
+        seenIds.add(m._id);
         mapped.push(m);
       }
     }

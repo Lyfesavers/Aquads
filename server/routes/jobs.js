@@ -198,16 +198,16 @@ router.get('/', async (req, res) => {
       query.owner = req.query.owner;
     }
     
-    // Calculate date 30 days ago
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Calculate date 7 days ago (user postings auto-expire after 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
     // Only expire jobs once per hour instead of on every request
     const now = Date.now();
     if (now - lastJobExpirySweep > JOB_EXPIRY_INTERVAL) {
       lastJobExpirySweep = now;
       Job.updateMany(
-        { source: 'user', createdAt: { $lt: thirtyDaysAgo }, status: 'active' },
+        { source: 'user', createdAt: { $lt: sevenDaysAgo }, status: 'active' },
         { $set: { status: 'expired' } }
       ).catch(err => console.error('Job expiry sweep error:', err));
     }

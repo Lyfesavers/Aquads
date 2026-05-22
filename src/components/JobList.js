@@ -550,6 +550,11 @@ Best regards,
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
+                  {job.source === 'jooble' && (
+                    <p className="text-xs text-amber-200/90 mb-2 leading-relaxed">
+                      Preview from Jooble search results — requirements and full details are on the Jooble listing. Use Continue on Jooble below for the complete posting.
+                    </p>
+                  )}
                   <div className="mt-1 whitespace-pre-wrap text-sm sm:text-base text-gray-200 leading-relaxed break-words">
                     {(() => {
                       let desc = job.description;

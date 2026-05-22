@@ -632,8 +632,8 @@ async function syncWeb3CareerJobs() {
       }
     }
 
-    // Drop only after 30 days with no successful sync touch (jobs missing from latest API remain in DB)
-    const retentionCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    // Drop only after 7 days with no successful sync touch (jobs missing from latest API remain in DB)
+    const retentionCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const removeResult = await Job.deleteMany({
       source: 'web3career',
       lastSynced: { $lt: retentionCutoff },

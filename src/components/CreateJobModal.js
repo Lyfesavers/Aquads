@@ -338,7 +338,7 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
                   </svg>
                   <div>
                     <p className="text-blue-300 text-sm font-medium">Important Information</p>
-                    <p className="text-blue-200 text-xs mt-1">Job postings will automatically expire after 30 days. You can refresh expired jobs from your dashboard to move them back to the top of the listings.</p>
+                    <p className="text-blue-200 text-xs mt-1">Job postings will automatically expire after 7 days. You can refresh expired jobs from your dashboard to move them back to the top of the listings.</p>
                   </div>
                 </div>
               </div>
