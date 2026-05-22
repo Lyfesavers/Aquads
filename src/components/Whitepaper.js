@@ -34,13 +34,13 @@ const Whitepaper = () => {
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads Business Plan</h1>
 
-          <h2 className="text-2xl mb-8">The launch stack for new crypto projects</h2>
+          <h2 className="text-2xl mb-8">Multi-tool, multi-chain growth hub for crypto projects and freelancers</h2>
           <p className="text-yellow-400 italic mb-8">(Note: This is not a token project – no crypto tokens will ever be created.)</p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4">1. Executive Summary</h2>
             <p className="mb-4">
-              Aquads is the launch stack for new crypto projects—everything a team needs in the first 30 days after a token goes live, in one platform instead of five disconnected tools.
+              Aquads is a multi-tool, multi-chain growth hub for crypto projects and freelancers — listings, community growth, hiring, and payments in one platform, with a focus on the first 30 days after a token goes live.
             </p>
             <p className="mb-2 font-semibold">Four pillars:</p>
             <ul className="list-disc pl-6 mb-4">
@@ -64,7 +64,7 @@ const Whitepaper = () => {
             </p>
 
             <h3 className="text-xl font-semibold mb-3">2.2. The Aquads Solution</h3>
-            <p className="mb-2">Aquads is one launch stack with four pillars:</p>
+            <p className="mb-2">The growth hub is organized around four pillars:</p>
             
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-2">Get listed (bubble map &amp; ads):</h4>

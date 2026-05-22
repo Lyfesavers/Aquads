@@ -187,14 +187,16 @@ const documentationContent = {
   // Getting Started
   whatIsAquads: {
     title: 'What is Aquads?',
-    description: 'Learn about Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid after launch.',
+    description: 'Learn about Aquads — a multi-tool, multi-chain growth hub for crypto projects and freelancers: list, grow, hire, and get paid after launch.',
     mockup: <BubbleMapMockup />,
     content: `
 ## Welcome to Aquads
 
-**Aquads is the launch stack for new crypto projects.** After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need a listing, community tools, launch help, and payments—not five separate platforms. Aquads brings those jobs together for your **first 30 days** and beyond.
+**Aquads is a multi-tool, multi-chain growth hub for crypto projects and freelancers** — listings, community growth, hiring, and payments in one platform, with a focus on the **first 30 days after a token goes live**.
 
-### The launch stack (four pillars)
+After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need a listing, community tools, launch help, and payments—not five separate platforms. Aquads brings those jobs together in one place.
+
+### The growth hub (four pillars)
 
 | Pillar | What you do on Aquads |
 |--------|------------------------|
@@ -215,7 +217,7 @@ Click any bubble to view project details, vote, and trade via integrated swap ro
 
 ### Core platform features
 
-| Feature | Role in the launch stack |
+| Feature | Role in the growth hub |
 |---------|---------------------------|
 | **Token listing** | Get listed (bubble map + bumps) |
 | **Raids & Telegram bot** | Grow community after launch |
@@ -736,7 +738,7 @@ Skipper uses a **prepaid USD wallet** (separate from affiliate points):
 | **Starter (free listing)** | Full Skipper access + **$1** trial credit per listing wallet |
 | **Premium (paid listing)** | Full Skipper access + **$5** starter wallet credit (see List Project modal for current USDC price) |
 
-**Paid Premium** also includes the bundled launch stack (**1-hour fast-track listing review**, PR/AMA where offered, BNB/Sol trending program, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
+**Paid Premium** also includes the bundled **Premium growth bundle** (**1-hour fast-track listing review**, PR/AMA where offered, BNB/Sol trending program, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
 
 ### Suggested first-week workflow
 
@@ -830,7 +832,7 @@ You can pay via:
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled launch stack (e.g. **$5 Skipper wallet credit**, **1-hour fast-track listing review**, PR / AMA, **BNB/Sol trending + volume**, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
+**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **$5 Skipper wallet credit**, **1-hour fast-track listing review**, PR / AMA, **BNB/Sol trending + volume**, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
 
 ### Listing review times
 
@@ -4275,11 +4277,11 @@ For widget issues:
   // ===== BUSINESS PLAN (WHITEPAPER) =====
   wpExecutiveSummary: {
     title: 'Executive Summary',
-    description: 'Aquads Business Plan — executive summary of the launch stack for new crypto projects.',
+    description: 'Aquads Business Plan — executive summary of the multi-tool, multi-chain growth hub for crypto projects and freelancers.',
     content: `
 ## Aquads Business Plan
 
-### The launch stack for new crypto projects
+### Multi-tool, multi-chain growth hub for crypto projects and freelancers
 
 > **Note:** This is not a token project – no crypto tokens will ever be created.
 
@@ -4287,7 +4289,7 @@ For widget issues:
 
 ## 1. Executive Summary
 
-Aquads is the **launch stack for new crypto projects**—everything a team needs in the **first 30 days after a token goes live**, in one platform instead of five disconnected tools.
+Aquads is a **multi-tool, multi-chain growth hub for crypto projects and freelancers** — listings, community growth, hiring, and payments in one platform, with a focus on the **first 30 days after a token goes live**.
 
 **Four pillars:**
 
@@ -4310,7 +4312,7 @@ Our mission is to help new and relaunching crypto projects **list, grow, hire, a
 
   wpBusinessDescription: {
     title: 'Business Description',
-    description: 'The post-launch problem Aquads solves and how the launch stack addresses it.',
+    description: 'The post-launch problem Aquads solves and how the growth hub addresses it.',
     content: `
 ## 2. Business Description
 
@@ -4327,7 +4329,7 @@ That fragmentation costs time, budget, and momentum in the critical first 30 day
 
 ### 2.2. The Aquads Solution
 
-Aquads is one **launch stack** with four integrated pillars:
+Aquads is one **growth hub** with four integrated pillars:
 
 **Get listed (bubble map & ads):**
 - Interactive bubbles, vote-driven bumping, BexTools trending, and swap routing from listings—your storefront after launch.
@@ -4380,7 +4382,7 @@ Aquads is one **launch stack** with four integrated pillars:
 
 ### 3.2. Target Audience
 
-- **New & relaunching crypto projects:** Teams with a live token that need listing, community growth, launch hires, and payments in one stack.
+- **New & relaunching crypto projects:** Teams with a live token that need listing, community growth, launch hires, and payments in one growth hub.
 - **Web3 freelancers & agencies:** Delivering logos, content, mods, dev, and marketing for launch-week clients.
 - **Community leads & moderators:** Running raids, Spaces, and engagement through Aquads growth tools.
     `,
@@ -4394,7 +4396,7 @@ Aquads is one **launch stack** with four integrated pillars:
     content: `
 ## 4. Products & Services
 
-### 4.1. Launch stack (core)
+### 4.1. Growth hub (core)
 
 **Get listed — Dynamic bubble map & ads:**
 - **Features:** Bubble listings, vote-based bumps (100+ bullish), premium banners, BexTools sync, DexScreener auto-fill, swap routing from ads.
