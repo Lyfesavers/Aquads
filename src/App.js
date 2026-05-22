@@ -551,6 +551,7 @@ const LINK_IN_BIO_STATE_KEYS = [
   'linkInBioButtonStyle',
   'linkInBioBackgroundImageUrl',
   'linkInBioBackgroundColor',
+  'linkInBioTextColor',
   'linkInBioAdsEnabled',
   'linkInBioAdPricing'
 ];

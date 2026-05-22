@@ -13,6 +13,11 @@ const PRESET_COLORS = [
   '#f43f5e', '#fb923c', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#1e3a5f'
 ];
 
+const TEXT_PRESET_COLORS = [
+  '#ffffff', '#f8fafc', '#e2e8f0', '#cbd5e1', '#94a3b8',
+  '#22d3ee', '#eab308', '#fb923c', '#f43f5e', '#a855f7', '#84cc16', '#22c55e'
+];
+
 const BACKGROUND_COLOR_PRESETS = [
   '#0c0f1a', '#0a0e18', '#060910', '#111827', '#0f172a', '#18181b', '#1e1b4b', '#1a1a2e',
   '#134e4a', '#1e3a5f', '#312e81', '#3f1d1d', '#422006', '#14532d', '#1e293b', '#27272a'
@@ -35,6 +40,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [customColor, setCustomColor] = useState('');
   const [buttonColor, setButtonColor] = useState('');
   const [buttonColorCustom, setButtonColorCustom] = useState('');
+  const [textColor, setTextColor] = useState('');
+  const [textColorCustom, setTextColorCustom] = useState('');
   const [buttonShape, setButtonShape] = useState('rounded');
   const [buttonFill, setButtonFill] = useState('bordered');
   const [buttonTranslucent, setButtonTranslucent] = useState(false);
@@ -71,6 +78,15 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       setButtonColor('');
       setButtonColorCustom('');
     }
+    const tc = currentUser?.linkInBioTextColor;
+    if (tc && /^#[0-9A-Fa-f]{3,6}$/.test(tc)) {
+      setTextColor(tc);
+      if (!TEXT_PRESET_COLORS.includes(tc.toLowerCase())) setTextColorCustom(tc);
+      else setTextColorCustom('');
+    } else {
+      setTextColor('');
+      setTextColorCustom('');
+    }
     const look = resolveLinkInBioButtonLook(currentUser || {});
     setButtonShape(look.shape);
     setButtonFill(look.fill);
@@ -89,6 +105,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   }, [
     currentUser?.linkInBioAccentColor,
     currentUser?.linkInBioButtonColor,
+    currentUser?.linkInBioTextColor,
     currentUser?.linkInBioButtonShape,
     currentUser?.linkInBioButtonFill,
     currentUser?.linkInBioButtonTranslucent,
@@ -177,6 +194,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     const btnHex = (buttonColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(buttonColorCustom.trim()))
       ? buttonColorCustom.trim()
       : (buttonColor || null);
+    const txtHex = (textColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(textColorCustom.trim()))
+      ? textColorCustom.trim()
+      : (textColor || null);
     const bgHex = (backgroundColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(backgroundColorCustom.trim()))
       ? backgroundColorCustom.trim()
       : (backgroundColor || null);
@@ -185,6 +205,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
       linkInBioAccentColor: hex,
       linkInBioButtonColor: btnHex || null,
+      linkInBioTextColor: txtHex || null,
       linkInBioButtonShape: buttonShape,
       linkInBioButtonFill: buttonFill,
       linkInBioButtonTranslucent: buttonTranslucent,
@@ -461,6 +482,48 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
               onChange={(e) => {
                 setButtonColorCustom(e.target.value);
                 if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setButtonColor(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="mb-5">
+          <p className="text-gray-300 text-sm font-medium mb-2">Text color</p>
+          <p className="text-gray-500 text-xs mb-2">Optional. Sets the color for your short bio and link tile labels. Leave default for automatic contrast.</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => { setTextColor(''); setTextColorCustom(''); }}
+              className={`px-3 py-1.5 rounded-lg border-2 text-xs font-medium transition-all ${!textColor && !textColorCustom ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-gray-600 text-gray-400 hover:border-gray-500'}`}
+            >
+              Default
+            </button>
+            {TEXT_PRESET_COLORS.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => { setTextColor(hex); setTextColorCustom(''); }}
+                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${(textColor === hex || textColorCustom === hex) ? 'border-white ring-2 ring-white/50' : 'border-gray-600 hover:border-gray-500'}`}
+                style={{ backgroundColor: hex }}
+                title={hex}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={textColor || textColorCustom || '#e2e8f0'}
+              onChange={(e) => { setTextColor(e.target.value); setTextColorCustom(e.target.value); }}
+              className="w-10 h-10 rounded cursor-pointer border border-gray-600 bg-transparent"
+            />
+            <input
+              type="text"
+              placeholder="Or custom hex"
+              value={textColorCustom}
+              onChange={(e) => {
+                setTextColorCustom(e.target.value);
+                if (/^#[0-9A-Fa-f]{3,6}$/.test(e.target.value)) setTextColor(e.target.value);
               }}
               className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white font-mono text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             />

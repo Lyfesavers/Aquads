@@ -317,7 +317,7 @@ const LinkInBio = () => {
     );
   }
 
-  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioBackgroundImageUrl, linkInBioBackgroundColor, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
+  const { displayName, image, bioLinks, linkInBioTagline, linkInBioAccentColor, linkInBioButtonColor, linkInBioTextColor, linkInBioBackgroundImageUrl, linkInBioBackgroundColor, linkInBioAdsEnabled, linkInBioAdPricing, aquaPaySlug } = data;
   const sortedLinks = Array.isArray(bioLinks)
     ? [...bioLinks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     : [];
@@ -331,6 +331,7 @@ const LinkInBio = () => {
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
   const backgroundColorHex = (linkInBioBackgroundColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioBackgroundColor)) ? linkInBioBackgroundColor : null;
+  const textColorHex = (linkInBioTextColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioTextColor)) ? linkInBioTextColor : null;
   const pageBackground = hasBackgroundImage
     ? 'transparent'
     : backgroundColorHex
@@ -349,9 +350,12 @@ const LinkInBio = () => {
     theme,
     hasBackgroundImage
   });
-  const labelColor = btnLook.fill === 'filled' && !btnLook.translucent
-    ? contrastOnTintHex(buttonHex)
-    : 'rgba(226, 232, 240, 0.92)';
+  const labelColor = textColorHex
+    ? textColorHex
+    : btnLook.fill === 'filled' && !btnLook.translucent
+      ? contrastOnTintHex(buttonHex)
+      : 'rgba(226, 232, 240, 0.92)';
+  const taglineColor = textColorHex || undefined;
 
   return (
     <motion.div
@@ -443,7 +447,8 @@ const LinkInBio = () => {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.35 }}
-            className="text-slate-400 text-sm text-center max-w-sm mx-auto leading-relaxed mb-6 px-1"
+            className={`text-sm text-center max-w-sm mx-auto leading-relaxed mb-6 px-1 ${taglineColor ? '' : 'text-slate-400'}`}
+            style={taglineColor ? { color: taglineColor } : undefined}
           >
             {taglineText}
           </motion.p>

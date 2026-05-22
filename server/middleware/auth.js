@@ -35,7 +35,7 @@ const auth = async (req, res, next) => {
     }
     
     // Check if user is suspended - Fetch user from database
-    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
+    const user = await User.findById(userId).select('suspended suspendedReason suspendedAt isAdmin emailVerified referredBy username cv image bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioTextColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug');
     
     if (!user) {
       throw new Error('User not found');
@@ -72,6 +72,7 @@ const auth = async (req, res, next) => {
       linkInBioButtonStyle: lookToLegacyStyle(authBtnLook.shape, authBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
       linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
+      linkInBioTextColor: user.linkInBioTextColor || null,
       linkInBioAdsEnabled: Boolean(user.linkInBioAdsEnabled),
       linkInBioAdPricing: user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 },
       aquaPay: {

@@ -121,6 +121,11 @@ const userSchema = new Schema({
     default: null,
     trim: true
   },
+  linkInBioTextColor: {
+    type: String,
+    default: null,
+    trim: true
+  },
   linkInBioButtonStyle: {
     type: String,
     enum: ['rounded', 'pill', 'minimal', 'bordered', 'filled'],
