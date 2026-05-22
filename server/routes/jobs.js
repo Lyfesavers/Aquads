@@ -89,6 +89,15 @@ const WORK_ARRANGEMENTS = ['remote', 'hybrid', 'onsite'];
 
 const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** Newest first — used after merging Mongo listings with live Jooble search results. */
+function sortJobsByRecency(jobs) {
+  return [...(jobs || [])].sort((a, b) => {
+    const tb = new Date(b?.createdAt || 0).getTime();
+    const ta = new Date(a?.createdAt || 0).getTime();
+    return tb - ta;
+  });
+}
+
 /**
  * Applies workArrangement + full-text style search (AND across whitespace-separated terms).
  * Mutates `query` (Mongo filter object).
@@ -254,7 +263,7 @@ router.get('/', async (req, res) => {
       const mongoHasMore = mongoPart.pagination.hasMore;
 
       const responseData = {
-        jobs: [...mongoPart.jobs, ...jooblePart.jobs],
+        jobs: sortJobsByRecency([...mongoPart.jobs, ...jooblePart.jobs]),
         pagination: {
           total: mongoPart.pagination.total + Number(jooblePart.totalCount || 0),
           page,
