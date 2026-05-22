@@ -176,7 +176,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds a <strong className="text-white">$5</strong> Skipper AI wallet credit plus the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit plus the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -455,7 +455,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
           discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
         });
         onClose();
-        alert('Your Starter listing was submitted for admin approval. You will be notified when it goes live.');
+        alert('Your Starter listing was submitted for admin approval. Standard review is typically within 24–48 hours. You will be notified when it goes live.');
         return;
       }
 
@@ -481,7 +481,11 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       
       // Close modal and show success message
       onClose();
-      alert('Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
+      const reviewNote =
+        listingTier === LISTING_TIER_PREMIUM
+          ? 'Your Premium listing enters our 1-hour fast-track review queue once payment is verified.'
+          : 'Your listing will enter the standard admin review queue (typically 24–48 hours for Starter) once payment is verified.';
+      alert(`Please complete the payment in the opened window. ${reviewNote}`);
     } catch (error) {
       console.error('Error submitting:', error);
       setError(error.message || 'Failed to submit. Please try again.');
@@ -1366,7 +1370,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1416,6 +1420,19 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div>
                       <h4 className="font-semibold text-white">Homepage banner ad spot</h4>
                       <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">7-day</strong> rotating banner placement on Aquads after your listing is approved (vs <strong className="text-white">24 hours</strong> on Starter)—coordinate creative and timing in your dashboard.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border-2 border-purple-500/50">
+                    <div className="bg-gradient-to-r from-purple-500 to-violet-500 p-2 rounded-full flex-shrink-0">
+                      <FaRocket className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                        1-hour fast-track listing review
+                        <span className="bg-purple-600 text-white px-2 py-0.5 rounded text-xs">Premium</span>
+                      </h4>
+                      <p className="text-gray-300 text-sm">Paid Premium listings are prioritized for admin review with a <strong className="text-white">1-hour fast-track</strong> target after payment is verified. Starter listings follow the standard <strong className="text-white">24–48 hour</strong> review window.</p>
                     </div>
                   </div>
                   
@@ -1521,6 +1538,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
                     ✓ Everything in Starter + over $1000 in bundled launch services<br/>
+                    ✓ <strong className="text-green-200">1-hour fast-track</strong> listing review (vs 24–48h on Starter)<br/>
                     ✓ <strong className="text-green-200">$5</strong> Skipper AI wallet credit on paid Premium (Skipper access itself is on all verified accounts)<br/>
                     ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong> (vs 24h on Starter)<br/>
                     ✓ Admin review & refund if rejected<br/>

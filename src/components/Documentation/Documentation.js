@@ -736,7 +736,7 @@ Skipper uses a **prepaid USD wallet** (separate from affiliate points):
 | **Starter (free listing)** | Full Skipper access + **$1** trial credit per listing wallet |
 | **Premium (paid listing)** | Full Skipper access + **$5** starter wallet credit (see List Project modal for current USDC price) |
 
-**Paid Premium** also includes the bundled launch stack (PR/AMA where offered, BNB/Sol trending program, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
+**Paid Premium** also includes the bundled launch stack (**1-hour fast-track listing review**, PR/AMA where offered, BNB/Sol trending program, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
 
 ### Suggested first-week workflow
 
@@ -830,7 +830,14 @@ You can pay via:
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled launch stack (e.g. **$5 Skipper wallet credit**, PR / AMA, **BNB/Sol trending + volume**, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
+**Paid Premium** adds the bundled launch stack (e.g. **$5 Skipper wallet credit**, **1-hour fast-track listing review**, PR / AMA, **BNB/Sol trending + volume**, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
+
+### Listing review times
+
+| Tier | Review target |
+|------|----------------|
+| **Starter** | Standard queue — typically **24–48 hours** after submission |
+| **Premium** | **1-hour fast-track** after payment is verified |
 
 ### Listing Fee
 
@@ -839,8 +846,8 @@ Base listing fee: **$0 Starter** or **Premium USDC base** — check the **List P
 ### After Submission
 
 1. Your listing is submitted for admin review
-2. Complete payment in the opened window
-3. Admin verifies and approves listing
+2. Complete payment in the opened window (Premium) or submit free Starter
+3. Admin verifies and approves — **Premium** is fast-tracked (**1 hour** target); **Starter** follows the standard queue (**24–48 hours**)
 4. Your bubble appears on the map!
 
 ### Add Packages to Existing Projects

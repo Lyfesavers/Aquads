@@ -299,7 +299,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         <title>List your token free on Aquads — no-fee bubble map listings</title>
         <meta
           name="description"
-          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Skipper Agent on all verified accounts (pay-as-you-go). Paid Premium adds a $5 Skipper AI credit plus the full launch stack."
+          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Skipper Agent on all verified accounts (pay-as-you-go). Paid Premium adds 1-hour fast-track review, a $5 Skipper AI credit, plus the full launch stack."
         />
         <link rel="canonical" href="https://www.aquads.xyz/list-token-free" />
         <meta property="og:type" content="website" />
@@ -579,7 +579,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
             </ul>
             <p className="text-gray-400 text-xs mt-3">
-              <strong className="text-white">Paid Premium</strong> also includes the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, ad credits, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
+              <strong className="text-white">Paid Premium</strong> also includes the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
             </p>
           </div>
         </div>
@@ -637,6 +637,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  Standard admin review — typically <strong className="text-white">24–48 hours</strong> after submission
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">Optional Mintfunnel packages paid separately at checkout</span>
               </li>
               <li className="flex items-start gap-3">
@@ -665,6 +671,12 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">Everything in Starter, plus:</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">1-hour fast-track listing review</strong> — Premium submissions are prioritized (Starter: standard 24–48 hour review)
+                </span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />

@@ -19,7 +19,7 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 ## Listing tiers
 
 - **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble. **Skipper Agent** with a one-time **$1** trial credit per workspace/listing (top up via AquaPay after).
-- **Premium (paid listing — ~$99 USDC)** — Adds **$5 Skipper Agent starter wallet credit** (tops up from $1 → $5 if trial was already granted on that listing), PR/AMA bundle, BNB/Sol trending+volume program, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
+- **Premium (paid listing — ~$99 USDC)** — Adds **1-hour fast-track listing review** (after payment verified), **$5 Skipper Agent starter wallet credit** (tops up from $1 → $5 if trial was already granted on that listing), PR/AMA bundle, BNB/Sol trending+volume program, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
 
 **Important:** **Premium** means the **paid listing package**, not vote bump. A Starter project bumped at 100+ votes keeps Starter tier benefits unless they pay to upgrade.
 
