@@ -1172,7 +1172,7 @@ router.post('/generate-image/:adId/:threadId', imageLimiter, async (req, res) =>
   }
 
   const imageModel = process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1';
-  const imageQuality = process.env.PROJECT_AGENT_IMAGE_QUALITY || 'medium';
+  const imageQuality = process.env.PROJECT_AGENT_IMAGE_QUALITY || 'high';
   const holdUsd = estimateImageHoldUsd(imageModel, imageQuality);
   const holdCents = usdToCents(holdUsd);
 

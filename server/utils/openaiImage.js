@@ -12,7 +12,7 @@ async function openaiGenerateImage(prompt, options = {}) {
 
   const size = options.size || '1024x1024';
   const model = options.model || process.env.PROJECT_AGENT_IMAGE_MODEL || 'gpt-image-1';
-  const quality = options.quality || process.env.PROJECT_AGENT_IMAGE_QUALITY || 'medium';
+  const quality = options.quality || process.env.PROJECT_AGENT_IMAGE_QUALITY || 'high';
 
   const payload = {
     model,

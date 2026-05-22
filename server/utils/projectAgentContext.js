@@ -148,43 +148,51 @@ function isPremiumListing(ad) {
   return getListingTier(ad) === LISTING_TIER_PREMIUM;
 }
 
-/** OpenAI Sora prompt with light project branding context */
-function buildProjectVideoPrompt(ad, userPrompt, user = null) {
+/** User asked for branded/promo output — otherwise pass their prompt through as-is. */
+function wantsProjectBranding(userPrompt) {
+  const s = String(userPrompt || '').toLowerCase();
+  return /\b(banner|promo(?:tional?)?|launch|branded|brand(?:ing)?|marketing|announcement|advert(?:isement)?|our\s+(?:token|project|coin|brand)|for\s+(?:my|our)\s+(?:project|token|brand|listing)|project\s+(?:name|logo|promo))\b/.test(
+    s
+  );
+}
+
+function buildOptionalBrandingContext(ad, user, userPrompt) {
+  if (!wantsProjectBranding(userPrompt)) return [];
+
   const profile = ad.projectProfile || {};
-  const bits = ad.isFreelancerScope
-    ? [
-        `Short marketing clip for Web3 freelancer "${user?.username || ad.title}".`,
-        user?.cv?.summary ? `Profile: ${trimBlock(user.cv.summary, 400)}.` : '',
-        `User request: ${trimBlock(userPrompt, 2000)}`,
-        'Cinematic motion, clear subject, no logos of other brands, no real public figures, no misleading profit claims.'
-      ]
-    : [
-        `Short promotional video for Web3/crypto project "${ad.title}".`,
-        ad.blockchain ? `Blockchain/ecosystem: ${ad.blockchain}.` : '',
-        profile.mission ? `Mission: ${trimBlock(profile.mission, 400)}.` : '',
-        `User request: ${trimBlock(userPrompt, 2000)}`,
-        'Dynamic camera, readable composition, suitable for social. No stock watermarks.',
-        'Do not depict guaranteed profits or misleading financial claims unless explicitly requested.'
-      ];
+  if (ad.isFreelancerScope) {
+    return [
+      `Optional branding context: freelancer "${user?.username || ad.title}".`,
+      user?.cv?.summary ? `Profile: ${trimBlock(user.cv.summary, 400)}.` : ''
+    ];
+  }
+
+  return [
+    `Optional branding context: project "${ad.title}".`,
+    ad.blockchain ? `Blockchain/ecosystem: ${ad.blockchain}.` : '',
+    profile.mission ? `Mission: ${trimBlock(profile.mission, 400)}.` : ''
+  ];
+}
+
+/** OpenAI Sora prompt — user request first; project context only when they ask for branding */
+function buildProjectVideoPrompt(ad, userPrompt, user = null) {
+  const bits = [
+    trimBlock(userPrompt, 2000),
+    ...buildOptionalBrandingContext(ad, user, userPrompt),
+    'Cinematic motion, clear subject. Follow the user request closely; do not add unrelated project names, logos, or promo overlays unless they asked for them.',
+    'No logos of other brands, no real public figures, no stock watermarks.',
+    'Do not depict guaranteed profits or misleading financial claims unless explicitly requested.'
+  ];
   return bits.filter(Boolean).join(' ');
 }
 
-/** OpenAI image prompt with light project branding context */
+/** OpenAI image prompt — user request first; project context only when they ask for branding */
 function buildProjectImagePrompt(ad, userPrompt, user = null) {
-  const profile = ad.projectProfile || {};
-  const bits = ad.isFreelancerScope
-    ? [
-        `Professional personal-brand visual for Web3 freelancer "${user?.username || ad.title}".`,
-        user?.cv?.summary ? `Profile: ${trimBlock(user.cv.summary, 400)}.` : '',
-        `User request: ${trimBlock(userPrompt, 2000)}`,
-        'High quality, sharp, suitable for profile or social. No stock watermarks.'
-      ]
-    : [
-    `Professional marketing visual for Web3/crypto project "${ad.title}".`,
-    ad.blockchain ? `Blockchain/ecosystem: ${ad.blockchain}.` : '',
-    profile.mission ? `Mission: ${trimBlock(profile.mission, 400)}.` : '',
-    `User request: ${trimBlock(userPrompt, 2000)}`,
-    'High quality, sharp, suitable for social or website. No stock watermarks.',
+  const bits = [
+    trimBlock(userPrompt, 2000),
+    ...buildOptionalBrandingContext(ad, user, userPrompt),
+    'High quality, sharp. Follow the user request closely; do not add unrelated project names, logos, or marketing overlays unless they asked for them.',
+    'No stock watermarks.',
     'Do not depict guaranteed profits, price charts implying returns, or misleading financial claims unless the user explicitly asked for specific chart copy.'
   ];
   return bits.filter(Boolean).join(' ');
