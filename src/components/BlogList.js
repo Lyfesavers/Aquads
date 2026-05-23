@@ -1,11 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
-import { Markdown } from 'tiptap-markdown';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import LinkExtension from '@tiptap/extension-link';
+import BlogContentRenderer from './BlogContentRenderer';
+import { isMarkdownBlogContent } from '../utils/blogEditor';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -25,81 +23,6 @@ const createSlug = (title) => {
   }
   
   return slug;
-};
-
-// Markdown renderer component
-const MarkdownRenderer = ({ content }) => {
-  const [ready, setReady] = useState(false);
-  // Add a key to force re-rendering when content changes
-  const editorKey = useRef(Math.random().toString(36).substring(7)).current;
-  
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      LinkExtension.configure({
-        openOnClick: true,
-        HTMLAttributes: {
-          class: 'blog-link',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        },
-        autolink: true,
-      }),
-      Markdown.configure({
-        html: false,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true, // Enable automatic link detection
-      }),
-    ],
-    content: content,
-    editable: false,
-    onBeforeCreate({ editor }) {
-      // Process Markdown in a more explicit way
-      if (content && typeof content === 'string') {
-        // Let the editor fully initialize first
-        setTimeout(() => {
-          try {
-            // Force the Markdown extension to parse the content
-            const md = editor.storage.markdown;
-            if (md) {
-              // Process links in Markdown - look for [text](url) pattern
-              const contentWithEnhancedLinks = content.replace(
-                /\[([^\]]+)\]\(([^)]+)\)/g, 
-                (match, text, url) => {
-                  return `[${text}](${url})`;
-                }
-              );
-              editor.commands.setContent(contentWithEnhancedLinks);
-              setReady(true);
-            }
-          } catch (err) {
-            console.error('Error parsing Markdown:', err);
-            // Fallback to simply setting content
-            editor.commands.setContent(content);
-            setReady(true);
-          }
-        }, 0);
-      } else {
-        setReady(true);
-      }
-    },
-  }, [content]); // Re-initialize when content changes
-
-  // Update editor content when it changes externally
-  useEffect(() => {
-    if (editor && content) {
-      editor.commands.setContent(content);
-    }
-  }, [editor, content]);
-
-  if (!editor || !ready) {
-    return <div className="animate-pulse bg-gray-700 h-24 rounded"></div>;
-  }
-
-  return (
-    <EditorContent key={editorKey + content.slice(0, 20)} editor={editor} className="prose prose-invert max-w-none" />
-  );
 };
 
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId = null }) => {
@@ -147,24 +70,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
   };
 
   // Function to check if content is Markdown
-  const isMarkdownContent = (content) => {
-    if (!content || typeof content !== 'string') return false;
-    
-    // More comprehensive check for Markdown patterns
-    return (
-      /^#+ .+/m.test(content) || // Headers
-      /\n#+ .+/m.test(content) || // Headers after newline
-      /\n- .+/m.test(content) || // List items after newline
-      /^- .+/m.test(content) || // List items at start
-      /\n\* .+/m.test(content) || // Asterisk list items
-      /^(>\s.*)+$/m.test(content) || // Blockquotes
-      /\*\*[^*]+\*\*/m.test(content) || // Bold text
-      /\*[^*]+\*/m.test(content) || // Italic text
-      /\[.+\]\(.+\)/m.test(content) || // Links
-      /`[^`]+`/m.test(content) || // Inline code
-      /^\s*```[\s\S]*?```\s*$/m.test(content) // Code blocks
-    );
-  };
+  const isMarkdownContent = (content) => isMarkdownBlogContent(content);
 
   if (!blogs?.length) {
     return (
@@ -267,8 +173,9 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
             {/* Content Preview - always show truncated version */}
             {isMarkdownContent(blog.content) ? (
               <div className="markdown-content max-h-24 overflow-hidden">
-                <MarkdownRenderer 
-                  content={truncateContent(blog.content)} 
+                <BlogContentRenderer
+                  content={truncateContent(blog.content)}
+                  className="prose prose-invert max-w-none"
                 />
                 <style jsx global>{`
                   .markdown-content .ProseMirror {

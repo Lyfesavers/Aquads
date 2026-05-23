@@ -1,9 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import { Markdown } from 'tiptap-markdown';
 import Modal from './Modal';
+import {
+  getBlogEditorExtensions,
+  isHtmlBlogContent,
+  isValidBlogImageUrl,
+  blogContentHasTable,
+  serializeBlogEditorContent,
+} from '../utils/blogEditor';
 
 const MenuBar = ({ editor }) => {
   const setLink = useCallback(() => {
@@ -24,6 +28,30 @@ const MenuBar = ({ editor }) => {
 
     // update link
     editor.chain().focus().extendMarkRange('link').setLink({ href: url })
+      .run()
+  }, [editor])
+
+  const insertImage = useCallback(() => {
+    const url = window.prompt('Enter image URL (https://...)')
+    if (url === null) return
+
+    const trimmedUrl = url.trim()
+    if (!trimmedUrl) return
+
+    if (!isValidBlogImageUrl(trimmedUrl)) {
+      window.alert('Please enter a valid image URL starting with http:// or https://')
+      return
+    }
+
+    const alt = window.prompt('Alt text (optional)', '') ?? ''
+    editor.chain().focus().setImage({ src: trimmedUrl, alt: alt.trim() }).run()
+  }, [editor])
+
+  const insertTable = useCallback(() => {
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
       .run()
   }, [editor])
 
@@ -71,6 +99,76 @@ const MenuBar = ({ editor }) => {
         >
           Unlink
         </button>
+      )}
+
+      <button
+        onClick={insertImage}
+        className="px-2 py-1 rounded bg-gray-800 text-white hover:bg-gray-600"
+        type="button"
+      >
+        Image
+      </button>
+
+      <button
+        onClick={insertTable}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('table') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Table
+      </button>
+
+      {editor.isActive('table') && (
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={() => editor.chain().focus().addRowBefore().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Row Above
+          </button>
+          <button
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Row Below
+          </button>
+          <button
+            onClick={() => editor.chain().focus().addColumnBefore().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Col Left
+          </button>
+          <button
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Col Right
+          </button>
+          <button
+            onClick={() => editor.chain().focus().deleteRow().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Delete Row
+          </button>
+          <button
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white text-xs"
+            type="button"
+          >
+            Delete Col
+          </button>
+          <button
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            className="px-2 py-1 rounded bg-red-700 hover:bg-red-800 text-white text-xs"
+            type="button"
+          >
+            Delete Table
+          </button>
+        </div>
       )}
       
       {/* Heading controls */}
@@ -160,63 +258,26 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     bannerImage: initialData?.bannerImage || ''
   });
   
-  // Add state for keeping track of editor mode
-  const [preserveMarkdown, setPreserveMarkdown] = useState(true);
+  const [preserveMarkdown, setPreserveMarkdown] = useState(
+    initialData?.content ? !isHtmlBlogContent(initialData.content) : true
+  );
+  const [usesTableStorage, setUsesTableStorage] = useState(
+    blogContentHasTable(initialData?.content || '')
+  );
+  const preserveMarkdownRef = useRef(preserveMarkdown);
+  preserveMarkdownRef.current = preserveMarkdown;
 
-  // Create an enhanced StarterKit configuration
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        // Configure the base kit for better paste handling
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: true,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: true,
-        },
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
-        },
-        // This helps preserve whitespace
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'code-block',
-          },
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        // Automatically detect links in pasted content
-        autolink: true,
-        // Allow validation of pasted URLs
-        validate: href => /^https?:\/\//.test(href),
-        HTMLAttributes: {
-          class: 'blog-link',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        },
-        // Linkify (convert text URLs to actual links)
-        linkOnPaste: true,
-      }),
-      // Add Markdown support
-      Markdown.configure({
-        html: false,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true,
-      }),
-    ],
+    extensions: getBlogEditorExtensions({ linkOpenOnClick: false }),
     content: formData.content,
-    onUpdate: ({ editor }) => {
-      // If we're preserving Markdown, get the Markdown representation instead of HTML
-      if (preserveMarkdown) {
-        const markdown = editor.storage.markdown.getMarkdown();
-        setFormData(prev => ({ ...prev, content: markdown }));
-      } else {
-        setFormData(prev => ({ ...prev, content: editor.getHTML() }));
-      }
+    onUpdate: ({ editor: updatedEditor }) => {
+      const html = updatedEditor.getHTML();
+      const hasTable = blogContentHasTable(html);
+      setUsesTableStorage(hasTable);
+      setFormData(prev => ({
+        ...prev,
+        content: serializeBlogEditorContent(updatedEditor, preserveMarkdownRef.current),
+      }));
     },
     // Enhanced editor props for better paste handling
     editorProps: {
@@ -224,6 +285,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
       transformPastedHTML(html) {
         // Replace common Microsoft Word and Google Docs artifacts and preserve links
         const cleanedHtml = html
+          .replace(/<table[\s\S]*?<\/table>/gi, '')
           // Fix Word's mso-style artifacts and normalize paragraphs
           .replace(/<o:p>(.*?)<\/o:p>/g, '$1')
           .replace(/<span style="mso-[^"]*">(.*?)<\/span>/g, '$1')
@@ -347,6 +409,15 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     },
   });
 
+  useEffect(() => {
+    if (!editor) return;
+
+    setFormData(prev => ({
+      ...prev,
+      content: serializeBlogEditorContent(editor, preserveMarkdown),
+    }));
+  }, [editor, preserveMarkdown]);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -354,8 +425,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
 
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    onSubmit(formData);
-  }, [formData, onSubmit]);
+    const content = editor
+      ? serializeBlogEditorContent(editor, preserveMarkdownRef.current)
+      : formData.content;
+    onSubmit({ ...formData, content });
+  }, [editor, formData, onSubmit]);
 
   return (
     <Modal onClose={onClose} fullScreen={true}>
@@ -425,12 +499,16 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
               editor={editor} 
               className="prose prose-invert max-w-none min-h-[400px] md:min-h-[500px] p-4 bg-gray-800 focus:outline-none"
             />
-            <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400">
+            <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400 space-y-1">
               <p>Tip: Markdown formatting is {preserveMarkdown ? 'enabled' : 'disabled'}. {
-                preserveMarkdown ? 
-                'Your headings (#), lists (-), and other Markdown formatting will be preserved when saved.' :
+                preserveMarkdown ?
+                'Your headings (#), lists (-), inline images, and other Markdown formatting will be preserved when saved.' :
                 'Switch to Markdown mode to preserve special formatting like headings and lists.'
               }</p>
+              <p>Use the Image and Table toolbar buttons to insert body images and comparison tables. Pasted tables are not supported.</p>
+              {usesTableStorage && (
+                <p className="text-amber-300">This post contains a table and will be saved in Rich Text (HTML) format.</p>
+              )}
             </div>
             <style jsx global>{`
               .ProseMirror {
@@ -528,6 +606,45 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 color: #aaa;
                 pointer-events: none;
                 height: 0;
+              }
+
+              .ProseMirror img,
+              .ProseMirror .blog-inline-image {
+                max-width: 100%;
+                height: auto;
+                border-radius: 0.5rem;
+                margin: 1.5em auto;
+                display: block;
+              }
+
+              .ProseMirror .tableWrapper,
+              .ProseMirror .blog-table-wrapper {
+                overflow-x: auto;
+                margin: 1.5em 0;
+              }
+
+              .ProseMirror table,
+              .ProseMirror .blog-table {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+              }
+
+              .ProseMirror th,
+              .ProseMirror td {
+                border: 1px solid #4b5563;
+                padding: 0.6em 0.75em;
+                vertical-align: top;
+                min-width: 80px;
+              }
+
+              .ProseMirror th {
+                background-color: #374151;
+                font-weight: 600;
+              }
+
+              .ProseMirror .selectedCell {
+                background-color: rgba(59, 130, 246, 0.2);
               }
             `}</style>
           </div>

@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { FaArrowLeft, FaShare, FaEdit, FaTrash, FaClock, FaUser } from 'react-icons/fa';
-import { Markdown } from 'tiptap-markdown';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import LinkExtension from '@tiptap/extension-link';
+import { getDisplayName } from '../utils/nameUtils';
+import BlogContentRenderer from './BlogContentRenderer';
 import CreateBlogModal from './CreateBlogModal';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
@@ -13,7 +11,6 @@ import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
-import { getDisplayName } from '../utils/nameUtils';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -40,43 +37,6 @@ const extractBlogIdFromSlug = (slug) => {
   if (!slug) return null;
   const parts = slug.split('-');
   return parts[parts.length - 1];
-};
-
-// Markdown renderer component
-const MarkdownRenderer = ({ content }) => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      LinkExtension.configure({
-        openOnClick: true,
-        HTMLAttributes: {
-          class: 'blog-link',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        },
-        autolink: true,
-      }),
-      Markdown.configure({
-        html: false,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true,
-      }),
-    ],
-    content: content,
-    editable: false,
-  }, [content]);
-
-  if (!editor) {
-    return <div className="animate-pulse bg-gray-700 h-24 rounded"></div>;
-  }
-
-  return (
-    <EditorContent 
-      editor={editor} 
-      className="prose prose-invert prose-lg max-w-none blog-content"
-    />
-  );
 };
 
 const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
@@ -812,7 +772,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             {/* Blog Content */}
             <article className="mb-12">
               <div className="blog-content-wrapper">
-                <MarkdownRenderer content={blog.content} />
+                <BlogContentRenderer content={blog.content} />
               </div>
             </article>
 
@@ -1068,6 +1028,8 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
           width: 100%;
           border-collapse: collapse;
           margin: 2em 0;
+          display: block;
+          overflow-x: auto;
         }
         
         .blog-content-wrapper th,
