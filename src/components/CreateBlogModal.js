@@ -269,19 +269,6 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   const toolbarRef = useRef(null);
   const [toolbarHeight, setToolbarHeight] = useState(0);
 
-  useEffect(() => {
-    const toolbar = toolbarRef.current;
-    if (!toolbar) return;
-
-    const updateHeight = () => setToolbarHeight(toolbar.offsetHeight);
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(toolbar);
-
-    return () => observer.disconnect();
-  }, [editor]);
-
   const editor = useEditor({
     extensions: getBlogEditorExtensions({ linkOpenOnClick: false }),
     content: formData.content,
@@ -423,6 +410,19 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
       },
     },
   });
+
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+
+    const updateHeight = () => setToolbarHeight(toolbar.offsetHeight);
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(toolbar);
+
+    return () => observer.disconnect();
+  }, [editor]);
 
   useEffect(() => {
     if (!editor) return;
