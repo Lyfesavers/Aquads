@@ -408,6 +408,23 @@ export const updateAd = async (id, adData) => {
   return updatedAd;
 };
 
+// Update project launch checklist (honor-system)
+export const updateAdLaunchChecklist = async (id, { completedSteps, dismiss } = {}) => {
+  const response = await fetch(`${API_URL}/ads/${id}/launch-checklist`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ completedSteps, dismiss }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update launch checklist');
+  }
+  return response.json();
+};
+
 // Update ad position only (no auth required)
 export const updateAdPosition = async (id, x, y) => {
   const response = await fetch(`${API_URL}/ads/${id}/position`, {

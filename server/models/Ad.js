@@ -234,6 +234,10 @@ const adSchema = new mongoose.Schema({
     // Direct HTTPS video file URL for AquaSwap deep dive (e.g. files.catbox.moe/….mp4)
     introVideoUrl: { type: String, default: '', maxlength: 2048 },
     updatedAt: { type: Date, default: null }
+  },
+  launchChecklist: {
+    completedSteps: { type: [String], default: [] },
+    dismissedAt: { type: Date, default: null }
   }
 });
 

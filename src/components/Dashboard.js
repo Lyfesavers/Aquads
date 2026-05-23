@@ -21,6 +21,7 @@ import AquaPaySettings from './AquaPaySettings';
 import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
+import ProjectLaunchChecklist from './ProjectLaunchChecklist';
 
 const LinkBioPageAds = ({ userId }) => {
   const [pendingAds, setPendingAds] = useState([]);
@@ -3393,6 +3394,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                 </div>
               ) : (
                 <>
+              {/* Project launch checklist — honor system, one per listing */}
+              {userAds
+                .filter(ad => ad.status !== 'rejected')
+                .map(ad => (
+                  <ProjectLaunchChecklist
+                    key={`checklist-${ad.id}`}
+                    ad={ad}
+                    onTabSelect={setActiveTab}
+                    showNotification={showNotification}
+                  />
+                ))}
+
               {/* My Project Bubble */}
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">

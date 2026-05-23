@@ -25,6 +25,22 @@ const {
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
 
+const LAUNCH_CHECKLIST_STEPS = [
+  'telegram_bot',
+  'discord_bot',
+  'chart_link',
+  'share_blog',
+  'link_in_bio',
+  'link_in_bio_socials',
+  'aquapay',
+  'mintfunnel_credit',
+  'skipper_posts',
+  'daily_raids',
+  'x_spaces',
+  'banner_ad',
+  'chrome_extension'
+];
+
 // Aquads-branded marketing add-on packages (server-side)
 const ADDON_PACKAGES = [
   {
@@ -522,6 +538,55 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     res.status(500).json({ 
       error: 'Failed to create ad', 
       message: error.message 
+    });
+  }
+});
+
+// PATCH launch checklist (honor-system step toggles + dismiss)
+router.patch('/:id/launch-checklist', auth, requireEmailVerification, emitAdEvent('update'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completedSteps, dismiss } = req.body;
+
+    const ad = await Ad.findOne({ id });
+    if (!ad) {
+      return res.status(404).json({ message: 'Ad not found' });
+    }
+    if (ad.owner !== req.user?.username && !req.user?.isAdmin) {
+      return res.status(403).json({ message: 'You do not have permission to update this ad' });
+    }
+
+    const update = {};
+    if (completedSteps !== undefined) {
+      if (!Array.isArray(completedSteps)) {
+        return res.status(400).json({ message: 'completedSteps must be an array' });
+      }
+      const invalid = completedSteps.filter(s => !LAUNCH_CHECKLIST_STEPS.includes(s));
+      if (invalid.length > 0) {
+        return res.status(400).json({ message: 'Invalid checklist step(s)', invalid });
+      }
+      update['launchChecklist.completedSteps'] = completedSteps;
+    }
+    if (dismiss === true) {
+      update['launchChecklist.dismissedAt'] = new Date();
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ message: 'No checklist updates provided' });
+    }
+
+    const updatedAd = await Ad.findByIdAndUpdate(
+      ad._id,
+      { $set: update },
+      { new: true, runValidators: false }
+    );
+
+    invalidateAdsCache();
+    res.json(updatedAd);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error updating launch checklist',
+      error: error.message
     });
   }
 });

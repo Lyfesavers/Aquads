@@ -1538,9 +1538,9 @@ function App() {
       setShowCreateModal(false);
       
       // Show partnership popup after successful submission for all users
-      // Build direct AquaSwap chart URL if token data is available
+      // Build share URL for social/OG metadata (same as Shill templates)
       const tokenUrl = (adData.pairAddress && adData.blockchain)
-        ? `https://aquads.xyz/aquaswap?token=${encodeURIComponent(adData.pairAddress)}&blockchain=${encodeURIComponent(adData.blockchain)}&name=${encodeURIComponent(adData.title || '')}`
+        ? `https://aquads.xyz/share/aquaswap?token=${encodeURIComponent(adData.pairAddress.trim())}&blockchain=${encodeURIComponent(adData.blockchain)}`
         : null;
       setPartnershipPopup({
         projectName: adData.title,
@@ -3696,7 +3696,7 @@ function App() {
                           </div>
                           <p className="text-sm text-gray-300 mb-3">
                             {partnershipPopup.tokenChartUrl
-                              ? "Add this link as a button on your website — visitors go directly to your token's live chart, price data, and swap widget on AquaSwap."
+                              ? "Add this link as a button on your website — visitors get your live chart with rich preview cards when shared on social."
                               : "Add this link to your website as a partner button to boost your domain authority and visibility."}
                           </p>
 
