@@ -271,7 +271,9 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   preserveMarkdownRef.current = preserveMarkdown;
   const skipPreserveMarkdownSyncRef = useRef(true);
   const toolbarRef = useRef(null);
+  const toolbarSentinelRef = useRef(null);
   const [toolbarHeight, setToolbarHeight] = useState(0);
+  const [toolbarStuck, setToolbarStuck] = useState(false);
 
   const editorExtensions = useMemo(
     () => getBlogEditorExtensionsForFormat(storageFormat, { linkOpenOnClick: false }),
@@ -443,6 +445,29 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   }, [editor]);
 
   useEffect(() => {
+    const sentinel = toolbarSentinelRef.current;
+    if (!sentinel) return;
+
+    let scrollRoot = sentinel.parentElement;
+    while (scrollRoot) {
+      const { overflowY } = window.getComputedStyle(scrollRoot);
+      if (overflowY === 'auto' || overflowY === 'scroll') break;
+      scrollRoot = scrollRoot.parentElement;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setToolbarStuck(!entry.isIntersecting),
+      {
+        root: scrollRoot,
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [editor]);
+
+  useEffect(() => {
     if (!editor) return;
 
     if (skipPreserveMarkdownSyncRef.current) {
@@ -521,6 +546,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
         <div>
           <div className="border border-gray-600 rounded">
             <div
+              ref={toolbarSentinelRef}
+              className="h-px w-full pointer-events-none"
+              aria-hidden="true"
+            />
+            <div
               ref={toolbarRef}
               className="sticky top-0 z-20 rounded-t bg-gray-800/95 backdrop-blur-sm border-b border-gray-600 shadow-lg"
             >
@@ -547,15 +577,9 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
             </div>
             <div
               className="bg-gray-800"
-              style={
-                toolbarHeight
-                  ? {
-                      marginTop: -toolbarHeight,
-                      paddingTop: toolbarHeight,
-                      '--blog-toolbar-height': `${toolbarHeight}px`,
-                    }
-                  : undefined
-              }
+              style={{
+                paddingTop: toolbarStuck && toolbarHeight ? toolbarHeight + 8 : 0,
+              }}
             >
               <EditorContent 
                 editor={editor} 
@@ -581,7 +605,6 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 min-height: 300px;
                 padding: 1rem;
                 outline: none;
-                scroll-margin-top: var(--blog-toolbar-height, 0px);
               }
               
               .ProseMirror p {
