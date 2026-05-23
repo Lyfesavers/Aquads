@@ -3393,6 +3393,129 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                 </div>
               ) : (
                 <>
+              {/* My Project Bubble */}
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">
+                  My Project Bubble
+                </h3>
+                {userAds.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No ads found.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {userAds.map(ad => {
+                      const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
+                      const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
+                      const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
+                      
+                      return (
+                        <div
+                          key={ad.id}
+                          className="bg-gray-700 rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="flex items-center space-x-4 min-w-0 flex-shrink-0">
+                            <img
+                              src={ad.logo}
+                              alt={ad.title}
+                              className="w-12 h-12 object-contain rounded flex-shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <h3 className="text-white font-semibold truncate">{ad.title}</h3>
+                              <p className="text-gray-400 text-sm truncate">{ad.url}</p>
+                              {ad.listingTier === 'starter' && (
+                                <span className="inline-block mt-1 text-xs bg-green-600/40 text-green-200 px-2 py-0.5 rounded">Starter</span>
+                              )}
+                              {ad.listingTier !== 'starter' && (
+                                <span className="inline-block mt-1 text-xs bg-blue-600/40 text-blue-200 px-2 py-0.5 rounded">Premium</span>
+                              )}
+                              {ad.status === 'pending' && (
+                                <p className="text-yellow-500 text-sm">Listing pending</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Vote Counts Display */}
+                          <div className="flex items-center space-x-6 sm:mr-0 flex-shrink-0">
+                            <div className="text-center">
+                              <div className="text-xs text-gray-400 mb-1">Community Votes</div>
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-green-400 font-bold">👍</span>
+                                  <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
+                                  <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-red-400 font-bold">👎</span>
+                                  <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
+                                  <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 sm:gap-0">
+                            {!ad.status || ad.status !== 'pending' ? (
+                              <>
+                                <button
+                                  onClick={() => handleBumpClick(ad.id)}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                                >
+                                  Bump
+                                </button>
+                                {ad.listingTier !== 'starter' && (
+                                <a
+                                  href="https://t.me/+6rJbDLqdMxA3ZTUx"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded inline-flex items-center text-sm whitespace-nowrap"
+                                  title="Book a free AMA session"
+                                >
+                                  Book Free AMA
+                                </a>
+                                )}
+                                {ad.listingTier === 'starter' && ['active', 'approved'].includes(ad.status) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpgradeListingToPremium(ad)}
+                                    className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                                  >
+                                    Upgrade to Premium
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">
+                                Listing pending
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleOpenEditAdModal(ad)}
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleOpenProjectDeepDive(ad)}
+                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                              title="Update chart deep dive details"
+                            >
+                              Deep Dive Form
+                            </button>
+                            <button
+                              onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                              title="Delete this ad"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
                   {renderAffiliateEarnings()}
 
               {/* Affiliate Section */}
@@ -3721,133 +3844,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-
-
-
-
-              {/* User's Ads */}
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4">
-                  Your Ads
-                </h3>
-                {userAds.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No ads found.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {userAds.map(ad => {
-                      const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
-                      const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
-                      const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
-                      
-                      return (
-                        <div
-                          key={ad.id}
-                          className="bg-gray-700 rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="flex items-center space-x-4 min-w-0 flex-shrink-0">
-                            <img
-                              src={ad.logo}
-                              alt={ad.title}
-                              className="w-12 h-12 object-contain rounded flex-shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <h3 className="text-white font-semibold truncate">{ad.title}</h3>
-                              <p className="text-gray-400 text-sm truncate">{ad.url}</p>
-                              {ad.listingTier === 'starter' && (
-                                <span className="inline-block mt-1 text-xs bg-green-600/40 text-green-200 px-2 py-0.5 rounded">Starter</span>
-                              )}
-                              {ad.listingTier !== 'starter' && (
-                                <span className="inline-block mt-1 text-xs bg-blue-600/40 text-blue-200 px-2 py-0.5 rounded">Premium</span>
-                              )}
-                              {ad.status === 'pending' && (
-                                <p className="text-yellow-500 text-sm">Listing pending</p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Vote Counts Display */}
-                          <div className="flex items-center space-x-6 sm:mr-0 flex-shrink-0">
-                            <div className="text-center">
-                              <div className="text-xs text-gray-400 mb-1">Community Votes</div>
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-green-400 font-bold">👍</span>
-                                  <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
-                                  <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-red-400 font-bold">👎</span>
-                                  <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
-                                  <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 sm:gap-0">
-                            {!ad.status || ad.status !== 'pending' ? (
-                              <>
-                                <button
-                                  onClick={() => handleBumpClick(ad.id)}
-                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
-                                >
-                                  Bump
-                                </button>
-                                {ad.listingTier !== 'starter' && (
-                                <a
-                                  href="https://t.me/+6rJbDLqdMxA3ZTUx"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded inline-flex items-center text-sm whitespace-nowrap"
-                                  title="Book a free AMA session"
-                                >
-                                  Book Free AMA
-                                </a>
-                                )}
-                                {ad.listingTier === 'starter' && ['active', 'approved'].includes(ad.status) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpgradeListingToPremium(ad)}
-                                    className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
-                                  >
-                                    Upgrade to Premium
-                                  </button>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">
-                                Listing pending
-                              </span>
-                            )}
-                            <button
-                              onClick={() => handleOpenEditAdModal(ad)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleOpenProjectDeepDive(ad)}
-                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
-                              title="Update chart deep dive details"
-                            >
-                              Deep Dive Form
-                            </button>
-                            <button
-                              onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
-                              title="Delete this ad"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </div>
