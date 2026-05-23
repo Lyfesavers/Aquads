@@ -6,6 +6,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import { Markdown } from 'tiptap-markdown';
+import DOMPurify from 'dompurify';
 
 export const isValidBlogImageUrl = (url) => /^https?:\/\/.+/i.test(url?.trim?.() || '');
 
@@ -104,13 +105,14 @@ export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
 
 export const getBlogReaderExtensions = (content, { linkOpenOnClick = false } = {}) => {
   const extensions = getBaseBlogExtensions({ linkOpenOnClick });
-
-  if (!isHtmlBlogContent(content)) {
-    extensions.push(getMarkdownExtension());
-  }
-
+  extensions.push(getMarkdownExtension());
   return extensions;
 };
+
+export const sanitizeBlogHtml = (html) =>
+  DOMPurify.sanitize(html || '', {
+    ADD_ATTR: ['target', 'rel', 'class'],
+  });
 
 export const serializeBlogEditorContent = (editor, preserveMarkdown) => {
   const html = editor.getHTML();

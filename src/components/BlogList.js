@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
-import DOMPurify from 'dompurify';
 import BlogContentRenderer from './BlogContentRenderer';
-import { isMarkdownBlogContent } from '../utils/blogEditor';
+import { isMarkdownBlogContent, sanitizeBlogHtml } from '../utils/blogEditor';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -279,10 +278,10 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
                 `}</style>
               </div>
             ) : (
-              <div 
+              <div
                 className="prose prose-invert max-w-none line-clamp-3"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(truncateContent(blog.content))
+                  __html: sanitizeBlogHtml(truncateContent(blog.content)),
                 }}
               />
             )}
