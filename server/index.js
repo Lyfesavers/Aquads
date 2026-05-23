@@ -759,7 +759,8 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "*"],
       connectSrc: ["'self'", "wss:", "https:", "*"],
-      frameSrc: ["'self'", "*"]
+      frameSrc: ["'self'", "*"],
+      upgradeInsecureRequests: []
     }
   },
   crossOriginEmbedderPolicy: false,
