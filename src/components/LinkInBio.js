@@ -348,7 +348,13 @@ const LinkInBio = () => {
           <div className="absolute bottom-0 right-0 w-[70%] h-[50%] rounded-full bg-blue-500/[0.03] blur-[100px]" />
         </div>
         <div className="relative flex flex-col items-center gap-6 w-full">
-          <div className="w-28 h-28 rounded-full bg-white/5 animate-pulse" style={{ boxShadow: '0 0 60px rgba(34, 211, 238, 0.08)' }} />
+          <div
+            className="w-full max-w-[260px] h-44 bg-white/5 animate-pulse mb-2"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)'
+            }}
+          />
           <div className="h-6 w-44 rounded-full bg-white/10 animate-pulse" />
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3.5 sm:gap-5 w-full max-w-2xl px-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -486,28 +492,41 @@ const LinkInBio = () => {
       <div className="relative z-10 w-full flex flex-col items-center">
         {/* Profile header — centered narrow column */}
         <div className="w-full max-w-md flex flex-col items-center">
-        {/* Avatar with soft glow ring */}
+        {/* Hero logo — full image blended into page top (Linktree-style) */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-6"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="relative w-full mb-4 -mt-3"
         >
           <motion.div
-            className="absolute inset-0 rounded-full"
+            className="absolute inset-x-[-8%] top-[10%] bottom-[-10%] pointer-events-none"
             style={{
-              background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.orb2} 50%, transparent 100%)`,
-              filter: 'blur(20px)',
-              opacity: 0.5
+              background: `radial-gradient(ellipse 75% 55% at 50% 38%, ${hexToRgba(accentHex, hasBackgroundImage ? 0.28 : 0.42)} 0%, transparent 72%)`,
+              filter: 'blur(28px)'
             }}
-            animate={{ opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ opacity: [0.55, 0.85, 0.55] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
+            style={{
+              background: hasBackgroundImage
+                ? 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 100%)'
+                : backgroundColorHex
+                  ? `linear-gradient(to bottom, transparent 0%, ${hexToRgba(backgroundColorHex, 0.55)} 100%)`
+                  : 'linear-gradient(to bottom, transparent 0%, rgba(6, 9, 16, 0.65) 100%)'
+            }}
           />
           <img
             src={image}
             alt=""
-            className="relative w-28 h-28 rounded-full object-cover border-2 border-white/10 shadow-xl"
-            style={{ boxShadow: `0 0 0 1px rgba(255,255,255,0.05), 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 80px ${theme.avatarGlow}` }}
+            className="relative w-full max-h-52 sm:max-h-60 object-contain object-center mx-auto select-none pointer-events-none"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
+              filter: `drop-shadow(0 12px 40px ${theme.avatarGlow})`
+            }}
           />
         </motion.div>
 
