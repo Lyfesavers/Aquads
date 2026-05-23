@@ -60,7 +60,7 @@ const MenuBar = ({ editor }) => {
   }
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 bg-gray-700 rounded-t border-b border-gray-600">
+    <div className="flex flex-wrap gap-1 p-2 bg-gray-700">
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={`px-2 py-1 rounded text-white ${editor.isActive('bold') ? 'bg-gray-600' : 'bg-gray-800'}`}
@@ -478,23 +478,25 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
         </div>
         
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="block text-sm font-medium text-gray-200">Content (Max 10000 words)</label>
-            <div className="flex gap-2 items-center">
-              <span className="text-xs text-gray-400">Format Preservation:</span>
-              <button
-                type="button"
-                onClick={() => setPreserveMarkdown(!preserveMarkdown)}
-                className={`px-2 py-1 text-xs rounded text-white ${
-                  preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
-                }`}
-              >
-                {preserveMarkdown ? 'Markdown Enabled' : 'Rich Text Mode'}
-              </button>
+          <div className="border border-gray-600 rounded">
+            <div className="sticky top-0 z-20 rounded-t bg-gray-800/95 backdrop-blur-sm border-b border-gray-600 shadow-lg">
+              <div className="flex flex-wrap justify-between items-center gap-2 px-3 pt-3 pb-1">
+                <label className="block text-sm font-medium text-gray-200">Content (Max 10000 words)</label>
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs text-gray-400">Format Preservation:</span>
+                  <button
+                    type="button"
+                    onClick={() => setPreserveMarkdown(!preserveMarkdown)}
+                    className={`px-2 py-1 text-xs rounded text-white ${
+                      preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    {preserveMarkdown ? 'Markdown Enabled' : 'Rich Text Mode'}
+                  </button>
+                </div>
+              </div>
+              <MenuBar editor={editor} />
             </div>
-          </div>
-          <div className="border border-gray-600 rounded overflow-hidden">
-            <MenuBar editor={editor} />
             <EditorContent 
               editor={editor} 
               className="prose prose-invert max-w-none min-h-[400px] md:min-h-[500px] p-4 bg-gray-800 focus:outline-none"
