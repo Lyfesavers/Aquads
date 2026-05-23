@@ -3394,18 +3394,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                 </div>
               ) : (
                 <>
-              {/* Project launch checklist — honor system, one per listing */}
-              {userAds
-                .filter(ad => ad.status !== 'rejected')
-                .map(ad => (
-                  <ProjectLaunchChecklist
-                    key={`checklist-${ad.id}`}
-                    ad={ad}
-                    onTabSelect={setActiveTab}
-                    showNotification={showNotification}
-                  />
-                ))}
-
               {/* My Project Bubble */}
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">
@@ -3423,7 +3411,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                       return (
                         <div
                           key={ad.id}
-                          className="bg-gray-700 rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                          className="rounded-xl overflow-hidden border border-gray-600/40"
+                        >
+                        <div
+                          className="bg-gray-700 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="flex items-center space-x-4 min-w-0 flex-shrink-0">
                             <img
@@ -3522,6 +3513,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                               Delete
                             </button>
                           </div>
+                        </div>
+                        {ad.status !== 'rejected' && (
+                          <ProjectLaunchChecklist
+                            ad={ad}
+                            embedded
+                            onTabSelect={setActiveTab}
+                            showNotification={showNotification}
+                          />
+                        )}
                         </div>
                       );
                     })}

@@ -42,7 +42,7 @@ const openMintFunnel = () => {
   }
 };
 
-const ProjectLaunchChecklist = ({ ad, onTabSelect, showNotification }) => {
+const ProjectLaunchChecklist = ({ ad, onTabSelect, showNotification, embedded = false }) => {
   const checklist = ad?.launchChecklist || {};
   const [completedSteps, setCompletedSteps] = useState(checklist.completedSteps || []);
   const [dismissed, setDismissed] = useState(!!checklist.dismissedAt);
@@ -236,7 +236,11 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, showNotification }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-800/80 border border-cyan-500/20 rounded-xl overflow-hidden">
+    <div className={`bg-gradient-to-br from-gray-800 to-gray-800/80 overflow-hidden ${
+      embedded
+        ? 'border-t border-cyan-500/20'
+        : 'border border-cyan-500/20 rounded-xl'
+    }`}>
       <div className="relative px-5 pt-5 pb-4 border-b border-gray-700/50">
         <button
           type="button"
@@ -250,7 +254,9 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, showNotification }) => {
         <div className="pr-8">
           <h3 className="text-lg font-semibold text-white">
             Launch checklist
-            <span className="text-gray-400 font-normal text-base ml-2">— {ad.title}</span>
+            {!embedded && (
+              <span className="text-gray-400 font-normal text-base ml-2">— {ad.title}</span>
+            )}
           </h3>
           <p className="text-sm text-gray-400 mt-1">
             Complete these steps to get the most out of Aquads. Check off each item when you&apos;re done.
