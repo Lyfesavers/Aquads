@@ -266,6 +266,21 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   );
   const preserveMarkdownRef = useRef(preserveMarkdown);
   preserveMarkdownRef.current = preserveMarkdown;
+  const toolbarRef = useRef(null);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+
+    const updateHeight = () => setToolbarHeight(toolbar.offsetHeight);
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(toolbar);
+
+    return () => observer.disconnect();
+  }, [editor]);
 
   const editor = useEditor({
     extensions: getBlogEditorExtensions({ linkOpenOnClick: false }),
@@ -479,7 +494,10 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
         
         <div>
           <div className="border border-gray-600 rounded">
-            <div className="sticky top-0 z-20 rounded-t bg-gray-800/95 backdrop-blur-sm border-b border-gray-600 shadow-lg">
+            <div
+              ref={toolbarRef}
+              className="sticky top-0 z-20 rounded-t bg-gray-800/95 backdrop-blur-sm border-b border-gray-600 shadow-lg"
+            >
               <div className="flex flex-wrap justify-between items-center gap-2 px-3 pt-3 pb-1">
                 <label className="block text-sm font-medium text-gray-200">Content (Max 10000 words)</label>
                 <div className="flex gap-2 items-center">
@@ -497,10 +515,23 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
               </div>
               <MenuBar editor={editor} />
             </div>
-            <EditorContent 
-              editor={editor} 
-              className="prose prose-invert max-w-none min-h-[400px] md:min-h-[500px] p-4 bg-gray-800 focus:outline-none"
-            />
+            <div
+              className="bg-gray-800"
+              style={
+                toolbarHeight
+                  ? {
+                      marginTop: -toolbarHeight,
+                      paddingTop: toolbarHeight,
+                      '--blog-toolbar-height': `${toolbarHeight}px`,
+                    }
+                  : undefined
+              }
+            >
+              <EditorContent 
+                editor={editor} 
+                className="prose prose-invert max-w-none min-h-[400px] md:min-h-[500px] px-4 pb-4 pt-2 bg-gray-800 focus:outline-none"
+              />
+            </div>
             <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400 space-y-1">
               <p>Tip: Markdown formatting is {preserveMarkdown ? 'enabled' : 'disabled'}. {
                 preserveMarkdown ?
@@ -517,6 +548,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 min-height: 300px;
                 padding: 1rem;
                 outline: none;
+                scroll-margin-top: var(--blog-toolbar-height, 0px);
               }
               
               .ProseMirror p {
