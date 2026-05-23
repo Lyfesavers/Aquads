@@ -267,6 +267,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
     confirmPassword: ''
   });
   const [previewUrl, setPreviewUrl] = useState(currentUser?.image || '');
+  const [imageError, setImageError] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -290,6 +291,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setError('');
+    setImageError('');
     setSuccess('');
   };
 
@@ -312,14 +314,14 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
       const isValid = await validateImageUrl(url);
       if (isValid) {
         setPreviewUrl(url);
-        setError('');
+        setImageError('');
       } else {
         setPreviewUrl('');
-        setError('Please enter a valid image URL (JPEG, PNG, or GIF)');
+        setImageError('Please enter a valid image URL (JPEG, PNG, or GIF)');
       }
     } else {
       setPreviewUrl('');
-      setError('');
+      setImageError('');
     }
   };
 
@@ -328,17 +330,17 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
     setError('');
     setSuccess('');
 
-    // Validate password fields if any password field is filled
-    if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
-      if (!formData.currentPassword) {
+    const currentPassword = formData.currentPassword.trim();
+    const newPassword = formData.newPassword.trim();
+    const confirmPassword = formData.confirmPassword.trim();
+    const isChangingPassword = newPassword.length > 0;
+
+    if (isChangingPassword) {
+      if (!currentPassword) {
         setError('Current password is required to change password');
         return;
       }
-      if (!formData.newPassword) {
-        setError('New password is required');
-        return;
-      }
-      if (formData.newPassword !== formData.confirmPassword) {
+      if (newPassword !== confirmPassword) {
         setError('New passwords do not match');
         return;
       }
@@ -354,9 +356,9 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
         country: formData.country
       };
 
-      if (formData.currentPassword && formData.newPassword) {
-        updateData.currentPassword = formData.currentPassword;
-        updateData.newPassword = formData.newPassword;
+      if (isChangingPassword) {
+        updateData.currentPassword = currentPassword;
+        updateData.newPassword = newPassword;
       }
 
       const updatedUser = await updateUserProfile(updateData);
@@ -400,7 +402,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
               onChange={handleImageChange}
               className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
             />
-            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+            {imageError && <p className="text-red-400 text-sm mt-2">{imageError}</p>}
           </div>
         </div>
 
@@ -475,6 +477,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                autoComplete="current-password"
                 className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
               />
               <button
@@ -495,6 +498,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                autoComplete="new-password"
                 className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
               />
               <button
@@ -515,6 +519,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                autoComplete="new-password"
                 className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
               />
               <button
@@ -551,12 +556,12 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
           </div>
         </div>
 
-        {/* Navigation Tabs - Only show on larger screens, keep mobile simple */}
+        {/* Navigation Tabs */}
         <div className="max-w-6xl mx-auto w-full mb-6">
-          <div className="hidden lg:flex border-b border-gray-700/50">
+          <div className="flex overflow-x-auto border-b border-gray-700/50">
             <button
               onClick={() => handleTabChange('profile')}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              className={`px-4 lg:px-6 py-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'border-blue-500 text-blue-400'
                   : 'border-transparent text-gray-400 hover:text-white'
@@ -567,7 +572,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
             </button>
             <button
               onClick={() => handleTabChange('security')}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              className={`px-4 lg:px-6 py-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'security'
                   ? 'border-yellow-500 text-yellow-400'
                   : 'border-transparent text-gray-400 hover:text-white'
@@ -579,7 +584,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
             {currentUser?.userType === 'freelancer' && (
               <button
                 onClick={() => handleTabChange('cv')}
-                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                className={`hidden lg:inline-flex px-6 py-3 font-medium transition-colors border-b-2 ${
                   activeTab === 'cv'
                     ? 'border-purple-500 text-purple-400'
                     : 'border-transparent text-gray-400 hover:text-white'
@@ -592,7 +597,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
             {currentUser?.userType === 'freelancer' && (
               <button
                 onClick={() => handleTabChange('onchain')}
-                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                className={`hidden lg:inline-flex px-6 py-3 font-medium transition-colors border-b-2 ${
                   activeTab === 'onchain'
                     ? 'border-green-500 text-green-400'
                     : 'border-transparent text-gray-400 hover:text-white'
@@ -635,12 +640,11 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
 
           {/* Profile and Security tabs - Inside form */}
           {activeTab !== 'cv' && activeTab !== 'onchain' && (
-            <form onSubmit={handleSubmit} className="h-full">
-              {/* Mobile: Show all non-CV tabs as single form, Desktop: Show selected tab */}
+            <form onSubmit={handleSubmit} className="h-full" autoComplete="off">
               <div className="lg:hidden space-y-6">
-                {renderProfileTab()}
-                {renderSecurityTab()}
-                {currentUser?.userType === 'freelancer' && (
+                {activeTab === 'profile' && renderProfileTab()}
+                {activeTab === 'security' && renderSecurityTab()}
+                {currentUser?.userType === 'freelancer' && activeTab === 'profile' && (
                   <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <FaFileAlt className="text-purple-400" />
@@ -656,7 +660,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
                     </button>
                   </div>
                 )}
-                {currentUser?.userType === 'freelancer' && (
+                {currentUser?.userType === 'freelancer' && activeTab === 'profile' && (
                   <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <FaLink className="text-green-400" />
