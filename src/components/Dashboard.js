@@ -3519,6 +3519,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                             ad={ad}
                             embedded
                             onTabSelect={setActiveTab}
+                            onOpenDeepDive={handleOpenProjectDeepDive}
                             showNotification={showNotification}
                           />
                         )}

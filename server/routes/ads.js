@@ -29,6 +29,7 @@ const LAUNCH_CHECKLIST_STEPS = [
   'telegram_bot',
   'discord_bot',
   'chart_link',
+  'deep_dive_form',
   'share_blog',
   'link_in_bio',
   'link_in_bio_socials',
@@ -36,6 +37,7 @@ const LAUNCH_CHECKLIST_STEPS = [
   'mintfunnel_credit',
   'skipper_posts',
   'daily_raids',
+  'free_ama',
   'x_spaces',
   'banner_ad',
   'chrome_extension'
