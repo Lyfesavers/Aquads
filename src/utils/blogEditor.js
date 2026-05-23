@@ -10,16 +10,15 @@ import DOMPurify from 'dompurify';
 
 export const isValidBlogImageUrl = (url) => /^https?:\/\/.+/i.test(url?.trim?.() || '');
 
+const HTML_TAG_PATTERN =
+  /<\s*(p|h[1-6]|ul|ol|li|blockquote|pre|div|table|thead|tbody|tr|td|th|img|a|hr|strong|em|span|br)[\s>/]/i;
+
 export const blogContentHasTable = (content) =>
   /<\s*table[\s>]/i.test(content || '');
 
 export const isHtmlBlogContent = (content) => {
   if (!content || typeof content !== 'string') return false;
-
-  if (blogContentHasTable(content)) return true;
-
-  const trimmed = content.trim();
-  return /<\s*(p|h[1-6]|ul|ol|blockquote|pre|div|table|img|a|hr|strong|em|span)[\s>/]/i.test(trimmed);
+  return HTML_TAG_PATTERN.test(content);
 };
 
 export const isMarkdownBlogContent = (content) => {
@@ -41,6 +40,9 @@ export const isMarkdownBlogContent = (content) => {
     /^\s*```[\s\S]*?```\s*$/m.test(content)
   );
 };
+
+export const getBlogStorageFormat = (content) =>
+  isHtmlBlogContent(content) ? 'html' : 'markdown';
 
 const getBaseBlogExtensions = ({ linkOpenOnClick = false } = {}) => [
   StarterKit.configure({
@@ -98,26 +100,35 @@ const getMarkdownExtension = () =>
     linkify: true,
   });
 
-export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
+export const getBlogHtmlEditorExtensions = ({ linkOpenOnClick = false } = {}) =>
+  getBaseBlogExtensions({ linkOpenOnClick });
+
+export const getBlogMarkdownEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
   ...getBaseBlogExtensions({ linkOpenOnClick }),
   getMarkdownExtension(),
 ];
 
-export const getBlogReaderExtensions = (content, { linkOpenOnClick = false } = {}) => {
-  const extensions = getBaseBlogExtensions({ linkOpenOnClick });
-  extensions.push(getMarkdownExtension());
-  return extensions;
-};
+export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) =>
+  getBlogMarkdownEditorExtensions({ linkOpenOnClick });
+
+export const getBlogEditorExtensionsForFormat = (storageFormat, options = {}) =>
+  storageFormat === 'html'
+    ? getBlogHtmlEditorExtensions(options)
+    : getBlogMarkdownEditorExtensions(options);
+
+export const getBlogReaderExtensions = ({ linkOpenOnClick = false } = {}) =>
+  getBlogMarkdownEditorExtensions({ linkOpenOnClick });
 
 export const sanitizeBlogHtml = (html) =>
   DOMPurify.sanitize(html || '', {
     ADD_ATTR: ['target', 'rel', 'class'],
+    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'img'],
   });
 
-export const serializeBlogEditorContent = (editor, preserveMarkdown) => {
+export const serializeBlogEditorContent = (editor, storageFormat) => {
   const html = editor.getHTML();
 
-  if (blogContentHasTable(html) || !preserveMarkdown) {
+  if (storageFormat === 'html') {
     return html;
   }
 

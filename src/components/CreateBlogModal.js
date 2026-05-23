@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import Modal from './Modal';
 import {
-  getBlogEditorExtensions,
-  isHtmlBlogContent,
+  getBlogEditorExtensionsForFormat,
+  getBlogStorageFormat,
   isValidBlogImageUrl,
   blogContentHasTable,
   serializeBlogEditorContent,
@@ -258,28 +258,45 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     bannerImage: initialData?.bannerImage || ''
   });
   
-  const [preserveMarkdown, setPreserveMarkdown] = useState(
-    initialData?.content ? !isHtmlBlogContent(initialData.content) : true
+  const [storageFormat, setStorageFormat] = useState(() =>
+    getBlogStorageFormat(initialData?.content || '')
   );
+  const [preserveMarkdown, setPreserveMarkdown] = useState(storageFormat === 'markdown');
   const [usesTableStorage, setUsesTableStorage] = useState(
     blogContentHasTable(initialData?.content || '')
   );
+  const storageFormatRef = useRef(storageFormat);
+  storageFormatRef.current = storageFormat;
   const preserveMarkdownRef = useRef(preserveMarkdown);
   preserveMarkdownRef.current = preserveMarkdown;
   const skipPreserveMarkdownSyncRef = useRef(true);
   const toolbarRef = useRef(null);
   const [toolbarHeight, setToolbarHeight] = useState(0);
 
+  const editorExtensions = useMemo(
+    () => getBlogEditorExtensionsForFormat(storageFormat, { linkOpenOnClick: false }),
+    [storageFormat]
+  );
+
   const editor = useEditor({
-    extensions: getBlogEditorExtensions({ linkOpenOnClick: false }),
+    extensions: editorExtensions,
     content: formData.content,
     onUpdate: ({ editor: updatedEditor }) => {
       const html = updatedEditor.getHTML();
       const hasTable = blogContentHasTable(html);
+      let nextFormat = storageFormatRef.current;
+
+      if (hasTable && nextFormat !== 'html') {
+        nextFormat = 'html';
+        storageFormatRef.current = 'html';
+        setStorageFormat('html');
+        setPreserveMarkdown(false);
+      }
+
       setUsesTableStorage(hasTable);
       setFormData(prev => ({
         ...prev,
-        content: serializeBlogEditorContent(updatedEditor, preserveMarkdownRef.current),
+        content: serializeBlogEditorContent(updatedEditor, nextFormat),
       }));
     },
     // Enhanced editor props for better paste handling
@@ -410,7 +427,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
         return false;
       },
     },
-  });
+  }, [editorExtensions]);
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
@@ -433,9 +450,12 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
       return;
     }
 
+    const nextFormat = preserveMarkdown ? 'markdown' : 'html';
+    storageFormatRef.current = nextFormat;
+    setStorageFormat(nextFormat);
     setFormData(prev => ({
       ...prev,
-      content: serializeBlogEditorContent(editor, preserveMarkdown),
+      content: serializeBlogEditorContent(editor, nextFormat),
     }));
   }, [editor, preserveMarkdown]);
 
@@ -447,7 +467,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     const content = editor
-      ? serializeBlogEditorContent(editor, preserveMarkdownRef.current)
+      ? serializeBlogEditorContent(editor, storageFormatRef.current)
       : formData.content;
     onSubmit({ ...formData, content });
   }, [editor, formData, onSubmit]);
@@ -510,10 +530,14 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                   <span className="text-xs text-gray-400">Format Preservation:</span>
                   <button
                     type="button"
-                    onClick={() => setPreserveMarkdown(!preserveMarkdown)}
+                    disabled={storageFormat === 'html' || usesTableStorage}
+                    onClick={() => {
+                      if (storageFormat === 'html' || usesTableStorage) return;
+                      setPreserveMarkdown(!preserveMarkdown);
+                    }}
                     className={`px-2 py-1 text-xs rounded text-white ${
                       preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
-                    }`}
+                    } ${storageFormat === 'html' || usesTableStorage ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {preserveMarkdown ? 'Markdown Enabled' : 'Rich Text Mode'}
                   </button>
@@ -546,7 +570,10 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
               }</p>
               <p>Use the Image and Table toolbar buttons to insert body images and comparison tables. Pasted tables are not supported.</p>
               {usesTableStorage && (
-                <p className="text-amber-300">This post contains a table and will be saved in Rich Text (HTML) format.</p>
+                <p className="text-amber-300">This post contains a table and stays in Rich Text (HTML) format.</p>
+              )}
+              {storageFormat === 'html' && !usesTableStorage && (
+                <p className="text-amber-300">This post uses Rich Text (HTML) storage. Markdown mode is disabled to protect formatting.</p>
               )}
             </div>
             <style jsx global>{`

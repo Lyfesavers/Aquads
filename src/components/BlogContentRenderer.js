@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import DOMPurify from 'dompurify';
 import {
   getBlogReaderExtensions,
   isHtmlBlogContent,
@@ -9,8 +8,8 @@ import {
 
 const MarkdownBlogRenderer = ({ content, className }) => {
   const readerExtensions = useMemo(
-    () => getBlogReaderExtensions(content, { linkOpenOnClick: true }),
-    [content]
+    () => getBlogReaderExtensions({ linkOpenOnClick: true }),
+    []
   );
 
   const editor = useEditor({
