@@ -39,6 +39,43 @@ const originalFetch = window.fetch;
 // Refresh token state management
 let isRefreshing = false;
 let refreshPromise = null;
+let sessionLogoutFired = false;
+
+/** Paths that may return 401 without meaning the stored session is dead (e.g. wrong password). */
+const AUTH_EXEMPT_API_PATHS = [
+  '/users/login',
+  '/users/register',
+  '/users/login/google',
+  '/users/refresh-token',
+  '/users/request-password-reset',
+  '/users/reset-password',
+];
+
+const isAuthExemptApiUrl = (urlString) =>
+  AUTH_EXEMPT_API_PATHS.some((path) => urlString.includes(path));
+
+/** Decode JWT exp (ms). Returns null if missing or invalid. */
+export const getJwtExpiryMs = (token) => {
+  if (!token || typeof token !== 'string') return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+};
+
+/** Clear persisted auth and notify React to log out (once per page load). */
+export const forceSessionLogout = (reason = 'expired') => {
+  if (sessionLogoutFired) return;
+  sessionLogoutFired = true;
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('token');
+  socket.auth = {};
+  socket.disconnect();
+  sessionStorage.setItem('aquads_session_expired', reason);
+  window.dispatchEvent(new CustomEvent('sessionExpired', { detail: { reason } }));
+};
 
 // Refresh access token using refresh token
 const refreshAccessToken = async () => {
@@ -98,9 +135,7 @@ const refreshAccessToken = async () => {
       return data.token;
     } catch (error) {
       logger.error('Token refresh error:', error);
-      // Clear user data on refresh failure
-      localStorage.removeItem('currentUser');
-      socket.disconnect();
+      forceSessionLogout('refresh_failed');
       throw error;
     } finally {
       isRefreshing = false;
@@ -151,28 +186,31 @@ window.fetch = async function(url, options = {}) {
   // Make the request
   let response = await originalFetch(url, { ...options, headers });
 
-  // If 401 and we have a refresh token, try to refresh
-  if (response.status === 401) {
+  const hadAuth = Boolean(headers['Authorization']);
+
+  // If 401 on an authenticated API call, try refresh; otherwise end the session.
+  if (response.status === 401 && hadAuth && !isAuthExemptApiUrl(urlString)) {
     try {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
         const user = JSON.parse(savedUser);
-        // Only try refresh if we have a refresh token (new users)
         if (user.refreshToken) {
           try {
             const newToken = await refreshAccessToken();
-            // Retry original request with new token
             headers['Authorization'] = `Bearer ${newToken}`;
             response = await originalFetch(url, { ...options, headers });
           } catch (refreshError) {
-            // If refresh fails, return original 401 response
             return response;
           }
         }
       }
+      if (response.status === 401) {
+        forceSessionLogout('unauthorized');
+      }
     } catch (error) {
-      // Return original 401 response on error
-      return response;
+      if (response.status === 401) {
+        forceSessionLogout('unauthorized');
+      }
     }
   }
 
@@ -216,15 +254,20 @@ axios.interceptors.response.use(
               return axios(originalRequest); // Retry the original request
             } catch (refreshError) {
               logger.error('Failed to refresh token during axios intercept:', refreshError);
-              // If refresh fails, clear user data
-              localStorage.removeItem('currentUser');
-              socket.disconnect();
               return Promise.reject(error);
             }
+          } else {
+            forceSessionLogout('unauthorized');
           }
         }
       } catch (err) {
         logger.error('Error in axios response interceptor:', err);
+      }
+      if (error.response?.status === 401) {
+        const reqUrl = originalRequest?.url || '';
+        if (!isAuthExemptApiUrl(reqUrl)) {
+          forceSessionLogout('unauthorized');
+        }
       }
     }
     
@@ -508,7 +551,16 @@ export const verifyToken = async (token) => {
     const serverUser = data && data.user;
 
     if (serverUser && serverUser.userId) {
-      return { ...serverUser, token };
+      // Interceptor may have refreshed tokens in localStorage during this call.
+      let activeToken = token;
+      try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.token) activeToken = parsed.token;
+        }
+      } catch (_) {}
+      return { ...serverUser, token: activeToken };
     }
 
     return false;
@@ -754,6 +806,37 @@ setInterval(async () => {
     logger.error('Health check failed:', error);
   }
 }, 30000); // Check every 30 seconds
+
+// Proactively refresh access token before it expires while the tab is open.
+const PROACTIVE_REFRESH_LEAD_MS = 2 * 60 * 1000; // refresh ~2 min before expiry
+
+const maybeProactiveTokenRefresh = async () => {
+  if (document.visibilityState === 'hidden' || isRefreshing) return;
+
+  try {
+    const savedUser = localStorage.getItem('currentUser');
+    if (!savedUser) return;
+
+    const user = JSON.parse(savedUser);
+    if (!user.token || !user.refreshToken) return;
+
+    const expiresAt = getJwtExpiryMs(user.token);
+    if (!expiresAt) return;
+
+    if (expiresAt - Date.now() <= PROACTIVE_REFRESH_LEAD_MS) {
+      await refreshAccessToken();
+    }
+  } catch (error) {
+    logger.error('Proactive token refresh failed:', error);
+  }
+};
+
+setInterval(maybeProactiveTokenRefresh, 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    maybeProactiveTokenRefresh();
+  }
+});
 
 // Add these review-related functions
 export const submitReview = async (reviewData, token) => {

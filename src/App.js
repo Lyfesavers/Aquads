@@ -14,7 +14,8 @@ import {
   pingServer,
   API_URL,
   reconnectSocket,
-  trackClick
+  trackClick,
+  forceSessionLogout
 } from './services/api';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
@@ -1223,6 +1224,14 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const reason = sessionStorage.getItem('aquads_session_expired');
+    if (reason) {
+      sessionStorage.removeItem('aquads_session_expired');
+      showNotification('Your session expired. Please log in again.', 'info');
+    }
+  }, []);
+
   // Function to check if user has an unbumped ad and show reminder
   const checkForUnbumpedAd = (user) => {
     if (!user || !ads.length) return;
@@ -1318,6 +1327,15 @@ function App() {
     // The next login behaves exactly like a first login.
     window.location.replace('/home');
   };
+
+  // When JWT refresh fails or access expires without recovery, force a clean logout.
+  useEffect(() => {
+    const onSessionExpired = () => {
+      handleLogout();
+    };
+    window.addEventListener('sessionExpired', onSessionExpired);
+    return () => window.removeEventListener('sessionExpired', onSessionExpired);
+  }, []);
 
     // Open MintFunnel platform in full-screen popup
   const openMintFunnelPlatform = () => {
@@ -1830,7 +1848,7 @@ function App() {
             let merged = {
               ...prev,
               ...freshUser,
-              token: prev.token,
+              token: freshUser.token || prev.token,
               refreshToken: prev.refreshToken
             };
             if (Date.now() < linkInBioProtectUntilRef.current) {
@@ -1842,7 +1860,7 @@ function App() {
             return prev;
           });
         } else if (freshUser === false) {
-          setCurrentUser(null);
+          forceSessionLogout('expired');
         }
       } catch (error) {
         logger.error('Periodic token validation failed:', error);
