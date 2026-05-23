@@ -1,52 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import {
-  getBlogEditorExtensions,
-  isHtmlBlogContent,
-} from '../utils/blogEditor';
+import { getBlogReaderExtensions } from '../utils/blogEditor';
 
 const BlogContentRenderer = ({ content, className = 'prose prose-invert prose-lg max-w-none blog-content' }) => {
-  const [ready, setReady] = useState(false);
-  const editorKey = useRef(Math.random().toString(36).substring(7)).current;
-  const useHtml = isHtmlBlogContent(content);
+  const readerExtensions = useMemo(
+    () => getBlogReaderExtensions(content, { linkOpenOnClick: true }),
+    [content]
+  );
 
   const editor = useEditor({
-    extensions: getBlogEditorExtensions({ linkOpenOnClick: true }),
+    extensions: readerExtensions,
     content: content || '',
     editable: false,
-    onCreate({ editor: createdEditor }) {
-      if (!content) {
-        setReady(true);
-        return;
-      }
-
-      try {
-        createdEditor.commands.setContent(content, false);
-      } catch (err) {
-        console.error('Error rendering blog content:', err);
-      }
-
-      setReady(true);
-    },
-  }, [content, useHtml]);
+  }, [content, readerExtensions]);
 
   useEffect(() => {
     if (!editor || content === undefined) return;
 
-    try {
-      editor.commands.setContent(content, false);
-    } catch (err) {
-      console.error('Error updating blog content:', err);
-    }
+    editor.commands.setContent(content, false);
   }, [editor, content]);
 
-  if (!editor || !ready) {
+  if (!editor) {
     return <div className="animate-pulse bg-gray-700 h-24 rounded" />;
   }
 
   return (
     <EditorContent
-      key={`${editorKey}-${content?.slice?.(0, 24) || 'empty'}`}
       editor={editor}
       className={className}
     />

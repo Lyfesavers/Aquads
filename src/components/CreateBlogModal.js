@@ -266,6 +266,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   );
   const preserveMarkdownRef = useRef(preserveMarkdown);
   preserveMarkdownRef.current = preserveMarkdown;
+  const skipPreserveMarkdownSyncRef = useRef(true);
   const toolbarRef = useRef(null);
   const [toolbarHeight, setToolbarHeight] = useState(0);
 
@@ -426,6 +427,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
 
   useEffect(() => {
     if (!editor) return;
+
+    if (skipPreserveMarkdownSyncRef.current) {
+      skipPreserveMarkdownSyncRef.current = false;
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,

@@ -18,7 +18,7 @@ export const isHtmlBlogContent = (content) => {
   if (blogContentHasTable(content)) return true;
 
   const trimmed = content.trim();
-  return /^<\s*(p|h[1-6]|ul|ol|blockquote|pre|div|table|img)[\s>]/i.test(trimmed);
+  return /<\s*(p|h[1-6]|ul|ol|blockquote|pre|div|table|img|a|hr|strong|em|span)[\s>/]/i.test(trimmed);
 };
 
 export const isMarkdownBlogContent = (content) => {
@@ -41,7 +41,7 @@ export const isMarkdownBlogContent = (content) => {
   );
 };
 
-export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
+const getBaseBlogExtensions = ({ linkOpenOnClick = false } = {}) => [
   StarterKit.configure({
     bulletList: {
       keepMarks: true,
@@ -87,13 +87,30 @@ export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
   TableRow,
   TableHeader,
   TableCell,
+];
+
+const getMarkdownExtension = () =>
   Markdown.configure({
     html: false,
     tightLists: true,
     bulletListMarker: '-',
     linkify: true,
-  }),
+  });
+
+export const getBlogEditorExtensions = ({ linkOpenOnClick = false } = {}) => [
+  ...getBaseBlogExtensions({ linkOpenOnClick }),
+  getMarkdownExtension(),
 ];
+
+export const getBlogReaderExtensions = (content, { linkOpenOnClick = false } = {}) => {
+  const extensions = getBaseBlogExtensions({ linkOpenOnClick });
+
+  if (!isHtmlBlogContent(content)) {
+    extensions.push(getMarkdownExtension());
+  }
+
+  return extensions;
+};
 
 export const serializeBlogEditorContent = (editor, preserveMarkdown) => {
   const html = editor.getHTML();
@@ -102,5 +119,10 @@ export const serializeBlogEditorContent = (editor, preserveMarkdown) => {
     return html;
   }
 
-  return editor.storage.markdown.getMarkdown();
+  const markdown = editor.storage.markdown?.getMarkdown?.();
+  if (typeof markdown === 'string') {
+    return markdown;
+  }
+
+  return html;
 };
