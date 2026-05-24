@@ -1,0 +1,69 @@
+/* Seamless infinite marquee for the "As Seen On" press strip.
+   Pattern: two identical groups laid side-by-side, each min-w-full,
+   then the whole track is translated left by one group's width
+   (50% of total) so the second group seamlessly takes the first's place. */
+
+.as-seen-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.as-seen-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: asSeenScroll var(--as-seen-duration, 35s) linear infinite;
+  will-change: transform;
+}
+
+.as-seen-marquee__group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 3rem;
+  padding-right: 3rem;
+}
+
+@media (min-width: 768px) {
+  .as-seen-marquee__group {
+    gap: 4.5rem;
+    padding-right: 4.5rem;
+  }
+}
+
+@keyframes asSeenScroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.as-seen-marquee:hover .as-seen-marquee__track,
+.as-seen-marquee:focus-within .as-seen-marquee__track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-seen-marquee__track {
+    animation: none;
+    transform: none;
+    justify-content: center;
+    width: 100%;
+  }
+}
