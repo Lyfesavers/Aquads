@@ -37,14 +37,10 @@ const PRESS_LOGOS = [
   {
     id: 'timestabloid',
     name: 'Times Tabloid',
-    logo: '/Times-Tabloid-for-Cryptocurrency-and-Blockchain.png',
+    logo: '/Times-Tabloid-Header-Mobile.png',
     url: 'https://timestabloid.com/aquads-launches-post-launch-growth-stack-for-crypto-projects/',
     alt: 'Aquads featured on Times Tabloid',
-    heightClass: 'h-7 md:h-9',
-    // PNG ships with a white background — invert so the white drops to black
-    // (matches the page) and the dark wordmark shows as white. Color hover is
-    // disabled for inverted logos since inverted hues look broken.
-    invertOnDark: true,
+    heightClass: 'h-8 md:h-10',
   },
 ];
 
