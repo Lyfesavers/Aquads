@@ -31,22 +31,31 @@
 }
 
 .as-seen-marquee__group {
-  display: flex;
+  /* Grid (not flex/space-around) so every logo gets an identical slot width,
+     regardless of its natural pixel width. With varied logo widths flex
+     space-around makes gaps look uneven; equal columns guarantees visual rhythm. */
+  display: grid;
+  grid-template-columns: repeat(var(--press-count, 4), 1fr);
   align-items: center;
-  justify-content: space-around;
+  justify-items: center;
   flex-shrink: 0;
   /* min-width: 100vw (not 100%) — each group must fill exactly one viewport so
      translating the track by -50% slides the duplicate group precisely into the
      first one's position. Using % here would be circular vs. the track's
      max-content width and the loop would visibly snap. */
   min-width: 100vw;
-  gap: 2.5rem;
   padding: 0 1.5rem;
+}
+
+.as-seen-marquee__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .as-seen-marquee__group {
-    gap: 4rem;
     padding: 0 2.5rem;
   }
 }

@@ -3,7 +3,10 @@ import './AsSeenOn.css';
 
 // Press / media mentions strip.
 // To add a new outlet: drop the logo file into /public and append an entry below.
-// Keep logos roughly the same vertical mass; the strip auto-sizes them by height.
+// - heightClass: tune so the visible wordmark looks the same optical height as the others
+//   (compensate for empty padding baked into the source image).
+// - invertOnDark: set true for logos with white/light backgrounds or dark-only ink —
+//   applies CSS invert so the logo reads as white-on-transparent over our dark page.
 const PRESS_LOGOS = [
   {
     id: 'mintfunnel',
@@ -11,7 +14,6 @@ const PRESS_LOGOS = [
     logo: '/Mintfunnel-Logo-Dark-350-1-r8rn1gxsqs7pcj7dypmjmf6t9g4s1ss44pk8sp3no0.webp',
     url: 'https://news.mintfunnel.co/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain/',
     alt: 'Aquads featured on Mintfunnel Newsroom',
-    // Optional per-logo height override (Tailwind class). Defaults to h-8 md:h-10.
     heightClass: 'h-7 md:h-9',
   },
   {
@@ -28,7 +30,9 @@ const PRESS_LOGOS = [
     logo: '/bittimes.webp',
     url: 'https://thebittimes.com/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain-tbt126930.html',
     alt: 'Aquads featured on TheBitTimes',
-    heightClass: 'h-6 md:h-8',
+    // Source file has a lot of empty padding — push the rendered height up so the
+    // wordmark itself matches the optical size of the other logos.
+    heightClass: 'h-10 md:h-14',
   },
   {
     id: 'timestabloid',
@@ -37,26 +41,38 @@ const PRESS_LOGOS = [
     url: 'https://timestabloid.com/aquads-launches-post-launch-growth-stack-for-crypto-projects/',
     alt: 'Aquads featured on Times Tabloid',
     heightClass: 'h-7 md:h-9',
+    // PNG ships with a white background — invert so the white drops to black
+    // (matches the page) and the dark wordmark shows as white. Color hover is
+    // disabled for inverted logos since inverted hues look broken.
+    invertOnDark: true,
   },
 ];
 
-const LogoItem = ({ item }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label={`Read article on ${item.name}`}
-    className="group inline-flex items-center shrink-0"
-  >
-    <img
-      src={item.logo}
-      alt={item.alt || item.name}
-      loading="lazy"
-      decoding="async"
-      className={`${item.heightClass || 'h-6 md:h-8'} w-auto max-w-[160px] md:max-w-[200px] object-contain opacity-70 grayscale transition duration-300 ease-out group-hover:opacity-100 group-hover:grayscale-0`}
-    />
-  </a>
-);
+const LogoItem = ({ item }) => {
+  const baseClass = `${item.heightClass || 'h-6 md:h-8'} w-auto max-w-[160px] md:max-w-[200px] object-contain transition duration-300 ease-out`;
+  // Inverted logos stay inverted on hover (color-flipped versions look wrong).
+  const colorClass = item.invertOnDark
+    ? 'invert grayscale opacity-70 group-hover:opacity-100'
+    : 'opacity-70 grayscale group-hover:opacity-100 group-hover:grayscale-0';
+
+  return (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Read article on ${item.name}`}
+      className="group inline-flex items-center justify-center"
+    >
+      <img
+        src={item.logo}
+        alt={item.alt || item.name}
+        loading="lazy"
+        decoding="async"
+        className={`${baseClass} ${colorClass}`}
+      />
+    </a>
+  );
+};
 
 const AsSeenOn = () => {
   if (!PRESS_LOGOS.length) return null;
@@ -78,12 +94,15 @@ const AsSeenOn = () => {
 
       <div
         className="as-seen-marquee"
-        style={{ '--as-seen-duration': `${durationSeconds}s` }}
+        style={{
+          '--as-seen-duration': `${durationSeconds}s`,
+          '--press-count': PRESS_LOGOS.length,
+        }}
       >
         <div className="as-seen-marquee__track">
           <ul className="as-seen-marquee__group list-none m-0 p-0">
             {PRESS_LOGOS.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="as-seen-marquee__cell">
                 <LogoItem item={item} />
               </li>
             ))}
@@ -93,7 +112,7 @@ const AsSeenOn = () => {
             aria-hidden="true"
           >
             {PRESS_LOGOS.map((item) => (
-              <li key={`dup-${item.id}`}>
+              <li key={`dup-${item.id}`} className="as-seen-marquee__cell">
                 <LogoItem item={item} />
               </li>
             ))}
