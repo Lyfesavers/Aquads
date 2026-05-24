@@ -4049,6 +4049,14 @@ const LaunchStackPillars = () => {
     teal: 'border-teal-500/30 hover:border-teal-400/50 from-teal-500/10',
   };
 
+  // Brick-solid step number color per accent — saturated fill, no gradient
+  const stepNumberClasses = {
+    cyan: 'text-cyan-400',
+    sky: 'text-sky-400',
+    purple: 'text-purple-400',
+    teal: 'text-teal-400',
+  };
+
   return (
     <section className="relative w-full py-12 md:py-20 px-4 md:px-6">
       <div className="max-w-6xl mx-auto">
@@ -4089,11 +4097,14 @@ const LaunchStackPillars = () => {
               transition={{ delay: index * 0.08, duration: 0.5 }}
               whileHover={{ y: -4 }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              <div className="flex items-end justify-between mb-3 md:mb-4">
+                <span
+                  className={`pillar-step-number font-display font-black leading-none tracking-tighter text-5xl sm:text-6xl md:text-7xl ${stepNumberClasses[pillar.accent]}`}
+                  aria-hidden
+                >
                   {pillar.step}
                 </span>
-                <span className="text-2xl" aria-hidden>{pillar.icon}</span>
+                <span className="text-2xl md:text-3xl" aria-hidden>{pillar.icon}</span>
               </div>
               <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{pillar.subtitle}</p>
               <h3 className="text-lg md:text-xl font-bold text-white font-display mb-2">{pillar.title}</h3>

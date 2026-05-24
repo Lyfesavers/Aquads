@@ -3,6 +3,17 @@
 /* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
+/* Brick-solid pillar step numbers — chiseled, dense, equal-width digit blocks */
+.pillar-step-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on, 'lnum' on;
+  letter-spacing: -0.06em;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.35),
+    0 0 18px currentColor;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
 /* Noise texture overlay */
 .noise-overlay {
   position: fixed;
