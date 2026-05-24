@@ -4789,9 +4789,6 @@ const LandingPage = () => {
         </div>
       </motion.section>
 
-      {/* As Seen On — press / media mentions */}
-      <AsSeenOn />
-
       {/* Tagline Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
         <div className="max-w-5xl mx-auto text-center">
@@ -4861,6 +4858,9 @@ const LandingPage = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* As Seen On — press / media mentions */}
+      <AsSeenOn />
 
       <LaunchStackPillars />
 

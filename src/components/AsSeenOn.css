@@ -33,15 +33,17 @@
 .as-seen-marquee__group {
   display: flex;
   align-items: center;
+  justify-content: space-around;
   flex-shrink: 0;
-  gap: 3rem;
-  padding-right: 3rem;
+  min-width: 100%;
+  gap: 2.5rem;
+  padding: 0 1.5rem;
 }
 
 @media (min-width: 768px) {
   .as-seen-marquee__group {
-    gap: 4.5rem;
-    padding-right: 4.5rem;
+    gap: 4rem;
+    padding: 0 2.5rem;
   }
 }
 
