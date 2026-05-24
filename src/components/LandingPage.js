@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import './LandingPage.css';
 import HowItWorksSection from './HowItWorksSection';
 import EtmTagline from './EtmTagline';
+import AsSeenOn from './AsSeenOn';
 
 // Floating particle component
 const FloatingParticle = ({ delay, size, color, x, y }) => (
@@ -4787,6 +4788,9 @@ const LandingPage = () => {
           </motion.div>
         </div>
       </motion.section>
+
+      {/* As Seen On — press / media mentions */}
+      <AsSeenOn />
 
       {/* Tagline Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
