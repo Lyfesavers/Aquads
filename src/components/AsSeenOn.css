@@ -35,7 +35,11 @@
   align-items: center;
   justify-content: space-around;
   flex-shrink: 0;
-  min-width: 100%;
+  /* min-width: 100vw (not 100%) — each group must fill exactly one viewport so
+     translating the track by -50% slides the duplicate group precisely into the
+     first one's position. Using % here would be circular vs. the track's
+     max-content width and the loop would visibly snap. */
+  min-width: 100vw;
   gap: 2.5rem;
   padding: 0 1.5rem;
 }
