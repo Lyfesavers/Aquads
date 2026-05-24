@@ -22,6 +22,7 @@ import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
 import ProjectLaunchChecklist from './ProjectLaunchChecklist';
+import FreelancerLaunchChecklist from './FreelancerLaunchChecklist';
 
 const LinkBioPageAds = ({ userId }) => {
   const [pendingAds, setPendingAds] = useState([]);
@@ -3394,7 +3395,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                 </div>
               ) : (
                 <>
-              {/* My Project Bubble */}
+              {/* Freelancer onboarding checklist (only for freelancer accounts) */}
+              {currentUser?.userType === 'freelancer' && (
+                <FreelancerLaunchChecklist
+                  currentUser={currentUser}
+                  showNotification={showNotification}
+                />
+              )}
+
+              {/* My Project Bubble (hidden for freelancers with no ads to avoid an empty section) */}
+              {!(currentUser?.userType === 'freelancer' && userAds.length === 0) && (
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">
                   My Project Bubble
@@ -3529,6 +3539,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                   </div>
                 )}
               </div>
+              )}
 
                   {renderAffiliateEarnings()}
 

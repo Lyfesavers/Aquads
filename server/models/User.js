@@ -723,6 +723,13 @@ const userSchema = new Schema({
       type: Date,
       default: null
     }
+  },
+
+  // Freelancer onboarding checklist (honor-system step toggles + dismiss)
+  // Mirrors Ad.launchChecklist but for freelancer accounts on the dashboard Main tab.
+  freelancerLaunchChecklist: {
+    completedSteps: { type: [String], default: [] },
+    dismissedAt: { type: Date, default: null }
   }
 });
 

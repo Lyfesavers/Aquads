@@ -51,6 +51,20 @@ async function findUserForPublicLinkInBio(usernameParam) {
   return doc;
 }
 
+// Valid step IDs for the freelancer dashboard launch checklist (honor-system).
+const FREELANCER_LAUNCH_CHECKLIST_STEPS = [
+  'complete_cv',
+  'mint_onchain_resume',
+  'skill_test',
+  'workshop',
+  'first_service',
+  'share_services',
+  'browse_jobs',
+  'visit_learn',
+  'read_docs',
+  'read_affiliate_docs'
+];
+
 function sanitizeBioLinkItems(raw) {
   const arr = Array.isArray(raw) ? raw : [];
   return arr.slice(0, 30).map((item, i) => {
@@ -641,6 +655,72 @@ router.get('/profile', auth, async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching user profile' });
+  }
+});
+
+// Freelancer launch checklist (honor-system step toggles + dismiss)
+// Read current checklist state for the authenticated user.
+router.get('/profile/launch-checklist', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .select('freelancerLaunchChecklist')
+      .lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const lc = user.freelancerLaunchChecklist || {};
+    res.json({
+      completedSteps: Array.isArray(lc.completedSteps) ? lc.completedSteps : [],
+      dismissedAt: lc.dismissedAt || null
+    });
+  } catch (error) {
+    console.error('Launch checklist read error:', error);
+    res.status(500).json({ error: 'Failed to load checklist' });
+  }
+});
+
+// Update freelancer launch checklist (completedSteps array and/or dismiss).
+router.patch('/profile/launch-checklist', auth, async (req, res) => {
+  try {
+    const { completedSteps, dismiss } = req.body || {};
+    const update = {};
+
+    if (completedSteps !== undefined) {
+      if (!Array.isArray(completedSteps)) {
+        return res.status(400).json({ error: 'completedSteps must be an array' });
+      }
+      const invalid = completedSteps.filter(
+        (s) => typeof s !== 'string' || !FREELANCER_LAUNCH_CHECKLIST_STEPS.includes(s)
+      );
+      if (invalid.length > 0) {
+        return res.status(400).json({ error: 'Invalid checklist step(s)', invalid });
+      }
+      // Deduplicate while preserving order
+      update['freelancerLaunchChecklist.completedSteps'] = Array.from(new Set(completedSteps));
+    }
+
+    if (dismiss === true) {
+      update['freelancerLaunchChecklist.dismissedAt'] = new Date();
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No checklist updates provided' });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: update },
+      { new: true }
+    ).select('freelancerLaunchChecklist').lean();
+
+    if (!updated) return res.status(404).json({ error: 'User not found' });
+
+    const lc = updated.freelancerLaunchChecklist || {};
+    res.json({
+      completedSteps: Array.isArray(lc.completedSteps) ? lc.completedSteps : [],
+      dismissedAt: lc.dismissedAt || null
+    });
+  } catch (error) {
+    console.error('Launch checklist update error:', error);
+    res.status(500).json({ error: 'Failed to save checklist' });
   }
 });
 

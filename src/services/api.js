@@ -425,6 +425,39 @@ export const updateAdLaunchChecklist = async (id, { completedSteps, dismiss } = 
   return response.json();
 };
 
+// Read freelancer launch checklist for current user (honor-system)
+export const getFreelancerLaunchChecklist = async () => {
+  const response = await fetch(`${API_URL}/users/profile/launch-checklist`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    }
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to load checklist');
+  }
+  return response.json();
+};
+
+// Update freelancer launch checklist for current user (honor-system)
+export const updateFreelancerLaunchChecklist = async ({ completedSteps, dismiss } = {}) => {
+  const response = await fetch(`${API_URL}/users/profile/launch-checklist`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ completedSteps, dismiss })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update checklist');
+  }
+  return response.json();
+};
+
 // Update ad position only (no auth required)
 export const updateAdPosition = async (id, x, y) => {
   const response = await fetch(`${API_URL}/ads/${id}/position`, {

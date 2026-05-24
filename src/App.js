@@ -2162,9 +2162,23 @@ function App() {
       if (navigateRef.current) navigateRef.current('/dashboard');
     };
     
+    // Open the profile modal at a specific tab from anywhere via a window event.
+    // Used by the freelancer launch checklist to jump straight into the CV editor.
+    const handleOpenProfileModal = (event) => {
+      const tab = event?.detail?.tab || 'profile';
+      if (currentUser) {
+        setProfileModalInitialTab(tab);
+        setShowProfileModal(true);
+      } else {
+        // Not logged in — defer until login completes (handled in a separate effect).
+        try { localStorage.setItem('aquads_pending_profile_tab', tab); } catch (_) {}
+      }
+    };
+
     // Add event listeners
     window.addEventListener('openDashboardWithBooking', handleOpenDashboardWithBooking);
     window.addEventListener('openDashboard', handleOpenDashboard);
+    window.addEventListener('aquads:open-profile-modal', handleOpenProfileModal);
     
     // Add global function to show dashboard (for use by other components)
     window.showDashboard = (tab, bookingId) => {
@@ -2207,6 +2221,7 @@ function App() {
     return () => {
       window.removeEventListener('openDashboardWithBooking', handleOpenDashboardWithBooking);
       window.removeEventListener('openDashboard', handleOpenDashboard);
+      window.removeEventListener('aquads:open-profile-modal', handleOpenProfileModal);
       delete window.showDashboard;
     };
   }, [currentUser]);
