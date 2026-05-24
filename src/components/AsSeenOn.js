@@ -22,6 +22,22 @@ const PRESS_LOGOS = [
     alt: 'Aquads featured on Bitcolumnist',
     heightClass: 'h-5 md:h-7',
   },
+  {
+    id: 'thebittimes',
+    name: 'TheBitTimes',
+    logo: '/bittimes.webp',
+    url: 'https://thebittimes.com/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain-tbt126930.html',
+    alt: 'Aquads featured on TheBitTimes',
+    heightClass: 'h-6 md:h-8',
+  },
+  {
+    id: 'timestabloid',
+    name: 'Times Tabloid',
+    logo: '/Times-Tabloid-for-Cryptocurrency-and-Blockchain.png',
+    url: 'https://timestabloid.com/aquads-launches-post-launch-growth-stack-for-crypto-projects/',
+    alt: 'Aquads featured on Times Tabloid',
+    heightClass: 'h-7 md:h-9',
+  },
 ];
 
 const LogoItem = ({ item }) => (
