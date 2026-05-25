@@ -64,7 +64,10 @@ const PRESS_LOGOS = [
     logo: '/mexc-global-logo-png_seeklogo-463569.png',
     url: 'https://www.mexc.co/fr/news/1109803',
     alt: 'Aquads featured on MEXC',
-    heightClass: 'h-8 md:h-10',
+    // Source file is near-square with significant padding around the wordmark,
+    // so the rendered height must be pushed well above the others for the visible
+    // logo to match their optical size.
+    heightClass: 'h-14 md:h-20',
     // PNG ships with a white background and black wordmark — invert so the white
     // drops out and the wordmark reads as white-on-transparent over the dark page.
     invertOnDark: true,
