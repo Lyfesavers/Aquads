@@ -58,6 +58,7 @@ const ProjectInfo = lazy(() => import('./components/ProjectInfo'));
 const FreelancerBenefits = lazy(() => import('./components/FreelancerBenefits'));
 const BookingConversationPage = lazy(() => import('./components/BookingConversationPage'));
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
@@ -2648,6 +2649,26 @@ function App() {
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
       <Router>
+        <Helmet>
+          {/*
+            Site-wide default meta tags. Any page that sets its own <Helmet>
+            (LandingPage, BlogPage, HowTo, Marketplace, AquaSwap, etc.) overrides
+            these by property/name. Pages without their own Helmet inherit these
+            defaults. Keeping defaults here (instead of in public/index.html)
+            prevents duplicate og:* / twitter:* tags appearing in prerendered HTML
+            served to search/social crawlers.
+          */}
+          <title>Aquads — The launch stack for new crypto projects</title>
+          <meta name="description" content="Aquads is the launch stack for new crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
+          <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
+          <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+          <meta property="og:image" content="https://www.aquads.xyz/METALOGO.png" />
+          <meta property="og:url" content="https://www.aquads.xyz/" />
+          <meta property="og:type" content="website" />
+          <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
+          <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+          <meta name="twitter:image" content="https://www.aquads.xyz/METALOGO.png" />
+        </Helmet>
         <PWAInstallProvider>
         <NavigationListener 
           onNavigate={() => {

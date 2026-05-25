@@ -36,6 +36,25 @@ import {
 const MARKET_NEWS_PAGE_SIZE = 20;
 const FREE_COURSES_PAGE_SIZE = 24;
 
+// Mirror of the slug helper used in BlogPage / BlogList / sitemap so that any
+// legacy "/learn?blogId=X" URL can be migrated to the canonical
+// "/learn/{slug}-{id}" form without a network round-trip beyond fetching the
+// blog itself. Keeping the same rules (lowercase, hyphen-separated, max 50)
+// guarantees the resulting URL matches the one in the sitemap.
+const createBlogSlug = (title) => {
+  const slug = (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  const maxLength = 50;
+  if (slug.length > maxLength) {
+    const truncated = slug.substring(0, maxLength);
+    const lastDash = truncated.lastIndexOf('-');
+    return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
+  }
+  return slug;
+};
+
 // Side panel definition for the Learn page. Order here = order in the sidebar.
 const LEARN_TABS = [
   {
@@ -338,7 +357,36 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     fetchBlogs();
   }, [location, navigate]);
 
+  // Legacy URL migration: if someone hits "/learn?blogId=X" (an old share URL
+  // pattern that used to be served by an inline script in index.html), fetch
+  // the blog, redirect to the canonical "/learn/{slug}-{id}" so Google and
+  // the user end up on the indexable URL with proper meta tags. Uses
+  // replaceState so it doesn't pollute browser history.
+  useEffect(() => {
+    if (!location.pathname.startsWith('/learn')) return;
+    const params = new URLSearchParams(location.search);
+    const legacyBlogId = params.get('blogId');
+    if (!legacyBlogId) return;
 
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${API_URL}/blogs/${legacyBlogId}`);
+        if (!response.ok) return;
+        const blog = await response.json();
+        if (cancelled || !blog || !blog._id) return;
+        const slug = createBlogSlug(blog.title) || 'post';
+        navigate(`/learn/${slug}-${blog._id}`, { replace: true });
+      } catch (err) {
+        // Silently fall back to the Learn hub if the API call fails — the
+        // user still sees a valid page rather than a broken redirect loop.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, location.search, navigate]);
 
   const fetchBlogs = async () => {
     setLoading(true);
@@ -1095,6 +1143,74 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 );
               })}
             </div>
+
+            {/*
+              SEO: surface the latest blog posts on the default /learn view
+              so crawlers can discover and follow links into individual blog
+              pages from the Learn hub. Links use the canonical
+              /learn/{slug}-{id} URL so internal link signals match the
+              sitemap and <link rel=canonical> on each BlogPage. UX-wise this
+              is purely additive — the Videos tab still leads as today.
+            */}
+            {blogs && blogs.length > 0 && (
+              <section className="mt-12 sm:mt-16 pt-8 border-t border-white/5" aria-label="Latest blog posts">
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4 sm:mb-6">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-emerald-300">Latest from the blog</h2>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Deep dives, tutorials, and updates from the Aquads community.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab('blogs')}
+                    className="text-sm text-gray-400 hover:text-emerald-300 transition-colors shrink-0"
+                  >
+                    See all blog posts →
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {blogs.slice(0, 6).map((blog) => (
+                    <Link
+                      key={blog._id}
+                      to={`/learn/${createBlogSlug(blog.title)}-${blog._id}`}
+                      className="group rounded-xl overflow-hidden border border-gray-700 bg-gray-800/80 hover:border-emerald-500/60 transition-all"
+                    >
+                      {blog.bannerImage && (
+                        <div className="aspect-video bg-gray-900 overflow-hidden">
+                          <img
+                            src={blog.bannerImage}
+                            alt={blog.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div className="p-3 sm:p-4">
+                        <h3 className="text-white text-sm sm:text-base font-semibold leading-snug line-clamp-2 group-hover:text-emerald-300 transition-colors">
+                          {blog.title}
+                        </h3>
+                        {blog.authorUsername && (
+                          <p className="mt-2 text-xs text-gray-400">
+                            {blog.authorUsername}
+                            {blog.createdAt && (
+                              <>
+                                {' • '}
+                                {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
 

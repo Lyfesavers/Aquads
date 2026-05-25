@@ -27,13 +27,12 @@
   function = "sitemap"
   path = "/sitemap.xml/"
 
-# Serve prerendered version for bots only - Blogs
-[[redirects]]
-  from = "/how-to/*-:id"
-  to = "/.netlify/functions/prerender-blog"
-  status = 200
-  force = false
-  conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
+# NOTE: a legacy "/how-to/*-:id -> prerender-blog" bot redirect used to live
+# here, but the prerender-blog function's URL regex only matches /learn/ paths
+# (the current blog URL prefix). Any bot hitting /how-to/ would just get the
+# default fallback HTML, so the rule did nothing useful. Old /how-to/ URLs are
+# now handled by the broad 301 in public/_redirects which sends them straight
+# to the canonical /learn/ equivalent for both bots and humans.
 
 # Serve prerendered version for bots only - AquaSwap tokens
 [[redirects]]

@@ -191,22 +191,51 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-// New route - HTML metadata for social sharing
+// Legacy social-share HTML route. The public sharing path is now the Netlify
+// Edge Function at /share/blog/:id (see netlify/edge-functions/share-blog.js),
+// which serves OG tags from the CDN edge. Nothing in the current frontend
+// references this Express route, but it stays here so any external traffic
+// that ever hits /api/blogs/share/:id (old links, scrapers, etc.) ends up at
+// the canonical blog URL instead of 404-ing.
+//
+// Two behaviors aligned with the rest of the SEO setup:
+//   1. The redirect now targets the canonical /learn/{slug}-{id} URL (not the
+//      legacy /learn?blogId= pattern) so authority flows to the indexable URL.
+//   2. `<meta name="robots" content="noindex, follow">` + `<link rel=canonical>`
+//      tell Google not to index this thin wrapper and to consolidate ranking
+//      signals on the canonical page. Social crawlers ignore robots noindex
+//      and still read the OG tags above.
 router.get('/share/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
       .populate('author', 'username image')
       .lean();
-      
+
     if (!blog) {
       return res.status(404).send('Blog not found');
     }
-    
+
     // Create a clean description without HTML tags
     const description = blog.content
       ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
       : 'Read our latest blog post on Aquads!';
-      
+
+    // Build canonical /learn/{slug}-{id} URL (mirrors BlogPage / sitemap rules)
+    const buildSlug = (title) => {
+      const slug = (title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      const maxLength = 50;
+      if (slug.length > maxLength) {
+        const truncated = slug.substring(0, maxLength);
+        const lastDash = truncated.lastIndexOf('-');
+        return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
+      }
+      return slug;
+    };
+    const canonicalUrl = `https://www.aquads.xyz/learn/${buildSlug(blog.title) || 'post'}-${blog._id}`;
+
     // Build HTML with proper metadata
     const html = `
 <!DOCTYPE html>
@@ -216,22 +245,26 @@ router.get('/share/:id', async (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${blog.title} - Aquads Blog</title>
   <meta name="description" content="${description}">
-  
+
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${blog.title} - Aquads Blog">
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-  
+
   <!-- Open Graph meta tags -->
   <meta property="og:title" content="${blog.title} - Aquads Blog">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-          <meta property="og:url" content="https://www.aquads.xyz/learn?blogId=${blog._id}">
+  <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:type" content="article">
-  
-  <!-- Redirect to the actual blog page -->
-          <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/learn?blogId=${blog._id}">
+
+  <!-- SEO: thin wrapper, real article lives at the canonical URL below -->
+  <link rel="canonical" href="${canonicalUrl}">
+  <meta name="robots" content="noindex, follow">
+
+  <!-- Redirect human visitors to the actual blog page -->
+  <meta http-equiv="refresh" content="0;url=${canonicalUrl}">
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -260,11 +293,11 @@ router.get('/share/:id', async (req, res) => {
   <div class="container">
     <h1>${blog.title}</h1>
     <p>${description}</p>
-            <p>Redirecting to blog post... <a href="https://www.aquads.xyz/learn?blogId=${blog._id}">Click here</a> if you're not redirected automatically.</p>
+    <p>Redirecting to blog post... <a href="${canonicalUrl}">Click here</a> if you're not redirected automatically.</p>
   </div>
 </body>
 </html>`;
-    
+
     // Send HTML response
     res.setHeader('Content-Type', 'text/html');
     res.send(html);

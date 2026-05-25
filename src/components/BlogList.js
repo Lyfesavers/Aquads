@@ -302,9 +302,16 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
               }
             `}</style>
 
-            {/* Read More Link - Use share URL so copied URLs have proper metadata */}
+            {/*
+              Internal links point at the canonical /learn/{slug}-{id} URL
+              (matches sitemap + <link rel=canonical> on BlogPage). The
+              /share/blog/:id wrapper still exists for the explicit Share
+              button below so social previews remain fast for already-shared
+              links, but Google should see internal navigation pointing at
+              the real article URL.
+            */}
             <Link
-              to={`/share/blog/${blog._id}`}
+              to={`/learn/${createSlug(blog.title)}-${blog._id}`}
               className="mt-2 text-blue-400 hover:text-blue-300 transition-colors inline-block"
             >
               Read More

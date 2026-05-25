@@ -7,8 +7,15 @@
 # Serve sitemap via Netlify function (must be first)
 /sitemap.xml /.netlify/functions/sitemap 200!
 
-# SEO-friendly URL redirect for blogs (for regular users)
-/how-to/*-:id /how-to?blogId=:id 301
+# Legacy blog URL migration: /how-to/ was the previous blog URL prefix before
+# we moved to /learn/. The old redirect target (/how-to?blogId=...) no longer
+# resolves to any route in the SPA, so any external link still pointing at
+# /how-to/{slug}-{id} would 404. Redirect through to /learn?blogId={id} so
+# the HowTo.js migration handler can upgrade it to the canonical
+# /learn/{slug}-{id} URL. Broad /how-to/* catch-all sends everything else to
+# the Learn hub so no legacy URL ends up on a blank SPA page.
+/how-to/*-:id /learn?blogId=:id 301!
+/how-to/* /learn 301!
 
 # Handle service pages - removed to allow React Router to handle /service/* routes
 

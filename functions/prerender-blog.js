@@ -125,20 +125,18 @@ function getBlogHtml(blog, description, seoUrl) {
     
     <link rel="canonical" href="${seoUrl}" />
     <title>${blog.title} - Aquads Blog</title>
-    <script>
-      // Redirect to the app URL
-      window.location.href = '/learn?blogId=${blog._id}';
-    </script>
   </head>
   <body>
+    <!--
+      This fallback is only served to bots (User-Agent gated in netlify.toml).
+      Real users hit the SPA directly. We intentionally do NOT include a JS
+      redirect here: a window.location.href on a crawlable URL is interpreted
+      as a soft redirect by Googlebot and would forward indexing signals to a
+      different URL than the canonical above. Serve the article content as-is
+      and let the canonical link tag do its job.
+    -->
     <h1>${blog.title}</h1>
     <div>${blog.content || ''}</div>
-    <script>
-      // Backup redirect
-      setTimeout(function() {
-        window.location.href = '/learn?blogId=${blog._id}';
-      }, 100);
-    </script>
   </body>
 </html>`;
 }
@@ -168,20 +166,17 @@ function getDefaultHtml() {
     <meta property="og:type" content="website">
     
     <title>Aquads — The launch stack for new crypto projects</title>
-    <script>
-      // Redirect to the app
-      window.location.href = '/learn';
-    </script>
+    <link rel="canonical" href="https://www.aquads.xyz/learn" />
   </head>
   <body>
+    <!--
+      Bot-only fallback. No JS redirect here for the same reason as above:
+      a window.location.href on a crawlable URL acts as a soft redirect and
+      can split indexing signals. The canonical link tag points crawlers at
+      the real Learn hub.
+    -->
     <h1>Aquads — The launch stack for new crypto projects</h1>
     <p>List on the bubble map, grow your community, hire launch help, and get paid with AquaPay — your first 30 days in one place.</p>
-    <script>
-      // Backup redirect
-      setTimeout(function() {
-        window.location.href = '/learn';
-      }, 100);
-    </script>
   </body>
 </html>`;
 } 

@@ -82,8 +82,19 @@ export default async (request, context) => {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="${escapeHtml(redirectUrl)}">
-  
-  <!-- Redirect to actual blog page -->
+
+  <!--
+    SEO: this wrapper exists purely to serve fast OG previews to social
+    crawlers for legacy /share/blog/:id links. The actual blog lives at the
+    canonical URL below. Tell Google not to index this thin wrapper and to
+    consolidate ranking signals on the canonical page. Social crawlers
+    (Facebook, Twitter, Telegram, LinkedIn, …) ignore robots noindex and
+    will still read the OG tags above for the preview card.
+  -->
+  <link rel="canonical" href="${escapeHtml(redirectUrl)}">
+  <meta name="robots" content="noindex, follow">
+
+  <!-- Redirect human visitors to the actual blog page -->
   <meta http-equiv="refresh" content="0;url=${escapeHtml(redirectUrl)}">
   
   <style>

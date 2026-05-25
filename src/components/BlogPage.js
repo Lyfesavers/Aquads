@@ -91,14 +91,22 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     fetchRelatedBlogs();
   }, [blogId]);
 
-  // Update browser URL to show /share/blog/:id when viewing via /learn/:slug
-  // This ensures copied URLs have proper metadata
+  // SEO: keep the browser URL on the canonical /learn/{slug}-{id} when the
+  // user arrived there directly. The previous behavior of rewriting to
+  // /share/blog/:id meant the canonical URL never showed in the address bar,
+  // so users copy-pasting from the bar produced wrapper URLs and Google saw
+  // two competing URLs for the same content. Users can still grab a fast
+  // share-preview link via the Share button (which copies /share/blog/:id).
+  //
+  // For visitors who arrived via /share/blog/:id (e.g. an already-shared
+  // social link), upgrade the address bar to the canonical URL once the
+  // blog is loaded so any subsequent copy/paste uses the indexable URL.
   useEffect(() => {
-    if (blog && blog._id && location.pathname.startsWith('/learn/')) {
-      // If we're on /learn/:slug but have the blog loaded, update URL to /share/blog/:id
-      const shareUrl = `/share/blog/${blog._id}`;
-      if (location.pathname !== shareUrl) {
-        navigate(shareUrl, { replace: true });
+    if (!blog || !blog._id) return;
+    if (location.pathname.startsWith('/share/blog/')) {
+      const canonicalPath = `/learn/${createSlug(blog.title)}-${blog._id}`;
+      if (location.pathname !== canonicalPath) {
+        navigate(canonicalPath, { replace: true });
       }
     }
   }, [blog, location.pathname, navigate]);
@@ -792,7 +800,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                   {relatedBlogs.map((relatedBlog) => (
                     <Link
                       key={relatedBlog._id}
-                      to={`/share/blog/${relatedBlog._id}`}
+                      to={`/learn/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
                       className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
                     >
                       <div className="aspect-video">
