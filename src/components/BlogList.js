@@ -35,15 +35,20 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
   };
 
   const handleShare = (blog) => {
-    // Use /share/blog/:id for proper social media meta tags (blog image, title, etc.)
-    // This ensures crawlers always get the correct metadata, just like /share/aquaswap
-    const shareUrl = `${window.location.origin}/share/blog/${blog._id}`;
-    
+    // Copy the canonical /learn/{slug}-{id} URL. The learn-blog Edge Function
+    // injects blog-specific OG / Twitter / canonical / JSON-LD metadata into
+    // the SPA shell for every client (humans, Facebook, Twitter, opengraph.xyz,
+    // Iframely, Embedly, …), so social previews work the same as the legacy
+    // /share/blog/:id wrapper while also being the URL Google indexes and
+    // ranks. The /share/blog/:id route still exists for backward compatibility
+    // with links already shared in the wild.
+    const shareUrl = `${window.location.origin}/learn/${createSlug(blog.title)}-${blog._id}`;
+
     // Add referral code if user is logged in (as a separate parameter)
-    const finalUrl = currentUser?.username 
-      ? `${shareUrl}?ref=${currentUser.username}` 
+    const finalUrl = currentUser?.username
+      ? `${shareUrl}?ref=${currentUser.username}`
       : shareUrl;
-    
+
     navigator.clipboard.writeText(finalUrl).then(() => {
       alert('Blog link copied to clipboard!');
     }).catch(err => {
@@ -303,12 +308,13 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
             `}</style>
 
             {/*
-              Internal links point at the canonical /learn/{slug}-{id} URL
-              (matches sitemap + <link rel=canonical> on BlogPage). The
-              /share/blog/:id wrapper still exists for the explicit Share
-              button below so social previews remain fast for already-shared
-              links, but Google should see internal navigation pointing at
-              the real article URL.
+              All blog links (internal navigation AND the Share button) now
+              point at the canonical /learn/{slug}-{id} URL. Matches the
+              sitemap and the <link rel=canonical> on BlogPage. Social
+              previews are served on that URL by the learn-blog Edge Function,
+              and Google consolidates ranking signals on the same URL. The
+              legacy /share/blog/:id wrapper still exists as a backward-compat
+              route for links already shared in the wild.
             */}
             <Link
               to={`/learn/${createSlug(blog.title)}-${blog._id}`}

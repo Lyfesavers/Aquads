@@ -175,14 +175,19 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
   };
 
   const handleShare = () => {
-    // Use /share/blog/:id for proper social media meta tags (blog image, title, etc.)
-    // This ensures crawlers always get the correct metadata, just like /share/aquaswap
+    // Copy the canonical /learn/{slug}-{id} URL. The learn-blog Edge Function
+    // injects blog-specific OG / Twitter / canonical / JSON-LD metadata into
+    // the SPA shell for every client (humans, Facebook, Twitter, opengraph.xyz,
+    // Iframely, Embedly, …), so social previews work the same as the legacy
+    // /share/blog/:id wrapper while also being the URL Google indexes and
+    // ranks. The /share/blog/:id route still exists for backward compatibility
+    // with links already shared in the wild.
     if (!blog || !blog._id) {
       alert('Blog information not available');
       return;
     }
-    
-    const shareUrl = `${window.location.origin}/share/blog/${blog._id}`;
+
+    const shareUrl = `${window.location.origin}/learn/${createSlug(blog.title)}-${blog._id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       alert('Blog link copied to clipboard!');
     }).catch(err => {
