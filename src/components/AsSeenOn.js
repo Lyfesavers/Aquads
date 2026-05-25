@@ -67,7 +67,7 @@ const PRESS_LOGOS = [
     // Source file is near-square with significant padding around the wordmark,
     // so the rendered height must be pushed well above the others for the visible
     // logo to match their optical size.
-    heightClass: 'h-14 md:h-20',
+    heightClass: 'h-20 md:h-28',
     // PNG ships with a white background and black wordmark — invert so the white
     // drops out and the wordmark reads as white-on-transparent over the dark page.
     invertOnDark: true,
