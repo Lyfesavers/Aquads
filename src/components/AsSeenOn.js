@@ -42,6 +42,33 @@ const PRESS_LOGOS = [
     alt: 'Aquads featured on Times Tabloid',
     heightClass: 'h-8 md:h-10',
   },
+  {
+    id: 'bitget',
+    name: 'Bitget',
+    logo: '/bitget.png',
+    url: 'https://www.bitget.com/amp/news/detail/12560605425522',
+    alt: 'Aquads featured on Bitget News',
+    heightClass: 'h-6 md:h-8',
+  },
+  {
+    id: 'intellectia',
+    name: 'Intellectia.AI',
+    logo: '/intellectia.png',
+    url: 'https://intellectia.ai/news/crypto/aquads-launches-postlaunch-growth-stack-for-live-crypto-projects',
+    alt: 'Aquads featured on Intellectia.AI',
+    heightClass: 'h-6 md:h-8',
+  },
+  {
+    id: 'mexc',
+    name: 'MEXC',
+    logo: '/mexc-global-logo-png_seeklogo-463569.png',
+    url: 'https://www.mexc.co/fr/news/1109803',
+    alt: 'Aquads featured on MEXC',
+    heightClass: 'h-8 md:h-10',
+    // PNG ships with a white background and black wordmark — invert so the white
+    // drops out and the wordmark reads as white-on-transparent over the dark page.
+    invertOnDark: true,
+  },
 ];
 
 const LogoItem = ({ item }) => {
