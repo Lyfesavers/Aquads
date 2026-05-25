@@ -66,7 +66,7 @@ const PRESS_LOGOS = [
     id: 'mexc',
     name: 'MEXC',
     logo: '/mexc-global-logo-png_seeklogo-463569.png',
-    url: 'https://www.mexc.co/fr/news/1109803',
+    url: 'https://www.mexc.com/news/1109803',
     alt: 'Aquads featured on MEXC',
     // Source file is near-square with significant padding around the wordmark,
     // so the rendered height must be pushed well above the others for the visible
