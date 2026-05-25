@@ -6,10 +6,15 @@ import {
   getBlogStorageFormat,
   isValidBlogImageUrl,
   blogContentHasTable,
+  blogContentHasDofollowLink,
   serializeBlogEditorContent,
 } from '../utils/blogEditor';
 
 const MenuBar = ({ editor }) => {
+  const linkAttrs = editor ? editor.getAttributes('link') : {}
+  const isLinkActive = editor ? editor.isActive('link') : false
+  const isLinkDofollow = linkAttrs['data-follow'] === 'true'
+
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('Enter the URL', previousUrl)
@@ -26,8 +31,26 @@ const MenuBar = ({ editor }) => {
       return
     }
 
-    // update link
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url })
+    // Preserve existing dofollow flag when updating an existing link;
+    // new links default to nofollow (data-follow = null).
+    const existingDataFollow = editor.getAttributes('link')['data-follow']
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({ href: url, 'data-follow': existingDataFollow === 'true' ? 'true' : null })
+      .run()
+  }, [editor])
+
+  const toggleDofollow = useCallback(() => {
+    if (!editor) return
+    const current = editor.getAttributes('link')['data-follow']
+    const next = current === 'true' ? null : 'true'
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .updateAttributes('link', { 'data-follow': next })
       .run()
   }, [editor])
 
@@ -86,19 +109,33 @@ const MenuBar = ({ editor }) => {
       {/* Link button */}
       <button
         onClick={setLink}
-        className={`px-2 py-1 rounded text-white ${editor.isActive('link') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        className={`px-2 py-1 rounded text-white ${isLinkActive ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"
       >
         Link
       </button>
-      {editor.isActive('link') && (
-        <button
-          onClick={() => editor.chain().focus().unsetLink().run()}
-          className="px-2 py-1 rounded bg-gray-800 text-white"
-          type="button"
-        >
-          Unlink
-        </button>
+      {isLinkActive && (
+        <>
+          <button
+            onClick={() => editor.chain().focus().unsetLink().run()}
+            className="px-2 py-1 rounded bg-gray-800 text-white"
+            type="button"
+          >
+            Unlink
+          </button>
+          <button
+            onClick={toggleDofollow}
+            className={`px-2 py-1 rounded text-white ${isLinkDofollow ? 'bg-emerald-600' : 'bg-gray-800'}`}
+            type="button"
+            title={
+              isLinkDofollow
+                ? 'This link passes SEO link equity (rel="noopener noreferrer"). Click to switch to nofollow.'
+                : 'This link is nofollow (rel="noopener noreferrer nofollow"). Click to mark as dofollow.'
+            }
+          >
+            {isLinkDofollow ? 'Dofollow' : 'Nofollow'}
+          </button>
+        </>
       )}
 
       <button
@@ -265,6 +302,9 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   const [usesTableStorage, setUsesTableStorage] = useState(
     blogContentHasTable(initialData?.content || '')
   );
+  const [usesDofollowStorage, setUsesDofollowStorage] = useState(
+    blogContentHasDofollowLink(initialData?.content || '')
+  );
   const storageFormatRef = useRef(storageFormat);
   storageFormatRef.current = storageFormat;
   const preserveMarkdownRef = useRef(preserveMarkdown);
@@ -282,9 +322,10 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     onUpdate: ({ editor: updatedEditor }) => {
       const html = updatedEditor.getHTML();
       const hasTable = blogContentHasTable(html);
+      const hasDofollow = blogContentHasDofollowLink(html);
       let nextFormat = storageFormatRef.current;
 
-      if (hasTable && nextFormat !== 'html') {
+      if ((hasTable || hasDofollow) && nextFormat !== 'html') {
         nextFormat = 'html';
         storageFormatRef.current = 'html';
         setStorageFormat('html');
@@ -292,6 +333,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
       }
 
       setUsesTableStorage(hasTable);
+      setUsesDofollowStorage(hasDofollow);
       setFormData(prev => ({
         ...prev,
         content: serializeBlogEditorContent(updatedEditor, nextFormat),
@@ -321,9 +363,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
           .replace(/<br\s*\/?>/g, ' ')
           // Ensure double line breaks between paragraphs are preserved
           .replace(/<\/p>\s*<p/g, '</p><p')
-          // Preserve hyperlinks attributes
+          // Preserve hyperlinks attributes (default to nofollow; the TipTap
+          // BlogLink extension will re-apply the correct rel based on
+          // data-follow when content is rendered/serialized).
           .replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer nofollow">${text}</a>`;
           });
           
         return cleanedHtml;
@@ -512,14 +556,14 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                   <span className="text-xs text-gray-400">Format Preservation:</span>
                   <button
                     type="button"
-                    disabled={storageFormat === 'html' || usesTableStorage}
+                    disabled={storageFormat === 'html' || usesTableStorage || usesDofollowStorage}
                     onClick={() => {
-                      if (storageFormat === 'html' || usesTableStorage) return;
+                      if (storageFormat === 'html' || usesTableStorage || usesDofollowStorage) return;
                       setPreserveMarkdown(!preserveMarkdown);
                     }}
                     className={`px-2 py-1 text-xs rounded text-white ${
                       preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
-                    } ${storageFormat === 'html' || usesTableStorage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } ${storageFormat === 'html' || usesTableStorage || usesDofollowStorage ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {preserveMarkdown ? 'Markdown Enabled' : 'Rich Text Mode'}
                   </button>
@@ -540,10 +584,14 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 'Switch to Markdown mode to preserve special formatting like headings and lists.'
               }</p>
               <p>Use the Image and Table toolbar buttons to insert body images and comparison tables. Pasted tables are not supported.</p>
+              <p>Outbound links are <span className="text-amber-300">nofollow by default</span>. Select a link and click the toolbar toggle to mark it as <span className="text-emerald-300">Dofollow</span> when you want to pass SEO link equity (e.g. partner / sponsored project links you trust).</p>
               {usesTableStorage && (
                 <p className="text-amber-300">This post contains a table and stays in Rich Text (HTML) format.</p>
               )}
-              {storageFormat === 'html' && !usesTableStorage && (
+              {usesDofollowStorage && (
+                <p className="text-amber-300">This post contains a Dofollow link and stays in Rich Text (HTML) format so the per-link SEO setting is preserved.</p>
+              )}
+              {storageFormat === 'html' && !usesTableStorage && !usesDofollowStorage && (
                 <p className="text-amber-300">This post uses Rich Text (HTML) storage. Markdown mode is disabled to protect formatting.</p>
               )}
             </div>
