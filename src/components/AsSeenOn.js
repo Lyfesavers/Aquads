@@ -76,6 +76,14 @@ const PRESS_LOGOS = [
     // drops out and the wordmark reads as white-on-transparent over the dark page.
     invertOnDark: true,
   },
+  {
+    id: 'blocktelegraph',
+    name: 'BlockTelegraph',
+    logo: '/blocktelegraph-logo-600x131.png',
+    url: 'https://blocktelegraph.io/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain/',
+    alt: 'Aquads featured on BlockTelegraph',
+    heightClass: 'h-7 md:h-9',
+  },
 ];
 
 const LogoItem = ({ item }) => {
