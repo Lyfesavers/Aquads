@@ -114,14 +114,19 @@
   force = true
   conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
 
-# Canonical blog URLs (/learn/slug-id): Facebook/Telegram often re-fetch og:url and hit the SPA.
-# Serve prerendered HTML to crawlers so previews match Twitter/Open Graph debuggers.
-[[redirects]]
-  from = "/learn/*"
-  to = "/.netlify/functions/prerender-blog"
-  status = 200
-  force = true
-  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+# Canonical blog URLs (/learn/{slug}-{id}): an Edge Function runs for ALL
+# clients (no User-Agent gate) and injects blog-specific OG / Twitter /
+# canonical / JSON-LD tags into the SPA shell's <head>. Non-blog paths under
+# /learn (the Learn hub, /learn/courses/*, etc.) pass straight through.
+#
+# This replaces the old UA-gated redirect to functions/prerender-blog.js which
+# only fired for a narrow list of crawler UAs (facebookexternalhit, Googlebot,
+# Twitterbot, …) and so missed most third-party OG validators — opengraph.xyz,
+# Iframely, Embedly, LinkPreview, most Mastodon instances, etc. — which fetch
+# with generic Mozilla UAs and were getting the unrendered SPA shell back.
+[[edge_functions]]
+  function = "learn-blog"
+  path = "/learn/*"
 
 # Handle service pages
 [[redirects]]
