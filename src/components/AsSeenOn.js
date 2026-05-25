@@ -7,6 +7,10 @@ import './AsSeenOn.css';
 //   (compensate for empty padding baked into the source image).
 // - invertOnDark: set true for logos with white/light backgrounds or dark-only ink —
 //   applies CSS invert so the logo reads as white-on-transparent over our dark page.
+// - dofollow: defaults to false. Press / PR placements use rel="nofollow sponsored"
+//   (SEO best practice — preserves our link equity, avoids paid-link-scheme penalty).
+//   Set dofollow: true only for *earned* editorial coverage from a high-authority
+//   outlet we explicitly want to vouch for (e.g. Cointelegraph, TechCrunch).
 const PRESS_LOGOS = [
   {
     id: 'mintfunnel',
@@ -81,11 +85,17 @@ const LogoItem = ({ item }) => {
     ? 'invert grayscale opacity-70 group-hover:opacity-100'
     : 'opacity-70 grayscale group-hover:opacity-100 group-hover:grayscale-0';
 
+  // Default to nofollow + sponsored for PR / press placements (best practice).
+  // Opt-in dofollow only for genuinely earned editorial coverage.
+  const relAttr = item.dofollow
+    ? 'noopener noreferrer'
+    : 'nofollow sponsored noopener noreferrer';
+
   return (
     <a
       href={item.url}
       target="_blank"
-      rel="noopener noreferrer"
+      rel={relAttr}
       aria-label={`Read article on ${item.name}`}
       className="group inline-flex items-center justify-center"
     >
