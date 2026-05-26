@@ -143,11 +143,11 @@ function estimateKimiWebSearchHoldUsd(opts = {}) {
     1,
     Number(process.env.PROJECT_AGENT_AGENT_MAX_SEARCHES_ESTIMATE) ||
       Number(process.env.PROJECT_AGENT_WEB_SEARCH_MAX_CALLS) ||
-      8
+      3
   );
   const searchInputUsd = (searchTokens * input) / 1_000_000;
   const toolFees = maxSearches * getWebSearchCallUsd();
-  const buffer = Number(process.env.PROJECT_AGENT_WEB_SEARCH_HOLD_BUFFER) || 1.35;
+  const buffer = Number(process.env.PROJECT_AGENT_WEB_SEARCH_HOLD_BUFFER) || 1.15;
   return (baseHold * 1.75 + searchInputUsd + toolFees) * buffer;
 }
 
@@ -161,7 +161,7 @@ function estimateKimiAgentHoldUsd(opts = {}) {
   const rounds = Math.max(1, Number(opts.agentMaxRounds) || 24);
   const roundFactor = 1 + Math.min(rounds, 48) * 0.12;
   const extra = Number(process.env.PROJECT_AGENT_AGENT_HOLD_EXTRA_USD) || 0.05;
-  const buffer = Number(process.env.PROJECT_AGENT_AGENT_HOLD_BUFFER) || 1.25;
+  const buffer = Number(process.env.PROJECT_AGENT_AGENT_HOLD_BUFFER) || 1.10;
   return base * buffer * roundFactor + extra;
 }
 

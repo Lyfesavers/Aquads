@@ -58,7 +58,7 @@ function getLimits() {
       process.env.PROJECT_AGENT_AGENT_MAX_SEARCHES_ESTIMATE,
       1,
       32,
-      8
+      3
     ),
     chatRateLimitPerMinute: clampInt(
       process.env.PROJECT_AGENT_CHAT_RATE_LIMIT,
