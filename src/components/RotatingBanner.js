@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-const RotatingBanner = () => {
+const RotatingBanner = ({ currentUser }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef(null);
   const progressRef = useRef(null);
+
+  const isFreelancer = currentUser?.userType === 'freelancer';
 
   const banners = [
     {
@@ -17,11 +19,23 @@ const RotatingBanner = () => {
       type: 'extension',
       id: 1
     },
-    {
-      type: 'onchain-resume',
-      id: 2
-    }
+    ...(isFreelancer
+      ? [
+          {
+            type: 'onchain-resume',
+            id: 2
+          }
+        ]
+      : [])
   ];
+
+  // Keep currentIndex within range if banners list changes (e.g. user logs out)
+  useEffect(() => {
+    if (currentIndex >= banners.length) {
+      setCurrentIndex(0);
+      setProgress(0);
+    }
+  }, [banners.length, currentIndex]);
 
   // Auto-rotate every 10 seconds
   useEffect(() => {
@@ -87,14 +101,16 @@ const RotatingBanner = () => {
             <ChromeExtensionBanner />
           </div>
 
-          {/* OnChain Resume Banner */}
-          <div
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              currentIndex === 2 ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
-          >
-            <OnChainResumeBanner />
-          </div>
+          {/* OnChain Resume Banner - only shown to freelancer accounts */}
+          {isFreelancer && (
+            <div
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                currentIndex === 2 ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              <OnChainResumeBanner />
+            </div>
+          )}
         </div>
 
         {/* Progress Indicators */}
@@ -466,7 +482,7 @@ const OnChainResumeBanner = () => {
               e.currentTarget.style.boxShadow = '0 10px 25px rgba(13, 148, 136, 0.4)';
             }}
           >
-            <span>Create Resume</span>
+            <span>Mint Onchain Resume</span>
             <span className="group-hover:translate-x-1 transition-transform duration-300">⛓️</span>
             
             {/* Button glow effect */}

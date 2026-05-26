@@ -3145,7 +3145,7 @@ function App() {
                     Aquads launch stack — list new crypto projects on the bubble map, grow, hire, and get paid
                   </h1>
                   {/* Rotating Banner - AquaSwap & Chrome Extension */}
-                  <RotatingBanner />
+                  <RotatingBanner currentUser={currentUser} />
 
                   {/* Filter controls */}
                   <div className="container mx-auto px-4">
