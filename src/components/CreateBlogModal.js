@@ -4,13 +4,16 @@ import Modal from './Modal';
 import {
   getBlogEditorExtensionsForFormat,
   getBlogStorageFormat,
-  isValidBlogImageUrl,
   blogContentHasTable,
   blogContentHasDofollowLink,
   serializeBlogEditorContent,
+  BLOG_IMAGE_ACCEPT,
+  BLOG_IMAGE_MAX_BYTES,
 } from '../utils/blogEditor';
+import { uploadBlogImage } from '../services/api';
 
-const MenuBar = ({ editor }) => {
+const MenuBar = ({ editor, onUploadInlineImage, inlineImageUploading }) => {
+  const inlineImageInputRef = useRef(null);
   const linkAttrs = editor ? editor.getAttributes('link') : {}
   const isLinkActive = editor ? editor.isActive('link') : false
   const isLinkDofollow = linkAttrs['data-follow'] === 'true'
@@ -54,21 +57,32 @@ const MenuBar = ({ editor }) => {
       .run()
   }, [editor])
 
-  const insertImage = useCallback(() => {
-    const url = window.prompt('Enter image URL (https://...)')
-    if (url === null) return
+  const handleInlineImageFile = useCallback(async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !editor || !onUploadInlineImage) return
 
-    const trimmedUrl = url.trim()
-    if (!trimmedUrl) return
-
-    if (!isValidBlogImageUrl(trimmedUrl)) {
-      window.alert('Please enter a valid image URL starting with http:// or https://')
+    if (!file.type.startsWith('image/')) {
+      window.alert('Please choose a JPEG, PNG, GIF, or WebP image.')
+      return
+    }
+    if (file.size > BLOG_IMAGE_MAX_BYTES) {
+      window.alert('Image must be 5MB or smaller.')
       return
     }
 
-    const alt = window.prompt('Alt text (optional)', '') ?? ''
-    editor.chain().focus().setImage({ src: trimmedUrl, alt: alt.trim() }).run()
-  }, [editor])
+    try {
+      const url = await onUploadInlineImage(file)
+      const alt = window.prompt('Alt text (optional)', file.name.replace(/\.[^.]+$/, '')) ?? ''
+      editor.chain().focus().setImage({ src: url, alt: alt.trim() }).run()
+    } catch (err) {
+      window.alert(err.message || 'Failed to upload image')
+    }
+  }, [editor, onUploadInlineImage])
+
+  const insertImage = useCallback(() => {
+    inlineImageInputRef.current?.click()
+  }, [])
 
   const insertTable = useCallback(() => {
     editor
@@ -138,12 +152,20 @@ const MenuBar = ({ editor }) => {
         </>
       )}
 
+      <input
+        ref={inlineImageInputRef}
+        type="file"
+        accept={BLOG_IMAGE_ACCEPT}
+        className="hidden"
+        onChange={handleInlineImageFile}
+      />
       <button
         onClick={insertImage}
-        className="px-2 py-1 rounded bg-gray-800 text-white hover:bg-gray-600"
+        disabled={inlineImageUploading}
+        className="px-2 py-1 rounded bg-gray-800 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-wait"
         type="button"
       >
-        Image
+        {inlineImageUploading ? 'Uploading…' : 'Image'}
       </button>
 
       <button
@@ -294,6 +316,10 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     content: initialData?.content || '',
     bannerImage: initialData?.bannerImage || ''
   });
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [inlineImageUploading, setInlineImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const bannerInputRef = useRef(null);
   
   const [storageFormat, setStorageFormat] = useState(() =>
     getBlogStorageFormat(initialData?.content || '')
@@ -493,8 +519,49 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
+  const handleUploadInlineImage = useCallback(async (file) => {
+    setUploadError('');
+    setInlineImageUploading(true);
+    try {
+      const { url } = await uploadBlogImage(file, { variant: 'inline' });
+      return url;
+    } finally {
+      setInlineImageUploading(false);
+    }
+  }, []);
+
+  const handleBannerFile = useCallback(async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Banner must be a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > BLOG_IMAGE_MAX_BYTES) {
+      setUploadError('Banner image must be 5MB or smaller.');
+      return;
+    }
+
+    setUploadError('');
+    setBannerUploading(true);
+    try {
+      const { url } = await uploadBlogImage(file, { variant: 'banner' });
+      setFormData((prev) => ({ ...prev, bannerImage: url }));
+    } catch (err) {
+      setUploadError(err.message || 'Failed to upload banner');
+    } finally {
+      setBannerUploading(false);
+    }
+  }, []);
+
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
+    if (!formData.bannerImage?.trim()) {
+      setUploadError('Please upload a banner image.');
+      return;
+    }
     const content = editor
       ? serializeBlogEditorContent(editor, storageFormatRef.current)
       : formData.content;
@@ -521,27 +588,47 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
         </div>
         
         <div>
-          <label htmlFor="bannerImage" className="block text-sm font-medium mb-1 text-gray-200">Banner Image URL</label>
+          <label className="block text-sm font-medium mb-1 text-gray-200">
+            Banner image
+          </label>
+          <p className="text-xs text-gray-400 mb-2">
+            Upload a wide image (recommended 1280×720). Images are compressed and hosted on Aquads for fast loading.
+          </p>
           <input
-            type="url"
-            id="bannerImage"
-            name="bannerImage"
-            value={formData.bannerImage}
-            onChange={handleChange}
-            required
-            placeholder="https://example.com/image.jpg W1280xH720px"
-            className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            ref={bannerInputRef}
+            type="file"
+            accept={BLOG_IMAGE_ACCEPT}
+            className="hidden"
+            onChange={handleBannerFile}
           />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              disabled={bannerUploading}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-wait text-white rounded transition-colors"
+            >
+              {bannerUploading ? 'Uploading…' : formData.bannerImage ? 'Replace banner' : 'Upload banner'}
+            </button>
+            {formData.bannerImage && (
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, bannerImage: '' }))}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {uploadError && (
+            <p className="mt-2 text-sm text-red-400">{uploadError}</p>
+          )}
           {formData.bannerImage && (
-            <div className="mt-2 aspect-video rounded overflow-hidden">
-              <img 
-                src={formData.bannerImage} 
-                alt="Banner preview" 
+            <div className="mt-2 aspect-video rounded overflow-hidden border border-gray-600">
+              <img
+                src={formData.bannerImage}
+                alt="Banner preview"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/640x360?text=Invalid+Image+URL';
-                }}
               />
             </div>
           )}
@@ -569,7 +656,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                   </button>
                 </div>
               </div>
-              <MenuBar editor={editor} />
+              <MenuBar
+                editor={editor}
+                onUploadInlineImage={handleUploadInlineImage}
+                inlineImageUploading={inlineImageUploading}
+              />
             </div>
             <div className="bg-gray-800 max-h-[60vh] overflow-y-auto overscroll-contain">
               <EditorContent
@@ -583,7 +674,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 'Your headings (#), lists (-), inline images, and other Markdown formatting will be preserved when saved.' :
                 'Switch to Markdown mode to preserve special formatting like headings and lists.'
               }</p>
-              <p>Use the Image and Table toolbar buttons to insert body images and comparison tables. Pasted tables are not supported.</p>
+              <p>Use the Image button to upload body images (hosted on Aquads, max 5MB). Use Table for comparison tables. Pasted tables are not supported.</p>
               <p>Outbound links are <span className="text-amber-300">nofollow by default</span>. Select a link and click the toolbar toggle to mark it as <span className="text-emerald-300">Dofollow</span> when you want to pass SEO link equity (e.g. partner / sponsored project links you trust).</p>
               {usesTableStorage && (
                 <p className="text-amber-300">This post contains a table and stays in Rich Text (HTML) format.</p>

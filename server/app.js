@@ -90,6 +90,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
       res.setHeader('Content-Type', 'image/png');
     } else if (filePath.endsWith('.gif')) {
       res.setHeader('Content-Type', 'image/gif');
+    } else if (filePath.endsWith('.webp')) {
+      res.setHeader('Content-Type', 'image/webp');
     } else if (filePath.endsWith('.pdf')) {
       res.setHeader('Content-Type', 'application/pdf');
     }

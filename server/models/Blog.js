@@ -16,11 +16,17 @@ const blogSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: function(v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v);
+      validator: function (v) {
+        if (!v || typeof v !== 'string') return false;
+        // External image hosts (legacy)
+        if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v)) {
+          return true;
+        }
+        // Aquads-hosted blog media stored in MongoDB
+        return /^https?:\/\/[^/]+\/api\/blogs\/media\/[a-fA-F0-9]{24}(\?.*)?$/i.test(v);
       },
-      message: props => `${props.value} is not a valid image URL!`
-    }
+      message: (props) => `${props.value} is not a valid image URL!`,
+    },
   },
   author: {
     type: Schema.Types.ObjectId,

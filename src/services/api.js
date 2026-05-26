@@ -1509,6 +1509,32 @@ export const deleteBlog = async (blogId) => {
   }
 };
 
+/** Upload a blog banner or inline image; returns { url, path }. */
+export const uploadBlogImage = async (file, { variant = 'inline' } = {}) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('variant', variant);
+
+  const response = await fetch(`${API_URL}/blogs/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to upload image');
+  }
+  return data;
+};
+
 // Game Hub API Functions
 
 export const fetchGames = async (filters = {}) => {

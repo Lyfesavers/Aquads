@@ -9,7 +9,16 @@ import { mergeAttributes } from '@tiptap/core';
 import { Markdown } from 'tiptap-markdown';
 import DOMPurify from 'dompurify';
 
-export const isValidBlogImageUrl = (url) => /^https?:\/\/.+/i.test(url?.trim?.() || '');
+export const isValidBlogImageUrl = (url) => {
+  const value = url?.trim?.() || '';
+  if (!value) return false;
+  if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(value)) return true;
+  // Aquads blog media stored in MongoDB
+  return /^https?:\/\/[^/]+\/api\/blogs\/media\/[a-fA-F0-9]{24}(\?.*)?$/i.test(value);
+};
+
+export const BLOG_IMAGE_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp';
+export const BLOG_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 // SEO link policy: blog outbound links are nofollow by default.
 // Authors can opt a specific link into dofollow by setting data-follow="true"
@@ -166,11 +175,13 @@ export const getBlogEditorExtensionsForFormat = (storageFormat, options = {}) =>
 export const getBlogReaderExtensions = ({ linkOpenOnClick = false } = {}) =>
   getBlogMarkdownEditorExtensions({ linkOpenOnClick });
 
-export const sanitizeBlogHtml = (html) =>
-  DOMPurify.sanitize(html || '', {
-    ADD_ATTR: ['target', 'rel', 'class', 'data-follow'],
+export const sanitizeBlogHtml = (html) => {
+  const clean = DOMPurify.sanitize(html || '', {
+    ADD_ATTR: ['target', 'rel', 'class', 'data-follow', 'loading', 'decoding'],
     ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'img'],
   });
+  return clean.replace(/<img(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async"');
+};
 
 export const serializeBlogEditorContent = (editor, storageFormat) => {
   const html = editor.getHTML();

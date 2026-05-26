@@ -1,9 +1,54 @@
 const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Blog = require('../models/Blog');
+const BlogImage = require('../models/BlogImage');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
+
+const getApiBaseUrl = () => {
+  if (process.env.PUBLIC_UPLOAD_BASE_URL) {
+    return process.env.PUBLIC_UPLOAD_BASE_URL.replace(/\/$/, '');
+  }
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+  return process.env.NODE_ENV === 'production'
+    ? 'https://aquads-production.up.railway.app'
+    : 'http://localhost:5000';
+};
+
+const buildBlogMediaUrl = (imageId) =>
+  `${getApiBaseUrl()}/api/blogs/media/${imageId}`;
+
+const blogImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed.'), false);
+    }
+  },
+});
+
+const optimizeBlogImageBuffer = async (inputBuffer, variant = 'inline') => {
+  const maxWidth = variant === 'banner' ? 1280 : 960;
+  try {
+    return await sharp(inputBuffer)
+      .rotate()
+      .resize({ width: maxWidth, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch (err) {
+    console.error('[Blog upload] sharp optimize failed:', err.message);
+    return inputBuffer;
+  }
+};
 
 // Cache for the blogs list — blogs change rarely (admin-only writes), 5-minute TTL is safe.
 let blogsListCache = null;
@@ -53,6 +98,74 @@ router.get('/', async (req, res) => {
     res.json(blogs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch blogs' });
+  }
+});
+
+// Upload blog image (banner or inline body) — admin only
+router.post(
+  '/upload-image',
+  auth,
+  requireEmailVerification,
+  (req, res, next) => {
+    blogImageUpload.single('image')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'Upload failed' });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(403).json({ error: 'Only administrators can upload blog images' });
+      }
+
+      if (!req.file?.buffer) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      const variant = req.body?.variant === 'banner' ? 'banner' : 'inline';
+      const optimized = await optimizeBlogImageBuffer(req.file.buffer, variant);
+      const contentType = 'image/webp';
+
+      const blogImage = await BlogImage.create({
+        data: optimized,
+        contentType,
+        variant,
+        size: optimized.length,
+        uploadedBy: req.user.userId,
+      });
+
+      const url = buildBlogMediaUrl(blogImage._id);
+
+      res.status(201).json({ url, id: blogImage._id });
+    } catch (error) {
+      console.error('[Blog upload] failed:', error);
+      res.status(500).json({ error: 'Failed to upload blog image' });
+    }
+  }
+);
+
+// Serve blog image bytes from MongoDB (persists across Railway redeploys)
+router.get('/media/:imageId', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.imageId)) {
+      return res.status(404).send('Image not found');
+    }
+
+    const blogImage = await BlogImage.findById(req.params.imageId).lean();
+    if (!blogImage?.data?.length) {
+      return res.status(404).send('Image not found');
+    }
+
+    res.set('Content-Type', blogImage.contentType || 'image/webp');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.send(blogImage.data);
+  } catch (error) {
+    console.error('[Blog media] serve failed:', error);
+    res.status(500).send('Failed to load image');
   }
 });
 
