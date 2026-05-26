@@ -1512,6 +1512,32 @@ export const deleteBlog = async (blogId) => {
 export const USER_AVATAR_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp';
 export const USER_AVATAR_MAX_BYTES = 4 * 1024 * 1024;
 
+export const SERVICE_IMAGE_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp';
+export const SERVICE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+/** Upload a service listing image (auth required). Returns { url, id }. */
+export const uploadServiceImage = async (file) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(`${API_URL}/services/upload-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to upload image');
+  }
+  return data;
+};
+
 /** Upload a profile/avatar image (public — used during signup and from ProfileModal). Returns { url, id }. */
 export const uploadUserAvatar = async (file) => {
   const formData = new FormData();

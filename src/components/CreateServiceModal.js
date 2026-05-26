@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { uploadServiceImage, SERVICE_IMAGE_ACCEPT, SERVICE_IMAGE_MAX_BYTES } from '../services/api';
 
 const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
+  const imageInputRef = useRef(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -45,40 +48,43 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     return foundTerms;
   };
 
-  const validateImageUrl = async (url) => {
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Service image must be a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > SERVICE_IMAGE_MAX_BYTES) {
+      setError('Service image must be 5MB or smaller.');
+      return;
+    }
+
+    setError('');
+    setImageUploading(true);
     try {
-      const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType.startsWith('image/') && 
-        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
-    } catch (error) {
-      return false;
+      const { url } = await uploadServiceImage(file);
+      setFormData((prev) => ({ ...prev, image: url }));
+      setPreviewUrl(url);
+    } catch (err) {
+      setError(err.message || 'Failed to upload service image');
+    } finally {
+      setImageUploading(false);
     }
   };
 
-  const handleImageChange = async (e) => {
-    const url = e.target.value;
-    setFormData(prev => ({ ...prev, image: url }));
-    
-    if (url) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
-        setPreviewUrl(url);
-        setError('');
-      } else {
-        setPreviewUrl('');
-        setError('Please enter a valid image URL (JPEG, PNG, or GIF)');
-      }
-    } else {
-      setPreviewUrl('');
-      setError('');
-    }
+  const clearImage = () => {
+    setFormData((prev) => ({ ...prev, image: '' }));
+    setPreviewUrl('');
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!previewUrl) {
-      setError('Please enter a valid image URL');
+    if (!formData.image) {
+      setError('Please upload a service image');
       return;
     }
     
@@ -270,20 +276,36 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                   Service Image
                 </label>
                 <div className="space-y-4">
+                  <p className="text-sm text-gray-400">
+                    Upload a wide image (recommended 1280×640). Images are compressed and hosted on Aquads for fast loading.
+                  </p>
                   <input
-                    type="url"
-                    required
-                    placeholder="https://example.com/your-service-image.jpg"
-                    className="w-full px-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200"
-                    value={formData.image}
-                    onChange={handleImageChange}
+                    ref={imageInputRef}
+                    type="file"
+                    accept={SERVICE_IMAGE_ACCEPT}
+                    onChange={handleImageFile}
+                    className="hidden"
                   />
-                  <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Recommended: 768x384px (JPEG, PNG, or GIF)</span>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={imageUploading}
+                      className="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:from-indigo-700 hover:to-purple-700 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {imageUploading ? 'Uploading…' : previewUrl ? 'Replace image' : 'Upload image'}
+                    </button>
+                    {previewUrl && !imageUploading && (
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="rounded-lg border border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
+                  <p className="text-xs text-gray-500">JPEG, PNG, GIF, or WebP. Max 5MB.</p>
                   {error && (
                     <div className="flex items-center space-x-2 text-red-400 bg-red-900/20 p-3 rounded-lg">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,9 +323,6 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                           alt="Service preview"
                           className="w-full h-48 object-cover rounded-lg border border-gray-600"
                         />
-                        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs">
-                          ✓ Valid
-                        </div>
                       </div>
                     </div>
                   )}

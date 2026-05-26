@@ -1,14 +1,139 @@
 const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Service = require('../models/Service');
 const ServiceReview = require('../models/ServiceReview');
 const Booking = require('../models/Booking');
+const ServiceImage = require('../models/ServiceImage');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const upload = require('../middleware/upload');
 const { awardListingPoints } = require('./points');
 const { createNotification } = require('./notifications');
 const { emitServiceApproved, emitServiceRejected, emitNewServicePending } = require('../socket');
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Service image upload (stored in MongoDB so files survive Railway redeploys).
+// Auth required: only logged-in users with verified email can list services,
+// so we gate the upload behind the same checks.
+// ──────────────────────────────────────────────────────────────────────────────
+const serviceImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed.'), false);
+    }
+  },
+});
+
+const getApiBaseUrl = () => {
+  if (process.env.PUBLIC_UPLOAD_BASE_URL) {
+    return process.env.PUBLIC_UPLOAD_BASE_URL.replace(/\/$/, '');
+  }
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+  return process.env.NODE_ENV === 'production'
+    ? 'https://aquads-production.up.railway.app'
+    : 'http://localhost:5000';
+};
+
+const buildServiceMediaUrl = (imageId) =>
+  `${getApiBaseUrl()}/api/services/media/${imageId}`;
+
+const optimizeServiceImageBuffer = async (inputBuffer) => {
+  try {
+    return await sharp(inputBuffer)
+      .rotate()
+      .resize({ width: 1280, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch (err) {
+    console.error('[Service image upload] sharp optimize failed:', err.message);
+    return inputBuffer;
+  }
+};
+
+router.post(
+  '/upload-image',
+  auth,
+  requireEmailVerification,
+  (req, res, next) => {
+    serviceImageUpload.single('image')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'Upload failed' });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.file?.buffer) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      const optimized = await optimizeServiceImageBuffer(req.file.buffer);
+
+      const serviceImage = await ServiceImage.create({
+        data: optimized,
+        contentType: 'image/webp',
+        size: optimized.length,
+        uploadedBy: req.user.userId,
+      });
+
+      const url = buildServiceMediaUrl(serviceImage._id);
+      res.status(201).json({ url, id: serviceImage._id });
+    } catch (error) {
+      console.error('[Service image upload] failed:', error);
+      res.status(500).json({ error: 'Failed to upload service image' });
+    }
+  }
+);
+
+router.get('/media/:imageId', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.imageId)) {
+      return res.status(404).send('Image not found');
+    }
+
+    const serviceImage = await ServiceImage.findById(req.params.imageId);
+    if (!serviceImage || !serviceImage.data) {
+      return res.status(404).send('Image not found');
+    }
+
+    const raw = serviceImage.data;
+    let buffer;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw.buffer !== 'undefined') {
+      buffer = Buffer.from(raw.buffer);
+    } else if (raw && raw.type === 'Buffer' && Array.isArray(raw.data)) {
+      buffer = Buffer.from(raw.data);
+    } else {
+      buffer = Buffer.from(raw);
+    }
+
+    if (!buffer.length) {
+      return res.status(404).send('Image not found');
+    }
+
+    res.set('Content-Type', serviceImage.contentType || 'image/webp');
+    res.set('Content-Length', String(buffer.length));
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('X-Robots-Tag', 'all');
+    res.end(buffer);
+  } catch (error) {
+    console.error('[Service media] serve failed:', error);
+    res.status(500).send('Failed to load image');
+  }
+});
 
 // Cache for services list — the GET with populate + 2 aggregations is very expensive.
 // Cache keyed by query params, TTL 2 minutes. Invalidated on create/update/delete/approve.
