@@ -153,16 +153,36 @@ router.get('/media/:imageId', async (req, res) => {
       return res.status(404).send('Image not found');
     }
 
-    const blogImage = await BlogImage.findById(req.params.imageId).lean();
-    if (!blogImage?.data?.length) {
+    const blogImage = await BlogImage.findById(req.params.imageId);
+    if (!blogImage || !blogImage.data) {
+      return res.status(404).send('Image not found');
+    }
+
+    // Mongoose returns Buffer for Buffer schema fields when not using .lean().
+    // Fall back through common shapes just in case (mongodb.Binary, plain object).
+    let buffer;
+    const raw = blogImage.data;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw.buffer !== 'undefined') {
+      buffer = Buffer.from(raw.buffer);
+    } else if (raw && raw.type === 'Buffer' && Array.isArray(raw.data)) {
+      buffer = Buffer.from(raw.data);
+    } else {
+      buffer = Buffer.from(raw);
+    }
+
+    if (!buffer.length) {
       return res.status(404).send('Image not found');
     }
 
     res.set('Content-Type', blogImage.contentType || 'image/webp');
+    res.set('Content-Length', String(buffer.length));
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.send(blogImage.data);
+    res.set('X-Robots-Tag', 'all');
+    res.end(buffer);
   } catch (error) {
     console.error('[Blog media] serve failed:', error);
     res.status(500).send('Failed to load image');
