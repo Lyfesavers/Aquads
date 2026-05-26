@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const sharp = require('sharp');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const UserImage = require('../models/UserImage');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
 const { awardAffiliatePoints, awardPendingAffiliatePoints, creditReferrerBonus } = require('./points');
@@ -18,6 +22,134 @@ const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Avatar upload (stored in MongoDB so files survive Railway redeploys).
+// Public endpoint because users upload during signup, before an account exists.
+// Rate-limited by IP and capped at 4MB to deter abuse.
+// ──────────────────────────────────────────────────────────────────────────────
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed.'), false);
+    }
+  },
+});
+
+const avatarUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many avatar uploads from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const getApiBaseUrl = () => {
+  if (process.env.PUBLIC_UPLOAD_BASE_URL) {
+    return process.env.PUBLIC_UPLOAD_BASE_URL.replace(/\/$/, '');
+  }
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+  return process.env.NODE_ENV === 'production'
+    ? 'https://aquads-production.up.railway.app'
+    : 'http://localhost:5000';
+};
+
+const buildUserMediaUrl = (imageId) =>
+  `${getApiBaseUrl()}/api/users/media/${imageId}`;
+
+const optimizeAvatarBuffer = async (inputBuffer) => {
+  try {
+    return await sharp(inputBuffer)
+      .rotate()
+      .resize({ width: 512, height: 512, fit: 'cover', position: 'attention' })
+      .webp({ quality: 85 })
+      .toBuffer();
+  } catch (err) {
+    console.error('[Avatar upload] sharp optimize failed:', err.message);
+    return inputBuffer;
+  }
+};
+
+router.post(
+  '/upload-avatar',
+  avatarUploadLimiter,
+  (req, res, next) => {
+    avatarUpload.single('image')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'Upload failed' });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.file?.buffer) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      const optimized = await optimizeAvatarBuffer(req.file.buffer);
+
+      const userImage = await UserImage.create({
+        data: optimized,
+        contentType: 'image/webp',
+        size: optimized.length,
+        uploaderIp: req.clientIp || req.ip,
+      });
+
+      const url = buildUserMediaUrl(userImage._id);
+      res.status(201).json({ url, id: userImage._id });
+    } catch (error) {
+      console.error('[Avatar upload] failed:', error);
+      res.status(500).json({ error: 'Failed to upload avatar' });
+    }
+  }
+);
+
+router.get('/media/:imageId', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.imageId)) {
+      return res.status(404).send('Image not found');
+    }
+
+    const userImage = await UserImage.findById(req.params.imageId);
+    if (!userImage || !userImage.data) {
+      return res.status(404).send('Image not found');
+    }
+
+    const raw = userImage.data;
+    let buffer;
+    if (Buffer.isBuffer(raw)) {
+      buffer = raw;
+    } else if (raw && typeof raw.buffer !== 'undefined') {
+      buffer = Buffer.from(raw.buffer);
+    } else if (raw && raw.type === 'Buffer' && Array.isArray(raw.data)) {
+      buffer = Buffer.from(raw.data);
+    } else {
+      buffer = Buffer.from(raw);
+    }
+
+    if (!buffer.length) {
+      return res.status(404).send('Image not found');
+    }
+
+    res.set('Content-Type', userImage.contentType || 'image/webp');
+    res.set('Content-Length', String(buffer.length));
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('X-Robots-Tag', 'all');
+    res.end(buffer);
+  } catch (error) {
+    console.error('[User media] serve failed:', error);
+    res.status(500).send('Failed to load image');
+  }
+});
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({

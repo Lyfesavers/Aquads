@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import emailService from '../services/emailService';
-import { FaSpinner, FaCheck, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaSpinner, FaCheck, FaTimes, FaEye, FaEyeSlash, FaUserCircle } from 'react-icons/fa';
+import { uploadUserAvatar, USER_AVATAR_ACCEPT, USER_AVATAR_MAX_BYTES } from '../services/api';
 
 const inputClass =
   'w-full rounded-lg border border-gray-600 bg-gray-900/50 px-3 py-2.5 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
@@ -12,8 +13,7 @@ const STEP_META = [
   { title: 'Profile', subtitle: 'Optional image, referral, and terms' }
 ];
 
-const isImageFlowMessage = (msg) =>
-  typeof msg === 'string' && (msg.includes('✨') || msg.includes('📋'));
+const isImageFlowMessage = () => false;
 
 const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
   const registerUser = onCreateAccount || onSubmit;
@@ -49,6 +49,8 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
   const [usernameFocused, setUsernameFocused] = useState(false);
   /** Prevents ghost taps / carried-over clicks when "Next" is swapped for "Create account" in the same screen area */
   const [finalStepActionsUnlocked, setFinalStepActionsUnlocked] = useState(true);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef(null);
 
   // Add countries list
   const countries = [
@@ -360,34 +362,37 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
     return formData.username.length > 0 && Object.values(usernameValidation).every(value => value === true);
   };
 
-  const validateImageUrl = async (url) => {
+  const handleAvatarFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Profile photo must be a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > USER_AVATAR_MAX_BYTES) {
+      setError('Profile photo must be 4MB or smaller.');
+      return;
+    }
+
+    setError('');
+    setAvatarUploading(true);
     try {
-      const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType.startsWith('image/') && 
-        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
-    } catch (error) {
-      return false;
+      const { url } = await uploadUserAvatar(file);
+      setFormData((prev) => ({ ...prev, image: url }));
+      setPreviewUrl(url);
+    } catch (err) {
+      setError(err.message || 'Failed to upload profile photo');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
-  const handleImageChange = async (e) => {
-    const url = e.target.value;
-    setFormData(prev => ({ ...prev, image: url }));
-    
-    if (url) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
-        setPreviewUrl(url);
-        setError('');
-      } else {
-        setPreviewUrl('');
-        setError('Please enter a valid image URL (JPEG, PNG, or GIF)');
-      }
-    } else {
-      setPreviewUrl('');
-      setError('');
-    }
+  const clearAvatar = () => {
+    setFormData((prev) => ({ ...prev, image: '' }));
+    setPreviewUrl('');
+    setError('');
   };
 
   const validateEmail = (email) => {
@@ -481,75 +486,10 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
     }
   };
 
-  // Add this new function to handle the Postimages upload window
-  const openPostimagesUploader = () => {
-    // Open Postimages in a popup window
-    const postimagesWindow = window.open(
-      'https://postimages.org/',
-      'postimagesWindow',
-      'width=1000,height=800,menubar=no,toolbar=no,location=no'
-    );
-    
-    // Clear the field and set focus guidance
-    setFormData(prev => ({ 
-      ...prev, 
-      image: '' 
-    }));
-    setPreviewUrl('');
-    // Show clear instructions instead of an error
-    setError('✨ Upload on Postimages, then copy the Direct link — the URL should end in .jpg, .jpeg, .png, .gif, or .webp');
-    
-    // For browsers that support it, set up a listener for when our window gets focus back
-    // This likely means the user has completed their task in the popup
-    window.addEventListener('focus', function onFocus() {
-      // Update guidance when the user comes back to our window
-      setError('📋 Paste that direct link above (must look like a file URL ending in .jpg, .png, etc.)');
-      window.removeEventListener('focus', onFocus);
-    }, { once: true });
-  };
-
-  // Keep the existing handleChange function
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // If changing the image URL, update the preview and validate
-    if (name === 'image' && value) {
-      // If it looks like an image URL, try to validate it
-      if (value.startsWith('http') && 
-         (value.includes('.jpg') || value.includes('.jpeg') || 
-          value.includes('.png') || value.includes('.gif'))) {
-        
-        // Check if the URL is valid
-        validateImageUrl(value).then(isValid => {
-          if (isValid) {
-            setPreviewUrl(value);
-            
-            // Show success message
-            if (error && error.includes('✨')) {
-              setError('✅ Image URL successfully added!');
-              // Clear the success message after 3 seconds
-              setTimeout(() => setError(''), 3000);
-            } else {
-              setError('');
-            }
-          } else {
-            setPreviewUrl('');
-            setError('The URL does not point to a valid image. Please try again.');
-          }
-        });
-      } else {
-        // Let's be optimistic and set the preview anyway, the image tag's onError will handle invalid images
-        setPreviewUrl(value);
-      }
-    } else if (name === 'image' && !value) {
-      setPreviewUrl('');
-    }
-    
-    // Clear error if it's not a special instruction
-    if (!(name === 'image' && error && error.includes('✨'))) {
-      setError('');
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError('');
   };
 
   // Password requirement item
@@ -829,77 +769,51 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
             )}
             {step === 3 && (
             <>
-            <div className="space-y-3 rounded-lg border border-zinc-700 bg-zinc-900/40 p-4">
-              <h4 className="text-sm font-medium text-gray-200">Profile image link (optional)</h4>
-              <p className="text-sm leading-relaxed text-gray-400">
-                Paste a <span className="font-medium text-gray-300">direct image URL</span> — the kind that opens the picture alone in the browser, not a gallery or album page.
-              </p>
-              <ul className="list-inside list-disc space-y-2 text-sm text-gray-400">
-                <li>
-                  On hosts like Postimages, choose the <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-xs text-gray-300">Direct link</span> (or equivalent), not HTML embed or thumbnail-only links.
-                </li>
-                <li>
-                  The address should end with a file type such as{' '}
-                  <span className="font-mono text-xs text-gray-300">.jpg</span>,{' '}
-                  <span className="font-mono text-xs text-gray-300">.jpeg</span>,{' '}
-                  <span className="font-mono text-xs text-gray-300">.png</span>,{' '}
-                  <span className="font-mono text-xs text-gray-300">.gif</span>, or{' '}
-                  <span className="font-mono text-xs text-gray-300">.webp</span>
-                  {' '}(extra <span className="font-mono text-xs">?query</span> parameters at the end are fine).
-                </li>
-                <li>If you are unsure, use <span className="font-medium text-gray-300">Upload image</span> below and copy the direct link the site gives you.</li>
-              </ul>
-            </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-200">Image URL</label>
-              <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                <input
-                  type="text"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleChange}
-                  placeholder="https://…/photo.png"
-                  className={`min-w-0 flex-1 ${inputClass}`}
-                />
-                <button
-                  type="button"
-                  onClick={openPostimagesUploader}
-                  className="flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 sm:w-auto"
-                >
-                  Upload image
-                </button>
-              </div>
-              {error && error.includes('✨') ? (
-                <div className="mb-2 mt-2 rounded-lg border border-blue-500/25 bg-blue-500/5 p-3">
-                  <h4 className="mb-2 text-sm font-medium text-blue-200">After uploading on Postimages</h4>
-                  <ol className="list-inside list-decimal space-y-1.5 text-sm text-gray-300">
-                    <li>Find the <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-xs">Direct link</span> row (URL should end in <span className="font-mono text-xs">.jpg</span>, <span className="font-mono text-xs">.png</span>, etc.).</li>
-                    <li>Copy that full URL — not the HTML code or a short gallery link.</li>
-                    <li>Paste it into the field above; you should see a preview when it loads.</li>
-                  </ol>
-                </div>
-              ) : null}
-              {error && error.includes('📋') ? (
-                <div className="mb-2 mt-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-100/90">
-                  {error}
-                </div>
-              ) : null}
-              <p className="text-xs text-gray-500">
-                Leave blank to add a profile photo later. Wrong links usually fail to preview — use a direct file URL.
+              <label className="mb-1.5 block text-sm font-medium text-gray-200">Profile photo (optional)</label>
+              <p className="mb-3 text-sm leading-relaxed text-gray-400">
+                Upload a square photo for your profile. Images are resized and hosted on Aquads for fast loading.
               </p>
-              {previewUrl && (
-                <div className="mt-2">
-                  <img
-                    src={previewUrl}
-                    alt="Profile preview"
-                    className="h-20 w-20 rounded-lg border border-gray-600 object-cover"
-                    onError={() => {
-                      setPreviewUrl('');
-                      setError('Failed to load image');
-                    }}
-                  />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept={USER_AVATAR_ACCEPT}
+                onChange={handleAvatarFile}
+                className="hidden"
+              />
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-600 bg-gray-800">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Profile preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <FaUserCircle className="h-12 w-12 text-gray-500" aria-hidden />
+                  )}
                 </div>
-              )}
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarUploading}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {avatarUploading ? 'Uploading…' : previewUrl ? 'Replace photo' : 'Upload photo'}
+                  </button>
+                  {previewUrl && !avatarUploading && (
+                    <button
+                      type="button"
+                      onClick={clearAvatar}
+                      className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">JPEG, PNG, GIF, or WebP. Max 4MB.</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-200">Referral code (optional)</label>

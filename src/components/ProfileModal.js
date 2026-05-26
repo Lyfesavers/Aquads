@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Modal from './Modal';
-import { updateUserProfile } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink, FaSpinner } from 'react-icons/fa';
+import {
+  updateUserProfile,
+  uploadUserAvatar,
+  USER_AVATAR_ACCEPT,
+  USER_AVATAR_MAX_BYTES,
+} from '../services/api';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink, FaSpinner, FaUserCircle } from 'react-icons/fa';
 import CVBuilder from './CVBuilder';
 import OnChainResume from './OnChainResume';
 
@@ -274,6 +279,8 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef(null);
 
   const showNotification = (message, type) => {
     if (type === 'success') {
@@ -295,34 +302,37 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
     setSuccess('');
   };
 
-  const validateImageUrl = async (url) => {
+  const handleAvatarFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Profile photo must be a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > USER_AVATAR_MAX_BYTES) {
+      setImageError('Profile photo must be 4MB or smaller.');
+      return;
+    }
+
+    setImageError('');
+    setAvatarUploading(true);
     try {
-      const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType.startsWith('image/') && 
-        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
-    } catch (error) {
-      return false;
+      const { url } = await uploadUserAvatar(file);
+      setFormData((prev) => ({ ...prev, image: url }));
+      setPreviewUrl(url);
+    } catch (err) {
+      setImageError(err.message || 'Failed to upload profile photo');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
-  const handleImageChange = async (e) => {
-    const url = e.target.value;
-    setFormData(prev => ({ ...prev, image: url }));
-    
-    if (url) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
-        setPreviewUrl(url);
-        setImageError('');
-      } else {
-        setPreviewUrl('');
-        setImageError('Please enter a valid image URL (JPEG, PNG, or GIF)');
-      }
-    } else {
-      setPreviewUrl('');
-      setImageError('');
-    }
+  const clearAvatar = () => {
+    setFormData((prev) => ({ ...prev, image: '' }));
+    setPreviewUrl('');
+    setImageError('');
   };
 
   const handleSubmit = async (e) => {
@@ -385,24 +395,48 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
               <FaUser className="text-blue-400" />
               Profile Picture
             </h3>
-            {previewUrl && (
-              <div className="mb-4 flex justify-center">
-                <img
-                  src={previewUrl}
-                  alt="Profile preview"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-blue-500/30"
-                />
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-blue-500/30 bg-gray-700/40">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Profile preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <FaUserCircle className="h-20 w-20 text-gray-500" aria-hidden />
+                )}
               </div>
-            )}
+            </div>
             <input
-              type="url"
-              name="image"
-              placeholder="Enter image URL (JPEG, PNG, or GIF)"
-              value={formData.image}
-              onChange={handleImageChange}
-              className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+              ref={avatarInputRef}
+              type="file"
+              accept={USER_AVATAR_ACCEPT}
+              onChange={handleAvatarFile}
+              className="hidden"
             />
-            {imageError && <p className="text-red-400 text-sm mt-2">{imageError}</p>}
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarUploading || saving}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-wait disabled:opacity-60"
+              >
+                {avatarUploading ? 'Uploading…' : previewUrl ? 'Replace photo' : 'Upload photo'}
+              </button>
+              {previewUrl && !avatarUploading && (
+                <button
+                  type="button"
+                  onClick={clearAvatar}
+                  disabled={saving}
+                  className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 disabled:opacity-60"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-center text-xs text-gray-400">JPEG, PNG, GIF, or WebP. Max 4MB.</p>
+            {imageError && <p className="text-red-400 text-sm mt-2 text-center">{imageError}</p>}
           </div>
         </div>
 
