@@ -40,6 +40,16 @@ const originalFetch = window.fetch;
 let isRefreshing = false;
 let refreshPromise = null;
 let sessionLogoutFired = false;
+/**
+ * True once we've successfully attached a Bearer token to ANY request this page load.
+ * Used to detect the "fake logged in" desync where localStorage was cleared (e.g. by
+ * another tab, or by a logout whose page reload never landed) while React state still
+ * holds currentUser. In that case the interceptor would otherwise see hadAuth=false on
+ * a 401 and silently swallow it — leaving the UI stuck as "logged in" with every action
+ * failing. When everHadAuth is true and we hit a 401 with no auth header on a non-exempt
+ * path, we force a clean logout.
+ */
+let everHadAuth = false;
 
 /** Paths that may return 401 without meaning the stored session is dead (e.g. wrong password). */
 const AUTH_EXEMPT_API_PATHS = [
@@ -187,6 +197,9 @@ window.fetch = async function(url, options = {}) {
   let response = await originalFetch(url, { ...options, headers });
 
   const hadAuth = Boolean(headers['Authorization']);
+  if (hadAuth) {
+    everHadAuth = true;
+  }
 
   // If 401 on an authenticated API call, try refresh; otherwise end the session.
   if (response.status === 401 && hadAuth && !isAuthExemptApiUrl(urlString)) {
@@ -212,6 +225,18 @@ window.fetch = async function(url, options = {}) {
         forceSessionLogout('unauthorized');
       }
     }
+  } else if (
+    response.status === 401 &&
+    !hadAuth &&
+    everHadAuth &&
+    !isAuthExemptApiUrl(urlString)
+  ) {
+    // Session-desync path: we WERE logged in earlier this page load but the
+    // Authorization header is now missing (localStorage cleared by another tab,
+    // by a logout whose reload didn't land, etc.). Without this branch the 401
+    // is silently returned and the UI stays "fake logged in" until the user
+    // manually logs out — which is exactly the bug we're fixing.
+    forceSessionLogout('session_desync');
   }
 
   return response;
@@ -225,6 +250,7 @@ axios.interceptors.request.use(
       const user = JSON.parse(savedUser);
       if (user.token) {
         config.headers.Authorization = `Bearer ${user.token}`;
+        everHadAuth = true;
       }
     }
     return config;
@@ -268,6 +294,19 @@ axios.interceptors.response.use(
         if (!isAuthExemptApiUrl(reqUrl)) {
           forceSessionLogout('unauthorized');
         }
+      }
+    } else if (
+      error.response?.status === 401 &&
+      everHadAuth &&
+      !originalRequest?.headers?.Authorization
+    ) {
+      // Same session-desync safety net as the fetch interceptor: we previously
+      // attached a Bearer token this page load, but this request went out with
+      // none and got 401. Treat as a lost session and force a clean logout
+      // instead of letting the UI sit in a "fake logged in" state.
+      const reqUrl = originalRequest?.url || '';
+      if (!isAuthExemptApiUrl(reqUrl)) {
+        forceSessionLogout('session_desync');
       }
     }
     
@@ -868,12 +907,25 @@ const maybeProactiveTokenRefresh = async () => {
     if (!savedUser) return;
 
     const user = JSON.parse(savedUser);
-    if (!user.token || !user.refreshToken) return;
+    if (!user.token) return;
 
     const expiresAt = getJwtExpiryMs(user.token);
     if (!expiresAt) return;
 
-    if (expiresAt - Date.now() <= PROACTIVE_REFRESH_LEAD_MS) {
+    const isExpired = expiresAt - Date.now() <= 0;
+    const isNearExpiry = expiresAt - Date.now() <= PROACTIVE_REFRESH_LEAD_MS;
+
+    // Legacy session without a refresh token (pre-refresh-token logins). If the
+    // access token is already expired we can never recover — force a clean logout
+    // instead of silently leaving the UI in a "fake logged in" state.
+    if (!user.refreshToken) {
+      if (isExpired) {
+        forceSessionLogout('expired');
+      }
+      return;
+    }
+
+    if (isNearExpiry) {
       await refreshAccessToken();
     }
   } catch (error) {

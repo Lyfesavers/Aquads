@@ -1319,19 +1319,33 @@ function App() {
   };
 
   const handleLogout = () => {
+    // Clear React state FIRST so the UI immediately reflects the logged-out state
+    // even if the page reload below is delayed (mobile bfcache, suspended navigation,
+    // race with pending awaits, etc.). Without this, localStorage was empty but
+    // React state still held currentUser, producing a "fake logged in" UI where
+    // every API call fired with no Authorization header (server saw
+    // "No authentication token provided") and the interceptor's `hadAuth` guard
+    // silently swallowed the resulting 401s.
+    setCurrentUser(null);
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     socket.auth = {};
     socket.disconnect();
-    // Full page reload guarantees 100% clean state — no stale React state,
+    // Full page reload still guarantees 100% clean state — no stale React state,
     // closures, pending async ops, or socket connections survive.
     // The next login behaves exactly like a first login.
     window.location.replace('/home');
   };
 
   // When JWT refresh fails or access expires without recovery, force a clean logout.
+  // Show the "session expired" notification immediately (not only after reload via
+  // sessionStorage flag) so the user always gets feedback even if the reload is
+  // delayed or never happens.
   useEffect(() => {
     const onSessionExpired = () => {
+      try {
+        showNotification('Your session has expired. Please log in again.', 'info');
+      } catch (_) {}
       handleLogout();
     };
     window.addEventListener('sessionExpired', onSessionExpired);
@@ -1831,6 +1845,26 @@ function App() {
     return () => window.removeEventListener('tokenRefreshed', handleTokenRefresh);
   }, []);
 
+  // Cross-tab session sync: if `currentUser` is cleared in another tab (logout,
+  // session expiry, etc.) the `storage` event fires here. Mirror the change so
+  // this tab doesn't sit in a "fake logged in" state. The event does NOT fire
+  // for changes made in the same tab — those are handled by handleLogout.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key !== 'currentUser') return;
+      if (e.newValue) return;
+      if (!currentUserRef.current) return;
+      try {
+        showNotification('You were logged out in another tab.', 'info');
+      } catch (_) {}
+      setCurrentUser(null);
+      socket.auth = {};
+      socket.disconnect();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   // Periodic token validation — keeps user data fresh from the database.
   // Depends only on token + user id so optimistic profile/link-in-bio updates do not
   // restart verify on every setCurrentUser (which raced PATCH and caused UI to snap back).
@@ -1876,7 +1910,22 @@ function App() {
       }
     };
 
+    // Re-validate the session whenever the tab comes back into focus. The proactive
+    // refresh handler already runs on visibilitychange, but it only mints a new
+    // access token — it does NOT detect cases where the server has invalidated the
+    // session (user suspended, profile changed, JWT secret rotated, etc.). Running
+    // validateToken here catches those and triggers forceSessionLogout when needed.
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState !== 'visible') return;
+      const live = currentUserRef.current;
+      if (live && !cancelled) {
+        validateToken();
+      }
+    };
+
     window.addEventListener('popstate', handleRouteChange);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
     const live = currentUserRef.current;
     if (live) {
@@ -1894,6 +1943,8 @@ function App() {
     return () => {
       cancelled = true;
       window.removeEventListener('popstate', handleRouteChange);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
       clearInterval(interval);
     };
   }, [currentUser?.token, currentUser?.userId, currentUser?.id]);
