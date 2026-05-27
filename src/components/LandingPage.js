@@ -7,6 +7,113 @@ import HowItWorksSection from './HowItWorksSection';
 import EtmTagline from './EtmTagline';
 import AsSeenOn from './AsSeenOn';
 
+/*
+  Landing-page FAQ — single source of truth for both:
+    1. The visible accordion rendered just above the footer.
+    2. The FAQPage JSON-LD block in <Helmet>.
+  Google requires the rendered text to mirror the schema text exactly, so
+  these strings MUST stay identical between the two consumers. When editing,
+  edit here and the schema and UI both update automatically.
+
+  Answers are sourced from public/llms.txt and src/components/Documentation/Documentation.js
+  (the canonical product reference). Do not invent capabilities here — every
+  number, chain count, review window, and mechanic comes from those two
+  documents, because AI engines (Perplexity / ChatGPT / Gemini / AI Overviews)
+  cite this surface and llms.txt against each other; drift between them costs
+  citation trust.
+*/
+const LANDING_FAQS = [
+  {
+    question: 'Is Aquads really free to list a token?',
+    answer:
+      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, an auto-bump at 100 bullish votes, and a complimentary 24-hour homepage banner once it's approved. Optional Premium and PR/marketing add-on packages (starting at $99) exist if you want a 1-hour fast-track review, a longer 7-day banner, Skipper AI agent credit, or bundled news distribution — but no upfront cost is ever required to list a token on Aquads.",
+  },
+  {
+    question: 'Which blockchains does Aquads support?',
+    answer:
+      'The Aquads bubble map accepts projects from 30+ chains, including Ethereum, Base, Arbitrum, Optimism, Solana, Sui, Aptos, Near, BSC, Polygon, Avalanche, Fantom, Cronos, TON, and Cardano among many others. AquaSwap (cross-chain swap) and AquaPay (multi-chain non-custodial payment links) extend coverage further to 50+ chains, so a single Aquads account spans nearly the entire on-chain ecosystem.',
+  },
+  {
+    question: 'How does Aquads stop bot voting and fake hype on the bubble map?',
+    answer:
+      "Aquads prevents bot voting and vote-farming through account-gated voting combined with a multi-factor ranking system. Voting is restricted to logged-in Aquads accounts with one vote stance per account per project — you can switch bullish or bearish but you can't multi-vote, and project owners can't vote on their own listings. Rankings layer on top of that: vote ratio, total engagement, profile completion, and social activity all weigh into a project's leaderboard position, so a thin spam swarm can't move the rankings the way it can on simple upvote-only crypto directories.",
+  },
+  {
+    question: 'Can I hire Web3 developers and marketers directly on Aquads?',
+    answer:
+      'Yes — the Aquads Marketplace is a Web3 freelancer hub where founders can browse and book verified developers, designers, marketers, raiders, and AMA hosts directly. Payments run through AquaPay payment links and the freelancer escrow flow, both non-custodial, and freelancers carry an on-chain resume verified on Base via EAS attestations, so credentials are publicly auditable rather than self-claimed.',
+  },
+  {
+    question: 'What does Aquads actually do for my project after I list?',
+    answer:
+      'Aquads is a post-launch growth stack, not just a listing site. After your project is live you get community votes that auto-bump your bubble at 100 bullish, paid bumps and banner ads for extra visibility, raid coordination across X, Telegram, and Facebook, AquaSwap trading directly from your bubble, the Skipper AI agent for automating tasks, and optional PR packages that push coverage to outlets like Forbes, CoinTelegraph, CoinMarketCap, and Yahoo Finance.',
+  },
+  {
+    question: 'How fast can my token go live on Aquads?',
+    answer:
+      'Free Starter listings on Aquads are reviewed in the standard queue and typically appear on the bubble map within 24 to 48 hours of submission. Premium listings are fast-tracked to a 1-hour review target once payment is verified. Both tiers ship onto the same Aquads bubble map with the same core voting, bumping, raids, and AquaSwap features — the difference is review speed and the bundled Premium growth perks, not the underlying product.',
+  },
+];
+
+// Single accordion row used by the FAQ section. Stateful (one per item)
+// so each row animates independently. Built with the same dark/glass tokens
+// as the rest of the landing page (white/10 borders, slate base, cyan accent
+// on hover) so it reads as native, not bolted on.
+const FAQItem = ({ question, answer, index }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const panelId = `faq-panel-${index}`;
+  const buttonId = `faq-button-${index}`;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.25) }}
+      className="rounded-xl border border-white/10 bg-white/[0.02] backdrop-blur-sm overflow-hidden hover:border-cyan-400/30 transition-colors"
+    >
+      <button
+        type="button"
+        id={buttonId}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={() => setIsOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-4 px-4 md:px-6 py-4 md:py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 rounded-xl"
+      >
+        <span className="text-white font-semibold text-sm md:text-base leading-snug">
+          {question}
+        </span>
+        <motion.span
+          animate={{ rotate: isOpen ? 45 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full border border-white/15 bg-white/5 text-cyan-300 flex items-center justify-center text-lg md:text-xl leading-none"
+          aria-hidden="true"
+        >
+          +
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            id={panelId}
+            role="region"
+            aria-labelledby={buttonId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 md:px-6 pb-5 md:pb-6 pt-0 text-gray-300 text-sm md:text-base leading-relaxed">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 // Floating particle component
 const FloatingParticle = ({ delay, size, color, x, y }) => (
   <motion.div
@@ -4416,6 +4523,28 @@ const LandingPage = () => {
             }
           })}
         </script>
+        {/*
+          FAQPage schema — primary surface for AI answer engines (Perplexity,
+          ChatGPT search, Claude, Gemini, Google AI Overviews) and Google
+          "People also ask" eligibility. Mirrors LANDING_FAQS exactly so the
+          rendered accordion below is the visible source of truth for these
+          Q/A pairs (Google requires the schema text to appear visibly on the
+          same page). Edit LANDING_FAQS to update both at once.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": LANDING_FAQS.map((faq) => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
+          })}
+        </script>
       </Helmet>
 
       {/* Global styles */}
@@ -5039,6 +5168,62 @@ const LandingPage = () => {
             Free listing • No wallet required to browse
           </motion.p>
         </motion.div>
+      </section>
+
+      {/*
+        FAQ Section.
+        Sits intentionally below the final CTA and above the footer — the
+        bottom-of-page "still on the fence?" zone. The questions / answers
+        are sourced from LANDING_FAQS at the top of this file, which is also
+        what the FAQPage JSON-LD in <Helmet> mirrors. Edit LANDING_FAQS to
+        update both the visible accordion and the schema in one place.
+
+        Why this section exists in addition to /docs and llms.txt:
+        - /docs is tagged TechArticle (long-form how-to). FAQPage is the
+          format AI answer engines and Google's "People also ask" prefer.
+        - llms.txt feeds AI scrapers but isn't visible on-page; FAQPage gives
+          Perplexity / ChatGPT / Gemini / AI Overviews a second tagged
+          surface and lets it cross-reference with llms.txt for trust.
+      */}
+      <section
+        id="faq"
+        aria-labelledby="faq-heading"
+        className="relative w-full px-4 md:px-6 py-14 md:py-24 border-t border-white/10"
+      >
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            className="text-center mb-8 md:mb-12"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2
+              id="faq-heading"
+              className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-4 font-display"
+            >
+              Frequently asked <span className="text-gradient-cyan">questions</span>
+            </h2>
+            <p className="text-gray-400 text-xs sm:text-sm md:text-base max-w-2xl mx-auto">
+              Quick answers for founders and traders. For deeper walkthroughs see the{' '}
+              <Link to="/docs" className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2">
+                full documentation
+              </Link>
+              .
+            </p>
+          </motion.div>
+
+          <div className="space-y-3 md:space-y-4">
+            {LANDING_FAQS.map((faq, idx) => (
+              <FAQItem
+                key={idx}
+                index={idx}
+                question={faq.question}
+                answer={faq.answer}
+              />
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
