@@ -5183,6 +5183,76 @@ const Documentation = () => {
       <Helmet>
         <title>{currentContent?.title || 'Documentation'} - Aquads Docs</title>
         <meta name="description" content={currentContent?.description || 'Aquads platform documentation'} />
+        <link rel="canonical" href="https://www.aquads.xyz/docs" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Aquads Docs" />
+        <meta property="og:title" content={`${currentContent?.title || 'Documentation'} - Aquads Docs`} />
+        <meta property="og:description" content={currentContent?.description || 'Aquads platform documentation: how to list, grow, hire, and get paid on Aquads.'} />
+        <meta property="og:url" content="https://www.aquads.xyz/docs" />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${currentContent?.title || 'Documentation'} - Aquads Docs`} />
+        <meta name="twitter:description" content={currentContent?.description || 'Aquads platform documentation.'} />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+
+        {/*
+          TechArticle schema — anchors the entire Aquads docs as one
+          authoritative technical reference. AI engines (Perplexity, ChatGPT
+          search, Google AI Overview) prefer TechArticle for "how does X work"
+          queries and cite it directly. Title/description are dynamic so each
+          section the reader scrolls to still presents as the right topic.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "headline": `${currentContent?.title || 'Documentation'} — Aquads Docs`,
+            "description": currentContent?.description || "Official Aquads documentation: how to list a token, run raids, hire freelancers, accept payments with AquaPay, swap with AquaSwap, and use every Aquads growth tool.",
+            "url": "https://www.aquads.xyz/docs",
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://www.aquads.xyz/docs"
+            },
+            "image": "https://www.aquads.xyz/logo712.png",
+            "inLanguage": "en",
+            "isAccessibleForFree": true,
+            "proficiencyLevel": "Beginner",
+            "about": [
+              "Aquads crypto launch platform",
+              "Token listing",
+              "Community raids and growth",
+              "Freelancer marketplace",
+              "AquaPay multi-chain payments",
+              "AquaSwap cross-chain swap",
+              "AquaFi DeFi savings"
+            ],
+            "author": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.aquads.xyz/logo192.png"
+              }
+            }
+          })}
+        </script>
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.aquads.xyz/" },
+              { "@type": "ListItem", "position": 2, "name": "Docs", "item": "https://www.aquads.xyz/docs" }
+            ]
+          })}
+        </script>
       </Helmet>
 
       {/* Header */}

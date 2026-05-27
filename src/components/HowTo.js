@@ -603,9 +603,122 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
-        <title>How To Guide - Aquads</title>
-        <meta name="description" content="Learn how to use Aquads with video tutorials, skill tests, community blog posts, market headlines, and a curated library of free online courses with certificates" />
-        <link rel="canonical" href={`${window.location.origin}${location.pathname.split('?')[0]}`} />
+        <title>Learn Aquads — tutorials, blog, skill tests & free courses</title>
+        <meta name="description" content="Learn how to use Aquads with video tutorials, skill tests, community blog posts, market headlines, and a curated library of free online courses with certificates." />
+        <link rel="canonical" href="https://www.aquads.xyz/learn" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Aquads" />
+        <meta property="og:title" content="Learn Aquads — tutorials, blog, skill tests & free courses" />
+        <meta property="og:description" content="Video tutorials, in-depth blog posts, crypto market news, skill tests, and a free certificate course library — everything you need to master Aquads and Web3." />
+        <meta property="og:url" content="https://www.aquads.xyz/learn" />
+        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Learn Aquads — tutorials, blog, skill tests & free courses" />
+        <meta name="twitter:description" content="Video tutorials, in-depth blog posts, crypto news, skill tests, and free certificate courses." />
+        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+
+        {/*
+          CollectionPage schema — tells Google and AI search this is the
+          Learn hub (a collection of articles, tutorials, and courses)
+          rather than a single article. Helps disambiguate from individual
+          blog posts which use BlogPosting on their own pages.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Aquads Learn",
+            "headline": "Learn Aquads — tutorials, blog, skill tests & free courses",
+            "description": "The Aquads learning hub: video tutorials, community blog posts, market news, skill tests, and curated free online courses with certificates.",
+            "url": "https://www.aquads.xyz/learn",
+            "inLanguage": "en",
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.aquads.xyz/logo192.png"
+              }
+            }
+          })}
+        </script>
+
+        {/*
+          Blog schema declaring the Aquads blog as a series, with the most
+          recent posts inlined as blogPost entries. Only emitted once blogs
+          have loaded so we don't ship an empty Blog{} to crawlers.
+        */}
+        {blogs && blogs.length > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Blog",
+              "name": "Aquads Blog",
+              "description": "Tutorials, deep dives, project updates, and community stories from the Aquads ecosystem.",
+              "url": "https://www.aquads.xyz/learn",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Aquads",
+                "url": "https://www.aquads.xyz",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://www.aquads.xyz/logo192.png"
+                }
+              },
+              "blogPost": blogs.slice(0, 10).map((blog) => ({
+                "@type": "BlogPosting",
+                "headline": blog.title,
+                "url": `https://www.aquads.xyz/learn/${createBlogSlug(blog.title)}-${blog._id}`,
+                "image": blog.bannerImage || "https://www.aquads.xyz/logo712.png",
+                "datePublished": blog.createdAt,
+                "dateModified": blog.updatedAt || blog.createdAt,
+                "author": {
+                  "@type": "Person",
+                  "name": blog.authorUsername || blog.author?.username || "Aquads"
+                }
+              }))
+            })}
+          </script>
+        )}
+
+        {/*
+          ItemList of the latest blog posts for the SERP — gives Google a
+          quick map of links Aquads considers most important on the hub.
+        */}
+        {blogs && blogs.length > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": "Latest Aquads blog posts",
+              "itemListOrder": "https://schema.org/ItemListOrderDescending",
+              "numberOfItems": Math.min(blogs.length, 10),
+              "itemListElement": blogs.slice(0, 10).map((blog, i) => ({
+                "@type": "ListItem",
+                "position": i + 1,
+                "url": `https://www.aquads.xyz/learn/${createBlogSlug(blog.title)}-${blog._id}`,
+                "name": blog.title
+              }))
+            })}
+          </script>
+        )}
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.aquads.xyz/" },
+              { "@type": "ListItem", "position": 2, "name": "Learn", "item": "https://www.aquads.xyz/learn" }
+            ]
+          })}
+        </script>
       </Helmet>
 
       {/* Header Navigation */}

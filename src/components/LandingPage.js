@@ -4318,7 +4318,8 @@ const LandingPage = () => {
             "description":
               "Aquads is the launch stack for new crypto projects: bubble listings, growth tools, freelancer marketplace, and AquaPay payments.",
             "sameAs": [
-              "https://twitter.com/_Aquads"
+              "https://x.com/_Aquads_",
+              "https://t.me/+6rJbDLqdMxA3ZTUx"
             ],
             "foundingDate": "2024",
             "contactPoint": {
@@ -4339,6 +4340,79 @@ const LandingPage = () => {
               "@type": "SearchAction",
               "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
               "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+        {/*
+          WebApplication schema — tells AI engines (Perplexity, ChatGPT search,
+          Claude, Google AI Overview) that Aquads is a finance/crypto web tool,
+          not a generic marketing site. Drives entity recognition and
+          categorization for branded and "what is Aquads" style queries.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Aquads",
+            "alternateName": "Aquads.xyz",
+            "url": "https://www.aquads.xyz",
+            "description":
+              "All-in-one launch stack for new crypto projects: free bubble-map listings, community raids, marketing & PR, freelancer marketplace, AquaPay multi-chain payments, AquaSwap cross-chain swap, and AquaFi DeFi savings.",
+            "applicationCategory": "FinanceApplication",
+            "applicationSubCategory": "Cryptocurrency",
+            "operatingSystem": "Any (web-based)",
+            "browserRequirements": "Requires a modern browser with JavaScript enabled.",
+            "inLanguage": "en",
+            "image": "https://www.aquads.xyz/logo712.png",
+            "screenshot": "https://www.aquads.xyz/logo712.png",
+            "isAccessibleForFree": true,
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Starter listing",
+                "price": "0",
+                "priceCurrency": "USD",
+                "description": "Free token listing on the Aquads bubble map with votes, bumps, AquaSwap routing, and raids."
+              },
+              {
+                "@type": "Offer",
+                "name": "Premium PR & marketing add-ons",
+                "price": "99",
+                "priceCurrency": "USD",
+                "description": "Marketing and PR distribution packages starting at $99 — Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap and 75+ outlets."
+              }
+            ],
+            "featureList": [
+              "Free crypto project listing on interactive bubble map",
+              "Community bullish/bearish voting with auto-bump at 100 votes",
+              "Twitter, Facebook and Telegram raid automation",
+              "Cross-chain swap (AquaSwap) across 50+ payment chains",
+              "DeFi savings and staking (AquaFi)",
+              "Web3 freelancer marketplace with escrow and reviews",
+              "Multi-chain non-custodial payment links (AquaPay)",
+              "On-chain freelancer resume verified on Base (EAS)",
+              "Twitter Spaces audience boosting (HyperSpace)",
+              "Link-in-bio with monetizable banner ads",
+              "Skipper AI agent for project automation",
+              "Telegram & Discord bot integrations"
+            ],
+            "audience": {
+              "@type": "Audience",
+              "audienceType": "Crypto project founders, token launch teams, Web3 marketers, freelancers and traders"
+            },
+            "creator": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.aquads.xyz/logo192.png"
+              }
             }
           })}
         </script>

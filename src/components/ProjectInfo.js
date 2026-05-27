@@ -317,6 +317,94 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
         />
         <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+
+        {/*
+          Service schema for the free Starter listing — anchors this page as
+          "Aquads token listing" so AI engines / Google connect "free crypto
+          listing" queries to it. Pricing is $0 with brand context.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "serviceType": "Crypto project listing",
+            "name": "Aquads Starter Listing",
+            "description":
+              "Free token listing on the Aquads interactive bubble map. Includes community bullish/bearish votes, automatic bump at 100 votes, AquaSwap cross-chain routing, raid participation, and Skipper AI agent on verified accounts.",
+            "provider": {
+              "@type": "Organization",
+              "name": "Aquads",
+              "url": "https://www.aquads.xyz"
+            },
+            "areaServed": "Global",
+            "url": "https://www.aquads.xyz/list-token-free",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock",
+              "url": "https://www.aquads.xyz/list-token-free",
+              "description": "No listing fee. Free for all crypto projects."
+            }
+          })}
+        </script>
+
+        {/*
+          ItemList of paid Marketing & PR add-on packages (AquaSplash → AquaStorm).
+          Each tier is a Product with a real Offer so price snippets can show in
+          Google and AI engines can quote pricing for "Aquads PR cost" queries.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Aquads Marketing & PR Add-on Packages",
+            "description":
+              "Press release distribution and marketing add-ons available to Aquads listings, powered by Mintfunnel.",
+            "itemListOrder": "https://schema.org/ItemListOrderAscending",
+            "numberOfItems": ADDON_PACKAGES.length,
+            "itemListElement": ADDON_PACKAGES.map((pkg, i) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "item": {
+                "@type": "Product",
+                "name": `${pkg.name} — ${pkg.partnerName}`,
+                "category": "Crypto press release distribution",
+                "description": `${pkg.idealFor}. Turnaround: ${pkg.turnaround}. Includes: ${pkg.features.join(", ")}.`,
+                "brand": {
+                  "@type": "Brand",
+                  "name": "Aquads"
+                },
+                "offers": {
+                  "@type": "Offer",
+                  "price": String(pkg.price),
+                  "priceCurrency": "USD",
+                  "availability": "https://schema.org/InStock",
+                  "url": "https://www.aquads.xyz/list-token-free",
+                  "seller": {
+                    "@type": "Organization",
+                    "name": "Aquads"
+                  }
+                }
+              }
+            }))
+          })}
+        </script>
+
+        {/*
+          Breadcrumb hint — gives Google the Home → List Token Free trail so the
+          SERP card can show the breadcrumb path instead of a raw URL.
+        */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.aquads.xyz/" },
+              { "@type": "ListItem", "position": 2, "name": "List token free", "item": "https://www.aquads.xyz/list-token-free" }
+            ]
+          })}
+        </script>
       </Helmet>
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
