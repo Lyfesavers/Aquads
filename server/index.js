@@ -40,6 +40,7 @@ const ipLimiter = require('./middleware/ipLimiter');
 const deviceLimiter = require('./middleware/deviceLimiter');
 const telegramService = require('./utils/telegramService');
 const discordService = require('./utils/discordService');
+const { cascadeUsernameRename } = require('./utils/usernameRenameCascade');
 const cron = require('node-cron');
 const { syncRemotiveJobs } = require('./services/remotiveSync');
 const { syncHimalayasJobs } = require('./services/himalayasJobsSync');
@@ -1119,7 +1120,11 @@ app.put('/api/users/profile', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // If username is being changed, check if new username is available
+    // If username is being changed, check if new username is available. We
+    // track the previous value so we can cascade the rename to every
+    // collection that stores ownership / identity as a username STRING (see
+    // utils/usernameRenameCascade.js for the full target list).
+    let renamedFromUsername = null;
     if (username && username !== user.username) {
       const sanitizedUsername = sanitizeForRegex(username);
       const existingUser = await User.findOne({
@@ -1130,6 +1135,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
       if (existingUser) {
         return res.status(400).json({ error: 'Username already taken' });
       }
+      renamedFromUsername = user.username;
       user.username = username;
     }
 
@@ -1161,6 +1167,20 @@ app.put('/api/users/profile', auth, async (req, res) => {
     }
 
     await user.save();
+
+    // Username changed? Propagate to every collection that stores ownership /
+    // identity as a username string. Done AFTER save so the User row is
+    // durably renamed first; cascade failures are logged but don't abort the
+    // request — the helper is idempotent and safely re-runnable. The fresh
+    // JWT issued just below already carries the new username, so the client
+    // session is consistent end-to-end after this response.
+    if (renamedFromUsername) {
+      try {
+        await cascadeUsernameRename(renamedFromUsername, user.username);
+      } catch (cascadeErr) {
+        console.error('[users.profile/index] Username rename cascade failed:', cascadeErr);
+      }
+    }
 
     // Generate new token with updated username if changed
     const token = jwt.sign(

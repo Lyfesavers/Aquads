@@ -22,6 +22,7 @@ const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
+const { cascadeUsernameRename } = require('../utils/usernameRenameCascade');
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Avatar upload (stored in MongoDB so files survive Railway redeploys).
@@ -999,12 +1000,21 @@ router.put('/profile', auth, async (req, res) => {
       user.email = email.toLowerCase();
     }
 
-    // If updating username, check if it's already in use
+    // If updating username, check if it's already in use. We track the
+    // previous value so we can cascade the rename to every collection that
+    // stores ownership / identity as a username STRING (Ad.owner,
+    // VoteBoost.owner, BumpRequest.owner, etc.). Without this cascade, a
+    // renamed user's listings become orphaned under the old name and
+    // downstream lookups (e.g. the Telegram bot's free-raid quota in
+    // utils/listingTier.js) silently return zero — surfacing as a misleading
+    // "not enough points" error.
+    let renamedFromUsername = null;
     if (username && username !== user.username) {
       const existingUsername = await User.findOne({ username }).lean();
       if (existingUsername) {
         return res.status(400).json({ error: 'Username already in use' });
       }
+      renamedFromUsername = user.username;
       user.username = username;
     }
 
@@ -1129,6 +1139,46 @@ router.put('/profile', auth, async (req, res) => {
 
     await user.save();
 
+    // Username changed? Two things must happen, in order:
+    //   1) Cascade the rename to every collection that stores ownership /
+    //      identity as a username string. Done AFTER save so the User row is
+    //      durably renamed first; cascade failures are logged but don't abort
+    //      the request — the helper is idempotent and safely re-runnable.
+    //   2) Issue a fresh access token. The previous JWT still embeds the OLD
+    //      username; downstream auth checks like `ad.owner !== req.user.username`
+    //      would otherwise misbehave until the token expires. The front-end
+    //      (src/services/api.js, updateProfile) already merges any `token` in
+    //      the response into localStorage and reconnects the socket with it,
+    //      so simply returning the new token is enough to refresh the session
+    //      end-to-end without forcing the user to log out.
+    let refreshedToken = null;
+    if (renamedFromUsername) {
+      try {
+        await cascadeUsernameRename(renamedFromUsername, user.username);
+      } catch (cascadeErr) {
+        console.error('[users.profile] Username rename cascade failed:', cascadeErr);
+      }
+
+      // Mirror the access-token shape and expiry rules used by the login
+      // route (search "users/login" in this file) so behavior stays uniform.
+      // Refresh tokens are bound to userId only and are not affected by a
+      // rename, so we do not rotate them here.
+      const isExtension = req.headers.origin && req.headers.origin.startsWith('chrome-extension://');
+      const tokenExpiration = isExtension ? '1h' : '15m';
+      refreshedToken = jwt.sign(
+        {
+          userId: user._id,
+          username: user.username,
+          isAdmin: user.isAdmin,
+          emailVerified: user.emailVerified,
+          userType: user.userType,
+          referredBy: user.referredBy
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: tokenExpiration }
+      );
+    }
+
     const profileBtnLook = resolveLinkInBioButtonLook(user);
     // Return updated user data without password
     const userData = {
@@ -1151,6 +1201,10 @@ router.put('/profile', auth, async (req, res) => {
       linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTextColor: user.linkInBioTextColor || null
     };
+
+    if (refreshedToken) {
+      userData.token = refreshedToken;
+    }
 
     res.json(userData);
   } catch (error) {
