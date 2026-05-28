@@ -44,7 +44,17 @@
      first one's position. Using % here would be circular vs. the track's
      max-content width and the loop would visibly snap. */
   min-width: 100vw;
-  padding: 0 1.5rem;
+  /* Spacing rule: gap = G, group padding-x = G / 2.
+     Within group: adjacent cells separated by exactly G.
+     At the seam (right edge of group 1 + left edge of group 2):
+     padding-right (G/2) + padding-left (G/2) = G as well.
+     => every logo-to-logo gap, including across the seam where index 7
+        (BlockTelegraph) meets the duplicate index 0 (Mintfunnel), is
+        mathematically identical. Without `gap`, only image-padding inside
+        each logo file decided breathing room, so two wide logos meeting
+        at the seam looked tighter than other pairs. */
+  gap: 2rem;
+  padding: 0 1rem;
 }
 
 .as-seen-marquee__cell {
@@ -56,7 +66,8 @@
 
 @media (min-width: 768px) {
   .as-seen-marquee__group {
-    padding: 0 2.5rem;
+    gap: 3rem;
+    padding: 0 1.5rem;
   }
 }
 
