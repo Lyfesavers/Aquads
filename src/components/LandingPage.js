@@ -46,7 +46,7 @@ const LANDING_FAQS = [
   {
     question: 'What does Aquads actually do for my project after I list?',
     answer:
-      'Aquads is a post-launch growth stack, not just a listing site. After your project is live you get community votes that auto-bump your bubble at 100 bullish, paid bumps and banner ads for extra visibility, raid coordination across X, Telegram, and Facebook, AquaSwap trading directly from your bubble, the Skipper AI agent for automating tasks, and optional PR packages that push coverage to outlets like Forbes, CoinTelegraph, CoinMarketCap, and Yahoo Finance.',
+      'Aquads is a post-launch growth stack, not just a listing site. After your project is live you get community votes that auto-bump your bubble at 100 bullish (with optional vote boosts to accelerate hitting that threshold), homepage and bubble banner ads for extra visibility, raid coordination across X, Telegram, and Facebook, AquaSwap trading directly from your bubble, the Skipper AI agent for automating tasks, and optional PR packages that push coverage to outlets like Forbes, CoinTelegraph, CoinMarketCap, and Yahoo Finance.',
   },
   {
     question: 'How fast can my token go live on Aquads?',
