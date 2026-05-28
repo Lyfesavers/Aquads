@@ -119,7 +119,17 @@ const LogoItem = ({ item }) => {
       <img
         src={item.logo}
         alt={item.alt || item.name}
-        loading="lazy"
+        // Eager (not lazy) is intentional. The marquee duplicates this
+        // logo set into a second off-screen group to enable a seamless
+        // infinite loop. With loading="lazy", the duplicate group's
+        // images don't load until they near the viewport during the
+        // first scroll cycle — and that mid-cycle load causes a tiny
+        // layout reflow that shows up as a visible glitch when the
+        // animation restarts. With 8 small logo files, eager load has
+        // negligible perf impact and guarantees both groups render
+        // pixel-identical from frame 1, which is what the seamless
+        // -50% translate math depends on.
+        loading="eager"
         decoding="async"
         className={`${baseClass} ${colorClass}`}
       />

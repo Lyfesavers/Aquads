@@ -28,6 +28,17 @@
   width: max-content;
   animation: asSeenScroll var(--as-seen-duration, 35s) linear infinite;
   will-change: transform;
+  /* CRITICAL for the seamless loop:
+     The parent `.as-seen-marquee` is `display: flex`, which makes the track
+     a flex item with the default `flex-shrink: 1`. Browsers can then shrink
+     the track below its natural `max-content` width when laying out the
+     flex container, especially on resize or first paint. When the track is
+     even one pixel narrower than 2× group width, `translate3d(-50%, 0, 0)`
+     no longer equals exactly one group's width, and the animation snap
+     back to 0% becomes visible as a "restart glitch" — what looked like
+     a jump rather than a continuous flow. flex-shrink: 0 locks the track
+     at max-content so the -50% translate is always exactly one group. */
+  flex-shrink: 0;
 }
 
 .as-seen-marquee__group {
