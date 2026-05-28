@@ -11,7 +11,24 @@ import './AsSeenOn.css';
 //   (SEO best practice — preserves our link equity, avoids paid-link-scheme penalty).
 //   Set dofollow: true only for *earned* editorial coverage from a high-authority
 //   outlet we explicitly want to vouch for (e.g. Cointelegraph, TechCrunch).
+//
+// ORDER MATTERS for the seamless marquee loop. Two identical groups sit side
+// by side; the seam falls between index N-1 (last) and index 0 (first of the
+// duplicate group). Two visually wide / minimally-padded wordmarks meeting
+// at the seam read as "too close" even when the math is even (because the
+// breathing room comes from each logo file's own internal whitespace).
+// Rule of thumb: keep narrow / padded logos at index 0 and the last index
+// so the seam always lands between two logos that bring their own breathing
+// room, and spread the wide wordmarks through the middle.
 const PRESS_LOGOS = [
+  {
+    id: 'bitget',
+    name: 'Bitget',
+    logo: '/bitget.png',
+    url: 'https://www.bitget.com/amp/news/detail/12560605425522',
+    alt: 'Aquads featured on Bitget News',
+    heightClass: 'h-6 md:h-8',
+  },
   {
     id: 'mintfunnel',
     name: 'Mintfunnel',
@@ -19,14 +36,6 @@ const PRESS_LOGOS = [
     url: 'https://news.mintfunnel.co/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain/',
     alt: 'Aquads featured on Mintfunnel Newsroom',
     heightClass: 'h-7 md:h-9',
-  },
-  {
-    id: 'bitcolumnist',
-    name: 'Bitcolumnist',
-    logo: '/Bitcolumnist-Logo-Dark-BG.webp',
-    url: 'https://bitcolumnist.com/release/aquads-launches-post-launch-growth-stack-to-close-the-30-day-gap-for-crypto-projects-already-live-on-chain/',
-    alt: 'Aquads featured on Bitcolumnist',
-    heightClass: 'h-5 md:h-7',
   },
   {
     id: 'thebittimes',
@@ -39,6 +48,14 @@ const PRESS_LOGOS = [
     heightClass: 'h-10 md:h-14',
   },
   {
+    id: 'blocktelegraph',
+    name: 'BlockTelegraph',
+    logo: '/blocktelegraph-logo-600x131.png',
+    url: 'https://blocktelegraph.io/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain/',
+    alt: 'Aquads featured on BlockTelegraph',
+    heightClass: 'h-7 md:h-9',
+  },
+  {
     id: 'timestabloid',
     name: 'Times Tabloid',
     logo: '/Times-Tabloid-Header-Mobile.png',
@@ -47,20 +64,12 @@ const PRESS_LOGOS = [
     heightClass: 'h-8 md:h-10',
   },
   {
-    id: 'bitget',
-    name: 'Bitget',
-    logo: '/bitget.png',
-    url: 'https://www.bitget.com/amp/news/detail/12560605425522',
-    alt: 'Aquads featured on Bitget News',
-    heightClass: 'h-6 md:h-8',
-  },
-  {
-    id: 'intellectia',
-    name: 'Intellectia.AI',
-    logo: '/intellectia.png',
-    url: 'https://intellectia.ai/news/crypto/aquads-launches-postlaunch-growth-stack-for-live-crypto-projects',
-    alt: 'Aquads featured on Intellectia.AI',
-    heightClass: 'h-6 md:h-8',
+    id: 'bitcolumnist',
+    name: 'Bitcolumnist',
+    logo: '/Bitcolumnist-Logo-Dark-BG.webp',
+    url: 'https://bitcolumnist.com/release/aquads-launches-post-launch-growth-stack-to-close-the-30-day-gap-for-crypto-projects-already-live-on-chain/',
+    alt: 'Aquads featured on Bitcolumnist',
+    heightClass: 'h-5 md:h-7',
   },
   {
     id: 'mexc',
@@ -77,12 +86,12 @@ const PRESS_LOGOS = [
     invertOnDark: true,
   },
   {
-    id: 'blocktelegraph',
-    name: 'BlockTelegraph',
-    logo: '/blocktelegraph-logo-600x131.png',
-    url: 'https://blocktelegraph.io/aquads-launches-post-launch-growth-stack-for-crypto-projects-already-live-on-chain/',
-    alt: 'Aquads featured on BlockTelegraph',
-    heightClass: 'h-7 md:h-9',
+    id: 'intellectia',
+    name: 'Intellectia.AI',
+    logo: '/intellectia.png',
+    url: 'https://intellectia.ai/news/crypto/aquads-launches-postlaunch-growth-stack-for-live-crypto-projects',
+    alt: 'Aquads featured on Intellectia.AI',
+    heightClass: 'h-6 md:h-8',
   },
 ];
 
@@ -144,7 +153,19 @@ const AsSeenOn = () => {
         }}
       >
         <div className="as-seen-marquee__track">
-          <ul className="as-seen-marquee__group list-none m-0 p-0">
+          {/*
+            NOTE: do NOT add Tailwind `p-0` here. The marquee group needs
+            horizontal padding (set in AsSeenOn.css → `.as-seen-marquee__group`)
+            because the seam-gap math depends on it: padding-right of group 1
+            + padding-left of group 2 must equal the within-group `gap`
+            for every logo-to-logo gap to look identical. Tailwind's `.p-0`
+            has the same selector specificity as our group rule and can win
+            the cascade depending on stylesheet load order, which silently
+            collapses the seam gap to 0 (BlockTelegraph and mintfunnel
+            rendered visually touching). `list-none` and `m-0` are safe
+            because nothing in our CSS competes with them.
+          */}
+          <ul className="as-seen-marquee__group list-none m-0">
             {PRESS_LOGOS.map((item) => (
               <li key={item.id} className="as-seen-marquee__cell">
                 <LogoItem item={item} />
@@ -152,7 +173,7 @@ const AsSeenOn = () => {
             ))}
           </ul>
           <ul
-            className="as-seen-marquee__group list-none m-0 p-0"
+            className="as-seen-marquee__group list-none m-0"
             aria-hidden="true"
           >
             {PRESS_LOGOS.map((item) => (

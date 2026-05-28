@@ -48,13 +48,21 @@
      Within group: adjacent cells separated by exactly G.
      At the seam (right edge of group 1 + left edge of group 2):
      padding-right (G/2) + padding-left (G/2) = G as well.
-     => every logo-to-logo gap, including across the seam where index 7
-        (BlockTelegraph) meets the duplicate index 0 (Mintfunnel), is
-        mathematically identical. Without `gap`, only image-padding inside
-        each logo file decided breathing room, so two wide logos meeting
-        at the seam looked tighter than other pairs. */
-  gap: 2rem;
-  padding: 0 1rem;
+     => every logo-to-logo gap is mathematically identical, including the
+        seam between the last logo of group 1 and the first logo of the
+        duplicate group 2. Without `gap`, only image-padding inside each
+        logo file decided breathing room, so two visually-tight wordmarks
+        meeting at the seam looked dramatically closer than other pairs.
+
+     `!important` is intentional: the parent <ul> picks up Tailwind utility
+     classes from JSX (e.g. p-0/m-0) that share specificity (0,1,0) with
+     this rule. Without !important, cascade order — which can flip between
+     dev/prod, hot reloads, and future CRA / Tailwind upgrades — decides
+     whether `padding: 0` from `.p-0` overrides our padding here. When that
+     happens the seam gap collapses to 0 silently. !important guarantees
+     the spacing math holds regardless. */
+  gap: 2rem !important;
+  padding: 0 1rem !important;
 }
 
 .as-seen-marquee__cell {
@@ -66,8 +74,8 @@
 
 @media (min-width: 768px) {
   .as-seen-marquee__group {
-    gap: 3rem;
-    padding: 0 1.5rem;
+    gap: 3rem !important;
+    padding: 0 1.5rem !important;
   }
 }
 
