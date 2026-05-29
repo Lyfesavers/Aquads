@@ -61,6 +61,19 @@ function looksLikeListingRequest(text) {
   return LISTING_ADDRESS_RE.test(withoutUrls);
 }
 
+// Detects when Skipper *claims* (in plain text) to be creating an image/video
+// instead of actually invoking the tool. This happens when a chat gets long and
+// the model imitates a "generating…" message rather than emitting a real tool
+// call — so no media is produced. We only act on this when no media event was
+// received, then nudge the user to start a fresh chat.
+const FAKE_MEDIA_CLAIM_RE =
+  /\bgenerate_image\b|\bgenerate_video\b|(?:image|video|clip)\s+generation\s+in\s+progress|generating\s+(?:your|the|a|an)\s+(?:image|video|visual|clip|picture)|deducted from (?:your )?wallet/i;
+
+function looksLikeFakeMediaClaim(text) {
+  if (!text) return false;
+  return FAKE_MEDIA_CLAIM_RE.test(text);
+}
+
 // Thread ids deleted during this browser session. Module-level so it is shared
 // by the drawer and full-page panel instances. Prevents a deleted chat from
 // reappearing when switching modes: a fresh thread refetch can race with an
@@ -187,6 +200,7 @@ export default function ProjectAgentPanel({
   const [streamingReasoning, setStreamingReasoning] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [imageGenerating, setImageGenerating] = useState(false);
+  const [mediaStallNotice, setMediaStallNotice] = useState(false);
   const [lastCost, setLastCost] = useState(null);
   const [searchStatus, setSearchStatus] = useState('');
   const [topupCreditUsd, setTopupCreditUsd] = useState('20');
@@ -474,6 +488,7 @@ export default function ProjectAgentPanel({
 
   useEffect(() => {
     if (!token || !adId || !threadId) return;
+    setMediaStallNotice(false);
     const tid = String(threadId);
     if (skipMessagesFetchRef.current === tid) {
       skipMessagesFetchRef.current = null;
@@ -552,6 +567,8 @@ export default function ProjectAgentPanel({
       setMessages([]);
       setStreamingContent('');
       setStreamingReasoning('');
+      setMediaStallNotice(false);
+      setError('');
     } catch (e) {
       setError(e.message);
     }
@@ -723,6 +740,7 @@ export default function ProjectAgentPanel({
     setStreamingReasoning('');
     setLastCost(null);
     setSearchStatus('');
+    setMediaStallNotice(false);
 
     if (mode === 'image') {
       setMessages((prev) => [...prev, { role: 'user', content: text, mode: 'image' }]);
@@ -851,6 +869,18 @@ export default function ProjectAgentPanel({
       }
       setStreamingContent('');
       setStreamingReasoning('');
+
+      // Long threads can make Skipper write a fake "generating…" reply instead of
+      // actually calling the tool. If it claimed to make media but no media event
+      // arrived, prompt the user to start a fresh chat so it works again.
+      if (
+        effectiveMode === 'agent' &&
+        mediaCreated.length === 0 &&
+        looksLikeFakeMediaClaim(content)
+      ) {
+        setMediaStallNotice(true);
+      }
+
       await refreshWallet();
     } catch (e) {
       setError(e.message || 'Send failed');
@@ -1177,6 +1207,27 @@ export default function ProjectAgentPanel({
                 {' '}
                 · Balance ${lastCost.balanceUsd}
               </p>
+            )}
+
+            {mediaStallNotice && (
+              <div className="project-agent-stall-notice" role="status">
+                <span>
+                  Skipper said it was creating media but didn’t actually make it — this chat got too
+                  long. Start a new chat to create images and videos again.
+                </span>
+                <div className="project-agent-stall-notice-actions">
+                  <button type="button" className="primary" onClick={handleNewChat}>
+                    Start new chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaStallNotice(false)}
+                    aria-label="Dismiss"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
             )}
 
             {error && (
