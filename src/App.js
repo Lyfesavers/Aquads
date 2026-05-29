@@ -3578,19 +3578,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Modals */}
-                {showLoginModal && (
-                  <LoginModal
-                    onLogin={handleLogin}
-                    onGoogleLogin={handleGoogleLogin}
-                    onClose={() => setShowLoginModal(false)}
-                    onCreateAccount={() => {
-                      setShowLoginModal(false);
-                      setShowCreateAccountModal(true);
-                    }}
-                  />
-                )}
-
+                {/* Modals — login/create-account are global (see below Routes) */}
                 {showProfileModal && currentUser && (
                   <ProfileModal
                     currentUser={currentUser}
@@ -3600,14 +3588,6 @@ function App() {
                     }}
                     onProfileUpdate={handleProfileUpdate}
                     initialTab={profileModalInitialTab}
-                  />
-                )}
-
-                {showCreateAccountModal && (
-                  <CreateAccountModal
-                    isOpen={showCreateAccountModal}
-                    onCreateAccount={handleCreateAccount}
-                    onClose={() => setShowCreateAccountModal(false)}
                   />
                 )}
 
@@ -3644,88 +3624,6 @@ function App() {
                     userAd={unbumpedAd}
                   />
                 )}
-
-                {/* Full-screen vote popup */}
-                {votePopup && (
-                  <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/70 backdrop-blur-md">
-                    <div className="bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all animate-fadeIn">
-                      <div className="flex flex-col items-center">
-                        {/* Bubble image/preview */}
-                        {votePopup.adDetails && (
-                          <div className="mb-4 flex flex-col items-center">
-                            <div className={`w-24 h-24 rounded-full mb-2 flex items-center justify-center text-center overflow-hidden ${votePopup.adDetails.blockchain ? `bubble-${votePopup.adDetails.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}>
-                              {votePopup.adDetails.logo ? (
-                                <img 
-                                  src={votePopup.adDetails.logo} 
-                                  alt={votePopup.adDetails.title}
-                                  className="w-16 h-16 object-contain"
-                                />
-                              ) : (
-                                <span className="text-lg font-bold">{votePopup.adDetails.title.substring(0, 2)}</span>
-                              )}
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-1">{votePopup.adDetails.title}</h3>
-                            <p className="text-sm text-gray-300 mb-4">
-                              {votePopup.adDetails.blockchain 
-                                ? BLOCKCHAIN_OPTIONS.find(opt => opt.value === votePopup.adDetails.blockchain.toLowerCase())?.label || votePopup.adDetails.blockchain
-                                : 'Ethereum'
-                              }
-                            </p>
-                          </div>
-                        )}
-                        
-                        {/* Bullish/Bearish icon */}
-                        <div className="text-6xl mb-4 flex justify-center">
-                          {votePopup.message.includes('bullish') ? (
-                            <img 
-                              src="/Bullish.svg" 
-                              alt="Bullish" 
-                              className="w-16 h-16"
-                            />
-                          ) : (
-                            <img 
-                              src="/Bearish.svg" 
-                              alt="Bearish" 
-                              className="w-16 h-16"
-                            />
-                          )}
-                        </div>
-                        
-                        {/* Message */}
-                        <div className="text-center mb-6">
-                          <h2 className="text-2xl font-bold text-white mb-2">
-                            {votePopup.message.includes('bullish') ? 'Bullish Vote!' : 'Bearish Vote!'}
-                          </h2>
-                          <p className="text-lg text-gray-200">{votePopup.message}</p>
-                        </div>
-                        
-                        {/* Close button */}
-                        <button 
-                          onClick={() => setVotePopup(null)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition duration-300"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Regular notifications - keep these for non-vote notifications */}
-                <div className="fixed bottom-4 right-4 space-y-2" style={{ zIndex: 999999999 }}>
-                  {notifications.map(({ id, message, type }) => (
-                    <div
-                      key={id}
-                      className={`p-4 rounded shadow-lg ${
-                        type === 'error' ? 'bg-red-500' :
-                        type === 'success' ? 'bg-green-500' :
-                        'bg-blue-500'
-                      }`}
-                    >
-                      {message}
-                    </div>
-                  ))}
-                </div>
 
                 {/* Debug info */}
                 {process.env.NODE_ENV === 'development' && (
@@ -3953,6 +3851,99 @@ function App() {
             />
         </Routes>
         </Suspense>
+
+        {/* Global auth modals — AquaSwap votes, header login links, etc. */}
+        {showLoginModal && (
+          <LoginModal
+            onLogin={handleLogin}
+            onGoogleLogin={handleGoogleLogin}
+            onClose={() => setShowLoginModal(false)}
+            onCreateAccount={() => {
+              setShowLoginModal(false);
+              setShowCreateAccountModal(true);
+            }}
+          />
+        )}
+
+        {showCreateAccountModal && (
+          <CreateAccountModal
+            isOpen={showCreateAccountModal}
+            onCreateAccount={handleCreateAccount}
+            onClose={() => setShowCreateAccountModal(false)}
+          />
+        )}
+
+        {/* Global vote success popup (bubble map + AquaSwap) */}
+        {votePopup && (
+          <div className="fixed inset-0 flex items-center justify-center z-[999999998] bg-black/70 backdrop-blur-md">
+            <div className="bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all animate-fadeIn">
+              <div className="flex flex-col items-center">
+                {votePopup.adDetails && (
+                  <div className="mb-4 flex flex-col items-center">
+                    <div className={`w-24 h-24 rounded-full mb-2 flex items-center justify-center text-center overflow-hidden ${votePopup.adDetails.blockchain ? `bubble-${votePopup.adDetails.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}>
+                      {votePopup.adDetails.logo ? (
+                        <img
+                          src={votePopup.adDetails.logo}
+                          alt={votePopup.adDetails.title}
+                          className="w-16 h-16 object-contain"
+                        />
+                      ) : (
+                        <span className="text-lg font-bold">{votePopup.adDetails.title.substring(0, 2)}</span>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-1">{votePopup.adDetails.title}</h3>
+                    <p className="text-sm text-gray-300 mb-4">
+                      {votePopup.adDetails.blockchain
+                        ? BLOCKCHAIN_OPTIONS.find(opt => opt.value === votePopup.adDetails.blockchain.toLowerCase())?.label || votePopup.adDetails.blockchain
+                        : 'Ethereum'
+                      }
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-6xl mb-4 flex justify-center">
+                  {votePopup.message.includes('bullish') ? (
+                    <img src="/Bullish.svg" alt="Bullish" className="w-16 h-16" />
+                  ) : (
+                    <img src="/Bearish.svg" alt="Bearish" className="w-16 h-16" />
+                  )}
+                </div>
+
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    {votePopup.message.includes('bullish') ? 'Bullish Vote!' : 'Bearish Vote!'}
+                  </h2>
+                  <p className="text-lg text-gray-200">{votePopup.message}</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setVotePopup(null)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition duration-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Global toast notifications */}
+        <div className="fixed bottom-4 right-4 space-y-2 pointer-events-none" style={{ zIndex: 999999999 }}>
+          {notifications.map(({ id, message, type }) => (
+            <div
+              key={id}
+              className={`p-4 rounded shadow-lg pointer-events-auto ${
+                type === 'error' ? 'bg-red-500' :
+                type === 'success' ? 'bg-green-500' :
+                'bg-blue-500'
+              }`}
+            >
+              {message}
+            </div>
+          ))}
+        </div>
+
         {showEmailVerificationModal && pendingVerificationEmail && (
           <EmailVerificationModal
             email={pendingVerificationEmail}
