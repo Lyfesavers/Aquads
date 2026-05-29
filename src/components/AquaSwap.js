@@ -139,7 +139,16 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'kaspa': 'kaspa'
 };
 
-const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
+const BUMP_VOTE_THRESHOLD = 100;
+
+const AquaSwap = ({
+  currentUser,
+  showNotification,
+  ads: adsFromApp,
+  onVote,
+  votingAdId,
+  onRequireLogin
+}) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -1710,6 +1719,23 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
     normalizeAddress(ad.pairAddress || ad.contractAddress) === selectedTokenAddress
   );
   const projectForInsights = selectedProject || null;
+  const showVoteFab = Boolean(selectedProject && tokenSearch?.trim());
+  const isVotingOnSelectedProject = Boolean(
+    selectedProject && votingAdId && votingAdId === selectedProject.id
+  );
+
+  const handleChartVote = (voteType) => {
+    if (!selectedProject?.id || !onVote) return;
+    if (!currentUser) {
+      if (onRequireLogin) {
+        onRequireLogin();
+      } else {
+        showNotification('Please log in to vote', 'info');
+      }
+      return;
+    }
+    onVote(selectedProject.id, voteType);
+  };
   const projectProfile = projectForInsights?.projectProfile || null;
   const qaStatus = projectProfile?.verification?.status || 'unverified';
   const hasProjectDeepDive = Boolean(
@@ -2922,6 +2948,55 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
         onClose={() => setShowBuyCryptoModal(false)}
       />
 
+      {showVoteFab && (
+        <div className="aquaswap-vote-fab" role="group" aria-label={`Vote on ${selectedProject.title}`}>
+          <div className="aquaswap-vote-fab-summary">
+            <span className="aquaswap-vote-fab-title">Community vote</span>
+            <span className="aquaswap-vote-fab-counts">
+              👍 {selectedProject.bullishVotes || 0}
+              {!selectedProject.isBumped && (selectedProject.bullishVotes || 0) < BUMP_VOTE_THRESHOLD && (
+                <span className="aquaswap-vote-fab-bump">
+                  · {BUMP_VOTE_THRESHOLD - (selectedProject.bullishVotes || 0)} to bump
+                </span>
+              )}
+              <span className="aquaswap-vote-fab-bearish-count"> · 👎 {selectedProject.bearishVotes || 0}</span>
+            </span>
+          </div>
+          <div className="aquaswap-vote-fab-actions">
+            <button
+              type="button"
+              className={`aquaswap-vote-fab-btn bearish ${selectedProject.userVote === 'bearish' ? 'active' : ''}`}
+              onClick={() => handleChartVote('bearish')}
+              disabled={isVotingOnSelectedProject}
+              aria-label="Vote bearish"
+              title="20 points once per bubble on your first vote; you can change anytime."
+            >
+              {isVotingOnSelectedProject ? (
+                <span className="aquaswap-vote-fab-spinner" aria-hidden />
+              ) : (
+                <img src="/Bearish.svg" alt="" className="aquaswap-vote-fab-icon" />
+              )}
+              <span className="aquaswap-vote-fab-label">Bearish</span>
+            </button>
+            <button
+              type="button"
+              className={`aquaswap-vote-fab-btn bullish ${selectedProject.userVote === 'bullish' ? 'active' : ''}`}
+              onClick={() => handleChartVote('bullish')}
+              disabled={isVotingOnSelectedProject}
+              aria-label="Vote bullish"
+              title="20 points once per bubble on your first vote; you can change anytime."
+            >
+              {isVotingOnSelectedProject ? (
+                <span className="aquaswap-vote-fab-spinner" aria-hidden />
+              ) : (
+                <img src="/Bullish.svg" alt="" className="aquaswap-vote-fab-icon" />
+              )}
+              <span className="aquaswap-vote-fab-label">Bullish</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Shill Templates Modal */}
       <ShillTemplatesModal
         isOpen={showShillModal}
@@ -2937,7 +3012,11 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
             blockchain: CHAIN_TO_BLOCKCHAIN_PARAM[selectedChain] || selectedChain,
             logo: selectedProject?.logo || activePair?.logo || null,
             priceUsd: activePair?.priceUsd ?? null,
-            priceChange24h: activePair?.priceChange24h ?? null
+            priceChange24h: activePair?.priceChange24h ?? null,
+            bullishVotes: selectedProject?.bullishVotes ?? null,
+            bearishVotes: selectedProject?.bearishVotes ?? null,
+            isBumped: selectedProject?.isBumped ?? false,
+            isListedOnAquads: Boolean(selectedProject)
           };
         })()}
         currentUser={currentUser}
@@ -2949,7 +3028,10 @@ const AquaSwap = ({ currentUser, showNotification, ads: adsFromApp }) => {
 AquaSwap.propTypes = {
   ads: PropTypes.array,
   currentUser: PropTypes.object,
-  showNotification: PropTypes.func.isRequired
+  showNotification: PropTypes.func.isRequired,
+  onVote: PropTypes.func,
+  votingAdId: PropTypes.string,
+  onRequireLogin: PropTypes.func
 };
 
 export default AquaSwap; 

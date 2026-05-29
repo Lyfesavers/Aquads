@@ -93,6 +93,23 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
   const tokenLogo = tokenData?.logo || tokenData?.image || fetchedTokenInfo?.logo || null;
   const priceUsd = (fetchedTokenInfo?.priceUsd || tokenData?.priceUsd) ? parseFloat(fetchedTokenInfo?.priceUsd || tokenData?.priceUsd).toFixed(6) : null;
   const priceChange = (fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h) ? parseFloat(fetchedTokenInfo?.priceChange24h || tokenData?.priceChange24h).toFixed(2) : null;
+  const bullishVotes = tokenData?.bullishVotes;
+  const bearishVotes = tokenData?.bearishVotes;
+  const isListedOnAquads = Boolean(tokenData?.isListedOnAquads);
+  const isBumped = Boolean(tokenData?.isBumped);
+  const BUMP_VOTE_THRESHOLD = 100;
+  const votesToBump =
+    typeof bullishVotes === 'number' && !isBumped
+      ? Math.max(0, BUMP_VOTE_THRESHOLD - bullishVotes)
+      : null;
+  const voteStatsLine =
+    typeof bullishVotes === 'number'
+      ? isBumped
+        ? `👍 ${bullishVotes} bullish · 👎 ${bearishVotes || 0} bearish · bumped on Aquads`
+        : votesToBump > 0
+          ? `👍 ${bullishVotes} bullish · ${votesToBump} more to bump`
+          : `👍 ${bullishVotes} bullish · 👎 ${bearishVotes || 0} bearish`
+      : 'Open the chart and tap Bullish or Bearish to vote';
 
   // Generate URLs - Link back to AquaSwap to retain traffic & swap fees!
   // Use /share/aquaswap for proper social media meta tags (token image, price, etc.)
@@ -132,6 +149,18 @@ const ShillTemplatesModal = ({ isOpen, onClose, tokenData, currentUser }) => {
       gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
       text: `$${tokenSymbol} 👀\n\n${priceUsd ? `Price: $${priceUsd}\n\n` : ''}${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads`,
       preview: `$${tokenSymbol} 👀 ${priceUsd ? `- $${priceUsd}` : ''}`
+    },
+    {
+      id: 'vote-push',
+      emoji: '🗳️',
+      label: 'Vote Push',
+      gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+      text: isListedOnAquads
+        ? `🗳️ Vote on $${tokenSymbol} on @_Aquads_!\n\n${voteStatsLine}\n\n📊 Chart + vote: ${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads #Vote`
+        : `🗳️ Check out $${tokenSymbol} on @_Aquads_!\n\n${voteStatsLine}\n\n📊 ${aquaSwapUrl}\n\n#${tokenSymbol} #Aquads`,
+      preview: isListedOnAquads
+        ? `Vote on $${tokenSymbol} — ${voteStatsLine}`
+        : `$${tokenSymbol} on Aquads — open chart to explore`
     }
   ];
 

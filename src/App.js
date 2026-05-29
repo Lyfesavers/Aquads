@@ -3914,9 +3914,9 @@ function App() {
                 openMintFunnelPlatform={openMintFunnelPlatform}
               />
             } />
-            <Route path="/swap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/share/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/swap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} onVote={handleSentimentVote} votingAdId={votingAdId} onRequireLogin={() => setShowLoginModal(true)} />} />
+            <Route path="/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} onVote={handleSentimentVote} votingAdId={votingAdId} onRequireLogin={() => setShowLoginModal(true)} />} />
+            <Route path="/share/aquaswap" element={<AquaSwap ads={ads} currentUser={currentUser} showNotification={showNotification} onVote={handleSentimentVote} votingAdId={votingAdId} onRequireLogin={() => setShowLoginModal(true)} />} />
             <Route path="/wallet-analyzer" element={<WalletAnalyzer currentUser={currentUser} showNotification={showNotification} />} />
             <Route
               path="/pfp-generator"
