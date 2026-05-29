@@ -239,13 +239,13 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-semibold">Website URL</label>
+            <label className="block mb-1 text-sm font-semibold">Website URL <span className="text-gray-400 font-normal">(optional)</span></label>
             <input
               type="url"
               name="url"
-              value={formData.url}
+              value={formData.url || ''}
               onChange={handleChange}
-              required
+              placeholder="https://yourproject.com"
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

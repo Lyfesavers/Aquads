@@ -10,7 +10,11 @@ const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
 const telegramService = require('../utils/telegramService');
-const { isValidDeepDiveIntroVideoUrl, MAX_BRANDING_VIDEO_URL_LENGTH } = require('../utils/brandingMedia');
+const {
+  isValidDeepDiveIntroVideoUrl,
+  MAX_BRANDING_VIDEO_URL_LENGTH
+} = require('../utils/brandingMedia');
+const { isValidProjectUrl, normalizeProjectUrl } = require('../utils/listingValidation');
 const {
   isVoteBumped,
   getBumpSyncUpdate,
@@ -447,6 +451,11 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       }
     }
 
+    const normalizedUrl = url ? normalizeProjectUrl(url) : '';
+    if (normalizedUrl && !isValidProjectUrl(normalizedUrl)) {
+      return res.status(400).json({ error: 'Invalid website URL' });
+    }
+
     // Server always uses its own affiliate calculations for security
     // No client-side validation needed since server values are authoritative
   
@@ -454,7 +463,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
       logo,
-      url,
+      url: normalizedUrl,
       pairAddress,
       blockchain,
       size: validatedSize, // Use validated size
@@ -631,6 +640,14 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
         updateData[field] = updates[field];
       }
     });
+
+    if (updates.url !== undefined) {
+      const normalizedUrl = updates.url ? normalizeProjectUrl(updates.url) : '';
+      if (normalizedUrl && !isValidProjectUrl(normalizedUrl)) {
+        return res.status(400).json({ message: 'Invalid website URL' });
+      }
+      updateData.url = normalizedUrl;
+    }
 
     if (updateData.projectProfile && typeof updateData.projectProfile === 'object') {
       const raw = updateData.projectProfile.introVideoUrl;

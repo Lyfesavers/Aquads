@@ -2574,9 +2574,11 @@ const AquaSwap = ({
                   )}
                   <div>
                     <h3>{projectForInsights.title}</h3>
-                    <a href={projectForInsights.url} target="_blank" rel="noopener noreferrer">
-                      Visit project
-                    </a>
+                    {projectForInsights.url ? (
+                      <a href={projectForInsights.url} target="_blank" rel="noopener noreferrer">
+                        Visit project
+                      </a>
+                    ) : null}
                   </div>
                 </div>
                 {deepDiveIntroVideoSrc && (

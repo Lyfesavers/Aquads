@@ -49,7 +49,7 @@ const AQUADS_SUBMIT_STARTER_TOOL = {
         website_url: {
           type: 'string',
           description:
-            'Project website URL. Required when DexScreener has no website — ask the user first.'
+            'Optional project website URL. Use DexScreener value when available; omit if the user has no site yet.'
         }
       },
       required: ['token_or_pair_address', 'logo_url']

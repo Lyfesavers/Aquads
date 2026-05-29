@@ -496,7 +496,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
   const handlePayPalPurchase = async () => {
     // Validate required data before proceeding (only if not add-on only)
-    if (!isAddOnOnly && (!formData.title || !formData.logo || !formData.url || !formData.pairAddress)) {
+    if (!isAddOnOnly && (!formData.title || !formData.logo || !formData.pairAddress)) {
       alert('Please complete all required fields in step 1');
       return;
     }
@@ -921,17 +921,17 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
               )}
             </div>
             <div>
-              <label className="block mb-2 text-lg font-medium">Website URL</label>
+              <label className="block mb-2 text-lg font-medium">Website URL <span className="text-gray-400 text-base font-normal">(optional)</span></label>
               <input
                 type="url"
                 name="url"
                 value={formData.url}
                 onChange={handleChange}
-                required
+                placeholder="https://yourproject.com"
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
               <p className="text-sm text-gray-400 mt-2">
-                Need a site fast? You can create a simple website in about 5 minutes with a free temporary domain on{' '}
+                No website yet? Leave this blank — you can add one later from your dashboard. Need a site fast? You can create a simple website in about 5 minutes with a free temporary domain on{' '}
                 <a
                   href="https://lovable.dev/invite/SB5W07K"
                   target="_blank"

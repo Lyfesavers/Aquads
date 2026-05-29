@@ -3434,7 +3434,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                             />
                             <div className="min-w-0">
                               <h3 className="text-white font-semibold truncate">{ad.title}</h3>
-                              <p className="text-gray-400 text-sm truncate">{ad.url}</p>
+                              <p className="text-gray-400 text-sm truncate">{ad.url || 'No website yet'}</p>
                               {ad.listingTier === 'starter' && (
                                 <span className="inline-block mt-1 text-xs bg-green-600/40 text-green-200 px-2 py-0.5 rounded">Starter</span>
                               )}
@@ -5157,9 +5157,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                       <div className="flex justify-between gap-4">
                                         <dt className="text-gray-400 shrink-0">Website URL</dt>
                                         <dd className="text-right">
-                                          <a href={listing.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
-                                            {listing.url}
-                                          </a>
+                                          {listing.url ? (
+                                            <a href={listing.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
+                                              {listing.url}
+                                            </a>
+                                          ) : (
+                                            <span className="text-gray-500">Not provided</span>
+                                          )}
                                         </dd>
                                       </div>
                                       <div className="flex justify-between gap-4">
@@ -5271,7 +5275,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                 <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" loading="lazy" />
                                 <div>
                                   <h3 className="text-white font-semibold">{ad.title}</h3>
-                                  <p className="text-gray-400 text-sm">{ad.url}</p>
+                                  <p className="text-gray-400 text-sm">{ad.url || 'No website yet'}</p>
                                   <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
                                   {ad.status === 'pending' && (
                                     <p className="text-yellow-500 text-sm">Listing pending</p>

@@ -36,10 +36,10 @@ async function lookupTokenForListing(tokenOrPairAddress) {
   return {
     success: true,
     token: resolved.token,
-    needsWebsite: !resolved.token.websiteUrl,
+    needsWebsite: false,
     note: resolved.token.websiteUrl
-      ? 'Website found on DexScreener — ready to submit with logo URL.'
-      : 'Ask the user for their project website URL before submitting.'
+      ? 'Website found on DexScreener — will be included if user does not provide one.'
+      : 'Website is optional — submit with logo URL; user can add a site later from their dashboard.'
   };
 }
 
@@ -91,18 +91,12 @@ async function submitStarterListingViaAgent({
   }
 
   const finalWebsite = String(websiteUrl || token.websiteUrl || '').trim();
-  if (!finalWebsite) {
-    return {
-      success: false,
-      error: 'Project website URL is required. Ask the user for their site URL, then call submit_starter_listing again with website_url.',
-      code: 'NEEDS_WEBSITE',
-      token
-    };
-  }
-
-  const url = normalizeProjectUrl(finalWebsite);
-  if (!isValidProjectUrl(url)) {
-    return { success: false, error: 'Website URL is not valid.', code: 'INVALID_WEBSITE' };
+  let url = '';
+  if (finalWebsite) {
+    url = normalizeProjectUrl(finalWebsite);
+    if (!isValidProjectUrl(url)) {
+      return { success: false, error: 'Website URL is not valid.', code: 'INVALID_WEBSITE' };
+    }
   }
 
   let existingGlobal = await Ad.findOne({

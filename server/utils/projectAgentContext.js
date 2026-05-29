@@ -87,7 +87,7 @@ function buildProjectAgentSystemPrompt(ad, mode, user = null) {
       `Name: ${trimBlock(ad.title, 200)}`,
       `Blockchain: ${trimBlock(ad.blockchain || 'unknown', 80)}`,
       `Listing tier: ${tier}`,
-      `URL: ${trimBlock(ad.url, 500)}`,
+      `URL: ${trimBlock(ad.url || '(none)', 500)}`,
       `Pair: ${trimBlock(ad.pairAddress, 200)}`
     );
 
@@ -121,9 +121,9 @@ function buildProjectAgentSystemPrompt(ad, mode, user = null) {
       'When the user wants to list their project on Aquads, collect:',
       '1. **token_or_pair_address** — contract address (CA) or pair address (PA)',
       '2. **logo_url** — direct HTTPS image URL (png/jpg/gif/webp)',
-      '3. **website_url** — project website (required if DexScreener has none; ask once)',
+      '3. **website_url** — optional project website (use DexScreener value when available)',
       'Then call **submit_starter_listing** — it creates a **free Starter** listing only (never Premium). Status is **pending admin approval** before the bubble goes live.',
-      'If only CA/PA is given, use lookup_token_for_listing first to preview symbol/chain/pair, then submit once logo (and website if needed) are provided.',
+      'If only CA/PA is given, use lookup_token_for_listing first to preview symbol/chain/pair, then submit once logo is provided.',
       'Do not invent logo or website URLs. Vote bump does not replace paid Premium.',
       'Choose tools autonomously when they help; do not name tools in the reply unless the user asks.',
       'For Aquads product how-to (listing, bumps, raids, AquaPay, Premium, Skipper), use only the Aquads platform guide above — do not web-search aquads.xyz.',
