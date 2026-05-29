@@ -538,6 +538,27 @@
 
 .project-agent-mode-select {
   margin-left: auto;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 30px;
+  border-color: rgba(34, 211, 238, 0.45);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%2322d3ee' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 11px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.project-agent-mode-select:hover {
+  border-color: var(--pa-accent);
+  background-color: var(--pa-accent-dim);
+}
+
+.project-agent-mode-select:focus-visible {
+  outline: none;
+  border-color: var(--pa-accent);
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.25);
 }
 
 .project-agent-close-btn {
