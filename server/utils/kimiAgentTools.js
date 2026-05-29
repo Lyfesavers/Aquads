@@ -446,6 +446,31 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
   return executeFormulaTool(apiKey, baseUrl, uri, toolName, toolCall.function?.arguments || '{}');
 }
 
+/**
+ * Run a (possibly slow) async task while emitting periodic keepalive pings on
+ * the SSE stream. Image generation can block the agent loop for 30–90s with no
+ * other output; without a heartbeat, idle proxy/connection timeouts can drop
+ * the stream before the media/done events arrive.
+ */
+async function withHeartbeat(send, fn, intervalMs = 8000) {
+  let timer = null;
+  if (typeof send === 'function') {
+    timer = setInterval(() => {
+      try {
+        send({ type: 'ping', ts: Date.now() });
+      } catch {
+        /* ignore write errors */
+      }
+    }, intervalMs);
+    if (typeof timer.unref === 'function') timer.unref();
+  }
+  try {
+    return await fn();
+  } finally {
+    if (timer) clearInterval(timer);
+  }
+}
+
 function toolStatusLabel(toolName) {
   switch (toolName) {
     case '$web_search':
@@ -563,15 +588,17 @@ async function runKimiAgentChat({
           send({ type: 'searching', searchNumber: webSearchCalls + 1 });
         }
 
-        const result = await executeAgentToolCall({
-          apiKey,
-          baseUrl,
-          toolName: name,
-          toolCall,
-          toolToUri,
-          agentContext,
-          send
-        });
+        const result = await withHeartbeat(send, () =>
+          executeAgentToolCall({
+            apiKey,
+            baseUrl,
+            toolName: name,
+            toolCall,
+            toolToUri,
+            agentContext,
+            send
+          })
+        );
 
         if (isWebSearchToolName(name)) {
           webSearchCalls += 1;

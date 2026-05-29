@@ -748,6 +748,7 @@ export default function ProjectAgentPanel({
     let reasoning = '';
     let content = '';
     const mediaCreated = [];
+    let doneReceived = false;
 
     try {
       await streamProjectAgentChat({
@@ -784,6 +785,7 @@ export default function ProjectAgentPanel({
             setStreamingContent(content);
           }
           if (evt.type === 'done') {
+            doneReceived = true;
             setSearchStatus('');
             setLastCost({
               costUsd: evt.costUsd,
@@ -803,13 +805,23 @@ export default function ProjectAgentPanel({
         }
       });
 
-      if (mediaCreated.length) {
-        // Skipper created an image/video via tools — those are separate persisted
-        // messages, so reload the thread to show them alongside the text reply.
+      // Reload the thread when Skipper created media (image/video live in their own
+      // persisted messages) or when the stream ended without a clean "done" (e.g. a
+      // dropped/idle-timed-out connection during a long image render). Reloading
+      // pulls the server-persisted result so nothing is left blank.
+      const shouldReload = mediaCreated.length > 0 || !doneReceived;
+
+      if (shouldReload) {
+        let reloaded = false;
         try {
           const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
           setMessages(normalizeAgentMessages(msgs));
+          reloaded = true;
         } catch {
+          reloaded = false;
+        }
+
+        if (!reloaded && (content || reasoning)) {
           setMessages((prev) => [
             ...prev,
             {
@@ -820,6 +832,9 @@ export default function ProjectAgentPanel({
             }
           ]);
         }
+
+        // Kick off polling for any video Skipper started (the pendingVideoJob
+        // effect also covers videos surfaced by the reload).
         mediaCreated
           .filter((evt) => evt.kind === 'video')
           .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
