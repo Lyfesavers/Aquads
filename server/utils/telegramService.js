@@ -4284,19 +4284,26 @@ Tap to update:`;
     const projectRank = allBubbles.findIndex((bubble) => bubble._id.toString() === project._id.toString()) + 1;
     const rankEmoji = projectRank === 1 ? '🥇' : projectRank === 2 ? '🥈' : projectRank === 3 ? '🥉' : '🔸';
 
-    let message = `🚀 Your Project: ${project.title}\n\n`;
-    message += `🏆 Rank: ${rankEmoji} #${projectRank}\n`;
-    message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
-    message += `🔗 URL: ${project.url}\n`;
-    message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
-    message += `💡 Share this message to get votes on your project!\n\n`;
-    message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
-
     const tokenAddress = project.pairAddress || project.contractAddress;
     const viewOnAquadsUrl =
       tokenAddress && project.blockchain
         ? `https://www.aquads.xyz/aquaswap?blockchain=${encodeURIComponent(project.blockchain)}&name=${encodeURIComponent(project.title || '')}&token=${encodeURIComponent(tokenAddress.trim())}`
         : 'https://www.aquads.xyz/aquaswap';
+    const aquaswapHref = viewOnAquadsUrl.replace(/&/g, '&amp;');
+    const safeTitle = escapeTelegramHtml(project.title);
+
+    let message = `🚀 Your Project: ${safeTitle}\n\n`;
+    message += `🏆 Rank: ${rankEmoji} #${projectRank}\n`;
+    message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
+    message += `💰 <a href="${aquaswapHref}">Buy now</a> on AquaSwap\n`;
+    const projectWebsite = String(project.url || '').trim();
+    if (projectWebsite) {
+      const siteHref = projectWebsite.replace(/&/g, '&amp;');
+      message += `🔗 <a href="${siteHref}">Website</a>\n`;
+    }
+    message += `⛓️ Blockchain: ${escapeTelegramHtml(project.blockchain || 'Ethereum')}\n\n`;
+    message += `💡 Share this message to get votes on your project!\n\n`;
+    message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
     const keyboard = {
       inline_keyboard: [
@@ -4304,9 +4311,11 @@ Tap to update:`;
           { text: '👍 Bullish', callback_data: 'vote_bullish_' + project._id.toString() },
           { text: '👎 Bearish', callback_data: 'vote_bearish_' + project._id.toString() },
         ],
-        [{ text: '🔗 View on Aquads', url: viewOnAquadsUrl }],
+        [{ text: '💰 Buy now', url: viewOnAquadsUrl }],
       ],
     };
+
+    const htmlOpts = { parseMode: 'HTML' };
 
     const hasCustomBranding = projectHasCustomBrandingMedia(project);
     const brandingVideoUrl = projectUsesVideoBranding(project) ? project.customBrandingVideoUrl.trim() : null;
@@ -4327,11 +4336,11 @@ Tap to update:`;
           process.env.TELEGRAM_BOT_TOKEN,
           chatId,
           { videoUrl: brandingVideoUrl, imageBuffer: brandingImageBuffer },
-          { caption: message, keyboard }
+          { caption: message, keyboard, parseMode: 'HTML' }
         );
 
         if (!response || !response.data.ok) {
-          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard, htmlOpts);
         }
       } else if (videoExists || telegramService.cachedVideoFileIds.vote) {
         let response;
@@ -4344,6 +4353,7 @@ Tap to update:`;
               chat_id: chatId,
               video: telegramService.cachedVideoFileIds.vote,
               caption: message,
+              parse_mode: 'HTML',
               reply_markup: keyboard,
             },
             { timeout: 15000 }
@@ -4353,6 +4363,7 @@ Tap to update:`;
           formData.append('chat_id', chatId);
           formData.append('video', fs.createReadStream(videoPath));
           formData.append('caption', message);
+          formData.append('parse_mode', 'HTML');
           formData.append('reply_markup', JSON.stringify(keyboard));
 
           response = await axios.post(`https://api.telegram.org/bot${botToken}/sendVideo`, formData, {
@@ -4367,14 +4378,14 @@ Tap to update:`;
         }
 
         if (!response.data.ok) {
-          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard, htmlOpts);
         }
       } else {
-        await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+        await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard, htmlOpts);
       }
     } catch (error) {
       console.error('Failed to send media, falling back to text:', error.message);
-      await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+      await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard, htmlOpts);
     }
   },
 

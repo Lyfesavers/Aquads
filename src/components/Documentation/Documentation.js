@@ -715,7 +715,7 @@ In **Agent** mode, you can submit a **free Starter** listing without filling the
 
 1. Provide your **contract address (CA)** or **pair address (PA)**
 2. Provide a **direct logo URL** (GIF or PNG)
-3. Add a **website URL** if DexScreener does not already show one
+3. Optionally add a **website URL** (or skip if you do not have a site yet — you can add it later from your dashboard)
 4. Skipper submits the listing → status **pending admin approval** → bubble goes live after approval
 
 Same rules apply as the normal List Project flow: accurate pair data, professional logo, and honest project info.
@@ -783,7 +783,7 @@ Click **"➕ List Project"** from:
 
 ### Step 1: Project Information
 
-Fill in the required fields:
+Fill in the required fields (website is optional):
 
 | Field | Description | Required |
 |-------|-------------|----------|
@@ -791,7 +791,7 @@ Fill in the required fields:
 | **Pair Address** | Trading pair contract address (0x...) | Yes |
 | **Blockchain** | Select from 30+ chains | Yes |
 | **Logo URL** | Direct link to GIF or PNG image | Yes |
-| **Website URL** | Your project's official website | Yes |
+| **Website URL** | Your project's official website (optional — add anytime from Dashboard) | No |
 
 ### Supported Blockchains
 
@@ -869,7 +869,7 @@ Already have a listing? You can:
 > 💡 **Pro Tip**: Projects with professional logos and complete info get 3x more engagement.
 
 - Use a high-quality, transparent PNG or animated GIF logo
-- Ensure your website is live and professional
+- Add a website when you have one (optional at listing time)
 - Have your pair address ready
 - Engage with voters to grow your bubble
     `,
