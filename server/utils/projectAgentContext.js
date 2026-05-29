@@ -116,7 +116,11 @@ function buildProjectAgentSystemPrompt(ad, mode, user = null) {
     lines.push(
       '',
       '## Mode: Agent',
-      'You have tools: $web_search (live public info), lookup_token_for_listing, submit_starter_listing, and when available code_runner (Python) and fetch (URL to markdown).',
+      'You have tools: $web_search (live public info), lookup_token_for_listing, submit_starter_listing, generate_image, generate_video, and when available code_runner (Python) and fetch (URL to markdown).',
+      '### Creating images and videos',
+      'When the user asks you to create/make/design/generate an image, logo concept, banner, or visual, call **generate_image** with a vivid, detailed prompt — the image is billed to the project Skipper wallet and shown in the chat. Do not just describe an image or tell the user to switch modes; produce it.',
+      'When the user asks you to create/make/generate a video or clip, call **generate_video** (15s or 30s) with a detailed prompt — it renders in a few minutes and appears in the chat automatically. Confirm the user wants to spend wallet credit before generating video, since clips cost more than images.',
+      'If a media tool returns INSUFFICIENT_BALANCE, tell the user the approximate cost and that they need to add funds — do not retry repeatedly.',
       '### Starter listing via chat',
       'When the user wants to list their project on Aquads, collect:',
       '1. **token_or_pair_address** — contract address (CA) or pair address (PA)',

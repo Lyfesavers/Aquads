@@ -714,6 +714,7 @@ export default function ProjectAgentPanel({
 
     let reasoning = '';
     let content = '';
+    const mediaCreated = [];
 
     try {
       await streamProjectAgentChat({
@@ -723,6 +724,9 @@ export default function ProjectAgentPanel({
         message: text,
         mode: effectiveMode,
         onEvent: (evt) => {
+          if (evt.type === 'media' && evt.messageId) {
+            mediaCreated.push(evt);
+          }
           if (evt.type === 'tool') {
             const label = evt.label || evt.tool || 'Tool';
             setSearchStatus(evt.round > 1 ? `${label} (step ${evt.round})…` : `${label}…`);
@@ -766,15 +770,37 @@ export default function ProjectAgentPanel({
         }
       });
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: content || '(No content returned)',
-          reasoningContent: reasoning,
-          mode: effectiveMode
+      if (mediaCreated.length) {
+        // Skipper created an image/video via tools — those are separate persisted
+        // messages, so reload the thread to show them alongside the text reply.
+        try {
+          const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
+          setMessages(normalizeAgentMessages(msgs));
+        } catch {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: content || '(No content returned)',
+              reasoningContent: reasoning,
+              mode: effectiveMode
+            }
+          ]);
         }
-      ]);
+        mediaCreated
+          .filter((evt) => evt.kind === 'video')
+          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: content || '(No content returned)',
+            reasoningContent: reasoning,
+            mode: effectiveMode
+          }
+        ]);
+      }
       setStreamingContent('');
       setStreamingReasoning('');
       await refreshWallet();

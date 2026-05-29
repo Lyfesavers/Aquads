@@ -962,7 +962,9 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
           agentContext: {
             userId: req.user.userId,
             username: req.user.username,
-            emailVerified: req.user.emailVerified
+            emailVerified: req.user.emailVerified,
+            adId: ad.id,
+            threadId: String(thread._id)
           }
         });
         fullContent = agentResult.content || '';

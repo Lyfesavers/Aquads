@@ -57,8 +57,55 @@ const AQUADS_SUBMIT_STARTER_TOOL = {
   }
 };
 
+const AQUADS_GENERATE_IMAGE_TOOL = {
+  type: 'function',
+  function: {
+    name: 'generate_image',
+    description:
+      "Generate an image for the user's project from a text prompt using Aquads' built-in image generator (same engine as Create Image mode). The image is billed to the project's Skipper wallet and is shown directly in the chat. Use this whenever the user asks you to create, make, design, draw, or generate an image, logo concept, banner, or visual. Write a vivid, detailed prompt.",
+    parameters: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Detailed description of the image to create.'
+        }
+      },
+      required: ['prompt']
+    }
+  }
+};
+
+const AQUADS_GENERATE_VIDEO_TOOL = {
+  type: 'function',
+  function: {
+    name: 'generate_video',
+    description:
+      "Start generating a short promotional text-to-video clip for the user's project using Aquads' built-in video generator (same engine as Create Video mode). Billed to the project's Skipper wallet; it renders in a few minutes and appears in the chat automatically when ready. Use this whenever the user asks you to create, make, or generate a video or clip. Only 15 or 30 second clips are supported.",
+    parameters: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Detailed description of the video to create.'
+        },
+        seconds: {
+          type: 'integer',
+          enum: [15, 30],
+          description: 'Clip length in seconds (15 or 30). Defaults to 15.'
+        }
+      },
+      required: ['prompt']
+    }
+  }
+};
+
 function isAquadsListingToolName(name) {
   return name === 'lookup_token_for_listing' || name === 'submit_starter_listing';
+}
+
+function isAquadsMediaToolName(name) {
+  return name === 'generate_image' || name === 'generate_video';
 }
 
 const { getLimits } = require('./projectAgentLimits');
@@ -298,7 +345,7 @@ async function executeFormulaTool(apiKey, baseUrl, formulaUri, functionName, arg
  * @param {object} opts.toolCall
  * @param {Record<string, string>} opts.toolToUri
  */
-async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolToUri, agentContext }) {
+async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolToUri, agentContext, send }) {
   if (toolName === '$web_search') {
     let args = {};
     try {
@@ -307,6 +354,54 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
       args = {};
     }
     return JSON.stringify(webSearchToolResult(args));
+  }
+
+  if (isAquadsMediaToolName(toolName)) {
+    if (!agentContext?.userId || !agentContext?.adId || !agentContext?.threadId) {
+      return JSON.stringify({
+        success: false,
+        error: 'Media tools require an active project chat session.'
+      });
+    }
+    let args = {};
+    try {
+      args = JSON.parse(toolCall.function?.arguments || '{}');
+    } catch {
+      args = {};
+    }
+
+    const { createImageViaAgent, startVideoViaAgent } = require('../services/projectAgentMedia');
+    const common = {
+      userId: agentContext.userId,
+      username: agentContext.username,
+      emailVerified: agentContext.emailVerified,
+      adId: agentContext.adId,
+      threadId: agentContext.threadId
+    };
+
+    if (toolName === 'generate_image') {
+      const result = await createImageViaAgent({ ...common, prompt: args.prompt });
+      if (result.success && typeof send === 'function') {
+        send({ type: 'media', kind: 'image', messageId: result.messageId });
+      }
+      return JSON.stringify(result);
+    }
+
+    const result = await startVideoViaAgent({
+      ...common,
+      prompt: args.prompt,
+      seconds: args.seconds
+    });
+    if (result.success && typeof send === 'function') {
+      send({
+        type: 'media',
+        kind: 'video',
+        messageId: result.messageId,
+        status: result.status,
+        seconds: result.seconds
+      });
+    }
+    return JSON.stringify(result);
   }
 
   if (isAquadsListingToolName(toolName)) {
@@ -360,6 +455,10 @@ function toolStatusLabel(toolName) {
       return 'Looking up token on DexScreener';
     case 'submit_starter_listing':
       return 'Submitting Starter listing';
+    case 'generate_image':
+      return 'Creating an image';
+    case 'generate_video':
+      return 'Starting a video render';
     case 'code_runner':
       return 'Running Python code';
     case 'fetch':
@@ -384,6 +483,10 @@ async function runKimiAgentChat({
 
   if (agentContext?.userId && agentContext?.username) {
     tools = [...tools, AQUADS_LOOKUP_TOKEN_TOOL, AQUADS_SUBMIT_STARTER_TOOL];
+  }
+
+  if (agentContext?.userId && agentContext?.adId && agentContext?.threadId) {
+    tools = [...tools, AQUADS_GENERATE_IMAGE_TOOL, AQUADS_GENERATE_VIDEO_TOOL];
   }
 
   if (isAquadsPlatformQuestion(userMessage)) {
@@ -466,7 +569,8 @@ async function runKimiAgentChat({
           toolName: name,
           toolCall,
           toolToUri,
-          agentContext
+          agentContext,
+          send
         });
 
         if (isWebSearchToolName(name)) {
