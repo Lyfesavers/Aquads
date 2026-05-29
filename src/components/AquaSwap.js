@@ -1719,7 +1719,12 @@ const AquaSwap = ({
     normalizeAddress(ad.pairAddress || ad.contractAddress) === selectedTokenAddress
   );
   const projectForInsights = selectedProject || null;
-  const showVoteFab = Boolean(selectedProject && tokenSearch?.trim());
+  const isOwnListedProject = Boolean(
+    currentUser?.username &&
+    selectedProject?.owner &&
+    selectedProject.owner === currentUser.username
+  );
+  const showVoteFab = Boolean(selectedProject && tokenSearch?.trim() && !isOwnListedProject);
   const isVotingOnSelectedProject = Boolean(
     selectedProject && votingAdId && votingAdId === selectedProject.id
   );
