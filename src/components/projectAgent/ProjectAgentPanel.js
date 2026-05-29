@@ -14,7 +14,7 @@ import {
   createProjectAgentTopup,
   fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
-import ProjectAgentMessageImage from './ProjectAgentMessageImage';
+import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentMessageImage';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
@@ -173,6 +173,7 @@ export default function ProjectAgentPanel({
   const [gateError, setGateError] = useState('');
   const [streamingReasoning, setStreamingReasoning] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
+  const [imageGenerating, setImageGenerating] = useState(false);
   const [lastCost, setLastCost] = useState(null);
   const [searchStatus, setSearchStatus] = useState('');
   const [topupCreditUsd, setTopupCreditUsd] = useState('20');
@@ -603,7 +604,7 @@ export default function ProjectAgentPanel({
   const handleSendImage = async (text) => {
     setError('');
     setLastCost(null);
-    setStreamingContent('Generating image…');
+    setImageGenerating(true);
 
     try {
       const data = await generateProjectAgentImage({
@@ -631,7 +632,7 @@ export default function ProjectAgentPanel({
         await refreshWallet();
       }
     } finally {
-      setStreamingContent('');
+      setImageGenerating(false);
     }
   };
 
@@ -691,6 +692,7 @@ export default function ProjectAgentPanel({
     setSearchStatus('');
 
     if (mode === 'image') {
+      setMessages((prev) => [...prev, { role: 'user', content: text, mode: 'image' }]);
       try {
         await handleSendImage(text);
       } finally {
@@ -1073,6 +1075,11 @@ export default function ProjectAgentPanel({
                   reasoningContent={mode === 'agent' ? '' : streamingReasoning}
                   isStreaming
                 />
+              </div>
+            )}
+            {imageGenerating && (
+              <div className="project-agent-msg assistant">
+                <ImageGeneratingStatus />
               </div>
             )}
             <div ref={messagesEndRef} />

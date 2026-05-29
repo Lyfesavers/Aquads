@@ -1336,6 +1336,164 @@
   color: var(--pa-text-muted, #64748b);
 }
 
+/* ——— Image generating loader (mirrors the video loader styling) ——— */
+.project-agent-image-generating {
+  margin-top: 6px;
+  padding: 14px 14px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--pa-accent) 35%, var(--pa-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pa-accent) 8%, var(--pa-surface)) 0%,
+    var(--pa-surface) 55%,
+    color-mix(in srgb, var(--pa-accent) 5%, var(--pa-surface)) 100%
+  );
+  background-size: 200% 200%;
+  animation: project-agent-video-bg-shift 6s ease-in-out infinite;
+}
+
+.project-agent-image-generating-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  margin-bottom: 10px;
+}
+
+.project-agent-image-generating-tile {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  width: 44px;
+  height: 44px;
+  z-index: 1;
+}
+
+.project-agent-image-generating-tile span {
+  display: block;
+  border-radius: 3px;
+  background: var(--pa-accent);
+  animation: project-agent-image-tile-pulse 1.4s ease-in-out infinite;
+}
+
+.project-agent-image-generating-tile span:nth-child(1) {
+  animation-delay: 0s;
+}
+.project-agent-image-generating-tile span:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.project-agent-image-generating-tile span:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.project-agent-image-generating-tile span:nth-child(4) {
+  animation-delay: 0.1s;
+}
+.project-agent-image-generating-tile span:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.project-agent-image-generating-tile span:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.project-agent-image-generating-tile span:nth-child(7) {
+  animation-delay: 0.2s;
+}
+.project-agent-image-generating-tile span:nth-child(8) {
+  animation-delay: 0.3s;
+}
+.project-agent-image-generating-tile span:nth-child(9) {
+  animation-delay: 0.4s;
+}
+
+@keyframes project-agent-image-tile-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.project-agent-image-generating-ring {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: color-mix(in srgb, var(--pa-accent) 70%, transparent);
+  border-right-color: color-mix(in srgb, var(--pa-accent) 25%, transparent);
+  animation: project-agent-video-ring-spin 1.4s linear infinite;
+}
+
+.project-agent-image-generating-title {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--pa-text);
+}
+
+.project-agent-image-generating-status {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--pa-accent);
+  animation: project-agent-search-pulse 1.8s ease-in-out infinite;
+}
+
+.project-agent-image-generating-track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pa-border) 80%, transparent);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.project-agent-image-generating-fill {
+  height: 100%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pa-accent), color-mix(in srgb, var(--pa-accent) 60%, #fff));
+  animation: project-agent-video-bar-shimmer 1.6s ease-in-out infinite;
+}
+
+.project-agent-image-generating-meta {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--pa-text-muted, #94a3b8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-agent-image-generating-elapsed {
+  font-variant-numeric: tabular-nums;
+}
+
+.project-agent-image-generating-sep {
+  opacity: 0.6;
+}
+
+.project-agent-image-generating-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--pa-accent);
+  font-weight: 600;
+}
+
+.project-agent-image-generating-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  animation: project-agent-video-live-blink 1.2s ease-in-out infinite;
+}
+
 .project-agent-video-options {
   display: flex;
   flex-wrap: wrap;
