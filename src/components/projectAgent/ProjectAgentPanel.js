@@ -61,6 +61,19 @@ function looksLikeListingRequest(text) {
   return LISTING_ADDRESS_RE.test(withoutUrls);
 }
 
+// Thread ids deleted during this browser session. Module-level so it is shared
+// by the drawer and full-page panel instances. Prevents a deleted chat from
+// reappearing when switching modes: a fresh thread refetch can race with an
+// in-flight (or just-committed) DELETE and return the stale thread, which then
+// 404s ("chat not found") on a second delete attempt. We filter these out of
+// any server- or snapshot-sourced thread list until the page is reloaded.
+const recentlyDeletedThreadIds = new Set();
+
+function withoutDeletedThreads(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((t) => !recentlyDeletedThreadIds.has(String(t?._id)));
+}
+
 function normalizeAgentMessages(msgs, generateData) {
   const list = (msgs || []).map((m) => ({
     ...m,
@@ -157,7 +170,7 @@ export default function ProjectAgentPanel({
   const [eligible, setEligible] = useState(() => restoredSession?.eligible || []);
   const [adId, setAdId] = useState(() => initialAdId || restoredSession?.adId || null);
   const [wallet, setWallet] = useState(() => restoredSession?.wallet || null);
-  const [threads, setThreads] = useState(() => restoredSession?.threads || []);
+  const [threads, setThreads] = useState(() => withoutDeletedThreads(restoredSession?.threads || []));
   const [threadId, setThreadId] = useState(
     () => initialThreadId || restoredSession?.threadId || null
   );
@@ -417,8 +430,9 @@ export default function ProjectAgentPanel({
   const loadThreads = useCallback(async () => {
     if (!token || !adId) return;
     const { threads: list } = await fetchProjectAgentThreads(adId, token);
-    setThreads(list || []);
-    return list;
+    const filtered = withoutDeletedThreads(list || []);
+    setThreads(filtered);
+    return filtered;
   }, [token, adId]);
 
   useEffect(() => {
@@ -559,7 +573,12 @@ export default function ProjectAgentPanel({
       streamingReasoning
     };
 
-    const nextThreads = threads.filter((t) => String(t._id) !== id);
+    // Tombstone immediately so a concurrent thread refetch (e.g. from switching
+    // between the drawer and full-page panel) can't resurrect this chat before
+    // the server delete commits.
+    recentlyDeletedThreadIds.add(id);
+
+    const nextThreads = withoutDeletedThreads(threads);
     setThreads(nextThreads);
     setDeletingThreadId(id);
     setError('');
@@ -579,7 +598,7 @@ export default function ProjectAgentPanel({
 
     try {
       const data = await deleteProjectAgentThread(adId, id, token);
-      const list = data.threads || [];
+      const list = withoutDeletedThreads(data.threads || []);
       setThreads(list);
 
       if (wasActive) {
@@ -590,6 +609,20 @@ export default function ProjectAgentPanel({
         }
       }
     } catch (err) {
+      // The thread was already gone on the server — treat as a successful delete
+      // and keep the tombstone so it stays removed everywhere.
+      const alreadyGone = /not found/i.test(err?.message || '') || err?.status === 404;
+      if (alreadyGone) {
+        try {
+          await loadThreads();
+        } catch {
+          /* keep optimistic state */
+        }
+        return;
+      }
+
+      // Genuine failure — undo the tombstone and restore prior state.
+      recentlyDeletedThreadIds.delete(id);
       setThreads(snapshot.threads);
       setThreadId(snapshot.threadId);
       setMessages(snapshot.messages);

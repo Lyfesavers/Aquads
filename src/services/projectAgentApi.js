@@ -100,7 +100,12 @@ export async function deleteProjectAgentThread(adId, threadId, token) {
     }
   );
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to delete conversation');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Failed to delete conversation');
+    err.status = res.status;
+    err.code = data.code;
+    throw err;
+  }
   return data;
 }
 
