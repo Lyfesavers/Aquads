@@ -876,13 +876,40 @@ export default function ProjectAgentPanel({
         }
       });
 
-      // Reload the thread when Skipper created media (image/video live in their own
-      // persisted messages) or when the stream ended without a clean "done" (e.g. a
-      // dropped/idle-timed-out connection during a long image render). Reloading
-      // pulls the server-persisted result so nothing is left blank.
-      const shouldReload = mediaCreated.length > 0 || !doneReceived;
+      // Full thread reload only when the stream did not finish cleanly (proxy timeout,
+      // dropped SSE, etc.). History is unchanged; media rows were already inserted on
+      // the `media` event. On a clean `done`, append streamed assistant text only.
+      const streamIncomplete = !doneReceived;
+      const mediaReadyLocally = mediaCreated.length > 0 && doneReceived;
 
-      if (shouldReload) {
+      if (mediaReadyLocally) {
+        if (content || reasoning) {
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (
+              last?.role === 'assistant' &&
+              last?.mode !== 'image' &&
+              last?.mode !== 'video' &&
+              last?.content === (content || '(No content returned)')
+            ) {
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                role: 'assistant',
+                content: content || '(No content returned)',
+                reasoningContent: reasoning,
+                mode: effectiveMode
+              }
+            ];
+          });
+        }
+
+        mediaCreated
+          .filter((evt) => evt.kind === 'video')
+          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
+      } else if (streamIncomplete) {
         let reloaded = false;
         const imageEvt = mediaCreated.find((e) => e.kind === 'image');
         try {
@@ -929,8 +956,6 @@ export default function ProjectAgentPanel({
           });
         }
 
-        // Kick off polling for any video Skipper started (the pendingVideoJob
-        // effect also covers videos surfaced by the reload).
         mediaCreated
           .filter((evt) => evt.kind === 'video')
           .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
