@@ -56,12 +56,15 @@ const PRESS_LOGOS = [
     heightClass: 'h-7 md:h-9',
   },
   {
-    id: 'timestabloid',
-    name: 'Times Tabloid',
-    logo: '/Times-Tabloid-Header-Mobile.png',
-    url: 'https://timestabloid.com/aquads-launches-post-launch-growth-stack-for-crypto-projects/',
-    alt: 'Aquads featured on Times Tabloid',
-    heightClass: 'h-8 md:h-10',
+    id: 'coinmarketcap',
+    name: 'CoinMarketCap',
+    // Filename has a space — URL-encode it so the asset path resolves correctly.
+    logo: '/CMC%20logo.png',
+    url: 'https://coinmarketcap.com/community/articles/6a1292b57576cb3a3d682843/',
+    alt: 'Aquads featured on CoinMarketCap',
+    // Source PNG has heavy padding around the wordmark; push the rendered
+    // height up so the visible logo matches the optical size of the others.
+    heightClass: 'h-16 md:h-24',
   },
   {
     id: 'bitcolumnist',
@@ -94,13 +97,12 @@ const PRESS_LOGOS = [
     heightClass: 'h-6 md:h-8',
   },
   {
-    id: 'coinmarketcap',
-    name: 'CoinMarketCap',
-    // Filename has a space — URL-encode it so the asset path resolves correctly.
-    logo: '/CMC%20logo.png',
-    url: 'https://coinmarketcap.com/community/articles/6a1292b57576cb3a3d682843/',
-    alt: 'Aquads featured on CoinMarketCap',
-    heightClass: 'h-7 md:h-9',
+    id: 'timestabloid',
+    name: 'Times Tabloid',
+    logo: '/Times-Tabloid-Header-Mobile.png',
+    url: 'https://timestabloid.com/aquads-launches-post-launch-growth-stack-for-crypto-projects/',
+    alt: 'Aquads featured on Times Tabloid',
+    heightClass: 'h-8 md:h-10',
   },
 ];
 
