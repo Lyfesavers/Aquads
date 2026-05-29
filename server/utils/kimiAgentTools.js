@@ -108,6 +108,18 @@ function isAquadsMediaToolName(name) {
   return name === 'generate_image' || name === 'generate_video';
 }
 
+/**
+ * Remove wallet balance from a media tool result before handing it to the model.
+ * During an agent turn a token hold is still reserved, so the mid-stream balance
+ * is lower than the user's real balance (the hold is refunded at settle time).
+ * The UI shows the authoritative live balance, so the model must not quote it.
+ */
+function stripWalletBalance(result) {
+  if (!result || typeof result !== 'object') return result;
+  const { balanceUsd, ...rest } = result;
+  return rest;
+}
+
 const { getLimits } = require('./projectAgentLimits');
 
 function getMaxAgentRounds() {
@@ -384,7 +396,7 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
       if (result.success && typeof send === 'function') {
         send({ type: 'media', kind: 'image', messageId: result.messageId });
       }
-      return JSON.stringify(result);
+      return JSON.stringify(stripWalletBalance(result));
     }
 
     const result = await startVideoViaAgent({
@@ -401,7 +413,7 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
         seconds: result.seconds
       });
     }
-    return JSON.stringify(result);
+    return JSON.stringify(stripWalletBalance(result));
   }
 
   if (isAquadsListingToolName(toolName)) {
