@@ -93,6 +93,15 @@ const PRESS_LOGOS = [
     alt: 'Aquads featured on Intellectia.AI',
     heightClass: 'h-6 md:h-8',
   },
+  {
+    id: 'coinmarketcap',
+    name: 'CoinMarketCap',
+    // Filename has a space — URL-encode it so the asset path resolves correctly.
+    logo: '/CMC%20logo.png',
+    url: 'https://coinmarketcap.com/community/articles/6a1292b57576cb3a3d682843/',
+    alt: 'Aquads featured on CoinMarketCap',
+    heightClass: 'h-7 md:h-9',
+  },
 ];
 
 const LogoItem = ({ item }) => {
