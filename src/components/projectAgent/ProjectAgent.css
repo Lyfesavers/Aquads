@@ -561,6 +561,15 @@
   box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.25);
 }
 
+/* Native option popups don't inherit theme colors on most browsers — force a
+   dark background + readable text so the open dropdown isn't white-on-white. */
+.project-agent-toolbar select option,
+.project-agent-mode-select option,
+.project-agent-video-seconds-select option {
+  background-color: var(--pa-surface);
+  color: var(--pa-text);
+}
+
 .project-agent-close-btn {
   flex-shrink: 0;
   display: flex;
