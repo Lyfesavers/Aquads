@@ -73,16 +73,22 @@ export function ImageGeneratingStatus() {
   );
 }
 
-export default function ProjectAgentMessageImage({ messageId, token, alt = 'Generated image' }) {
+export default function ProjectAgentMessageImage({
+  messageId,
+  token,
+  alt = 'Generated image',
+  eager = false
+}) {
   const [src, setSrc] = useState('');
   const [failed, setFailed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [containerRef, inView] = useLazyInView();
+  const visible = eager || inView;
   const id = messageId != null ? String(messageId) : '';
 
   useEffect(() => {
-    if (!id || !token || !inView) return undefined;
+    if (!id || !token || !visible) return undefined;
     let cancelled = false;
 
     setFailed(false);
@@ -99,7 +105,7 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
     return () => {
       cancelled = true;
     };
-  }, [id, token, retryKey, inView]);
+  }, [id, token, retryKey, visible]);
 
   const handleDownload = useCallback(async () => {
     if (!id || !token || downloading) return;
@@ -136,7 +142,7 @@ export default function ProjectAgentMessageImage({ messageId, token, alt = 'Gene
   if (!src) {
     return (
       <div ref={containerRef} className="project-agent-media-placeholder">
-        <p className="project-agent-meta">{inView ? 'Loading image…' : 'Image'}</p>
+        <p className="project-agent-meta">{visible ? 'Loading image…' : 'Image'}</p>
       </div>
     );
   }

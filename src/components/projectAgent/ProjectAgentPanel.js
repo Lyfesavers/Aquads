@@ -15,6 +15,7 @@ import {
   fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
 import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentMessageImage';
+import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
@@ -144,6 +145,38 @@ function messageShowsVideo(m) {
   return Boolean(m?._id && m.mode === 'video' && m.role === 'assistant');
 }
 
+/** Insert assistant media row as soon as the agent SSE `media` event arrives. */
+function upsertAgentMediaMessage(prev, evt) {
+  const id = String(evt.messageId);
+  if (prev.some((m) => String(m._id) === id)) return prev;
+
+  if (evt.kind === 'video') {
+    return [
+      ...prev,
+      {
+        _id: id,
+        role: 'assistant',
+        mode: 'video',
+        hasVideo: false,
+        videoStatus: evt.status || 'queued',
+        videoTargetSeconds: evt.seconds || 15,
+        content: 'Generating video…'
+      }
+    ];
+  }
+
+  return [
+    ...prev,
+    {
+      _id: id,
+      role: 'assistant',
+      mode: 'image',
+      hasImage: true,
+      content: 'Generated image for your project.'
+    }
+  ];
+}
+
 function videoJobInFlight(m) {
   const s = m?.videoStatus;
   return (
@@ -200,6 +233,8 @@ export default function ProjectAgentPanel({
   const [streamingReasoning, setStreamingReasoning] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [imageGenerating, setImageGenerating] = useState(false);
+  /** Agent-mode tool in flight: same UX as dedicated Create image/video modes. */
+  const [agentMediaGenerating, setAgentMediaGenerating] = useState(null);
   const [mediaStallNotice, setMediaStallNotice] = useState(false);
   const [lastCost, setLastCost] = useState(null);
   const [searchStatus, setSearchStatus] = useState('');
@@ -509,6 +544,13 @@ export default function ProjectAgentPanel({
     };
   }, [token, adId, threadId]);
 
+  const latestImageMessageId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messageShowsImage(messages[i])) return String(messages[i]._id);
+    }
+    return null;
+  }, [messages]);
+
   const pendingVideoJob = useMemo(() => {
     const pending = messages.find(
       (m) => m.role === 'assistant' && m.mode === 'video' && videoJobInFlight(m)
@@ -741,6 +783,7 @@ export default function ProjectAgentPanel({
     setLastCost(null);
     setSearchStatus('');
     setMediaStallNotice(false);
+    setAgentMediaGenerating(null);
 
     if (mode === 'image') {
       setMessages((prev) => [...prev, { role: 'user', content: text, mode: 'image' }]);
@@ -778,8 +821,18 @@ export default function ProjectAgentPanel({
         onEvent: (evt) => {
           if (evt.type === 'media' && evt.messageId) {
             mediaCreated.push(evt);
+            setAgentMediaGenerating(null);
+            setMessages((prev) => upsertAgentMediaMessage(prev, evt));
+            if (evt.kind === 'image' && token) {
+              getProjectAgentImageBlobUrl(String(evt.messageId), token).catch(() => {});
+            }
           }
           if (evt.type === 'tool') {
+            if (evt.tool === 'generate_image') {
+              setAgentMediaGenerating('image');
+            } else if (evt.tool === 'generate_video') {
+              setAgentMediaGenerating('video');
+            }
             const label = evt.label || evt.tool || 'Tool';
             setSearchStatus(evt.round > 1 ? `${label} (step ${evt.round})…` : `${label}…`);
           }
@@ -831,24 +884,49 @@ export default function ProjectAgentPanel({
 
       if (shouldReload) {
         let reloaded = false;
+        const imageEvt = mediaCreated.find((e) => e.kind === 'image');
         try {
           const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-          setMessages(normalizeAgentMessages(msgs));
+          setMessages(
+            normalizeAgentMessages(
+              msgs,
+              imageEvt
+                ? {
+                    messageId: imageEvt.messageId,
+                    assistantMessage: {
+                      _id: imageEvt.messageId,
+                      mode: 'image',
+                      hasImage: true,
+                      content: 'Generated image for your project.'
+                    }
+                  }
+                : undefined
+            )
+          );
           reloaded = true;
         } catch {
           reloaded = false;
         }
 
-        if (!reloaded && (content || reasoning)) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: 'assistant',
-              content: content || '(No content returned)',
-              reasoningContent: reasoning,
-              mode: effectiveMode
+        if (!reloaded) {
+          setMessages((prev) => {
+            let next = prev;
+            mediaCreated.forEach((evt) => {
+              next = upsertAgentMediaMessage(next, evt);
+            });
+            if (content || reasoning) {
+              next = [
+                ...next,
+                {
+                  role: 'assistant',
+                  content: content || '(No content returned)',
+                  reasoningContent: reasoning,
+                  mode: effectiveMode
+                }
+              ];
             }
-          ]);
+            return next;
+          });
         }
 
         // Kick off polling for any video Skipper started (the pendingVideoJob
@@ -881,13 +959,14 @@ export default function ProjectAgentPanel({
         setMediaStallNotice(true);
       }
 
-      await refreshWallet();
+      void refreshWallet();
     } catch (e) {
       setError(e.message || 'Send failed');
       if (e.code === 'INSUFFICIENT_BALANCE') {
-        await refreshWallet();
+        void refreshWallet();
       }
     } finally {
+      setAgentMediaGenerating(null);
       setSending(false);
     }
   };
@@ -1143,7 +1222,11 @@ export default function ProjectAgentPanel({
             {messages.map((m, i) => (
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
                 {messageShowsImage(m) && token ? (
-                  <ProjectAgentMessageImage messageId={String(m._id)} token={token} />
+                  <ProjectAgentMessageImage
+                    messageId={String(m._id)}
+                    token={token}
+                    eager={String(m._id) === latestImageMessageId}
+                  />
                 ) : messageShowsVideo(m) && token ? (
                   <ProjectAgentMessageVideo
                     messageId={String(m._id)}
@@ -1181,7 +1264,7 @@ export default function ProjectAgentPanel({
                 />
               </div>
             )}
-            {imageGenerating && (
+            {(imageGenerating || agentMediaGenerating === 'image') && (
               <div className="project-agent-msg assistant">
                 <ImageGeneratingStatus />
               </div>
