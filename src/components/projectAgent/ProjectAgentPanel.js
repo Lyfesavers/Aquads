@@ -866,6 +866,12 @@ export default function ProjectAgentPanel({
         message: text,
         mode: effectiveMode,
         onEvent: (evt) => {
+          if (evt.type === 'start' && effectiveMode === 'agent') {
+            setSearchStatus('Thinking…');
+          }
+          if (evt.type === 'status' && evt.label) {
+            setSearchStatus(String(evt.label));
+          }
           if (evt.type === 'media' && evt.messageId) {
             mediaCreated.push(evt);
             setAgentMediaGenerating(null);
@@ -1325,9 +1331,13 @@ export default function ProjectAgentPanel({
                 )}
               </div>
             ))}
-            {sending && searchStatus && !streamingContent && (
-              <p className="project-agent-search-status">{searchStatus}</p>
-            )}
+            {sending &&
+              !streamingContent &&
+              (searchStatus || (mode === 'agent' && !imageGenerating && !agentMediaGenerating)) && (
+                <p className="project-agent-search-status" role="status" aria-live="polite">
+                  {searchStatus || 'Working on your reply…'}
+                </p>
+              )}
             {sending && (streamingReasoning || streamingContent) && (
               <div className="project-agent-msg assistant">
                 <ProjectAgentMessageBody

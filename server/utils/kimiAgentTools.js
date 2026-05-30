@@ -237,14 +237,16 @@ async function finalizeAgentAnswer({
 }) {
   send({ type: 'wrap_up', reason });
   const messages = [...working, { role: 'user', content: WRAP_UP_USER_MESSAGE }];
-  const data = await kimiChatCompletion({
-    apiKey,
-    baseUrl,
-    model,
-    messages,
-    maxTokens,
-    tools: undefined
-  });
+  const data = await withAgentActivity(send, 'Finishing your answer…', () =>
+    kimiChatCompletion({
+      apiKey,
+      baseUrl,
+      model,
+      messages,
+      maxTokens,
+      tools: undefined
+    })
+  );
 
   if (data.usage) {
     usages.push(data.usage);
@@ -512,6 +514,39 @@ async function withHeartbeat(send, fn, intervalMs = 8000) {
   }
 }
 
+/** Status + keepalive while a non-streaming Kimi completion runs (long text replies, etc.). */
+async function withAgentActivity(send, label, fn, intervalMs = 5000) {
+  if (typeof send === 'function' && label) {
+    try {
+      send({ type: 'status', label });
+    } catch {
+      /* ignore write errors */
+    }
+  }
+  let timer = null;
+  if (typeof send === 'function') {
+    timer = setInterval(() => {
+      try {
+        send({ type: 'ping', ts: Date.now() });
+        if (label) send({ type: 'status', label });
+      } catch {
+        /* ignore write errors */
+      }
+    }, intervalMs);
+    if (typeof timer.unref === 'function') timer.unref();
+  }
+  try {
+    return await fn();
+  } finally {
+    if (timer) clearInterval(timer);
+  }
+}
+
+function kimiWaitStatusLabel({ turnTrace, toolRound }) {
+  if (turnTrace.length > 0 || toolRound > 0) return 'Writing your reply…';
+  return 'Thinking…';
+}
+
 function toolStatusLabel(toolName) {
   switch (toolName) {
     case '$web_search':
@@ -607,14 +642,19 @@ async function runKimiAgentChat({
       });
     }
 
-    const data = await kimiChatCompletion({
-      apiKey,
-      baseUrl,
-      model,
-      messages: working,
-      maxTokens,
-      tools
-    });
+    const data = await withAgentActivity(
+      send,
+      kimiWaitStatusLabel({ turnTrace, toolRound }),
+      () =>
+        kimiChatCompletion({
+          apiKey,
+          baseUrl,
+          model,
+          messages: working,
+          maxTokens,
+          tools
+        })
+    );
 
     if (data.usage) {
       usages.push(data.usage);
