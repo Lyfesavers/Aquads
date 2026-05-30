@@ -62,17 +62,55 @@ function looksLikeListingRequest(text) {
   return LISTING_ADDRESS_RE.test(withoutUrls);
 }
 
-// Detects when Skipper *claims* (in plain text) to be creating an image/video
-// instead of actually invoking the tool. This happens when a chat gets long and
-// the model imitates a "generating…" message rather than emitting a real tool
-// call — so no media is produced. We only act on this when no media event was
-// received, then nudge the user to start a fresh chat.
+// Long Agent threads: Kimi may *describe* a finished image/video (incl. fake "Billed:")
+// without calling generate_image / generate_video. No `media` SSE → show stall UI
+// and replace that reply so users don't keep prompting the same broken thread.
 const FAKE_MEDIA_CLAIM_RE =
-  /\bgenerate_image\b|\bgenerate_video\b|(?:image|video|clip)\s+generation\s+in\s+progress|generating\s+(?:your|the|a|an)\s+(?:image|video|visual|clip|picture)|deducted from (?:your )?wallet/i;
+  /\bgenerate_image\b|\bgenerate_video\b|(?:image|video|clip)\s+generation\s+in\s+progress|generating\s+(?:your|the|a|an)\s+(?:image|video|visual|clip|picture)|deducted from (?:your )?wallet|\bbilled:\s*\$|(?:charged|costs?)\s+\$?\d|from your Skipper wallet|\b(?:is|are)\s+ready\b|(?:here'?s|here is)\s+your\s+(?:image|visual|logo|banner|video|clip)|(?:image|visual|logo|banner|video|clip)\s+(?:is\s+)?(?:done|ready|complete|finished)|created\s+(?:your|the)\s+(?:image|visual|logo|banner)/i;
+
+const MEDIA_REQUEST_RE =
+  /\b(?:create|generate|make|design|draw|render|produce)(?:\s+me)?\s+(?:an?\s+)?(?:image|visual|logo|banner|picture|graphic|illustration|video|clip)\b/i;
+
+const MEDIA_STALL_REPLY =
+  'This chat is too long for Skipper to run image or video tools on that request — **nothing was created**, and any “billed” line in the model reply was **not** a real wallet charge.\n\nStart a **new chat** (or use **Create image** mode) and ask again.';
 
 function looksLikeFakeMediaClaim(text) {
   if (!text) return false;
   return FAKE_MEDIA_CLAIM_RE.test(text);
+}
+
+function looksLikeMediaRequest(text) {
+  return MEDIA_REQUEST_RE.test(text || '');
+}
+
+function looksLikeDeliveryShapedReply(text) {
+  if (!text) return false;
+  return (
+    looksLikeFakeMediaClaim(text) ||
+    /\b(?:ready|complete|finished|created)\b[\s\S]{0,80}\b(?:image|visual|logo|banner|video|clip)\b/i.test(
+      text
+    ) ||
+    /\b(?:image|visual|logo|banner|video|clip)\b[\s\S]{0,80}\b(?:ready|complete|finished)\b/i.test(text)
+  );
+}
+
+function detectFakeMediaDelivery({ mode, mediaCreated, userText, assistantText }) {
+  if (mode !== 'agent' || mediaCreated.length > 0) return false;
+  const reply = String(assistantText || '').trim();
+  if (!reply) return false;
+  if (looksLikeFakeMediaClaim(reply)) return true;
+  if (looksLikeMediaRequest(userText) && looksLikeDeliveryShapedReply(reply)) return true;
+  return false;
+}
+
+function assistantPayloadForTurn({ content, reasoning, fakeMedia }) {
+  if (fakeMedia) {
+    return { content: MEDIA_STALL_REPLY, reasoningContent: '' };
+  }
+  return {
+    content: content || '(No content returned)',
+    reasoningContent: reasoning
+  };
 }
 
 // Thread ids deleted during this browser session. Module-level so it is shared
@@ -93,7 +131,11 @@ function normalizeAgentMessages(msgs, generateData) {
     ...m,
     _id: m._id != null ? String(m._id) : m._id,
     hasImage: Boolean(
-      m.hasImage || (m.role === 'assistant' && m.mode === 'image' && m._id && m.hasImage)
+      m.hasImage ||
+        (m.role === 'assistant' &&
+          (m.mode === 'image' || m.mode === 'agent') &&
+          m._id &&
+          m.hasImage)
     ),
     hasVideo: Boolean(
       m.hasVideo ||
@@ -138,7 +180,7 @@ function normalizeAgentMessages(msgs, generateData) {
 }
 
 function messageShowsImage(m) {
-  return Boolean(m?._id && m.hasImage && m.mode === 'image');
+  return Boolean(m?._id && m.hasImage && (m.mode === 'image' || m.mode === 'agent'));
 }
 
 function messageShowsVideo(m) {
@@ -170,7 +212,7 @@ function upsertAgentMediaMessage(prev, evt) {
     {
       _id: id,
       role: 'assistant',
-      mode: 'image',
+      mode: 'agent',
       hasImage: true,
       content: 'Generated image for your project.'
     }
@@ -551,6 +593,11 @@ export default function ProjectAgentPanel({
     return null;
   }, [messages]);
 
+  const threadImageCount = useMemo(
+    () => messages.filter((m) => messageShowsImage(m)).length,
+    [messages]
+  );
+
   const pendingVideoJob = useMemo(() => {
     const pending = messages.find(
       (m) => m.role === 'assistant' && m.mode === 'video' && videoJobInFlight(m)
@@ -881,16 +928,31 @@ export default function ProjectAgentPanel({
       // the `media` event. On a clean `done`, append streamed assistant text only.
       const streamIncomplete = !doneReceived;
       const mediaReadyLocally = mediaCreated.length > 0 && doneReceived;
+      const fakeMediaDelivery = detectFakeMediaDelivery({
+        mode: effectiveMode,
+        mediaCreated,
+        userText: text,
+        assistantText: content
+      });
+      const assistantPayload = assistantPayloadForTurn({
+        content,
+        reasoning,
+        fakeMedia: fakeMediaDelivery
+      });
+
+      if (fakeMediaDelivery) {
+        setMediaStallNotice(true);
+      }
 
       if (mediaReadyLocally) {
-        if (content || reasoning) {
+        if (content || reasoning || fakeMediaDelivery) {
           setMessages((prev) => {
             const last = prev[prev.length - 1];
             if (
               last?.role === 'assistant' &&
               last?.mode !== 'image' &&
               last?.mode !== 'video' &&
-              last?.content === (content || '(No content returned)')
+              last?.content === assistantPayload.content
             ) {
               return prev;
             }
@@ -898,8 +960,7 @@ export default function ProjectAgentPanel({
               ...prev,
               {
                 role: 'assistant',
-                content: content || '(No content returned)',
-                reasoningContent: reasoning,
+                ...assistantPayload,
                 mode: effectiveMode
               }
             ];
@@ -941,13 +1002,12 @@ export default function ProjectAgentPanel({
             mediaCreated.forEach((evt) => {
               next = upsertAgentMediaMessage(next, evt);
             });
-            if (content || reasoning) {
+            if (content || reasoning || fakeMediaDelivery) {
               next = [
                 ...next,
                 {
                   role: 'assistant',
-                  content: content || '(No content returned)',
-                  reasoningContent: reasoning,
+                  ...assistantPayload,
                   mode: effectiveMode
                 }
               ];
@@ -964,25 +1024,13 @@ export default function ProjectAgentPanel({
           ...prev,
           {
             role: 'assistant',
-            content: content || '(No content returned)',
-            reasoningContent: reasoning,
+            ...assistantPayload,
             mode: effectiveMode
           }
         ]);
       }
       setStreamingContent('');
       setStreamingReasoning('');
-
-      // Long threads can make Skipper write a fake "generating…" reply instead of
-      // actually calling the tool. If it claimed to make media but no media event
-      // arrived, prompt the user to start a fresh chat so it works again.
-      if (
-        effectiveMode === 'agent' &&
-        mediaCreated.length === 0 &&
-        looksLikeFakeMediaClaim(content)
-      ) {
-        setMediaStallNotice(true);
-      }
 
       void refreshWallet();
     } catch (e) {
@@ -1317,11 +1365,18 @@ export default function ProjectAgentPanel({
               </p>
             )}
 
+            {mode === 'agent' && threadImageCount >= 2 && !mediaStallNotice && (
+              <p className="project-agent-long-thread-hint" role="note">
+                This chat already has {threadImageCount} images. Agent can usually keep going, but
+                if a reply claims an image without showing one, start a new chat or use Create image.
+              </p>
+            )}
+
             {mediaStallNotice && (
               <div className="project-agent-stall-notice" role="status">
                 <span>
-                  Skipper said it was creating media but didn’t actually make it — this chat got too
-                  long. Start a new chat to create images and videos again.
+                  No image or video was generated — this chat is too long for Agent tools. Start a
+                  new chat (or use Create image / Create video) instead of sending more prompts here.
                 </span>
                 <div className="project-agent-stall-notice-actions">
                   <button type="button" className="primary" onClick={handleNewChat}>

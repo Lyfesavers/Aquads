@@ -213,6 +213,14 @@ const WRAP_UP_USER_MESSAGE =
 /**
  * One final completion without tools so the user still gets an answer.
  */
+function agentRunPayload(base, turnTrace, pendingMedia) {
+  return {
+    ...base,
+    turnTrace: turnTrace || [],
+    pendingMedia: pendingMedia || []
+  };
+}
+
 async function finalizeAgentAnswer({
   apiKey,
   baseUrl,
@@ -223,7 +231,9 @@ async function finalizeAgentAnswer({
   webSearchCalls,
   toolRound,
   send,
-  reason
+  reason,
+  turnTrace,
+  pendingMedia
 }) {
   send({ type: 'wrap_up', reason });
   const messages = [...working, { role: 'user', content: WRAP_UP_USER_MESSAGE }];
@@ -248,14 +258,18 @@ async function finalizeAgentAnswer({
     }
   }
 
-  return {
-    content,
-    usages,
-    webSearchCalls,
-    toolRounds: toolRound,
-    truncated: true,
-    truncateReason: reason
-  };
+  return agentRunPayload(
+    {
+      content,
+      usages,
+      webSearchCalls,
+      toolRounds: toolRound,
+      truncated: true,
+      truncateReason: reason
+    },
+    turnTrace,
+    pendingMedia
+  );
 }
 
 /**
@@ -392,11 +406,26 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
     };
 
     if (toolName === 'generate_image') {
-      const result = await createImageViaAgent({ ...common, prompt: args.prompt });
-      if (result.success && typeof send === 'function') {
-        send({ type: 'media', kind: 'image', messageId: result.messageId });
+      const deferPersist = Boolean(agentContext?.deferMediaMessages);
+      const result = await createImageViaAgent({
+        ...common,
+        prompt: args.prompt,
+        persistAssistantMessage: !deferPersist
+      });
+      if (result.success) {
+        if (deferPersist && Array.isArray(agentContext?.pendingMedia)) {
+          agentContext.pendingMedia.push({
+            kind: 'image',
+            jpegBase64: result.jpegBase64,
+            imageMimeType: result.imageMimeType || 'image/jpeg',
+            costCents: result.costCents || 0
+          });
+        } else if (typeof send === 'function' && result.messageId) {
+          send({ type: 'media', kind: 'image', messageId: result.messageId });
+        }
       }
-      return JSON.stringify(stripWalletBalance(result));
+      const { jpegBase64, imageMimeType, ...forModel } = result;
+      return JSON.stringify(stripWalletBalance(forModel));
     }
 
     const result = await startVideoViaAgent({
@@ -547,6 +576,14 @@ async function runKimiAgentChat({
   const usages = [];
   let webSearchCalls = 0;
   let toolRound = 0;
+  const turnTrace = [];
+  const pendingMedia = [];
+
+  if (agentContext) {
+    agentContext.deferMediaMessages = true;
+    agentContext.turnTrace = turnTrace;
+    agentContext.pendingMedia = pendingMedia;
+  }
 
   const limits = getLimits();
   const maxRounds = limits.maxAgentRounds;
@@ -564,7 +601,9 @@ async function runKimiAgentChat({
         webSearchCalls,
         toolRound,
         send,
-        reason: 'max_web_searches'
+        reason: 'max_web_searches',
+        turnTrace,
+        pendingMedia
       });
     }
 
@@ -585,6 +624,11 @@ async function runKimiAgentChat({
     const finishReason = choice?.finish_reason;
 
     if (finishReason === 'tool_calls' && choice?.message?.tool_calls?.length) {
+      turnTrace.push({
+        role: 'assistant',
+        content: choice.message.content || '',
+        tool_calls: choice.message.tool_calls
+      });
       working.push(choice.message);
       toolRound += 1;
 
@@ -624,6 +668,7 @@ async function runKimiAgentChat({
         if (name === '$web_search') {
           toolMsg.name = '$web_search';
         }
+        turnTrace.push(toolMsg);
         working.push(toolMsg);
       }
 
@@ -638,7 +683,9 @@ async function runKimiAgentChat({
           webSearchCalls,
           toolRound,
           send,
-          reason: 'max_web_searches'
+          reason: 'max_web_searches',
+          turnTrace,
+          pendingMedia
         });
       }
       continue;
@@ -652,7 +699,11 @@ async function runKimiAgentChat({
       }
     }
 
-    return { content, usages, webSearchCalls, toolRounds: toolRound, skippedFormulas };
+    return agentRunPayload(
+      { content, usages, webSearchCalls, toolRounds: toolRound, skippedFormulas },
+      turnTrace,
+      pendingMedia
+    );
   }
 
   return finalizeAgentAnswer({
@@ -665,7 +716,9 @@ async function runKimiAgentChat({
     webSearchCalls,
     toolRound,
     send,
-    reason: 'max_rounds'
+    reason: 'max_rounds',
+    turnTrace,
+    pendingMedia
   });
 }
 

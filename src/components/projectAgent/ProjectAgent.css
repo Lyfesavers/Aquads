@@ -252,6 +252,17 @@
   color: #f87171 !important;
 }
 
+.project-agent-long-thread-hint {
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--pa-border);
+  background: color-mix(in srgb, var(--pa-accent) 8%, var(--pa-surface));
+  color: var(--pa-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .project-agent-stall-notice {
   display: flex;
   flex-direction: column;

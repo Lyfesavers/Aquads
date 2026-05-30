@@ -38,6 +38,7 @@ const {
   getWebSearchCallUsd
 } = require('../utils/kimiCost');
 const { runKimiAgentChat } = require('../utils/kimiAgentTools');
+const { capAgentReplyContent } = require('../utils/projectAgentAgentReply');
 const {
   getLimits,
   resolveMaxOutputTokens,
@@ -509,17 +510,54 @@ function normalizeChatMode(mode) {
   return mode;
 }
 
+const LEGACY_IMAGE_STUB_HINT =
+  '[Aquads: an image was delivered in chat. To create another image you must call generate_image — never claim an image was created or billed without calling that tool.]';
+
+function kimiTraceEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  const out = { role: entry.role };
+  if (entry.content != null && entry.content !== '') out.content = entry.content;
+  if (entry.tool_calls?.length) out.tool_calls = entry.tool_calls;
+  if (entry.tool_call_id) out.tool_call_id = entry.tool_call_id;
+  if (entry.name) out.name = entry.name;
+  return out;
+}
+
+function expandHistoryForKimi(m) {
+  if (m.role === 'user') {
+    return [{ role: 'user', content: m.content }];
+  }
+
+  const trace = Array.isArray(m.agentToolTrace) ? m.agentToolTrace : [];
+  if (trace.length) {
+    const expanded = trace.map(kimiTraceEntry).filter(Boolean);
+    const tail = String(m.content || '').trim();
+    if (tail) {
+      expanded.push({ role: 'assistant', content: tail });
+    }
+    return expanded;
+  }
+
+  if (m.mode === 'image' && messageHasImage(m)) {
+    return [{ role: 'assistant', content: LEGACY_IMAGE_STUB_HINT }];
+  }
+
+  if (m.role === 'assistant') {
+    const msg = { role: 'assistant', content: m.content || '' };
+    if (m.reasoningContent) {
+      msg.reasoning_content = m.reasoningContent;
+    }
+    return [msg];
+  }
+
+  return [];
+}
+
 function buildKimiMessages(systemPrompt, history, userContent) {
   const messages = [{ role: 'system', content: systemPrompt }];
   for (const m of history) {
-    if (m.role === 'user') {
-      messages.push({ role: 'user', content: m.content });
-    } else if (m.role === 'assistant') {
-      const msg = { role: 'assistant', content: m.content || '' };
-      if (m.reasoningContent) {
-        msg.reasoning_content = m.reasoningContent;
-      }
-      messages.push(msg);
+    for (const part of expandHistoryForKimi(m)) {
+      messages.push(part);
     }
   }
   messages.push({ role: 'user', content: userContent });
@@ -875,7 +913,7 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
     const history = await ProjectAgentMessage.find({ threadId: thread._id })
       .sort({ createdAt: -1 })
       .limit(limits.maxHistoryMessages)
-      .select('role content reasoningContent')
+      .select('role content reasoningContent mode agentToolTrace hasImage imageJpegBase64')
       .lean();
     history.reverse();
 
@@ -967,7 +1005,8 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
             threadId: String(thread._id)
           }
         });
-        fullContent = agentResult.content || '';
+        const hadMediaTools = (agentResult.pendingMedia || []).length > 0;
+        fullContent = capAgentReplyContent(agentResult.content || '', { afterMedia: hadMediaTools });
         webSearchCalls = agentResult.webSearchCalls || 0;
         costBreakdown = kimiChatCostUsd({
           usages: agentResult.usages,
@@ -1092,15 +1131,49 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       });
     }
 
-    await ProjectAgentMessage.create({
+    let assistantCostCents = costCents;
+    const agentToolTrace =
+      isAgentToolsMode(storedMode) && Array.isArray(agentResult?.turnTrace)
+        ? agentResult.turnTrace
+        : undefined;
+
+    let pendingImage = null;
+    if (isAgentToolsMode(storedMode) && Array.isArray(agentResult?.pendingMedia)) {
+      for (const item of agentResult.pendingMedia) {
+        if (item?.kind === 'image' && item.jpegBase64) {
+          pendingImage = item;
+          assistantCostCents += Number(item.costCents) || 0;
+          break;
+        }
+      }
+    }
+
+    const assistantContent =
+      pendingImage && !String(fullContent || '').trim()
+        ? 'Generated image for your project.'
+        : fullContent;
+
+    const assistantMsg = await ProjectAgentMessage.create({
       threadId: thread._id,
       role: 'assistant',
-      content: fullContent,
+      content: assistantContent,
       reasoningContent: fullReasoning,
       mode: storedMode,
       usage: usage || {},
-      costCents
+      costCents: assistantCostCents,
+      ...(agentToolTrace?.length ? { agentToolTrace } : {}),
+      ...(pendingImage
+        ? {
+            hasImage: true,
+            imageJpegBase64: pendingImage.jpegBase64,
+            imageMimeType: pendingImage.imageMimeType || 'image/jpeg'
+          }
+        : {})
     });
+
+    if (pendingImage) {
+      send({ type: 'media', kind: 'image', messageId: String(assistantMsg._id) });
+    }
 
     if (thread.title === 'New chat' && fullContent) {
       thread.title = userContent.slice(0, 80) || 'Chat';

@@ -110,6 +110,14 @@ const projectAgentMessageSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  /**
+   * Agent-mode tool rounds replayed to Kimi (assistant+tool_calls, tool, …).
+   * Final user-visible reply stays in `content` on this same document.
+   */
+  agentToolTrace: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: undefined
+  },
   createdAt: {
     type: Date,
     default: Date.now,

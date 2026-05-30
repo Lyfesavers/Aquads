@@ -57,7 +57,15 @@ async function loadScopeAndThread({ userId, username, emailVerified, adId, threa
  * assistant message. Billed to the project's Skipper wallet (reserve → settle).
  * Used by Skipper Agent's generate_image tool.
  */
-async function createImageViaAgent({ userId, username, emailVerified, adId, threadId, prompt }) {
+async function createImageViaAgent({
+  userId,
+  username,
+  emailVerified,
+  adId,
+  threadId,
+  prompt,
+  persistAssistantMessage = true
+}) {
   if (!getOpenAiKey()) {
     return { success: false, error: 'Image generation is not configured on the server.', code: 'NOT_CONFIGURED' };
   }
@@ -152,6 +160,23 @@ async function createImageViaAgent({ userId, username, emailVerified, adId, thre
     return { success: false, error: 'Insufficient balance for image generation.', code: 'INSUFFICIENT_BALANCE' };
   }
 
+  const baseResult = {
+    success: true,
+    costUsd: costUsd.toFixed(6),
+    costCents: imageCostCents,
+    billingMethod: method,
+    balanceUsd: walletResponse(settleResult.wallet).balanceUsd,
+    message: 'Image created and shown to the user in the chat.',
+    jpegBase64,
+    imageMimeType: 'image/jpeg'
+  };
+
+  if (!persistAssistantMessage) {
+    thread.updatedAt = new Date();
+    await thread.save();
+    return baseResult;
+  }
+
   const assistantMsg = await ProjectAgentMessage.create({
     threadId: thread._id,
     role: 'assistant',
@@ -167,13 +192,8 @@ async function createImageViaAgent({ userId, username, emailVerified, adId, thre
   await thread.save();
 
   return {
-    success: true,
-    messageId: String(assistantMsg._id),
-    costUsd: costUsd.toFixed(6),
-    costCents: imageCostCents,
-    billingMethod: method,
-    balanceUsd: walletResponse(settleResult.wallet).balanceUsd,
-    message: 'Image created and shown to the user in the chat.'
+    ...baseResult,
+    messageId: String(assistantMsg._id)
   };
 }
 
