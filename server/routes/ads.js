@@ -296,10 +296,10 @@ router.get('/my-analytics', auth, async (req, res) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const [twitterRaids, facebookRaids] = await Promise.all([
       TwitterRaid.find({ createdBy: userObjectId })
-        .select('active createdAt completions.approvalStatus completions.userId')
+        .select('createdAt completions.approvalStatus completions.userId')
         .lean(),
       FacebookRaid.find({ createdBy: userObjectId })
-        .select('active createdAt completions.approvalStatus completions.userId')
+        .select('createdAt completions.approvalStatus completions.userId')
         .lean()
     ]);
 
@@ -326,7 +326,6 @@ router.get('/my-analytics', auth, async (req, res) => {
       bubbles,
       raids: {
         totalRaids: allRaids.length,
-        activeRaids: allRaids.filter((r) => r.active).length,
         approvedCompletions,
         uniqueRaiders: uniqueRaiderIds.size,
         pendingCompletions,

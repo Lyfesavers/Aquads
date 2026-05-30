@@ -3529,12 +3529,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                   </div>
                                 </div>
 
-                                {raids && (raids.totalRaids > 0 || raids.activeRaids > 0) ? (
+                                {raids && raids.totalRaids > 0 ? (
                                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                                     <span className="inline-flex items-center gap-1.5">
                                       <FaBolt className="text-yellow-400" />
                                       <span>
-                                        <span className="text-white font-medium">{raids.activeRaids}</span> active raid{raids.activeRaids !== 1 ? 's' : ''}
+                                        <span className="text-white font-medium">{raids.totalRaids}</span> created raid{raids.totalRaids !== 1 ? 's' : ''}
                                       </span>
                                     </span>
                                     <span>
