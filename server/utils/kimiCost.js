@@ -55,6 +55,14 @@ function usdToCents(usd) {
   return Math.max(0, Math.round(Number(usd) * 100));
 }
 
+/** Bill actual usage: never round sub-cent API cost down to $0 when totalUsd > 0. */
+function usdToBillCents(usd) {
+  const n = Math.max(0, Number(usd) || 0);
+  if (n <= 0) return 0;
+  const rounded = Math.round(n * 100);
+  return rounded > 0 ? rounded : 1;
+}
+
 /** Cents → USD display */
 function centsToUsd(cents) {
   return (Math.max(0, Number(cents) || 0) / 100).toFixed(2);
@@ -99,14 +107,79 @@ function getWebSearchCallUsd() {
   return Number.isFinite(n) && n >= 0 ? n : 0.005;
 }
 
+/** Normalize Kimi/Moonshot usage shapes (top-level or choice-level). */
+function normalizeKimiUsage(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const prompt = Math.max(
+    0,
+    Number(raw.prompt_tokens ?? raw.input_tokens ?? raw.prompt_tokens_total) || 0
+  );
+  const completion = Math.max(
+    0,
+    Number(raw.completion_tokens ?? raw.output_tokens ?? raw.completion_tokens_total) || 0
+  );
+  const cached = Math.max(0, Number(raw.cached_tokens) || 0);
+  const total = Math.max(0, Number(raw.total_tokens) || prompt + completion);
+  if (!prompt && !completion && !total) return null;
+  return {
+    prompt_tokens: prompt || Math.max(0, total - completion),
+    completion_tokens: completion || Math.max(0, total - prompt),
+    cached_tokens: cached,
+    total_tokens: total
+  };
+}
+
+function extractKimiUsageFromCompletion(data) {
+  if (!data || typeof data !== 'object') return null;
+  return (
+    normalizeKimiUsage(data.usage) ||
+    normalizeKimiUsage(data.choices?.[0]?.usage) ||
+    normalizeKimiUsage(data.choices?.[0]?.message?.usage)
+  );
+}
+
+function messageTokensForBilling(message = {}) {
+  let n = 0;
+  n += approximateTokens(message.content);
+  n += approximateTokens(message.reasoning_content);
+  if (Array.isArray(message.tool_calls) && message.tool_calls.length) {
+    try {
+      n += approximateTokens(JSON.stringify(message.tool_calls));
+    } catch {
+      n += 64;
+    }
+  }
+  if (message.role === 'tool') {
+    n += approximateTokens(message.name);
+  }
+  return n;
+}
+
+/** When API omits usage (common on some Agent legs), estimate from messages + reply. */
+function estimateKimiUsageFromMessages(messages = [], assistantContent = '') {
+  let prompt = 0;
+  for (const m of messages) {
+    prompt += messageTokensForBilling(m);
+  }
+  const completion = approximateTokens(assistantContent);
+  return {
+    prompt_tokens: prompt,
+    completion_tokens: completion,
+    cached_tokens: 0,
+    total_tokens: prompt + completion,
+    estimated: true
+  };
+}
+
 function mergeKimiUsage(usages = []) {
   const merged = { prompt_tokens: 0, completion_tokens: 0, cached_tokens: 0, total_tokens: 0 };
   for (const u of usages) {
-    if (!u) continue;
-    merged.prompt_tokens += Math.max(0, Number(u.prompt_tokens) || 0);
-    merged.completion_tokens += Math.max(0, Number(u.completion_tokens) || 0);
-    merged.cached_tokens += Math.max(0, Number(u.cached_tokens) || 0);
-    merged.total_tokens += Math.max(0, Number(u.total_tokens) || 0);
+    const norm = normalizeKimiUsage(u);
+    if (!norm) continue;
+    merged.prompt_tokens += norm.prompt_tokens;
+    merged.completion_tokens += norm.completion_tokens;
+    merged.cached_tokens += norm.cached_tokens;
+    merged.total_tokens += norm.total_tokens;
   }
   if (!merged.total_tokens) {
     merged.total_tokens = merged.prompt_tokens + merged.completion_tokens;
@@ -116,10 +189,25 @@ function mergeKimiUsage(usages = []) {
 
 /**
  * Total chat cost: summed token usage across tool-loop legs + $web_search call fees.
+ * @param {{ usages?: object[], webSearchCalls?: number, modelId?: string, fallbackMessages?: object[], assistantContent?: string }} opts
  */
-function kimiChatCostUsd({ usages = [], webSearchCalls = 0, modelId = 'kimi-k2.6' }) {
-  const usage = mergeKimiUsage(usages);
-  const tokenUsd = kimiUsageToUsd(usage, modelId);
+function kimiChatCostUsd({
+  usages = [],
+  webSearchCalls = 0,
+  modelId = 'kimi-k2.6',
+  fallbackMessages = null,
+  assistantContent = ''
+}) {
+  let usage = mergeKimiUsage(usages);
+  let billingMethod = 'usage';
+  let tokenUsd = kimiUsageToUsd(usage, modelId);
+
+  if (tokenUsd <= 0 && fallbackMessages?.length) {
+    usage = estimateKimiUsageFromMessages(fallbackMessages, assistantContent);
+    tokenUsd = kimiUsageToUsd(usage, modelId);
+    billingMethod = 'estimated';
+  }
+
   const calls = Math.max(0, Number(webSearchCalls) || 0);
   const toolUsd = calls * getWebSearchCallUsd();
   return {
@@ -127,7 +215,8 @@ function kimiChatCostUsd({ usages = [], webSearchCalls = 0, modelId = 'kimi-k2.6
     tokenUsd,
     toolUsd,
     webSearchCalls: calls,
-    totalUsd: tokenUsd + toolUsd
+    totalUsd: tokenUsd + toolUsd,
+    billingMethod
   };
 }
 
@@ -177,8 +266,12 @@ module.exports = {
   resolveModelPricing,
   kimiUsageToUsd,
   usdToCents,
+  usdToBillCents,
   centsToUsd,
   approximateTokens,
+  normalizeKimiUsage,
+  extractKimiUsageFromCompletion,
+  estimateKimiUsageFromMessages,
   estimateKimiChatHoldUsd,
   estimateKimiChatHoldCents,
   getWebSearchCallUsd,

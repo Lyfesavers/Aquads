@@ -1,5 +1,6 @@
 const { isAquadsPlatformQuestion } = require('./aquadsPlatformDetect');
 const { KIMI_WEB_SEARCH_TOOL, webSearchToolResult } = require('./kimiWebSearch');
+const { extractKimiUsageFromCompletion } = require('./kimiCost');
 const {
   lookupTokenForListing,
   submitStarterListingViaAgent
@@ -250,8 +251,9 @@ async function finalizeAgentAnswer({
     })
   );
 
-  if (data.usage) {
-    usages.push(data.usage);
+  const wrapUsage = extractKimiUsageFromCompletion(data);
+  if (wrapUsage) {
+    usages.push(wrapUsage);
   }
 
   const content = data.choices?.[0]?.message?.content || '';
@@ -661,8 +663,9 @@ async function runKimiAgentChat({
         })
     );
 
-    if (data.usage) {
-      usages.push(data.usage);
+    const legUsage = extractKimiUsageFromCompletion(data);
+    if (legUsage) {
+      usages.push(legUsage);
     }
 
     const choice = data.choices?.[0];

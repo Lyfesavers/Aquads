@@ -912,7 +912,10 @@ export default function ProjectAgentPanel({
             doneReceived = true;
             setSearchStatus('');
             setLastCost({
-              costUsd: evt.costUsd,
+              costUsd:
+                evt.costCents != null
+                  ? (Number(evt.costCents) / 100).toFixed(6)
+                  : evt.costUsd,
               balanceUsd: evt.balanceUsd,
               webSearchCalls: evt.webSearchCalls,
               toolUsd: evt.toolUsd,

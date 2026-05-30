@@ -28,6 +28,7 @@ const { getListingTier, LISTING_TIER_PREMIUM } = require('../utils/listingTier')
 const {
   kimiUsageToUsd,
   usdToCents,
+  usdToBillCents,
   centsToUsd,
   resolveModelPricing,
   estimateKimiChatHoldCents,
@@ -1021,14 +1022,17 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
         costBreakdown = kimiChatCostUsd({
           usages: agentResult.usages,
           webSearchCalls,
-          modelId: KIMI_MODEL
+          modelId: KIMI_MODEL,
+          fallbackMessages: [...kimiMessages, { role: 'assistant', content: fullContent || '' }],
+          assistantContent: fullContent || ''
         });
         usage = {
           ...costBreakdown.usage,
-          web_search_calls: webSearchCalls
+          web_search_calls: webSearchCalls,
+          billing_method: costBreakdown.billingMethod
         };
         costUsd = costBreakdown.totalUsd;
-        costCents = usdToCents(costUsd);
+        costCents = usdToBillCents(costUsd);
       } catch (agentErr) {
         await releaseHold(req.user.userId, ad.id, holdCents, {
           provider: 'kimi',
@@ -1121,7 +1125,17 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       }
 
       costUsd = kimiUsageToUsd(usage || {}, KIMI_MODEL);
-      costCents = usdToCents(costUsd);
+      if (costUsd <= 0 && (fullContent || fullReasoning)) {
+        const est = kimiChatCostUsd({
+          usages: [],
+          modelId: KIMI_MODEL,
+          fallbackMessages: [...kimiMessages, { role: 'assistant', content: fullContent || '' }],
+          assistantContent: fullContent || ''
+        });
+        costUsd = est.totalUsd;
+        usage = { ...est.usage, billing_method: est.billingMethod };
+      }
+      costCents = usdToBillCents(costUsd);
     }
 
     const sessionMediaSpendCents =
@@ -1200,12 +1214,11 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
     }
 
     const doneCostCents = isAgentToolsMode(storedMode) ? totalSettleCents : costCents;
-    const doneCostUsd = centsToUsd(doneCostCents);
 
     send({
       type: 'done',
       usage: usage || {},
-      costUsd: doneCostUsd,
+      costUsd: (doneCostCents / 100).toFixed(6),
       costCents: doneCostCents,
       webSearchCalls: isAgentToolsMode(storedMode) ? webSearchCalls : undefined,
       toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,

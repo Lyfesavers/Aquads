@@ -1,3 +1,5 @@
+const { extractKimiUsageFromCompletion } = require('./kimiCost');
+
 const KIMI_WEB_SEARCH_TOOL = {
   type: 'builtin_function',
   function: { name: '$web_search' }
@@ -56,8 +58,9 @@ async function runKimiWebSearchChat({ apiKey, baseUrl, model, messages, maxToken
       throw err;
     }
 
-    if (data.usage) {
-      usages.push(data.usage);
+    const legUsage = extractKimiUsageFromCompletion(data);
+    if (legUsage) {
+      usages.push(legUsage);
     }
 
     const choice = data.choices?.[0];
