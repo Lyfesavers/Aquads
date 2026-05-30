@@ -240,6 +240,12 @@ const adSchema = new mongoose.Schema({
   launchChecklist: {
     completedSteps: { type: [String], default: [] },
     dismissedAt: { type: Date, default: null }
+  },
+  /** Bubble map clicks (opens AquaSwap chart from the bubble) */
+  clicks: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 });
 

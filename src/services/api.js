@@ -2170,7 +2170,6 @@ export const deleteCV = async () => {
 
 // ============ Click Tracking API ============
 
-// Track a click on paid ads button or free marketing banner
 export const trackClick = async (elementType, pagePath = '/') => {
   try {
     const response = await fetch(`${API_URL}/click-tracking/track`, {
@@ -2196,6 +2195,23 @@ export const trackClick = async (elementType, pagePath = '/') => {
     logger.error('Click tracking error:', error);
     return false;
   }
+};
+
+// Track a bubble map click (opens AquaSwap chart)
+export const trackBubbleClick = (adId) => {
+  if (!adId) return;
+  fetch(`${API_URL}/ads/${encodeURIComponent(adId)}/click`, { method: 'POST' }).catch(() => {});
+};
+
+// Dashboard: bubble clicks, map rank, and raid analytics for project owner
+export const fetchMyBubbleAnalytics = async () => {
+  const response = await fetch(`${API_URL}/ads/my-analytics`, {
+    headers: getAuthHeader()
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch bubble analytics');
+  }
+  return response.json();
 };
 
 // Get click statistics (admin only)

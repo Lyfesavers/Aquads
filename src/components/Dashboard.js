@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -15,7 +15,7 @@ import MembershipManager from './MembershipManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 import QRCode from 'qrcode';
-import { FaQrcode, FaCopy, FaCheck, FaSpinner, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaQrcode, FaCopy, FaCheck, FaSpinner, FaChevronDown, FaChevronUp, FaMousePointer, FaTrophy, FaUsers, FaBolt } from 'react-icons/fa';
 import QRCodeCustomizerModal from './QRCodeCustomizerModal';
 import AquaPaySettings from './AquaPaySettings';
 import LinkInBioSettings from './LinkInBioSettings';
@@ -269,6 +269,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   
   // Loading state for main dashboard tab - Start false for immediate display (Optimistic UI)
   const [isLoadingMainTab, setIsLoadingMainTab] = useState(false);
+  const [bubbleAnalytics, setBubbleAnalytics] = useState(null);
+  const [isLoadingBubbleAnalytics, setIsLoadingBubbleAnalytics] = useState(false);
 
   // Click tracking analytics states
   const [clickStats, setClickStats] = useState(null);
@@ -1296,6 +1298,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   };
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
+
+  useEffect(() => {
+    if (!currentUser?.token || activeTab !== 'ads') return;
+    if (currentUser?.userType === 'freelancer' && ads.filter((ad) => ad.owner === currentUser?.username).length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    const loadBubbleAnalytics = async () => {
+      setIsLoadingBubbleAnalytics(true);
+      try {
+        const data = await fetchMyBubbleAnalytics();
+        if (!cancelled) setBubbleAnalytics(data);
+      } catch {
+        if (!cancelled) setBubbleAnalytics(null);
+      } finally {
+        if (!cancelled) setIsLoadingBubbleAnalytics(false);
+      }
+    };
+
+    loadBubbleAnalytics();
+    return () => { cancelled = true; };
+  }, [currentUser?.token, currentUser?.username, currentUser?.userType, activeTab, ads.length]);
 
   const handleUpgradeListingToPremium = async (ad) => {
     if (!['active', 'approved'].includes(ad.status)) {
@@ -3414,65 +3439,134 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                 ) : (
                   <div className="space-y-4">
                     {userAds.map(ad => {
-                      const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
-                      const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
-                      const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
-                      
+                      const stats = bubbleAnalytics?.bubbles?.[ad.id];
+                      const raids = bubbleAnalytics?.raids;
+                      const totalVotes = stats
+                        ? (stats.bullishVotes || 0) + (stats.bearishVotes || 0)
+                        : (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
+                      const bullishVotes = stats?.bullishVotes ?? ad.bullishVotes ?? 0;
+                      const bullishPercentage = totalVotes > 0 ? Math.round((bullishVotes / totalVotes) * 100) : 0;
+                      const isBumped = stats?.isBumped ?? ad.isBumped;
+                      const votesToBump = Math.max(0, 100 - bullishVotes);
+
                       return (
                         <div
                           key={ad.id}
-                          className="rounded-xl overflow-hidden border border-gray-600/40"
+                          className="rounded-2xl overflow-hidden border border-gray-600/50 bg-gray-800/40 shadow-lg"
                         >
-                        <div
-                          className="bg-gray-700 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="flex items-center space-x-4 min-w-0 flex-shrink-0">
-                            <img
-                              src={ad.logo}
-                              alt={ad.title}
-                              className="w-12 h-12 object-contain rounded flex-shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <h3 className="text-white font-semibold truncate">{ad.title}</h3>
-                              <p className="text-gray-400 text-sm truncate">{ad.url || 'No website yet'}</p>
-                              {ad.listingTier === 'starter' && (
-                                <span className="inline-block mt-1 text-xs bg-green-600/40 text-green-200 px-2 py-0.5 rounded">Starter</span>
-                              )}
-                              {ad.listingTier !== 'starter' && (
-                                <span className="inline-block mt-1 text-xs bg-blue-600/40 text-blue-200 px-2 py-0.5 rounded">Premium</span>
-                              )}
-                              {ad.status === 'pending' && (
-                                <p className="text-yellow-500 text-sm">Listing pending</p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Vote Counts Display */}
-                          <div className="flex items-center space-x-6 sm:mr-0 flex-shrink-0">
-                            <div className="text-center">
-                              <div className="text-xs text-gray-400 mb-1">Community Votes</div>
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-green-400 font-bold">👍</span>
-                                  <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
-                                  <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-red-400 font-bold">👎</span>
-                                  <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
-                                  <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
+                          {/* Header */}
+                          <div className="p-4 sm:p-5 border-b border-gray-700/50">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="flex items-start gap-4 min-w-0">
+                                <img
+                                  src={ad.logo}
+                                  alt={ad.title}
+                                  className="w-14 h-14 object-contain rounded-xl bg-gray-900/60 border border-gray-600/40 flex-shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                                    <h3 className="text-white font-semibold text-lg truncate">{ad.title}</h3>
+                                    {ad.listingTier === 'starter' ? (
+                                      <span className="text-xs bg-green-600/30 text-green-300 px-2 py-0.5 rounded-full border border-green-500/30">Starter</span>
+                                    ) : (
+                                      <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30">Premium</span>
+                                    )}
+                                    {isBumped && (
+                                      <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Bumped</span>
+                                    )}
+                                    {ad.status === 'pending' && (
+                                      <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">Pending</span>
+                                    )}
+                                  </div>
+                                  <p className="text-gray-400 text-sm truncate">{ad.url || 'No website yet'}</p>
+                                  {!isBumped && ad.status !== 'pending' && votesToBump > 0 && (
+                                    <p className="text-gray-500 text-xs mt-1">{votesToBump} bullish votes to bump</p>
+                                  )}
                                 </div>
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
                             </div>
                           </div>
-                          
-                          <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 sm:gap-0">
+
+                          {/* Analytics grid */}
+                          <div className="px-4 sm:px-5 py-4 bg-gray-900/30 border-b border-gray-700/40">
+                            {isLoadingBubbleAnalytics ? (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-pulse">
+                                {[0, 1, 2, 3].map((i) => (
+                                  <div key={i} className="h-20 bg-gray-700/40 rounded-xl" />
+                                ))}
+                              </div>
+                            ) : (
+                              <>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                  <div className="bg-gray-800/60 rounded-xl p-3 border border-gray-700/50 text-center">
+                                    <FaMousePointer className="text-cyan-400 mx-auto mb-1.5 w-4 h-4" />
+                                    <p className="text-xl font-bold text-white">{(stats?.clicks ?? 0).toLocaleString()}</p>
+                                    <p className="text-gray-500 text-xs mt-0.5">Bubble Clicks</p>
+                                  </div>
+                                  <div className="bg-gray-800/60 rounded-xl p-3 border border-gray-700/50 text-center">
+                                    <FaTrophy className="text-amber-400 mx-auto mb-1.5 w-4 h-4" />
+                                    <p className="text-xl font-bold text-white">
+                                      {stats?.mapRank ? `#${stats.mapRank}` : '—'}
+                                    </p>
+                                    <p className="text-gray-500 text-xs mt-0.5">
+                                      Map Rank{stats?.totalOnMap ? ` / ${stats.totalOnMap}` : ''}
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-800/60 rounded-xl p-3 border border-gray-700/50 text-center">
+                                    <div className="flex items-center justify-center gap-1 mb-1.5">
+                                      <span className="text-green-400 text-sm">👍</span>
+                                      <span className="text-red-400 text-sm">👎</span>
+                                    </div>
+                                    <p className="text-xl font-bold text-white">{totalVotes.toLocaleString()}</p>
+                                    <p className="text-gray-500 text-xs mt-0.5">
+                                      {bullishPercentage}% bullish · {stats?.uniqueVoters ?? totalVotes} voters
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-800/60 rounded-xl p-3 border border-gray-700/50 text-center">
+                                    <FaUsers className="text-purple-400 mx-auto mb-1.5 w-4 h-4" />
+                                    <p className="text-xl font-bold text-white">{(raids?.uniqueRaiders ?? 0).toLocaleString()}</p>
+                                    <p className="text-gray-500 text-xs mt-0.5">Network Raiders</p>
+                                  </div>
+                                </div>
+
+                                {raids && (raids.totalRaids > 0 || raids.activeRaids > 0) ? (
+                                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                                    <span className="inline-flex items-center gap-1.5">
+                                      <FaBolt className="text-yellow-400" />
+                                      <span>
+                                        <span className="text-white font-medium">{raids.activeRaids}</span> active raid{raids.activeRaids !== 1 ? 's' : ''}
+                                      </span>
+                                    </span>
+                                    <span>
+                                      <span className="text-white font-medium">{raids.approvedCompletions ?? 0}</span> completions
+                                    </span>
+                                    {raids.raidsThisWeek > 0 && (
+                                      <span>
+                                        <span className="text-white font-medium">{raids.raidsThisWeek}</span> posted this week
+                                      </span>
+                                    )}
+                                    {raids.pendingCompletions > 0 && (
+                                      <span className="text-yellow-400/90">
+                                        {raids.pendingCompletions} pending review
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="mt-3 text-xs text-gray-500">
+                                    No raids posted yet — create one to reach raiders across the Aquads network.
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="p-4 sm:p-5 flex flex-wrap gap-2">
                             {!ad.status || ad.status !== 'pending' ? (
                               <>
                                 <button
                                   onClick={() => handleBumpClick(ad.id)}
-                                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                                  className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                 >
                                   Bump
                                 </button>
@@ -3481,7 +3575,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                   href="https://t.me/+6rJbDLqdMxA3ZTUx"
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded inline-flex items-center text-sm whitespace-nowrap"
+                                  className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg inline-flex items-center text-sm font-medium transition-colors"
                                   title="Book a free AMA session"
                                 >
                                   Book Free AMA
@@ -3491,48 +3585,50 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                   <button
                                     type="button"
                                     onClick={() => handleUpgradeListingToPremium(ad)}
-                                    className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                                    className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                   >
                                     Upgrade to Premium
                                   </button>
                                 )}
                               </>
                             ) : (
-                              <span className="text-yellow-500 px-3 py-1.5 text-sm whitespace-nowrap">
-                                Listing pending
+                              <span className="text-yellow-400 px-3 py-1.5 text-sm">
+                                Listing pending approval
                               </span>
                             )}
                             <button
                               onClick={() => handleOpenEditAdModal(ad)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleOpenProjectDeepDive(ad)}
-                              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                              className="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                               title="Update chart deep dive details"
                             >
-                              Deep Dive Form
+                              Deep Dive
                             </button>
                             <button
                               onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap"
+                              className="bg-red-600/80 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ml-auto sm:ml-0"
                               title="Delete this ad"
                             >
                               Delete
                             </button>
                           </div>
-                        </div>
-                        {ad.status !== 'rejected' && (
-                          <ProjectLaunchChecklist
-                            ad={ad}
-                            embedded
-                            onTabSelect={setActiveTab}
-                            onOpenDeepDive={handleOpenProjectDeepDive}
-                            showNotification={showNotification}
-                          />
-                        )}
+
+                          {ad.status !== 'rejected' && (
+                            <div className="px-4 sm:px-5 pb-4">
+                              <ProjectLaunchChecklist
+                                ad={ad}
+                                embedded
+                                onTabSelect={setActiveTab}
+                                onOpenDeepDive={handleOpenProjectDeepDive}
+                                showNotification={showNotification}
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}

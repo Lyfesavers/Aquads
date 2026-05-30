@@ -15,6 +15,7 @@ import {
   API_URL,
   reconnectSocket,
   trackClick,
+  trackBubbleClick,
   forceSessionLogout
 } from './services/api';
 import LoginModal from './components/LoginModal';
@@ -3258,6 +3259,7 @@ function App() {
                                   // Check if ad has pairAddress or contractAddress for token chart
                                   const tokenAddress = ad.pairAddress || ad.contractAddress;
                                   if (tokenAddress && tokenAddress.trim()) {
+                                    trackBubbleClick(ad.id);
                                     const blockchain = ad.blockchain || 'ethereum';
                                     const tokenName = ad.title || '';
                                     window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}&name=${encodeURIComponent(tokenName)}`;

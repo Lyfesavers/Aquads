@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Ad = require('../models/Ad');
+const TwitterRaid = require('../models/TwitterRaid');
+const FacebookRaid = require('../models/FacebookRaid');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { emitAdEvent } = require('../middleware/socketEmitter');
@@ -249,6 +252,92 @@ const fetchAndCacheAds = async () => {
   adsListCacheTime = Date.now();
   return processedAds;
 };
+
+// GET bubble + raid analytics for the logged-in project owner (dashboard)
+router.get('/my-analytics', auth, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const userId = req.user.userId || req.user.id;
+
+    const [userAds, allMapAds] = await Promise.all([
+      Ad.find({ owner: username })
+        .select('id clicks bullishVotes bearishVotes isBumped status voterData')
+        .lean(),
+      Ad.find({ status: { $in: ['active', 'approved'] } })
+        .select('id bullishVotes isBumped')
+        .lean()
+    ]);
+
+    const sortedMapAds = [...allMapAds].sort((a, b) => {
+      if (a.isBumped && !b.isBumped) return -1;
+      if (!a.isBumped && b.isBumped) return 1;
+      return (b.bullishVotes || 0) - (a.bullishVotes || 0);
+    });
+
+    const rankByAdId = {};
+    sortedMapAds.forEach((ad, index) => {
+      rankByAdId[ad.id] = index + 1;
+    });
+
+    const bubbles = {};
+    userAds.forEach((ad) => {
+      bubbles[ad.id] = {
+        clicks: ad.clicks || 0,
+        uniqueVoters: (ad.voterData || []).length,
+        mapRank: rankByAdId[ad.id] || null,
+        totalOnMap: sortedMapAds.length,
+        bullishVotes: ad.bullishVotes || 0,
+        bearishVotes: ad.bearishVotes || 0,
+        isBumped: !!ad.isBumped,
+        status: ad.status
+      };
+    });
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const [twitterRaids, facebookRaids] = await Promise.all([
+      TwitterRaid.find({ createdBy: userObjectId })
+        .select('active createdAt completions.approvalStatus completions.userId')
+        .lean(),
+      FacebookRaid.find({ createdBy: userObjectId })
+        .select('active createdAt completions.approvalStatus completions.userId')
+        .lean()
+    ]);
+
+    const allRaids = [...twitterRaids, ...facebookRaids];
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const uniqueRaiderIds = new Set();
+    let approvedCompletions = 0;
+    let pendingCompletions = 0;
+
+    allRaids.forEach((raid) => {
+      (raid.completions || []).forEach((completion) => {
+        if (completion.approvalStatus === 'approved') {
+          approvedCompletions += 1;
+          if (completion.userId) {
+            uniqueRaiderIds.add(completion.userId.toString());
+          }
+        } else if (completion.approvalStatus === 'pending') {
+          pendingCompletions += 1;
+        }
+      });
+    });
+
+    res.json({
+      bubbles,
+      raids: {
+        totalRaids: allRaids.length,
+        activeRaids: allRaids.filter((r) => r.active).length,
+        approvedCompletions,
+        uniqueRaiders: uniqueRaiderIds.size,
+        pendingCompletions,
+        raidsThisWeek: allRaids.filter((r) => new Date(r.createdAt) >= oneWeekAgo).length
+      }
+    });
+  } catch (error) {
+    console.error('My bubble analytics error:', error);
+    res.status(500).json({ error: 'Failed to load bubble analytics' });
+  }
+});
 
 // GET route
 router.get('/', async (req, res) => {
@@ -715,6 +804,21 @@ router.post('/bump', auth, async (req, res) => {
     error: 'Paid bumps are no longer available.',
     message: `Bubbles bump automatically at ${BUMP_VOTE_THRESHOLD}+ bullish votes (organic votes and vote boosts both count).`
   });
+});
+
+// Track bubble click (public — opens AquaSwap from bubble map)
+router.post('/:id/click', async (req, res) => {
+  try {
+    const ad = await Ad.findOne({ id: req.params.id });
+    if (!ad || !['active', 'approved'].includes(ad.status)) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    await Ad.updateOne({ id: ad.id }, { $inc: { clicks: 1 } });
+    res.json({ ok: true, clicks: (ad.clicks || 0) + 1 });
+  } catch (error) {
+    console.error('Bubble click tracking error:', error);
+    res.status(500).json({ error: 'Failed to track click' });
+  }
 });
 
 // Special route for position updates only (no auth required)
