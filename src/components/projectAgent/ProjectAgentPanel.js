@@ -41,6 +41,20 @@ const MODES = [
   }
 ];
 
+/** Chat modes stored on messages — one mode per thread; switching starts a new chat. */
+const SKIPPER_CHAT_MODES = new Set(['instant', 'thinking', 'agent', 'websearch']);
+
+function resolveThreadSkipperMode(messages = []) {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const m = messages[i];
+    if (!m?.mode) continue;
+    if (m.mode === 'websearch') return 'agent';
+    if (SKIPPER_CHAT_MODES.has(m.mode)) return m.mode;
+    if (m.mode === 'image' || m.mode === 'video') return m.mode;
+  }
+  return null;
+}
+
 const VIDEO_SECONDS_OPTIONS = [15, 30];
 
 const VIDEO_POLL_MS = 12_000;
@@ -576,7 +590,12 @@ export default function ProjectAgentPanel({
     (async () => {
       try {
         const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-        if (!cancelled) setMessages(normalizeAgentMessages(msgs));
+        if (!cancelled) {
+          const normalized = normalizeAgentMessages(msgs);
+          setMessages(normalized);
+          const threadMode = resolveThreadSkipperMode(normalized);
+          if (threadMode) setMode(threadMode);
+        }
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
@@ -647,20 +666,42 @@ export default function ProjectAgentPanel({
     }
   };
 
-  const handleNewChat = async () => {
-    if (!token || !adId) return;
-    try {
-      const { thread } = await createProjectAgentThread(adId, token);
-      setThreads((prev) => [thread, ...prev]);
-      setThreadId(thread._id);
+  const startNewChat = useCallback(
+    async (nextMode) => {
+      if (!token || !adId) return null;
+      videoPollAbortRef.current = null;
+      videoPollRunningRef.current = null;
+      if (nextMode) setMode(nextMode);
       setMessages([]);
       setStreamingContent('');
       setStreamingReasoning('');
       setMediaStallNotice(false);
+      setSearchStatus('');
+      setLastCost(null);
+      setAgentMediaGenerating(null);
       setError('');
-    } catch (e) {
-      setError(e.message);
-    }
+
+      try {
+        const { thread } = await createProjectAgentThread(adId, token);
+        const id = String(thread._id);
+        setThreads((prev) => [thread, ...prev]);
+        setThreadId(id);
+        skipMessagesFetchRef.current = id;
+        return id;
+      } catch (e) {
+        setError(e.message);
+        return null;
+      }
+    },
+    [token, adId]
+  );
+
+  const handleNewChat = () => startNewChat();
+
+  const handleModeChange = async (e) => {
+    const nextMode = e.target.value;
+    if (nextMode === mode || sending) return;
+    await startNewChat(nextMode);
   };
 
   const handleDeleteThread = async (targetThreadId, e) => {
@@ -814,12 +855,17 @@ export default function ProjectAgentPanel({
     const text = input.trim();
     if (!text || !token || !adId || !threadId || sending) return;
 
-    // Listing needs Agent-mode tools. If the user pastes a CA/PA + logo URL
-    // while in instant/thinking, switch to Agent so the listing goes through.
     let effectiveMode = mode;
-    if ((mode === 'instant' || mode === 'thinking') && looksLikeListingRequest(text)) {
+    let activeThreadId = threadId;
+
+    // Listing needs Agent tools — start a fresh Agent chat (no mode mixing in one thread).
+    if (
+      (mode === 'instant' || mode === 'thinking') &&
+      looksLikeListingRequest(text)
+    ) {
       effectiveMode = 'agent';
-      setMode('agent');
+      activeThreadId = await startNewChat('agent');
+      if (!activeThreadId) return;
     }
 
     setInput('');
@@ -861,7 +907,7 @@ export default function ProjectAgentPanel({
     try {
       await streamProjectAgentChat({
         adId,
-        threadId,
+        threadId: activeThreadId,
         token,
         message: text,
         mode: effectiveMode,
@@ -983,7 +1029,11 @@ export default function ProjectAgentPanel({
         let reloaded = false;
         const imageEvt = mediaCreated.find((e) => e.kind === 'image');
         try {
-          const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
+          const { messages: msgs } = await fetchProjectAgentMessages(
+            adId,
+            activeThreadId,
+            token
+          );
           setMessages(
             normalizeAgentMessages(
               msgs,
@@ -1202,8 +1252,10 @@ export default function ProjectAgentPanel({
         <select
           className="project-agent-mode-select"
           value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          title={MODES.find((m) => m.id === mode)?.hint}
+          onChange={handleModeChange}
+          disabled={sending}
+          title={`${MODES.find((m) => m.id === mode)?.hint || ''} Changing mode starts a new chat.`}
+          aria-label="Skipper mode (changing mode starts a new chat)"
         >
           {MODES.map((m) => (
             <option key={m.id} value={m.id}>
