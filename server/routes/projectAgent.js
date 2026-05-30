@@ -931,23 +931,30 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       maxTokens,
       modelId: KIMI_MODEL,
       mode: isAgentToolsMode(storedMode) ? 'instant' : storedMode,
-      agentMaxRounds: isAgentToolsMode(storedMode) ? limits.maxAgentRounds : undefined
+      agentMaxRounds: isAgentToolsMode(storedMode) ? limits.maxAgentRounds : undefined,
+      agentHoldRoundEstimate: isAgentToolsMode(storedMode)
+        ? limits.agentHoldMaxSearchesEstimate + 2
+        : undefined
     };
 
-    holdCents = isAgentToolsMode(storedMode)
-      ? estimateKimiAgentHoldCents(holdOpts)
-      : estimateKimiChatHoldCents({ ...holdOpts, mode: storedMode });
-
-    const estimatedHoldUsd = isAgentToolsMode(storedMode)
-      ? estimateKimiAgentHoldUsd(holdOpts)
-      : estimateKimiChatHoldUsd({ ...holdOpts, mode: storedMode });
+    let estimatedHoldUsd;
+    if (isAgentToolsMode(storedMode)) {
+      // One Agent hold covers Kimi + optional image/video tools; actuals settle against it,
+      // with any overage deducted from free wallet balance (settleHold).
+      estimatedHoldUsd = estimateKimiAgentHoldUsd(holdOpts);
+      holdCents = usdToCents(estimatedHoldUsd);
+    } else {
+      estimatedHoldUsd = estimateKimiChatHoldUsd({ ...holdOpts, mode: storedMode });
+      holdCents = usdToCents(estimatedHoldUsd);
+    }
 
     const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
-      provider: 'kimi',
+      provider: isAgentToolsMode(storedMode) ? 'kimi+media' : 'kimi',
       mode: storedMode,
       model: KIMI_MODEL,
       threadId: String(thread._id),
-      estimatedHoldUsd: estimatedHoldUsd.toFixed(4)
+      estimatedHoldUsd: estimatedHoldUsd.toFixed(4),
+      sessionBilling: isAgentToolsMode(storedMode)
     });
 
     if (!reservation) {
@@ -1002,7 +1009,10 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
             username: req.user.username,
             emailVerified: req.user.emailVerified,
             adId: ad.id,
-            threadId: String(thread._id)
+            threadId: String(thread._id),
+            sessionBilling: true,
+            sessionHoldCents: holdCents,
+            sessionMediaSpendCents: 0
           }
         });
         const hadMediaTools = (agentResult.pendingMedia || []).length > 0;
@@ -1114,24 +1124,31 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       costCents = usdToCents(costUsd);
     }
 
-    const settleResult = await settleHold(req.user.userId, ad.id, holdCents, costCents, {
+    const sessionMediaSpendCents =
+      isAgentToolsMode(storedMode) && agentResult?.sessionMediaSpendCents != null
+        ? Math.max(0, Number(agentResult.sessionMediaSpendCents) || 0)
+        : 0;
+    const totalSettleCents = costCents + sessionMediaSpendCents;
+
+    const settleResult = await settleHold(req.user.userId, ad.id, holdCents, totalSettleCents, {
       mode: storedMode,
       model: KIMI_MODEL,
       usage: usage || {},
       threadId: String(thread._id),
       provider: 'kimi',
-      webSearchCalls
+      webSearchCalls,
+      sessionMediaSpendCents
     });
     holdCents = 0;
 
-    if (!settleResult?.settled && costCents > 0) {
+    if (!settleResult?.settled && totalSettleCents > 0) {
       send({
         type: 'error',
         error: 'Could not settle full usage cost. Please add funds.'
       });
     }
 
-    let assistantCostCents = costCents;
+    let assistantCostCents = totalSettleCents;
     const agentToolTrace =
       isAgentToolsMode(storedMode) && Array.isArray(agentResult?.turnTrace)
         ? agentResult.turnTrace
@@ -1142,7 +1159,6 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       for (const item of agentResult.pendingMedia) {
         if (item?.kind === 'image' && item.jpegBase64) {
           pendingImage = item;
-          assistantCostCents += Number(item.costCents) || 0;
           break;
         }
       }
@@ -1183,11 +1199,14 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       await thread.save();
     }
 
+    const doneCostCents = isAgentToolsMode(storedMode) ? totalSettleCents : costCents;
+    const doneCostUsd = centsToUsd(doneCostCents);
+
     send({
       type: 'done',
       usage: usage || {},
-      costUsd: costUsd.toFixed(6),
-      costCents,
+      costUsd: doneCostUsd,
+      costCents: doneCostCents,
       webSearchCalls: isAgentToolsMode(storedMode) ? webSearchCalls : undefined,
       toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,
       tokenUsd: costBreakdown ? costBreakdown.tokenUsd.toFixed(6) : undefined,

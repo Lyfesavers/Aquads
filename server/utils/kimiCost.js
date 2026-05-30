@@ -158,8 +158,11 @@ function estimateKimiWebSearchHoldCents(opts = {}) {
 /** Agent mode (web_search + code_runner + fetch tool loop) */
 function estimateKimiAgentHoldUsd(opts = {}) {
   const base = estimateKimiWebSearchHoldUsd(opts);
-  const rounds = Math.max(1, Number(opts.agentMaxRounds) || 24);
-  const roundFactor = 1 + Math.min(rounds, 48) * 0.12;
+  const rounds =
+    Number(opts.agentHoldRoundEstimate) ||
+    Number(process.env.PROJECT_AGENT_AGENT_HOLD_ROUND_ESTIMATE) ||
+    6;
+  const roundFactor = 1 + Math.min(Math.max(1, rounds), 12) * 0.12;
   const extra = Number(process.env.PROJECT_AGENT_AGENT_HOLD_EXTRA_USD) || 0.05;
   const buffer = Number(process.env.PROJECT_AGENT_AGENT_HOLD_BUFFER) || 1.10;
   return base * buffer * roundFactor + extra;

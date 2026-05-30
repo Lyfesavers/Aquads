@@ -19,7 +19,7 @@ const {
   normalizeSeconds,
   planVideoSegments
 } = require('../utils/openaiVideoCost');
-const { usdToCents } = require('../utils/kimiCost');
+const { usdToCents, centsToUsd } = require('../utils/kimiCost');
 const {
   grantStarterIfNeeded,
   reserveBalance,
@@ -64,7 +64,8 @@ async function createImageViaAgent({
   adId,
   threadId,
   prompt,
-  persistAssistantMessage = true
+  persistAssistantMessage = true,
+  agentContext = null
 }) {
   if (!getOpenAiKey()) {
     return { success: false, error: 'Image generation is not configured on the server.', code: 'NOT_CONFIGURED' };
@@ -90,26 +91,45 @@ async function createImageViaAgent({
   const imageQuality = process.env.PROJECT_AGENT_IMAGE_QUALITY || 'high';
   const holdUsd = estimateImageHoldUsd(imageModel, imageQuality);
   const holdCents = usdToCents(holdUsd);
+  const useSessionHold = Boolean(agentContext?.sessionBilling && agentContext?.sessionHoldCents > 0);
 
-  const reservation = await reserveBalance(userId, ad.id, holdCents, {
-    provider: 'openai',
-    mode: 'image',
-    model: imageModel,
-    quality: imageQuality,
-    threadId: String(thread._id),
-    via: 'agent',
-    estimatedHoldUsd: holdUsd.toFixed(4)
-  });
+  let reservation = null;
+  if (useSessionHold) {
+    const spent = Math.max(0, Number(agentContext.sessionMediaSpendCents) || 0);
+    const ceiling = Math.max(0, Number(agentContext.sessionHoldCents) || 0);
+    if (spent + holdCents > ceiling) {
+      const wallet = await getOrCreateWallet(userId, ad.id);
+      const headroomUsd = centsToUsd(Math.max(0, ceiling - spent));
+      return {
+        success: false,
+        error: `This Agent message has about $${headroomUsd} left in its prepaid hold; generating this image needs about $${holdUsd.toFixed(2)}. Add funds or start a new chat.`,
+        code: 'INSUFFICIENT_BALANCE',
+        balanceUsd: walletResponse(wallet).balanceUsd,
+        requiredUsd: holdUsd.toFixed(2),
+        sessionHoldUsd: centsToUsd(ceiling)
+      };
+    }
+  } else {
+    reservation = await reserveBalance(userId, ad.id, holdCents, {
+      provider: 'openai',
+      mode: 'image',
+      model: imageModel,
+      quality: imageQuality,
+      threadId: String(thread._id),
+      via: 'agent',
+      estimatedHoldUsd: holdUsd.toFixed(4)
+    });
 
-  if (!reservation) {
-    const wallet = await getOrCreateWallet(userId, ad.id);
-    return {
-      success: false,
-      error: `Insufficient Skipper wallet balance. Image generation needs about $${holdUsd.toFixed(2)} available — ask the user to add funds.`,
-      code: 'INSUFFICIENT_BALANCE',
-      balanceUsd: walletResponse(wallet).balanceUsd,
-      requiredUsd: holdUsd.toFixed(2)
-    };
+    if (!reservation) {
+      const wallet = await getOrCreateWallet(userId, ad.id);
+      return {
+        success: false,
+        error: `Insufficient Skipper wallet balance. Image generation needs about $${holdUsd.toFixed(2)} available — ask the user to add funds.`,
+        code: 'INSUFFICIENT_BALANCE',
+        balanceUsd: walletResponse(wallet).balanceUsd,
+        requiredUsd: holdUsd.toFixed(2)
+      };
+    }
   }
 
   let pngBase64;
@@ -122,7 +142,9 @@ async function createImageViaAgent({
       { model: imageModel, quality: imageQuality }
     ));
   } catch (genErr) {
-    await releaseHold(userId, ad.id, holdCents, { provider: 'openai', reason: 'openai_error', mode: 'image' });
+    if (!useSessionHold) {
+      await releaseHold(userId, ad.id, holdCents, { provider: 'openai', reason: 'openai_error', mode: 'image' });
+    }
     return { success: false, error: genErr.message || 'Image generation failed.', code: 'GENERATION_FAILED' };
   }
 
@@ -136,28 +158,39 @@ async function createImageViaAgent({
       .toBuffer();
     jpegBase64 = jpegBuffer.toString('base64');
   } catch (encodeErr) {
-    await settleHold(userId, ad.id, holdCents, imageCostCents, {
-      provider: 'openai',
-      reason: 'encode_error',
-      mode: 'image',
-      via: 'agent'
-    });
+    if (!useSessionHold) {
+      await settleHold(userId, ad.id, holdCents, imageCostCents, {
+        provider: 'openai',
+        reason: 'encode_error',
+        mode: 'image',
+        via: 'agent'
+      });
+    }
     return { success: false, error: 'Failed to process the generated image.', code: 'ENCODE_FAILED' };
   }
 
-  const settleResult = await settleHold(userId, ad.id, holdCents, imageCostCents, {
-    mode: 'image',
-    provider: 'openai',
-    model: model || imageModel,
-    usage: usage || {},
-    billingMethod: method,
-    costBreakdown: breakdown,
-    threadId: String(thread._id),
-    via: 'agent'
-  });
+  let balanceUsd;
+  if (useSessionHold) {
+    agentContext.sessionMediaSpendCents =
+      (Number(agentContext.sessionMediaSpendCents) || 0) + imageCostCents;
+    const wallet = await getOrCreateWallet(userId, ad.id);
+    balanceUsd = walletResponse(wallet).balanceUsd;
+  } else {
+    const settleResult = await settleHold(userId, ad.id, holdCents, imageCostCents, {
+      mode: 'image',
+      provider: 'openai',
+      model: model || imageModel,
+      usage: usage || {},
+      billingMethod: method,
+      costBreakdown: breakdown,
+      threadId: String(thread._id),
+      via: 'agent'
+    });
 
-  if (!settleResult?.settled) {
-    return { success: false, error: 'Insufficient balance for image generation.', code: 'INSUFFICIENT_BALANCE' };
+    if (!settleResult?.settled) {
+      return { success: false, error: 'Insufficient balance for image generation.', code: 'INSUFFICIENT_BALANCE' };
+    }
+    balanceUsd = walletResponse(settleResult.wallet).balanceUsd;
   }
 
   const baseResult = {
@@ -165,7 +198,7 @@ async function createImageViaAgent({
     costUsd: costUsd.toFixed(6),
     costCents: imageCostCents,
     billingMethod: method,
-    balanceUsd: walletResponse(settleResult.wallet).balanceUsd,
+    balanceUsd,
     message: 'Image created and shown to the user in the chat.',
     jpegBase64,
     imageMimeType: 'image/jpeg'

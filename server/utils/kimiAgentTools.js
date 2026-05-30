@@ -213,11 +213,12 @@ const WRAP_UP_USER_MESSAGE =
 /**
  * One final completion without tools so the user still gets an answer.
  */
-function agentRunPayload(base, turnTrace, pendingMedia) {
+function agentRunPayload(base, turnTrace, pendingMedia, agentContext = null) {
   return {
     ...base,
     turnTrace: turnTrace || [],
-    pendingMedia: pendingMedia || []
+    pendingMedia: pendingMedia || [],
+    sessionMediaSpendCents: agentContext?.sessionMediaSpendCents || 0
   };
 }
 
@@ -233,7 +234,8 @@ async function finalizeAgentAnswer({
   send,
   reason,
   turnTrace,
-  pendingMedia
+  pendingMedia,
+  agentContext = null
 }) {
   send({ type: 'wrap_up', reason });
   const messages = [...working, { role: 'user', content: WRAP_UP_USER_MESSAGE }];
@@ -270,7 +272,8 @@ async function finalizeAgentAnswer({
       truncateReason: reason
     },
     turnTrace,
-    pendingMedia
+    pendingMedia,
+    agentContext
   );
 }
 
@@ -412,7 +415,8 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
       const result = await createImageViaAgent({
         ...common,
         prompt: args.prompt,
-        persistAssistantMessage: !deferPersist
+        persistAssistantMessage: !deferPersist,
+        agentContext
       });
       if (result.success) {
         if (deferPersist && Array.isArray(agentContext?.pendingMedia)) {
@@ -638,7 +642,8 @@ async function runKimiAgentChat({
         send,
         reason: 'max_web_searches',
         turnTrace,
-        pendingMedia
+        pendingMedia,
+        agentContext
       });
     }
 
@@ -725,7 +730,8 @@ async function runKimiAgentChat({
           send,
           reason: 'max_web_searches',
           turnTrace,
-          pendingMedia
+          pendingMedia,
+          agentContext
         });
       }
       continue;
@@ -742,7 +748,8 @@ async function runKimiAgentChat({
     return agentRunPayload(
       { content, usages, webSearchCalls, toolRounds: toolRound, skippedFormulas },
       turnTrace,
-      pendingMedia
+      pendingMedia,
+      agentContext
     );
   }
 
@@ -758,7 +765,8 @@ async function runKimiAgentChat({
     send,
     reason: 'max_rounds',
     turnTrace,
-    pendingMedia
+    pendingMedia,
+    agentContext
   });
 }
 
