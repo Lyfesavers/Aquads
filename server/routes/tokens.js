@@ -53,6 +53,8 @@ let tokensReadCache = null;
 let tokensReadCacheTime = 0;
 let tokensReadRefreshing = false;
 const TOKENS_READ_CACHE_TTL = 60 * 1000; // 60 seconds
+/** CoinGecko free-tier max per request; DB holds only this many (current top by market cap). */
+const COINGECKO_TOP_LIMIT = 250;
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
@@ -70,7 +72,7 @@ const updateTokenCache = async (force = false) => {
         params: {
           vs_currency: 'usd',
           order: 'market_cap_desc',
-          per_page: 100,
+          per_page: COINGECKO_TOP_LIMIT,
           page: 1,
           sparkline: true,
           locale: 'en'
@@ -127,7 +129,8 @@ const updateTokenCache = async (force = false) => {
       // Token data processed
 
       return token;
-    }).filter(token => token && token.id && token.symbol && token.name);
+    }).filter(token => token && token.id && token.symbol && token.name)
+      .slice(0, COINGECKO_TOP_LIMIT);
 
     // Processed valid tokens
 
@@ -136,8 +139,6 @@ const updateTokenCache = async (force = false) => {
       return null;
     }
 
-    // Use bulkWrite for better performance - upsert will update existing tokens and add new ones
-    // This is safer than deleting all tokens first
     const bulkOps = tokens.map(token => ({
       updateOne: {
         filter: { id: token.id },
@@ -147,6 +148,15 @@ const updateTokenCache = async (force = false) => {
     }));
 
     await Token.bulkWrite(bulkOps, { ordered: false });
+
+    // Keep DB in lockstep with CoinGecko: only the current top-N survive each sync.
+    const syncedIds = tokens.map((t) => t.id);
+    const { deletedCount } = await Token.deleteMany({ id: { $nin: syncedIds } });
+    if (deletedCount > 0) {
+      console.log(`[Tokens] Pruned ${deletedCount} token(s) no longer in top ${COINGECKO_TOP_LIMIT}`);
+    }
+    console.log(`[Tokens] Synced ${tokens.length} tokens (DB capped at ${COINGECKO_TOP_LIMIT})`);
+
     lastUpdateTime = now;
     nextCoinGeckoAttemptAt = 0;
 
@@ -158,7 +168,8 @@ const updateTokenCache = async (force = false) => {
 
     // Emit WebSocket event for real-time token updates
     try {
-      emitTokenUpdate('update', tokens);
+      const freshList = await fetchAndCacheTokens();
+      emitTokenUpdate('update', freshList);
     } catch (socketError) {
       console.error('Failed to emit token update via WebSocket:', socketError);
       // Don't fail the token update if WebSocket fails
@@ -236,7 +247,7 @@ router.post('/refresh', async (req, res) => {
 // Fetch all tokens from DB and populate the read cache — used by the GET handler
 // and by background refreshes.
 const fetchAndCacheTokens = async () => {
-  let tokens = await Token.find({}).sort({ marketCapRank: 1 }).limit(250).lean();
+  let tokens = await Token.find({}).sort({ marketCapRank: 1 }).limit(COINGECKO_TOP_LIMIT).lean();
   tokens = tokens.map(formatTokenForResponse);
   tokensReadCache = tokens;
   tokensReadCacheTime = Date.now();
@@ -252,7 +263,7 @@ router.get('/', async (req, res) => {
       const searchRegex = new RegExp(search, 'i');
       let tokens = await Token.find({
         $or: [{ symbol: searchRegex }, { name: searchRegex }, { id: searchRegex }]
-      }).sort({ marketCapRank: 1 }).limit(250).lean();
+      }).sort({ marketCapRank: 1 }).limit(COINGECKO_TOP_LIMIT).lean();
       tokens = tokens.map(formatTokenForResponse);
       return res.json(tokens);
     }

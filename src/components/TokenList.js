@@ -79,7 +79,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'marketCapRank', direction: 'asc' });
   const [showDexFrame, setShowDexFrame] = useState(true);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
@@ -91,7 +91,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   // Prevents request stacking: if a fetch is already in-flight, don't fire another one.
   // Without this, slow server responses cause multiple concurrent requests to pile up.
   const isFetchingTokens = useRef(false);
-  const sortConfigRef = useRef({ key: 'marketCap', direction: 'desc' });
+  const sortConfigRef = useRef({ key: 'marketCapRank', direction: 'asc' });
   sortConfigRef.current = sortConfig;
 
   // Get tokens to display (paginated)
@@ -449,6 +449,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                   }}
                   className="bg-gray-700 text-white rounded px-2 py-2 text-xs sm:text-sm"
                 >
+                  <option value="marketCapRank">Rank</option>
                   <option value="marketCap">Market Cap</option>
                   <option value="currentPrice">Price</option>
                   <option value="priceChangePercentage24h">24h Change</option>
@@ -542,7 +543,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                             className="hover:bg-gray-800/40 cursor-pointer"
                             onClick={() => handleTokenClick(token)}
                           >
-                            <td className="px-2 py-4 text-sm text-gray-300">{index + 1}</td>
+                            <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
                             <td className="px-2 py-4">
                               <div className="flex items-center min-w-0">
                                 <img
@@ -624,7 +625,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
                             <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-700 rounded text-xs font-bold text-gray-300">
-                              #{index + 1}
+                              #{token.marketCapRank || index + 1}
                             </span>
                             <img
                               src={token.image}
