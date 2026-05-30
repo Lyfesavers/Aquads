@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import TokenReviews from './TokenReviews';
+import TokenSparkline from './TokenSparkline';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import { Helmet } from 'react-helmet';
@@ -527,6 +527,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                             onClick={() => handleColumnSort('totalVolume')}>
                           Volume
                         </th>
+                        <th scope="col" className="w-24 px-2 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          7d
+                        </th>
                         <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Rating
                         </th>
@@ -570,6 +573,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                             </td>
                             <td className="px-2 py-4 text-sm text-gray-300">
                               {formatCurrency(token.totalVolume)}
+                            </td>
+                            <td className="px-2 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-center">
+                                <TokenSparkline prices={token.sparklineIn7d} />
+                              </div>
                             </td>
                             <td className="px-2 py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
@@ -632,9 +640,12 @@ const TokenList = ({ currentUser, showNotification }) => {
                               <div className="text-xs text-gray-400">{token.symbol}</div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-400 text-xs">★</span>
-                            <TokenRating symbol={token.symbol} />
+                          <div className="flex items-center gap-2">
+                            <TokenSparkline prices={token.sparklineIn7d} width={72} height={24} />
+                            <div className="flex items-center gap-1">
+                              <span className="text-yellow-400 text-xs">★</span>
+                              <TokenRating symbol={token.symbol} />
+                            </div>
                           </div>
                         </div>
 

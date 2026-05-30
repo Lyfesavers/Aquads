@@ -39,6 +39,10 @@ const tokenSchema = new mongoose.Schema({
   athChangePercentage: Number,
   athDate: Date,
   fullyDilutedValuation: Number,
+  sparklineIn7d: {
+    type: [Number],
+    default: []
+  },
   lastUpdated: {
     type: Date,
     default: Date.now

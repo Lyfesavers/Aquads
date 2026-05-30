@@ -15,6 +15,29 @@ const STARTUP_FETCH_DELAY_JITTER_MS = 45 * 1000;
 
 let nextCoinGeckoAttemptAt = 0;
 
+const formatTokenForResponse = (token) => ({
+  id: token.id,
+  symbol: token.symbol,
+  name: token.name,
+  image: token.image,
+  currentPrice: Number(token.currentPrice) || 0,
+  marketCap: Number(token.marketCap) || 0,
+  marketCapRank: Number(token.marketCapRank) || 0,
+  totalVolume: Number(token.totalVolume) || 0,
+  priceChange24h: Number(token.priceChange24h) || 0,
+  priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+  high24h: Number(token.high24h) || 0,
+  low24h: Number(token.low24h) || 0,
+  circulatingSupply: Number(token.circulatingSupply) || 0,
+  totalSupply: Number(token.totalSupply) || 0,
+  maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+  ath: Number(token.ath) || 0,
+  athChangePercentage: Number(token.athChangePercentage) || 0,
+  fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
+  sparklineIn7d: Array.isArray(token.sparklineIn7d) ? token.sparklineIn7d : [],
+  lastUpdated: token.lastUpdated
+});
+
 function getRetryAfterMsFromError(error) {
   const headers = error.response?.headers;
   if (!headers) return DEFAULT_429_BACKOFF_MS;
@@ -49,7 +72,7 @@ const updateTokenCache = async (force = false) => {
           order: 'market_cap_desc',
           per_page: 100,
           page: 1,
-          sparkline: false,
+          sparkline: true,
           locale: 'en'
         },
         timeout: 15000,
@@ -95,6 +118,9 @@ const updateTokenCache = async (force = false) => {
         athChangePercentage: parseFloat(item.ath_change_percentage) || null,
         athDate: item.ath_date ? new Date(item.ath_date) : null,
         fullyDilutedValuation: parseFloat(item.fully_diluted_valuation) || 0,
+        sparklineIn7d: Array.isArray(item.sparkline_in_7d?.price)
+          ? item.sparkline_in_7d.price.map((p) => parseFloat(p) || 0).filter((p) => p > 0)
+          : [],
         lastUpdated: new Date()
       };
 
@@ -211,27 +237,7 @@ router.post('/refresh', async (req, res) => {
 // and by background refreshes.
 const fetchAndCacheTokens = async () => {
   let tokens = await Token.find({}).sort({ marketCapRank: 1 }).limit(250).lean();
-  tokens = tokens.map(token => ({
-    id: token.id,
-    symbol: token.symbol,
-    name: token.name,
-    image: token.image,
-    currentPrice: Number(token.currentPrice) || 0,
-    marketCap: Number(token.marketCap) || 0,
-    marketCapRank: Number(token.marketCapRank) || 0,
-    totalVolume: Number(token.totalVolume) || 0,
-    priceChange24h: Number(token.priceChange24h) || 0,
-    priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-    high24h: Number(token.high24h) || 0,
-    low24h: Number(token.low24h) || 0,
-    circulatingSupply: Number(token.circulatingSupply) || 0,
-    totalSupply: Number(token.totalSupply) || 0,
-    maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-    ath: Number(token.ath) || 0,
-    athChangePercentage: Number(token.athChangePercentage) || 0,
-    fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
-    lastUpdated: token.lastUpdated
-  }));
+  tokens = tokens.map(formatTokenForResponse);
   tokensReadCache = tokens;
   tokensReadCacheTime = Date.now();
   return tokens;
@@ -247,22 +253,7 @@ router.get('/', async (req, res) => {
       let tokens = await Token.find({
         $or: [{ symbol: searchRegex }, { name: searchRegex }, { id: searchRegex }]
       }).sort({ marketCapRank: 1 }).limit(250).lean();
-      tokens = tokens.map(token => ({
-        id: token.id, symbol: token.symbol, name: token.name, image: token.image,
-        currentPrice: Number(token.currentPrice) || 0,
-        marketCap: Number(token.marketCap) || 0,
-        marketCapRank: Number(token.marketCapRank) || 0,
-        totalVolume: Number(token.totalVolume) || 0,
-        priceChange24h: Number(token.priceChange24h) || 0,
-        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-        high24h: Number(token.high24h) || 0, low24h: Number(token.low24h) || 0,
-        circulatingSupply: Number(token.circulatingSupply) || 0,
-        totalSupply: Number(token.totalSupply) || 0,
-        maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-        ath: Number(token.ath) || 0, athChangePercentage: Number(token.athChangePercentage) || 0,
-        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
-        lastUpdated: token.lastUpdated
-      }));
+      tokens = tokens.map(formatTokenForResponse);
       return res.json(tokens);
     }
 
