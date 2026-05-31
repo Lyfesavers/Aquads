@@ -24,6 +24,7 @@ import {
   filterSkipperThreads,
   getSkipperAuthEpoch,
   getSkipperSessionKey,
+  consumeWarmSkipperPayload,
   getJwtUserId,
   jwtMatchesSessionKey,
   markSkipperThreadDeleted,
@@ -420,15 +421,46 @@ export default function ProjectAgentPanel({
     let cancelled = false;
 
     const resolveBearerForAccount = async () => {
-      const deadline = Date.now() + 4000;
-      while (Date.now() < deadline) {
-        if (cancelled || signal.aborted) return null;
+      const tWait = performance.now();
+      const tryOnce = () => {
         const bearer = currentUser?.token || getActiveAuthToken();
-        if (bearer && jwtMatchesSessionKey(bearer, sessionKey)) return bearer;
-        await new Promise((r) => setTimeout(r, 50));
+        if (bearer && sessionKey && jwtMatchesSessionKey(bearer, sessionKey)) return bearer;
+        return null;
+      };
+      let bearer = tryOnce();
+      if (bearer) return { bearer, waitMs: 0 };
+
+      const deadline = Date.now() + 800;
+      while (Date.now() < deadline) {
+        if (cancelled || signal.aborted) return { bearer: null, waitMs: Math.round(performance.now() - tWait) };
+        await new Promise((r) => setTimeout(r, 40));
+        bearer = tryOnce();
+        if (bearer) return { bearer, waitMs: Math.round(performance.now() - tWait) };
       }
-      return null;
+      return { bearer: null, waitMs: Math.round(performance.now() - tWait) };
     };
+
+    const warmed = consumeWarmSkipperPayload(sessionKey);
+    if (warmed && !restoredSession) {
+      setEligible(warmed.eligible || []);
+      setAdId(warmed.adId || null);
+      setWallet(warmed.wallet || null);
+      setThreads(filterSkipperThreads(warmed.threads || []));
+      setThreadId(warmed.threadId || null);
+      setMessages(
+        warmed.messages?.length ? normalizeAgentMessages(warmed.messages) : []
+      );
+      if (warmed.mode) setMode(warmed.mode);
+      setHydratedEpoch(authEpoch);
+      setLoading(false);
+      skipperDebugLog('panel applied warm cache (instant)', {
+        username: currentUser?.username,
+        sessionKey,
+        adId: warmed.adId,
+        scopes: (warmed.eligible || []).map((a) => a.scope || a.id).join(', ')
+      });
+      return undefined;
+    }
 
     if (restoredSession) {
       setHydratedEpoch(authEpoch);
@@ -448,7 +480,7 @@ export default function ProjectAgentPanel({
     setError('');
 
     (async () => {
-      const bearer = await resolveBearerForAccount();
+      const { bearer, waitMs } = await resolveBearerForAccount();
       if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
 
       if (!bearer) {
@@ -459,7 +491,8 @@ export default function ProjectAgentPanel({
         skipperDebugLog('bootstrap blocked — JWT userId did not match session', {
           sessionKey,
           username: currentUser?.username,
-          jwtUserId: getJwtUserId(currentUser?.token || getActiveAuthToken())
+          jwtUserId: getJwtUserId(currentUser?.token || getActiveAuthToken()),
+          waitMs
         });
         return;
       }
@@ -469,8 +502,10 @@ export default function ProjectAgentPanel({
       userId: sessionKey,
       epoch: epochAtStart,
       jwtUserId: getJwtUserId(bearer),
-      jwtMatchesSession: true
+      jwtMatchesSession: true,
+      jwtWaitMs: waitMs
     });
+    if (waitMs > 0) trace.mark('JWT/session aligned', { waitMs });
 
     const abortBootstrap = (reason) => {
       trace.aborted(reason, {

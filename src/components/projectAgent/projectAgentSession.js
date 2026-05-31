@@ -1,12 +1,18 @@
 import { clearProjectAgentMediaCache } from '../../services/projectAgentMediaCache';
 
-/** Stable id for the logged-in Aquads user (used to reset Skipper on account switch). */
+/** Stable Mongo user id for Skipper (must match JWT `userId` — never use username). */
 export function getSkipperSessionKey(user) {
   if (!user || typeof user !== 'object') return '';
   const id = user.userId ?? user.id ?? user._id;
-  if (id != null && String(id)) return String(id);
-  if (user.username) return String(user.username);
-  return '';
+  return id != null && String(id) ? String(id) : '';
+}
+
+/** Ensure login/verify payloads always carry string `userId` for Skipper + JWT checks. */
+export function normalizeAquadsUser(user) {
+  if (!user || typeof user !== 'object') return user;
+  const userId = getSkipperSessionKey(user);
+  if (!userId) return user;
+  return user.userId === userId ? user : { ...user, userId };
 }
 
 /**
@@ -93,11 +99,32 @@ export function createSkipperBootstrapAbort() {
 }
 
 /** Full client-side Skipper reset (call on logout, login, and account switch). */
+let warmSkipperPayload = null;
+
+export function clearWarmSkipperPayload() {
+  warmSkipperPayload = null;
+}
+
+export function setWarmSkipperPayload(sessionKey, payload) {
+  if (!sessionKey) return;
+  warmSkipperPayload = { sessionKey: String(sessionKey), payload };
+}
+
+export function consumeWarmSkipperPayload(sessionKey) {
+  if (!warmSkipperPayload || warmSkipperPayload.sessionKey !== String(sessionKey)) {
+    return null;
+  }
+  const data = warmSkipperPayload.payload;
+  warmSkipperPayload = null;
+  return data;
+}
+
 export function resetSkipperClientSession() {
   abortSkipperInFlightWork();
   abortSkipperBootstrap();
   recentlyDeletedThreadIds.clear();
   clearProjectAgentMediaCache();
+  clearWarmSkipperPayload();
 }
 
 /**

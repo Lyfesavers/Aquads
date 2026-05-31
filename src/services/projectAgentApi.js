@@ -1,4 +1,12 @@
 import { API_URL, getActiveAuthToken } from './api';
+import {
+  filterSkipperThreads,
+  getJwtUserId,
+  getSkipperSessionKey,
+  jwtMatchesSessionKey,
+  setWarmSkipperPayload,
+  skipperDebugLog
+} from '../components/projectAgent/projectAgentSession';
 
 function authHeaders(token) {
   // Prefer explicit token; else in-memory activeAuthToken (set in commitAuthSession before setState).
@@ -19,10 +27,91 @@ export async function fetchProjectAgentEligible(token) {
   return data;
 }
 
-/** Warm Skipper after login so the drawer is not waiting on the first eligible call. */
-export function prefetchSkipperForUser(token) {
-  if (!token) return Promise.resolve();
-  return fetchProjectAgentEligible(token).catch(() => {});
+/**
+ * Load full Skipper session right after login (while drawer is closed) so opening
+ * Skipper can apply cached data immediately instead of waiting on first paint.
+ */
+export async function warmSkipperSessionForUser(user) {
+  const sessionKey = getSkipperSessionKey(user);
+  const token = user?.token;
+  if (!token || !sessionKey) {
+    skipperDebugLog('warm skipped — missing token or userId', {
+      username: user?.username,
+      hasToken: Boolean(token),
+      sessionKey
+    });
+    return;
+  }
+  if (!jwtMatchesSessionKey(token, sessionKey)) {
+    skipperDebugLog('warm skipped — JWT userId ≠ session userId', {
+      username: user?.username,
+      sessionKey,
+      jwtUserId: getJwtUserId(token)
+    });
+    return;
+  }
+
+  const t0 = performance.now();
+  skipperDebugLog('warm start (login)', { username: user?.username, sessionKey });
+
+  try {
+    const { eligible: list, code } = await fetchProjectAgentEligible(token);
+    if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
+      skipperDebugLog('warm done — no access', { ms: Math.round(performance.now() - t0), code });
+      return;
+    }
+
+    const nextAdId = list[0]?.id || null;
+    if (!nextAdId) return;
+
+    const [walletResult, threadList] = await Promise.all([
+      fetchProjectAgentWallet(nextAdId, token).catch(() => null),
+      fetchProjectAgentThreads(nextAdId, token)
+        .then((r) => filterSkipperThreads(r.threads || []))
+        .catch(() => [])
+    ]);
+
+    let threadId = null;
+    let threads = threadList || [];
+    let messages = [];
+
+    if (threads.length) {
+      threadId = threads[0]._id;
+    } else {
+      const { thread } = await createProjectAgentThread(nextAdId, token);
+      threads = [thread];
+      threadId = thread._id;
+    }
+
+    if (threadId) {
+      const { messages: msgs } = await fetchProjectAgentMessages(nextAdId, threadId, token);
+      messages = msgs || [];
+    }
+
+    setWarmSkipperPayload(sessionKey, {
+      eligible: list,
+      adId: nextAdId,
+      wallet: walletResult,
+      threads,
+      threadId,
+      messages,
+      mode: 'instant'
+    });
+
+    skipperDebugLog('warm cache ready', {
+      ms: Math.round(performance.now() - t0),
+      username: user?.username,
+      adId: nextAdId,
+      scopes: list.map((a) => a.scope || a.id).join(', '),
+      threadCount: threads.length,
+      messageCount: messages.length
+    });
+  } catch (err) {
+    skipperDebugLog('warm failed', {
+      ms: Math.round(performance.now() - t0),
+      message: err?.message
+    });
+  }
 }
 
 export async function createProjectAgentTopup(adId, token, amountUsd) {
