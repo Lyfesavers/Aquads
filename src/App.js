@@ -15,7 +15,9 @@ import {
   reconnectSocket,
   trackClick,
   trackBubbleClick,
-  forceSessionLogout
+  forceSessionLogout,
+  persistAuthSession,
+  clearAuthSessionStorage
 } from './services/api';
 import { resetSkipperClientSession } from './components/projectAgent/projectAgentSession';
 import LoginModal from './components/LoginModal';
@@ -610,13 +612,13 @@ function App() {
     return null;
   });
 
-  // Single effect that mirrors React state → localStorage.
-  // This is the ONLY place localStorage gets written for auth.
+  // Mirror React session → client cache (localStorage + in-memory token for fetch interceptor).
+  // Source of truth for identity is still the backend JWT on every API call.
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('currentUser');
+    if (currentUser?.token) {
+      persistAuthSession(currentUser);
+    } else if (!currentUser) {
+      clearAuthSessionStorage();
     }
   }, [currentUser]);
 
@@ -1292,13 +1294,9 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
-      // Stop Skipper using the previous account before any new auth is written.
       resetSkipperClientSession();
-      // Write localStorage BEFORE setCurrentUser so that child effects
-      // (Dashboard, etc.) and the global fetch interceptor already have
-      // the new token by the time they fire.
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('token', user.token);
+      // Sync client cache before React re-render so fetch/interceptors use the new JWT immediately.
+      persistAuthSession(user);
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1327,8 +1325,7 @@ function App() {
     try {
       const user = await loginWithGoogle(idToken);
       resetSkipperClientSession();
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('token', user.token);
+      persistAuthSession(user);
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       setShowLoginModal(false);
@@ -1359,9 +1356,8 @@ function App() {
     // "No authentication token provided") and the interceptor's `hadAuth` guard
     // silently swallowed the resulting 401s.
     resetSkipperClientSession();
+    clearAuthSessionStorage();
     setCurrentUser(null);
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('token');
     socket.auth = {};
     socket.disconnect();
     // Full page reload still guarantees 100% clean state — no stale React state,
@@ -1861,12 +1857,15 @@ function App() {
     const validateToken = async () => {
       const cu = currentUserRef.current;
       if (!cu || !cu.token) return;
+      const tokenAtStart = cu.token;
       try {
-        const freshUser = await verifyToken(cu.token);
+        const freshUser = await verifyToken(tokenAtStart);
         if (cancelled) return;
+        const live = currentUserRef.current;
+        if (!live?.token || live.token !== tokenAtStart) return;
         if (freshUser && typeof freshUser === 'object') {
           setCurrentUser((prev) => {
-            if (!prev?.token) return prev;
+            if (!prev?.token || prev.token !== tokenAtStart) return prev;
             let merged = {
               ...prev,
               ...freshUser,

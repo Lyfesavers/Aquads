@@ -51,6 +51,63 @@ let sessionLogoutFired = false;
  */
 let everHadAuth = false;
 
+/**
+ * In-memory JWT for this tab — updated synchronously on login/logout so API calls
+ * cannot briefly use a stale localStorage entry after account switch.
+ * Backend remains source of truth (JWT validated per request).
+ */
+let activeAuthToken = (() => {
+  try {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user?.token ? String(user.token) : null;
+  } catch {
+    return null;
+  }
+})();
+
+/** Persist session to localStorage + activeAuthToken (client cache only). */
+export function persistAuthSession(user) {
+  if (!user?.token) {
+    clearAuthSessionStorage();
+    return;
+  }
+  activeAuthToken = String(user.token);
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  localStorage.setItem('token', user.token);
+}
+
+/** Clear client auth cache (does not touch React state). */
+export function clearAuthSessionStorage() {
+  activeAuthToken = null;
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('token');
+}
+
+function readAuthTokenFromStorage() {
+  try {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user?.token ? String(user.token) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Bearer for an outgoing request — explicit Authorization header wins. */
+function resolveBearerForRequest(options = {}) {
+  const headers = options.headers || {};
+  const explicit = headers.Authorization || headers.authorization;
+  if (explicit) {
+    const match = String(explicit).match(/^Bearer\s+(.+)$/i);
+    if (match?.[1]) return match[1];
+  }
+  if (activeAuthToken) return activeAuthToken;
+  return readAuthTokenFromStorage();
+}
+
 /** Paths that may return 401 without meaning the stored session is dead (e.g. wrong password). */
 const AUTH_EXEMPT_API_PATHS = [
   '/users/login',
@@ -79,8 +136,7 @@ export const getJwtExpiryMs = (token) => {
 export const forceSessionLogout = (reason = 'expired') => {
   if (sessionLogoutFired) return;
   sessionLogoutFired = true;
-  localStorage.removeItem('currentUser');
-  localStorage.removeItem('token');
+  clearAuthSessionStorage();
   socket.auth = {};
   socket.disconnect();
   sessionStorage.setItem('aquads_session_expired', reason);
@@ -127,7 +183,8 @@ const refreshAccessToken = async () => {
         token: data.token,
         refreshToken: data.refreshToken
       };
-      
+
+      activeAuthToken = String(data.token);
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       
       // New JWT must reach the server via a fresh handshake; update auth and reconnect.
@@ -168,27 +225,18 @@ window.fetch = async function(url, options = {}) {
     return originalFetch.apply(this, arguments);
   }
 
-  // Get auth header from localStorage
-  let authHeader = {};
-  try {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      if (user.token) {
-        authHeader = { 'Authorization': `Bearer ${user.token}` };
-      }
-    }
-  } catch (error) {
-    // Ignore errors
-  }
-
-  // Merge headers - skip Content-Type for FormData so the browser
-  // can auto-set multipart/form-data with the correct boundary
+  // Merge headers — never overwrite an explicit Authorization (was stomping Skipper's
+  // currentUser.token with a stale localStorage JWT after account switch).
   const isFormData = options.body instanceof FormData;
   const headers = {
-    ...(options.headers || {}),
-    ...authHeader
+    ...(options.headers || {})
   };
+  if (!headers.Authorization && !headers.authorization) {
+    const bearer = resolveBearerForRequest(options);
+    if (bearer) {
+      headers.Authorization = `Bearer ${bearer}`;
+    }
+  }
   if (!isFormData) {
     headers['Content-Type'] = options.headers?.['Content-Type'] || 'application/json';
   }
@@ -245,11 +293,10 @@ window.fetch = async function(url, options = {}) {
 // Axios request interceptor - automatically attach auth token
 axios.interceptors.request.use(
   (config) => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      if (user.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
+    if (!config.headers.Authorization && !config.headers.authorization) {
+      const bearer = activeAuthToken || readAuthTokenFromStorage();
+      if (bearer) {
+        config.headers.Authorization = `Bearer ${bearer}`;
         everHadAuth = true;
       }
     }
@@ -315,16 +362,8 @@ axios.interceptors.response.use(
 );
 
 const getAuthHeader = () => {
-  try {
-    const savedUser = localStorage.getItem('currentUser');
-    if (!savedUser) return {};
-    
-    const user = JSON.parse(savedUser);
-    return user?.token ? { 'Authorization': `Bearer ${user.token}` } : {};
-  } catch (error) {
-    logger.error('Error getting auth header:', error);
-    return {};
-  }
+  const bearer = activeAuthToken || readAuthTokenFromStorage();
+  return bearer ? { Authorization: `Bearer ${bearer}` } : {};
 };
 
 // Fetch all ads
