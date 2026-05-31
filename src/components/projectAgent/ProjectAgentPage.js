@@ -42,7 +42,7 @@ export default function ProjectAgentPage({ currentUser }) {
   return (
     <div className="project-agent-page">
       <ProjectAgentPanel
-        key={`${authEpoch}-${currentUser?.token || ''}`}
+        key={authEpoch}
         currentUser={currentUser}
         initialAdId={initialAdId}
         initialThreadId={initialThreadId}

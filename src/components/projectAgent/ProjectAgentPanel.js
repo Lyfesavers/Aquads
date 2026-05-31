@@ -320,9 +320,7 @@ export default function ProjectAgentPanel({
   authEpochRef.current = authEpoch;
 
   const skipperBearer = () => getActiveAuthToken() || token || null;
-  const loadStillValid = (epochAtStart, tokenAtStart) =>
-    epochAtStart === authEpochRef.current &&
-    tokenAtStart === skipperBearer();
+  const loadStillValid = (epochAtStart) => epochAtStart === authEpochRef.current;
 
   const clearPanelForSessionChange = useCallback((nextEpoch) => {
     videoPollAbortRef.current = null;
@@ -417,7 +415,7 @@ export default function ProjectAgentPanel({
         }
         setGateError('');
         const { eligible: list, code } = await fetchProjectAgentEligible(bearerAtStart);
-        if (cancelled || !loadStillValid(epochAtStart, bearerAtStart)) return;
+        if (cancelled || !loadStillValid(epochAtStart)) return;
         setEligible(list || []);
         if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
           setGateError(
@@ -431,11 +429,11 @@ export default function ProjectAgentPanel({
         const pickFromInitial =
           initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : null;
         setAdId(pickFromInitial || list[0]?.id || null);
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+        if (!cancelled && loadStillValid(epochAtStart)) {
           setLoading(false);
         }
       } catch (e) {
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+        if (!cancelled && loadStillValid(epochAtStart)) {
           setGateError(e.message || 'Failed to load');
           setLoading(false);
         }
@@ -616,13 +614,14 @@ export default function ProjectAgentPanel({
     (async () => {
       try {
         setError('');
+        const bearer = skipperBearer();
         const [walletResult, list] = await Promise.all([
-          fetchProjectAgentWallet(adId, bearerAtStart).catch(() => null),
-          fetchProjectAgentThreads(adId, bearerAtStart)
+          fetchProjectAgentWallet(adId, bearer).catch(() => null),
+          fetchProjectAgentThreads(adId, bearer)
             .then((r) => filterSkipperThreads(r.threads || []))
             .catch(() => [])
         ]);
-        if (cancelled || !loadStillValid(epochAtStart, bearerAtStart)) return;
+        if (cancelled || !loadStillValid(epochAtStart)) return;
         if (walletResult) setWallet(walletResult);
 
         if (list?.length) {
@@ -631,18 +630,19 @@ export default function ProjectAgentPanel({
             initialThreadId && list.find((t) => String(t._id) === String(initialThreadId));
           setThreadId(preferred ? preferred._id : list[0]._id);
         } else {
-          const { thread } = await createProjectAgentThread(adId, bearerAtStart);
-          if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+          const { thread } = await createProjectAgentThread(adId, skipperBearer());
+          if (!cancelled && loadStillValid(epochAtStart)) {
             setThreads([thread]);
             setThreadId(thread._id);
           }
         }
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
-          setHydratedEpoch(authEpochRef.current);
-        }
       } catch (e) {
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+        if (!cancelled && loadStillValid(epochAtStart)) {
           setError(e.message || 'Failed to load project');
+        }
+      } finally {
+        if (!cancelled && loadStillValid(epochAtStart)) {
+          setHydratedEpoch(authEpochRef.current);
         }
       }
     })();
@@ -672,14 +672,14 @@ export default function ProjectAgentPanel({
           threadId,
           bearerAtStart
         );
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+        if (!cancelled && loadStillValid(epochAtStart)) {
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
           if (threadMode) setMode(threadMode);
         }
       } catch (e) {
-        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) setError(e.message);
+        if (!cancelled && loadStillValid(epochAtStart)) setError(e.message);
       }
     })();
     return () => {

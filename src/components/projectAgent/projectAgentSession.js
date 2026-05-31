@@ -9,11 +9,13 @@ export function getSkipperSessionKey(user) {
   return '';
 }
 
-/** Changes when the Aquads account or JWT changes — remount / reset Skipper immediately. */
+/**
+ * Changes when the Aquads account changes — remount / reset Skipper on login/logout.
+ * Must NOT include JWT: token refresh updates the access token without changing user,
+ * and including it caused endless reload loops + "Loading conversations…" for minutes.
+ */
 export function getSkipperAuthEpoch(user) {
-  const key = getSkipperSessionKey(user);
-  const token = user?.token ? String(user.token) : '';
-  return key && token ? `${key}:${token}` : key || 'guest';
+  return getSkipperSessionKey(user) || 'guest';
 }
 
 /** Module-level Skipper UI bookkeeping cleared when the account changes. */
