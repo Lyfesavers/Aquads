@@ -715,16 +715,9 @@ export const verifyToken = async (token) => {
     const serverUser = data && data.user;
 
     if (serverUser && serverUser.userId) {
-      // Interceptor may have refreshed tokens in localStorage during this call.
-      let activeToken = token;
-      try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          if (parsed.token) activeToken = parsed.token;
-        }
-      } catch (_) {}
-      return { ...serverUser, token: activeToken };
+      // Keep the token this verify call was made with — never swap in localStorage
+      // (that re-introduced the previous account after login while Skipper loaded).
+      return { ...serverUser, token };
     }
 
     return false;

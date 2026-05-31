@@ -431,6 +431,9 @@ export default function ProjectAgentPanel({
         const pickFromInitial =
           initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : null;
         setAdId(pickFromInitial || list[0]?.id || null);
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+          setLoading(false);
+        }
       } catch (e) {
         if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           setGateError(e.message || 'Failed to load');
@@ -636,12 +639,10 @@ export default function ProjectAgentPanel({
         }
         if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           setHydratedEpoch(authEpochRef.current);
-          setLoading(false);
         }
       } catch (e) {
         if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           setError(e.message || 'Failed to load project');
-          setLoading(false);
         }
       }
     })();
@@ -1206,7 +1207,7 @@ export default function ProjectAgentPanel({
 
   const sessionDataReady = hydratedEpoch === authEpoch;
 
-  if (loading || !sessionDataReady) {
+  if (loading) {
     return (
       <div className={rootClass}>
         <div className="project-agent-loading">
@@ -1456,7 +1457,11 @@ export default function ProjectAgentPanel({
 
         <div className="project-agent-main">
           <div className="project-agent-messages">
-            {messages.map((m, i) => (
+            {!sessionDataReady ? (
+              <div className="project-agent-empty">Loading conversations…</div>
+            ) : null}
+            {sessionDataReady &&
+              messages.map((m, i) => (
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
                 {messageShowsImage(m) && token ? (
                   <ProjectAgentMessageImage
@@ -1489,14 +1494,14 @@ export default function ProjectAgentPanel({
                 )}
               </div>
             ))}
-            {sending &&
+            {sessionDataReady && sending &&
               !streamingContent &&
               (searchStatus || (mode === 'agent' && !imageGenerating && !agentMediaGenerating)) && (
                 <p className="project-agent-search-status" role="status" aria-live="polite">
                   {searchStatus || 'Working on your reply…'}
                 </p>
               )}
-            {sending && (streamingReasoning || streamingContent) && (
+            {sessionDataReady && sending && (streamingReasoning || streamingContent) && (
               <div className="project-agent-msg assistant">
                 <ProjectAgentMessageBody
                   content={streamingContent}
@@ -1505,7 +1510,7 @@ export default function ProjectAgentPanel({
                 />
               </div>
             )}
-            {(imageGenerating || agentMediaGenerating === 'image') && (
+            {sessionDataReady && (imageGenerating || agentMediaGenerating === 'image') && (
               <div className="project-agent-msg assistant">
                 <ImageGeneratingStatus />
               </div>

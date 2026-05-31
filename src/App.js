@@ -18,12 +18,12 @@ import {
   forceSessionLogout,
   persistAuthSession,
   commitAuthSession,
-  clearAuthSessionStorage
+  clearAuthSessionStorage,
+  getAuthSessionGeneration
 } from './services/api';
 import {
   resetSkipperClientSession,
-  getSkipperAuthEpoch,
-  clearProjectAgentRoute
+  getSkipperAuthEpoch
 } from './components/projectAgent/projectAgentSession';
 import { prefetchSkipperForUser } from './services/projectAgentApi';
 import LoginModal from './components/LoginModal';
@@ -604,14 +604,20 @@ function App() {
     }
   }, []);
   
-  /** Bumped on every login so Skipper fully remounts (drawer + in-memory state). */
-  const [skipperMountKey, setSkipperMountKey] = useState(0);
+  /** Skip background verify briefly after login so it cannot merge the previous account. */
+  const skipValidateUntilRef = useRef(0);
 
   const beginLoggedInSession = useCallback((user) => {
     commitAuthSession(user);
     resetSkipperClientSession();
-    clearProjectAgentRoute();
-    setSkipperMountKey((k) => k + 1);
+    skipValidateUntilRef.current = Date.now() + 8000;
+    skipNextValidationRef.current = true;
+    if (
+      window.location.pathname.startsWith('/project-agent') &&
+      navigateRef.current
+    ) {
+      navigateRef.current('/', { replace: true });
+    }
     setCurrentUser(user);
     prefetchSkipperForUser(user.token);
   }, []);
@@ -1472,7 +1478,8 @@ function App() {
         };
         commitAuthSession(merged);
         resetSkipperClientSession();
-        setSkipperMountKey((k) => k + 1);
+        skipValidateUntilRef.current = Date.now() + 8000;
+        skipNextValidationRef.current = true;
         return merged;
       });
       reconnectSocket();
@@ -1863,17 +1870,37 @@ function App() {
     let cancelled = false;
 
     const validateToken = async () => {
+      if (Date.now() < skipValidateUntilRef.current) return;
       const cu = currentUserRef.current;
       if (!cu || !cu.token) return;
       const tokenAtStart = cu.token;
+      const userIdAtStart = cu.userId ?? cu.id ?? cu._id;
+      const generationAtStart = getAuthSessionGeneration();
       try {
         const freshUser = await verifyToken(tokenAtStart);
         if (cancelled) return;
+        if (generationAtStart !== getAuthSessionGeneration()) return;
         const live = currentUserRef.current;
         if (!live?.token || live.token !== tokenAtStart) return;
         if (freshUser && typeof freshUser === 'object') {
+          const freshId = freshUser.userId ?? freshUser.id ?? freshUser._id;
+          if (
+            userIdAtStart != null &&
+            freshId != null &&
+            String(freshId) !== String(userIdAtStart)
+          ) {
+            return;
+          }
           setCurrentUser((prev) => {
             if (!prev?.token || prev.token !== tokenAtStart) return prev;
+            const prevId = prev.userId ?? prev.id ?? prev._id;
+            if (
+              prevId != null &&
+              freshId != null &&
+              String(freshId) !== String(prevId)
+            ) {
+              return prev;
+            }
             let merged = {
               ...prev,
               ...freshUser,
@@ -2746,7 +2773,7 @@ function App() {
         {currentUser?.token && (
           <Suspense fallback={null}>
             <ProjectAgentFab
-              key={`${getSkipperAuthEpoch(currentUser)}:${skipperMountKey}`}
+              key={getSkipperAuthEpoch(currentUser)}
               currentUser={currentUser}
             />
           </Suspense>

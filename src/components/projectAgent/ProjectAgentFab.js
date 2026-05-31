@@ -47,9 +47,14 @@ export default function ProjectAgentFab({ currentUser }) {
     };
   }, [open]);
 
+  // Only hit eligible API when the drawer opens — not on every login (main app stays fast).
   useEffect(() => {
     if (!token) {
       setShowFab(false);
+      return undefined;
+    }
+    if (!open) {
+      setShowFab(canShowFab);
       return undefined;
     }
 
@@ -65,29 +70,16 @@ export default function ProjectAgentFab({ currentUser }) {
         }
         setShowFab(true);
       } catch {
-        // Keep optimistic FAB visible; recheck on focus.
+        // Keep optimistic FAB visible while drawer is open.
       }
     };
 
     checkAccess();
 
-    const recheck = () => {
-      if (!cancelled) checkAccess();
-    };
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') recheck();
-    };
-
-    window.addEventListener('focus', recheck);
-    document.addEventListener('visibilitychange', onVisible);
-
     return () => {
       cancelled = true;
-      window.removeEventListener('focus', recheck);
-      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [authEpoch, token, currentUser?.emailVerified]);
+  }, [authEpoch, token, open, canShowFab, currentUser?.emailVerified]);
 
   if (!showFab || onFullPage) return null;
 
