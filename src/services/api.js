@@ -67,22 +67,41 @@ let activeAuthToken = (() => {
   }
 })();
 
+/** Bumped on login/logout so in-flight refresh cannot write the previous account back. */
+let authSessionGeneration = 0;
+
+export function getAuthSessionGeneration() {
+  return authSessionGeneration;
+}
+
+function bumpAuthSessionGeneration() {
+  authSessionGeneration += 1;
+  return authSessionGeneration;
+}
+
 /** Persist session to localStorage + activeAuthToken (client cache only). */
 export function persistAuthSession(user) {
+  bumpAuthSessionGeneration();
   if (!user?.token) {
-    clearAuthSessionStorage();
+    activeAuthToken = null;
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
+    window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
     return;
   }
   activeAuthToken = String(user.token);
   localStorage.setItem('currentUser', JSON.stringify(user));
   localStorage.setItem('token', user.token);
+  window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
 }
 
 /** Clear client auth cache (does not touch React state). */
 export function clearAuthSessionStorage() {
+  bumpAuthSessionGeneration();
   activeAuthToken = null;
   localStorage.removeItem('currentUser');
   localStorage.removeItem('token');
+  window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
 }
 
 function readAuthTokenFromStorage() {
@@ -151,6 +170,7 @@ const refreshAccessToken = async () => {
   }
 
   isRefreshing = true;
+  const generationAtStart = authSessionGeneration;
   refreshPromise = (async () => {
     try {
       const savedUser = localStorage.getItem('currentUser');
@@ -176,7 +196,11 @@ const refreshAccessToken = async () => {
       }
 
       const data = await response.json();
-      
+
+      if (generationAtStart !== authSessionGeneration) {
+        throw new Error('Session changed during token refresh');
+      }
+
       // Update stored user data with new tokens
       const updatedUser = {
         ...user,
@@ -186,6 +210,7 @@ const refreshAccessToken = async () => {
 
       activeAuthToken = String(data.token);
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      localStorage.setItem('token', data.token);
       
       // New JWT must reach the server via a fresh handshake; update auth and reconnect.
       socket.auth = { token: data.token };

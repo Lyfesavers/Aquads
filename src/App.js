@@ -17,9 +17,13 @@ import {
   trackBubbleClick,
   forceSessionLogout,
   persistAuthSession,
-  clearAuthSessionStorage
+  clearAuthSessionStorage,
+  getAuthSessionGeneration
 } from './services/api';
-import { resetSkipperClientSession } from './components/projectAgent/projectAgentSession';
+import {
+  resetSkipperClientSession,
+  getSkipperSessionKey
+} from './components/projectAgent/projectAgentSession';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
@@ -1263,6 +1267,16 @@ function App() {
       sessionStorage.removeItem('aquads_session_expired');
       showNotification('Your session expired. Please log in again.', 'info');
     }
+    const loginNotice = sessionStorage.getItem('aquads_login_notice');
+    if (loginNotice) {
+      sessionStorage.removeItem('aquads_login_notice');
+      showNotification(
+        loginNotice === 'google'
+          ? 'Successfully signed in with Google!'
+          : 'Successfully logged in!',
+        'success'
+      );
+    }
   }, []);
 
   // Function to check if user has an unbumped ad and show reminder
@@ -1295,16 +1309,13 @@ function App() {
     try {
       const user = await loginUser(credentials);
       resetSkipperClientSession();
-      // Sync client cache before React re-render so fetch/interceptors use the new JWT immediately.
       persistAuthSession(user);
       skipNextValidationRef.current = true;
-      setCurrentUser(user);
       setShowLoginModal(false);
-      showNotification('Successfully logged in!', 'success');
-
-      setTimeout(() => {
-        checkForUnbumpedAd(user);
-      }, 1000);
+      sessionStorage.setItem('aquads_login_notice', 'login');
+      // Hard reload (same as logout) so Skipper and all React state match the new account.
+      window.location.replace('/home');
+      return;
     } catch (error) {
       logger.error('Login error:', error);
       
@@ -1327,13 +1338,10 @@ function App() {
       resetSkipperClientSession();
       persistAuthSession(user);
       skipNextValidationRef.current = true;
-      setCurrentUser(user);
       setShowLoginModal(false);
-      showNotification('Successfully signed in with Google!', 'success');
-
-      setTimeout(() => {
-        checkForUnbumpedAd(user);
-      }, 1000);
+      sessionStorage.setItem('aquads_login_notice', 'google');
+      window.location.replace('/home');
+      return;
     } catch (error) {
       logger.error('Google login error:', error);
       if (error.emailVerificationRequired && error.email) {
@@ -2731,9 +2739,12 @@ function App() {
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <DesktopInstallPrompt />
-        {currentUser && (
+        {currentUser?.token && (
           <Suspense fallback={null}>
-            <ProjectAgentFab currentUser={currentUser} />
+            <ProjectAgentFab
+              key={`${getSkipperSessionKey(currentUser)}-${getAuthSessionGeneration()}`}
+              currentUser={currentUser}
+            />
           </Suspense>
         )}
         <Suspense fallback={

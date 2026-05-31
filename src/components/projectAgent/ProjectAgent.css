@@ -66,6 +66,15 @@
   opacity: 0.9;
 }
 
+.project-agent-header-account {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--pa-muted, #94a3b8);
+  letter-spacing: 0.02em;
+}
+
 .project-agent-balance {
   font-size: 0.8rem;
   color: var(--pa-accent);

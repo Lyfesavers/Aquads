@@ -350,6 +350,14 @@ export default function ProjectAgentPanel({
     clearPanelForSessionChange(sessionKey);
   }, [sessionKey, clearPanelForSessionChange]);
 
+  useEffect(() => {
+    const onAuthSessionChanged = () => {
+      clearPanelForSessionChange(sessionKey);
+    };
+    window.addEventListener('aquads-auth-session-changed', onAuthSessionChanged);
+    return () => window.removeEventListener('aquads-auth-session-changed', onAuthSessionChanged);
+  }, [sessionKey, clearPanelForSessionChange]);
+
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
     setMessages((prev) =>
@@ -1214,6 +1222,11 @@ export default function ProjectAgentPanel({
           </span>
           {adMeta?.title ? (
             <span className="project-agent-header-badge">{SKIPPER_AGENT_NAME}</span>
+          ) : null}
+          {currentUser?.username ? (
+            <span className="project-agent-header-account" title="Aquads account for this Skipper session">
+              {currentUser.username}
+            </span>
           ) : null}
         </h2>
         <button
