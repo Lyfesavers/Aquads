@@ -27,6 +27,7 @@ import {
   markSkipperThreadDeleted,
   createSkipperAbortController,
   createSkipperBootstrapAbort,
+  createSkipperBootstrapTrace,
   resetSkipperClientSession,
   skipperDebugLog,
   unmarkSkipperThreadDeleted
@@ -362,8 +363,13 @@ export default function ProjectAgentPanel({
     const prev = prevAuthEpochRef.current;
     prevAuthEpochRef.current = authEpoch;
     if (prev === authEpoch) return;
+    skipperDebugLog('account epoch changed — clearing panel', {
+      from: prev || '(none)',
+      to: authEpoch,
+      username: currentUser?.username
+    });
     clearPanelForSessionChange(authEpoch);
-  }, [authEpoch, clearPanelForSessionChange]);
+  }, [authEpoch, clearPanelForSessionChange, currentUser?.username]);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
@@ -429,17 +435,37 @@ export default function ProjectAgentPanel({
     setGateError('');
     setError('');
 
-    (async () => {
-      const t0 = performance.now();
-      skipperDebugLog('bootstrap start', {
-        account: currentUser?.username,
-        sessionKey,
-        tokenPrefix: bearer ? `${String(bearer).slice(0, 12)}…` : null
+    const trace = createSkipperBootstrapTrace({
+      account: currentUser?.username,
+      userId: sessionKey,
+      epoch: epochAtStart,
+      tokenMatchesUser: Boolean(bearer && token && bearer === token)
+    });
+
+    const abortBootstrap = (reason) => {
+      trace.aborted(reason, {
+        cancelled,
+        signalAborted: signal.aborted,
+        epochAtStart,
+        epochNow: authEpochRef.current
       });
+    };
+
+    (async () => {
       try {
+        trace.mark('fetch eligible');
         const { eligible: list, code } = await fetchProjectAgentEligible(bearer);
-        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) {
+          abortBootstrap(
+            cancelled ? 'effect cleanup' : signal.aborted ? 'aborted' : 'epoch changed'
+          );
+          return;
+        }
         setEligible(list || []);
+        trace.mark('eligible parsed', {
+          projects: list?.length,
+          scopes: (list || []).map((a) => a.scope || a.id).join(', ')
+        });
         if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
           setGateError(
             code === 'EMAIL_VERIFICATION_REQUIRED'
@@ -447,6 +473,7 @@ export default function ProjectAgentPanel({
               : `${SKIPPER_AGENT_NAME} is available to verified Aquads accounts. List a project or verify your email to get started.`
           );
           setLoading(false);
+          trace.finish('gated', { code });
           return;
         }
 
@@ -455,20 +482,39 @@ export default function ProjectAgentPanel({
         const nextAdId = pickFromInitial || list[0]?.id || null;
         skipAdIdReloadRef.current = nextAdId;
         setAdId(nextAdId);
+        trace.mark('project selected', { adId: nextAdId });
         if (!nextAdId) {
           setLoading(false);
+          trace.finish('no-project');
           return;
         }
 
+        trace.mark('fetch wallet + threads (parallel)');
         const [walletResult, threadList] = await Promise.all([
-          fetchProjectAgentWallet(nextAdId, bearer).catch(() => null),
+          fetchProjectAgentWallet(nextAdId, bearer).catch((err) => {
+            trace.mark('wallet failed', { error: err?.message });
+            return null;
+          }),
           fetchProjectAgentThreads(nextAdId, bearer)
             .then((r) => filterSkipperThreads(r.threads || []))
-            .catch(() => [])
+            .catch((err) => {
+              trace.mark('threads failed', { error: err?.message });
+              return [];
+            })
         ]);
-        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) {
+          abortBootstrap(
+            cancelled ? 'effect cleanup' : signal.aborted ? 'aborted' : 'epoch changed'
+          );
+          return;
+        }
 
         if (walletResult) setWallet(walletResult);
+        trace.mark('wallet + threads done', {
+          balanceUsd: walletResult?.balanceUsd,
+          scope: walletResult?.scope || walletResult?.ad?.scope,
+          threadCount: threadList?.length ?? 0
+        });
 
         let nextThreadId = null;
         if (threadList?.length) {
@@ -479,44 +525,64 @@ export default function ProjectAgentPanel({
           nextThreadId = preferred ? preferred._id : threadList[0]._id;
           setThreadId(nextThreadId);
         } else {
+          trace.mark('create thread (none existed)');
           const { thread } = await createProjectAgentThread(nextAdId, bearer);
-          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) {
+            abortBootstrap(
+              cancelled ? 'effect cleanup' : signal.aborted ? 'aborted' : 'epoch changed'
+            );
+            return;
+          }
           setThreads([thread]);
           nextThreadId = thread._id;
           setThreadId(nextThreadId);
         }
 
         if (nextThreadId) {
+          trace.mark('fetch messages', { threadId: String(nextThreadId) });
           const { messages: msgs } = await fetchProjectAgentMessages(
             nextAdId,
             nextThreadId,
             bearer
           );
-          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) {
+            abortBootstrap(
+              cancelled ? 'effect cleanup' : signal.aborted ? 'aborted' : 'epoch changed'
+            );
+            return;
+          }
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
           if (threadMode) setMode(threadMode);
+          trace.mark('messages applied', { count: normalized.length });
         }
 
         if (!cancelled && loadStillValid(epochAtStart)) {
           setHydratedEpoch(authEpochRef.current);
           setLoading(false);
-          skipperDebugLog('bootstrap done ms', Math.round(performance.now() - t0), {
+          trace.finish('UI ready', {
             adId: nextAdId,
-            threadId: nextThreadId
+            threadId: nextThreadId,
+            username: currentUser?.username
           });
         }
       } catch (e) {
-        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) {
+          abortBootstrap(
+            cancelled ? 'effect cleanup' : signal.aborted ? 'aborted' : 'epoch changed'
+          );
+          return;
+        }
         setGateError(e.message || 'Failed to load');
         setLoading(false);
-        skipperDebugLog('bootstrap error', e);
+        trace.finish('error', { message: e?.message });
       }
     })();
 
     return () => {
       cancelled = true;
+      skipperDebugLog('bootstrap effect cleanup', { epoch: epochAtStart });
     };
   }, [
     token,

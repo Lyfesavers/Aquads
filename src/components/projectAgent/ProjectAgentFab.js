@@ -7,7 +7,7 @@ import {
   SKIPPER_AGENT_NAME,
   SKIPPER_AGENT_SHORT
 } from './projectAgentBrand';
-import { getSkipperAuthEpoch } from './projectAgentSession';
+import { getSkipperAuthEpoch, skipperDebugLog } from './projectAgentSession';
 import './ProjectAgent.css';
 
 function SkipperFabIcon() {
@@ -36,16 +36,24 @@ export default function ProjectAgentFab({ currentUser }) {
   useEffect(() => {
     setOpen(false);
     setShowFab(canShowFab);
-  }, [authEpoch, canShowFab]);
+    skipperDebugLog('FAB account changed (drawer closed)', {
+      authEpoch,
+      username: currentUser?.username
+    });
+  }, [authEpoch, canShowFab, currentUser?.username]);
 
   useEffect(() => {
     if (!open) return undefined;
+    skipperDebugLog('FAB drawer opened — panel will bootstrap', {
+      authEpoch,
+      username: currentUser?.username
+    });
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, authEpoch, currentUser?.username]);
 
   // Only hit eligible API when the drawer opens — not on every login (main app stays fast).
   useEffect(() => {

@@ -23,7 +23,8 @@ import {
 } from './services/api';
 import {
   resetSkipperClientSession,
-  getSkipperAuthEpoch
+  getSkipperAuthEpoch,
+  skipperDebugLog
 } from './components/projectAgent/projectAgentSession';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
@@ -607,6 +608,12 @@ function App() {
   const skipValidateUntilRef = useRef(0);
 
   const beginLoggedInSession = useCallback((user) => {
+    const t0 = performance.now();
+    skipperDebugLog('login session begin', {
+      username: user?.username,
+      userId: user?.userId ?? user?.id,
+      authGeneration: getAuthSessionGeneration()
+    });
     commitAuthSession(user);
     resetSkipperClientSession();
     skipValidateUntilRef.current = Date.now() + 8000;
@@ -618,6 +625,10 @@ function App() {
       navigateRef.current('/', { replace: true });
     }
     setCurrentUser(user);
+    skipperDebugLog('login session committed', {
+      ms: Math.round(performance.now() - t0),
+      username: user?.username
+    });
   }, []);
 
   const [currentUser, setCurrentUser] = useState(() => {

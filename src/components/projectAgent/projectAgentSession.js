@@ -74,18 +74,72 @@ export function resetSkipperClientSession() {
   clearProjectAgentMediaCache();
 }
 
+/**
+ * Skipper switch timing logs.
+ * - Always on in development (`npm start`)
+ * - Production: `localStorage.setItem('skipperDebug', '1')` then reload
+ * - Off: `localStorage.removeItem('skipperDebug')`
+ */
 export function isSkipperDebugEnabled() {
   try {
-    return localStorage.getItem('skipperDebug') === '1';
+    if (localStorage.getItem('skipperDebug') === '0') return false;
+    if (localStorage.getItem('skipperDebug') === '1') return true;
   } catch {
-    return false;
+    /* ignore */
+  }
+  return process.env.NODE_ENV === 'development';
+}
+
+export function skipperDebugLog(label, detail) {
+  if (!isSkipperDebugEnabled()) return;
+  const ts = new Date().toISOString().slice(11, 23);
+  if (detail !== undefined) {
+    console.log(`[Skipper ${ts}] ${label}`, detail);
+  } else {
+    console.log(`[Skipper ${ts}] ${label}`);
   }
 }
 
-export function skipperDebugLog(...args) {
-  if (isSkipperDebugEnabled()) {
-    console.log('[Skipper]', ...args);
-  }
+/** Per-step timings for account switch bootstrap (see console.table at end). */
+export function createSkipperBootstrapTrace(meta = {}) {
+  const t0 = performance.now();
+  let last = t0;
+  const steps = [];
+
+  skipperDebugLog('── bootstrap trace start ──', meta);
+
+  return {
+    mark(step, extra) {
+      const now = performance.now();
+      const row = {
+        step,
+        msTotal: Math.round(now - t0),
+        msStep: Math.round(now - last),
+        ...(extra || {})
+      };
+      steps.push(row);
+      last = now;
+      skipperDebugLog(`  +${row.msStep}ms (${row.msTotal}ms) ${step}`, extra || '');
+    },
+    finish(status, extra) {
+      const msTotal = Math.round(performance.now() - t0);
+      const summary = { status, msTotal, ...(extra || {}) };
+      skipperDebugLog(`── bootstrap ${status} (${msTotal}ms) ──`, summary);
+      if (typeof console !== 'undefined' && console.table && steps.length) {
+        console.table(steps);
+      }
+    },
+    aborted(reason, extra) {
+      const msTotal = Math.round(performance.now() - t0);
+      skipperDebugLog(`── bootstrap ABORTED @ ${msTotal}ms: ${reason} ──`, {
+        steps,
+        ...(extra || {})
+      });
+      if (typeof console !== 'undefined' && console.table && steps.length) {
+        console.table(steps);
+      }
+    }
+  };
 }
 
 /** Leave full-page Skipper so URL params cannot pin the previous account's project/thread. */
