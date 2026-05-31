@@ -1,6 +1,6 @@
 import { API_URL } from './api';
 
-/** Prefer localStorage so long polls survive token refresh (React state can lag). */
+/** Fallback only when callers omit an explicit session token. */
 function readStoredToken() {
   try {
     const raw = localStorage.getItem('currentUser');
@@ -13,7 +13,9 @@ function readStoredToken() {
 }
 
 function authHeaders(token) {
-  const bearer = readStoredToken() || token || '';
+  // Always prefer the token from React (currentUser) — reading localStorage first
+  // caused Skipper to use the previous account after login until a manual refresh.
+  const bearer = (token && String(token)) || readStoredToken();
   const headers = { 'Content-Type': 'application/json' };
   if (bearer) {
     headers.Authorization = `Bearer ${bearer}`;

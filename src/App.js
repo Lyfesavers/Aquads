@@ -17,6 +17,7 @@ import {
   trackBubbleClick,
   forceSessionLogout
 } from './services/api';
+import { resetSkipperClientSession } from './components/projectAgent/projectAgentSession';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
@@ -1297,14 +1298,14 @@ function App() {
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
+      resetSkipperClientSession();
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
-      
-      // Check if user has an unbumped ad after successful login
+
       setTimeout(() => {
         checkForUnbumpedAd(user);
-      }, 1000); // Small delay to ensure ads are loaded
+      }, 1000);
     } catch (error) {
       logger.error('Login error:', error);
       
@@ -1327,6 +1328,7 @@ function App() {
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
+      resetSkipperClientSession();
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
@@ -1356,6 +1358,7 @@ function App() {
     // "No authentication token provided") and the interceptor's `hadAuth` guard
     // silently swallowed the resulting 401s.
     setCurrentUser(null);
+    resetSkipperClientSession();
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     socket.auth = {};
@@ -1827,40 +1830,22 @@ function App() {
     return () => window.removeEventListener('tokenRefreshed', handleTokenRefresh);
   }, []);
 
-  // Cross-tab session sync: when `currentUser` changes in another tab, mirror it
-  // here so Skipper and the rest of the UI don't keep the previous account.
-  // The event does NOT fire for changes made in the same tab — those use handleLogout/login.
+  // Cross-tab session sync: if `currentUser` is cleared in another tab (logout,
+  // session expiry, etc.) the `storage` event fires here. Mirror the change so
+  // this tab doesn't sit in a "fake logged in" state. The event does NOT fire
+  // for changes made in the same tab — those are handled by handleLogout.
   useEffect(() => {
-    const sessionId = (user) => {
-      if (!user) return '';
-      return String(user.userId ?? user.id ?? user._id ?? user.username ?? '');
-    };
-
     const onStorage = (e) => {
       if (e.key !== 'currentUser') return;
-
-      if (!e.newValue) {
-        if (!currentUserRef.current) return;
-        try {
-          showNotification('You were logged out in another tab.', 'info');
-        } catch (_) {}
-        setCurrentUser(null);
-        socket.auth = {};
-        socket.disconnect();
-        return;
-      }
-
+      if (e.newValue) return;
+      if (!currentUserRef.current) return;
       try {
-        const user = JSON.parse(e.newValue);
-        const prev = currentUserRef.current;
-        if (sessionId(prev) === sessionId(user) && prev?.token === user?.token) return;
-        setCurrentUser(user);
-        if (user?.token) {
-          reconnectSocket();
-        }
-      } catch (_) {
-        /* ignore malformed storage payload */
-      }
+        showNotification('You were logged out in another tab.', 'info');
+      } catch (_) {}
+      resetSkipperClientSession();
+      setCurrentUser(null);
+      socket.auth = {};
+      socket.disconnect();
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
