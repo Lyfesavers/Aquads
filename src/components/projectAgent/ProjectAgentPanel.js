@@ -21,6 +21,7 @@ import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessag
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
 import {
   filterSkipperThreads,
+  getSkipperAuthEpoch,
   getSkipperSessionKey,
   markSkipperThreadDeleted,
   createSkipperAbortController,
@@ -265,6 +266,7 @@ export default function ProjectAgentPanel({
   const rootClass = `project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`;
   const token = currentUser?.token;
   const sessionKey = getSkipperSessionKey(currentUser);
+  const authEpoch = getSkipperAuthEpoch(currentUser);
   const [eligible, setEligible] = useState(() => restoredSession?.eligible || []);
   const [adId, setAdId] = useState(() => initialAdId || restoredSession?.adId || null);
   const [wallet, setWallet] = useState(() => restoredSession?.wallet || null);
@@ -309,9 +311,9 @@ export default function ProjectAgentPanel({
 
   /** Bumped on every account change so in-flight fetches cannot apply stale data. */
   const loadGenerationRef = useRef(0);
-  const prevSessionKeyRef = useRef(null);
+  const prevAuthEpochRef = useRef(null);
 
-  const clearPanelForSessionChange = useCallback((nextSessionKey) => {
+  const clearPanelForSessionChange = useCallback((nextEpoch) => {
     videoPollAbortRef.current = null;
     videoPollRunningRef.current = null;
     resetSkipperClientSession();
@@ -339,16 +341,16 @@ export default function ProjectAgentPanel({
     setTopupOpen(false);
     setDeletingThreadId(null);
     skipMessagesFetchRef.current = null;
-    setLoading(Boolean(nextSessionKey));
+    setLoading(Boolean(nextEpoch && nextEpoch !== 'guest'));
   }, []);
 
   // useLayoutEffect so adId/messages are cleared before other effects run in the same tick.
   useLayoutEffect(() => {
-    const prev = prevSessionKeyRef.current;
-    prevSessionKeyRef.current = sessionKey;
-    if (prev === sessionKey) return;
-    clearPanelForSessionChange(sessionKey);
-  }, [sessionKey, clearPanelForSessionChange]);
+    const prev = prevAuthEpochRef.current;
+    prevAuthEpochRef.current = authEpoch;
+    if (prev === authEpoch) return;
+    clearPanelForSessionChange(authEpoch);
+  }, [authEpoch, clearPanelForSessionChange]);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
@@ -594,10 +596,14 @@ export default function ProjectAgentPanel({
     (async () => {
       try {
         setError('');
-        await refreshWallet();
+        const [walletResult, list] = await Promise.all([
+          fetchProjectAgentWallet(adId, token).catch(() => null),
+          fetchProjectAgentThreads(adId, token)
+            .then((r) => filterSkipperThreads(r.threads || []))
+            .catch(() => [])
+        ]);
         if (cancelled || loadGen !== loadGenerationRef.current) return;
-        const list = await loadThreads();
-        if (cancelled || loadGen !== loadGenerationRef.current) return;
+        if (walletResult) setWallet(walletResult);
 
         if (list?.length) {
           setThreads(list);
@@ -625,7 +631,7 @@ export default function ProjectAgentPanel({
     return () => {
       cancelled = true;
     };
-  }, [token, sessionKey, adId, refreshWallet, loadThreads, initialThreadId]);
+  }, [token, sessionKey, adId, initialThreadId]);
 
   useEffect(() => {
     if (!token || !adId || !threadId || !sessionKey) return;
@@ -1177,7 +1183,14 @@ export default function ProjectAgentPanel({
   if (loading) {
     return (
       <div className={rootClass}>
-        <div className="project-agent-empty">Loading {SKIPPER_AGENT_NAME}…</div>
+        <div className="project-agent-loading">
+          <div className="project-agent-empty">Loading {SKIPPER_AGENT_NAME}…</div>
+          {currentUser?.username ? (
+            <p className="project-agent-loading-account" title="Aquads account for this Skipper session">
+              {currentUser.username}
+            </p>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -1299,7 +1312,7 @@ export default function ProjectAgentPanel({
             type="button"
             onClick={() =>
               onExpand({
-                ownerSessionKey: sessionKey,
+                ownerSessionKey: authEpoch,
                 adId,
                 threadId,
                 threads,

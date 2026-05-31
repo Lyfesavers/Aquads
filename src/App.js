@@ -22,8 +22,9 @@ import {
 } from './services/api';
 import {
   resetSkipperClientSession,
-  getSkipperSessionKey
+  getSkipperAuthEpoch
 } from './components/projectAgent/projectAgentSession';
+import { prefetchSkipperForUser } from './services/projectAgentApi';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
@@ -1295,6 +1296,7 @@ function App() {
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       commitAuthSession(user);
+      prefetchSkipperForUser(user.token);
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
       setTimeout(() => {
@@ -1323,6 +1325,7 @@ function App() {
       skipNextValidationRef.current = true;
       setCurrentUser(user);
       commitAuthSession(user);
+      prefetchSkipperForUser(user.token);
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
       setTimeout(() => {
@@ -2735,7 +2738,7 @@ function App() {
         {currentUser?.token && (
           <Suspense fallback={null}>
             <ProjectAgentFab
-              key={getSkipperSessionKey(currentUser)}
+              key={getSkipperAuthEpoch(currentUser)}
               currentUser={currentUser}
             />
           </Suspense>

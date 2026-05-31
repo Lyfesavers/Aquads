@@ -19,6 +19,12 @@ export async function fetchProjectAgentEligible(token) {
   return data;
 }
 
+/** Warm Skipper after login so the drawer is not waiting on the first eligible call. */
+export function prefetchSkipperForUser(token) {
+  if (!token) return Promise.resolve();
+  return fetchProjectAgentEligible(token).catch(() => {});
+}
+
 export async function createProjectAgentTopup(adId, token, amountUsd) {
   const res = await fetch(
     `${API_URL}/project-agent/topup/${encodeURIComponent(adId)}`,

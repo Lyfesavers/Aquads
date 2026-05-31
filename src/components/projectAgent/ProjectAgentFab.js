@@ -7,7 +7,7 @@ import {
   SKIPPER_AGENT_NAME,
   SKIPPER_AGENT_SHORT
 } from './projectAgentBrand';
-import { getSkipperSessionKey } from './projectAgentSession';
+import { getSkipperAuthEpoch } from './projectAgentSession';
 import './ProjectAgent.css';
 
 function SkipperFabIcon() {
@@ -24,15 +24,19 @@ function SkipperFabIcon() {
 export default function ProjectAgentFab({ currentUser }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const sessionKey = getSkipperSessionKey(currentUser);
-  const [showFab, setShowFab] = useState(false);
+  const authEpoch = getSkipperAuthEpoch(currentUser);
+  const token = currentUser?.token;
+  const canShowFab =
+    Boolean(token) && currentUser?.emailVerified !== false;
+  const [showFab, setShowFab] = useState(canShowFab);
   const [open, setOpen] = useState(false);
   const onFullPage = location.pathname.startsWith('/project-agent');
 
+  // New account: close drawer, show FAB immediately (do not wait for eligible API).
   useEffect(() => {
     setOpen(false);
-    setShowFab(false);
-  }, [sessionKey]);
+    setShowFab(canShowFab);
+  }, [authEpoch, canShowFab]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -44,7 +48,6 @@ export default function ProjectAgentFab({ currentUser }) {
   }, [open]);
 
   useEffect(() => {
-    const token = currentUser?.token;
     if (!token) {
       setShowFab(false);
       return undefined;
@@ -62,7 +65,7 @@ export default function ProjectAgentFab({ currentUser }) {
         }
         setShowFab(true);
       } catch {
-        // Transient network/auth errors — do not permanently hide; retry on focus.
+        // Keep optimistic FAB visible; recheck on focus.
       }
     };
 
@@ -84,7 +87,7 @@ export default function ProjectAgentFab({ currentUser }) {
       window.removeEventListener('focus', recheck);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [sessionKey, currentUser?.token, currentUser?.emailVerified]);
+  }, [authEpoch, token, currentUser?.emailVerified]);
 
   if (!showFab || onFullPage) return null;
 
@@ -107,7 +110,7 @@ export default function ProjectAgentFab({ currentUser }) {
         </button>
       )}
 
-      {open && currentUser?.token && (
+      {open && token && (
         <>
           <div
             className="project-agent-drawer-backdrop"
@@ -121,7 +124,7 @@ export default function ProjectAgentFab({ currentUser }) {
             aria-label={SKIPPER_AGENT_NAME}
           >
             <ProjectAgentPanel
-              key={sessionKey}
+              key={authEpoch}
               currentUser={currentUser}
               compact
               onClose={() => setOpen(false)}
@@ -134,7 +137,14 @@ export default function ProjectAgentFab({ currentUser }) {
                 const path = ad
                   ? `/project-agent/${ad}${thread ? `?thread=${thread}` : ''}`
                   : '/project-agent';
-                navigate(path, { state: { projectAgentSession: session } });
+                navigate(path, {
+                  state: {
+                    projectAgentSession: {
+                      ...session,
+                      ownerSessionKey: getSkipperAuthEpoch(currentUser)
+                    }
+                  }
+                });
               }}
             />
           </div>
