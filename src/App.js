@@ -22,7 +22,8 @@ import {
 } from './services/api';
 import {
   resetSkipperClientSession,
-  getSkipperAuthEpoch
+  getSkipperAuthEpoch,
+  clearProjectAgentRoute
 } from './components/projectAgent/projectAgentSession';
 import { prefetchSkipperForUser } from './services/projectAgentApi';
 import LoginModal from './components/LoginModal';
@@ -603,6 +604,18 @@ function App() {
     }
   }, []);
   
+  /** Bumped on every login so Skipper fully remounts (drawer + in-memory state). */
+  const [skipperMountKey, setSkipperMountKey] = useState(0);
+
+  const beginLoggedInSession = useCallback((user) => {
+    commitAuthSession(user);
+    resetSkipperClientSession();
+    clearProjectAgentRoute();
+    setSkipperMountKey((k) => k + 1);
+    setCurrentUser(user);
+    prefetchSkipperForUser(user.token);
+  }, []);
+
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
@@ -1292,11 +1305,8 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
-      resetSkipperClientSession();
       skipNextValidationRef.current = true;
-      setCurrentUser(user);
-      commitAuthSession(user);
-      prefetchSkipperForUser(user.token);
+      beginLoggedInSession(user);
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
       setTimeout(() => {
@@ -1321,11 +1331,8 @@ function App() {
   const handleGoogleLogin = async (idToken) => {
     try {
       const user = await loginWithGoogle(idToken);
-      resetSkipperClientSession();
       skipNextValidationRef.current = true;
-      setCurrentUser(user);
-      commitAuthSession(user);
-      prefetchSkipperForUser(user.token);
+      beginLoggedInSession(user);
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
       setTimeout(() => {
@@ -1423,8 +1430,7 @@ function App() {
         }
 
         skipNextValidationRef.current = true;
-        setCurrentUser(user);
-        commitAuthSession(user);
+        beginLoggedInSession(user);
 
         if (formData.email) {
           logger.log('Attempting to send welcome email...');
@@ -1465,6 +1471,8 @@ function App() {
           refreshToken: verifiedUser.refreshToken ?? prev?.refreshToken
         };
         commitAuthSession(merged);
+        resetSkipperClientSession();
+        setSkipperMountKey((k) => k + 1);
         return merged;
       });
       reconnectSocket();
@@ -2738,7 +2746,7 @@ function App() {
         {currentUser?.token && (
           <Suspense fallback={null}>
             <ProjectAgentFab
-              key={getSkipperAuthEpoch(currentUser)}
+              key={`${getSkipperAuthEpoch(currentUser)}:${skipperMountKey}`}
               currentUser={currentUser}
             />
           </Suspense>

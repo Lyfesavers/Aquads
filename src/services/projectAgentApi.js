@@ -1,11 +1,11 @@
-import { API_URL } from './api';
+import { API_URL, getActiveAuthToken } from './api';
 
 function authHeaders(token) {
-  // Never read localStorage here — it caused Skipper to keep the previous account's JWT
-  // after login/logout until React and storage were fully in sync.
+  // Prefer explicit token; else in-memory activeAuthToken (set in commitAuthSession before setState).
+  const bearer = token ? String(token) : getActiveAuthToken();
   const headers = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers.Authorization = `Bearer ${String(token)}`;
+  if (bearer) {
+    headers.Authorization = `Bearer ${bearer}`;
   }
   return headers;
 }

@@ -55,3 +55,11 @@ export function resetSkipperClientSession() {
   recentlyDeletedThreadIds.clear();
   clearProjectAgentMediaCache();
 }
+
+/** Leave full-page Skipper so URL params cannot pin the previous account's project/thread. */
+export function clearProjectAgentRoute() {
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname.startsWith('/project-agent')) {
+    window.history.replaceState(null, '', '/');
+  }
+}

@@ -14,6 +14,7 @@ import {
   createProjectAgentTopup,
   fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
+import { getActiveAuthToken } from '../../services/api';
 import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentMessageImage';
 import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
@@ -281,6 +282,9 @@ export default function ProjectAgentPanel({
   const [videoSeconds, setVideoSeconds] = useState(15);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(() => !restoredSession);
+  const [hydratedEpoch, setHydratedEpoch] = useState(() =>
+    restoredSession ? getSkipperAuthEpoch(currentUser) : null
+  );
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [gateError, setGateError] = useState('');
@@ -312,6 +316,13 @@ export default function ProjectAgentPanel({
   /** Bumped on every account change so in-flight fetches cannot apply stale data. */
   const loadGenerationRef = useRef(0);
   const prevAuthEpochRef = useRef(null);
+  const authEpochRef = useRef(authEpoch);
+  authEpochRef.current = authEpoch;
+
+  const skipperBearer = () => getActiveAuthToken() || token || null;
+  const loadStillValid = (epochAtStart, tokenAtStart) =>
+    epochAtStart === authEpochRef.current &&
+    tokenAtStart === skipperBearer();
 
   const clearPanelForSessionChange = useCallback((nextEpoch) => {
     videoPollAbortRef.current = null;
@@ -341,6 +352,7 @@ export default function ProjectAgentPanel({
     setTopupOpen(false);
     setDeletingThreadId(null);
     skipMessagesFetchRef.current = null;
+    setHydratedEpoch(null);
     setLoading(Boolean(nextEpoch && nextEpoch !== 'guest'));
   }, []);
 
@@ -382,26 +394,32 @@ export default function ProjectAgentPanel({
   useEffect(() => {
     if (!token) {
       setLoading(false);
+      setHydratedEpoch(null);
       setGateError(`Log in to use ${SKIPPER_AGENT_NAME}.`);
       return;
     }
     if (currentUser?.emailVerified === false) {
       setLoading(false);
+      setHydratedEpoch(null);
       setGateError('Verify your email to use Skipper Agent.');
       return;
     }
 
     const loadGen = loadGenerationRef.current;
+    const epochAtStart = authEpoch;
+    const bearerAtStart = skipperBearer();
     let cancelled = false;
     (async () => {
       try {
-        if (!restoredSession) setLoading(true);
+        if (!restoredSession) {
+          setLoading(true);
+          setHydratedEpoch(null);
+        }
         setGateError('');
-        const { eligible: list, code } = await fetchProjectAgentEligible(token);
-        if (cancelled || loadGen !== loadGenerationRef.current) return;
+        const { eligible: list, code } = await fetchProjectAgentEligible(bearerAtStart);
+        if (cancelled || !loadStillValid(epochAtStart, bearerAtStart)) return;
         setEligible(list || []);
         if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
-          if (loadGen !== loadGenerationRef.current) return;
           setGateError(
             code === 'EMAIL_VERIFICATION_REQUIRED'
               ? 'Verify your email to use Skipper Agent.'
@@ -412,27 +430,24 @@ export default function ProjectAgentPanel({
         }
         const pickFromInitial =
           initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : null;
-        setAdId((current) => {
-          if (current && list.some((a) => a.id === current)) return current;
-          return pickFromInitial || list[0].id;
-        });
+        setAdId(pickFromInitial || list[0]?.id || null);
       } catch (e) {
-        if (!cancelled && loadGen === loadGenerationRef.current) {
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           setGateError(e.message || 'Failed to load');
+          setLoading(false);
         }
-      } finally {
-        if (!cancelled && loadGen === loadGenerationRef.current) setLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [token, sessionKey, initialAdId, currentUser?.emailVerified, restoredSession]);
+  }, [token, authEpoch, sessionKey, initialAdId, currentUser?.emailVerified, restoredSession]);
 
   const refreshWallet = useCallback(async () => {
-    if (!token || !adId) return;
-    const w = await fetchProjectAgentWallet(adId, token);
+    const bearer = skipperBearer();
+    if (!bearer || !adId) return;
+    const w = await fetchProjectAgentWallet(adId, bearer);
     setWallet(w);
     return w;
   }, [token, adId]);
@@ -591,50 +606,53 @@ export default function ProjectAgentPanel({
   useEffect(() => {
     if (!token || !adId || !sessionKey) return;
     const loadGen = loadGenerationRef.current;
+    const epochAtStart = authEpoch;
+    const bearerAtStart = skipperBearer();
     let cancelled = false;
 
     (async () => {
       try {
         setError('');
         const [walletResult, list] = await Promise.all([
-          fetchProjectAgentWallet(adId, token).catch(() => null),
-          fetchProjectAgentThreads(adId, token)
+          fetchProjectAgentWallet(adId, bearerAtStart).catch(() => null),
+          fetchProjectAgentThreads(adId, bearerAtStart)
             .then((r) => filterSkipperThreads(r.threads || []))
             .catch(() => [])
         ]);
-        if (cancelled || loadGen !== loadGenerationRef.current) return;
+        if (cancelled || !loadStillValid(epochAtStart, bearerAtStart)) return;
         if (walletResult) setWallet(walletResult);
 
         if (list?.length) {
           setThreads(list);
-          setThreadId((current) => {
-            if (current && list.some((t) => String(t._id) === String(current))) {
-              return current;
-            }
-            const preferred =
-              initialThreadId && list.find((t) => String(t._id) === String(initialThreadId));
-            return preferred ? preferred._id : list[0]._id;
-          });
+          const preferred =
+            initialThreadId && list.find((t) => String(t._id) === String(initialThreadId));
+          setThreadId(preferred ? preferred._id : list[0]._id);
         } else {
-          const { thread } = await createProjectAgentThread(adId, token);
-          if (!cancelled && loadGen === loadGenerationRef.current) {
+          const { thread } = await createProjectAgentThread(adId, bearerAtStart);
+          if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
             setThreads([thread]);
             setThreadId(thread._id);
           }
         }
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
+          setHydratedEpoch(authEpochRef.current);
+          setLoading(false);
+        }
       } catch (e) {
-        if (!cancelled && loadGen === loadGenerationRef.current) {
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           setError(e.message || 'Failed to load project');
+          setLoading(false);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, sessionKey, adId, initialThreadId]);
+  }, [token, authEpoch, sessionKey, adId, initialThreadId]);
 
   useEffect(() => {
     if (!token || !adId || !threadId || !sessionKey) return;
+    if (hydratedEpoch !== authEpoch) return;
     setMediaStallNotice(false);
     const tid = String(threadId);
     if (skipMessagesFetchRef.current === tid) {
@@ -642,25 +660,31 @@ export default function ProjectAgentPanel({
       return undefined;
     }
 
-    const loadGen = loadGenerationRef.current;
+    const epochAtStart = authEpoch;
+    const bearerAtStart = skipperBearer();
+    setMessages([]);
     let cancelled = false;
     (async () => {
       try {
-        const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-        if (!cancelled && loadGen === loadGenerationRef.current) {
+        const { messages: msgs } = await fetchProjectAgentMessages(
+          adId,
+          threadId,
+          bearerAtStart
+        );
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) {
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
           if (threadMode) setMode(threadMode);
         }
       } catch (e) {
-        if (!cancelled && loadGen === loadGenerationRef.current) setError(e.message);
+        if (!cancelled && loadStillValid(epochAtStart, bearerAtStart)) setError(e.message);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, sessionKey, adId, threadId]);
+  }, [token, authEpoch, sessionKey, adId, threadId, hydratedEpoch]);
 
   const latestImageMessageId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -1180,7 +1204,9 @@ export default function ProjectAgentPanel({
     );
   }
 
-  if (loading) {
+  const sessionDataReady = hydratedEpoch === authEpoch;
+
+  if (loading || !sessionDataReady) {
     return (
       <div className={rootClass}>
         <div className="project-agent-loading">

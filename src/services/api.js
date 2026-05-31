@@ -74,6 +74,11 @@ export function getAuthSessionGeneration() {
   return authSessionGeneration;
 }
 
+/** JWT for this tab — updated synchronously in commitAuthSession (before React re-render). */
+export function getActiveAuthToken() {
+  return activeAuthToken || readAuthTokenFromStorage();
+}
+
 function bumpAuthSessionGeneration() {
   authSessionGeneration += 1;
   return authSessionGeneration;
