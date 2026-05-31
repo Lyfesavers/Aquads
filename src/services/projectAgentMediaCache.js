@@ -50,3 +50,11 @@ export function invalidateProjectAgentMedia(messageId, kind = 'both') {
     cache.delete(key);
   });
 }
+
+/** Drop all cached blobs (e.g. when switching Aquads accounts). */
+export function clearProjectAgentMediaCache() {
+  cache.forEach((entry) => {
+    if (entry?.url) URL.revokeObjectURL(entry.url);
+  });
+  cache.clear();
+}

@@ -20,6 +20,13 @@ import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
 import {
+  filterSkipperThreads,
+  getSkipperSessionKey,
+  markSkipperThreadDeleted,
+  resetSkipperClientSession,
+  unmarkSkipperThreadDeleted
+} from './projectAgentSession';
+import {
   getVideoPollMaxAttempts,
   getVideoRenderEstimate
 } from './projectAgentVideoEstimates';
@@ -125,19 +132,6 @@ function assistantPayloadForTurn({ content, reasoning, fakeMedia }) {
     content: content || '(No content returned)',
     reasoningContent: reasoning
   };
-}
-
-// Thread ids deleted during this browser session. Module-level so it is shared
-// by the drawer and full-page panel instances. Prevents a deleted chat from
-// reappearing when switching modes: a fresh thread refetch can race with an
-// in-flight (or just-committed) DELETE and return the stale thread, which then
-// 404s ("chat not found") on a second delete attempt. We filter these out of
-// any server- or snapshot-sourced thread list until the page is reloaded.
-const recentlyDeletedThreadIds = new Set();
-
-function withoutDeletedThreads(list) {
-  if (!Array.isArray(list)) return [];
-  return list.filter((t) => !recentlyDeletedThreadIds.has(String(t?._id)));
 }
 
 function normalizeAgentMessages(msgs, generateData) {
@@ -269,10 +263,11 @@ export default function ProjectAgentPanel({
   const fullPage = !compact;
   const rootClass = `project-agent-root${fullPage ? ' project-agent-root--fullpage' : ''}`;
   const token = currentUser?.token;
+  const sessionKey = getSkipperSessionKey(currentUser);
   const [eligible, setEligible] = useState(() => restoredSession?.eligible || []);
   const [adId, setAdId] = useState(() => initialAdId || restoredSession?.adId || null);
   const [wallet, setWallet] = useState(() => restoredSession?.wallet || null);
-  const [threads, setThreads] = useState(() => withoutDeletedThreads(restoredSession?.threads || []));
+  const [threads, setThreads] = useState(() => filterSkipperThreads(restoredSession?.threads || []));
   const [threadId, setThreadId] = useState(
     () => initialThreadId || restoredSession?.threadId || null
   );
@@ -310,6 +305,47 @@ export default function ProjectAgentPanel({
       : null
   );
   const topupPreview = previewTopupClient(topupCreditUsd);
+
+  const prevSessionKeyRef = useRef(sessionKey);
+  useEffect(() => {
+    const prev = prevSessionKeyRef.current;
+    prevSessionKeyRef.current = sessionKey;
+    if (prev === sessionKey) return;
+
+    videoPollAbortRef.current = null;
+    videoPollRunningRef.current = null;
+    resetSkipperClientSession();
+
+    setEligible([]);
+    setAdId(null);
+    setWallet(null);
+    setThreads([]);
+    setThreadId(null);
+    setMessages([]);
+    setMode('instant');
+    setInput('');
+    setSending(false);
+    setError('');
+    setGateError('');
+    setStreamingReasoning('');
+    setStreamingContent('');
+    setImageGenerating(false);
+    setAgentMediaGenerating(null);
+    setMediaStallNotice(false);
+    setLastCost(null);
+    setSearchStatus('');
+    setTopupNotice('');
+    setTopupOpen(false);
+    setDeletingThreadId(null);
+    skipMessagesFetchRef.current = null;
+
+    if (!sessionKey) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+  }, [sessionKey]);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
@@ -367,11 +403,12 @@ export default function ProjectAgentPanel({
           setLoading(false);
           return;
         }
-        if (!adId) {
-          const pick =
-            initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : list[0].id;
-          setAdId(pick);
-        }
+        const pickFromInitial =
+          initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : null;
+        setAdId((current) => {
+          if (current && list.some((a) => a.id === current)) return current;
+          return pickFromInitial || list[0].id;
+        });
       } catch (e) {
         if (!cancelled) setGateError(e.message || 'Failed to load');
       } finally {
@@ -382,7 +419,7 @@ export default function ProjectAgentPanel({
     return () => {
       cancelled = true;
     };
-  }, [token, initialAdId, adId, currentUser?.emailVerified, restoredSession]);
+  }, [token, sessionKey, initialAdId, adId, currentUser?.emailVerified, restoredSession]);
 
   const refreshWallet = useCallback(async () => {
     if (!token || !adId) return;
@@ -535,7 +572,7 @@ export default function ProjectAgentPanel({
   const loadThreads = useCallback(async () => {
     if (!token || !adId) return;
     const { threads: list } = await fetchProjectAgentThreads(adId, token);
-    const filtered = withoutDeletedThreads(list || []);
+    const filtered = filterSkipperThreads(list || []);
     setThreads(filtered);
     return filtered;
   }, [token, adId]);
@@ -723,9 +760,9 @@ export default function ProjectAgentPanel({
     // Tombstone immediately so a concurrent thread refetch (e.g. from switching
     // between the drawer and full-page panel) can't resurrect this chat before
     // the server delete commits.
-    recentlyDeletedThreadIds.add(id);
+    markSkipperThreadDeleted(id);
 
-    const nextThreads = withoutDeletedThreads(threads);
+    const nextThreads = filterSkipperThreads(threads);
     setThreads(nextThreads);
     setDeletingThreadId(id);
     setError('');
@@ -745,7 +782,7 @@ export default function ProjectAgentPanel({
 
     try {
       const data = await deleteProjectAgentThread(adId, id, token);
-      const list = withoutDeletedThreads(data.threads || []);
+      const list = filterSkipperThreads(data.threads || []);
       setThreads(list);
 
       if (wasActive) {
@@ -769,7 +806,7 @@ export default function ProjectAgentPanel({
       }
 
       // Genuine failure — undo the tombstone and restore prior state.
-      recentlyDeletedThreadIds.delete(id);
+      unmarkSkipperThreadDeleted(id);
       setThreads(snapshot.threads);
       setThreadId(snapshot.threadId);
       setMessages(snapshot.messages);
@@ -1236,6 +1273,7 @@ export default function ProjectAgentPanel({
             type="button"
             onClick={() =>
               onExpand({
+                ownerSessionKey: sessionKey,
                 adId,
                 threadId,
                 threads,

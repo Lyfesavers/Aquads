@@ -1827,21 +1827,40 @@ function App() {
     return () => window.removeEventListener('tokenRefreshed', handleTokenRefresh);
   }, []);
 
-  // Cross-tab session sync: if `currentUser` is cleared in another tab (logout,
-  // session expiry, etc.) the `storage` event fires here. Mirror the change so
-  // this tab doesn't sit in a "fake logged in" state. The event does NOT fire
-  // for changes made in the same tab — those are handled by handleLogout.
+  // Cross-tab session sync: when `currentUser` changes in another tab, mirror it
+  // here so Skipper and the rest of the UI don't keep the previous account.
+  // The event does NOT fire for changes made in the same tab — those use handleLogout/login.
   useEffect(() => {
+    const sessionId = (user) => {
+      if (!user) return '';
+      return String(user.userId ?? user.id ?? user._id ?? user.username ?? '');
+    };
+
     const onStorage = (e) => {
       if (e.key !== 'currentUser') return;
-      if (e.newValue) return;
-      if (!currentUserRef.current) return;
+
+      if (!e.newValue) {
+        if (!currentUserRef.current) return;
+        try {
+          showNotification('You were logged out in another tab.', 'info');
+        } catch (_) {}
+        setCurrentUser(null);
+        socket.auth = {};
+        socket.disconnect();
+        return;
+      }
+
       try {
-        showNotification('You were logged out in another tab.', 'info');
-      } catch (_) {}
-      setCurrentUser(null);
-      socket.auth = {};
-      socket.disconnect();
+        const user = JSON.parse(e.newValue);
+        const prev = currentUserRef.current;
+        if (sessionId(prev) === sessionId(user) && prev?.token === user?.token) return;
+        setCurrentUser(user);
+        if (user?.token) {
+          reconnectSocket();
+        }
+      } catch (_) {
+        /* ignore malformed storage payload */
+      }
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);

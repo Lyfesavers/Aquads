@@ -1,13 +1,19 @@
 import React, { useEffect } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import ProjectAgentPanel from './ProjectAgentPanel';
+import { getSkipperSessionKey } from './projectAgentSession';
 import './ProjectAgent.css';
 
 export default function ProjectAgentPage({ currentUser }) {
   const { adId: routeAdId } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const restoredSession = location.state?.projectAgentSession || null;
+  const sessionKey = getSkipperSessionKey(currentUser);
+  const rawRestored = location.state?.projectAgentSession || null;
+  const restoredSession =
+    rawRestored?.ownerSessionKey && rawRestored.ownerSessionKey === sessionKey
+      ? rawRestored
+      : null;
   const queryThreadId = searchParams.get('thread');
   const initialAdId = routeAdId || restoredSession?.adId || null;
   const initialThreadId = queryThreadId || restoredSession?.threadId || null;
@@ -26,6 +32,7 @@ export default function ProjectAgentPage({ currentUser }) {
   return (
     <div className="project-agent-page">
       <ProjectAgentPanel
+        key={sessionKey || 'guest'}
         currentUser={currentUser}
         initialAdId={initialAdId}
         initialThreadId={initialThreadId}

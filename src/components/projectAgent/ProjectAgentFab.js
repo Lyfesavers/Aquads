@@ -7,6 +7,7 @@ import {
   SKIPPER_AGENT_NAME,
   SKIPPER_AGENT_SHORT
 } from './projectAgentBrand';
+import { getSkipperSessionKey } from './projectAgentSession';
 import './ProjectAgent.css';
 
 function SkipperFabIcon() {
@@ -23,9 +24,14 @@ function SkipperFabIcon() {
 export default function ProjectAgentFab({ currentUser }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const sessionKey = getSkipperSessionKey(currentUser);
   const [showFab, setShowFab] = useState(false);
   const [open, setOpen] = useState(false);
   const onFullPage = location.pathname.startsWith('/project-agent');
+
+  useEffect(() => {
+    setOpen(false);
+  }, [sessionKey]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -77,7 +83,7 @@ export default function ProjectAgentFab({ currentUser }) {
       window.removeEventListener('focus', recheck);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [currentUser?.token, currentUser?.emailVerified]);
+  }, [sessionKey, currentUser?.token, currentUser?.emailVerified]);
 
   if (!showFab || onFullPage) return null;
 
@@ -114,6 +120,7 @@ export default function ProjectAgentFab({ currentUser }) {
             aria-label={SKIPPER_AGENT_NAME}
           >
             <ProjectAgentPanel
+              key={sessionKey || 'guest'}
               currentUser={currentUser}
               compact
               onClose={() => setOpen(false)}
