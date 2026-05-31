@@ -29,10 +29,20 @@ export default function ProjectAgentPage({ currentUser }) {
     };
   }, []);
 
+  if (!currentUser?.token) {
+    return (
+      <div className="project-agent-page">
+        <div className="project-agent-gate">
+          <p>Log in to use Skipper Agent.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="project-agent-page">
       <ProjectAgentPanel
-        key={sessionKey || 'guest'}
+        key={sessionKey}
         currentUser={currentUser}
         initialAdId={initialAdId}
         initialThreadId={initialThreadId}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   fetchProjectAgentEligible,
@@ -23,6 +23,7 @@ import {
   filterSkipperThreads,
   getSkipperSessionKey,
   markSkipperThreadDeleted,
+  createSkipperAbortController,
   resetSkipperClientSession,
   unmarkSkipperThreadDeleted
 } from './projectAgentSession';
@@ -306,15 +307,15 @@ export default function ProjectAgentPanel({
   );
   const topupPreview = previewTopupClient(topupCreditUsd);
 
-  const prevSessionKeyRef = useRef(sessionKey);
-  useEffect(() => {
-    const prev = prevSessionKeyRef.current;
-    prevSessionKeyRef.current = sessionKey;
-    if (prev === sessionKey) return;
+  /** Bumped on every account change so in-flight fetches cannot apply stale data. */
+  const loadGenerationRef = useRef(0);
+  const prevSessionKeyRef = useRef(null);
 
+  const clearPanelForSessionChange = useCallback((nextSessionKey) => {
     videoPollAbortRef.current = null;
     videoPollRunningRef.current = null;
     resetSkipperClientSession();
+    loadGenerationRef.current += 1;
 
     setEligible([]);
     setAdId(null);
@@ -338,14 +339,16 @@ export default function ProjectAgentPanel({
     setTopupOpen(false);
     setDeletingThreadId(null);
     skipMessagesFetchRef.current = null;
+    setLoading(Boolean(nextSessionKey));
+  }, []);
 
-    if (!sessionKey) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-  }, [sessionKey]);
+  // useLayoutEffect so adId/messages are cleared before other effects run in the same tick.
+  useLayoutEffect(() => {
+    const prev = prevSessionKeyRef.current;
+    prevSessionKeyRef.current = sessionKey;
+    if (prev === sessionKey) return;
+    clearPanelForSessionChange(sessionKey);
+  }, [sessionKey, clearPanelForSessionChange]);
 
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
@@ -386,15 +389,17 @@ export default function ProjectAgentPanel({
       return;
     }
 
+    const loadGen = loadGenerationRef.current;
     let cancelled = false;
     (async () => {
       try {
         if (!restoredSession) setLoading(true);
         setGateError('');
         const { eligible: list, code } = await fetchProjectAgentEligible(token);
-        if (cancelled) return;
+        if (cancelled || loadGen !== loadGenerationRef.current) return;
         setEligible(list || []);
         if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
+          if (loadGen !== loadGenerationRef.current) return;
           setGateError(
             code === 'EMAIL_VERIFICATION_REQUIRED'
               ? 'Verify your email to use Skipper Agent.'
@@ -410,16 +415,18 @@ export default function ProjectAgentPanel({
           return pickFromInitial || list[0].id;
         });
       } catch (e) {
-        if (!cancelled) setGateError(e.message || 'Failed to load');
+        if (!cancelled && loadGen === loadGenerationRef.current) {
+          setGateError(e.message || 'Failed to load');
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && loadGen === loadGenerationRef.current) setLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [token, sessionKey, initialAdId, adId, currentUser?.emailVerified, restoredSession]);
+  }, [token, sessionKey, initialAdId, currentUser?.emailVerified, restoredSession]);
 
   const refreshWallet = useCallback(async () => {
     if (!token || !adId) return;
@@ -431,6 +438,7 @@ export default function ProjectAgentPanel({
   const pollVideoJob = useCallback(
     async (messageId, seconds = 15) => {
       if (!token) return;
+      const loadGen = loadGenerationRef.current;
       const id = String(messageId);
       const pollMax = getVideoPollMaxAttempts(seconds);
       const estimate = getVideoRenderEstimate(seconds);
@@ -441,6 +449,7 @@ export default function ProjectAgentPanel({
 
       try {
         for (let attempt = 0; attempt < pollMax; attempt += 1) {
+          if (loadGen !== loadGenerationRef.current) return;
           if (videoPollAbortRef.current !== id) return;
 
           if (attempt > 0) {
@@ -578,15 +587,17 @@ export default function ProjectAgentPanel({
   }, [token, adId]);
 
   useEffect(() => {
-    if (!token || !adId) return;
+    if (!token || !adId || !sessionKey) return;
+    const loadGen = loadGenerationRef.current;
     let cancelled = false;
 
     (async () => {
       try {
         setError('');
         await refreshWallet();
+        if (cancelled || loadGen !== loadGenerationRef.current) return;
         const list = await loadThreads();
-        if (cancelled) return;
+        if (cancelled || loadGen !== loadGenerationRef.current) return;
 
         if (list?.length) {
           setThreads(list);
@@ -600,22 +611,24 @@ export default function ProjectAgentPanel({
           });
         } else {
           const { thread } = await createProjectAgentThread(adId, token);
-          if (!cancelled) {
+          if (!cancelled && loadGen === loadGenerationRef.current) {
             setThreads([thread]);
             setThreadId(thread._id);
           }
         }
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Failed to load project');
+        if (!cancelled && loadGen === loadGenerationRef.current) {
+          setError(e.message || 'Failed to load project');
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, adId, refreshWallet, loadThreads, initialThreadId]);
+  }, [token, sessionKey, adId, refreshWallet, loadThreads, initialThreadId]);
 
   useEffect(() => {
-    if (!token || !adId || !threadId) return;
+    if (!token || !adId || !threadId || !sessionKey) return;
     setMediaStallNotice(false);
     const tid = String(threadId);
     if (skipMessagesFetchRef.current === tid) {
@@ -623,24 +636,25 @@ export default function ProjectAgentPanel({
       return undefined;
     }
 
+    const loadGen = loadGenerationRef.current;
     let cancelled = false;
     (async () => {
       try {
         const { messages: msgs } = await fetchProjectAgentMessages(adId, threadId, token);
-        if (!cancelled) {
+        if (!cancelled && loadGen === loadGenerationRef.current) {
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
           if (threadMode) setMode(threadMode);
         }
       } catch (e) {
-        if (!cancelled) setError(e.message);
+        if (!cancelled && loadGen === loadGenerationRef.current) setError(e.message);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, adId, threadId]);
+  }, [token, sessionKey, adId, threadId]);
 
   const latestImageMessageId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -941,6 +955,8 @@ export default function ProjectAgentPanel({
     const mediaCreated = [];
     let doneReceived = false;
 
+    const chatAbort = createSkipperAbortController();
+
     try {
       await streamProjectAgentChat({
         adId,
@@ -948,7 +964,9 @@ export default function ProjectAgentPanel({
         token,
         message: text,
         mode: effectiveMode,
+        signal: chatAbort.signal,
         onEvent: (evt) => {
+          if (chatAbort.signal.aborted) return;
           if (evt.type === 'start' && effectiveMode === 'agent') {
             setSearchStatus('Thinking…');
           }
@@ -1130,13 +1148,16 @@ export default function ProjectAgentPanel({
 
       void refreshWallet();
     } catch (e) {
+      if (chatAbort.signal.aborted || e?.name === 'AbortError') return;
       setError(e.message || 'Send failed');
       if (e.code === 'INSUFFICIENT_BALANCE') {
         void refreshWallet();
       }
     } finally {
-      setAgentMediaGenerating(null);
-      setSending(false);
+      if (!chatAbort.signal.aborted) {
+        setAgentMediaGenerating(null);
+        setSending(false);
+      }
     }
   };
 

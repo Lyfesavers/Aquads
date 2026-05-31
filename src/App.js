@@ -1292,13 +1292,14 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
+      // Stop Skipper using the previous account before any new auth is written.
+      resetSkipperClientSession();
       // Write localStorage BEFORE setCurrentUser so that child effects
       // (Dashboard, etc.) and the global fetch interceptor already have
       // the new token by the time they fire.
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
-      resetSkipperClientSession();
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
@@ -1325,10 +1326,10 @@ function App() {
   const handleGoogleLogin = async (idToken) => {
     try {
       const user = await loginWithGoogle(idToken);
+      resetSkipperClientSession();
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', user.token);
       skipNextValidationRef.current = true;
-      resetSkipperClientSession();
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Successfully signed in with Google!', 'success');
@@ -1357,8 +1358,8 @@ function App() {
     // every API call fired with no Authorization header (server saw
     // "No authentication token provided") and the interceptor's `hadAuth` guard
     // silently swallowed the resulting 401s.
-    setCurrentUser(null);
     resetSkipperClientSession();
+    setCurrentUser(null);
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     socket.auth = {};

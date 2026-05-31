@@ -12,6 +12,23 @@ export function getSkipperSessionKey(user) {
 /** Module-level Skipper UI bookkeeping cleared when the account changes. */
 const recentlyDeletedThreadIds = new Set();
 
+let skipperAbortController = null;
+
+/** Abort open SSE streams / fetches started by Skipper. */
+export function abortSkipperInFlightWork() {
+  if (skipperAbortController) {
+    skipperAbortController.abort();
+    skipperAbortController = null;
+  }
+}
+
+/** Cancel prior Skipper network work and return a fresh AbortController. */
+export function createSkipperAbortController() {
+  abortSkipperInFlightWork();
+  skipperAbortController = new AbortController();
+  return skipperAbortController;
+}
+
 export function markSkipperThreadDeleted(threadId) {
   recentlyDeletedThreadIds.add(String(threadId));
 }
@@ -25,7 +42,9 @@ export function filterSkipperThreads(list) {
   return list.filter((t) => !recentlyDeletedThreadIds.has(String(t?._id)));
 }
 
+/** Full client-side Skipper reset (call on logout, login, and account switch). */
 export function resetSkipperClientSession() {
+  abortSkipperInFlightWork();
   recentlyDeletedThreadIds.clear();
   clearProjectAgentMediaCache();
 }

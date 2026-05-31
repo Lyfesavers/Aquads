@@ -1,24 +1,11 @@
 import { API_URL } from './api';
 
-/** Fallback only when callers omit an explicit session token. */
-function readStoredToken() {
-  try {
-    const raw = localStorage.getItem('currentUser');
-    if (!raw) return '';
-    const user = JSON.parse(raw);
-    return user?.token ? String(user.token) : '';
-  } catch {
-    return '';
-  }
-}
-
 function authHeaders(token) {
-  // Always prefer the token from React (currentUser) — reading localStorage first
-  // caused Skipper to use the previous account after login until a manual refresh.
-  const bearer = (token && String(token)) || readStoredToken();
+  // Never read localStorage here — it caused Skipper to keep the previous account's JWT
+  // after login/logout until React and storage were fully in sync.
   const headers = { 'Content-Type': 'application/json' };
-  if (bearer) {
-    headers.Authorization = `Bearer ${bearer}`;
+  if (token) {
+    headers.Authorization = `Bearer ${String(token)}`;
   }
   return headers;
 }

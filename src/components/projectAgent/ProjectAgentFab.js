@@ -31,6 +31,7 @@ export default function ProjectAgentFab({ currentUser }) {
 
   useEffect(() => {
     setOpen(false);
+    setShowFab(false);
   }, [sessionKey]);
 
   useEffect(() => {
@@ -106,7 +107,7 @@ export default function ProjectAgentFab({ currentUser }) {
         </button>
       )}
 
-      {open && (
+      {open && currentUser?.token && (
         <>
           <div
             className="project-agent-drawer-backdrop"
@@ -120,7 +121,7 @@ export default function ProjectAgentFab({ currentUser }) {
             aria-label={SKIPPER_AGENT_NAME}
           >
             <ProjectAgentPanel
-              key={sessionKey || 'guest'}
+              key={sessionKey}
               currentUser={currentUser}
               compact
               onClose={() => setOpen(false)}
