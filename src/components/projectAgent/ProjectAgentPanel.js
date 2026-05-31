@@ -26,7 +26,9 @@ import {
   getSkipperSessionKey,
   markSkipperThreadDeleted,
   createSkipperAbortController,
+  createSkipperBootstrapAbort,
   resetSkipperClientSession,
+  skipperDebugLog,
   unmarkSkipperThreadDeleted
 } from './projectAgentSession';
 import {
@@ -315,6 +317,7 @@ export default function ProjectAgentPanel({
 
   /** Bumped on every account change so in-flight fetches cannot apply stale data. */
   const loadGenerationRef = useRef(0);
+  const skipAdIdReloadRef = useRef(null);
   const prevAuthEpochRef = useRef(null);
   const authEpochRef = useRef(authEpoch);
   authEpochRef.current = authEpoch;
@@ -389,33 +392,53 @@ export default function ProjectAgentPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: grew ? 'smooth' : 'auto' });
   }, [messages.length, streamingContent, streamingReasoning]);
 
+  /** One load per account: eligible → project → wallet + threads → messages (no stale UI in between). */
   useEffect(() => {
     if (!token) {
       setLoading(false);
       setHydratedEpoch(null);
       setGateError(`Log in to use ${SKIPPER_AGENT_NAME}.`);
-      return;
+      return undefined;
     }
     if (currentUser?.emailVerified === false) {
       setLoading(false);
       setHydratedEpoch(null);
       setGateError('Verify your email to use Skipper Agent.');
-      return;
+      return undefined;
     }
 
-    const loadGen = loadGenerationRef.current;
     const epochAtStart = authEpoch;
-    const bearerAtStart = skipperBearer();
+    const bearer = currentUser?.token || getActiveAuthToken();
+    const signal = createSkipperBootstrapAbort();
     let cancelled = false;
+
+    if (restoredSession) {
+      setHydratedEpoch(authEpoch);
+      setLoading(false);
+      return undefined;
+    }
+
+    setLoading(true);
+    setHydratedEpoch(null);
+    setEligible([]);
+    setAdId(null);
+    setWallet(null);
+    setThreads([]);
+    setThreadId(null);
+    setMessages([]);
+    setGateError('');
+    setError('');
+
     (async () => {
+      const t0 = performance.now();
+      skipperDebugLog('bootstrap start', {
+        account: currentUser?.username,
+        sessionKey,
+        tokenPrefix: bearer ? `${String(bearer).slice(0, 12)}…` : null
+      });
       try {
-        if (!restoredSession) {
-          setLoading(true);
-          setHydratedEpoch(null);
-        }
-        setGateError('');
-        const { eligible: list, code } = await fetchProjectAgentEligible(bearerAtStart);
-        if (cancelled || !loadStillValid(epochAtStart)) return;
+        const { eligible: list, code } = await fetchProjectAgentEligible(bearer);
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
         setEligible(list || []);
         if (code === 'EMAIL_VERIFICATION_REQUIRED' || !list?.length) {
           setGateError(
@@ -426,24 +449,86 @@ export default function ProjectAgentPanel({
           setLoading(false);
           return;
         }
+
         const pickFromInitial =
           initialAdId && list.find((a) => a.id === initialAdId) ? initialAdId : null;
-        setAdId(pickFromInitial || list[0]?.id || null);
-        if (!cancelled && loadStillValid(epochAtStart)) {
+        const nextAdId = pickFromInitial || list[0]?.id || null;
+        skipAdIdReloadRef.current = nextAdId;
+        setAdId(nextAdId);
+        if (!nextAdId) {
           setLoading(false);
+          return;
+        }
+
+        const [walletResult, threadList] = await Promise.all([
+          fetchProjectAgentWallet(nextAdId, bearer).catch(() => null),
+          fetchProjectAgentThreads(nextAdId, bearer)
+            .then((r) => filterSkipperThreads(r.threads || []))
+            .catch(() => [])
+        ]);
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+
+        if (walletResult) setWallet(walletResult);
+
+        let nextThreadId = null;
+        if (threadList?.length) {
+          setThreads(threadList);
+          const preferred =
+            initialThreadId &&
+            threadList.find((t) => String(t._id) === String(initialThreadId));
+          nextThreadId = preferred ? preferred._id : threadList[0]._id;
+          setThreadId(nextThreadId);
+        } else {
+          const { thread } = await createProjectAgentThread(nextAdId, bearer);
+          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+          setThreads([thread]);
+          nextThreadId = thread._id;
+          setThreadId(nextThreadId);
+        }
+
+        if (nextThreadId) {
+          const { messages: msgs } = await fetchProjectAgentMessages(
+            nextAdId,
+            nextThreadId,
+            bearer
+          );
+          if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+          const normalized = normalizeAgentMessages(msgs);
+          setMessages(normalized);
+          const threadMode = resolveThreadSkipperMode(normalized);
+          if (threadMode) setMode(threadMode);
+        }
+
+        if (!cancelled && loadStillValid(epochAtStart)) {
+          setHydratedEpoch(authEpochRef.current);
+          setLoading(false);
+          skipperDebugLog('bootstrap done ms', Math.round(performance.now() - t0), {
+            adId: nextAdId,
+            threadId: nextThreadId
+          });
         }
       } catch (e) {
-        if (!cancelled && loadStillValid(epochAtStart)) {
-          setGateError(e.message || 'Failed to load');
-          setLoading(false);
-        }
+        if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+        setGateError(e.message || 'Failed to load');
+        setLoading(false);
+        skipperDebugLog('bootstrap error', e);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [token, authEpoch, sessionKey, initialAdId, currentUser?.emailVerified, restoredSession]);
+  }, [
+    token,
+    authEpoch,
+    sessionKey,
+    initialAdId,
+    initialThreadId,
+    currentUser?.emailVerified,
+    currentUser?.token,
+    currentUser?.username,
+    restoredSession
+  ]);
 
   const refreshWallet = useCallback(async () => {
     const bearer = skipperBearer();
@@ -604,17 +689,23 @@ export default function ProjectAgentPanel({
     return filtered;
   }, [token, adId]);
 
+  /** User picked a different project in the toolbar (after initial account bootstrap). */
   useEffect(() => {
-    if (!token || !adId || !sessionKey) return;
-    const loadGen = loadGenerationRef.current;
+    if (!token || !adId || !sessionKey || hydratedEpoch !== authEpoch) return;
+    if (skipAdIdReloadRef.current === adId) {
+      skipAdIdReloadRef.current = null;
+      return undefined;
+    }
+
     const epochAtStart = authEpoch;
-    const bearerAtStart = skipperBearer();
+    const bearer = currentUser?.token || getActiveAuthToken();
     let cancelled = false;
+    setMessages([]);
+    setThreadId(null);
 
     (async () => {
       try {
         setError('');
-        const bearer = skipperBearer();
         const [walletResult, list] = await Promise.all([
           fetchProjectAgentWallet(adId, bearer).catch(() => null),
           fetchProjectAgentThreads(adId, bearer)
@@ -626,11 +717,9 @@ export default function ProjectAgentPanel({
 
         if (list?.length) {
           setThreads(list);
-          const preferred =
-            initialThreadId && list.find((t) => String(t._id) === String(initialThreadId));
-          setThreadId(preferred ? preferred._id : list[0]._id);
+          setThreadId(list[0]._id);
         } else {
-          const { thread } = await createProjectAgentThread(adId, skipperBearer());
+          const { thread } = await createProjectAgentThread(adId, bearer);
           if (!cancelled && loadStillValid(epochAtStart)) {
             setThreads([thread]);
             setThreadId(thread._id);
@@ -640,16 +729,13 @@ export default function ProjectAgentPanel({
         if (!cancelled && loadStillValid(epochAtStart)) {
           setError(e.message || 'Failed to load project');
         }
-      } finally {
-        if (!cancelled && loadStillValid(epochAtStart)) {
-          setHydratedEpoch(authEpochRef.current);
-        }
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [token, authEpoch, sessionKey, adId, initialThreadId]);
+  }, [token, authEpoch, sessionKey, adId, hydratedEpoch, currentUser?.token]);
 
   useEffect(() => {
     if (!token || !adId || !threadId || !sessionKey) return;
@@ -1207,16 +1293,19 @@ export default function ProjectAgentPanel({
 
   const sessionDataReady = hydratedEpoch === authEpoch;
 
-  if (loading) {
+  if (loading || !sessionDataReady) {
     return (
       <div className={rootClass}>
         <div className="project-agent-loading">
-          <div className="project-agent-empty">Loading {SKIPPER_AGENT_NAME}…</div>
+          <div className="project-agent-empty">Switching account…</div>
           {currentUser?.username ? (
             <p className="project-agent-loading-account" title="Aquads account for this Skipper session">
               {currentUser.username}
             </p>
           ) : null}
+          <p className="project-agent-loading-hint">
+            Loading projects, wallet, and chats for this account.
+          </p>
         </div>
       </div>
     );
@@ -1457,11 +1546,7 @@ export default function ProjectAgentPanel({
 
         <div className="project-agent-main">
           <div className="project-agent-messages">
-            {!sessionDataReady ? (
-              <div className="project-agent-empty">Loading conversations…</div>
-            ) : null}
-            {sessionDataReady &&
-              messages.map((m, i) => (
+            {messages.map((m, i) => (
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
                 {messageShowsImage(m) && token ? (
                   <ProjectAgentMessageImage
@@ -1494,14 +1579,14 @@ export default function ProjectAgentPanel({
                 )}
               </div>
             ))}
-            {sessionDataReady && sending &&
+            {sending &&
               !streamingContent &&
               (searchStatus || (mode === 'agent' && !imageGenerating && !agentMediaGenerating)) && (
                 <p className="project-agent-search-status" role="status" aria-live="polite">
                   {searchStatus || 'Working on your reply…'}
                 </p>
               )}
-            {sessionDataReady && sending && (streamingReasoning || streamingContent) && (
+            {sending && (streamingReasoning || streamingContent) && (
               <div className="project-agent-msg assistant">
                 <ProjectAgentMessageBody
                   content={streamingContent}
@@ -1510,7 +1595,7 @@ export default function ProjectAgentPanel({
                 />
               </div>
             )}
-            {sessionDataReady && (imageGenerating || agentMediaGenerating === 'image') && (
+            {(imageGenerating || agentMediaGenerating === 'image') && (
               <div className="project-agent-msg assistant">
                 <ImageGeneratingStatus />
               </div>

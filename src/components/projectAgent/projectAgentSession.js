@@ -51,11 +51,41 @@ export function filterSkipperThreads(list) {
   return list.filter((t) => !recentlyDeletedThreadIds.has(String(t?._id)));
 }
 
+let skipperBootstrapAbort = null;
+
+export function abortSkipperBootstrap() {
+  if (skipperBootstrapAbort) {
+    skipperBootstrapAbort.abort();
+    skipperBootstrapAbort = null;
+  }
+}
+
+export function createSkipperBootstrapAbort() {
+  abortSkipperBootstrap();
+  skipperBootstrapAbort = new AbortController();
+  return skipperBootstrapAbort.signal;
+}
+
 /** Full client-side Skipper reset (call on logout, login, and account switch). */
 export function resetSkipperClientSession() {
   abortSkipperInFlightWork();
+  abortSkipperBootstrap();
   recentlyDeletedThreadIds.clear();
   clearProjectAgentMediaCache();
+}
+
+export function isSkipperDebugEnabled() {
+  try {
+    return localStorage.getItem('skipperDebug') === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function skipperDebugLog(...args) {
+  if (isSkipperDebugEnabled()) {
+    console.log('[Skipper]', ...args);
+  }
 }
 
 /** Leave full-page Skipper so URL params cannot pin the previous account's project/thread. */

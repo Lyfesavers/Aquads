@@ -25,7 +25,6 @@ import {
   resetSkipperClientSession,
   getSkipperAuthEpoch
 } from './components/projectAgent/projectAgentSession';
-import { prefetchSkipperForUser } from './services/projectAgentApi';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
@@ -619,7 +618,6 @@ function App() {
       navigateRef.current('/', { replace: true });
     }
     setCurrentUser(user);
-    prefetchSkipperForUser(user.token);
   }, []);
 
   const [currentUser, setCurrentUser] = useState(() => {
@@ -2773,7 +2771,7 @@ function App() {
         {currentUser?.token && (
           <Suspense fallback={null}>
             <ProjectAgentFab
-              key={getSkipperAuthEpoch(currentUser)}
+              key={`${getSkipperAuthEpoch(currentUser)}:${getAuthSessionGeneration()}`}
               currentUser={currentUser}
             />
           </Suspense>
