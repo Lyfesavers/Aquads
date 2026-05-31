@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { 
   socket, 
@@ -850,93 +849,122 @@ function App() {
     localStorage.setItem('cachedAds', JSON.stringify(newAds));
   };
 
-  // Load ads when component mounts
-  useEffect(() => {
-    const loadAdsFromApi = async () => {
-      try {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
+  const isFirstAdsLoadRef = useRef(true);
+
+  const loadAdsFromApi = useCallback(async () => {
+    const showLoading = isFirstAdsLoadRef.current;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    const filterAdsForViewer = (list) =>
+      currentUser?.isAdmin
+        ? list
+        : list.filter((ad) => ad.status !== 'pending' && ad.status !== 'rejected');
+
+    try {
+      if (showLoading) {
         setIsLoading(true);
         setLoadingMessage(isMobile ? 'Connecting to server...' : 'Loading ads...');
-        
-        const data = await fetchAds();
-        const currentMaxSize = getMaxSize(); // Get current max size for this screen
-        
-        // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
-        const repositionedAds = data.map((ad, index) => {
-          // Calculate responsive size correctly based on the current screen size
-          let adWithMetadata = {
-            ...ad,
-            originalSize: ad.size, // Store the original size from server
-            originalMaxSize: currentMaxSize, // Maximum size for current screen
-            currentMaxSize: currentMaxSize
-          };
-          
-          // Check if this ad has zero coordinates or y less than TOP_PADDING
-          if (ad.x === 0 || ad.y === 0 || ad.y < TOP_PADDING) {
-            logger.log('Fixing ad with invalid coordinates:', ad.id);
-            
-            // Use staggered positioning if many ads need fixing
-            let position;
-            if (index > 0) {
-              // Try a position that's definitely not (0,0)
-              const baseX = windowSize.width / 2;
-              const baseY = windowSize.height / 2;
-              
-              // Apply a spiral pattern
-              const angle = index * (Math.PI * 0.618033988749895); // Golden ratio
-              const radius = 50 + 20 * Math.sqrt(index);
-              
-              position = {
-                x: baseX + Math.cos(angle) * radius - (ad.size / 2),
-                y: baseY + Math.sin(angle) * radius - (ad.size / 2)
-              };
-              
-              // Then use calculateSafePosition to fine-tune
-              position = calculateSafePosition(
-                ad.size, 
-                windowSize.width, 
-                windowSize.height, 
-                data.filter(otherAd => otherAd.id !== ad.id)
-              );
-            } else {
-              // Calculate a safe position for this ad
-              position = calculateSafePosition(
-                ad.size, 
-                windowSize.width, 
-                windowSize.height, 
-                data.filter(otherAd => otherAd.id !== ad.id)
-              );
-            }
-            
-            // Make sure y is at least TOP_PADDING + some margin
-            if (position.y < TOP_PADDING) {
-              position.y = TOP_PADDING + 20;
-            }
-            
-            adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
-          }
-          
-          return adWithMetadata;
-        });
-        
-        setAds(repositionedAds);
-        setIsLoading(false);
-        setLoadingMessage('');
-        
-        // Note: Position updates are now only sent when user drags an ad
-        // This reduces server load from 12+ API calls per page load to 0
-        // Positions are stored in DB and recalculated client-side for display
-      } catch (error) {
-        logger.error('Error loading ads:', error);
-        setIsLoading(false);
-        setLoadingMessage('');
-        showNotification('Connection issue. Using cached data.', 'warning');
       }
-    };
 
+      const data = await fetchAds();
+      const processedAds = data.map((ad) => ({
+        ...ad,
+        bullishVotes: ad.bullishVotes || 0,
+        bearishVotes: ad.bearishVotes || 0,
+      }));
+
+      localStorage.setItem('cachedAds', JSON.stringify(processedAds));
+
+      const currentMaxSize = getMaxSize();
+
+      const repositionedAds = processedAds.map((ad, index) => {
+        let adWithMetadata = {
+          ...ad,
+          originalSize: ad.size,
+          originalMaxSize: currentMaxSize,
+          currentMaxSize: currentMaxSize,
+        };
+
+        if (ad.x === 0 || ad.y === 0 || ad.y < TOP_PADDING) {
+          logger.log('Fixing ad with invalid coordinates:', ad.id);
+
+          let position;
+          if (index > 0) {
+            const baseX = windowSize.width / 2;
+            const baseY = windowSize.height / 2;
+            const angle = index * (Math.PI * 0.618033988749895);
+            const radius = 50 + 20 * Math.sqrt(index);
+
+            position = {
+              x: baseX + Math.cos(angle) * radius - ad.size / 2,
+              y: baseY + Math.sin(angle) * radius - ad.size / 2,
+            };
+
+            position = calculateSafePosition(
+              ad.size,
+              windowSize.width,
+              windowSize.height,
+              processedAds.filter((otherAd) => otherAd.id !== ad.id)
+            );
+          } else {
+            position = calculateSafePosition(
+              ad.size,
+              windowSize.width,
+              windowSize.height,
+              processedAds.filter((otherAd) => otherAd.id !== ad.id)
+            );
+          }
+
+          if (position.y < TOP_PADDING) {
+            position.y = TOP_PADDING + 20;
+          }
+
+          adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
+        }
+
+        return adWithMetadata;
+      });
+
+      setAds(filterAdsForViewer(repositionedAds));
+    } catch (error) {
+      logger.error('Error loading ads:', error);
+
+      const cachedAds = localStorage.getItem('cachedAds');
+      if (cachedAds) {
+        try {
+          const parsedAds = JSON.parse(cachedAds).map((ad) => ({
+            ...ad,
+            bullishVotes: ad.bullishVotes || 0,
+            bearishVotes: ad.bearishVotes || 0,
+          }));
+          setAds(filterAdsForViewer(parsedAds));
+        } catch (parseError) {
+          logger.error('Error parsing cached ads:', parseError);
+        }
+      }
+
+      if (showLoading) {
+        const noticeId = Date.now();
+        setNotifications((prev) => [
+          ...prev,
+          { id: noticeId, message: 'Connection issue. Using cached data.', type: 'warning' },
+        ]);
+        setTimeout(() => {
+          setNotifications((prev) => prev.filter((n) => n.id !== noticeId));
+        }, 3000);
+      }
+    } finally {
+      if (showLoading) {
+        setIsLoading(false);
+        setLoadingMessage('');
+      }
+      isFirstAdsLoadRef.current = false;
+    }
+  }, [currentUser?.userId, currentUser?.isAdmin]);
+
+  useEffect(() => {
     loadAdsFromApi();
-  }, []);
+  }, [loadAdsFromApi]);
 
   // Update socket connection handling
   useEffect(() => {
@@ -1785,53 +1813,6 @@ function App() {
       socket.off('adVoteUpdated');
       socket.off('tokenPurchaseApproved');
     };
-  }, [currentUser]);
-
-  // Initial ads fetch - WebSocket handles real-time updates
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const response = await fetch(`${API_URL}/ads`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Ensure ads have bullishVotes and bearishVotes properties if not present
-        const processedAds = data.map(ad => ({
-          ...ad,
-          bullishVotes: ad.bullishVotes || 0,
-          bearishVotes: ad.bearishVotes || 0
-        }));
-        
-        // Filter out pending and rejected ads - only show active ads in the bubbles
-        const filteredAds = currentUser?.isAdmin 
-          ? processedAds 
-          : processedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
-        
-        // Cache the ads (store all ads but only display filtered ones)
-        localStorage.setItem('cachedAds', JSON.stringify(processedAds));
-        
-        // Update state with filtered ads
-        setAds(filteredAds);
-      } catch (error) {
-        logger.error('Error fetching ads:', error);
-        // Use cached ads if available and the API call fails
-        const cachedAds = localStorage.getItem('cachedAds');
-        if (cachedAds) {
-          const parsedAds = JSON.parse(cachedAds);
-          // Apply same filtering to cached ads
-          const filteredAds = currentUser?.isAdmin 
-            ? parsedAds 
-            : parsedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
-          setAds(filteredAds);
-        }
-      }
-    };
-
-    fetchAds(); // Only fetch once on mount - WebSocket handles updates
   }, [currentUser]);
 
   // Pick up token refreshes that happen inside the fetch interceptor (outside React).
