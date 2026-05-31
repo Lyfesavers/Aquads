@@ -18,6 +18,32 @@ export function getSkipperAuthEpoch(user) {
   return getSkipperSessionKey(user) || 'guest';
 }
 
+/** Decode Aquads JWT payload (no verify) — used to ensure API calls match logged-in user. */
+export function decodeJwtPayload(token) {
+  if (!token) return null;
+  try {
+    const part = String(token).split('.')[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+export function getJwtUserId(token) {
+  const p = decodeJwtPayload(token);
+  const id = p?.userId ?? p?._id ?? p?.id;
+  return id != null ? String(id) : '';
+}
+
+/** True when this JWT belongs to the same Aquads user as sessionKey (Mongo user id). */
+export function jwtMatchesSessionKey(token, sessionKey) {
+  if (!token || !sessionKey) return false;
+  const jwtUserId = getJwtUserId(token);
+  return jwtUserId !== '' && jwtUserId === String(sessionKey);
+}
+
 /** Module-level Skipper UI bookkeeping cleared when the account changes. */
 const recentlyDeletedThreadIds = new Set();
 

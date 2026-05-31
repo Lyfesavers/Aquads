@@ -24,6 +24,8 @@ import {
   filterSkipperThreads,
   getSkipperAuthEpoch,
   getSkipperSessionKey,
+  getJwtUserId,
+  jwtMatchesSessionKey,
   markSkipperThreadDeleted,
   createSkipperAbortController,
   createSkipperBootstrapAbort,
@@ -414,9 +416,19 @@ export default function ProjectAgentPanel({
     }
 
     const epochAtStart = authEpoch;
-    const bearer = currentUser?.token || getActiveAuthToken();
     const signal = createSkipperBootstrapAbort();
     let cancelled = false;
+
+    const resolveBearerForAccount = async () => {
+      const deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        if (cancelled || signal.aborted) return null;
+        const bearer = currentUser?.token || getActiveAuthToken();
+        if (bearer && jwtMatchesSessionKey(bearer, sessionKey)) return bearer;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return null;
+    };
 
     if (restoredSession) {
       setHydratedEpoch(authEpoch);
@@ -435,11 +447,29 @@ export default function ProjectAgentPanel({
     setGateError('');
     setError('');
 
+    (async () => {
+      const bearer = await resolveBearerForAccount();
+      if (cancelled || signal.aborted || !loadStillValid(epochAtStart)) return;
+
+      if (!bearer) {
+        setGateError(
+          'Session is still syncing. Close Skipper and open it again, or log out and log back in.'
+        );
+        setLoading(false);
+        skipperDebugLog('bootstrap blocked — JWT userId did not match session', {
+          sessionKey,
+          username: currentUser?.username,
+          jwtUserId: getJwtUserId(currentUser?.token || getActiveAuthToken())
+        });
+        return;
+      }
+
     const trace = createSkipperBootstrapTrace({
       account: currentUser?.username,
       userId: sessionKey,
       epoch: epochAtStart,
-      tokenMatchesUser: Boolean(bearer && token && bearer === token)
+      jwtUserId: getJwtUserId(bearer),
+      jwtMatchesSession: true
     });
 
     const abortBootstrap = (reason) => {
@@ -451,7 +481,6 @@ export default function ProjectAgentPanel({
       });
     };
 
-    (async () => {
       try {
         trace.mark('fetch eligible');
         const { eligible: list, code } = await fetchProjectAgentEligible(bearer);
