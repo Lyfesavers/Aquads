@@ -1354,10 +1354,10 @@ function App() {
     setCurrentUser(null);
     socket.auth = {};
     socket.disconnect();
-    // Full page reload still guarantees 100% clean state — no stale React state,
-    // closures, pending async ops, or socket connections survive.
-    // The next login behaves exactly like a first login.
-    window.location.replace('/home');
+    // Full page reload on the same URL (not /home) — clean state without yanking the user
+    // off marketplace, dashboard, Skipper, etc.
+    const stayUrl = `${window.location.pathname}${window.location.search}` || '/';
+    window.location.replace(stayUrl);
   };
 
   // When JWT refresh fails or access expires without recovery, force a clean logout.
