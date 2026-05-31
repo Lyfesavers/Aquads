@@ -79,20 +79,27 @@ function bumpAuthSessionGeneration() {
   return authSessionGeneration;
 }
 
-/** Persist session to localStorage + activeAuthToken (client cache only). */
+/**
+ * Write session to client cache. Does not bump generation (safe for profile/verify updates).
+ * Login/logout must use commitAuthSession / clearAuthSessionStorage instead.
+ */
 export function persistAuthSession(user) {
+  if (!user?.token) return;
+  activeAuthToken = String(user.token);
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  localStorage.setItem('token', user.token);
+}
+
+/** New login — invalidate in-flight refresh and persist. */
+export function commitAuthSession(user) {
   bumpAuthSessionGeneration();
   if (!user?.token) {
-    activeAuthToken = null;
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('token');
-    window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
+    clearAuthSessionStorage();
     return;
   }
   activeAuthToken = String(user.token);
   localStorage.setItem('currentUser', JSON.stringify(user));
   localStorage.setItem('token', user.token);
-  window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
 }
 
 /** Clear client auth cache (does not touch React state). */
@@ -101,7 +108,6 @@ export function clearAuthSessionStorage() {
   activeAuthToken = null;
   localStorage.removeItem('currentUser');
   localStorage.removeItem('token');
-  window.dispatchEvent(new CustomEvent('aquads-auth-session-changed'));
 }
 
 function readAuthTokenFromStorage() {

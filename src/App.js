@@ -17,8 +17,8 @@ import {
   trackBubbleClick,
   forceSessionLogout,
   persistAuthSession,
-  clearAuthSessionStorage,
-  getAuthSessionGeneration
+  commitAuthSession,
+  clearAuthSessionStorage
 } from './services/api';
 import {
   resetSkipperClientSession,
@@ -616,15 +616,8 @@ function App() {
     return null;
   });
 
-  // Mirror React session → client cache (localStorage + in-memory token for fetch interceptor).
-  // Source of truth for identity is still the backend JWT on every API call.
-  useEffect(() => {
-    if (currentUser?.token) {
-      persistAuthSession(currentUser);
-    } else if (!currentUser) {
-      clearAuthSessionStorage();
-    }
-  }, [currentUser]);
+  // Do NOT mirror every currentUser change → localStorage (that overwrote a fresh
+  // login with the previous account still in React until the next render).
 
   // When true, the next validateToken cycle is skipped because we just
   // received fresh data from the server (login/register). This prevents
@@ -1267,16 +1260,6 @@ function App() {
       sessionStorage.removeItem('aquads_session_expired');
       showNotification('Your session expired. Please log in again.', 'info');
     }
-    const loginNotice = sessionStorage.getItem('aquads_login_notice');
-    if (loginNotice) {
-      sessionStorage.removeItem('aquads_login_notice');
-      showNotification(
-        loginNotice === 'google'
-          ? 'Successfully signed in with Google!'
-          : 'Successfully logged in!',
-        'success'
-      );
-    }
   }, []);
 
   // Function to check if user has an unbumped ad and show reminder
@@ -1309,13 +1292,14 @@ function App() {
     try {
       const user = await loginUser(credentials);
       resetSkipperClientSession();
-      persistAuthSession(user);
       skipNextValidationRef.current = true;
+      setCurrentUser(user);
+      commitAuthSession(user);
       setShowLoginModal(false);
-      sessionStorage.setItem('aquads_login_notice', 'login');
-      // Hard reload (same as logout) so Skipper and all React state match the new account.
-      window.location.replace('/home');
-      return;
+      showNotification('Successfully logged in!', 'success');
+      setTimeout(() => {
+        checkForUnbumpedAd(user);
+      }, 1000);
     } catch (error) {
       logger.error('Login error:', error);
       
@@ -1336,12 +1320,14 @@ function App() {
     try {
       const user = await loginWithGoogle(idToken);
       resetSkipperClientSession();
-      persistAuthSession(user);
       skipNextValidationRef.current = true;
+      setCurrentUser(user);
+      commitAuthSession(user);
       setShowLoginModal(false);
-      sessionStorage.setItem('aquads_login_notice', 'google');
-      window.location.replace('/home');
-      return;
+      showNotification('Successfully signed in with Google!', 'success');
+      setTimeout(() => {
+        checkForUnbumpedAd(user);
+      }, 1000);
     } catch (error) {
       logger.error('Google login error:', error);
       if (error.emailVerificationRequired && error.email) {
@@ -1433,10 +1419,9 @@ function App() {
           return;
         }
 
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('token', user.token);
         skipNextValidationRef.current = true;
         setCurrentUser(user);
+        commitAuthSession(user);
 
         if (formData.email) {
           logger.log('Attempting to send welcome email...');
@@ -1476,8 +1461,7 @@ function App() {
           token: verifiedUser.token,
           refreshToken: verifiedUser.refreshToken ?? prev?.refreshToken
         };
-        localStorage.setItem('token', merged.token);
-        localStorage.setItem('currentUser', JSON.stringify(merged));
+        commitAuthSession(merged);
         return merged;
       });
       reconnectSocket();
@@ -1829,7 +1813,12 @@ function App() {
   useEffect(() => {
     const handleTokenRefresh = (e) => {
       const { token, refreshToken } = e.detail;
-      setCurrentUser(prev => prev ? { ...prev, token, refreshToken } : null);
+      setCurrentUser((prev) => {
+        if (!prev) return null;
+        const next = { ...prev, token, refreshToken };
+        persistAuthSession(next);
+        return next;
+      });
     };
     window.addEventListener('tokenRefreshed', handleTokenRefresh);
     return () => window.removeEventListener('tokenRefreshed', handleTokenRefresh);
@@ -1884,6 +1873,7 @@ function App() {
               Object.assign(merged, pickLinkInBioState(prev));
             }
             if (JSON.stringify(merged) !== JSON.stringify(prev)) {
+              persistAuthSession(merged);
               return merged;
             }
             return prev;
@@ -1947,9 +1937,12 @@ function App() {
     if (options.linkInBio) {
       linkInBioProtectUntilRef.current = Date.now() + 5000;
     }
-    setCurrentUser((prev) =>
-      typeof updatedUserOrFn === 'function' ? updatedUserOrFn(prev) : updatedUserOrFn
-    );
+    setCurrentUser((prev) => {
+      const next =
+        typeof updatedUserOrFn === 'function' ? updatedUserOrFn(prev) : updatedUserOrFn;
+      if (next?.token) persistAuthSession(next);
+      return next;
+    });
     if (!options.silent) {
       showNotification('Profile updated successfully!', 'success');
     }
@@ -2742,7 +2735,7 @@ function App() {
         {currentUser?.token && (
           <Suspense fallback={null}>
             <ProjectAgentFab
-              key={`${getSkipperSessionKey(currentUser)}-${getAuthSessionGeneration()}`}
+              key={getSkipperSessionKey(currentUser)}
               currentUser={currentUser}
             />
           </Suspense>

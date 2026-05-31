@@ -350,14 +350,6 @@ export default function ProjectAgentPanel({
     clearPanelForSessionChange(sessionKey);
   }, [sessionKey, clearPanelForSessionChange]);
 
-  useEffect(() => {
-    const onAuthSessionChanged = () => {
-      clearPanelForSessionChange(sessionKey);
-    };
-    window.addEventListener('aquads-auth-session-changed', onAuthSessionChanged);
-    return () => window.removeEventListener('aquads-auth-session-changed', onAuthSessionChanged);
-  }, [sessionKey, clearPanelForSessionChange]);
-
   const updateVideoMessage = useCallback((messageId, patch) => {
     const id = String(messageId);
     setMessages((prev) =>
