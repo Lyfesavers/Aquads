@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCopy, FaCheck, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaMobile, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH, FaChevronDown, FaChevronUp, FaQuestionCircle } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaSearch, FaFilter, FaGift, FaExternalLinkAlt, FaCoins, FaGamepad, FaCode, FaHardHat, FaUtensils, FaTshirt, FaBook, FaLaptop, FaHeartbeat, FaPlane, FaFilm, FaHome, FaBriefcase, FaDollarSign, FaPalette, FaMicrochip, FaDumbbell, FaSprayCan, FaCar, FaCloud, FaCreditCard, FaEllipsisH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import BannerDisplay from './BannerDisplay';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
 import CreateBannerModal from './CreateBannerModal';
 import NotificationBell from './NotificationBell';
-import { socket } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
 
 const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
@@ -23,7 +22,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showFilters, setShowFilters] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
   
   // Modal states
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -32,20 +30,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  
-  // Removed old redemption states - now using membership system
-  // const [selectedOffer, setSelectedOffer] = useState(null);
-  // const [showRedemptionModal, setShowRedemptionModal] = useState(false);
-  // const [redeeming, setRedeeming] = useState(false);
-  // const [redemptionResult, setRedemptionResult] = useState(null);
-  // const [copiedCode, setCopiedCode] = useState(false);
-  
-  // User points (fetch from socket like Dashboard does)
-  const [userPoints, setUserPoints] = useState(0);
-  const [pointsInfo, setPointsInfo] = useState(null);
-  
-  // Membership status
-  const [membership, setMembership] = useState(null);
 
   // Category icons mapping
   const getCategoryIcon = (category) => {
@@ -91,50 +75,11 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   useEffect(() => {
     fetchPartners();
     fetchCategories();
-    if (currentUser) {
-      fetchMembershipStatus();
-    }
-  }, [currentUser]);
+  }, []);
 
   useEffect(() => {
     filterPartners();
   }, [partners, selectedCategory, searchTerm, sortBy]);
-
-  // Fetch points via socket like Dashboard does
-  useEffect(() => {
-    if (!socket || !currentUser) return;
-
-    const handleAffiliateInfoLoaded = (data) => {
-      if (data.pointsInfo) {
-        setPointsInfo(data.pointsInfo);
-        setUserPoints(data.pointsInfo.points || 0);
-      }
-    };
-
-    const handleAffiliateEarningUpdate = (data) => {
-      if (currentUser?.userId === data.affiliateId || currentUser?.id === data.affiliateId) {
-        if (data.newTotalPoints !== undefined) {
-          setUserPoints(data.newTotalPoints);
-          setPointsInfo(prev => prev ? { ...prev, points: data.newTotalPoints } : { points: data.newTotalPoints });
-        }
-      }
-    };
-
-    socket.on('affiliateInfoLoaded', handleAffiliateInfoLoaded);
-    socket.on('affiliateEarningUpdate', handleAffiliateEarningUpdate);
-
-    // Request affiliate info on mount
-    if (currentUser.userId || currentUser.id) {
-      socket.emit('requestAffiliateInfo', {
-        userId: currentUser.userId || currentUser.id
-      });
-    }
-
-    return () => {
-      socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
-      socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
-    };
-  }, [currentUser, socket]);
 
   const fetchPartners = async () => {
     try {
@@ -184,29 +129,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
     }
   };
 
-  const fetchMembershipStatus = async () => {
-    try {
-      const token = currentUser?.token;
-      if (!token) {
-        console.error('No authentication token found');
-        return;
-      }
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/membership/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMembership(data.membership);
-      }
-    } catch (error) {
-      console.error('Error fetching membership status:', error);
-    }
-  };
-
   const filterPartners = () => {
     let filtered = [...partners];
 
@@ -239,8 +161,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
     setFilteredPartners(filtered);
   };
-
-  // Removed old redemption functions - now using membership system
 
   if (loading) {
     return (
@@ -308,7 +228,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 to="/partner-rewards"
                 className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/30 transition-all duration-300 backdrop-blur-sm text-white"
               >
-                🎯 Rewards
+                🤝 Partners
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
@@ -325,7 +245,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
               {currentUser ? (
                 <>
-                  <div className="text-blue-400 font-medium text-sm">{userPoints} pts</div>
                   <NotificationBell currentUser={currentUser} />
                   
                   {/* User Dropdown */}
@@ -351,15 +270,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                           >
                             📊 Dashboard
                           </Link>
-                          {currentUser.userType === 'project' && (
-                            <Link
-                              to="/dashboard/partnerStore"
-                              onClick={() => setShowUserDropdown(false)}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-green-600/50 transition-colors"
-                            >
-                              🎁 List Reward
-                            </Link>
-                          )}
                           <button
                             onClick={() => {
                               setShowProfileModal(true);
@@ -430,7 +340,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 className="block px-3 py-2 text-blue-400 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                🎯 Rewards
+                🤝 Partners
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
@@ -448,7 +358,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
               {currentUser ? (
                 <>
-                  <div className="px-3 py-2 text-blue-400 font-medium">{userPoints} points</div>
                   <Link
                     to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -456,15 +365,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                   >
                     📊 Dashboard
                   </Link>
-                  {currentUser.userType === 'project' && (
-                    <Link
-                      to="/dashboard/partnerStore"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block w-full text-left px-3 py-2 text-green-400 hover:text-green-300"
-                    >
-                      🎁 List Reward
-                    </Link>
-                  )}
                   <button
                     onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
                     className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
@@ -514,140 +414,13 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-purple-400 mb-4">
-              👑 Partner Rewards
+              🤝 Our Partners
             </h1>
             <p className="text-xl text-gray-300 mb-6">
-              Access exclusive discounts at partner stores with your membership
+              Discover verified Aquads partner projects and businesses
             </p>
-            {currentUser && (
-              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                <div className="inline-flex items-center space-x-2 bg-blue-600/20 border border-blue-400/30 rounded-full px-6 py-3">
-                  <FaGift className="text-blue-400" />
-                  <span className="text-white font-medium">
-                    Your Points: <span className="text-blue-400 font-bold">{userPoints.toLocaleString()}</span>
-                  </span>
-                </div>
-                {membership?.isActive ? (
-                  <div className="inline-flex items-center space-x-2 bg-green-600/20 border border-green-400/30 rounded-full px-6 py-3">
-                    <span className="text-green-400">👑</span>
-                    <span className="text-white font-medium">
-                      Active Member: <span className="text-green-400 font-bold">{membership.memberId}</span>
-                    </span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center space-x-2 bg-gray-600/20 border border-gray-400/30 rounded-full px-6 py-3">
-                    <span className="text-gray-400">🔒</span>
-                    <span className="text-white font-medium">
-                      Membership Required
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
           </motion.div>
         </div>
-
-        {/* How It Works Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-12"
-        >
-          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl border border-gray-600/30 overflow-hidden">
-            {/* Header with Toggle Button */}
-            <button
-              onClick={() => setShowHowItWorks(!showHowItWorks)}
-              className="w-full p-6 sm:p-8 text-left hover:bg-gray-700/30 transition-colors duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FaQuestionCircle className="text-blue-400 text-xl" />
-                  <h2 className="text-2xl font-bold text-white">How It Works</h2>
-                </div>
-                <motion.div
-                  animate={{ rotate: showHowItWorks ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <FaChevronDown className="text-gray-400 text-lg" />
-                </motion.div>
-              </div>
-            </button>
-
-            {/* Collapsible Content */}
-            <AnimatePresence>
-              {showHowItWorks && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-6 sm:px-8 pb-6 sm:pb-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Step 1 */}
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white text-2xl font-bold">1</span>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Subscribe to Membership</h3>
-                <p className="text-gray-300 text-sm">
-                  Pay 1,000 points monthly for unlimited access to all partner discounts
-                </p>
-              </div>
-
-              {/* Step 2 */}
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white text-2xl font-bold">2</span>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Access Member Rewards</h3>
-                <p className="text-gray-300 text-sm">
-                  Browse exclusive discounts from verified partner stores across all categories
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white text-2xl font-bold">3</span>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Show Your Member Card</h3>
-                <p className="text-gray-300 text-sm">
-                  Display your QR code at merchant stores for instant verification and discounts
-                </p>
-              </div>
-            </div>
-
-            {/* Benefits */}
-            <div className="mt-8 pt-6 border-t border-gray-600/30">
-              <h3 className="text-lg font-semibold text-white mb-4 text-center">Membership Benefits</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="flex items-center space-x-2 text-gray-300">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-sm">Unlimited Partner Access</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-300">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-sm">Priority Customer Support</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-300">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-sm">Exclusive Partner Offers</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-300">
-                  <span className="text-green-400">✓</span>
-                  <span className="text-sm">Monthly Auto-Renewal</span>
-                </div>
-              </div>
-            </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
 
         {/* Search and Sort */}
         <div className="mb-6">
@@ -837,13 +610,9 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                           <span className="text-green-400 font-bold text-sm">
                             {offer.discountAmount}
                           </span>
-                          <div className={`px-3 py-1 rounded text-xs font-medium ${
-                            membership?.isActive
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-600 text-gray-400'
-                          }`}>
-                            {membership?.isActive ? 'Available' : 'Membership Required'}
-                          </div>
+                          {offer.discountCode && (
+                            <span className="text-blue-400 text-xs font-mono">{offer.discountCode}</span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -854,8 +623,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           </motion.div>
         )}
       </div>
-
-      {/* Removed old redemption modal - now using membership system */}
 
       {/* Modals */}
       {showLoginModal && (

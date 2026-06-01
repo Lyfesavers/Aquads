@@ -76,7 +76,7 @@ const Terms = () => {
                   <li><span className="text-blue-400 font-semibold">Points & Rewards System:</span> A platform-wide points system where users earn points through various activities including referrals, social media raids, and platform engagement; points may be redeemed for platform benefits.</li>
                   <li><span className="text-blue-400 font-semibold">Social Media Raids:</span> Organized Twitter/X and Facebook engagement campaigns where users earn points by completing social media interactions.</li>
                   <li><span className="text-blue-400 font-semibold">Job Board:</span> A board where employers can post jobs and freelancers can browse and apply. Listings and applications are your responsibility; Aquads may remove content that violates our guidelines.</li>
-                  <li><span className="text-blue-400 font-semibold">Partner Marketplace:</span> A marketplace where users with active membership can access exclusive discounts and rewards from partner businesses using their accumulated points.</li>
+                  <li><span className="text-blue-400 font-semibold">Partner Directory:</span> A public listing of verified Aquads partner projects and businesses.</li>
                   <li><span className="text-blue-400 font-semibold">Telegram Mini‑App:</span> Access to core Services within Telegram's interface.</li>
                   <li><span className="text-blue-400 font-semibold">Chrome Browser Extension:</span> The AquaSwap Chrome extension enabling cross-chain token swaps directly from any webpage without leaving your current browser tab.</li>
                 </ul>

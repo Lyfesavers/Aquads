@@ -10,8 +10,6 @@ import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 import AdminDiscountCodes from './AdminDiscountCodes';
 import PartnerAdmin from './PartnerAdmin';
-import PartnerStoreManager from './PartnerStoreManager';
-import MembershipManager from './MembershipManager';
 import { socket } from '../services/api';
 import logger from '../utils/logger';
 import QRCode from 'qrcode';
@@ -146,7 +144,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const [affiliateInfo, setAffiliateInfo] = useState(null);
   const [pointsInfo, setPointsInfo] = useState(null);
   const [lastSocketPointsUpdate, setLastSocketPointsUpdate] = useState(null);
-  const [membershipInfo, setMembershipInfo] = useState(null);
 
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
@@ -156,7 +153,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const [aquaPayLink, setAquaPayLink] = useState('');
 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
-  const [isLoadingMembership, setIsLoadingMembership] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
 
   const [bookings, setBookings] = useState([]);
@@ -354,7 +350,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     
     // STEP 1: Main tab data loads IMMEDIATELY (0ms)
     socket.emit('requestAffiliateInfo', { userId });
-    socket.emit('requestMembershipInfo', { userId });
     
     // STEP 2: Bookings data loads after 300ms
     timers.push(setTimeout(() => {
@@ -651,66 +646,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       socket.off('affiliateInfoLoaded', handleAffiliateInfoLoaded);
       socket.off('affiliateInfoError', handleAffiliateInfoError);
       socket.off('affiliateEarningUpdate', handleAffiliateEarningUpdate);
-    };
-  }, [socket, currentUser]);
-
-  // Socket listeners for membership data
-  useEffect(() => {
-    if (!socket || !currentUser) return;
-
-    const handleMembershipInfoLoaded = (data) => {
-      setMembershipInfo(data.membership);
-      setIsLoadingMembership(false);
-    };
-
-    const handleMembershipInfoError = (error) => {
-      console.error('Error loading membership info via socket:', error);
-      setIsLoadingMembership(false);
-    };
-
-    const handleMembershipUpdate = (data) => {
-      // Update membership data in real-time
-      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
-        setMembershipInfo(data.membership);
-        // Also update points if they changed due to membership action
-        if (data.pointsRemaining !== undefined) {
-          setPointsInfo(prev => prev ? { ...prev, points: data.pointsRemaining } : null);
-        }
-      }
-    };
-
-    const handleMembershipActionResponse = (data) => {
-      // Handle responses from membership actions (subscribe/cancel)
-      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
-        setMembershipInfo(data.membership);
-        if (data.pointsRemaining !== undefined) {
-          setPointsInfo(prev => prev ? { ...prev, points: data.pointsRemaining } : null);
-        }
-        // You could add a toast notification here if you have a notification system
-        console.log('Membership action completed:', data.message);
-      }
-    };
-
-    const handleMembershipActionError = (data) => {
-      // Handle errors from membership actions
-      if (currentUser?.userId === data.userId || currentUser?.id === data.userId) {
-        // You could add a toast notification here if you have a notification system
-        console.error('Membership action error:', data.error);
-      }
-    };
-
-    socket.on('membershipInfoLoaded', handleMembershipInfoLoaded);
-    socket.on('membershipInfoError', handleMembershipInfoError);
-    socket.on('membershipUpdated', handleMembershipUpdate);
-    socket.on('membershipActionResponse', handleMembershipActionResponse);
-    socket.on('membershipActionError', handleMembershipActionError);
-
-    return () => {
-      socket.off('membershipInfoLoaded', handleMembershipInfoLoaded);
-      socket.off('membershipInfoError', handleMembershipInfoError);
-      socket.off('membershipUpdated', handleMembershipUpdate);
-      socket.off('membershipActionResponse', handleMembershipActionResponse);
-      socket.off('membershipActionError', handleMembershipActionError);
     };
   }, [socket, currentUser]);
 
@@ -3189,12 +3124,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     { id: 'linkinbio', label: 'Link in bio', icon: '🔗', show: true },
     { id: 'aquapay', label: 'AquaPay', icon: '💸', show: true },
     { id: 'affiliateAnalytics', label: 'Affiliate Analytics', icon: '📈', show: true, onSelect: () => { if (!affiliateAnalytics) fetchAffiliateAnalytics(); } },
-    { id: 'membership', label: 'My Membership', icon: '👑', show: true },
-    { id: 'partnerStore', label: 'My Partner Store', icon: '🎁', show: currentUser.userType === 'project' },
     { id: 'admin', label: 'Admin Panel', icon: '🛡️', show: currentUser.isAdmin },
     { id: 'twitterRaids', label: 'Twitter Raids', icon: '🐦', show: currentUser.isAdmin },
     { id: 'facebookRaids', label: 'Facebook Raids', icon: '📘', show: currentUser.isAdmin },
-    { id: 'partnerAdmin', label: 'Partner Stores', icon: '🎯', show: currentUser.isAdmin },
+    { id: 'partnerAdmin', label: 'Partners', icon: '🤝', show: currentUser.isAdmin },
   ].filter(t => t.show);
 
   const handleTabSelect = (tab) => {
@@ -3232,12 +3165,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     linkinbio: 'One link for all your socials — powered by Aquads.xyz',
     aquapay: 'Payment settings and transaction history',
     affiliateAnalytics: 'Track your referral performance and earnings',
-    membership: 'Your membership plan and benefits',
-    partnerStore: 'Manage your partner rewards store',
     admin: 'Platform administration and moderation',
     twitterRaids: 'Review and manage Twitter raid requests',
     facebookRaids: 'Review and manage Facebook raid requests',
-    partnerAdmin: 'Manage partner store listings',
+    partnerAdmin: 'Manage partner listings',
   };
 
   /* --- Full-page layout: sidebar on desktop, horizontal tabs on mobile --- */
@@ -6775,28 +6706,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
           {/* Add the Facebook Raids tab content */}
           {activeTab === 'facebookRaids' && currentUser?.isAdmin && renderFacebookRaidsTab()}
           
-          {/* Partner Store tab content for project users */}
-          {activeTab === 'partnerStore' && currentUser?.userType === 'project' && (
-            <PartnerStoreManager currentUser={currentUser} />
-          )}
-
           {/* Partner Admin tab content */}
           {activeTab === 'partnerAdmin' && currentUser?.isAdmin && (
             <PartnerAdmin currentUser={currentUser} />
-          )}
-
-          {/* Membership tab content */}
-          {activeTab === 'membership' && (
-            <MembershipManager 
-              currentUser={currentUser} 
-              userPoints={pointsInfo?.points || 0}
-              membershipInfo={membershipInfo}
-              isLoading={isLoadingMembership}
-              socket={socket}
-              onPointsUpdate={(newPoints) => {
-                setPointsInfo(prev => prev ? { ...prev, points: newPoints } : null);
-              }}
-            />
           )}
 
           <div className="mb-6">

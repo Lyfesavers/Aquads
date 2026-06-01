@@ -202,7 +202,7 @@ const Footer = () => {
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
                   <FaGift className="mr-2" />
-                  <span>Partner Rewards</span>
+                  <span>Partners</span>
                 </Link>
                 <Link
                   to="/telegram-bot"
