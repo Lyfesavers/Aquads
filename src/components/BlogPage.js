@@ -11,6 +11,7 @@ import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
+import { getBlogAuthorId } from '../utils/blogEditor';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -141,7 +142,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
   const fetchBlog = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/blogs/${blogId}`);
+      const response = await fetch(`${API_URL}/blogs/${blogId}`, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Blog not found');
       }
@@ -214,7 +215,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
       }
 
       // Check if user is either the blog author or an admin
-      if (blog.author !== currentUser.userId && !currentUser.isAdmin) {
+      if (getBlogAuthorId(blog.author) !== currentUser.userId && !currentUser.isAdmin) {
         alert('You do not have permission to edit this blog post');
         return;
       }
@@ -236,8 +237,12 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         throw new Error('Failed to update blog');
       }
 
-      // Refresh the blog data to show updated content
-      await fetchBlog();
+      const updatedBlog = await response.json();
+      setBlog(updatedBlog);
+      const canonicalPath = `/learn/${createSlug(updatedBlog.title)}-${updatedBlog._id}`;
+      if (location.pathname !== canonicalPath) {
+        navigate(canonicalPath, { replace: true });
+      }
       setShowEditModal(false);
       alert('Blog updated successfully!');
     } catch (error) {
@@ -734,7 +739,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                   Share
                 </button>
                 
-                {currentUser && (currentUser.userId === blog.author || currentUser.isAdmin) && (
+                {currentUser && (currentUser.userId === getBlogAuthorId(blog.author) || currentUser.isAdmin) && (
                   <>
                     <button
                       onClick={handleEdit}
@@ -827,6 +832,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
        {/* Edit Blog Modal */}
        {showEditModal && (
          <CreateBlogModal
+           key={blog._id}
            onClose={() => setShowEditModal(false)}
            onSubmit={handleEditBlog}
            initialData={blog}

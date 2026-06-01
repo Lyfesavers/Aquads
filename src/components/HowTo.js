@@ -25,6 +25,7 @@ import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL, fetchMarketNews, fetchFreeCourses } from '../services/api';
+import { getBlogAuthorId } from '../utils/blogEditor';
 import { getDisplayName } from '../utils/nameUtils';
 import {
   TUTORIAL_VIDEOS,
@@ -388,11 +389,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     };
   }, [location.pathname, location.search, navigate]);
 
-  const fetchBlogs = async () => {
+  const fetchBlogs = async ({ bustCache = false } = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/blogs`);
+      const cacheQuery = bustCache ? `?_=${Date.now()}` : '';
+      const response = await fetch(`${API_URL}/blogs${cacheQuery}`, { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setBlogs(data);
@@ -461,7 +463,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       const data = await response.json();
       setShowCreateBlogModal(false);
       setError(null);
-      fetchBlogs();
+      fetchBlogs({ bustCache: true });
     } catch (error) {
       setError('Failed to create blog post. Please try again.');
     } finally {
@@ -486,12 +488,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       }
 
       // Check if user is either the blog author or an admin
-      if (editingBlog.author !== currentUser.userId && !currentUser.isAdmin) {
+      if (getBlogAuthorId(editingBlog.author) !== currentUser.userId && !currentUser.isAdmin) {
         setError('You do not have permission to edit this blog post');
         return;
       }
 
-      // Use a simpler, more direct approach that matches the working delete function
       const response = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
         method: 'PATCH',
         headers: {
@@ -509,7 +510,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         throw new Error('Failed to update blog');
       }
 
-      await fetchBlogs();
+      const updatedBlog = await response.json();
+      setBlogs((prev) =>
+        prev.map((b) => (b._id === updatedBlog._id ? { ...b, ...updatedBlog } : b))
+      );
+      await fetchBlogs({ bustCache: true });
       setEditingBlog(null);
       setShowCreateBlogModal(false);
       setError(null);
@@ -556,7 +561,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
       }
 
       // Only update UI if deletion was successful
-      await fetchBlogs();
+      await fetchBlogs({ bustCache: true });
       setError(null);
     } catch (error) {
       setError(error.message || 'Failed to delete blog. Please try again.');
@@ -1490,6 +1495,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         {/* Create/Edit Blog Modal */}
         {showCreateBlogModal && (
           <CreateBlogModal
+            key={editingBlog?._id || 'new-blog'}
             onClose={() => {
               // Prevent closing while submitting
               if (!isSubmitting) {

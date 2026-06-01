@@ -197,3 +197,11 @@ export const serializeBlogEditorContent = (editor, storageFormat) => {
 
   return html;
 };
+
+/** Author id whether the API returned a populated user object or a raw ObjectId. */
+export const getBlogAuthorId = (author) => {
+  if (author == null) return null;
+  if (typeof author === 'string') return author;
+  if (typeof author === 'object' && author._id != null) return String(author._id);
+  return String(author);
+};

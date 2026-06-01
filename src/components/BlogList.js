@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import BlogContentRenderer from './BlogContentRenderer';
-import { isMarkdownBlogContent, sanitizeBlogHtml } from '../utils/blogEditor';
+import { isMarkdownBlogContent, sanitizeBlogHtml, getBlogAuthorId } from '../utils/blogEditor';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -128,7 +128,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
                 >
                   <FaShare size={18} />
                 </button>
-                {currentUser && (currentUser.userId === blog.author || currentUser.isAdmin) && (
+                {currentUser && (currentUser.userId === getBlogAuthorId(blog.author) || currentUser.isAdmin) && (
                   <>
                     <button
                       onClick={() => onEditBlog(blog)}

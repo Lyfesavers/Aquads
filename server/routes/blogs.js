@@ -53,7 +53,6 @@ const optimizeBlogImageBuffer = async (inputBuffer, variant = 'inline') => {
 // Cache for the blogs list — blogs change rarely (admin-only writes), 5-minute TTL is safe.
 let blogsListCache = null;
 let blogsListCacheTime = 0;
-let blogsListRefreshing = false;
 const BLOGS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes (admin-only writes; invalidation handles freshness)
 
 const invalidateBlogsCache = () => {
@@ -77,24 +76,18 @@ router.get('/', async (req, res) => {
   try {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
     const now = Date.now();
+    const cacheBust = req.query._ != null || req.query.t != null;
 
-    if (blogsListCache) {
-      res.set('X-Cache', now - blogsListCacheTime < BLOGS_CACHE_TTL ? 'HIT' : 'STALE');
-      res.json(blogsListCache);
-      if (!blogsListRefreshing && now - blogsListCacheTime >= BLOGS_CACHE_TTL) {
-        blogsListRefreshing = true;
-        fetchAndCacheBlogs().catch(err =>
-          console.error('[Blogs Cache] Background refresh failed:', err.message)
-        ).finally(() => { blogsListRefreshing = false; });
-      }
-      return;
+    if (blogsListCache && !cacheBust && now - blogsListCacheTime < BLOGS_CACHE_TTL) {
+      res.set('X-Cache', 'HIT');
+      return res.json(blogsListCache);
     }
 
-    // No cache — must wait
     const blogs = await fetchAndCacheBlogs();
-    res.set('X-Cache', 'MISS');
+    res.set('X-Cache', cacheBust ? 'BYPASS' : 'MISS');
     res.json(blogs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch blogs' });
@@ -195,6 +188,7 @@ router.get('/:id', async (req, res) => {
     // Add no-index headers to prevent search engines from indexing the API endpoint
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     
     const blog = await Blog.findById(req.params.id)
       .populate('author', 'username image')
@@ -294,7 +288,13 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
 
     await blog.save();
     invalidateBlogsCache();
-    res.json(blog);
+    const updated = await Blog.findById(blog._id)
+      .populate('author', 'username image')
+      .lean();
+    if (updated?.author?.image) {
+      updated.authorImage = updated.author.image;
+    }
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update blog' });
   }
