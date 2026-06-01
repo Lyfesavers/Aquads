@@ -172,7 +172,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-bold text-white mb-2">{blog.title}</h2>
+            <h2 className="text-xl font-bold text-yellow-400 mb-2">{blog.title}</h2>
 
             {/* Content Preview - always show truncated version */}
             {isMarkdownContent(blog.content) ? (
