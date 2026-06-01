@@ -24,6 +24,7 @@ const {
   computeShrunkSize,
   BUMP_VOTE_THRESHOLD
 } = require('../utils/bumpFromVotes');
+const { normalizeBlockchainSlug } = require('../constants/blockchains');
 const {
   LISTING_TIER_STARTER,
   LISTING_TIER_PREMIUM,
@@ -553,7 +554,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       logo,
       url: normalizedUrl,
       pairAddress,
-      blockchain,
+      blockchain: normalizeBlockchainSlug(blockchain),
       size: validatedSize, // Use validated size
       x: x || 0,
       y: y || 0,
@@ -725,7 +726,10 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
     
     allowedUpdates.forEach(field => {
       if (updates[field] !== undefined) {
-        updateData[field] = updates[field];
+        updateData[field] =
+          field === 'blockchain'
+            ? normalizeBlockchainSlug(updates[field])
+            : updates[field];
       }
     });
 

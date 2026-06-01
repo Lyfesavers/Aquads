@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaDiscord, FaRobot, FaSearch } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
+import BlockchainSelect from './BlockchainSelect';
+import { normalizeBlockchainSlug } from '../constants/blockchains';
 import { createAd as apiCreateAd } from '../services/api';
 
 const BLOCKCHAIN_OPTIONS = [
@@ -280,7 +282,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       
       // These 3 fields are 100% guaranteed in every DexScreener response
       const tokenSymbol = topPair.baseToken?.symbol || '';
-      const chainId = topPair.chainId || 'ethereum';
+      const chainId = normalizeBlockchainSlug(topPair.chainId || 'ethereum');
       const pairAddr = topPair.pairAddress || '';
 
       // Use ticker symbol as the title
@@ -839,49 +841,12 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 Blockchain
                 {fetchStatus === 'success' && <span className="text-green-400 text-sm ml-2">(auto-filled)</span>}
               </label>
-              <select
+              <BlockchainSelect
                 name="blockchain"
                 value={formData.blockchain}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
-              >
-                <option value="ethereum">Ethereum</option>
-                <option value="bsc">Binance Smart Chain</option>
-                <option value="polygon">Polygon</option>
-                <option value="pulsechain">PulseChain</option>
-                <option value="solana">Solana</option>
-                <option value="avalanche">Avalanche</option>
-                <option value="arbitrum">Arbitrum</option>
-                <option value="optimism">Optimism</option>
-                <option value="base">Base</option>
-                <option value="sui">Sui</option>
-                <option value="near">NEAR</option>
-                <option value="fantom">Fantom</option>
-                <option value="tron">TRON</option>
-                <option value="cronos">Cronos</option>
-                <option value="celo">Celo</option>
-                <option value="harmony">Harmony</option>
-                <option value="moonbeam">Moonbeam</option>
-                <option value="moonriver">Moonriver</option>
-                <option value="cosmos">Cosmos</option>
-                <option value="polkadot">Polkadot</option>
-                <option value="hedera">Hedera</option>
-                <option value="kadena">Kadena</option>
-                <option value="stacks">Stacks</option>
-                <option value="oasis">Oasis</option>
-                <option value="zilliqa">Zilliqa</option>
-                <option value="elrond">MultiversX (Elrond)</option>
-                <option value="kava">Kava</option>
-                <option value="injective">Injective</option>
-                <option value="aptos">Aptos</option>
-                <option value="algorand">Algorand</option>
-                <option value="stellar">Stellar</option>
-                <option value="flow">Flow</option>
-                <option value="cardano">Cardano</option>
-                <option value="ton">TON</option>
-                <option value="tezos">Tezos</option>
-                <option value="kaspa">Kaspa</option>
-              </select>
+              />
             </div>
 
             {/* Manual fields - user always fills these */}

@@ -79,6 +79,11 @@ import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
+import {
+  FILTER_BLOCKCHAIN_OPTIONS,
+  matchesBlockchainFilter,
+  getBlockchainLabel,
+} from './constants/blockchains';
 const DotsAndBoxes = lazy(() => import('./components/DotsAndBoxes'));
 const HorseRacing = lazy(() => import('./components/HorseRacing'));
 const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
@@ -130,32 +135,7 @@ function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
 
-// Define blockchain options for filters and display
-const BLOCKCHAIN_OPTIONS = [
-  { value: 'all', label: 'All Blockchains' },
-  { value: 'ethereum', label: 'Ethereum' },
-  { value: 'bsc', label: 'Binance Smart Chain' },
-  { value: 'polygon', label: 'Polygon' },
-  { value: 'pulsechain', label: 'PulseChain' },
-  { value: 'solana', label: 'Solana' },
-  { value: 'avalanche', label: 'Avalanche' },
-  { value: 'arbitrum', label: 'Arbitrum' },
-  { value: 'optimism', label: 'Optimism' },
-  { value: 'base', label: 'Base' },
-  { value: 'sui', label: 'Sui' },
-  { value: 'near', label: 'NEAR' },
-  { value: 'fantom', label: 'Fantom' },
-  { value: 'tron', label: 'TRON' },
-  { value: 'cronos', label: 'Cronos' },
-  { value: 'celo', label: 'Celo' },
-  { value: 'harmony', label: 'Harmony' },
-  { value: 'polkadot', label: 'Polkadot' },
-  { value: 'cosmos', label: 'Cosmos' },
-  { value: 'aptos', label: 'Aptos' },
-  { value: 'flow', label: 'Flow' },
-  { value: 'cardano', label: 'Cardano' },
-  { value: 'kaspa', label: 'Kaspa' }
-];
+const BLOCKCHAIN_OPTIONS = FILTER_BLOCKCHAIN_OPTIONS;
 
 const SHRINK_RATE = 4; // Amount to shrink by each interval
 const SHRINK_INTERVAL = 15000; // 15 seconds (matches backend for real-time sync)
@@ -769,10 +749,10 @@ function App() {
 
   // Calculate total pages whenever ads or filter changes
   useEffect(() => {
-    const filteredAds = blockchainFilter === 'all' 
-      ? ads 
-      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
-    
+    const filteredAds = blockchainFilter === 'all'
+      ? ads
+      : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter));
+
     // Separate bumped and non-bumped ads to calculate pages
     const bumpedAds = filteredAds.filter(ad => ad.isBumped);
     const nonBumpedAds = filteredAds.filter(ad => !ad.isBumped);
@@ -802,10 +782,10 @@ function App() {
 
   // Function to get currently visible ads
   const getVisibleAds = () => {
-    const filteredAds = blockchainFilter === 'all' 
-      ? ads 
-      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
-    
+    const filteredAds = blockchainFilter === 'all'
+      ? ads
+      : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter));
+
     // First, sort ads to put bumped ads first, then sort by bullish votes
     const sortedAds = [...filteredAds].sort((a, b) => {
       // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
@@ -3248,9 +3228,9 @@ function App() {
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       itemsPerPage={itemsPerPage}
-                      totalItems={blockchainFilter === 'all' 
-                        ? ads.length 
-                        : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase()).length}
+                      totalItems={blockchainFilter === 'all'
+                        ? ads.length
+                        : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter)).length}
                     />
                   </div>
                   
@@ -3459,7 +3439,7 @@ function App() {
                             <p className="text-gray-400 text-xl mb-2">No projects found</p>
                             {blockchainFilter !== 'all' && (
                               <p className="text-gray-500">
-                                No projects found for {BLOCKCHAIN_OPTIONS.find(option => option.value === blockchainFilter)?.label || blockchainFilter}.
+                                No projects found for {getBlockchainLabel(blockchainFilter)}.
                                 <button 
                                   className="ml-2 text-blue-400 hover:text-blue-300 underline"
                                   onClick={() => handleBlockchainFilterChange('all')}
@@ -3936,7 +3916,7 @@ function App() {
                     <h3 className="text-xl font-bold text-white mb-1">{votePopup.adDetails.title}</h3>
                     <p className="text-sm text-gray-300 mb-4">
                       {votePopup.adDetails.blockchain
-                        ? BLOCKCHAIN_OPTIONS.find(opt => opt.value === votePopup.adDetails.blockchain.toLowerCase())?.label || votePopup.adDetails.blockchain
+                        ? getBlockchainLabel(votePopup.adDetails.blockchain)
                         : 'Ethereum'
                       }
                     </p>

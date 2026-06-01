@@ -1,3 +1,4 @@
+const { normalizeBlockchainSlug } = require('../constants/blockchains');
 const DEX_SEARCH = 'https://api.dexscreener.com/latest/dex/search';
 const DEX_TOKENS = 'https://api.dexscreener.com/latest/dex/tokens';
 const FETCH_MS = Number(process.env.TOKEN_LOOKUP_TIMEOUT_MS) || 12_000;
@@ -34,7 +35,7 @@ function normalizeResolvedPair(pair) {
   return {
     title: symbol.slice(0, 120),
     name: name.slice(0, 200),
-    blockchain: chainId,
+    blockchain: normalizeBlockchainSlug(chainId),
     pairAddress,
     contractAddress: contractAddress || null,
     priceUsd: pair.priceUsd != null ? String(pair.priceUsd) : null,

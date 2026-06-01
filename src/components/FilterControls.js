@@ -1,44 +1,5 @@
 import React from 'react';
-
-const BLOCKCHAIN_OPTIONS = [
-  { value: 'all', label: 'All Blockchains' },
-  { value: 'ethereum', label: 'Ethereum' },
-  { value: 'bsc', label: 'Binance Smart Chain' },
-  { value: 'polygon', label: 'Polygon' },
-  { value: 'pulsechain', label: 'PulseChain' },
-  { value: 'solana', label: 'Solana' },
-  { value: 'avalanche', label: 'Avalanche' },
-  { value: 'arbitrum', label: 'Arbitrum' },
-  { value: 'optimism', label: 'Optimism' },
-  { value: 'base', label: 'Base' },
-  { value: 'sui', label: 'Sui' },
-  { value: 'near', label: 'NEAR' },
-  { value: 'fantom', label: 'Fantom' },
-  { value: 'tron', label: 'TRON' },
-  { value: 'cronos', label: 'Cronos' },
-  { value: 'celo', label: 'Celo' },
-  { value: 'harmony', label: 'Harmony' },
-  { value: 'polkadot', label: 'Polkadot' },
-  { value: 'cosmos', label: 'Cosmos' },
-  { value: 'aptos', label: 'Aptos' },
-  { value: 'flow', label: 'Flow' },
-  { value: 'cardano', label: 'Cardano' },
-  { value: 'kaspa', label: 'Kaspa' },
-  { value: 'moonbeam', label: 'Moonbeam' },
-  { value: 'moonriver', label: 'Moonriver' },
-  { value: 'hedera', label: 'Hedera' },
-  { value: 'kadena', label: 'Kadena' },
-  { value: 'stacks', label: 'Stacks' },
-  { value: 'oasis', label: 'Oasis' },
-  { value: 'zilliqa', label: 'Zilliqa' },
-  { value: 'multiversx', label: 'MultiversX' },
-  { value: 'kava', label: 'Kava' },
-  { value: 'injective', label: 'Injective' },
-  { value: 'algorand', label: 'Algorand' },
-  { value: 'stellar', label: 'Stellar' },
-  { value: 'ton', label: 'TON' },
-  { value: 'tezos', label: 'Tezos' }
-];
+import { LISTING_BLOCKCHAIN_OPTIONS } from '../constants/blockchains';
 
 const FilterControls = ({ 
   currentBlockchain, 
@@ -100,11 +61,21 @@ const FilterControls = ({
               className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white 
                         focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
             >
-              {BLOCKCHAIN_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              <option value="all">All Blockchains</option>
+              <optgroup label="Popular">
+                {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => o.popular).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="All chains">
+                {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => !o.popular).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
         </div>

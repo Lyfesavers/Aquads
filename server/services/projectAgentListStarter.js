@@ -9,6 +9,7 @@ const {
   normalizeProjectUrl,
   validateLogoUrl
 } = require('../utils/listingValidation');
+const { normalizeBlockchainSlug } = require('../constants/blockchains');
 
 const MAX_SIZE = 100;
 const MIN_SIZE = 50;
@@ -138,7 +139,7 @@ async function submitStarterListingViaAgent({
     logo: logoCheck.url,
     url,
     pairAddress: token.pairAddress,
-    blockchain: token.blockchain || 'ethereum',
+    blockchain: normalizeBlockchainSlug(token.blockchain || 'ethereum'),
     size: MAX_SIZE,
     x: 0,
     y: 0,
