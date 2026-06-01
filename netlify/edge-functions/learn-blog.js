@@ -1,5 +1,5 @@
-// Netlify Edge Function — injects blog-specific OG / Twitter / canonical /
-// JSON-LD metadata into the SPA shell for canonical blog URLs.
+// Netlify Edge Function — injects blog-specific head metadata, full JSON-LD,
+// and the article body into the SPA shell for canonical blog URLs.
 //
 // Why this exists:
 //   The legacy bot-only redirect for /learn/* was gated on a narrow
@@ -12,8 +12,9 @@
 //   Runs on every request to /learn/* (humans AND bots) at Netlify's CDN edge.
 //   - If the path matches /learn/{slug}-{24-hex-id}, fetch the blog from the
 //     API, ask Netlify for the normal SPA shell via context.next(), and inject
-//     blog-specific meta tags into the <head>. Every client now receives the
-//     full React SPA *and* working OG metadata in the same response.
+//     blog-specific <head> tags plus a static <article> before #root so
+//     crawlers see real article text without waiting for React.
+//   - BlogPage removes #aquads-seo-content on mount so users only see the SPA.
 //   - For any other /learn path (the Learn hub, /learn/courses/*, etc.) we
 //     simply call context.next() and return the response unchanged.
 //   - On any fetch / parse error we fall through to the SPA so the blog is
@@ -23,9 +24,8 @@
 //   - Canonical URL (/learn/{slug}-{id}) is the URL we want Google to rank.
 //     We do NOT mark it noindex — only the /share/blog/{id} wrapper carries
 //     the noindex hint. <link rel="canonical"> points at itself.
-//   - Tags injected here are duplicated by React Helmet once the SPA hydrates
-//     in the browser; that is harmless (browsers and crawlers tolerate it,
-//     and bots that never run JS only see the static injected tags).
+//   - BlogPosting JSON-LD (with articleBody) lives here only — not in React
+//     Helmet — so Google never sees duplicate structured data on direct loads.
 
 const BLOG_API_BASE = 'https://aquads-production.up.railway.app/api/blogs';
 const CANONICAL_HOST = 'https://www.aquads.xyz';
@@ -63,9 +63,15 @@ function stripHtml(html) {
     .trim();
 }
 
+function wordCount(plainText) {
+  if (!plainText) return 0;
+  return plainText.split(/\s+/).filter(Boolean).length;
+}
+
 function buildMetaBlock(blog, canonicalUrl) {
   const title = `${blog.title} - Aquads Blog`;
   const plainText = stripHtml(blog.content);
+  const articleBody = plainText;
   const description = plainText.length > 200
     ? plainText.slice(0, 197) + '...'
     : (plainText || 'Read the latest from the Aquads blog.');
@@ -80,6 +86,9 @@ function buildMetaBlock(blog, canonicalUrl) {
     headline: blog.title,
     description,
     image: imageUrl,
+    url: canonicalUrl,
+    articleBody,
+    wordCount: wordCount(plainText),
     author: {
       '@type': 'Person',
       name: author,
@@ -125,6 +134,28 @@ function buildMetaBlock(blog, canonicalUrl) {
 
     <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   `;
+}
+
+// Admin-authored HTML; injected for crawlers. BlogPage removes this on mount.
+function buildArticleBlock(blog) {
+  const content = blog.content || '';
+  return `<article id="aquads-seo-content" data-seo-prerender="true">
+  <h1>${escapeHtml(blog.title)}</h1>
+  <div class="aquads-seo-article-body">${content}</div>
+</article>`;
+}
+
+function injectArticleBlock(html, articleBlock) {
+  if (html.includes('id="aquads-seo-content"')) {
+    return html.replace(/<article id="aquads-seo-content"[\s\S]*?<\/article>/i, articleBlock);
+  }
+  if (html.includes('<div id="root"></div>')) {
+    return html.replace('<div id="root"></div>', `${articleBlock}\n<div id="root"></div>`);
+  }
+  if (html.includes('<div id="root">')) {
+    return html.replace(/<div id="root">\s*<\/div>/i, `${articleBlock}\n<div id="root"></div>`);
+  }
+  return html.replace('</body>', `${articleBlock}\n</body>`);
 }
 
 function stripExistingHeadDefaults(html) {
@@ -207,11 +238,13 @@ export default async (request, context) => {
   const titleSlug = createSlug(blog.title) || 'post';
   const canonicalUrl = `${CANONICAL_HOST}/learn/${titleSlug}-${blog._id}`;
   const metaBlock = buildMetaBlock(blog, canonicalUrl);
+  const articleBlock = buildArticleBlock(blog);
 
   const cleaned = stripExistingHeadDefaults(html);
-  const modified = cleaned.includes('<head>')
+  let modified = cleaned.includes('<head>')
     ? cleaned.replace('<head>', `<head>\n${metaBlock}`)
     : cleaned;
+  modified = injectArticleBlock(modified, articleBlock);
 
   const newHeaders = new Headers(response.headers);
   // Length will change after injection — let the platform recompute it

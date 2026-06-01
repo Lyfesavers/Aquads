@@ -80,6 +80,11 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     sessionStorage.setItem('learnActiveTab', 'blogs');
   }, []);
 
+  // learn-blog edge injects a static <article> for crawlers; remove once React renders
+  useEffect(() => {
+    document.getElementById('aquads-seo-content')?.remove();
+  }, []);
+
   useEffect(() => {
     if (!blogId) {
       setError('Blog ID not found');
@@ -379,39 +384,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <meta name="twitter:title" content={`${blog.title} - Aquads Blog`} />
         <meta name="twitter:description" content={plainTextContent} />
         <meta name="twitter:image" content={blog.bannerImage || 'https://www.aquads.xyz/logo712.png'} />
-        
-        {/* JSON-LD BlogPosting schema.org structured data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            "headline": blog.title,
-            "image": blog.bannerImage,
-            "datePublished": blog.createdAt,
-            "dateModified": blog.updatedAt || blog.createdAt,
-            "author": {
-              "@type": "Person",
-              "name": blog.authorUsername || blog.author,
-              "image": blog.authorImage
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Aquads",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://aquads.xyz/logo192.png"
-              }
-            },
-            "description": plainTextContent,
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": canonicalUrl
-            },
-            "wordCount": blog.content.replace(/<[^>]*>/g, '').split(/\s+/).length,
-            "articleBody": blog.content.replace(/<[^>]*>/g, ''),
-            "url": canonicalUrl
-          })}
-        </script>
+        {/* BlogPosting JSON-LD is injected server-side by learn-blog edge only */}
       </Helmet>
 
       {/* Header Navigation */}
