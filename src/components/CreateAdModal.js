@@ -252,6 +252,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const [isFetchingToken, setIsFetchingToken] = useState(false);
   const [fetchStatus, setFetchStatus] = useState(''); // '', 'success', 'error'
   const [searchAddress, setSearchAddress] = useState(''); // The address user types to search
+  const [dexLogoFilled, setDexLogoFilled] = useState(false);
 
   // Fetch token data from DexScreener using contract or pair address
   const fetchTokenData = async () => {
@@ -263,6 +264,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
     setIsFetchingToken(true);
     setFetchStatus('');
+    setDexLogoFilled(false);
     setError('');
 
     try {
@@ -287,13 +289,29 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
       // Use ticker symbol as the title
       const title = tokenSymbol;
+      const logoUrl = (topPair.info?.imageUrl || '').trim();
 
       setFormData(prev => ({
         ...prev,
         title: title,
         blockchain: chainId,
-        pairAddress: pairAddr
+        pairAddress: pairAddr,
+        ...(logoUrl ? { logo: logoUrl } : {}),
       }));
+
+      if (logoUrl) {
+        const logoOk = await validateImageUrl(logoUrl);
+        if (logoOk) {
+          setPreviewUrl(logoUrl);
+          setDexLogoFilled(true);
+        } else {
+          setPreviewUrl('');
+          setDexLogoFilled(false);
+        }
+      } else {
+        setPreviewUrl('');
+        setDexLogoFilled(false);
+      }
 
       setFetchStatus('success');
     } catch (err) {
@@ -305,15 +323,37 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     }
   };
 
+  const canDisplayImageUrl = (url) =>
+    new Promise((resolve) => {
+      const trimmed = (url || '').trim();
+      if (!trimmed) {
+        resolve(false);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = trimmed;
+    });
+
   const validateImageUrl = async (url) => {
     try {
       const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType.startsWith('image/') && 
-        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
-    } catch (error) {
-      return false;
+      const contentType = response.headers.get('content-type') || '';
+      if (
+        contentType.startsWith('image/') &&
+        (contentType.includes('gif') ||
+          contentType.includes('png') ||
+          contentType.includes('jpeg') ||
+          contentType.includes('jpg') ||
+          contentType.includes('webp'))
+      ) {
+        return true;
+      }
+    } catch {
+      // CORS-blocked (common for DexScreener CDN) — fall through to load test
     }
+    return canDisplayImageUrl(url);
   };
 
   const validatePairAddress = (address) => {
@@ -339,7 +379,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     const url = e.target.value;
     setFormData(prev => ({ ...prev, logo: url }));
     setFetchStatus(''); // Clear fetch status when user starts filling logo
-    
+    setDexLogoFilled(false);
+
     if (url) {
       const isValid = await validateImageUrl(url);
       if (isValid) {
@@ -347,7 +388,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         setError('');
       } else {
         setPreviewUrl('');
-        setError('Please enter a valid image URL (GIF or PNG)');
+        setError('Please enter a valid image URL (GIF, PNG, or WebP)');
       }
     } else {
       setPreviewUrl('');
@@ -849,9 +890,14 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
               />
             </div>
 
-            {/* Manual fields - user always fills these */}
+            {/* Logo — auto-filled from DexScreener when profile image exists */}
             <div>
-              <label className="block mb-2 text-lg font-medium">Logo URL (GIF or PNG)</label>
+              <label className="block mb-2 text-lg font-medium">
+                Logo URL (GIF or PNG)
+                {dexLogoFilled && fetchStatus === 'success' && (
+                  <span className="text-green-400 text-sm ml-2">(auto-filled from DexScreener)</span>
+                )}
+              </label>
               <input
                 type="url"
                 name="logo"

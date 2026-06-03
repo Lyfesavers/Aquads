@@ -16,7 +16,7 @@ const AQUADS_LOOKUP_TOKEN_TOOL = {
   function: {
     name: 'lookup_token_for_listing',
     description:
-      'Look up token symbol, blockchain, and pair address from a contract address (CA) or pair address (PA) using DexScreener. Use before submitting a Starter listing or to confirm token details with the user.',
+      'Look up token symbol, blockchain, pair address, and DexScreener profile logo (logoFromDex) from a contract address (CA) or pair address (PA). Use before submitting a Starter listing or to confirm token details with the user.',
     parameters: {
       type: 'object',
       properties: {
@@ -35,7 +35,7 @@ const AQUADS_SUBMIT_STARTER_TOOL = {
   function: {
     name: 'submit_starter_listing',
     description:
-      'Submit a free Starter bubble-map listing on Aquads for the logged-in user. Resolves token metadata from CA/PA, applies the user-provided logo URL, and creates a pending listing for admin approval. Starter tier only — never Premium or paid add-ons.',
+      'Submit a free Starter bubble-map listing on Aquads for the logged-in user. Resolves token metadata from CA/PA, uses DexScreener profile logo when available (omit logo_url), otherwise requires a user-provided logo URL. Creates a pending listing for admin approval. Starter tier only — never Premium or paid add-ons.',
     parameters: {
       type: 'object',
       properties: {
@@ -45,7 +45,8 @@ const AQUADS_SUBMIT_STARTER_TOOL = {
         },
         logo_url: {
           type: 'string',
-          description: 'Direct HTTPS URL to the project logo image (png/jpg/gif/webp)'
+          description:
+            'Optional direct HTTPS logo URL (png/jpg/gif/webp). Omit when lookup_token_for_listing returned logoFromDex — Dex profile image is applied automatically.'
         },
         website_url: {
           type: 'string',
@@ -53,7 +54,7 @@ const AQUADS_SUBMIT_STARTER_TOOL = {
             'Optional project website URL. Use DexScreener value when available; omit if the user has no site yet.'
         }
       },
-      required: ['token_or_pair_address', 'logo_url']
+      required: ['token_or_pair_address']
     }
   }
 };

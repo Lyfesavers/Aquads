@@ -34,13 +34,20 @@ async function lookupTokenForListing(tokenOrPairAddress) {
   if (!resolved.ok) {
     return { success: false, error: resolved.error, code: 'TOKEN_NOT_FOUND' };
   }
+  const logoFromDex = resolved.token.logoFromDex || null;
+  const websiteNote = resolved.token.websiteUrl
+    ? 'Website found on DexScreener — will be included if user does not provide one.'
+    : 'Website is optional — user can add a site later from their dashboard.';
+  const logoNote = logoFromDex
+    ? 'DexScreener profile logo is available — omit logo_url on submit to use it automatically.'
+    : 'No DexScreener profile logo — ask the user for a direct HTTPS image URL before submitting.';
+
   return {
     success: true,
     token: resolved.token,
+    logoFromDex,
     needsWebsite: false,
-    note: resolved.token.websiteUrl
-      ? 'Website found on DexScreener — will be included if user does not provide one.'
-      : 'Website is optional — submit with logo URL; user can add a site later from their dashboard.'
+    note: `${logoNote} ${websiteNote}`
   };
 }
 
@@ -76,17 +83,29 @@ async function submitStarterListingViaAgent({
     };
   }
 
-  const logoCheck = await validateLogoUrl(logoUrl);
-  if (!logoCheck.ok) {
-    return { success: false, error: logoCheck.error, code: 'INVALID_LOGO' };
-  }
-
   const resolved = await resolveTokenFromAddress(tokenOrPairAddress);
   if (!resolved.ok) {
     return { success: false, error: resolved.error, code: 'TOKEN_NOT_FOUND' };
   }
 
   const token = resolved.token;
+  const userLogo = String(logoUrl || '').trim();
+  const effectiveLogoUrl = userLogo || String(token.logoFromDex || '').trim();
+  if (!effectiveLogoUrl) {
+    return {
+      success: false,
+      error:
+        'Logo URL is required. No DexScreener profile image was found for this token — provide a direct HTTPS image URL (png/jpg/gif/webp).',
+      code: 'LOGO_REQUIRED'
+    };
+  }
+
+  const logoCheck = await validateLogoUrl(effectiveLogoUrl);
+  if (!logoCheck.ok) {
+    return { success: false, error: logoCheck.error, code: 'INVALID_LOGO' };
+  }
+
+  const logoSource = userLogo ? 'user' : 'dexscreener';
   if (!isValidPairAddress(token.pairAddress)) {
     return { success: false, error: 'Resolved pair address is invalid.', code: 'INVALID_PAIR' };
   }
@@ -184,10 +203,12 @@ async function submitStarterListingViaAgent({
     status: 'pending',
     message:
       'Starter listing submitted successfully. It is pending admin approval before appearing on the bubble map.',
+    logoSource,
     resolvedFrom: {
       tokenOrPairAddress: String(tokenOrPairAddress).trim(),
       contractAddress: token.contractAddress,
-      dexUrl: token.dexUrl
+      dexUrl: token.dexUrl,
+      logoFromDex: token.logoFromDex || null
     }
   };
 }

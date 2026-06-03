@@ -28,6 +28,8 @@ function isValidProjectUrl(url) {
   return Boolean(normalized && URL_REGEX.test(normalized));
 }
 
+const DEXSCREENER_CDN_LOGO = /^https:\/\/cdn\.dexscreener\.com\/.+/i;
+
 async function validateLogoUrl(url) {
   const target = String(url || '').trim();
   if (!target || !/^https?:\/\//i.test(target)) {
@@ -42,6 +44,9 @@ async function validateLogoUrl(url) {
     });
     const contentType = (res.headers.get('content-type') || '').toLowerCase();
     if (!res.ok) {
+      if (DEXSCREENER_CDN_LOGO.test(target)) {
+        return { ok: true, url: target };
+      }
       return { ok: false, error: `Logo URL returned HTTP ${res.status}. Use a direct image link.` };
     }
     if (
@@ -52,6 +57,9 @@ async function validateLogoUrl(url) {
         !contentType.includes('jpg') &&
         !contentType.includes('webp'))
     ) {
+      if (DEXSCREENER_CDN_LOGO.test(target)) {
+        return { ok: true, url: target };
+      }
       return {
         ok: false,
         error: 'Logo URL must point to a PNG, JPG, GIF, or WebP image.'
@@ -59,6 +67,9 @@ async function validateLogoUrl(url) {
     }
     return { ok: true, url: target };
   } catch (err) {
+    if (DEXSCREENER_CDN_LOGO.test(target)) {
+      return { ok: true, url: target };
+    }
     return { ok: false, error: err.message || 'Could not validate logo URL.' };
   }
 }
