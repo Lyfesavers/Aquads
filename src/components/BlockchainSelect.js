@@ -6,6 +6,8 @@ import {
   getBlockchainLabel,
 } from '../constants/blockchains';
 
+const AQUADS_TELEGRAM_URL = 'https://t.me/+6rJbDLqdMxA3ZTUx';
+
 /**
  * Shared blockchain dropdown for listing create/edit modals.
  */
@@ -26,34 +28,48 @@ const BlockchainSelect = ({
   const other = LISTING_BLOCKCHAIN_OPTIONS.filter((o) => !o.popular);
 
   return (
-    <select
-      id={id}
-      name={name}
-      value={selectValue}
-      onChange={onChange}
-      required={required}
-      className={className}
-    >
-      {isLegacy && (
-        <option value={raw}>
-          {getBlockchainLabel(raw)} (saved)
-        </option>
-      )}
-      <optgroup label="Popular">
-        {popular.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
+    <>
+      <select
+        id={id}
+        name={name}
+        value={selectValue}
+        onChange={onChange}
+        required={required}
+        className={className}
+      >
+        {isLegacy && (
+          <option value={raw}>
+            {getBlockchainLabel(raw)} (saved)
           </option>
-        ))}
-      </optgroup>
-      <optgroup label="All chains">
-        {other.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </optgroup>
-    </select>
+        )}
+        <optgroup label="Popular">
+          {popular.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="All chains">
+          {other.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+      <p className="text-sm text-gray-400 mt-2">
+        Can&apos;t find your blockchain?{' '}
+        <a
+          href={AQUADS_TELEGRAM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300"
+        >
+          Let us know
+        </a>{' '}
+        and we&apos;ll add it quickly.
+      </p>
+    </>
   );
 };
 
