@@ -265,6 +265,7 @@ export default function ProjectAgentPanel({
   initialThreadId = null,
   restoredSession = null,
   compact = false,
+  projectListingOnboarding = false,
   onExpand,
   onClose,
   showBackLink = false
@@ -284,7 +285,11 @@ export default function ProjectAgentPanel({
   const [messages, setMessages] = useState(() =>
     restoredSession?.messages ? normalizeAgentMessages(restoredSession.messages) : []
   );
-  const [mode, setMode] = useState(() => restoredSession?.mode || 'instant');
+  const [mode, setMode] = useState(() =>
+    projectListingOnboarding || restoredSession?.projectListingOnboarding
+      ? 'agent'
+      : restoredSession?.mode || 'instant'
+  );
   const [videoSeconds, setVideoSeconds] = useState(15);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(() => !restoredSession);
@@ -667,6 +672,11 @@ export default function ProjectAgentPanel({
     setWallet(w);
     return w;
   }, [token, adId]);
+
+  useEffect(() => {
+    if (!projectListingOnboarding || loading || hydratedEpoch !== authEpoch) return;
+    setMode('agent');
+  }, [projectListingOnboarding, loading, hydratedEpoch, authEpoch]);
 
   const pollVideoJob = useCallback(
     async (messageId, seconds = 15) => {
@@ -1457,6 +1467,10 @@ export default function ProjectAgentPanel({
   }
 
   const adMeta = eligible.find((a) => a.id === adId) || wallet?.ad;
+  const showListingOnboardingGreeting =
+    projectListingOnboarding &&
+    (adMeta?.scope === 'account' || wallet?.scope === 'account') &&
+    messages.length === 0;
 
   return (
     <div className={rootClass}>
@@ -1676,6 +1690,19 @@ export default function ProjectAgentPanel({
 
         <div className="project-agent-main">
           <div className="project-agent-messages">
+            {showListingOnboardingGreeting && (
+              <div className="project-agent-listing-onboarding" role="status">
+                <p className="project-agent-listing-onboarding-title">Welcome to Skipper</p>
+                <p>
+                  Paste your <strong>contract address (CA)</strong> or pair address and a direct{' '}
+                  <strong>logo image URL</strong> (PNG, JPG, GIF, or WebP) to submit a free Starter
+                  listing. It goes to admin review before your bubble goes live.
+                </p>
+                <p className="project-agent-listing-onboarding-note">
+                  Listing via Skipper is free for project accounts — no wallet balance needed.
+                </p>
+              </div>
+            )}
             {messages.map((m, i) => (
               <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
                 {messageShowsImage(m) && token ? (

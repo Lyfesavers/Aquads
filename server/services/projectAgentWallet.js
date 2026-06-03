@@ -319,6 +319,26 @@ async function creditTopupFromPayment(topup, paymentMeta = {}) {
   return { wallet, topup, alreadyPaid: false };
 }
 
+/**
+ * Record platform-subsidized Skipper usage (no user wallet debit).
+ */
+async function recordListingSubsidy(userId, adId, platformCostCents, meta = {}) {
+  const wallet = await getOrCreateWallet(userId, adId);
+  await ProjectAgentLedger.create({
+    userId,
+    adId,
+    type: 'adjustment',
+    amountCents: 0,
+    balanceAfterCents: wallet.balanceCents,
+    meta: {
+      ...meta,
+      platformCostCents: Math.max(0, Number(platformCostCents) || 0),
+      subsidy: 'project_listing_via_skipper'
+    }
+  });
+  return { wallet };
+}
+
 module.exports = {
   STARTER_GRANT_CENTS,
   LOAD_FEE_RATE,
@@ -330,6 +350,7 @@ module.exports = {
   settleHold,
   deductUsage,
   creditTopupFromPayment,
+  recordListingSubsidy,
   walletResponse,
   usdToCents,
   centsToUsd

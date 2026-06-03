@@ -1,5 +1,8 @@
 import { clearProjectAgentMediaCache } from '../../services/projectAgentMediaCache';
 
+/** Delay before opening Skipper after the welcome modal closes (project onboarding). */
+export const SKIPPER_PROJECT_ONBOARDING_DELAY_MS = 5_000;
+
 /** Stable Mongo user id for Skipper (must match JWT `userId` — never use username). */
 export function getSkipperSessionKey(user) {
   if (!user || typeof user !== 'object') return '';

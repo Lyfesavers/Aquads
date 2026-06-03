@@ -25,7 +25,8 @@ import {
   resetSkipperClientSession,
   getSkipperAuthEpoch,
   normalizeAquadsUser,
-  skipperDebugLog
+  skipperDebugLog,
+  SKIPPER_PROJECT_ONBOARDING_DELAY_MS
 } from './components/projectAgent/projectAgentSession';
 import { warmSkipperSessionForUser } from './services/projectAgentApi';
 import LoginModal from './components/LoginModal';
@@ -676,6 +677,8 @@ function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileModalInitialTab, setProfileModalInitialTab] = useState('profile');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [skipperProjectOnboarding, setSkipperProjectOnboarding] = useState(false);
+  const skipperOnboardingTimerRef = useRef(null);
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
@@ -1400,6 +1403,28 @@ function App() {
     }
   };
 
+  const handleWelcomeModalClose = useCallback(() => {
+    setShowWelcomeModal(false);
+    if (skipperOnboardingTimerRef.current) {
+      clearTimeout(skipperOnboardingTimerRef.current);
+      skipperOnboardingTimerRef.current = null;
+    }
+    if (currentUserRef.current?.userType !== 'project') return;
+    if (currentUserRef.current?.emailVerified !== true) return;
+    skipperOnboardingTimerRef.current = window.setTimeout(() => {
+      setSkipperProjectOnboarding(true);
+      skipperOnboardingTimerRef.current = null;
+    }, SKIPPER_PROJECT_ONBOARDING_DELAY_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (skipperOnboardingTimerRef.current) {
+        clearTimeout(skipperOnboardingTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleCreateAccount = async (formData) => {
     try {
       const user = await apiRegister(formData);
@@ -1461,21 +1486,19 @@ function App() {
 
     if (verifiedUser) {
       skipNextValidationRef.current = true;
-      let merged;
-      setCurrentUser((prev) => {
-        merged = {
-          ...(prev || {}),
-          ...verifiedUser,
-          token: verifiedUser.token,
-          refreshToken: verifiedUser.refreshToken ?? prev?.refreshToken
-        };
-        commitAuthSession(merged);
-        resetSkipperClientSession();
-        skipValidateUntilRef.current = Date.now() + 8000;
-        skipNextValidationRef.current = true;
-        return merged;
+      const merged = normalizeAquadsUser({
+        ...(currentUserRef.current || {}),
+        ...verifiedUser,
+        token: verifiedUser.token,
+        refreshToken: verifiedUser.refreshToken ?? currentUserRef.current?.refreshToken
       });
+      commitAuthSession(merged);
+      resetSkipperClientSession();
+      skipValidateUntilRef.current = Date.now() + 8000;
+      skipNextValidationRef.current = true;
+      setCurrentUser(merged);
       reconnectSocket();
+      warmSkipperSessionForUser(merged);
 
       if (welcomeTargetEmail && merged?.username) {
         logger.log('Sending welcome email after verification...');
@@ -2768,6 +2791,8 @@ function App() {
             <ProjectAgentFab
               key={`${getSkipperAuthEpoch(currentUser)}:${getAuthSessionGeneration()}`}
               currentUser={currentUser}
+              openProjectOnboarding={skipperProjectOnboarding}
+              onProjectOnboardingOpen={() => setSkipperProjectOnboarding(false)}
             />
           </Suspense>
         )}
@@ -3633,7 +3658,7 @@ function App() {
                   <WelcomeModal
                     username={currentUser.username}
                     referralCode={currentUser.referralCode}
-                    onClose={() => setShowWelcomeModal(false)}
+                    onClose={handleWelcomeModalClose}
                   />
                 )}
 

@@ -21,7 +21,7 @@ function SkipperFabIcon() {
   );
 }
 
-export default function ProjectAgentFab({ currentUser }) {
+export default function ProjectAgentFab({ currentUser, openProjectOnboarding = false, onProjectOnboardingOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const authEpoch = getSkipperAuthEpoch(currentUser);
@@ -30,7 +30,15 @@ export default function ProjectAgentFab({ currentUser }) {
     Boolean(token) && currentUser?.emailVerified !== false;
   const [showFab, setShowFab] = useState(canShowFab);
   const [open, setOpen] = useState(false);
+  const [projectListingOnboarding, setProjectListingOnboarding] = useState(false);
   const onFullPage = location.pathname.startsWith('/project-agent');
+
+  useEffect(() => {
+    if (!openProjectOnboarding || !canShowFab) return;
+    setProjectListingOnboarding(true);
+    setOpen(true);
+    onProjectOnboardingOpen?.();
+  }, [openProjectOnboarding, canShowFab, onProjectOnboardingOpen]);
 
   // New account: close drawer, show FAB immediately (do not wait for eligible API).
   useEffect(() => {
@@ -127,7 +135,11 @@ export default function ProjectAgentFab({ currentUser }) {
               key={authEpoch}
               currentUser={currentUser}
               compact
-              onClose={() => setOpen(false)}
+              projectListingOnboarding={projectListingOnboarding}
+              onClose={() => {
+                setOpen(false);
+                setProjectListingOnboarding(false);
+              }}
               onExpand={(session) => {
                 setOpen(false);
                 const ad = session?.adId ? encodeURIComponent(session.adId) : '';

@@ -40,6 +40,7 @@ const {
 } = require('../utils/kimiCost');
 const { runKimiAgentChat } = require('../utils/kimiAgentTools');
 const { capAgentReplyContent } = require('../utils/projectAgentAgentReply');
+const { isListingOnboardingFlow } = require('../utils/listingIntent');
 const {
   getLimits,
   resolveMaxOutputTokens,
@@ -72,6 +73,7 @@ const {
   reserveBalance,
   releaseHold,
   settleHold,
+  recordListingSubsidy,
   walletResponse,
   getOrCreateWallet,
   computeTopupPricing,
@@ -506,6 +508,17 @@ function isAgentToolsMode(mode) {
   return mode === 'agent' || mode === 'websearch';
 }
 
+/** First-listing onboarding subsidy only — any submitted listing ends free Skipper listing. */
+async function ownerHasListingForSubsidyGate(username) {
+  if (!username) return false;
+  return Boolean(
+    await Ad.exists({
+      owner: username,
+      status: { $in: ['pending', 'active', 'approved'] }
+    })
+  );
+}
+
 function normalizeChatMode(mode) {
   if (mode === 'websearch') return 'agent';
   return mode;
@@ -918,6 +931,15 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       .lean();
     history.reverse();
 
+    const dbUserForSubsidy = await User.findById(req.user.userId).select('userType').lean();
+    const hasExistingListing = await ownerHasListingForSubsidyGate(req.user.username);
+    const listingSubsidy =
+      isAgentToolsMode(storedMode) &&
+      Boolean(ad.isAccountScope) &&
+      dbUserForSubsidy?.userType === 'project' &&
+      !hasExistingListing &&
+      isListingOnboardingFlow(userContent, history);
+
     const systemPrompt = buildProjectAgentSystemPrompt(ad, storedMode, user);
     const kimiMessages = buildKimiMessages(systemPrompt, history, userContent);
     const maxTokens = resolveMaxOutputTokens({
@@ -949,23 +971,31 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       holdCents = usdToCents(estimatedHoldUsd);
     }
 
-    const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
-      provider: isAgentToolsMode(storedMode) ? 'kimi+media' : 'kimi',
-      mode: storedMode,
-      model: KIMI_MODEL,
-      threadId: String(thread._id),
-      estimatedHoldUsd: estimatedHoldUsd.toFixed(4),
-      sessionBilling: isAgentToolsMode(storedMode)
-    });
+    let settleWallet = null;
 
-    if (!reservation) {
-      const wallet = await getOrCreateWallet(req.user.userId, ad.id);
-      return res.status(402).json({
-        error: 'Insufficient balance for this message. Add funds or try a shorter conversation.',
-        code: 'INSUFFICIENT_BALANCE',
-        balanceUsd: walletResponse(wallet).balanceUsd,
-        requiredUsd: centsToUsd(holdCents)
+    if (listingSubsidy) {
+      holdCents = 0;
+      settleWallet = await getOrCreateWallet(req.user.userId, ad.id);
+    } else {
+      const reservation = await reserveBalance(req.user.userId, ad.id, holdCents, {
+        provider: isAgentToolsMode(storedMode) ? 'kimi+media' : 'kimi',
+        mode: storedMode,
+        model: KIMI_MODEL,
+        threadId: String(thread._id),
+        estimatedHoldUsd: estimatedHoldUsd.toFixed(4),
+        sessionBilling: isAgentToolsMode(storedMode)
       });
+
+      if (!reservation) {
+        const wallet = await getOrCreateWallet(req.user.userId, ad.id);
+        return res.status(402).json({
+          error: 'Insufficient balance for this message. Add funds or try a shorter conversation.',
+          code: 'INSUFFICIENT_BALANCE',
+          balanceUsd: walletResponse(wallet).balanceUsd,
+          requiredUsd: centsToUsd(holdCents)
+        });
+      }
+      settleWallet = reservation.wallet;
     }
 
     await ProjectAgentMessage.create({
@@ -1011,9 +1041,10 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
             emailVerified: req.user.emailVerified,
             adId: ad.id,
             threadId: String(thread._id),
-            sessionBilling: true,
+            sessionBilling: !listingSubsidy,
             sessionHoldCents: holdCents,
-            sessionMediaSpendCents: 0
+            sessionMediaSpendCents: 0,
+            listingSubsidy
           }
         });
         const hadMediaTools = (agentResult.pendingMedia || []).length > 0;
@@ -1144,25 +1175,46 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
         : 0;
     const totalSettleCents = costCents + sessionMediaSpendCents;
 
-    const settleResult = await settleHold(req.user.userId, ad.id, holdCents, totalSettleCents, {
-      mode: storedMode,
-      model: KIMI_MODEL,
-      usage: usage || {},
-      threadId: String(thread._id),
-      provider: 'kimi',
-      webSearchCalls,
-      sessionMediaSpendCents
-    });
+    let settleResult = null;
+    if (listingSubsidy) {
+      if (totalSettleCents > 0) {
+        const subsidized = await recordListingSubsidy(
+          req.user.userId,
+          ad.id,
+          totalSettleCents,
+          {
+            mode: storedMode,
+            model: KIMI_MODEL,
+            threadId: String(thread._id),
+            provider: 'kimi',
+            webSearchCalls,
+            sessionMediaSpendCents
+          }
+        );
+        settleWallet = subsidized.wallet;
+      }
+      settleResult = { wallet: settleWallet, settled: true };
+    } else {
+      settleResult = await settleHold(req.user.userId, ad.id, holdCents, totalSettleCents, {
+        mode: storedMode,
+        model: KIMI_MODEL,
+        usage: usage || {},
+        threadId: String(thread._id),
+        provider: 'kimi',
+        webSearchCalls,
+        sessionMediaSpendCents
+      });
+    }
     holdCents = 0;
 
-    if (!settleResult?.settled && totalSettleCents > 0) {
+    if (!listingSubsidy && !settleResult?.settled && totalSettleCents > 0) {
       send({
         type: 'error',
         error: 'Could not settle full usage cost. Please add funds.'
       });
     }
 
-    let assistantCostCents = totalSettleCents;
+    let assistantCostCents = listingSubsidy ? 0 : totalSettleCents;
     const agentToolTrace =
       isAgentToolsMode(storedMode) && Array.isArray(agentResult?.turnTrace)
         ? agentResult.turnTrace
@@ -1213,13 +1265,14 @@ router.post('/chat/:adId/:threadId', chatLimiter, async (req, res) => {
       await thread.save();
     }
 
-    const doneCostCents = isAgentToolsMode(storedMode) ? totalSettleCents : costCents;
+    const doneCostCents = listingSubsidy ? 0 : isAgentToolsMode(storedMode) ? totalSettleCents : costCents;
 
     send({
       type: 'done',
       usage: usage || {},
       costUsd: (doneCostCents / 100).toFixed(6),
       costCents: doneCostCents,
+      listingSubsidized: listingSubsidy || undefined,
       webSearchCalls: isAgentToolsMode(storedMode) ? webSearchCalls : undefined,
       toolUsd: costBreakdown ? costBreakdown.toolUsd.toFixed(6) : undefined,
       tokenUsd: costBreakdown ? costBreakdown.tokenUsd.toFixed(6) : undefined,
