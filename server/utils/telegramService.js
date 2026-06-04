@@ -217,7 +217,8 @@ const telegramService = {
     vote: null,
     raid: null,
     raidCompletion: null,
-    leaderboard: null
+    leaderboard: null,
+    spaces: null,
   },
 
   RAID_MESSAGE_CLEANUP_AFTER_MS,
@@ -515,6 +516,92 @@ const telegramService = {
     }
   },
 
+  storeSpacesBroadcastMessageId: async (chatId, messageId) => {
+    try {
+      const chatIdStr = String(chatId);
+      const settings = await BotSettings.findOne({ key: 'spacesBroadcastMessageIds' });
+      const existing =
+        settings?.value && typeof settings.value === 'object' ? { ...settings.value } : {};
+      if (!existing[chatIdStr]) existing[chatIdStr] = [];
+      existing[chatIdStr].push({
+        messageId: Number(messageId),
+        storedAt: new Date().toISOString(),
+      });
+      await BotSettings.findOneAndUpdate(
+        { key: 'spacesBroadcastMessageIds' },
+        { value: existing, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing spaces broadcast message ID:', error);
+    }
+  },
+
+  /** Unpin + delete Space alerts older than 24h in all tracked Telegram groups. */
+  scheduledSpacesTelegramMessageCleanup: async () => {
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
+
+    const { SPACES_MESSAGE_CLEANUP_AFTER_MS, isSpacesMessageCleanupDue } = require('./xSpacesBroadcast');
+
+    try {
+      const settings = await BotSettings.findOne({ key: 'spacesBroadcastMessageIds' });
+      let byChat =
+        settings?.value && typeof settings.value === 'object' ? { ...settings.value } : {};
+      let changed = false;
+
+      for (const chatIdStr of Object.keys(byChat)) {
+        const entries = byChat[chatIdStr];
+        if (!Array.isArray(entries)) continue;
+
+        const kept = [];
+        let chatDirty = false;
+        for (const entry of entries) {
+          const norm = normalizeRaidMessageIdsEntry(entry);
+          if (!norm) continue;
+
+          if (!norm.storedAt) {
+            kept.push({ messageId: norm.messageId, storedAt: new Date().toISOString() });
+            chatDirty = true;
+            continue;
+          }
+
+          if (!isSpacesMessageCleanupDue(norm.storedAt, SPACES_MESSAGE_CLEANUP_AFTER_MS)) {
+            kept.push({ messageId: norm.messageId, storedAt: norm.storedAt });
+            continue;
+          }
+
+          const ok = await telegramService.deleteRaidTelegramMessage(chatIdStr, norm.messageId);
+          if (ok) {
+            console.log(`[Spaces TG cleanup] Deleted msg ${norm.messageId} chat ${chatIdStr}`);
+          } else {
+            console.log(
+              `[Spaces TG cleanup] Could not delete msg ${norm.messageId} chat ${chatIdStr} — dropping DB ref`
+            );
+          }
+          chatDirty = true;
+        }
+
+        if (kept.length === 0) {
+          delete byChat[chatIdStr];
+          changed = true;
+        } else if (chatDirty || kept.length !== entries.length) {
+          byChat[chatIdStr] = kept;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await BotSettings.findOneAndUpdate(
+          { key: 'spacesBroadcastMessageIds' },
+          { value: byChat, updatedAt: new Date() },
+          { upsert: true }
+        );
+      }
+    } catch (error) {
+      console.error('[Spaces TG cleanup] Error:', error.message);
+    }
+  },
+
   sendRaidNotification: async (raidData) => {
     const prev = _raidNotifyLock;
     let release;
@@ -749,6 +836,106 @@ const telegramService = {
       })();
     } finally {
       release();
+    }
+  },
+
+  /** X Space alert — same /raidin /raidout routing as user-created raids. */
+  sendSpacesBroadcast: async ({ spaceUrl, sourceChatId = null }) => {
+    try {
+      const {
+        buildSpacesBroadcastCaptionHtml,
+        getSpacesBroadcastVideoPath,
+        spacesBroadcastVideoExists,
+      } = require('./xSpacesBroadcast');
+
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken || !spaceUrl) return { count: 0 };
+
+      const groupsToNotify = new Set();
+      const src = sourceChatId ? String(sourceChatId) : null;
+      if (src) {
+        groupsToNotify.add(src);
+        telegramService.raidCrossPostingGroups.forEach((groupId) => groupsToNotify.add(groupId));
+      } else {
+        telegramService.raidCrossPostingGroups.forEach((groupId) => groupsToNotify.add(groupId));
+      }
+      const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+      if (defaultChatId) groupsToNotify.add(defaultChatId);
+
+      if (groupsToNotify.size === 0) return { count: 0 };
+
+      const caption = buildSpacesBroadcastCaptionHtml(spaceUrl);
+      const keyboard = defaultPromoInlineKeyboard();
+      const videoPath = getSpacesBroadcastVideoPath();
+      const videoExists = spacesBroadcastVideoExists();
+
+      let successCount = 0;
+      for (const chatId of groupsToNotify) {
+        try {
+          let response;
+          if (videoExists && telegramService.cachedVideoFileIds.spaces) {
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              {
+                chat_id: chatId,
+                video: telegramService.cachedVideoFileIds.spaces,
+                caption,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+              },
+              { timeout: 15000 }
+            );
+          } else if (videoExists) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', caption);
+            formData.append('parse_mode', 'HTML');
+            formData.append('reply_markup', JSON.stringify(keyboard));
+            response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: formData.getHeaders(),
+                timeout: 60000,
+              }
+            );
+            if (response.data.ok && response.data.result.video) {
+              telegramService.cachedVideoFileIds.spaces = response.data.result.video.file_id;
+            }
+          } else {
+            const result = await telegramService.sendBotMessage(chatId, caption, { parseMode: 'HTML' });
+            if (result.success) {
+              successCount++;
+              if (result.messageId) {
+                await telegramService.storeSpacesBroadcastMessageId(chatId, result.messageId);
+                await telegramService.pinMessage(chatId, result.messageId);
+              }
+            }
+            continue;
+          }
+
+          if (response?.data?.ok) {
+            successCount++;
+            const messageId = response.data.result.message_id;
+            await telegramService.storeSpacesBroadcastMessageId(chatId, messageId);
+            await telegramService.pinMessage(chatId, messageId);
+          }
+        } catch (error) {
+          console.error(`[Spaces TG] Failed to send to ${chatId}:`, error.message);
+          if (telegramService.shouldRemoveGroupFromActive(error)) {
+            const chatIdStr = String(chatId);
+            telegramService.activeGroups.delete(chatIdStr);
+            await telegramService.saveActiveGroups();
+          }
+        }
+      }
+
+      console.log(`[Spaces TG] Alert sent to ${successCount}/${groupsToNotify.size} groups`);
+      return { count: successCount };
+    } catch (error) {
+      console.error('[Spaces TG] broadcast failed:', error.message);
+      return { count: 0 };
     }
   },
 
@@ -1063,6 +1250,43 @@ const telegramService = {
     } else if (text.startsWith('/cancelraid')) {
       await telegramService.handleCancelRaidCommand(chatId, userId, text);
     } else if (!text.startsWith('/')) {
+      const { extractSpacesUrl } = require('./xSpacesBroadcast');
+      const spaceUrl = extractSpacesUrl(text);
+      if (spaceUrl) {
+        const linkedUser = await User.findOne({ telegramId: userId.toString() });
+        const ackChatId = chatId < 0 ? userId : chatId;
+        if (!linkedUser) {
+          await telegramService.sendBotMessage(
+            ackChatId,
+            '❌ Please link your account first: /link your_username\n\n🌐 https://aquads.xyz'
+          );
+          return;
+        }
+        const sourceChatId =
+          chatType === 'group' || chatType === 'supergroup' ? chatId.toString() : null;
+        const notifySourceChatId =
+          sourceChatId ||
+          (linkedUser.telegramGroupId ? linkedUser.telegramGroupId.toString() : null);
+        const { broadcastSpacesAlert } = require('./spacesAlertBroadcast');
+        const result = await broadcastSpacesAlert(spaceUrl, { sourceChatId: notifySourceChatId });
+        const total = (result.telegram?.count || 0) + (result.discord?.count || 0);
+        if (result.ok) {
+          let ack = `✅ X Space alert sent (${result.telegram?.count || 0} Telegram, ${result.discord?.count || 0} Discord).\n\n🔗 ${spaceUrl}`;
+          if (sourceChatId) {
+            const isOptedIn = telegramService.raidCrossPostingGroups.has(sourceChatId);
+            if (!isOptedIn) {
+              ack += '\n\n💡 Your group is on /raidout — alert went to this group only (not other communities). Use /raidin to cross-post.';
+            }
+          }
+          await telegramService.sendBotMessage(ackChatId, ack);
+        } else {
+          await telegramService.sendBotMessage(
+            ackChatId,
+            `⚠️ Could not send Space alert (no opted-in groups or missing video).\n\n🔗 ${spaceUrl}\n\n💡 Use /raidin in your group to share with other communities.`
+          );
+        }
+        return;
+      }
       // Auto-create raid when a Twitter/X URL is posted (group or private chat, no command needed)
       const tweetUrlMatch = text.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
       if (tweetUrlMatch && tweetUrlMatch[1]) {

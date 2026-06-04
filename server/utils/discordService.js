@@ -1465,6 +1465,34 @@ async function startBot() {
 
     if (!message.content) return;
 
+    const { extractSpacesUrl } = require('./xSpacesBroadcast');
+    const spaceUrl = extractSpacesUrl(message.content);
+    if (spaceUrl) {
+      const isAdmin = message.member?.permissions?.has?.(PermissionFlagsBits.Administrator) === true;
+      if (!isAdmin) return;
+      const user = await User.findOne({ discordId: discordUserId });
+      if (!user) {
+        await message.author.send({ content: '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz' }).catch(() => {});
+        return;
+      }
+      const { broadcastSpacesAlert } = require('./spacesAlertBroadcast');
+      const result = await broadcastSpacesAlert(spaceUrl, {
+        discordSourceChannelId: message.channelId ? String(message.channelId) : null,
+      });
+      let ack = result.ok
+        ? `✅ X Space alert sent (${result.telegram?.count || 0} Telegram, ${result.discord?.count || 0} Discord).\n\n🔗 ${spaceUrl}`
+        : `⚠️ Could not send Space alert (no opted-in channels or missing video).\n\n🔗 ${spaceUrl}\n\n💡 Use \`/raidin\` in your server to share with other communities.`;
+      if (result.ok && message.guildId) {
+        const raidInSettings = await BotSettings.findOne({ key: 'discordRaidInGuilds' }).lean();
+        const raidInGuilds = Array.isArray(raidInSettings?.value) ? raidInSettings.value : [];
+        if (!raidInGuilds.includes(message.guildId)) {
+          ack += '\n\n💡 This server is on `/raidout` — alert went here only. Use `/raidin` to cross-post.';
+        }
+      }
+      await message.author.send({ content: ack }).catch(() => {});
+      return;
+    }
+
     const tweetUrlMatch = message.content.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
     if (tweetUrlMatch && tweetUrlMatch[1]) {
       const isAdmin = message.member?.permissions?.has?.(PermissionFlagsBits.Administrator) === true;
@@ -1998,6 +2026,7 @@ const DISCORD_RAID_BY_RAID_KEY = 'discordRaidMessagesByRaidId';
 const DISCORD_COMPLETION_MSG_KEY = 'discordRaidCompletionMessageIds';
 const DISCORD_VOTE_MSG_KEY = 'discordVoteMessageIds';
 const DISCORD_BUBBLES_MSG_KEY = 'discordBubblesMessageIds';
+const DISCORD_SPACES_MSG_KEY = 'discordSpacesBroadcastMessages';
 
 async function getStoredDiscordMessages(key) {
   const settings = await BotSettings.findOne({ key }).lean();
@@ -2046,6 +2075,117 @@ async function getDiscordCommunityRaidChannelIds() {
   const raidInSet = new Set(raidInGuilds);
   const ids = list.filter(c => c && c.guildId && raidInSet.has(c.guildId)).map(c => c.channelId);
   return ids;
+}
+
+/** X Space alert — same /raidin /raidout routing as user-created raids. */
+async function sendSpacesBroadcastToChannels({ spaceUrl, discordSourceChannelId = null }) {
+  const {
+    SPACES_BROADCAST_TITLE,
+    buildSpacesBroadcastDescriptionDiscord,
+    getSpacesBroadcastVideoPath,
+    spacesBroadcastVideoExists,
+  } = require('./xSpacesBroadcast');
+
+  const communityIds = await getDiscordCommunityRaidChannelIds();
+  const ids = new Set(communityIds);
+  if (discordSourceChannelId) ids.add(String(discordSourceChannelId));
+  const channelIds = Array.from(ids);
+  if (channelIds.length === 0 || !spaceUrl) return { count: 0 };
+
+  const embed = new EmbedBuilder()
+    .setTitle(SPACES_BROADCAST_TITLE)
+    .setDescription(buildSpacesBroadcastDescriptionDiscord(spaceUrl))
+    .setColor(0x1da1f2)
+    .setURL(spaceUrl);
+
+  const components = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
+      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
+    ),
+  ];
+
+  let files = [];
+  if (spacesBroadcastVideoExists()) {
+    files = [getSpacesBroadcastVideoPath()];
+  }
+
+  const payload = { embeds: [embed], components, files };
+  let sent = 0;
+  for (const channelId of channelIds) {
+    const message = await sendToChannel(channelId, payload);
+    if (message) {
+      sent++;
+      await storeSpacesDiscordMessage(channelId, message.id);
+      await message.pin().catch((e) => {
+        console.log(`[Spaces Discord] Could not pin in ${channelId}:`, e.message);
+      });
+    }
+  }
+  console.log(`[Spaces Discord] Alert sent to ${sent}/${channelIds.length} channels`);
+  return { count: sent };
+}
+
+async function storeSpacesDiscordMessage(channelId, messageId) {
+  const settings = await BotSettings.findOne({ key: DISCORD_SPACES_MSG_KEY }).lean();
+  const list = Array.isArray(settings?.value) ? [...settings.value] : [];
+  list.push({
+    channelId: String(channelId),
+    messageId: String(messageId),
+    storedAt: new Date().toISOString(),
+  });
+  await BotSettings.findOneAndUpdate(
+    { key: DISCORD_SPACES_MSG_KEY },
+    { value: list, updatedAt: new Date() },
+    { upsert: true }
+  );
+}
+
+async function scheduledSpacesDiscordMessageCleanup() {
+  if (!discordClient?.isReady()) return;
+
+  const { SPACES_MESSAGE_CLEANUP_AFTER_MS, isSpacesMessageCleanupDue } = require('./xSpacesBroadcast');
+
+  try {
+    const settings = await BotSettings.findOne({ key: DISCORD_SPACES_MSG_KEY }).lean();
+    const list = Array.isArray(settings?.value) ? settings.value : [];
+    const kept = [];
+    let changed = false;
+
+    for (const entry of list) {
+      if (!entry?.channelId || !entry?.messageId) continue;
+      const storedAt = entry.storedAt || null;
+      if (!storedAt) {
+        kept.push({ ...entry, storedAt: new Date().toISOString() });
+        changed = true;
+        continue;
+      }
+      if (!isSpacesMessageCleanupDue(storedAt, SPACES_MESSAGE_CLEANUP_AFTER_MS)) {
+        kept.push(entry);
+        continue;
+      }
+
+      const ok = await deleteDiscordMessage(entry.channelId, entry.messageId);
+      if (ok) {
+        console.log(`[Spaces Discord cleanup] Deleted msg ${entry.messageId} channel ${entry.channelId}`);
+      } else {
+        console.log(
+          `[Spaces Discord cleanup] Could not delete msg ${entry.messageId} channel ${entry.channelId} — dropping DB ref`
+        );
+      }
+      changed = true;
+    }
+
+    if (changed) {
+      await BotSettings.findOneAndUpdate(
+        { key: DISCORD_SPACES_MSG_KEY },
+        { value: kept, updatedAt: new Date() },
+        { upsert: true }
+      );
+    }
+  } catch (error) {
+    console.error('[Spaces Discord cleanup] Error:', error.message);
+  }
 }
 
 async function sendRaidNotificationToChannel(raidData) {
@@ -2457,6 +2597,8 @@ async function awardDailyReactionPoints(discordUserId, channelId) {
 module.exports = {
   startBot,
   getClient: () => discordClient,
+  sendSpacesBroadcastToChannels,
+  scheduledSpacesDiscordMessageCleanup,
   sendRaidNotificationToChannel,
   sendRaidCompletionToChannel,
   sendVoteNotificationToChannel,
