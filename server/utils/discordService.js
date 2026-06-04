@@ -37,6 +37,11 @@ const DiscordDailyEngagement = require('../models/DiscordDailyEngagement');
 const { creditReferrerBonus } = require('../routes/points');
 const path = require('path');
 const fs = require('fs');
+const { buildDiscordPromoComponents } = require('./botPromoButtons');
+
+function getDiscordPromoComponents() {
+  return buildDiscordPromoComponents({ ActionRowBuilder, ButtonBuilder, ButtonStyle });
+}
 const {
   isValidBrandingVideoUrl,
   projectUsesVideoBranding,
@@ -456,13 +461,8 @@ async function handleLeaders(interaction) {
       .setColor(0x00bfff)
       .setURL('https://aquads.xyz');
 
-    const linkRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
-      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
-    );
-
     const files = fs.existsSync(VIDEO_LEADERBOARD) ? [VIDEO_LEADERBOARD] : [];
-    return interaction.reply({ embeds: [embed], components: [linkRow], files });
+    return interaction.reply({ embeds: [embed], components: getDiscordPromoComponents(), files });
   } catch (e) {
     console.error('Discord /leaders error:', e.message);
     return reply(interaction, '❌ Could not load the leaderboard. Try again later.\n\nhttps://aquads.xyz', false);
@@ -2098,12 +2098,7 @@ async function sendSpacesBroadcastToChannels({ spaceUrl, discordSourceChannelId 
     .setColor(0x1da1f2)
     .setURL(spaceUrl);
 
-  const components = [
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
-      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
-    ),
-  ];
+  const components = getDiscordPromoComponents();
 
   let files = [];
   if (spacesBroadcastVideoExists()) {
@@ -2245,12 +2240,7 @@ async function sendRaidNotificationToChannel(raidData) {
       )
     );
   }
-  components.push(
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('👨‍💼 Hire an Expert').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/marketplace'),
-      new ButtonBuilder().setLabel('🚀 X Space Trender').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz/hyperspace')
-    )
-  );
+  components.push(...getDiscordPromoComponents());
 
   let files = [];
   if (raidData.creatorBrandingVideoUrl && isValidBrandingVideoUrl(raidData.creatorBrandingVideoUrl)) {
@@ -2318,9 +2308,12 @@ async function sendRaidCompletionToChannel(completionData) {
     )
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setLabel('Join Raids').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz')
-  );
+  const components = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('Join Raids').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz')
+    ),
+    ...getDiscordPromoComponents(),
+  ];
   let files = [];
   if (completionData.creatorBrandingVideoUrl && isValidBrandingVideoUrl(completionData.creatorBrandingVideoUrl)) {
     files = await buildDiscordBrandingFiles({ customBrandingVideoUrl: completionData.creatorBrandingVideoUrl.trim() });
@@ -2331,7 +2324,7 @@ async function sendRaidCompletionToChannel(completionData) {
   if (files.length === 0 && fs.existsSync(VIDEO_RAID_COMPLETION)) {
     files = [VIDEO_RAID_COMPLETION];
   }
-  const payload = { embeds: [embed], components: [row], files };
+  const payload = { embeds: [embed], components, files };
   let sent = 0;
   const newCompletionIds = {};
   for (const channelId of ids) {

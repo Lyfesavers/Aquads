@@ -5,7 +5,12 @@ const fs = require('fs');
 const SPACES_URL_REGEX = /(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/i\/spaces\/[A-Za-z0-9]+)/i;
 
 const AQUADS_WEBSITE_URL = 'https://aquads.xyz';
+const { AQUADS_HOME_URL, getDefaultTelegramPromoKeyboard } = require('./botPromoButtons');
 const SPACES_BROADCAST_TITLE = 'Live X Space Happening Now!';
+
+function getSpacesBroadcastTelegramKeyboard() {
+  return getDefaultTelegramPromoKeyboard();
+}
 
 function escapeHtml(s) {
   return String(s)
@@ -88,6 +93,8 @@ module.exports = {
   SPACES_MESSAGE_CLEANUP_AFTER_MS,
   SPACES_BROADCAST_TITLE,
   AQUADS_WEBSITE_URL,
+  AQUADS_HOME_URL,
+  getSpacesBroadcastTelegramKeyboard,
   extractSpacesUrl,
   buildSpacesBroadcastCaption,
   buildSpacesBroadcastCaptionHtml,

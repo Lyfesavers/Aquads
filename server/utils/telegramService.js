@@ -131,25 +131,21 @@ async function isTelegramChatCreator(chatId, telegramUserId) {
   }
 }
 
-// HyperSpace promo: X Space Trender – shown on bot messages via inline button
-const HYPERSPACE_BUTTON_ROW = [
-  { text: '🚀 X Space Trender', url: 'https://aquads.xyz/hyperspace' }
-];
+const {
+  LIST_PROJECT_BUTTON_ROW,
+  HIRE_EXPERT_BUTTON_ROW,
+  HYPERSPACE_BUTTON_ROW,
+  getDefaultTelegramPromoKeyboard,
+  addPromoButtonsToTelegramKeyboard,
+} = require('./botPromoButtons');
 
+/** @deprecated Use addPromoButtonsToTelegramKeyboard — kept for call sites */
 function addHyperSpaceToKeyboard(keyboard) {
-  if (!keyboard || !keyboard.inline_keyboard) {
-    return { inline_keyboard: [HYPERSPACE_BUTTON_ROW] };
-  }
-  return {
-    inline_keyboard: [...keyboard.inline_keyboard, HYPERSPACE_BUTTON_ROW]
-  };
+  return addPromoButtonsToTelegramKeyboard(keyboard);
 }
 
-/** Hire an Expert + X Space Trender — same inline row as most bot sends */
 function defaultPromoInlineKeyboard() {
-  return addHyperSpaceToKeyboard({
-    inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-  });
+  return getDefaultTelegramPromoKeyboard();
 }
 
 // Serialize raid notifications (TG + Discord) so delete → send → store never interleave (avoids race conditions)
@@ -703,13 +699,9 @@ const telegramService = {
               callback_data: JSON.stringify({ action: 'complete', raidId: raidData.raidId })
             }
           ],
-          [
-            {
-              text: '👨‍💼 Hire an Expert',
-              url: 'https://aquads.xyz/marketplace'
-            }
-          ],
-          HYPERSPACE_BUTTON_ROW
+          LIST_PROJECT_BUTTON_ROW,
+          HIRE_EXPERT_BUTTON_ROW,
+          HYPERSPACE_BUTTON_ROW,
         ]
       };
       
@@ -844,6 +836,7 @@ const telegramService = {
     try {
       const {
         buildSpacesBroadcastCaptionHtml,
+        getSpacesBroadcastTelegramKeyboard,
         getSpacesBroadcastVideoPath,
         spacesBroadcastVideoExists,
       } = require('./xSpacesBroadcast');
@@ -865,7 +858,7 @@ const telegramService = {
       if (groupsToNotify.size === 0) return { count: 0 };
 
       const caption = buildSpacesBroadcastCaptionHtml(spaceUrl);
-      const keyboard = defaultPromoInlineKeyboard();
+      const keyboard = getSpacesBroadcastTelegramKeyboard();
       const videoPath = getSpacesBroadcastVideoPath();
       const videoExists = spacesBroadcastVideoExists();
 
@@ -952,12 +945,8 @@ const telegramService = {
           }
         ]);
       }
-      buttons.push([
-        {
-          text: '👨‍💼 Hire an Expert',
-          url: 'https://aquads.xyz/marketplace'
-        }
-      ]);
+      buttons.push(LIST_PROJECT_BUTTON_ROW);
+      buttons.push(HIRE_EXPERT_BUTTON_ROW);
       buttons.push(HYPERSPACE_BUTTON_ROW);
 
       const keyboard = {
@@ -2822,30 +2811,9 @@ ${platformEmoji} ${platformName} Raid
 
       // Add "Hire an Expert" and "X Space Trender" (HyperSpace) to the keyboard
       if (keyboard) {
-        const enhancedKeyboard = addHyperSpaceToKeyboard({
-          inline_keyboard: [
-            ...keyboard.inline_keyboard,
-            [
-              {
-                text: '👨‍💼 Hire an Expert',
-                url: 'https://aquads.xyz/marketplace'
-              }
-            ]
-          ]
-        });
-        payload.reply_markup = enhancedKeyboard;
+        payload.reply_markup = addPromoButtonsToTelegramKeyboard(keyboard);
       } else {
-        payload.reply_markup = {
-          inline_keyboard: [
-            [
-              {
-                text: '👨‍💼 Hire an Expert',
-                url: 'https://aquads.xyz/marketplace'
-              }
-            ],
-            HYPERSPACE_BUTTON_ROW
-          ]
-        };
+        payload.reply_markup = getDefaultTelegramPromoKeyboard();
       }
 
       const response = await axios.post(
@@ -4387,9 +4355,7 @@ Tap to update:`;
       
       try {
         if (userBrandingVideoUrl || userBrandingImageBuffer) {
-          const keyboard = addHyperSpaceToKeyboard({
-            inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-          });
+          const keyboard = getDefaultTelegramPromoKeyboard();
           const response = await telegramSendCustomBrandingMedia(
             botToken,
             chatId,
@@ -4404,9 +4370,7 @@ Tap to update:`;
             await telegramService.pinMessage(chatId, messageId);
           }
         } else if (videoExists || telegramService.cachedVideoFileIds.trend) {
-          const keyboard = addHyperSpaceToKeyboard({
-            inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-          });
+          const keyboard = getDefaultTelegramPromoKeyboard();
 
           let response;
           
@@ -5251,9 +5215,7 @@ Tap to update:`;
         return null;
       }
 
-      const keyboard = addHyperSpaceToKeyboard({
-        inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-      });
+      const keyboard = getDefaultTelegramPromoKeyboard();
 
       let response;
       
@@ -5603,9 +5565,7 @@ Tap to update:`;
       const videoPath = path.join(__dirname, '../../public/TRENDINGLIST.mp4');
       const videoExists = fs.existsSync(videoPath);
 
-      const keyboard = addHyperSpaceToKeyboard({
-        inline_keyboard: [[{ text: '👨‍💼 Hire an Expert', url: 'https://aquads.xyz/marketplace' }]]
-      });
+      const keyboard = getDefaultTelegramPromoKeyboard();
 
       let messageId = null;
       if (videoExists || telegramService.cachedVideoFileIds.trend) {
