@@ -3888,7 +3888,7 @@ When you list your project as **Premium** and it reaches **bumped** status (**10
 - 🔥 Trending across Aquads homepage
 - 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
-- 🔥 5K+ trending channel exposure
+- 🔥 Trending channel exposure
 - 🔥 Custom branding on vote notifications
 - 🔥 Vote + Member boost packages
 
@@ -4020,7 +4020,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 - **Aquads Homepage**: **Bumped** (100+ bullish) projects get trending-style visibility
 - **BexTools Trending Section**: Featured visibility
 - **Bubble Leaderboards**: Ranked by bullish votes
-- **5K+ Trending Channel**: Vote notifications reach thousands
+- **Trending Channel**: Vote notifications on our trending channel
 
 Use \`/bubbles\` to see top 10 and \`/mybubble\` to manage your projects.
 
@@ -4047,7 +4047,7 @@ Purchase boosts via \`/boostvote\`:
 - Starter listings use the bot for everything **except** custom notification media—they keep **default Aquads** styling on pings until upgraded.
 - Upload your logo/image (max 500KB, JPG/PNG)
 - Your branding appears on vote notifications
-- Notifications go to 5K+ member trending channel
+- Notifications go to our trending channel
 - Set with \`/setbranding\` (image max 500KB, or **direct** https \`.mp4\` link max **5MB** — e.g. **catbox.moe**), remove with \`/removebranding\`
 
 ### Community Raid Network

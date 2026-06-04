@@ -47,7 +47,7 @@ const TelegramBot = () => {
       description: 'Branding image or direct https .mp4 link (max 5MB; e.g. catbox.moe) for vote notifications—same video style as default alerts; we only store the URL.',
       command: '/setbranding • /removebranding',
       color: 'from-pink-500 to-rose-600',
-      details: ['5K+ trending channel reach', 'Image max 500KB or direct .mp4 URL (max 5MB)', 'Try catbox.moe for easy hosting', 'Exclusive for bumped projects'],
+      details: ['Trending channel reach', 'Image max 500KB or direct .mp4 URL (max 5MB)', 'Try catbox.moe for easy hosting', 'Exclusive for bumped projects'],
       premium: true
     },
     {
@@ -93,7 +93,7 @@ const TelegramBot = () => {
         { name: 'Trending Across Aquads Platform', included: false },
         { name: 'BexTools Trending Section', included: false },
         { name: 'Bubble Ranking Visibility', included: false },
-        { name: '5K+ Trending Channel Exposure', included: false },
+        { name: 'Trending Channel Exposure', included: false },
         { name: 'Custom Branding on Notifications', included: false },
         { name: 'Vote boost packages (Telegram & Discord)', included: false }
       ]
@@ -113,7 +113,7 @@ const TelegramBot = () => {
         { name: 'Trending Across Aquads Platform', included: true, highlight: true },
         { name: 'BexTools Trending Section', included: true, highlight: true },
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
-        { name: '5K+ Trending Channel Exposure', included: true, highlight: true },
+        { name: 'Trending Channel Exposure', included: true, highlight: true },
         { name: 'Custom Branding on Notifications', included: true, highlight: true },
         { name: 'Vote boost packages (Telegram & Discord)', included: true, highlight: true }
       ]
@@ -165,8 +165,8 @@ const TelegramBot = () => {
     {
       icon: FaTrophy,
       title: 'Trending Everywhere',
-      description: 'Get featured in bubble rankings, BexTools trending, Aquads platform, AND our 5,000+ member trending channel. Maximum visibility.',
-      highlight: 'Multi-platform + 5K channel'
+      description: 'Get featured in bubble rankings, BexTools trending, Aquads platform, and our trending channel. Maximum visibility.',
+      highlight: 'Multi-platform + trending channel'
     },
     {
       icon: FaShieldAlt,
@@ -176,9 +176,9 @@ const TelegramBot = () => {
     },
     {
       icon: FaImage,
-      title: '5K+ Trending Channel',
-      description: 'Your custom branding and vote notifications appear in our trending channel with 5,000+ active crypto degens watching.',
-      highlight: '5,000+ eyes on your coin'
+      title: 'Trending Channel',
+      description: 'Your custom branding and vote notifications appear in our trending channel.',
+      highlight: 'Trending channel exposure'
     },
     {
       icon: FaGlobe,
@@ -263,7 +263,7 @@ const TelegramBot = () => {
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 The same powerful bot on <span className="text-cyan-400 font-semibold">Telegram</span> and <span className="text-indigo-400 font-semibold">Discord</span>. Get <span className="text-green-400 font-semibold">20 FREE raid posts daily</span> (for lifetime bumped projects), 
-                boost with <span className="text-cyan-400 font-semibold">guaranteed bullish votes</span>, and get exposure to our <span className="text-purple-400 font-semibold">5,000+ member trending channel</span>.
+                boost with <span className="text-cyan-400 font-semibold">guaranteed bullish votes</span>, and get exposure on our <span className="text-purple-400 font-semibold">trending channel</span>.
               </p>
 
               {/* CTA Buttons */}
@@ -314,7 +314,7 @@ const TelegramBot = () => {
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>5K+ Trending Channel</span>
+                  <span>Trending Channel</span>
                 </div>
               </div>
             </div>

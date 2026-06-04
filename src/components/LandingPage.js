@@ -2989,7 +2989,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in 5K+ trending channel.
+                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
                 </p>
                 
                 {/* Stats grid */}
@@ -2998,7 +2998,7 @@ const CarouselCard = ({ feature, index }) => {
                     { icon: '🐦', label: 'Twitter Raids', value: '20 Free Daily' },
                     { icon: '👍', label: 'Bubble votes', value: '20 pts once' },
                     { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
-                    { icon: '🎨', label: 'Custom Branding', value: '5K+ Channel' }
+                    { icon: '🎨', label: 'Custom Branding', value: 'Trending Channel' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -3092,7 +3092,7 @@ const CarouselCard = ({ feature, index }) => {
                     {/* Custom Branding Badge */}
                     <div className="bg-gradient-to-r from-pink-500/20 to-rose-500/20 border border-pink-500/40 rounded-xl p-3 text-center">
                       <div className="text-pink-400 text-xs font-semibold mb-1">🎨 Custom Branding</div>
-                      <div className="text-white text-xs">5K+ Trending Channel</div>
+                      <div className="text-white text-xs">Trending Channel</div>
                     </div>
                   </div>
                   
