@@ -141,7 +141,7 @@ const logoutBtn = document.getElementById('logout-btn');
 
 // Configuration
 const IFRAME_TIMEOUT = 10000; // 10 seconds
-const AQUADS_URL = 'https://aquads.xyz/embed/aquaswap';
+const AQUADS_URL = 'https://aquads.xyz/embed/aquaswap?extension=1';
 
 // Track if iframe has loaded
 let iframeLoaded = false;
@@ -390,7 +390,8 @@ window.addEventListener('message', (event) => {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${storage.authToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Aquads-Points-Source': 'extension'
           }
         });
         

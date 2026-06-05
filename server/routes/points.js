@@ -492,9 +492,18 @@ router.post('/social-raids/complete', auth, requireEmailVerification, (req, res)
   return res.status(403).json({ error: 'This endpoint is disabled. Complete raids via the raid flow and earn points after admin approval.' });
 });
 
+const ALLOWED_SWAP_POINTS_SOURCES = new Set(['website', 'extension']);
+
 // Route to award points for completed AquaSwap transaction
 router.post('/swap-completed', auth, async (req, res) => {
   try {
+    const pointsSource = (req.get('X-Aquads-Points-Source') || '').toLowerCase();
+    if (!ALLOWED_SWAP_POINTS_SOURCES.has(pointsSource)) {
+      return res.status(403).json({
+        error: 'Swap points are only available on the Aquads AquaSwap page and official extension'
+      });
+    }
+
     const user = await User.findById(req.user.userId);
     
     if (!user) {

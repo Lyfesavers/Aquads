@@ -12,73 +12,58 @@ const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;
 
 const SOLANA_RPC_URL = (process.env.REACT_APP_SOLANA_RPC_URL || '').trim();
 
-const AquaSwapEmbed = () => {
-  const [embedOptions, setEmbedOptions] = useState({
-    hideLogo: false
-  });
+const readEmbedOptionsFromUrl = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    hideLogo: urlParams.get('hideLogo') === 'true',
+    /** Official Chrome extension iframe only (`?extension=1`) — public embeds must not earn swap points */
+    isExtensionEmbed: urlParams.get('extension') === '1'
+  };
+};
 
-  // LiFi Widget Events Hook - THE CORRECT WAY to listen to widget events (same as main swap)
+const AquaSwapEmbed = () => {
+  const [embedOptions, setEmbedOptions] = useState(readEmbedOptionsFromUrl);
+
   const widgetEvents = useWidgetEvents();
 
-  // Parse URL parameters
+  const notifyExtensionParentSwapCompleted = (route) => {
+    if (!embedOptions.isExtensionEmbed || window.parent === window) return;
+
+    window.parent.postMessage({
+      type: 'AQUASWAP_SWAP_COMPLETED',
+      timestamp: Date.now(),
+      route: route ? {
+        fromChain: route.fromChain,
+        toChain: route.toChain,
+        fromToken: route.fromToken,
+        toToken: route.toToken
+      } : null
+    }, '*');
+  };
+
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const hideLogo = urlParams.get('hideLogo') === 'true';
-    
-    setEmbedOptions({
-      hideLogo
-    });
+    setEmbedOptions(readEmbedOptionsFromUrl());
   }, []);
 
-  // Listen for swap completion using the proper event hook (same as main swap page)
+  // Extension iframe only: notify parent to award points (not public /embed embeds)
   useEffect(() => {
+    if (!embedOptions.isExtensionEmbed) return;
+
     const handleSwapComplete = (route) => {
-      logger.info('✅ Swap completed via widget event hook in embed', { route });
-      
-      // Send message to parent window (extension) to award 5 affiliate points
-      if (window.parent !== window) {
-        const message = {
-          type: 'AQUASWAP_SWAP_COMPLETED',
-          timestamp: Date.now(),
-          route: route ? {
-            fromChain: route.fromChain,
-            toChain: route.toChain,
-            fromToken: route.fromToken,
-            toToken: route.toToken
-          } : null
-        };
-        
-        logger.info('📤 Sending swap completion message to parent window (from event hook)', message);
-        
-        // Send to parent window (extension popup)
-        window.parent.postMessage(message, '*');
-        
-        // Also try with specific origin for better compatibility
-        try {
-          window.parent.postMessage(message, window.location.origin);
-        } catch (e) {
-          logger.warn('Could not send message with specific origin, using wildcard:', e);
-        }
-      } else {
-        logger.warn('Not in iframe context, cannot send message to parent');
-      }
+      logger.info('Swap completed in extension embed', { route });
+      notifyExtensionParentSwapCompleted(route);
     };
 
-    // Subscribe to the RouteExecutionCompleted event (same as main swap)
     if (widgetEvents) {
       widgetEvents.on(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
-      logger.info('✅ Subscribed to RouteExecutionCompleted event');
-    } else {
-      logger.warn('⚠️ widgetEvents not available, using callback fallback');
     }
 
-    // Cleanup: unsubscribe when component unmounts
     return () => {
       if (widgetEvents) {
         widgetEvents.off(WidgetEvent.RouteExecutionCompleted, handleSwapComplete);
       }
     };
-  }, [widgetEvents]);
+  }, [widgetEvents, embedOptions.isExtensionEmbed]);
 
   // LiFi Widget configuration optimized for embedding
   const widgetConfig = {
@@ -139,35 +124,8 @@ const AquaSwapEmbed = () => {
     },
     
     onRouteExecutionCompleted: (route) => {
-      logger.info('✅ Swap execution completed in embed', { route });
-      
-      // Send message to parent window (extension) to award 5 affiliate points
-      if (window.parent !== window) {
-        const message = {
-          type: 'AQUASWAP_SWAP_COMPLETED',
-          timestamp: Date.now(),
-          route: route ? {
-            fromChain: route.fromChain,
-            toChain: route.toChain,
-            fromToken: route.fromToken,
-            toToken: route.toToken
-          } : null
-        };
-        
-        logger.info('📤 Sending swap completion message to parent window', message);
-        
-        // Send to parent window (extension popup)
-        window.parent.postMessage(message, '*');
-        
-        // Also try with specific origin for better compatibility
-        try {
-          window.parent.postMessage(message, window.location.origin);
-        } catch (e) {
-          logger.warn('Could not send message with specific origin, using wildcard:', e);
-        }
-      } else {
-        logger.warn('Not in iframe context, cannot send message to parent');
-      }
+      logger.info('Swap execution completed in embed', { route });
+      notifyExtensionParentSwapCompleted(route);
     },
     
     onRouteExecutionFailed: (route, error) => {

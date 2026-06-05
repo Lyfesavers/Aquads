@@ -690,7 +690,8 @@ const AquaSwap = ({
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'X-Aquads-Points-Source': 'website'
             }
           })
           .then(async response => {
