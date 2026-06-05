@@ -314,7 +314,7 @@ const Whitepaper = () => {
               <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-3 text-center">
                 <div className="text-2xl mb-1">🔴</div>
                 <div className="text-red-400 font-bold">0-49</div>
-                <div className="text-sm text-gray-400">Risky</div>
+                <div className="text-sm text-gray-400">Unproven</div>
               </div>
             </div>
           </section>

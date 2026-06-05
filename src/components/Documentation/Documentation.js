@@ -4507,7 +4507,7 @@ The Trust Score is displayed through an intuitive gauge that categorizes freelan
 | 85-100 | Green | Safe to Book |
 | 70-84 | Yellow | Almost Proven |
 | 50-69 | Orange | Unproven |
-| 0-49 | Red | Risky |
+| 0-49 | Red | Unproven |
     `,
     prevPage: { id: 'wp-products-services', title: 'Products & Services' },
     nextPage: { id: 'wp-onchain-resume', title: 'On-Chain Resume' },

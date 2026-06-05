@@ -162,10 +162,10 @@ const RiskGauge = ({
       zone: 'unproven'
     };
     return { 
-      level: 'risky', 
+      level: 'unproven', 
       color: '#ef4444', 
-      label: 'Risky',
-      zone: 'risky'
+      label: 'Unproven',
+      zone: 'unproven'
     };
   };
 
@@ -262,7 +262,7 @@ const RiskGauge = ({
           strokeLinecap="round"
         />
         
-        {/* Risky zone (50-70%) */}
+        {/* Unproven zone (50-70%) */}
         <path
           d={createArc(180 + (50 * 180) / 100, 180 + (70 * 180) / 100)}
           fill="none"
@@ -320,7 +320,7 @@ const RiskGauge = ({
               fontWeight="bold"
               textAnchor="start"
             >
-              Risky
+              Unproven
             </text>
             
             <text
@@ -395,7 +395,7 @@ const RiskGauge = ({
               ))}
             </div>
             <div className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
-              Score: {score}% • Zone: {score >= 85 ? 'Safe to Book (85-100%)' : score >= 70 ? 'Almost Proven (70-84%)' : score >= 50 ? 'Unproven (50-69%)' : 'Risky (0-49%)'} • Needle: {Math.round(needleAngle)}°
+              Score: {score}% • Zone: {score >= 85 ? 'Safe to Book (85-100%)' : score >= 70 ? 'Almost Proven (70-84%)' : score >= 50 ? 'Unproven (50-69%)' : 'Unproven (0-49%)'} • Needle: {Math.round(needleAngle)}°
             </div>
           </div>
           {/* Tooltip arrow */}
