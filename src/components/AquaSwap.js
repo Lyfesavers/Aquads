@@ -9,6 +9,7 @@ import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
 import logger from '../utils/logger';
+import { getQualifyingSwapPointsPayload } from '../utils/swapPointsQualification';
 import { isValidDeepDiveIntroVideoUrl, normalizeDeepDiveVideoUrlCandidate } from '../utils/deepDiveVideoUrl';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
@@ -670,10 +671,15 @@ const AquaSwap = ({
   useEffect(() => {
     const handleSwapComplete = (route) => {
       logger.info('Swap completed via widget event', { route });
-      
-      // Award 5 points if user is logged in
-      if (currentUser) {
-        // Get token from localStorage currentUser object (not a separate 'token' key)
+
+      const swapPointsPayload = getQualifyingSwapPointsPayload(route);
+      if (!swapPointsPayload) {
+        logger.info('Swap completed but below $5 USD minimum for affiliate points', {
+          fromAmountUSD: route?.fromAmountUSD
+        });
+      }
+
+      if (currentUser && swapPointsPayload) {
         let token = null;
         try {
           const storedUser = localStorage.getItem('currentUser');
@@ -692,18 +698,16 @@ const AquaSwap = ({
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'X-Aquads-Points-Source': 'website'
-            }
+            },
+            body: JSON.stringify(swapPointsPayload)
           })
           .then(async response => {
             const data = await response.json().catch(() => ({}));
             
-            // Check if response is ok before processing (same as extension)
             if (response.ok) {
-              // Show custom popup modal for points earned
-              if (data.success) {
+              if (data.success && !data.alreadyClaimed) {
                 setPointsEarned(5);
                 setShowPointsPopup(true);
-                // Auto-dismiss after 4 seconds
                 setTimeout(() => {
                   setShowPointsPopup(false);
                 }, 4000);
@@ -733,16 +737,11 @@ const AquaSwap = ({
               showNotification('✅ Swap completed successfully!', 'success');
             }
           });
-        } else {
-          if (showNotification) {
-            showNotification('✅ Swap completed successfully!', 'success');
-          }
-        }
-      } else {
-        // User not logged in, just show swap success
-        if (showNotification) {
+        } else if (showNotification) {
           showNotification('✅ Swap completed successfully!', 'success');
         }
+      } else if (showNotification) {
+        showNotification('✅ Swap completed successfully!', 'success');
       }
     };
 

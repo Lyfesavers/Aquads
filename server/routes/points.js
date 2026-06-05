@@ -493,6 +493,7 @@ router.post('/social-raids/complete', auth, requireEmailVerification, (req, res)
 });
 
 const ALLOWED_SWAP_POINTS_SOURCES = new Set(['website', 'extension']);
+const MIN_SWAP_POINTS_USD = 5;
 
 // Route to award points for completed AquaSwap transaction
 router.post('/swap-completed', auth, async (req, res) => {
@@ -509,19 +510,49 @@ router.post('/swap-completed', auth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    let routeIdStr = null;
+
+    if (pointsSource === 'website') {
+      const { routeId, fromAmountUSD } = req.body || {};
+      const usd = parseFloat(fromAmountUSD);
+      if (!routeId || !Number.isFinite(usd) || usd < MIN_SWAP_POINTS_USD) {
+        return res.status(400).json({
+          success: false,
+          belowMinimum: true,
+          error: `Qualifying swaps require at least $${MIN_SWAP_POINTS_USD} USD notional on the From side`
+        });
+      }
+      routeIdStr = String(routeId);
+      const alreadyClaimed = user.pointsHistory?.some(
+        (entry) =>
+          entry.reason === 'Completed AquaSwap transaction' &&
+          entry.socialRaidId === routeIdStr
+      );
+      if (alreadyClaimed) {
+        return res.json({
+          success: true,
+          alreadyClaimed: true,
+          message: 'Points already awarded for this swap',
+          currentPoints: user.points
+        });
+      }
+    }
     
-    // Award 5 points for completing a swap
+    const historyEntry = {
+      amount: 5,
+      reason: 'Completed AquaSwap transaction',
+      createdAt: new Date()
+    };
+    if (routeIdStr) {
+      historyEntry.socialRaidId = routeIdStr;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user.userId,
       {
         $inc: { points: 5 },
-        $push: {
-          pointsHistory: {
-            amount: 5,
-            reason: 'Completed AquaSwap transaction',
-            createdAt: new Date()
-          }
-        }
+        $push: { pointsHistory: historyEntry }
       },
       { new: true }
     );
