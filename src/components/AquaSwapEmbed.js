@@ -127,7 +127,7 @@ const AquaSwapEmbed = () => {
     
     onRouteExecutionCompleted: (route) => {
       logger.info('Swap execution completed in embed', { route });
-      notifyExtensionParentSwapCompleted(route);
+      // Points postMessage handled by extension-only useEffect (avoids duplicate awards)
     },
     
     onRouteExecutionFailed: (route, error) => {
