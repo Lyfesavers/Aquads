@@ -9,6 +9,7 @@ import { fetchMyPoints, socket } from '../services/api';
 const HorseRacing = ({ currentUser }) => {
   // Game state
   const [horses, setHorses] = useState([]);
+  const [raceId, setRaceId] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
   const [currentBet, setCurrentBet] = useState(null);
   const [raceInProgress, setRaceInProgress] = useState(false);
@@ -89,6 +90,10 @@ const HorseRacing = ({ currentUser }) => {
       }
 
       const data = await response.json();
+      if (!data.raceId || !Array.isArray(data.horses)) {
+        throw new Error('Invalid race data from server');
+      }
+      setRaceId(data.raceId);
       const raceHorses = data.horses.map(horse => ({
         ...horse,
         position: 0,
@@ -493,10 +498,15 @@ const HorseRacing = ({ currentUser }) => {
       return;
     }
 
+    if (!raceId) {
+      alert('Race data expired. Please wait for a new race to load.');
+      await initializeHorses();
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Call horse racing backend API
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
         method: 'POST',
         headers: {
@@ -506,7 +516,7 @@ const HorseRacing = ({ currentUser }) => {
         body: JSON.stringify({
           horseId: currentBet.horseId,
           betAmount: currentBet.amount,
-          horses: horses
+          raceId
         })
       });
 
@@ -516,6 +526,7 @@ const HorseRacing = ({ currentUser }) => {
       }
 
       const results = await response.json();
+      setRaceId(null);
 
       // Update user points from backend response
       setUserPoints(results.newBalance);

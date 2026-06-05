@@ -3659,8 +3659,8 @@ Whenever someone who signed up with your referral code **earns points** anywhere
 **When you earn the bonus:**
 - They complete a raid (Twitter/Facebook)
 - They complete a qualifying AquaSwap swap (min. $5 USD notional) or vote on a bubble
-- They vote on a game, leave a service review, or earn daily Telegram engagement points
-- They win in horse racing, or earn any other positive points in the ecosystem
+- They vote on a game, leave a service review, or earn daily Telegram/Discord engagement points
+- They earn other qualifying positive points in the ecosystem (not horse racing wins)
 
 **When you don’t:** If they *lose* points (e.g. betting, spending points), you don’t get the bonus—only when they *earn* points.
 

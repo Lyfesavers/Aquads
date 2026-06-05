@@ -1,11 +1,43 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
 const HorseRaceResult = require('../models/HorseRaceResult');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { getIO } = require('../socket');
-const { creditReferrerBonus } = require('./points');
+const HORSE_COUNT = 8;
+const RACE_TTL_MS = 30 * 60 * 1000;
+const MAX_VALID_ODDS = 4;
+const MIN_VALID_ODDS = 1.5;
+
+/** Server-authoritative pending races: raceId -> { userId, horses, createdAt } */
+const pendingRaces = new Map();
+
+function pruneExpiredRaces() {
+  const now = Date.now();
+  for (const [id, race] of pendingRaces.entries()) {
+    if (now - race.createdAt > RACE_TTL_MS) pendingRaces.delete(id);
+  }
+}
+
+function clearPendingRacesForUser(userId) {
+  const uid = userId.toString();
+  for (const [id, race] of pendingRaces.entries()) {
+    if (race.userId === uid) pendingRaces.delete(id);
+  }
+}
+
+function sanitizeRaceHorses(horses) {
+  return horses.map((horse) => ({
+    id: horse.id,
+    name: horse.name,
+    color: horse.color,
+    baseOdds: horse.baseOdds,
+    baseSpeed: horse.baseSpeed,
+    odds: Math.min(MAX_VALID_ODDS, Math.max(MIN_VALID_ODDS, Number(horse.odds) || MIN_VALID_ODDS))
+  }));
+}
 
 // Horse data with base odds and speeds (balanced for fair gameplay)
 const HORSE_DATA = [
@@ -232,11 +264,21 @@ const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
 };
 
 // GET /api/horse-racing/race-data
-// Get fresh race data for a new race
+// Get fresh race data for a new race (stored server-side until bet is placed)
 router.get('/race-data', auth, async (req, res) => {
   try {
-    const raceHorses = generateRaceData();
-    res.json({ horses: raceHorses });
+    pruneExpiredRaces();
+    clearPendingRacesForUser(req.user.userId);
+
+    const raceHorses = sanitizeRaceHorses(generateRaceData());
+    const raceId = crypto.randomUUID();
+    pendingRaces.set(raceId, {
+      userId: req.user.userId.toString(),
+      horses: raceHorses,
+      createdAt: Date.now()
+    });
+
+    res.json({ raceId, horses: raceHorses });
   } catch (error) {
     console.error('Error generating race data:', error);
     res.status(500).json({ error: 'Failed to generate race data' });
@@ -247,18 +289,30 @@ router.get('/race-data', auth, async (req, res) => {
 // Place a bet on a horse
 router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { horseId, betAmount, horses } = req.body;
-    
-    // Validate input
-    if (horseId == null || !betAmount || !horses || !Array.isArray(horses)) {
+    const { horseId, betAmount, raceId } = req.body;
+
+    if (horseId == null || !betAmount || !raceId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
+    pruneExpiredRaces();
+    const pending = pendingRaces.get(raceId);
+    if (!pending || pending.userId !== req.user.userId.toString()) {
+      return res.status(400).json({ error: 'Invalid or expired race. Please start a new race.' });
+    }
+    if (Date.now() - pending.createdAt > RACE_TTL_MS) {
+      pendingRaces.delete(raceId);
+      return res.status(400).json({ error: 'Race expired. Please start a new race.' });
+    }
+
+    const horses = pending.horses;
+    pendingRaces.delete(raceId);
+
     if (betAmount < MIN_BET || betAmount > MAX_BET) {
       return res.status(400).json({ error: `Bet amount must be between ${MIN_BET} and ${MAX_BET} points` });
     }
-    
-    if (horseId < 0 || horseId >= horses.length) {
+
+    if (horseId < 0 || horseId >= HORSE_COUNT || horseId >= horses.length) {
       return res.status(400).json({ error: 'Invalid horse selection' });
     }
     
@@ -303,8 +357,6 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       });
       
       await user.save();
-      // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-      await creditReferrerBonus(req.user.userId, 'horse racing win');
     }
     
     // Save race result to database with psychology data
