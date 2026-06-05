@@ -681,29 +681,30 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    // Update completion
+    if (completion.approvalStatus === 'approved') {
+      return res.status(400).json({ error: 'Completion already approved' });
+    }
+
     completion.approvalStatus = 'approved';
     completion.approvedBy = req.user.id;
     completion.approvedAt = new Date();
-    completion.pointsAwarded = true;
 
-    // Award points to user - check if admin specified custom points (for verified accounts)
-    const user = await User.findById(completion.userId);
-    if (user) {
-      // Use admin-specified points if provided, otherwise use raid default or 20
-      const points = req.body.points || raid.points || 20;
-      const isVerifiedBonus = req.body.points === 50;
-      user.points = (user.points || 0) + points;
-      user.lastActivity = new Date(); // Update activity when points are awarded
-      user.pointsHistory.push({
-        amount: points,
-        reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`,
-        socialRaidId: raid._id,
-        createdAt: new Date()
-      });
-      await user.save();
-      
-        // Emit real-time update for points awarded
+    if (!completion.pointsAwarded) {
+      const user = await User.findById(completion.userId);
+      if (user) {
+        const points = req.body.points || raid.points || 20;
+        const isVerifiedBonus = req.body.points === 50;
+        user.points = (user.points || 0) + points;
+        user.lastActivity = new Date();
+        user.pointsHistory.push({
+          amount: points,
+          reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`,
+          socialRaidId: raid._id,
+          createdAt: new Date()
+        });
+        await user.save();
+        completion.pointsAwarded = true;
+
         emitAffiliateEarningUpdate({
           affiliateId: completion.userId,
           type: 'points_awarded',
@@ -711,14 +712,14 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
           newTotalPoints: user.points,
           reason: `Twitter raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`
         });
-        // Referrer bonus: run in background so approve response is fast; earner points already saved
         const referredUserId = completion.userId;
         const raidTitleForBonus = raid.title;
         setImmediate(() => {
           pointsModule.creditReferrerBonus(referredUserId, `Twitter raid approved: ${raidTitleForBonus}`)
             .catch(err => console.error('Twitter raid approve: referrer bonus failed', err));
         });
-         }
+      }
+    }
 
     await raid.save({ validateBeforeSave: false });
     invalidateRaidsCache();
