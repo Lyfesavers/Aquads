@@ -9,16 +9,14 @@ import WorkshopProgress from './workshop/WorkshopProgress';
 import WorkshopModule from './workshop/WorkshopModule';
 import WorkshopGameification from './workshop/WorkshopGameification';
 import WorkshopStats from './workshop/WorkshopStats';
-import { getWorkshopProgress, completeWorkshopSection, awardAchievement, getWorkshopProgressFallback } from '../services/workshopApi';
+import { getWorkshopProgress, completeWorkshopSection, getWorkshopProgressFallback } from '../services/workshopApi';
 import logger from '../utils/logger';
 
 const FreelancerWorkshop = ({ currentUser }) => {
   const [currentModule, setCurrentModule] = useState(0);
   const [workshopProgress, setWorkshopProgress] = useState({
-    totalPoints: 0,
-    totalWorkshopPoints: 0,
-    completedSections: [],
-    workshopHistory: [],
+    completedSections: {},
+    sectionCompletions: [],
     badges: [],
     completedModules: [],
     currentStreak: 0,
@@ -238,6 +236,65 @@ const FreelancerWorkshop = ({ currentUser }) => {
     }
   ];
 
+  const calculateStreak = (sectionCompletions) => {
+    const recentDays = 7;
+    const now = new Date();
+    const recentActivity = (sectionCompletions || []).filter((entry) => {
+      const entryDate = new Date(entry.date);
+      const daysDiff = (now - entryDate) / (1000 * 60 * 60 * 24);
+      return daysDiff <= recentDays;
+    });
+    return Math.min(recentActivity.length, recentDays);
+  };
+
+  const calculateTimeSpent = (sectionCompletions) => {
+    return (sectionCompletions || []).length * 10;
+  };
+
+  const buildWorkshopState = (apiProgress) => {
+    const completedSectionsMap = {};
+    const sectionsList = apiProgress.completedSections || [];
+
+    if (Array.isArray(sectionsList)) {
+      sectionsList.forEach((sectionKey) => {
+        const [moduleId, , sectionIndex] = sectionKey.split('-');
+        if (!completedSectionsMap[moduleId]) {
+          completedSectionsMap[moduleId] = [];
+        }
+        completedSectionsMap[moduleId].push(parseInt(sectionIndex, 10));
+      });
+    }
+
+    const completedModules = [];
+    const badges = [];
+
+    modules.forEach((module) => {
+      const moduleCompletedSections = completedSectionsMap[module.id] || [];
+      const validCompletedSections = moduleCompletedSections.filter(
+        (sectionIndex) => sectionIndex < module.sections.length
+      );
+      if (
+        validCompletedSections.length === module.sections.length &&
+        validCompletedSections.length > 0
+      ) {
+        completedModules.push(module.id);
+        badges.push(module.badge);
+      }
+      completedSectionsMap[module.id] = validCompletedSections;
+    });
+
+    const sectionCompletions = apiProgress.sectionCompletions || [];
+
+    return {
+      completedSections: completedSectionsMap,
+      sectionCompletions,
+      completedModules,
+      badges,
+      currentStreak: calculateStreak(sectionCompletions),
+      timeSpent: calculateTimeSpent(sectionCompletions)
+    };
+  };
+
   useEffect(() => {
     loadWorkshopProgress();
   }, [currentUser]);
@@ -251,102 +308,36 @@ const FreelancerWorkshop = ({ currentUser }) => {
     try {
       setLoading(true);
       const progress = await getWorkshopProgress();
-      
-      // Convert completed sections array to the format expected by components
-      const completedSectionsMap = {};
-      if (Array.isArray(progress.completedSections)) {
-        progress.completedSections.forEach(sectionKey => {
-          const [moduleId, , sectionIndex] = sectionKey.split('-');
-          if (!completedSectionsMap[moduleId]) {
-            completedSectionsMap[moduleId] = [];
-          }
-          completedSectionsMap[moduleId].push(parseInt(sectionIndex));
-        });
-      } else if (progress.completedSections && typeof progress.completedSections === 'object') {
-        // Already in the right format from localStorage fallback
-        Object.assign(completedSectionsMap, progress.completedSections);
-      }
+      const nextState = buildWorkshopState(progress);
 
-      // Calculate completed modules and badges
-      const completedModules = [];
-      const badges = [];
-      
-      modules.forEach(module => {
-        const moduleCompletedSections = completedSectionsMap[module.id] || [];
-        // Only mark as completed if we have exactly the right sections completed
-        // and no more than the total sections for this module
-        const validCompletedSections = moduleCompletedSections.filter(
-          sectionIndex => sectionIndex < module.sections.length
-        );
-        if (validCompletedSections.length === module.sections.length && 
-            validCompletedSections.length > 0) {
-          completedModules.push(module.id);
-          badges.push(module.badge);
-        }
-        // Update the cleaned sections back to the map
-        completedSectionsMap[module.id] = validCompletedSections;
-      });
-
-      // Debug logging
       logger.log('Workshop Progress Debug:', {
-        completedModules,
-        completedSectionsMap,
-        currentModule: currentModule
+        completedModules: nextState.completedModules,
+        completedSections: nextState.completedSections,
+        currentModule
       });
 
-      // Set current module to the first uncompleted module
-      const firstUncompletedModuleIndex = modules.findIndex(module => 
-        !completedModules.includes(module.id)
+      const firstUncompletedModuleIndex = modules.findIndex(
+        (module) => !nextState.completedModules.includes(module.id)
       );
       const newCurrentModule = firstUncompletedModuleIndex >= 0 ? firstUncompletedModuleIndex : 0;
-      
+
       if (newCurrentModule !== currentModule) {
         setCurrentModule(newCurrentModule);
       }
 
-      setWorkshopProgress({
-        totalPoints: progress.totalPoints || 0,
-        completedSections: completedSectionsMap,
-        workshopHistory: progress.workshopHistory || [],
-        completedModules,
-        badges,
-        currentStreak: calculateStreak(progress.workshopHistory || []),
-        timeSpent: calculateTimeSpent(progress.workshopHistory || [])
-      });
-      
+      setWorkshopProgress(nextState);
     } catch (err) {
       logger.error('Error loading workshop progress:', err);
-      // Use fallback data if API fails
-      const fallbackProgress = getWorkshopProgressFallback();
       setWorkshopProgress({
-        ...fallbackProgress,
+        ...buildWorkshopState(getWorkshopProgressFallback()),
         badges: [],
         completedModules: [],
         currentStreak: 0,
-        timeSpent: 0,
-        completedSections: {}
+        timeSpent: 0
       });
-      // Don't show error - localStorage fallback will work
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateStreak = (history) => {
-    // Simple streak calculation based on recent activity
-    const recentDays = 7;
-    const now = new Date();
-    const recentActivity = history.filter(entry => {
-      const entryDate = new Date(entry.date);
-      const daysDiff = (now - entryDate) / (1000 * 60 * 60 * 24);
-      return daysDiff <= recentDays;
-    });
-    return Math.min(recentActivity.length, recentDays);
-  };
-
-  const calculateTimeSpent = (history) => {
-    // Estimate time spent based on completed sections (rough calculation)
-    return history.length * 10; // 10 minutes per section average
   };
 
   const completeSection = async (moduleId, sectionIndex, sectionTitle) => {
@@ -358,68 +349,15 @@ const FreelancerWorkshop = ({ currentUser }) => {
     try {
       setCompletingSection(true);
       const result = await completeWorkshopSection(moduleId, sectionIndex, sectionTitle);
-      
-      // Use the returned user data instead of making another API call
-      if (result.success && result.user) {
-        const user = result.user;
-        
-        // Process the user's pointsHistory to extract completed sections (same as API does)
-        const workshopHistory = user.pointsHistory.filter(
-          entry => entry.reason && entry.reason.includes('Workshop')
-        );
-        
-        const completedSectionsArray = workshopHistory
-          .filter(entry => entry.workshopSection)
-          .map(entry => entry.workshopSection);
-        
-        // Convert to map format
-        const completedSectionsMap = {};
-        completedSectionsArray.forEach(sectionKey => {
-          const [modId, , secIndex] = sectionKey.split('-');
-          if (!completedSectionsMap[modId]) {
-            completedSectionsMap[modId] = [];
-          }
-          completedSectionsMap[modId].push(parseInt(secIndex));
-        });
-        
-        // Calculate completed modules and badges
-        const completedModules = [];
-        const badges = [];
-        
-        modules.forEach(module => {
-          const moduleCompletedSections = completedSectionsMap[module.id] || [];
-          const validCompletedSections = moduleCompletedSections.filter(
-            sectionIndex => sectionIndex < module.sections.length
-          );
-          if (validCompletedSections.length === module.sections.length && 
-              validCompletedSections.length > 0) {
-            completedModules.push(module.id);
-            badges.push(module.badge);
-          }
-          completedSectionsMap[module.id] = validCompletedSections;
-        });
-        
-        // Update state with processed data
-        setWorkshopProgress({
-          totalPoints: user.points || 0,
-          completedSections: completedSectionsMap,
-          workshopHistory: workshopHistory.map(entry => ({
-            amount: entry.amount,
-            reason: entry.reason,
-            section: entry.workshopSection,
-            date: entry.createdAt
-          })),
-          completedModules,
-          badges,
-          currentStreak: calculateStreak(workshopHistory),
-          timeSpent: calculateTimeSpent(workshopHistory)
-        });
-        
-        // Check if module is now complete for celebration
-        const module = modules.find(m => m.id === moduleId);
-        const moduleCompletedSections = completedSectionsMap[moduleId] || [];
-        
-        if (moduleCompletedSections.length === module.sections.length) {
+
+      if (result.success) {
+        const nextState = buildWorkshopState(result);
+        setWorkshopProgress(nextState);
+
+        const module = modules.find((m) => m.id === moduleId);
+        const moduleCompletedSections = nextState.completedSections[moduleId] || [];
+
+        if (module && moduleCompletedSections.length === module.sections.length) {
           setShowCelebration(true);
           setTimeout(() => setShowCelebration(false), 3000);
         }

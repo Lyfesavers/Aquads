@@ -258,6 +258,13 @@ const userSchema = new Schema({
       default: Date.now
     }
   }],
+  workshopProgress: [{
+    sectionKey: { type: String, required: true },
+    moduleId: String,
+    sectionIndex: Number,
+    sectionTitle: String,
+    completedAt: { type: Date, default: Date.now }
+  }],
   giftCardRedemptions: [{
     amount: Number,
     status: {

@@ -55,34 +55,6 @@ export const getWorkshopProgress = async () => {
   }
 };
 
-// Award achievement points
-export const awardAchievement = async (achievementId, points, description) => {
-  try {
-    const response = await fetch(`${API_URL}/workshop/achievement`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader()
-      },
-      body: JSON.stringify({
-        achievementId,
-        points,
-        description
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to award achievement');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error awarding achievement:', error);
-    throw error;
-  }
-};
-
 // Get workshop leaderboard
 export const getWorkshopLeaderboard = async () => {
   try {
@@ -100,12 +72,8 @@ export const getWorkshopLeaderboard = async () => {
   }
 };
 
-// Fallback function for when API is not available
-export const getWorkshopProgressFallback = () => {
-  return {
-    totalPoints: 0,
-    totalWorkshopPoints: 0,
-    completedSections: [],
-    workshopHistory: []
-  };
-};
+// Fallback when API is unavailable
+export const getWorkshopProgressFallback = () => ({
+  completedSections: [],
+  sectionCompletions: []
+});

@@ -1839,13 +1839,13 @@ The Freelancer Workshop is a structured learning program covering:
 
 **Progress Tracking**
 - Track completion status
-- Earn points for modules
 - Achievement badges
+- Module progress saved to your account
 
 **Gamification**
-- XP system
-- Leaderboards
-- Completion rewards
+- Level progression by modules completed
+- Leaderboards (participation and progress)
+- Badges for completed modules
 
 ### Completing Workshops
 
@@ -3140,7 +3140,7 @@ Earn points through platform activities and unlock rewards.
 | Profile Completion | 20 |
 | Skill Test Passed | 30 |
 
-**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, workshop, etc.), you get **5 bonus points** each time. See **Affiliate Program** in the docs for full details.
+**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, games, etc.), you get **5 bonus points** each time. See **Affiliate Program** in the docs for full details.
 
 ### Points Dashboard
 
@@ -3658,7 +3658,7 @@ Whenever someone who signed up with your referral code **earns points** anywhere
 
 **When you earn the bonus:**
 - They complete a raid (Twitter/Facebook)
-- They complete a qualifying AquaSwap swap (min. $5 USD notional), vote on a bubble, or earn workshop/achievement points
+- They complete a qualifying AquaSwap swap (min. $5 USD notional) or vote on a bubble
 - They vote on a game, leave a service review, or earn daily Telegram engagement points
 - They win in horse racing, or earn any other positive points in the ecosystem
 
