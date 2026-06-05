@@ -395,24 +395,38 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
  * Rule: when a user (earner) receives positive points, their referrer gets 5 bonus points.
  * Only call this after awarding positive points to the earner. Do not call when awarding
  * to the referrer (e.g. signup/listing) or on deductions. Exclude admin-award and refunds.
+ * @param {Object} [options] - optional { gameId } for one-time-per-game dedupe (game votes)
  */
-async function creditReferrerBonus(referredUserId, sourceReason) {
+async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
   try {
     const earner = await User.findById(referredUserId).select('referredBy').lean();
     if (!earner?.referredBy) return;
     const referrerId = earner.referredBy;
+
+    if (options.gameId) {
+      const referrer = await User.findById(referrerId).select('pointsHistory').lean();
+      const alreadyCredited = referrer?.pointsHistory?.some(
+        (entry) =>
+          entry.amount === 5 &&
+          entry.referredUser?.toString() === referredUserId.toString() &&
+          entry.gameId?.toString() === options.gameId.toString()
+      );
+      if (alreadyCredited) return;
+    }
+
+    const historyEntry = {
+      amount: 5,
+      reason: `Affiliate bonus: referred user earned points (${sourceReason})`,
+      referredUser: referredUserId,
+      createdAt: new Date()
+    };
+    if (options.gameId) historyEntry.gameId = options.gameId;
+
     const updatedReferrer = await User.findByIdAndUpdate(
       referrerId,
       {
         $inc: { points: 5 },
-        $push: {
-          pointsHistory: {
-            amount: 5,
-            reason: `Affiliate bonus: referred user earned points (${sourceReason})`,
-            referredUser: referredUserId,
-            createdAt: new Date()
-          }
-        }
+        $push: { pointsHistory: historyEntry }
       },
       { new: true }
     );
@@ -427,6 +441,49 @@ async function creditReferrerBonus(referredUserId, sourceReason) {
     }
   } catch (err) {
     console.error('creditReferrerBonus error:', err);
+  }
+}
+
+/** Claw back referrer +5 when a referred user's game vote points are revoked (once per game). */
+async function revokeReferrerBonusForGameVote(referredUserId, gameId) {
+  try {
+    const earner = await User.findById(referredUserId).select('referredBy').lean();
+    if (!earner?.referredBy) return;
+    const referrerId = earner.referredBy;
+    const referrer = await User.findById(referrerId).select('pointsHistory').lean();
+    if (!referrer) return;
+
+    const hasBonus = referrer.pointsHistory?.some(
+      (entry) =>
+        entry.amount === 5 &&
+        entry.referredUser?.toString() === referredUserId.toString() &&
+        entry.gameId?.toString() === gameId.toString()
+    );
+    if (!hasBonus) return;
+
+    const alreadyRevoked = referrer.pointsHistory?.some(
+      (entry) =>
+        entry.amount === -5 &&
+        entry.referredUser?.toString() === referredUserId.toString() &&
+        entry.gameId?.toString() === gameId.toString() &&
+        entry.reason?.includes('removed game vote')
+    );
+    if (alreadyRevoked) return;
+
+    await User.findByIdAndUpdate(referrerId, {
+      $inc: { points: -5 },
+      $push: {
+        pointsHistory: {
+          amount: -5,
+          reason: 'Affiliate bonus revoked: referred user removed game vote',
+          referredUser: referredUserId,
+          gameId,
+          createdAt: new Date()
+        }
+      }
+    });
+  } catch (err) {
+    console.error('revokeReferrerBonusForGameVote error:', err);
   }
 }
 
@@ -647,8 +704,10 @@ const awardGameVotePoints = async (userId, gameId) => {
       },
       { new: true }
     );
-    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-    if (updatedUser) await creditReferrerBonus(userId, reason);
+    // Referrer bonus only on first vote per game — not when restoring after unvote
+    if (updatedUser && !previouslyRevokedPoints) {
+      await creditReferrerBonus(userId, reason, { gameId });
+    }
     return updatedUser;
   } catch (error) {
     return null;
@@ -658,28 +717,26 @@ const awardGameVotePoints = async (userId, gameId) => {
 // Helper function to revoke points when a vote is removed
 const revokeGameVotePoints = async (userId, gameId) => {
   try {
-    // Find the user
     const user = await User.findById(userId);
     if (!user) {
       return null;
     }
-    
-    // Check if the user has received points for this game
-    const pointEntry = user.pointsHistory.find(
-      entry => entry.gameId && entry.gameId.toString() === gameId.toString() && 
-              entry.reason === 'Voted for a game'
-    );
-    
-    if (!pointEntry) {
-      return user; // No points to revoke
+
+    const netForGame = user.pointsHistory
+      .filter(
+        (entry) => entry.gameId && entry.gameId.toString() === gameId.toString()
+      )
+      .reduce((sum, entry) => sum + (entry.amount || 0), 0);
+
+    if (netForGame <= 0) {
+      return user;
     }
-    
-    // Update user points and add a negative entry to history
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
         $inc: { points: -20 },
-        lastActivity: new Date(), // Update activity when points are revoked
+        lastActivity: new Date(),
         $push: {
           pointsHistory: {
             amount: -20,
@@ -691,7 +748,8 @@ const revokeGameVotePoints = async (userId, gameId) => {
       },
       { new: true }
     );
-    
+
+    await revokeReferrerBonusForGameVote(userId, gameId);
     return updatedUser;
   } catch (error) {
     return null;
@@ -709,4 +767,5 @@ module.exports.awardGameVotePoints = awardGameVotePoints;
 module.exports.revokeGameVotePoints = revokeGameVotePoints;
 module.exports.awardSocialMediaPoints = awardSocialMediaPoints;
 module.exports.awardPendingAffiliatePoints = awardPendingAffiliatePoints;
-module.exports.creditReferrerBonus = creditReferrerBonus; 
+module.exports.creditReferrerBonus = creditReferrerBonus;
+module.exports.revokeReferrerBonusForGameVote = revokeReferrerBonusForGameVote; 
