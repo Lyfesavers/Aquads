@@ -10,6 +10,19 @@ const AQUADS_EXT_ORIGIN =
     ? AQUADS_API_ORIGIN
     : 'https://aquads-production.up.railway.app';
 
+function getQualifyingSwapPointsPayload(route) {
+  const minUsd = typeof MIN_SWAP_POINTS_USD !== 'undefined' ? MIN_SWAP_POINTS_USD : 5;
+  if (!route?.id) return null;
+  const fromAmountUSD = parseFloat(route.fromAmountUSD);
+  if (!Number.isFinite(fromAmountUSD) || fromAmountUSD < minUsd) {
+    return null;
+  }
+  return {
+    routeId: String(route.id),
+    fromAmountUSD
+  };
+}
+
 // Socket.io connection for real-time points updates
 let socket = null;
 
@@ -373,9 +386,18 @@ window.addEventListener('message', (event) => {
   
   dbg('Message from iframe:', event.data);
   
-  // Handle swap completion - award 5 affiliate points
+  // Handle swap completion - award 5 affiliate points (min $5 USD From-side notional)
   if (event.data.type === 'swap-completed' || event.data.type === 'AQUASWAP_SWAP_COMPLETED') {
-    dbg('✅ Swap completed! Awarding 5 affiliate points...');
+    const swapPointsPayload = getQualifyingSwapPointsPayload(event.data.route);
+    if (!swapPointsPayload) {
+      dbg('Swap completed but below minimum for affiliate points', {
+        fromAmountUSD: event.data.route?.fromAmountUSD,
+        minimumUsd: typeof MIN_SWAP_POINTS_USD !== 'undefined' ? MIN_SWAP_POINTS_USD : 5
+      });
+      return;
+    }
+
+    dbg('✅ Qualifying swap completed! Awarding 5 affiliate points...');
     (async () => {
       try {
         const storage = await chrome.storage.local.get(['authToken', 'isLoggedIn', 'user']);
@@ -392,7 +414,8 @@ window.addEventListener('message', (event) => {
             'Authorization': `Bearer ${storage.authToken}`,
             'Content-Type': 'application/json',
             'X-Aquads-Points-Source': 'extension'
-          }
+          },
+          body: JSON.stringify(swapPointsPayload)
         });
         
         const data = await res.json().catch(() => ({}));

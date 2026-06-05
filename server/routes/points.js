@@ -513,7 +513,7 @@ router.post('/swap-completed', auth, async (req, res) => {
 
     let routeIdStr = null;
 
-    if (pointsSource === 'website') {
+    if (pointsSource === 'website' || pointsSource === 'extension') {
       const { routeId, fromAmountUSD } = req.body || {};
       const usd = parseFloat(fromAmountUSD);
       if (!routeId || !Number.isFinite(usd) || usd < MIN_SWAP_POINTS_USD) {

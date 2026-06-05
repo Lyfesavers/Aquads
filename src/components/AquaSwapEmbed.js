@@ -33,6 +33,8 @@ const AquaSwapEmbed = () => {
       type: 'AQUASWAP_SWAP_COMPLETED',
       timestamp: Date.now(),
       route: route ? {
+        id: route.id,
+        fromAmountUSD: route.fromAmountUSD,
         fromChain: route.fromChain,
         toChain: route.toChain,
         fromToken: route.fromToken,
