@@ -1275,6 +1275,29 @@ export const updateUserProfile = async (profileData) => {
   }
 };
 
+export const revealSecretCode = async (password) => {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  if (!currentUser.token) {
+    throw new Error('No authentication token found');
+  }
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/users/reveal-secret-code`,
+      { password },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 // Update only link-in-bio (faster than full profile update)
 export const updateLinkInBio = async (data) => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');

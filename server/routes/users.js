@@ -1371,6 +1371,42 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// Reveal secret code (stored as referralCode) after password confirmation
+router.post('/reveal-secret-code', auth, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required to reveal your secret code' });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let isValidPassword = false;
+    if (user.password.startsWith('$2b$')) {
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } else if (password === user.password) {
+      isValidPassword = true;
+    }
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    if (!user.referralCode) {
+      return res.status(404).json({ error: 'Secret code not found for this account' });
+    }
+
+    res.json({ secretCode: user.referralCode });
+  } catch (error) {
+    console.error('Reveal secret code error:', error);
+    res.status(500).json({ error: 'Error revealing secret code' });
+  }
+});
+
 // Verify referral code
 router.post('/verify-referral', auth, async (req, res) => {
   try {

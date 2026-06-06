@@ -1,12 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Modal from './Modal';
 import {
   updateUserProfile,
   uploadUserAvatar,
+  revealSecretCode,
   USER_AVATAR_ACCEPT,
   USER_AVATAR_MAX_BYTES,
 } from '../services/api';
-import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink, FaSpinner, FaUserCircle } from 'react-icons/fa';
+import { FaUser, FaLock, FaFileAlt, FaEdit, FaSave, FaTimes, FaEye, FaEyeSlash, FaLink, FaSpinner, FaUserCircle, FaKey, FaCopy } from 'react-icons/fa';
+
+const SECRET_CODE_REVEAL_SECONDS = 10;
 import CVBuilder from './CVBuilder';
 import OnChainResume from './OnChainResume';
 
@@ -280,7 +283,27 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [revealPassword, setRevealPassword] = useState('');
+  const [showRevealPassword, setShowRevealPassword] = useState(false);
+  const [revealedSecretCode, setRevealedSecretCode] = useState('');
+  const [secretCodeCountdown, setSecretCodeCountdown] = useState(0);
+  const [revealingSecretCode, setRevealingSecretCode] = useState(false);
+  const [secretCodeError, setSecretCodeError] = useState('');
   const avatarInputRef = useRef(null);
+  const secretCodeTimerRef = useRef(null);
+
+  const clearSecretCodeReveal = useCallback(() => {
+    if (secretCodeTimerRef.current) {
+      clearInterval(secretCodeTimerRef.current);
+      secretCodeTimerRef.current = null;
+    }
+    setRevealedSecretCode('');
+    setSecretCodeCountdown(0);
+    setRevealPassword('');
+    setShowRevealPassword(false);
+  }, []);
+
+  useEffect(() => () => clearSecretCodeReveal(), [clearSecretCodeReveal]);
 
   const showNotification = (message, type) => {
     if (type === 'success') {
@@ -300,6 +323,49 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
     setError('');
     setImageError('');
     setSuccess('');
+    setSecretCodeError('');
+    clearSecretCodeReveal();
+  };
+
+  const handleRevealSecretCode = async () => {
+    const password = revealPassword.trim();
+    if (!password) {
+      setSecretCodeError('Enter your password to reveal your secret code');
+      return;
+    }
+
+    setSecretCodeError('');
+    setRevealingSecretCode(true);
+    try {
+      const { secretCode } = await revealSecretCode(password);
+      setRevealedSecretCode(secretCode);
+      setRevealPassword('');
+      setShowRevealPassword(false);
+      setSecretCodeCountdown(SECRET_CODE_REVEAL_SECONDS);
+
+      if (secretCodeTimerRef.current) {
+        clearInterval(secretCodeTimerRef.current);
+      }
+      secretCodeTimerRef.current = setInterval(() => {
+        setSecretCodeCountdown((prev) => {
+          if (prev <= 1) {
+            clearSecretCodeReveal();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setSecretCodeError(err.error || 'Failed to reveal secret code');
+    } finally {
+      setRevealingSecretCode(false);
+    }
+  };
+
+  const handleCopySecretCode = () => {
+    if (!revealedSecretCode) return;
+    navigator.clipboard.writeText(revealedSecretCode);
+    showNotification('Secret code copied to clipboard', 'success');
   };
 
   const handleAvatarFile = async (e) => {
@@ -496,7 +562,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
   );
 
   const renderSecurityTab = () => (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FaLock className="text-yellow-400" />
@@ -567,6 +633,74 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate, initialTab = 'pro
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-amber-500/30">
+        <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <FaKey className="text-amber-400" />
+          Secret Code
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          Your secret code is used for account recovery, reviews, and verification. To share referrals, use your username — not this code.
+        </p>
+
+        {revealedSecretCode ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 rounded-lg border border-amber-500/40 bg-gray-900/60 px-4 py-3">
+              <code className="flex-1 break-all font-mono text-amber-200">{revealedSecretCode}</code>
+              <button
+                type="button"
+                onClick={handleCopySecretCode}
+                className="shrink-0 rounded-lg bg-amber-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-500"
+              >
+                <FaCopy className="inline mr-1" />
+                Copy
+              </button>
+            </div>
+            <p className="text-sm text-amber-300/90">
+              Hiding in {secretCodeCountdown}s — save it somewhere safe before it disappears.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-600 bg-gray-900/50 px-4 py-3 font-mono tracking-widest text-gray-500">
+              ••••••••••••
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Confirm your password</label>
+              <div className="relative">
+                <input
+                  type={showRevealPassword ? 'text' : 'password'}
+                  value={revealPassword}
+                  onChange={(e) => setRevealPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter password to reveal"
+                  className="w-full px-4 py-3 pr-12 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 border border-gray-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRevealPassword(!showRevealPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  aria-label={showRevealPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showRevealPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleRevealSecretCode}
+              disabled={revealingSecretCode}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-500 disabled:cursor-wait disabled:opacity-60"
+            >
+              {revealingSecretCode ? 'Verifying…' : 'Reveal Secret Code'}
+            </button>
+          </div>
+        )}
+
+        {secretCodeError && (
+          <p className="mt-3 text-sm text-red-400">{secretCodeError}</p>
+        )}
       </div>
     </div>
   );
