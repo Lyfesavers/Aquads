@@ -3140,7 +3140,7 @@ Earn points through platform activities and unlock rewards.
 | Profile Completion | 20 |
 | Skill Test Passed | 30 |
 
-**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, games, etc.), you get **5 bonus points** each time. See **Affiliate Program** in the docs for full details.
+**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, games, etc.), you get **1 bonus point** each time. See **Affiliate Program** in the docs for full details.
 
 ### Points Dashboard
 
@@ -3650,11 +3650,11 @@ You can customize:
 |--------|--------|
 | New user signup (email verified) | 20 points |
 | Referred user lists a service or ad | 20 points |
-| **Referrer bonus** — whenever a referred user earns points | **+5 points to you** |
+| **Referrer bonus** — whenever a referred user earns points | **+1 point to you** |
 
 ### Referrer Bonus (Share Points)
 
-Whenever someone who signed up with your referral code **earns points** anywhere on Aquads, you automatically get **5 bonus points** added to your account. Their points stay the same—you get 5 on top.
+Whenever someone who signed up with your referral code **earns points** anywhere on Aquads, you automatically get **1 bonus point** added to your account. Their points stay the same—you get 1 on top.
 
 **When you earn the bonus:**
 - They complete a raid (Twitter/Facebook)

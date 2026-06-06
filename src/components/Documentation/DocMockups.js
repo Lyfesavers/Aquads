@@ -1292,7 +1292,7 @@ export const AffiliateMockup = () => (
           <ul className="text-gray-300 text-xs sm:text-sm space-y-1 leading-relaxed">
             <li>• <strong className="text-gray-100">20 pts</strong> — new signup (email verified)</li>
             <li>• <strong className="text-gray-100">20 pts</strong> — referred user lists a service or ad</li>
-            <li>• <strong className="text-gray-100">+5 pts</strong> — each time they earn points (referrer bonus)</li>
+            <li>• <strong className="text-gray-100">+1 pt</strong> — each time they earn points (referrer bonus)</li>
           </ul>
         </div>
       </div>

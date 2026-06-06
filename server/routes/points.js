@@ -5,6 +5,9 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { emitAffiliateEarningUpdate, emitRedemptionCreated, emitRedemptionProcessed } = require('../socket');
 
+const REFERRER_BONUS_POINTS = 1;
+const LEGACY_REFERRER_BONUS_POINTS = 5;
+
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
   res.json({ message: 'Points router is working' });
@@ -392,7 +395,7 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
 }
 
 /**
- * Rule: when a user (earner) receives positive points, their referrer gets 5 bonus points.
+ * Rule: when a user (earner) receives positive points, their referrer gets REFERRER_BONUS_POINTS.
  * Only call this after awarding positive points to the earner. Do not call when awarding
  * to the referrer (e.g. signup/listing) or on deductions. Exclude admin-award and refunds.
  * @param {Object} [options] - optional { gameId } for one-time-per-game dedupe (game votes)
@@ -407,7 +410,7 @@ async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
       const referrer = await User.findById(referrerId).select('pointsHistory').lean();
       const alreadyCredited = referrer?.pointsHistory?.some(
         (entry) =>
-          entry.amount === 5 &&
+          (entry.amount === REFERRER_BONUS_POINTS || entry.amount === LEGACY_REFERRER_BONUS_POINTS) &&
           entry.referredUser?.toString() === referredUserId.toString() &&
           entry.gameId?.toString() === options.gameId.toString()
       );
@@ -415,7 +418,7 @@ async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
     }
 
     const historyEntry = {
-      amount: 5,
+      amount: REFERRER_BONUS_POINTS,
       reason: `Affiliate bonus: referred user earned points (${sourceReason})`,
       referredUser: referredUserId,
       createdAt: new Date()
@@ -425,7 +428,7 @@ async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
     const updatedReferrer = await User.findByIdAndUpdate(
       referrerId,
       {
-        $inc: { points: 5 },
+        $inc: { points: REFERRER_BONUS_POINTS },
         $push: { pointsHistory: historyEntry }
       },
       { new: true }
@@ -434,7 +437,7 @@ async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
       emitAffiliateEarningUpdate({
         affiliateId: referrerId.toString(),
         type: 'referrer_bonus',
-        pointsAwarded: 5,
+        pointsAwarded: REFERRER_BONUS_POINTS,
         newTotalPoints: updatedReferrer.points,
         reason: `Affiliate bonus: referred user earned points (${sourceReason})`
       });
@@ -444,7 +447,7 @@ async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
   }
 }
 
-/** Claw back referrer +5 when a referred user's game vote points are revoked (once per game). */
+/** Claw back referrer bonus when a referred user's game vote points are revoked (once per game). */
 async function revokeReferrerBonusForGameVote(referredUserId, gameId) {
   try {
     const earner = await User.findById(referredUserId).select('referredBy').lean();
@@ -453,17 +456,18 @@ async function revokeReferrerBonusForGameVote(referredUserId, gameId) {
     const referrer = await User.findById(referrerId).select('pointsHistory').lean();
     if (!referrer) return;
 
-    const hasBonus = referrer.pointsHistory?.some(
+    const bonusEntry = referrer.pointsHistory?.find(
       (entry) =>
-        entry.amount === 5 &&
+        (entry.amount === REFERRER_BONUS_POINTS || entry.amount === LEGACY_REFERRER_BONUS_POINTS) &&
         entry.referredUser?.toString() === referredUserId.toString() &&
         entry.gameId?.toString() === gameId.toString()
     );
-    if (!hasBonus) return;
+    if (!bonusEntry) return;
 
+    const bonusAmount = bonusEntry.amount;
     const alreadyRevoked = referrer.pointsHistory?.some(
       (entry) =>
-        entry.amount === -5 &&
+        entry.amount === -bonusAmount &&
         entry.referredUser?.toString() === referredUserId.toString() &&
         entry.gameId?.toString() === gameId.toString() &&
         entry.reason?.includes('removed game vote')
@@ -471,10 +475,10 @@ async function revokeReferrerBonusForGameVote(referredUserId, gameId) {
     if (alreadyRevoked) return;
 
     await User.findByIdAndUpdate(referrerId, {
-      $inc: { points: -5 },
+      $inc: { points: -bonusAmount },
       $push: {
         pointsHistory: {
-          amount: -5,
+          amount: -bonusAmount,
           reason: 'Affiliate bonus revoked: referred user removed game vote',
           referredUser: referredUserId,
           gameId,
@@ -565,7 +569,7 @@ router.post('/swap-completed', auth, async (req, res) => {
       newTotalPoints: updatedUser.points,
       reason: 'Completed AquaSwap transaction'
     });
-    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
     await creditReferrerBonus(req.user.userId, 'Completed AquaSwap transaction');
     
     res.json({
@@ -627,7 +631,7 @@ router.post('/shill-completed', auth, async (req, res) => {
       newTotalPoints: updatedUser.points,
       reason: 'Shared token on social media'
     });
-    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
     await creditReferrerBonus(req.user.userId, 'Shared token on social media (daily shill)');
     
     res.json({
@@ -688,7 +692,7 @@ const awardAffiliateReviewPoints = async (userId) => {
     if (!updatedUser) {
       return null;
     }
-    // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
+    // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
     await creditReferrerBonus(userId, 'Left a service review');
     return updatedUser;
   } catch (error) {

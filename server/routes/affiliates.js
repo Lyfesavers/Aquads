@@ -321,7 +321,7 @@ router.get('/analytics', auth, async (req, res) => {
     // Calculate fraud analysis for the user
     const fraudAnalysis = await calculateAdvancedFraudScore(currentUser, affiliates);
 
-    // Referrer bonus: total points you earned from each affiliate (5 pts per time they earned)
+    // Referrer bonus: total points you earned from each affiliate (1 pt per time they earned)
     const referrer = await User.findById(req.user.userId).select('pointsHistory').lean();
     const referrerBonusByAffiliate = {};
     if (referrer?.pointsHistory?.length) {
