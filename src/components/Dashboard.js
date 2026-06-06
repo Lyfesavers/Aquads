@@ -2431,6 +2431,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                           aria-label={`Select submission by ${completion.user?.username || 'user'}`}
                         />
                         <h4 className="font-medium text-white truncate">{completion.raidTitle}</h4>
+                        {completion.raidStatus && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            completion.raidStatus === 'active'
+                              ? 'bg-green-900/50 text-green-300'
+                              : completion.raidStatus === 'expired'
+                                ? 'bg-red-900/50 text-red-300'
+                                : 'bg-gray-700 text-gray-300'
+                          }`}>
+                            {completion.raidStatus}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="text-lg">{getTrustIcon(completion.trustScore.trustLevel)}</span>
@@ -2457,6 +2468,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                           <span className="text-gray-400">Completed: </span>
                           <span className="text-gray-300">{new Date(completion.completedAt).toLocaleString()}</span>
                         </p>
+                        {completion.raidCreatedAt && (
+                          <p className="text-sm">
+                            <span className="text-gray-400">Raid created: </span>
+                            <span className="text-gray-300">{new Date(completion.raidCreatedAt).toLocaleString()}</span>
+                          </p>
+                        )}
+                        {completion.tweetPostedAt && (
+                          <p className="text-sm">
+                            <span className="text-gray-400">Tweet posted: </span>
+                            <span className="text-gray-300">{new Date(completion.tweetPostedAt).toLocaleString()}</span>
+                          </p>
+                        )}
+                        {(completion.raidExpired || completion.raidStatus === 'expired') && (
+                          <p className="text-sm text-red-400 font-medium">
+                            ⚠️ Raid expired — reject this submission
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm">

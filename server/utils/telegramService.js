@@ -2036,9 +2036,10 @@ https://aquads.xyz`;
         return;
       }
 
-      if (!raid.active) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ This raid is no longer active.");
+      const { getRaidCompletableError } = require('./twitterRaidExpiration');
+      const completableError = platform === 'Twitter' ? getRaidCompletableError(raid) : (!raid.active ? 'This raid is no longer active' : null);
+      if (completableError) {
+        await telegramService.sendBotMessage(chatId, `❌ ${completableError}`);
         return;
       }
 
@@ -2978,8 +2979,9 @@ ${platformEmoji} ${platformName} Raid
             { inline_keyboard: [] });
           return;
         }
-        const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-        const existingRaidForTweet = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
+        const { RAID_LIFETIME_MS, applyNewRaidDefaults } = require('./twitterRaidExpiration');
+        const twoDaysAgo = new Date(Date.now() - RAID_LIFETIME_MS);
+        const existingRaidForTweet = await TwitterRaid.findOne({ tweetId, active: true, status: { $nin: ['cancelled', 'expired'] }, createdAt: { $gt: twoDaysAgo } });
         if (existingRaidForTweet) {
           await telegramService.editMessageWithKeyboard(chatId, messageId,
             `❌ A raid for this tweet already exists. No points were deducted.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it.`,
@@ -2988,7 +2990,7 @@ ${platformEmoji} ${platformName} Raid
         }
         const title = `Twitter Raid by @${user.username}`;
         const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
-        const raid = new TwitterRaid({
+        const raid = applyNewRaidDefaults(new TwitterRaid({
           tweetId,
           tweetUrl,
           title,
@@ -3000,7 +3002,7 @@ ${platformEmoji} ${platformName} Raid
           active: true,
           paidWithPoints: true,
           pointsSpent: POINTS_REQUIRED_RAID
-        });
+        }));
         user.points -= POINTS_REQUIRED_RAID;
         user.pointsHistory = user.pointsHistory || [];
         user.pointsHistory.push({
@@ -3879,9 +3881,12 @@ Tap to update:`;
         }
       }
       
-      if (!raid || !raid.active) {
-        await telegramService.sendBotMessage(privateChatId, 
-          "❌ Raid not found or no longer active.");
+      const { getRaidCompletableError } = require('./twitterRaidExpiration');
+      const completableError = !raid
+        ? 'Raid not found or no longer active.'
+        : (platform === 'Twitter' ? getRaidCompletableError(raid) : (!raid.active ? 'This raid is no longer active' : null));
+      if (completableError) {
+        await telegramService.sendBotMessage(privateChatId, `❌ ${completableError}`);
         return;
       }
 
@@ -3966,9 +3971,12 @@ Tap to update:`;
         }
       }
       
-      if (!raid || !raid.active) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Raid not found or no longer active.");
+      const { getRaidCompletableError } = require('./twitterRaidExpiration');
+      const completableError = !raid
+        ? 'Raid not found or no longer active.'
+        : (platform === 'Twitter' ? getRaidCompletableError(raid) : (!raid.active ? 'This raid is no longer active' : null));
+      if (completableError) {
+        await telegramService.sendBotMessage(chatId, `❌ ${completableError}`);
         return;
       }
 
@@ -4035,8 +4043,10 @@ Tap to update:`;
         return;
       }
 
-      if (!raid.active) {
-        await telegramService.sendBotMessage(chatId, "❌ This raid is no longer active.");
+      const { getRaidCompletableError } = require('./twitterRaidExpiration');
+      const completableError = platform === 'Twitter' ? getRaidCompletableError(raid) : (!raid.active ? 'This raid is no longer active' : null);
+      if (completableError) {
+        await telegramService.sendBotMessage(chatId, `❌ ${completableError}`);
         return;
       }
 
@@ -4868,10 +4878,11 @@ Tap to update:`;
 
       // Create the raid using the same logic as the website
       const TwitterRaid = require('../models/TwitterRaid');
+      const { RAID_LIFETIME_MS, applyNewRaidDefaults } = require('./twitterRaidExpiration');
 
       // Prevent duplicate raids for the same tweet (match by tweetId; URLs can vary e.g. twitter.com vs x.com)
-      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-      const existingRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
+      const twoDaysAgo = new Date(Date.now() - RAID_LIFETIME_MS);
+      const existingRaid = await TwitterRaid.findOne({ tweetId, active: true, status: { $nin: ['cancelled', 'expired'] }, createdAt: { $gt: twoDaysAgo } });
       if (existingRaid) {
         await telegramService.sendBotMessage(chatId,
           `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use /raids to see it, or wait until it expires (48h).`);
@@ -4890,7 +4901,7 @@ Tap to update:`;
         // Use free raid
         const usage = await user.useFreeRaid(dailyLimit);
         
-        const raid = new TwitterRaid({
+        const raid = applyNewRaidDefaults(new TwitterRaid({
           tweetId,
           tweetUrl,
           title,
@@ -4902,7 +4913,7 @@ Tap to update:`;
           active: true,
           paidWithPoints: false, // Not paid with points (it's a free raid)
           pointsSpent: 0 // No points spent
-        });
+        }));
 
         await raid.save();
 
@@ -5068,6 +5079,7 @@ Tap to update:`;
       // Cancel the raid
       if (platform === 'twitter') {
         raid.active = false;
+        raid.status = 'cancelled';
         await raid.save();
       } else {
         const FacebookRaid = require('../models/FacebookRaid');

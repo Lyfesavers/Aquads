@@ -104,6 +104,19 @@ const twitterRaidSchema = new Schema({
     type: Boolean,
     default: true
   },
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active'
+  },
+  expiresAt: {
+    type: Date,
+    default: null
+  },
+  expiredAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -112,6 +125,7 @@ const twitterRaidSchema = new Schema({
 
 // Add performance indexes for common queries
 twitterRaidSchema.index({ active: 1, createdAt: -1 }); // For main raids listing
+twitterRaidSchema.index({ status: 1, expiresAt: 1 }); // For expiration sweeps
 twitterRaidSchema.index({ createdBy: 1 }); // For user's raids
 twitterRaidSchema.index({ tweetId: 1 }); // For tweet ID lookups
 twitterRaidSchema.index({ 'completions.verified': 1 }); // For verified completions

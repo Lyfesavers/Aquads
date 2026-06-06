@@ -14,6 +14,13 @@ const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
 const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
+const {
+  RAID_LIFETIME_MS,
+  getRaidCompletableError,
+  applyNewRaidDefaults,
+  expireStaleRaids,
+  formatPendingCompletion
+} = require('../utils/twitterRaidExpiration');
 
 // In-memory cache for the public raids listing — same stale-while-revalidate pattern
 // used by ads, games, services etc. Invalidated on every write operation.
@@ -30,8 +37,13 @@ const invalidateRaidsCache = () => {
 // Fetches active raids from the last 2 days and populates the cache.
 // Shared by the GET handler, background refreshes, and startup warmup.
 const fetchAndCacheRaids = async () => {
-  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-  const raids = await TwitterRaid.find({ active: true, createdAt: { $gt: twoDaysAgo } })
+  await expireStaleRaids();
+  const twoDaysAgo = new Date(Date.now() - RAID_LIFETIME_MS);
+  const raids = await TwitterRaid.find({
+    active: true,
+    status: { $nin: ['cancelled', 'expired'] },
+    createdAt: { $gt: twoDaysAgo }
+  })
     .sort({ createdAt: -1 })
     .populate('createdBy', 'username')
     .select('tweetId tweetUrl title description points createdBy active createdAt completions.userId completions.approvalStatus')
@@ -236,7 +248,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 
     const tweetId = tweetIdMatch[1];
 
-    const raid = new TwitterRaid({
+    const raid = applyNewRaidDefaults(new TwitterRaid({
       tweetId,
       tweetUrl,
       title,
@@ -245,7 +257,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       createdBy: req.user.id,
       isPaid: false,
       paymentStatus: 'approved' // Admin created raids are automatically approved
-    });
+    }));
 
     await raid.save();
     
@@ -301,14 +313,14 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     const tweetId = tweetIdMatch[1];
 
     // Prevent duplicate raids for the same tweet (match by tweetId)
-    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-    const existingPointsRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
+    const twoDaysAgo = new Date(Date.now() - RAID_LIFETIME_MS);
+    const existingPointsRaid = await TwitterRaid.findOne({ tweetId, active: true, status: { $nin: ['cancelled', 'expired'] }, createdAt: { $gt: twoDaysAgo } });
     if (existingPointsRaid) {
       return res.status(400).json({ error: 'A raid for this tweet already exists. No points were deducted. Use the raids list to see it.' });
     }
 
     // Create the raid
-    const raid = new TwitterRaid({
+    const raid = applyNewRaidDefaults(new TwitterRaid({
       tweetId,
       tweetUrl,
       title,
@@ -320,7 +332,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       active: true,
       paidWithPoints: true, // New field to track point-based raids
       pointsSpent: POINTS_REQUIRED // Track how many points were spent
-    });
+    }));
 
     // Deduct points from user
     user.points -= POINTS_REQUIRED;
@@ -403,8 +415,9 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       // Continue with raid cancellation even if Telegram deletion fails
     }
 
-    // Instead of deleting, mark as inactive
+    // Instead of deleting, mark as cancelled
     raid.active = false;
+    raid.status = 'cancelled';
     await raid.save();
     
     // Emit socket event for real-time update (convert ObjectId to string)
@@ -489,8 +502,9 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       return res.status(404).json({ error: 'Twitter raid not found' });
     }
 
-    if (!raid.active) {
-      return res.status(400).json({ error: 'This Twitter raid is no longer active' });
+    const completableError = getRaidCompletableError(raid);
+    if (completableError) {
+      return res.status(400).json({ error: completableError });
     }
 
     // Check if user already completed this raid - using the safely determined userId
@@ -685,6 +699,11 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
       return res.status(400).json({ error: 'Completion already approved' });
     }
 
+    const completableError = getRaidCompletableError(raid);
+    if (completableError) {
+      return res.status(400).json({ error: `Cannot approve: ${completableError}` });
+    }
+
     completion.approvalStatus = 'approved';
     completion.approvedBy = req.user.id;
     completion.approvedAt = new Date();
@@ -849,6 +868,8 @@ router.get('/completions/pending', auth, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can view pending completions' });
     }
 
+    await expireStaleRaids();
+
     // Get raids with pending completions using optimized query
     const raids = await TwitterRaid.find({
       completions: {
@@ -929,27 +950,7 @@ router.get('/completions/pending', auth, async (req, res) => {
         if (completion.approvalStatus === 'pending') {
           const userId = completion.userId ? completion.userId._id.toString() : null;
           const trustScore = userId ? userTrustScores[userId] : null;
-          
-          pendingCompletions.push({
-            completionId: completion._id,
-            raidId: raid._id,
-            raidTitle: raid.title,
-            raidTweetUrl: raid.tweetUrl,
-            pointsAmount: raid.points || 20,
-            user: completion.userId,
-            twitterUsername: completion.twitterUsername,
-            verificationMethod: completion.verificationMethod,
-            verificationNote: completion.verificationNote,
-            iframeVerified: completion.iframeVerified,
-            completedAt: completion.completedAt,
-            ipAddress: completion.ipAddress,
-            trustScore: trustScore || {
-              totalCompletions: 0,
-              approvedCompletions: 0,
-              approvalRate: 0,
-              trustLevel: 'new'
-            }
-          });
+          pendingCompletions.push(formatPendingCompletion(raid, completion, trustScore));
         }
       });
     });
@@ -1100,8 +1101,8 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     const tweetId = tweetIdMatch[1];
 
     // Prevent duplicate raids for the same tweet (match by tweetId)
-    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-    const existingFreeRaid = await TwitterRaid.findOne({ tweetId, active: true, createdAt: { $gt: twoDaysAgo } });
+    const twoDaysAgo = new Date(Date.now() - RAID_LIFETIME_MS);
+    const existingFreeRaid = await TwitterRaid.findOne({ tweetId, active: true, status: { $nin: ['cancelled', 'expired'] }, createdAt: { $gt: twoDaysAgo } });
     if (existingFreeRaid) {
       return res.status(400).json({ error: 'A raid for this tweet already exists. Use the raids list to see it, or wait until it expires (48h).' });
     }
@@ -1110,7 +1111,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     const usage = await user.useFreeRaid(dailyLimit);
 
     // Create the raid
-    const raid = new TwitterRaid({
+    const raid = applyNewRaidDefaults(new TwitterRaid({
       tweetId,
       tweetUrl,
       title,
@@ -1122,7 +1123,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       paidWithPoints: false,
       pointsSpent: 0,
       active: true
-    });
+    }));
 
     await raid.save();
     

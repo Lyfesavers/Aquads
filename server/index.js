@@ -324,6 +324,16 @@ cron.schedule('0 9,21 * * *', async () => {
   timezone: "America/New_York"
 });
 
+// Mark Twitter raids past 48h as expired in the database and auto-reject stale pending completions
+cron.schedule('0 * * * *', async () => {
+  try {
+    const { expireStaleRaids } = require('./utils/twitterRaidExpiration');
+    await expireStaleRaids();
+  } catch (error) {
+    console.error('[Twitter Raid Expiration] Error:', error);
+  }
+});
+
 // Sweep Telegram raid announcement messages before Telegram's ~48h bot delete window ends (stored IDs + stale pins)
 cron.schedule('0 */2 * * *', async () => {
   try {

@@ -297,7 +297,10 @@ function init(server) {
         try {
           const TwitterRaid = require('./models/TwitterRaid');
           const mongoose = require('mongoose');
-          
+          const { expireStaleRaids, formatPendingCompletion } = require('./utils/twitterRaidExpiration');
+
+          await expireStaleRaids();
+
           // Get raids with pending completions
           const raids = await TwitterRaid.find({
             completions: {
@@ -378,26 +381,7 @@ function init(server) {
                 const userId = completion.userId ? completion.userId._id.toString() : null;
                 const trustScore = userId ? userTrustScores[userId] : null;
                 
-                pendingCompletions.push({
-                  completionId: completion._id,
-                  raidId: raid._id,
-                  raidTitle: raid.title,
-                  raidTweetUrl: raid.tweetUrl,
-                  pointsAmount: raid.points || 20,
-                  user: completion.userId,
-                  twitterUsername: completion.twitterUsername,
-                  verificationMethod: completion.verificationMethod,
-                  verificationNote: completion.verificationNote,
-                  iframeVerified: completion.iframeVerified,
-                  completedAt: completion.completedAt,
-                  ipAddress: completion.ipAddress,
-                  trustScore: trustScore || {
-                    totalCompletions: 0,
-                    approvedCompletions: 0,
-                    approvalRate: 0,
-                    trustLevel: 'new'
-                  }
-                });
+                pendingCompletions.push(formatPendingCompletion(raid, completion, trustScore));
               }
             });
           });
