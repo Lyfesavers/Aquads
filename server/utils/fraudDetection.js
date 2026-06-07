@@ -287,44 +287,21 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       details: {}
     };
 
-    // 1. Network Analysis - Use actual User model fields
+    // 1. Network diversity — rollup across referrer + all affiliates
+    const referrerIPs = new Set();
     const uniqueIPs = new Set();
     const uniqueCountries = new Set();
     const uniqueDevices = new Set();
-    
-    // Parse multiple IPs from user.ipAddress (comma-separated)
-    if (user.ipAddress) {
-      const ips = user.ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip);
-      ips.forEach(ip => uniqueIPs.add(ip));
-    }
-    
-    // Add user's country
-    if (user.country) {
-      uniqueCountries.add(user.country);
-    }
-    
-    // Add user's device fingerprint
-    if (user.deviceFingerprint) {
-      uniqueDevices.add(user.deviceFingerprint);
-    }
 
-    analysis.details.networkDiversity = {
-      uniqueIPs: uniqueIPs.size,
-      uniqueCountries: uniqueCountries.size,
-      uniqueDevices: uniqueDevices.size
+    const addIPsToSet = (ipAddress, targetSet) => {
+      if (!ipAddress) return;
+      ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip).forEach(ip => targetSet.add(ip));
     };
 
-    // Flag: Too many different IPs
-    if (uniqueIPs.size > 10) {
-      analysis.flags.push('multiple_ips');
-      analysis.riskScore += 0.3;
-    }
-
-    // Flag: Multiple countries
-    if (uniqueCountries.size > 3) {
-      analysis.flags.push('multiple_countries');
-      analysis.riskScore += 0.2;
-    }
+    addIPsToSet(user.ipAddress, referrerIPs);
+    referrerIPs.forEach(ip => uniqueIPs.add(ip));
+    if (user.country) uniqueCountries.add(user.country);
+    if (user.deviceFingerprint) uniqueDevices.add(user.deviceFingerprint);
 
     // 2. Affiliate Network Analysis
     if (affiliates && affiliates.length > 0) {
@@ -334,11 +311,16 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       const now = new Date();
       
       for (const affiliate of affiliates) {
-        // Check for shared IPs using actual affiliate ipAddress field
+        // Roll affiliate signals into network-wide diversity totals
+        addIPsToSet(affiliate.ipAddress, uniqueIPs);
+        if (affiliate.country) uniqueCountries.add(affiliate.country);
+        if (affiliate.deviceFingerprint) uniqueDevices.add(affiliate.deviceFingerprint);
+
+        // Shared IPs = overlap between referrer and affiliate (not affiliate-to-affiliate)
         if (affiliate.ipAddress) {
           const affiliateIPs = affiliate.ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip);
           affiliateIPs.forEach(ip => {
-            if (uniqueIPs.has(ip)) {
+            if (referrerIPs.has(ip)) {
               sharedIPs.add(ip);
             }
           });
@@ -404,10 +386,6 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         inactiveRatio: affiliates.length > 0 ? Math.round((inactiveAffiliates.length / affiliates.length) * 100) / 100 : 0,
         unverifiedRatio: affiliates.length > 0 ? Math.round((unverifiedAffiliates.length / affiliates.length) * 100) / 100 : 0
       };
-      
-      // Add to networkDiversity for calling code compatibility
-      analysis.details.networkDiversity.rapidSignups = rapidSignups.length; // count of affiliates in burst windows
-      analysis.details.networkDiversity.totalAffiliates = affiliates.length;
 
       // Flag: Too many rapid signups
       const rapidSignupRatio = rapidSignups.length / affiliates.length;
@@ -456,6 +434,28 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         analysis.flags.push('shared_ips_with_affiliates');
         analysis.riskScore += 0.2;
       }
+    }
+
+    // Network diversity totals (referrer + affiliates) — set after affiliate rollup
+    analysis.details.networkDiversity = {
+      uniqueIPs: uniqueIPs.size,
+      uniqueCountries: uniqueCountries.size,
+      uniqueDevices: uniqueDevices.size,
+      rapidSignups: analysis.details.affiliateNetwork?.rapidSignups || 0,
+      totalAffiliates: analysis.details.affiliateNetwork?.totalAffiliates || 0,
+      sharedIPsWithReferrer: analysis.details.affiliateNetwork?.sharedIPs || 0
+    };
+
+    // Flag: Too many different IPs across the network
+    if (uniqueIPs.size > 10) {
+      analysis.flags.push('multiple_ips');
+      analysis.riskScore += 0.3;
+    }
+
+    // Flag: Multiple countries across the network
+    if (uniqueCountries.size > 3) {
+      analysis.flags.push('multiple_countries');
+      analysis.riskScore += 0.2;
     }
 
     // 3. Activity Diversity Analysis

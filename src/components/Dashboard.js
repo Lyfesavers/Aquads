@@ -137,6 +137,16 @@ const formatAffiliatePointsCad = (points) =>
     affiliatePointsBalanceToCad(points)
   );
 
+const AFFILIATE_TRUST_COPY = {
+  high: { label: 'LOW TRUST', subtext: 'Higher fraud risk — review your referral network' },
+  medium: { label: 'MODERATE TRUST', subtext: 'Some warning signals in your network' },
+  low: { label: 'HIGH TRUST', subtext: 'Strong referral network quality' },
+  unknown: { label: 'UNAVAILABLE', subtext: 'Trust score could not be calculated' }
+};
+
+const getAffiliateTrustCopy = (riskLevel) =>
+  AFFILIATE_TRUST_COPY[riskLevel] || AFFILIATE_TRUST_COPY.unknown;
+
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bannerAds, setBannerAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
@@ -4453,9 +4463,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                   )}
 
                   {/* Fraud Analysis */}
-                  {affiliateAnalytics.fraudAnalysis && (
+                  {affiliateAnalytics.fraudAnalysis && (() => {
+                    const trustCopy = getAffiliateTrustCopy(affiliateAnalytics.fraudAnalysis.riskLevel);
+                    const trustPercent = Math.round(100 - affiliateAnalytics.fraudAnalysis.riskScore);
+                    return (
                     <div className="bg-gray-700 rounded-lg p-4 mb-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">Network Trust Analysis</h3>
+                      <h3 className="text-lg font-semibold text-white mb-1">Network Trust Analysis</h3>
+                      <p className="text-xs text-gray-400 mb-4">
+                        Automated fraud-risk estimate from your account and referral network. Higher % = lower risk.
+                      </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Risk Score */}
                         <div className="bg-gray-800 rounded-lg p-4">
@@ -4486,7 +4502,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                               </svg>
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-sm font-bold text-white">
-                                  {Math.round(100 - affiliateAnalytics.fraudAnalysis.riskScore)}%
+                                  {trustPercent}%
                                 </span>
                               </div>
                             </div>
@@ -4496,12 +4512,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                 affiliateAnalytics.fraudAnalysis.riskLevel === 'medium' ? 'text-yellow-400' :
                                 'text-green-400'
                               }`}>
-                                {affiliateAnalytics.fraudAnalysis.riskLevel.toUpperCase()} TRUST
+                                {trustCopy.label}
                               </p>
                               <p className="text-xs text-gray-400">
-                                {affiliateAnalytics.fraudAnalysis.riskLevel === 'high' ? 'Review your network' :
-                                 affiliateAnalytics.fraudAnalysis.riskLevel === 'medium' ? 'Moderate confidence' :
-                                 'Excellent network quality'}
+                                {trustCopy.subtext}
                               </p>
                             </div>
                           </div>
@@ -4535,7 +4549,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
                       {/* Network Analysis */}
                       <div className="mt-4 bg-gray-800 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-gray-400 mb-2">Network Diversity</h4>
+                        <h4 className="text-sm font-medium text-gray-400 mb-1">Network Diversity</h4>
+                        <p className="text-xs text-gray-500 mb-3">Unique values across you and your affiliates</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="text-center">
                             <p className="text-lg font-bold text-blue-400">
@@ -4559,7 +4574,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                             <p className="text-lg font-bold text-orange-400">
                               {affiliateAnalytics.fraudAnalysis.networkAnalysis.rapidSignups}
                             </p>
-                            <p className="text-xs text-gray-400">Recent (24h)</p>
+                            <p className="text-xs text-gray-400">Burst signups</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">3+ in 24h window</p>
                           </div>
                         </div>
                       </div>
@@ -4567,7 +4583,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                       {/* Risk Factors */}
                       {affiliateAnalytics.fraudAnalysis.riskFactors.length > 0 && (
                         <div className="mt-4 bg-gray-800 rounded-lg p-4">
-                          <h4 className="text-sm font-medium text-gray-400 mb-2">Improvement Areas</h4>
+                          <h4 className="text-sm font-medium text-gray-400 mb-1">Risk Signals</h4>
+                          <p className="text-xs text-gray-500 mb-2">Patterns that lowered your trust score</p>
                           <div className="space-y-1">
                             {affiliateAnalytics.fraudAnalysis.riskFactors.map((factor, index) => (
                               <div key={index} className="flex items-center space-x-2 text-sm">
@@ -4581,7 +4598,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                         </div>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Affiliate List */}
                   <div className="bg-gray-700 rounded-lg p-4">
