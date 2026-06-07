@@ -58,10 +58,10 @@ Powered by [Aquads](${AQUADS_WEBSITE_URL})`;
 }
 
 /** Default Space alert video in repo (filename includes a space). */
-const SPACES_BROADCAST_VIDEO_FILENAME = 'NEW SPACE.mp4';
+const SPACES_BROADCAST_VIDEO_FILENAME = 'x spaces.mp4';
 
 /**
- * Video for Space blasts: SPACES_BROADCAST_VIDEO_PATH env, then public/NEW SPACE.mp4, then timeraid.mp4.
+ * Video for Space blasts: SPACES_BROADCAST_VIDEO_PATH env, then public/x spaces.mp4, then timeraid.mp4.
  */
 function getSpacesBroadcastVideoPath() {
   const envPath = process.env.SPACES_BROADCAST_VIDEO_PATH;
