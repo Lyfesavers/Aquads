@@ -1942,6 +1942,8 @@ https://aquads.xyz`;
         return;
       }
 
+      const inPrivateChat = chatId > 0;
+
       // Send each available raid as separate message with button
       for (const raid of availableRaids) {
         const platform = raid.platform;
@@ -1957,13 +1959,17 @@ https://aquads.xyz`;
         message += `🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}\n\n`;
         message += `${interactionNote}`;
 
-        // Add button for completion
         const keyboard = {
           inline_keyboard: [[
-            {
-              text: "💬 Complete in Private Chat",
-              url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`
-            }
+            inPrivateChat
+              ? {
+                  text: '✅ Complete Raid',
+                  callback_data: JSON.stringify({ action: 'complete', raidId: raid._id.toString() })
+                }
+              : {
+                  text: '💬 Complete in Private Chat',
+                  url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`
+                }
           ]]
         };
 
@@ -1973,9 +1979,12 @@ https://aquads.xyz`;
       // Send summary
       const twitterCount = availableRaids.filter(raid => raid.platform === 'Twitter').length;
       const facebookCount = availableRaids.filter(raid => raid.platform === 'Facebook').length;
+      const completeHint = inPrivateChat
+        ? '• Click "Complete Raid" button (easiest way!)'
+        : '• Click "Complete in Private Chat" button (easiest way!)';
       
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest way!)\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
+        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n${completeHint}\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
 
     } catch (error) {
       console.error('Raids command error:', error);
