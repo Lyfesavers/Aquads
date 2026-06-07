@@ -205,7 +205,7 @@ After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need
 | Pillar | What you do on Aquads |
 |--------|------------------------|
 | **Get listed** | Free bubble on the map; votes, bumps, BexTools trending—your storefront, not a CoinGecko clone |
-| **Grow** | Twitter/Facebook raids, Telegram bot, HyperSpace, banners, PR packages |
+| **Grow** | Twitter/Facebook raids, Telegram/Discord bot, X Space & VC live alerts, HyperSpace, banners, PR packages |
 | **Hire** | Freelancer marketplace with escrow, trust scores, and on-chain resumes |
 | **Get paid** | AquaPay links and AquaSwap from your listing—funds to your wallet |
 
@@ -3898,6 +3898,8 @@ When you list your project as **Premium** and it reaches **bumped** status (**10
 2. Raids will be shared directly to your community
 3. Use \`/raidin\` to opt-in to community raid network
 4. Use \`/raidout\` to opt-out anytime
+5. **X Space alerts:** paste an \`https://x.com/i/spaces/...\` link (linked account required) — video alert goes to your group and all \`/raidin\` communities
+6. **Voice chat alerts (Telegram only):** when someone starts a group voice chat, the bot automatically posts a pinned video announcement in that group
 
 ### Points System
 
@@ -3961,6 +3963,13 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | \`/raidin\` | Opt-in your group to community raid sharing |
 | \`/raidout\` | Opt-out your group from community raids |
 
+### Live Alerts (no slash command)
+
+| Action | Description |
+|--------|-------------|
+| **Paste X Space URL** | Send \`https://x.com/i/spaces/...\` in Telegram or Discord (linked Aquads account required). Video alert goes to your group/server plus all \`/raidin\` communities; \`/raidout\` keeps it local only. Pinned; auto-removed before Telegram's 48h limit. |
+| **Start voice chat** | **Telegram groups only:** when someone opens a voice chat, the bot posts a pinned video announcement in that group. Removed when the call ends (fallback cleanup before 48h). |
+
 ### Command Examples
 
 **Creating a Raid:**
@@ -3976,6 +3985,11 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 **Setting Twitter:**
 \`\`\`
 /twitter myhandle
+\`\`\`
+
+**X Space alert (paste link — no command):**
+\`\`\`
+https://x.com/i/spaces/1YqJDqXXXXX
 \`\`\`
 
 > 💡 **Tip**: Use /help to see an interactive menu with buttons for quick access to all features.
@@ -4057,6 +4071,21 @@ Purchase boosts via \`/boostvote\`:
 - \`/raidout\` - Opt out anytime
 - Raids shared across all participating groups
 - Multiply your reach beyond your own community
+
+### Live Alerts
+
+**X Space alerts (Telegram + Discord):**
+- Paste an \`https://x.com/i/spaces/...\` link (linked Aquads account required)
+- Bot sends a pinned video alert with promo buttons
+- **\`/raidin\`:** alert goes to your group plus all opted-in communities
+- **\`/raidout\`:** alert stays in your group/server only
+- Messages are auto-removed before Telegram's ~48h bot delete window (Discord uses the same schedule)
+
+**Voice chat alerts (Telegram groups only):**
+- Automatic when someone starts a group voice chat (no command needed)
+- Bot posts a pinned video announcement in that group only
+- Announcement is removed when the voice chat ends
+- Fallback cleanup before 48h if the end event is missed
 
 ### Points Economy
 

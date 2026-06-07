@@ -100,8 +100,10 @@ Behavior matches: raidin/raidout only control community cross-posting; everyone 
 | **Daily engagement (message/reaction points)** | handleEngagementMessage, handleEngagementReaction | N/A | Telegram-specific; no Discord equivalent implemented |
 | **/start raid_xxx deep link** | startRaidCompletion(chatId, userId, raidId) | N/A | Discord uses “Complete” button → modal instead |
 | **Scheduled/cron (daily bubble summary, GM message, admin reminder)** | sendDailyBubbleSummary etc. | Not mirrored | Could add later if Discord channels are configured |
+| **X Space live alert (paste URL)** | handleCommand → broadcastSpacesAlert | Message handler → broadcastSpacesAlert | Same /raidin /raidout routing; pinned video; 42h cleanup |
+| **Voice chat live alert** | handleVideoChatStarted → sendVcOpenBroadcast | N/A | Telegram-only (`video_chat_started`); auto in group; removed on VC end |
 
-These are either simplified by design (branding, boost, onboarding) or platform-specific (engagement, deep links).
+These are either simplified by design (branding, boost, onboarding) or platform-specific (engagement, deep links, voice chat).
 
 ---
 
@@ -112,6 +114,6 @@ These are either simplified by design (branding, boost, onboarding) or platform-
 - **Raid flow:** Create, list, complete, cancel; community vs admin notification logic correct.
 - **Notifications:** New raid (admin + user), completion, vote, top bubbles; Discord channels/env used correctly.
 - **Registration:** Bot add/remove and raidin/raidout only affect community cross-posting; no conflict with channel registration.
-- **Gaps (by design):** Vote in-chat, boost purchase, branding upload, auto-create from URL, full onboarding, daily engagement, raid deep link, scheduled messages.
+- **Gaps (by design):** Vote in-chat, boost purchase, branding upload, auto-create from URL, full onboarding, daily engagement, raid deep link, scheduled messages, **Telegram voice chat alerts**.
 
 Nothing critical is missing for parity where Discord can reasonably mirror Telegram; remaining gaps are either intentional simplifications or platform-specific features.

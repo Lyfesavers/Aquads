@@ -67,6 +67,22 @@ const TelegramBot = () => {
       details: ['Cross-group sharing', 'Opt-in/out anytime', 'Expand your reach']
     },
     {
+      icon: FaGlobe,
+      title: 'X Space Alerts',
+      description: 'Going live on X Spaces? Paste your Space link in Telegram or Discord. The bot sends a video alert to your group and all /raidin communities (or your group only on /raidout).',
+      command: 'Paste x.com/i/spaces/… link',
+      color: 'from-sky-400 to-cyan-600',
+      details: ['Telegram + Discord', 'Pinned video alert', 'Auto cleanup before 48h']
+    },
+    {
+      icon: FaBell,
+      title: 'Voice Chat Alerts',
+      description: 'When someone starts a voice chat in your Telegram group, the bot automatically posts a video announcement so members know to join.',
+      command: 'Automatic when VC opens',
+      color: 'from-indigo-500 to-blue-600',
+      details: ['Telegram groups only', 'Removed when call ends', 'Pinned + auto cleanup']
+    },
+    {
       icon: FaRocket,
       title: 'Vote boost',
       description: 'Skyrocket your meme coin\'s ranking with guaranteed bullish votes applied to your bubble.',
@@ -90,6 +106,8 @@ const TelegramBot = () => {
         { name: 'View Top 10 Bubble Rankings', included: true },
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
+        { name: 'X Space live alerts (paste link)', included: true },
+        { name: 'Auto voice chat alerts (Telegram)', included: true },
         { name: 'Trending Across Aquads Platform', included: false },
         { name: 'BexTools Trending Section', included: false },
         { name: 'Bubble Ranking Visibility', included: false },
@@ -110,6 +128,8 @@ const TelegramBot = () => {
         { name: 'View Top 10 Bubble Rankings', included: true },
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
+        { name: 'X Space live alerts (paste link)', included: true },
+        { name: 'Auto voice chat alerts (Telegram)', included: true },
         { name: 'Trending Across Aquads Platform', included: true, highlight: true },
         { name: 'BexTools Trending Section', included: true, highlight: true },
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
@@ -197,6 +217,12 @@ const TelegramBot = () => {
       title: 'Cross-Community Raids',
       description: 'Opt-in to share raids with other meme coin communities. Expand reach beyond your own holders.',
       highlight: 'Network effect'
+    },
+    {
+      icon: FaBell,
+      title: 'Live Space & VC Alerts',
+      description: 'Paste an X Spaces link for a pinned video blast across /raidin groups. On Telegram, opening a voice chat triggers an automatic join announcement in your group.',
+      highlight: 'No extra command'
     },
     {
       icon: FaCoins,
@@ -612,7 +638,7 @@ const TelegramBot = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Command Reference</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              All {commands.length} commands — use in Telegram or the same slash commands in Discord.
+              All {commands.length} slash commands — plus live alerts (paste X Space links; Telegram voice chats auto-announce). Use in Telegram or Discord.
             </p>
           </div>
 
