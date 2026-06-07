@@ -32,6 +32,15 @@ function makeCompleteRaidTelegramButton(raidId) {
   };
 }
 
+/** Bullish (green) + bearish (red) vote row for bubble voting. */
+function makeVoteTelegramButtonRow(projectId) {
+  const id = projectId != null ? String(projectId) : '';
+  return [
+    { text: '👍 Bullish', callback_data: 'vote_bullish_' + id, style: 'success' },
+    { text: '👎 Bearish', callback_data: 'vote_bearish_' + id, style: 'danger' },
+  ];
+}
+
 function getDefaultTelegramPromoKeyboard() {
   return {
     inline_keyboard: [LIST_PROJECT_BUTTON_ROW, HIRE_EXPERT_BUTTON_ROW, HYPERSPACE_BUTTON_ROW],
@@ -90,4 +99,5 @@ module.exports = {
   addPromoButtonsToTelegramKeyboard,
   buildDiscordPromoComponents,
   makeCompleteRaidTelegramButton,
+  makeVoteTelegramButtonRow,
 };

@@ -138,6 +138,7 @@ const {
   getDefaultTelegramPromoKeyboard,
   addPromoButtonsToTelegramKeyboard,
   makeCompleteRaidTelegramButton,
+  makeVoteTelegramButtonRow,
 } = require('./botPromoButtons');
 
 /** @deprecated Use addPromoButtonsToTelegramKeyboard — kept for call sites */
@@ -4502,10 +4503,7 @@ Tap to update:`;
 
     const keyboard = {
       inline_keyboard: [
-        [
-          { text: '👍 Bullish', callback_data: 'vote_bullish_' + project._id.toString() },
-          { text: '👎 Bearish', callback_data: 'vote_bearish_' + project._id.toString() },
-        ],
+        makeVoteTelegramButtonRow(project._id),
         [{ text: '💰 Buy now', url: viewOnAquadsUrl }],
       ],
     };
@@ -5348,14 +5346,9 @@ Tap to update:`;
       // Create voting keyboard
       const keyboard = {
         inline_keyboard: [
-          [
-            { text: "👍 Bullish", callback_data: "vote_bullish_" + project._id.toString() },
-            { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
-          ],
-          [
-            { text: "🔗 View on Aquads", url: viewOnAquadsUrl }
-          ]
-        ]
+          makeVoteTelegramButtonRow(project._id),
+          [{ text: '🔗 View on Aquads', url: viewOnAquadsUrl }],
+        ],
       };
 
       // Check if project has custom branding (image or HTTPS video URL)
