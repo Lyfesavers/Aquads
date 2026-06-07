@@ -1965,16 +1965,6 @@ https://aquads.xyz`;
         await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
       }
 
-      // Send summary
-      const twitterCount = availableRaids.filter(raid => raid.platform === 'Twitter').length;
-      const facebookCount = availableRaids.filter(raid => raid.platform === 'Facebook').length;
-      const completeHint = inPrivateChat
-        ? '• Click "Complete Raid" button (easiest way!)'
-        : '• Click "Complete in Private Chat" button (easiest way!)';
-      
-      await telegramService.sendBotMessage(chatId, 
-        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n${completeHint}\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
-
     } catch (error) {
       console.error('Raids command error:', error);
       await telegramService.sendBotMessage(chatId, 
