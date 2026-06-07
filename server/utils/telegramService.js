@@ -137,6 +137,7 @@ const {
   HYPERSPACE_BUTTON_ROW,
   getDefaultTelegramPromoKeyboard,
   addPromoButtonsToTelegramKeyboard,
+  makeCompleteRaidTelegramButton,
 } = require('./botPromoButtons');
 
 /** @deprecated Use addPromoButtonsToTelegramKeyboard — kept for call sites */
@@ -693,12 +694,7 @@ const telegramService = {
       // Add "Complete Raid", "Hire an Expert", and "X Space Trender" (HyperSpace) buttons
       const keyboard = {
         inline_keyboard: [
-          [
-            {
-              text: '✅ Complete Raid',
-              callback_data: JSON.stringify({ action: 'complete', raidId: raidData.raidId })
-            }
-          ],
+          [makeCompleteRaidTelegramButton(raidData.raidId)],
           LIST_PROJECT_BUTTON_ROW,
           HIRE_EXPERT_BUTTON_ROW,
           HYPERSPACE_BUTTON_ROW,
@@ -938,12 +934,7 @@ const telegramService = {
       // Add buttons - "Complete Raid" if raidId provided, and "Hire an Expert"
       const buttons = [];
       if (raidId) {
-        buttons.push([
-          {
-            text: '✅ Complete Raid',
-            callback_data: JSON.stringify({ action: 'complete', raidId: raidId })
-          }
-        ]);
+        buttons.push([makeCompleteRaidTelegramButton(raidId)]);
       }
       buttons.push(LIST_PROJECT_BUTTON_ROW);
       buttons.push(HIRE_EXPERT_BUTTON_ROW);
@@ -1962,10 +1953,7 @@ https://aquads.xyz`;
         const keyboard = {
           inline_keyboard: [[
             inPrivateChat
-              ? {
-                  text: '✅ Complete Raid',
-                  callback_data: JSON.stringify({ action: 'complete', raidId: raid._id.toString() })
-                }
+              ? makeCompleteRaidTelegramButton(raid._id)
               : {
                   text: '💬 Complete in Private Chat',
                   url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`

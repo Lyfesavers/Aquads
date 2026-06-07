@@ -22,6 +22,16 @@ const HYPERSPACE_BUTTON_ROW = [
   { text: BOT_PROMO_BUTTONS.hyperspace.label, url: BOT_PROMO_BUTTONS.hyperspace.url },
 ];
 
+/** Green "Complete Raid" callback button (Telegram Bot API style: success). */
+function makeCompleteRaidTelegramButton(raidId) {
+  const id = raidId != null ? String(raidId) : '';
+  return {
+    text: '✅ Complete Raid',
+    callback_data: JSON.stringify({ action: 'complete', raidId: id }),
+    style: 'success',
+  };
+}
+
 function getDefaultTelegramPromoKeyboard() {
   return {
     inline_keyboard: [LIST_PROJECT_BUTTON_ROW, HIRE_EXPERT_BUTTON_ROW, HYPERSPACE_BUTTON_ROW],
@@ -79,4 +89,5 @@ module.exports = {
   getDefaultTelegramPromoKeyboard,
   addPromoButtonsToTelegramKeyboard,
   buildDiscordPromoComponents,
+  makeCompleteRaidTelegramButton,
 };
