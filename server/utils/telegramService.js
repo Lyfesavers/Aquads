@@ -217,6 +217,7 @@ const telegramService = {
     raidCompletion: null,
     leaderboard: null,
     spaces: null,
+    vcOpen: null,
   },
 
   RAID_MESSAGE_CLEANUP_AFTER_MS,
@@ -535,7 +536,7 @@ const telegramService = {
     }
   },
 
-  /** Unpin + delete Space alerts older than 24h in all tracked Telegram groups. */
+  /** Unpin + delete Space alerts before Telegram's ~48h bot delete window (Discord uses same age). */
   scheduledSpacesTelegramMessageCleanup: async () => {
     if (!process.env.TELEGRAM_BOT_TOKEN) return;
 
@@ -926,6 +927,237 @@ const telegramService = {
     } catch (error) {
       console.error('[Spaces TG] broadcast failed:', error.message);
       return { count: 0 };
+    }
+  },
+
+  storeVcOpenBroadcastMessageId: async (chatId, messageId) => {
+    try {
+      const chatIdStr = String(chatId);
+      const settings = await BotSettings.findOne({ key: 'vcOpenBroadcastMessageIds' });
+      const existing =
+        settings?.value && typeof settings.value === 'object' ? { ...settings.value } : {};
+      if (!existing[chatIdStr]) existing[chatIdStr] = [];
+      existing[chatIdStr].push({
+        messageId: Number(messageId),
+        storedAt: new Date().toISOString(),
+      });
+      await BotSettings.findOneAndUpdate(
+        { key: 'vcOpenBroadcastMessageIds' },
+        { value: existing, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing VC-open broadcast message ID:', error);
+    }
+  },
+
+  /** Announce voice chat live in the group that started it (video + promo buttons). */
+  sendVcOpenBroadcast: async (chatId) => {
+    try {
+      const {
+        buildVcOpenBroadcastCaptionHtml,
+        getVcOpenBroadcastTelegramKeyboard,
+        getVcOpenBroadcastVideoPath,
+        vcOpenBroadcastVideoExists,
+      } = require('./vcOpenBroadcast');
+
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken || chatId == null) return { ok: false };
+
+      const chatIdStr = String(chatId);
+      const caption = buildVcOpenBroadcastCaptionHtml();
+      const keyboard = getVcOpenBroadcastTelegramKeyboard();
+      const videoPath = getVcOpenBroadcastVideoPath();
+      const videoExists = vcOpenBroadcastVideoExists();
+
+      let response;
+      if (videoExists && telegramService.cachedVideoFileIds.vcOpen) {
+        response = await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendVideo`,
+          {
+            chat_id: chatIdStr,
+            video: telegramService.cachedVideoFileIds.vcOpen,
+            caption,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+          },
+          { timeout: 15000 }
+        );
+      } else if (videoExists) {
+        const formData = new FormData();
+        formData.append('chat_id', chatIdStr);
+        formData.append('video', fs.createReadStream(videoPath));
+        formData.append('caption', caption);
+        formData.append('parse_mode', 'HTML');
+        formData.append('reply_markup', JSON.stringify(keyboard));
+        response = await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendVideo`,
+          formData,
+          {
+            headers: formData.getHeaders(),
+            timeout: 60000,
+          }
+        );
+        if (response.data.ok && response.data.result.video) {
+          telegramService.cachedVideoFileIds.vcOpen = response.data.result.video.file_id;
+        }
+      } else {
+        const result = await telegramService.sendBotMessage(chatIdStr, caption, {
+          parseMode: 'HTML',
+        });
+        if (result.success && result.messageId) {
+          await telegramService.storeVcOpenBroadcastMessageId(chatIdStr, result.messageId);
+          await telegramService.pinMessage(chatIdStr, result.messageId);
+        }
+        return { ok: !!result.success };
+      }
+
+      if (response?.data?.ok) {
+        const messageId = response.data.result.message_id;
+        await telegramService.storeVcOpenBroadcastMessageId(chatIdStr, messageId);
+        await telegramService.pinMessage(chatIdStr, messageId);
+        console.log(`[VC Open TG] Alert sent to ${chatIdStr}`);
+        return { ok: true };
+      }
+
+      return { ok: false };
+    } catch (error) {
+      console.error(`[VC Open TG] Failed to send to ${chatId}:`, error.message);
+      if (telegramService.shouldRemoveGroupFromActive(error)) {
+        const chatIdStr = String(chatId);
+        telegramService.activeGroups.delete(chatIdStr);
+        await telegramService.saveActiveGroups();
+      }
+      return { ok: false };
+    }
+  },
+
+  handleVideoChatStarted: async (message) => {
+    const chat = message?.chat;
+    if (!chat?.id) return;
+
+    const chatType = chat.type;
+    if (chatType !== 'group' && chatType !== 'supergroup') return;
+
+    const chatIdStr = chat.id.toString();
+    telegramService.activeGroups.add(chatIdStr);
+    await telegramService.saveActiveGroups();
+
+    await telegramService.sendVcOpenBroadcast(chat.id);
+  },
+
+  /** Remove the latest VC-open announcement when the voice chat ends. */
+  removeLatestVcOpenBroadcastForChat: async (chatId) => {
+    const chatIdStr = String(chatId);
+    try {
+      const settings = await BotSettings.findOne({ key: 'vcOpenBroadcastMessageIds' });
+      const byChat =
+        settings?.value && typeof settings.value === 'object' ? { ...settings.value } : {};
+      const entries = byChat[chatIdStr];
+      if (!Array.isArray(entries) || entries.length === 0) return;
+
+      const normalized = entries.map(normalizeRaidMessageIdsEntry).filter(Boolean);
+      if (normalized.length === 0) return;
+
+      normalized.sort((a, b) => {
+        const ta = a.storedAt ? new Date(a.storedAt).getTime() : 0;
+        const tb = b.storedAt ? new Date(b.storedAt).getTime() : 0;
+        return tb - ta;
+      });
+      const latest = normalized[0];
+
+      await telegramService.deleteRaidTelegramMessage(chatIdStr, latest.messageId);
+
+      const kept = normalized.filter((e) => e.messageId !== latest.messageId);
+      if (kept.length === 0) {
+        delete byChat[chatIdStr];
+      } else {
+        byChat[chatIdStr] = kept.map(({ messageId, storedAt }) => ({ messageId, storedAt }));
+      }
+
+      await BotSettings.findOneAndUpdate(
+        { key: 'vcOpenBroadcastMessageIds' },
+        { value: byChat, updatedAt: new Date() },
+        { upsert: true }
+      );
+      console.log(`[VC Open TG] Removed announcement msg ${latest.messageId} chat ${chatIdStr}`);
+    } catch (error) {
+      console.error('[VC Open TG] Error removing latest broadcast:', error.message);
+    }
+  },
+
+  handleVideoChatEnded: async (message) => {
+    const chat = message?.chat;
+    if (!chat?.id) return;
+
+    const chatType = chat.type;
+    if (chatType !== 'group' && chatType !== 'supergroup') return;
+
+    await telegramService.removeLatestVcOpenBroadcastForChat(chat.id);
+  },
+
+  /** Unpin + delete VC-open alerts before Telegram's ~48h bot delete window (fallback if end event missed). */
+  scheduledVcOpenTelegramMessageCleanup: async () => {
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
+
+    const { VC_OPEN_MESSAGE_CLEANUP_AFTER_MS, isVcOpenMessageCleanupDue } = require('./vcOpenBroadcast');
+
+    try {
+      const settings = await BotSettings.findOne({ key: 'vcOpenBroadcastMessageIds' });
+      let byChat =
+        settings?.value && typeof settings.value === 'object' ? { ...settings.value } : {};
+      let changed = false;
+
+      for (const chatIdStr of Object.keys(byChat)) {
+        const entries = byChat[chatIdStr];
+        if (!Array.isArray(entries)) continue;
+
+        const kept = [];
+        let chatDirty = false;
+        for (const entry of entries) {
+          const norm = normalizeRaidMessageIdsEntry(entry);
+          if (!norm) continue;
+
+          if (!norm.storedAt) {
+            kept.push({ messageId: norm.messageId, storedAt: new Date().toISOString() });
+            chatDirty = true;
+            continue;
+          }
+
+          if (!isVcOpenMessageCleanupDue(norm.storedAt, VC_OPEN_MESSAGE_CLEANUP_AFTER_MS)) {
+            kept.push({ messageId: norm.messageId, storedAt: norm.storedAt });
+            continue;
+          }
+
+          const ok = await telegramService.deleteRaidTelegramMessage(chatIdStr, norm.messageId);
+          if (ok) {
+            console.log(`[VC Open TG cleanup] Deleted msg ${norm.messageId} chat ${chatIdStr}`);
+          } else {
+            console.log(
+              `[VC Open TG cleanup] Could not delete msg ${norm.messageId} chat ${chatIdStr} — dropping DB ref`
+            );
+          }
+          chatDirty = true;
+        }
+
+        if (kept.length === 0) {
+          delete byChat[chatIdStr];
+          changed = true;
+        } else if (chatDirty || kept.length !== entries.length) {
+          byChat[chatIdStr] = kept;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await BotSettings.findOneAndUpdate(
+          { key: 'vcOpenBroadcastMessageIds' },
+          { value: byChat, updatedAt: new Date() },
+          { upsert: true }
+        );
+      }
+    } catch (error) {
+      console.error('[VC Open TG cleanup] Error:', error.message);
     }
   },
 

@@ -158,6 +158,22 @@ router.post('/telegram-webhook', async (req, res) => {
           console.error('Command handler error (photo):', cmdError.message);
         }
       }
+      // Voice chat started in a group — announce in that group only
+      else if (update.message.video_chat_started) {
+        try {
+          await telegramService.handleVideoChatStarted(update.message);
+        } catch (vcError) {
+          console.error('Video chat started handler error:', vcError.message);
+        }
+      }
+      // Voice chat ended — remove the VC-open announcement from the group
+      else if (update.message.video_chat_ended) {
+        try {
+          await telegramService.handleVideoChatEnded(update.message);
+        } catch (vcError) {
+          console.error('Video chat ended handler error:', vcError.message);
+        }
+      }
       // Handle text messages
       else if (update.message.text) {
         try {

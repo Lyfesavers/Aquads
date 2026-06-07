@@ -79,8 +79,8 @@ function spacesBroadcastVideoExists() {
   return fs.existsSync(p);
 }
 
-/** Delete + unpin Space alert posts after this age (Telegram + Discord). */
-const SPACES_MESSAGE_CLEANUP_AFTER_MS = 24 * 60 * 60 * 1000;
+/** Delete + unpin Space alert posts before Telegram's ~48h bot self-delete window closes (same margin as raid posts). Discord uses the same age. */
+const SPACES_MESSAGE_CLEANUP_AFTER_MS = 42 * 60 * 60 * 1000;
 
 function isSpacesMessageCleanupDue(storedAt, cleanupAfterMs = SPACES_MESSAGE_CLEANUP_AFTER_MS) {
   const t = new Date(storedAt).getTime();

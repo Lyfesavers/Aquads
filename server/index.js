@@ -340,6 +340,7 @@ cron.schedule('0 */2 * * *', async () => {
     console.log('[Raid TG cleanup] Running scheduled raid message sweep...');
     await telegramService.scheduledRaidTelegramRaidMessageCleanup();
     await telegramService.scheduledSpacesTelegramMessageCleanup();
+    await telegramService.scheduledVcOpenTelegramMessageCleanup();
     const discordService = require('./utils/discordService');
     await discordService.scheduledSpacesDiscordMessageCleanup();
   } catch (error) {
