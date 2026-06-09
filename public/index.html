@@ -70,19 +70,24 @@
       interest-cohort=()
     ">
     <!--
-      Per-page meta tags (title, description, og:title, og:description, og:image,
-      og:url, og:type, twitter:title, twitter:description, twitter:image) are
-      managed by React Helmet — App-level defaults live in src/App.js, and each
-      route (LandingPage, BlogPage, HowTo, Marketplace, AquaSwap, …) overrides
-      them as needed. They are intentionally NOT duplicated here to avoid
-      double meta tags in prerendered HTML served to search/social crawlers.
-      Only truly static, site-wide hints (card type, site name, image dims)
-      stay here so they're available even before React mounts.
+      Default social/SEO meta for crawlers that do not run JavaScript (Facebook,
+      X, LinkedIn, most OG debuggers). React Helmet in App.js / per-route pages
+      updates the same tags after mount for browsers; prerender edge functions
+      inject route-specific tags for share URLs.
     -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:site_name" content="Aquads">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta name="description" content="Aquads is the launch stack for new crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
+    <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
+    <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+    <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
+    <meta property="og:url" content="https://www.aquads.xyz/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Aquads" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
+    <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+    <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
     
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     
