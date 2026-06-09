@@ -4577,7 +4577,7 @@ Tap to update:`;
       message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
       // Get the video file path
-      const videoPath = path.join(__dirname, '../../public/TRENDINGLIST.mp4');
+      const videoPath = path.join(__dirname, '../../public/newtrendinglist.mp4');
       const videoExists = fs.existsSync(videoPath);
 
       // Send to the specific group
@@ -5786,7 +5786,7 @@ Tap to update:`;
       message += `💎 Vote on your favorites at aquads.xyz`;
 
       // Send with video
-      const videoPath = path.join(__dirname, '../../public/TRENDINGLIST.mp4');
+      const videoPath = path.join(__dirname, '../../public/newtrendinglist.mp4');
       const videoExists = fs.existsSync(videoPath);
 
       const keyboard = getDefaultTelegramPromoKeyboard();
