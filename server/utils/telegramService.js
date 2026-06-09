@@ -5584,7 +5584,7 @@ Tap to update:`;
         : null;
       
       // Path to the new vote video (fallback)
-      const videoPath = path.join(__dirname, '../../public/New_vote.mp4');
+      const videoPath = path.join(__dirname, '../../public/justvoted.mp4');
       const videoExists = fs.existsSync(videoPath);
 
       // Send to registered group (if exists)

@@ -2001,7 +2001,7 @@ async function startBot() {
 const PUBLIC_DIR = path.join(__dirname, '../../public');
 const VIDEO_RAID = path.join(PUBLIC_DIR, 'raidtime.mp4');
 const VIDEO_RAID_COMPLETION = path.join(PUBLIC_DIR, 'Just Raided.mp4');
-const VIDEO_VOTE = path.join(PUBLIC_DIR, 'New_vote.mp4');
+const VIDEO_VOTE = path.join(PUBLIC_DIR, 'justvoted.mp4');
 const VIDEO_TOP_BUBBLES = path.join(PUBLIC_DIR, 'newtrendinglist.mp4');
 const VIDEO_MYBUBBLE = path.join(PUBLIC_DIR, 'newvotenow.mp4');
 const VIDEO_LEADERBOARD = path.join(PUBLIC_DIR, 'leaderboard.mp4');
