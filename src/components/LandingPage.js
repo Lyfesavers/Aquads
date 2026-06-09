@@ -4402,7 +4402,7 @@ const LandingPage = () => {
           property="og:description"
           content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
         />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta property="og:url" content="https://www.aquads.xyz/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Aquads" />
@@ -4413,7 +4413,7 @@ const LandingPage = () => {
           name="twitter:description"
           content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
         />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
 
         <script type="application/ld+json">
           {JSON.stringify({
@@ -4470,8 +4470,8 @@ const LandingPage = () => {
             "operatingSystem": "Any (web-based)",
             "browserRequirements": "Requires a modern browser with JavaScript enabled.",
             "inLanguage": "en",
-            "image": "https://www.aquads.xyz/logo712.png",
-            "screenshot": "https://www.aquads.xyz/logo712.png",
+            "image": "https://www.aquads.xyz/metalogo.png",
+            "screenshot": "https://www.aquads.xyz/metalogo.png",
             "isAccessibleForFree": true,
             "offers": [
               {
@@ -4723,7 +4723,7 @@ const LandingPage = () => {
             whileHover={{ scale: 1.05 }}
           >
             <img 
-              src="/Aquadsnewlogo.png" 
+              src="/alogo.png" 
               alt="AQUADS" 
               className="h-8 md:h-10 w-auto filter drop-shadow-lg"
               style={{ filter: 'drop-shadow(0 0 20px rgba(34, 211, 238, 0.5))' }}
@@ -5233,7 +5233,7 @@ const LandingPage = () => {
             {/* Logo & Copyright */}
             <div className="flex items-center gap-2 md:gap-3">
               <img 
-                src="/Aquadsnewlogo.png" 
+                src="/alogo.png" 
                 alt="AQUADS" 
                 className="h-6 md:h-8 w-auto"
               />

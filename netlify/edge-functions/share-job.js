@@ -197,10 +197,10 @@ function getDefaultResponse() {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Web3 & Crypto Jobs — Aquads">
   <meta name="twitter:description" content="Browse Web3, crypto and remote jobs hand-picked for the Aquads community.">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
   <meta property="og:title" content="Web3 & Crypto Jobs — Aquads">
   <meta property="og:description" content="Browse Web3, crypto and remote jobs hand-picked for the Aquads community.">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
   <meta property="og:url" content="https://www.aquads.xyz/marketplace?jobs=true">
   <meta property="og:type" content="website">
   <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/marketplace?jobs=true">

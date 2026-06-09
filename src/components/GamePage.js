@@ -205,7 +205,7 @@ const GamePage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const canonicalUrl = `https://www.aquads.xyz/games/${id}`;
   const ogImage = game && game.bannerType === 'image' && game.bannerUrl
     ? game.bannerUrl
-    : 'https://www.aquads.xyz/logo712.png';
+    : 'https://www.aquads.xyz/metalogo.png';
   const ogDescription = game
     ? game.description.replace(/<[^>]*>/g, '').slice(0, 200)
     : 'Play exciting Web3 games on Aquads Game Hub!';
@@ -300,7 +300,7 @@ const GamePage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               src={game.bannerUrl}
               alt={game.title}
               className="w-full h-full object-cover"
-              onError={(e) => { e.target.onerror = null; e.target.src = '/logo712.png'; }}
+              onError={(e) => { e.target.onerror = null; e.target.src = '/metalogo.png'; }}
             />
           )}
         </div>

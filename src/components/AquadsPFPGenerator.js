@@ -200,7 +200,7 @@ export default function AquadsPFPGenerator({ currentUser, onLogin, showNotificat
         <header className="pfp-header">
           <div className="pfp-header-left">
             <img
-              src="/Aquadsnewlogo.png"
+              src="/alogo.png"
               alt="Aquads"
               className="pfp-logo"
               onClick={() => navigate('/home')}

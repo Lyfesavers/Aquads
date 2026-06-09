@@ -51,7 +51,7 @@ export default async (request, context) => {
     const description = stripHtml(blog.content).slice(0, 200) + '...';
     
     // Use blog banner image or default
-    const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
+    const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/metalogo.png';
     
     // Canonical in-app URL (must match BlogPage: /learn/{titleSlug}-{mongoId})
     const titleSlug = createSlug(blog.title) || 'post';
@@ -147,9 +147,9 @@ function getDefaultResponse() {
   <title>Aquads Blog</title>
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Aquads Blog">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
   <meta property="og:title" content="Aquads Blog">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
   <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/learn">
 </head>
 <body>

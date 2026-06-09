@@ -309,14 +309,14 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           property="og:description"
           content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
         />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="List your token free on Aquads — bubble map listings" />
         <meta
           name="twitter:description"
           content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
         />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
 
         {/*
           Service schema for the free Starter listing — anchors this page as

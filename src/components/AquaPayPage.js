@@ -1040,7 +1040,7 @@ const AquaPayPage = ({ currentUser }) => {
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
       <div className="text-center">
-        <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
+        <img src="/alogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
         <div className="w-8 h-8 mx-auto mb-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
         <p className="text-slate-400 text-sm">Loading payment...</p>
       </div>
@@ -1149,7 +1149,7 @@ const AquaPayPage = ({ currentUser }) => {
         </button>
         
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
-          <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
+          <img src="/alogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by AquaPay</span>
         </div>
       </div>
@@ -1162,7 +1162,7 @@ const AquaPayPage = ({ currentUser }) => {
       <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="https://aquads.xyz" className="flex items-center gap-2">
-            <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
+            <img src="/alogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
             <span className="text-slate-400 text-sm font-medium">Pay</span>
           </a>
           <div className="flex items-center gap-3">
@@ -1530,7 +1530,7 @@ const AquaPayPage = ({ currentUser }) => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-5 w-auto opacity-50" />
+              <img src="/alogo.png" alt="Aquads logo" className="h-5 w-auto opacity-50" />
               <div className="flex items-center gap-3 text-xs text-slate-600">
                 <a href="https://aquads.xyz" className="hover:text-cyan-400 transition-colors">Aquads.xyz</a>
                 <span>•</span>

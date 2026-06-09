@@ -5218,11 +5218,11 @@ const Documentation = () => {
         <meta property="og:title" content={`${currentContent?.title || 'Documentation'} - Aquads Docs`} />
         <meta property="og:description" content={currentContent?.description || 'Aquads platform documentation: how to list, grow, hire, and get paid on Aquads.'} />
         <meta property="og:url" content="https://www.aquads.xyz/docs" />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${currentContent?.title || 'Documentation'} - Aquads Docs`} />
         <meta name="twitter:description" content={currentContent?.description || 'Aquads platform documentation.'} />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
 
         {/*
           TechArticle schema — anchors the entire Aquads docs as one
@@ -5242,7 +5242,7 @@ const Documentation = () => {
               "@type": "WebPage",
               "@id": "https://www.aquads.xyz/docs"
             },
-            "image": "https://www.aquads.xyz/logo712.png",
+            "image": "https://www.aquads.xyz/metalogo.png",
             "inLanguage": "en",
             "isAccessibleForFree": true,
             "proficiencyLevel": "Beginner",
@@ -5297,7 +5297,7 @@ const Documentation = () => {
 
           {/* Logo */}
           <Link to="/home" className="flex items-center gap-2">
-            <img src="/Aquadsnewlogo.png" alt="Aquads" className="h-8" />
+            <img src="/alogo.png" alt="Aquads" className="h-8" />
             <span className="text-gray-400 text-sm hidden sm:inline">/ Docs</span>
           </Link>
 

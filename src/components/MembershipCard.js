@@ -60,7 +60,7 @@ const MembershipCard = ({ membership, onClose }) => {
       // Load and draw logo
       const logo = new Image();
       logo.crossOrigin = 'anonymous'; // Prevent CORS issues
-      logo.src = '/Aquadsnewlogo.png';
+      logo.src = '/alogo.png';
       
       await new Promise((resolve, reject) => {
         logo.onload = resolve;

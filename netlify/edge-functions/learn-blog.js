@@ -29,7 +29,7 @@
 
 const BLOG_API_BASE = 'https://aquads-production.up.railway.app/api/blogs';
 const CANONICAL_HOST = 'https://www.aquads.xyz';
-const DEFAULT_OG_IMAGE = `${CANONICAL_HOST}/logo712.png`;
+const DEFAULT_OG_IMAGE = `${CANONICAL_HOST}/metalogo.png`;
 
 function createSlug(title) {
   const slug = (title || '')
@@ -98,7 +98,7 @@ function buildMetaBlock(blog, canonicalUrl) {
       name: 'Aquads',
       logo: {
         '@type': 'ImageObject',
-        url: `${CANONICAL_HOST}/logo712.png`,
+        url: `${CANONICAL_HOST}/metalogo.png`,
       },
     },
     datePublished: publishedAt,

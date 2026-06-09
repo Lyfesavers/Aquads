@@ -405,7 +405,7 @@ app.get('/learn', async (req, res, next) => {
           const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
           
           // Use the blog banner image or fall back to the new optimized image
-          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
+          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/metalogo.png`;
           
           // Create clean URL without referral parameters for meta tags
           const cleanUrl = `${req.protocol}://${req.get('host')}/learn?blogId=${blogId}`;
@@ -654,7 +654,7 @@ app.get('/learn/:slug', async (req, res, next) => {
           const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
           
           // Use the blog banner image or fall back to the default image
-          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
+          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/metalogo.png`;
           
           // Create the canonical SEO-friendly URL
           const slug = createSlug(blog.title);
@@ -766,7 +766,7 @@ app.get('/games/:id', async (req, res, next) => {
 
       const imageUrl = game.bannerType === 'image' && game.bannerUrl
         ? game.bannerUrl
-        : `${req.protocol}://${req.get('host')}/logo712.png`;
+        : `${req.protocol}://${req.get('host')}/metalogo.png`;
 
       const canonicalUrl = `${req.protocol}://${req.get('host')}/games/${game._id}`;
 

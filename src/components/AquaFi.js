@@ -126,14 +126,14 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
 
         <meta property="og:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
         <meta property="og:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta property="og:url" content="https://www.aquads.xyz/aquafi" />
         <meta property="og:type" content="website" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
         <meta name="twitter:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
       </Helmet>
 
       {/* Enhanced Fixed Background */}
@@ -151,7 +151,7 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
             <div className="flex items-center">
               <Link to="/home" className="flex items-center">
                 <img 
-                  src="/Aquadsnewlogo.png" 
+                  src="/alogo.png" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
                   style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}

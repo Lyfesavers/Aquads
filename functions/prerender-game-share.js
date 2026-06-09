@@ -97,7 +97,7 @@ function getGameHtml(game, description, seoUrl, redirectUrl) {
   const escapedDescription = escapeHtml(description);
   const imageUrl = game.bannerType === 'image' && game.bannerUrl
     ? game.bannerUrl
-    : 'https://www.aquads.xyz/logo712.png';
+    : 'https://www.aquads.xyz/metalogo.png';
   const escapedImageUrl = escapeHtml(imageUrl);
   const escapedSeoUrl = escapeHtml(seoUrl);
   const escapedRedirectUrl = escapeHtml(redirectUrl);
@@ -162,7 +162,7 @@ function getDefaultHtml() {
   <meta name="twitter:site" content="@AquadsXYZ">
   <meta name="twitter:title" content="Aquads Game Hub - Play Web3 Games">
   <meta name="twitter:description" content="Play exciting Web3 games on Aquads Game Hub!">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
 
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
@@ -170,7 +170,7 @@ function getDefaultHtml() {
   <meta property="og:url" content="https://www.aquads.xyz/games">
   <meta property="og:title" content="Aquads Game Hub - Play Web3 Games">
   <meta property="og:description" content="Play exciting Web3 games on Aquads Game Hub!">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
 
   <title>Aquads Game Hub</title>
   <script>window.location.href='/games';</script>

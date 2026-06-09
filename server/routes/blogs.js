@@ -383,12 +383,12 @@ router.get('/share/:id', async (req, res) => {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${blog.title} - Aquads Blog">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+  <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'}">
 
   <!-- Open Graph meta tags -->
   <meta property="og:title" content="${blog.title} - Aquads Blog">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+  <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'}">
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:type" content="article">
 

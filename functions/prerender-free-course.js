@@ -156,14 +156,14 @@ function getDefaultHtml() {
 
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+    <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
     <meta name="twitter:title" content="Free Online Courses — Aquads Learn">
     <meta name="twitter:description" content="Hand-picked free online courses with certificates from cursa.app — programming, marketing, AI, languages and more.">
 
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="Free Online Courses — Aquads Learn">
     <meta property="og:description" content="Hand-picked free online courses with certificates from cursa.app — programming, marketing, AI, languages and more.">
-    <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+    <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
     <meta property="og:url" content="https://www.aquads.xyz/learn">
     <meta property="og:type" content="website">
 

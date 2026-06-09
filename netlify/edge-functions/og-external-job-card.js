@@ -1,7 +1,7 @@
 // Proxies Jooble-signed external job OG images from Railway through www.aquads.xyz
 
 const RAILWAY_OG = 'https://aquads-production.up.railway.app/og/external-job';
-const FALLBACK_IMAGE = 'https://www.aquads.xyz/logo712.png';
+const FALLBACK_IMAGE = 'https://www.aquads.xyz/metalogo.png';
 
 export default async (request) => {
   const url = new URL(request.url);

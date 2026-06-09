@@ -63,7 +63,7 @@ import {
   IconLink
 } from './linkInBioCustomIcons';
 
-export const AQUADS_LOGO_SRC = '/Aquadsnewlogo.png';
+export const AQUADS_LOGO_SRC = '/asymbol.png';
 
 /** Picker in dashboard — custom Aquads icons + auto + Aquads logo. */
 export const LINK_IN_BIO_ICON_PICKER = [

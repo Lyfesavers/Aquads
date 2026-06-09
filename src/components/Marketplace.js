@@ -326,7 +326,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       const desc = (stripHtml(job.description) || stripHtml(job.requirements) || '').slice(0, 200);
       const titleSuffix = job.workArrangement ? `${job.workArrangement.charAt(0).toUpperCase()}${job.workArrangement.slice(1)} ` : '';
       const fullTitle = `${job.title} — ${titleSuffix}Job on Aquads`;
-      const image = (job.source && job.source !== 'user' && job.companyLogo) || job.ownerImage || (job.owner && job.owner.image) || 'https://www.aquads.xyz/logo712.png';
+      const image = (job.source && job.source !== 'user' && job.companyLogo) || job.ownerImage || (job.owner && job.owner.image) || 'https://www.aquads.xyz/metalogo.png';
       const cleanUrl = `${window.location.origin}/marketplace?jobs=true&job=${sharedJobId}`;
 
       if (dynamicTwitterImage) dynamicTwitterImage.content = image;
@@ -1108,7 +1108,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             <div className="flex items-center">
               <Link to="/home" className="flex items-center">
                 <img 
-                  src="/Aquadsnewlogo.png" 
+                  src="/alogo.png" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
                   style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}

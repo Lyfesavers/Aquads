@@ -616,11 +616,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         <meta property="og:title" content="Learn Aquads — tutorials, blog, skill tests & free courses" />
         <meta property="og:description" content="Video tutorials, in-depth blog posts, crypto market news, skill tests, and a free certificate course library — everything you need to master Aquads and Web3." />
         <meta property="og:url" content="https://www.aquads.xyz/learn" />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Learn Aquads — tutorials, blog, skill tests & free courses" />
         <meta name="twitter:description" content="Video tutorials, in-depth blog posts, crypto news, skill tests, and free certificate courses." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
 
         {/*
           CollectionPage schema — tells Google and AI search this is the
@@ -680,7 +680,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 "@type": "BlogPosting",
                 "headline": blog.title,
                 "url": `https://www.aquads.xyz/learn/${createBlogSlug(blog.title)}-${blog._id}`,
-                "image": blog.bannerImage || "https://www.aquads.xyz/logo712.png",
+                "image": blog.bannerImage || "https://www.aquads.xyz/metalogo.png",
                 "datePublished": blog.createdAt,
                 "dateModified": blog.updatedAt || blog.createdAt,
                 "author": {
@@ -733,7 +733,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             <div className="flex items-center">
               <Link to="/home" className="flex items-center">
                 <img 
-                  src="/Aquadsnewlogo.png" 
+                  src="/alogo.png" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
                   style={{height: '1.75rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}

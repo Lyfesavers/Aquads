@@ -2754,12 +2754,12 @@ function App() {
           <meta name="description" content="Aquads is the launch stack for new crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
           <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
           <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
-          <meta property="og:image" content="https://www.aquads.xyz/METALOGO.png" />
+          <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
           <meta property="og:url" content="https://www.aquads.xyz/" />
           <meta property="og:type" content="website" />
           <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
           <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
-          <meta name="twitter:image" content="https://www.aquads.xyz/METALOGO.png" />
+          <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
         </Helmet>
         <PWAInstallProvider>
         <NavigationListener 
@@ -2906,7 +2906,7 @@ function App() {
                       <div className="flex items-center">
                         <Link to="/" className="flex items-center">
                           <img 
-                            src="/Aquadsnewlogo.png" 
+                            src="/alogo.png" 
                             alt="AQUADS" 
                             className="w-auto filter drop-shadow-lg"
                             style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}

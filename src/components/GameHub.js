@@ -239,14 +239,14 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
 
         <meta property="og:title" content="Web3 Games Hub - Play Crypto Games & Earn | Aquads" />
         <meta property="og:description" content="Play exciting Web3 games on Aquads. Discover community-built crypto games and earn while you play." />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta property="og:url" content="https://www.aquads.xyz/games" />
         <meta property="og:type" content="website" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Web3 Games Hub - Play Crypto Games & Earn | Aquads" />
         <meta name="twitter:description" content="Play exciting Web3 games on Aquads. Discover community-built crypto games and earn while you play." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
       </Helmet>
 
       {/* Navigation - Same as main page */}
@@ -256,7 +256,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                          <div className="flex items-center">
                <Link to="/home">
                  <img 
-                   src="/Aquadsnewlogo.png" 
+                   src="/alogo.png" 
                    alt="AQUADS" 
                    className="w-auto filter drop-shadow-lg hover:opacity-80 transition-opacity"
                    style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}

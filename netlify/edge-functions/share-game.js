@@ -38,7 +38,7 @@ export default async (request, context) => {
     // Use the game banner when it is an image; fall back to the platform logo
     const imageUrl = game.bannerType === 'image' && game.bannerUrl
       ? game.bannerUrl
-      : 'https://www.aquads.xyz/logo712.png';
+      : 'https://www.aquads.xyz/metalogo.png';
 
     // Humans land on the game page; og:url points at this share URL so Facebook/Telegram
     // re-scrape the edge HTML instead of the SPA at /games/:id.
@@ -123,9 +123,9 @@ function getDefaultResponse() {
   <title>Aquads Game Hub</title>
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Aquads Game Hub - Play Web3 Games">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
   <meta property="og:title" content="Aquads Game Hub - Play Web3 Games">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
   <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/games">
 </head>
 <body>

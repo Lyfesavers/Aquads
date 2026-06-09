@@ -225,7 +225,7 @@ const WalletAnalyzer = ({ currentUser, showNotification }) => {
       <header className="wa-header">
         <div className="wa-header-left">
           <img 
-            src="/Aquadsnewlogo.png" 
+            src="/alogo.png" 
             alt="AQUADS" 
             className="wa-logo"
             onClick={() => navigate('/home')}

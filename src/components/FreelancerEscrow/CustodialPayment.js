@@ -140,7 +140,7 @@ const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain,
         <button onClick={() => navigate('/dashboard/bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
         <p className="text-slate-500 text-xs mt-3">Redirecting in {countdown}s...</p>
         <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
-          <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
+          <img src="/alogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by Aquads Escrow</span>
         </div>
       </div>
@@ -416,7 +416,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
       <div className="text-center">
-        <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
+        <img src="/alogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
         <div className="w-8 h-8 mx-auto mb-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
         <p className="text-slate-400 text-sm">Loading escrow payment...</p>
       </div>
@@ -452,7 +452,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         {txHash && <a href={`${chainConfig?.explorerUrl}${txHash}${selectedChain === 'solana' && ESCROW_MODE === 'testnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm mb-6">View on Explorer <span>↗</span></a>}
         <button onClick={() => navigate('/dashboard/bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
-          <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
+          <img src="/alogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by Aquads Escrow</span>
         </div>
       </div>
@@ -464,7 +464,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
       <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="https://aquads.xyz" className="flex items-center gap-2">
-            <img src="/Aquadsnewlogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
+            <img src="/alogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
             <span className="text-slate-400 text-sm font-medium">Escrow Pay</span>
           </a>
           <div className="flex items-center gap-3">
@@ -625,7 +625,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img src="/Aquadsnewlogo.png" alt="Aquads logo" className="h-5 w-auto opacity-50" />
+              <img src="/alogo.png" alt="Aquads logo" className="h-5 w-auto opacity-50" />
               <div className="flex items-center gap-3 text-xs text-slate-600">
                 <a href="https://aquads.xyz" className="hover:text-cyan-400 transition-colors">Aquads.xyz</a>
                 <span>•</span>

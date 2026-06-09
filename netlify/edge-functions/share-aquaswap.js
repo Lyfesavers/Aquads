@@ -575,14 +575,14 @@ function getDefaultResponse(isSocialPreviewCrawler = false) {
   <meta name="twitter:site" content="@AquadsXYZ">
   <meta name="twitter:title" content="AquaSwap - Aquads DEX 🌊">
   <meta name="twitter:description" content="Trade tokens on Aquads DEX with live charts, real-time prices, and instant swaps">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
   
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aquads DEX">
   <meta property="og:url" content="https://www.aquads.xyz/aquaswap">
   <meta property="og:title" content="AquaSwap - Aquads DEX 🌊">
   <meta property="og:description" content="Trade tokens on Aquads DEX with live charts, real-time prices, and instant swaps">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
   
   ${redirectMeta}
 </head>

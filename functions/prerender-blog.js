@@ -109,14 +109,14 @@ function getBlogHtml(blog, description, seoUrl) {
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+    <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'}">
     <meta name="twitter:title" content="${blog.title} - Aquads Blog">
     <meta name="twitter:description" content="${description}">
     
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="${blog.title} - Aquads Blog">
     <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+    <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="Aquads Blog">
@@ -154,14 +154,14 @@ function getDefaultHtml() {
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+    <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
     <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects">
     <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
     
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="Aquads — The launch stack for new crypto projects">
     <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
-    <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+    <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
     <meta property="og:url" content="https://aquads.xyz">
     <meta property="og:type" content="website">
     

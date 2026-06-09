@@ -63,7 +63,7 @@ const DashboardPage = ({
           <div className="flex items-center gap-3">
             <Link to="/home" className="flex items-center hover:opacity-80 transition-opacity">
               <img 
-                src="/Aquadsnewlogo.png" 
+                src="/alogo.png" 
                 alt="AQUADS" 
                 className="h-7 filter drop-shadow-lg"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }}

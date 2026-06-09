@@ -364,14 +364,14 @@ const TokenList = ({ currentUser, showNotification }) => {
           property="og:description"
           content="Your project storefront after launch—free bubble listing, community growth, hire help, and AquaPay on one platform."
         />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="List your token free | Aquads launch stack" />
         <meta
           name="twitter:description"
           content="Your project storefront after launch—free bubble listing, community growth, hire help, and AquaPay on one platform."
         />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
       </Helmet>
 
       <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">

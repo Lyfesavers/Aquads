@@ -3,7 +3,7 @@
 // Twitter / Facebook (they often fail or time out on *.railway.app links).
 
 const RAILWAY_OG = 'https://aquads-production.up.railway.app/og/job';
-const FALLBACK_IMAGE = 'https://www.aquads.xyz/logo712.png';
+const FALLBACK_IMAGE = 'https://www.aquads.xyz/metalogo.png';
 
 export default async (request) => {
   const url = new URL(request.url);

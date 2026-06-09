@@ -809,7 +809,7 @@ const LinkInBio = () => {
               Aquads.xyz
             </span>
             <img
-              src="/Aquadsnewlogo.png"
+              src="/alogo.png"
               alt="Aquads"
               className="h-5 opacity-70"
               style={{ filter: `drop-shadow(0 0 8px ${theme.avatarGlow})` }}

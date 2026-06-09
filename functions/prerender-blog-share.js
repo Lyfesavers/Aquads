@@ -134,7 +134,7 @@ function escapeHtml(text) {
 function getBlogHtml(blog, description, seoUrl, redirectUrl) {
   const escapedTitle = escapeHtml(blog.title);
   const escapedDescription = escapeHtml(description);
-  const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/logo712.png';
+  const imageUrl = blog.bannerImage || 'https://www.aquads.xyz/metalogo.png';
   const escapedImageUrl = escapeHtml(imageUrl);
   const escapedSeoUrl = escapeHtml(seoUrl);
   const escapedRedirectUrl = escapeHtml(redirectUrl);
@@ -209,7 +209,7 @@ function getDefaultHtml() {
   <meta name="twitter:site" content="@_Aquads">
   <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects">
   <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
-  <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
   
   <!-- Open Graph meta tags -->
   <meta property="og:type" content="website">
@@ -217,7 +217,7 @@ function getDefaultHtml() {
   <meta property="og:url" content="https://www.aquads.xyz">
   <meta property="og:title" content="Aquads — The launch stack for new crypto projects">
   <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
-  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <meta property="og:image" content="https://www.aquads.xyz/metalogo.png">
   
   <title>Aquads — The launch stack for new crypto projects</title>
   <script>window.location.href='/learn';</script>

@@ -1872,14 +1872,14 @@ const AquaSwap = ({
 
         <meta property="og:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
         <meta property="og:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
-        <meta property="og:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta property="og:url" content="https://www.aquads.xyz/aquaswap" />
         <meta property="og:type" content="website" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
         <meta name="twitter:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/logo712.png" />
+        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
       </Helmet>
       {/* Header Section */}
       <div className="header-section">
@@ -1888,7 +1888,7 @@ const AquaSwap = ({
           {/* Left Section */}
           <div className="header-left">
             <img 
-              src="/Aquadsnewlogo.png" 
+              src="/alogo.png" 
               alt="Aquads" 
               className="aquads-logo-clickable"
               width="72" 
@@ -1957,7 +1957,7 @@ const AquaSwap = ({
 
         {/* Mobile Layout (unchanged for mobile compatibility) */}
         <img 
-          src="/Aquadsnewlogo.png" 
+          src="/alogo.png" 
           alt="Aquads" 
           className="aquads-logo-clickable"
           width="60" 

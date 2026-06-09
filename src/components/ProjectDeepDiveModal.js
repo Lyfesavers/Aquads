@@ -440,7 +440,7 @@ const ProjectDeepDiveModal = ({ ad, onSave, onClose }) => {
           >
             <div className="w-full max-w-md rounded-2xl border border-cyan-500/35 bg-gradient-to-b from-slate-900/98 to-gray-950 shadow-2xl shadow-cyan-500/10 px-6 py-8 sm:px-8 text-center">
               <img
-                src="/Aquadsnewlogo.png"
+                src="/alogo.png"
                 alt=""
                 className="h-14 w-auto mx-auto mb-5 object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]"
                 width="120"

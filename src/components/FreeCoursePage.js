@@ -173,7 +173,7 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
           <div className="flex items-center">
             <Link to="/home" className="flex items-center">
               <img
-                src="/Aquadsnewlogo.png"
+                src="/alogo.png"
                 alt="AQUADS"
                 className="w-auto filter drop-shadow-lg"
                 style={{ height: '1.75rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }}

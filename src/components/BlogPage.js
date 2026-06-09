@@ -377,7 +377,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         {/* Open Graph meta tags */}
         <meta property="og:title" content={`${blog.title} - Aquads Blog`} />
         <meta property="og:description" content={plainTextContent} />
-        <meta property="og:image" content={blog.bannerImage || 'https://www.aquads.xyz/logo712.png'} />
+        <meta property="og:image" content={blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="article" />
         <meta property="article:published_time" content={blog.createdAt} />
@@ -388,7 +388,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${blog.title} - Aquads Blog`} />
         <meta name="twitter:description" content={plainTextContent} />
-        <meta name="twitter:image" content={blog.bannerImage || 'https://www.aquads.xyz/logo712.png'} />
+        <meta name="twitter:image" content={blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'} />
         {/* BlogPosting JSON-LD is injected server-side by learn-blog edge only */}
       </Helmet>
 
@@ -399,7 +399,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <div className="flex items-center">
               <Link to="/home" className="flex items-center">
                 <img 
-                  src="/Aquadsnewlogo.png" 
+                  src="/alogo.png" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
                   style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
