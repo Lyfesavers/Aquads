@@ -1,5 +1,19 @@
 // Login Screen Logic
 
+(function setVersionLabel() {
+  const el = document.querySelector('.login-version');
+  if (!el) return;
+  try {
+    if (chrome?.runtime?.getManifest) {
+      el.textContent = 'v' + chrome.runtime.getManifest().version;
+      return;
+    }
+  } catch (_) {}
+  if (typeof EXTENSION_VERSION !== 'undefined') {
+    el.textContent = 'v' + EXTENSION_VERSION;
+  }
+})();
+
 const form = document.getElementById('login-form');
 const identifierInput = document.getElementById('identifier');
 const passwordInput = document.getElementById('password');

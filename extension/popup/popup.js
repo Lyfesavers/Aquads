@@ -165,6 +165,17 @@ let loadTimeout = null;
  */
 function init() {
   dbg('Initializing AquaSwap extension...');
+
+  const versionEl = document.querySelector('.version');
+  if (versionEl) {
+    try {
+      if (chrome?.runtime?.getManifest) {
+        versionEl.textContent = 'v' + chrome.runtime.getManifest().version;
+      } else if (typeof EXTENSION_VERSION !== 'undefined') {
+        versionEl.textContent = 'v' + EXTENSION_VERSION;
+      }
+    } catch (_) {}
+  }
   
   // Set up iframe load timeout
   loadTimeout = setTimeout(() => {

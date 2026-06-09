@@ -6,7 +6,7 @@ The official browser extension for AquaSwap - enabling instant cross-chain token
 
 This lightweight browser extension provides quick access to AquaSwap's powerful cross-chain swap functionality. Users can swap tokens across 50+ blockchains without leaving their current webpage.
 
-**Version:** 1.4.7  
+**Version:** 1.4.8  
 **Compatible with:** Chrome, Edge, Brave, and other Chromium-based browsers
 
 ---
@@ -205,7 +205,7 @@ When you need to release an update:
 
 1. **Update version in manifest.json**:
    ```json
-   "version": "1.4.7"  // Current version
+   "version": "1.4.8"  // Current version
    ```
 
 2. **Test changes locally** using "Load unpacked"
@@ -327,7 +327,10 @@ chrome.action.openPopup();              // Open popup programmatically
 
 ## 📝 Changelog
 
-### Version 1.4.7 (Current Release)
+### Version 1.4.8 (Current Release)
+- 🎨 Updated extension icons to match new Aquads branding
+
+### Version 1.4.7
 - ✨ Enforce $5 USD minimum swap notional for affiliate points (matches aquads.xyz AquaSwap)
 - ✅ Extension sends route ID + USD amount to server for duplicate prevention
 
