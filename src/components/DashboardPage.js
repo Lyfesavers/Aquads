@@ -65,8 +65,7 @@ const DashboardPage = ({
               <img 
                 src="/alogo.png" 
                 alt="AQUADS" 
-                className="h-7 filter drop-shadow-lg"
-                style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }}
+                className="aquads-nav-logo"
               />
             </Link>
             <div className="hidden sm:flex items-center text-sm">

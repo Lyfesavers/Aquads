@@ -1110,8 +1110,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 <img 
                   src="/alogo.png" 
                   alt="AQUADS" 
-                  className="w-auto filter drop-shadow-lg"
-                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                  className="aquads-nav-logo"
                 />
               </Link>
             </div>

@@ -63,27 +63,36 @@
   }
 }
 
-/* Logo hover effects for desktop */
-@media (min-width: 769px) {
-  .flex img[alt="AQUADS"]:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease-in-out;
-  }
-  
-  /* Ensure navigation bar accommodates larger logo */
-  nav .h-16 {
-    min-height: 4rem !important; /* Standard height for h-14 logo */
+/* Primary nav logo — readable on mobile & desktop inside h-16 bars */
+.aquads-nav-logo {
+  height: 3rem;
+  width: auto;
+  max-width: min(13rem, 58vw);
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.55));
+  transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+}
+
+@media (min-width: 768px) {
+  .aquads-nav-logo {
+    height: 3.5rem;
+    max-width: 15rem;
   }
 }
 
-/* Additional logo enhancements */
-.flex img[alt="AQUADS"] {
-  /* Ensure sharp rendering */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  
-  /* Better contrast and enhanced glow */
-  filter: contrast(1.2) brightness(1.1) drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)) !important;
+.aquads-nav-logo:hover {
+  transform: scale(1.03);
+  filter: drop-shadow(0 0 14px rgba(59, 130, 246, 0.75));
+}
+
+/* Logo hover effects for desktop */
+@media (min-width: 769px) {
+  /* Ensure navigation bar accommodates larger logo */
+  nav .h-16 {
+    min-height: 4rem !important;
+  }
 }
 
 /* Ensure all navigation containers accommodate larger logos */

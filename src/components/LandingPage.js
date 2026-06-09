@@ -4725,8 +4725,7 @@ const LandingPage = () => {
             <img 
               src="/alogo.png" 
               alt="AQUADS" 
-              className="h-8 md:h-10 w-auto filter drop-shadow-lg"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(34, 211, 238, 0.5))' }}
+              className="aquads-nav-logo"
             />
           </motion.div>
 

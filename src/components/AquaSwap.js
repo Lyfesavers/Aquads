@@ -1890,9 +1890,7 @@ const AquaSwap = ({
             <img 
               src="/alogo.png" 
               alt="Aquads" 
-              className="aquads-logo-clickable"
-              width="72" 
-              height="72"
+              className="aquads-logo-clickable aquads-nav-logo"
               onClick={() => navigate('/home')}
               title="Back to Main Page"
             />
@@ -1959,9 +1957,7 @@ const AquaSwap = ({
         <img 
           src="/alogo.png" 
           alt="Aquads" 
-          className="aquads-logo-clickable"
-          width="60" 
-          height="60"
+          className="aquads-logo-clickable aquads-nav-logo"
           onClick={() => navigate('/home')}
           title="Back to Main Page"
         />

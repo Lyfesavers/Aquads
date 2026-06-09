@@ -5297,7 +5297,7 @@ const Documentation = () => {
 
           {/* Logo */}
           <Link to="/home" className="flex items-center gap-2">
-            <img src="/alogo.png" alt="Aquads" className="h-8" />
+            <img src="/alogo.png" alt="Aquads" className="aquads-nav-logo" />
             <span className="text-gray-400 text-sm hidden sm:inline">/ Docs</span>
           </Link>
 
