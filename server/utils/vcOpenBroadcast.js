@@ -32,17 +32,13 @@ Powered by <a href="${AQUADS_WEBSITE_URL}">Aquads</a>`;
 const VC_OPEN_BROADCAST_VIDEO_FILENAME = 'VC open.mp4';
 
 /**
- * Video for VC-open blasts: VC_OPEN_BROADCAST_VIDEO_PATH env, then public/VC open.mp4, then timeraid.mp4.
+ * Video for VC-open blasts: VC_OPEN_BROADCAST_VIDEO_PATH env, then public/VC open.mp4.
  */
 function getVcOpenBroadcastVideoPath() {
   const envPath = process.env.VC_OPEN_BROADCAST_VIDEO_PATH;
   if (envPath && fs.existsSync(envPath)) return envPath;
   const publicDir = path.join(__dirname, '../../public');
-  const dedicated = path.join(publicDir, VC_OPEN_BROADCAST_VIDEO_FILENAME);
-  if (fs.existsSync(dedicated)) return dedicated;
-  const raidFallback = path.join(publicDir, 'timeraid.mp4');
-  if (fs.existsSync(raidFallback)) return raidFallback;
-  return dedicated;
+  return path.join(publicDir, VC_OPEN_BROADCAST_VIDEO_FILENAME);
 }
 
 function vcOpenBroadcastVideoExists() {

@@ -61,17 +61,13 @@ Powered by [Aquads](${AQUADS_WEBSITE_URL})`;
 const SPACES_BROADCAST_VIDEO_FILENAME = 'x spaces.mp4';
 
 /**
- * Video for Space blasts: SPACES_BROADCAST_VIDEO_PATH env, then public/x spaces.mp4, then timeraid.mp4.
+ * Video for Space blasts: SPACES_BROADCAST_VIDEO_PATH env, then public/x spaces.mp4.
  */
 function getSpacesBroadcastVideoPath() {
   const envPath = process.env.SPACES_BROADCAST_VIDEO_PATH;
   if (envPath && fs.existsSync(envPath)) return envPath;
   const publicDir = path.join(__dirname, '../../public');
-  const dedicated = path.join(publicDir, SPACES_BROADCAST_VIDEO_FILENAME);
-  if (fs.existsSync(dedicated)) return dedicated;
-  const raidFallback = path.join(publicDir, 'timeraid.mp4');
-  if (fs.existsSync(raidFallback)) return raidFallback;
-  return dedicated;
+  return path.join(publicDir, SPACES_BROADCAST_VIDEO_FILENAME);
 }
 
 function spacesBroadcastVideoExists() {

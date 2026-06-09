@@ -1999,7 +1999,7 @@ async function startBot() {
 // Videos/branding: same as Telegram — raid/completion/trend use video files; vote uses custom branding image if set, else default vote video.
 
 const PUBLIC_DIR = path.join(__dirname, '../../public');
-const VIDEO_RAID = path.join(PUBLIC_DIR, 'timeraid.mp4');
+const VIDEO_RAID = path.join(PUBLIC_DIR, 'raidtime.mp4');
 const VIDEO_RAID_COMPLETION = path.join(PUBLIC_DIR, 'Just Raided.mp4');
 const VIDEO_VOTE = path.join(PUBLIC_DIR, 'New_vote.mp4');
 const VIDEO_TOP_BUBBLES = path.join(PUBLIC_DIR, 'newtrendinglist.mp4');

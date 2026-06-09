@@ -690,7 +690,7 @@ const telegramService = {
       }
 
       // Get the video file path (fallback when no creator branding)
-      const videoPath = path.join(__dirname, '../../public/timeraid.mp4');
+      const videoPath = path.join(__dirname, '../../public/raidtime.mp4');
       const videoExists = fs.existsSync(videoPath);
       
       // Add "Complete Raid", "Hire an Expert", and "X Space Trender" (HyperSpace) buttons
