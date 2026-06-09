@@ -1948,9 +1948,9 @@
   
   .aquads-logo-clickable {
     margin-bottom: 2px;
-    height: 3rem;
+    height: 3.5rem;
     width: auto;
-    max-width: min(11rem, 52vw);
+    max-width: min(14rem, 60vw);
     object-fit: contain;
   }
   

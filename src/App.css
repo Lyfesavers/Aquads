@@ -65,9 +65,9 @@
 
 /* Primary nav logo — readable on mobile & desktop inside h-16 bars */
 .aquads-nav-logo {
-  height: 3rem;
+  height: 3.5rem; /* 56px — fits h-16 (64px) nav on mobile */
   width: auto;
-  max-width: min(13rem, 58vw);
+  max-width: min(14rem, 60vw);
   object-fit: contain;
   object-position: left center;
   flex-shrink: 0;
@@ -77,8 +77,8 @@
 
 @media (min-width: 768px) {
   .aquads-nav-logo {
-    height: 3.5rem;
-    max-width: 15rem;
+    height: 3.875rem; /* 62px — nearly full h-16 bar, header height unchanged */
+    max-width: 16rem;
   }
 }
 
