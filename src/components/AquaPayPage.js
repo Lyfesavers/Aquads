@@ -1160,9 +1160,9 @@ const AquaPayPage = ({ currentUser }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
       <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between min-h-16">
           <a href="https://aquads.xyz" className="flex items-center gap-2">
-            <img src="/alogo.png" alt="AQUADS" className="h-7 w-auto" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }} />
+            <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
             <span className="text-slate-400 text-sm font-medium">Pay</span>
           </a>
           <div className="flex items-center gap-3">
