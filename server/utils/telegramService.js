@@ -4742,7 +4742,7 @@ Tap to update:`;
           })()
         : null;
 
-    const videoPath = path.join(__dirname, '../../public/vote now .mp4');
+    const videoPath = path.join(__dirname, '../../public/newvotenow.mp4');
     const videoExists = fs.existsSync(videoPath);
 
     try {
