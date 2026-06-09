@@ -2858,7 +2858,7 @@ ${platformEmoji} ${platformName} Raid
       }
 
       // Get the video file path (fallback when no creator branding)
-      const videoPath = path.join(__dirname, '../../public/Just Raided.mp4');
+      const videoPath = path.join(__dirname, '../../public/newraider.mp4');
       const videoExists = fs.existsSync(videoPath);
       const useCreatorBrandingCompletion = !!(completionData.creatorBrandingBuffer || completionData.creatorBrandingVideoUrl);
 
