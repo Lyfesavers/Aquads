@@ -76,17 +76,14 @@ const VIDEO_SECONDS_OPTIONS = [15, 30];
 const VIDEO_POLL_MS = 12_000;
 
 // Listing a project (submit_starter_listing) only works in Agent mode, where
-// Skipper has tools. These detect a contract/pair address + a logo image URL
-// so we can auto-switch instant/thinking chats to Agent before sending.
+// Skipper has tools. Detect CA/PA (with or without logo URL) so we can
+// auto-switch instant/thinking chats to Agent before sending.
 const LISTING_ADDRESS_RE =
   /(?:0x[0-9a-fA-F]+::[a-zA-Z0-9_]+::[A-Z0-9_]+|0x[0-9a-fA-F]{40,64}|[1-9A-HJ-NP-Za-km-z]{32,44})/;
-const LISTING_LOGO_URL_RE = /https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:[?#]\S*)?/i;
 
 function looksLikeListingRequest(text) {
   if (!text) return false;
-  const hasLogo = LISTING_LOGO_URL_RE.test(text);
-  if (!hasLogo) return false;
-  // Look for the CA/PA outside of any URL so a long hash in the logo filename
+  // Look for the CA/PA outside of any URL so a long hash in a logo filename
   // doesn't count as the contract/pair address on its own.
   const withoutUrls = text.replace(/https?:\/\/\S+/gi, ' ');
   return LISTING_ADDRESS_RE.test(withoutUrls);
