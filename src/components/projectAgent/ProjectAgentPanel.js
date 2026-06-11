@@ -326,7 +326,7 @@ export default function ProjectAgentPanel({
 
   /** Bumped on every account change so in-flight fetches cannot apply stale data. */
   const loadGenerationRef = useRef(0);
-  const skipAdIdReloadRef = useRef(null);
+  const skipAdIdReloadRef = useRef(restoredSession?.adId || null);
   const prevAuthEpochRef = useRef(null);
   const authEpochRef = useRef(authEpoch);
   authEpochRef.current = authEpoch;
@@ -370,7 +370,8 @@ export default function ProjectAgentPanel({
   useLayoutEffect(() => {
     const prev = prevAuthEpochRef.current;
     prevAuthEpochRef.current = authEpoch;
-    if (prev === authEpoch) return;
+    // First mount: prev is null — do not wipe restored expand / warm-cache initial state.
+    if (prev == null || prev === authEpoch) return;
     skipperDebugLog('account epoch changed — clearing panel', {
       from: prev || '(none)',
       to: authEpoch,
@@ -478,6 +479,13 @@ export default function ProjectAgentPanel({
       }
       setHydratedEpoch(authEpoch);
       setLoading(false);
+      skipperDebugLog('panel applied expand handoff', {
+        username: currentUser?.username,
+        adId: restoredSession.adId,
+        threadId: restoredSession.threadId,
+        messageCount: restoredSession.messages?.length ?? 0,
+        balanceUsd: restoredSession.wallet?.balanceUsd
+      });
       return undefined;
     }
 
