@@ -8,7 +8,7 @@ import {
   SKIPPER_AGENT_NAME,
   SKIPPER_AGENT_SHORT
 } from './projectAgentBrand';
-import { getSkipperAuthEpoch, skipperDebugLog } from './projectAgentSession';
+import { getSkipperAuthEpoch, setWarmSkipperPayload, skipperDebugLog } from './projectAgentSession';
 import './ProjectAgent.css';
 
 function SkipperFabIcon() {
@@ -143,6 +143,18 @@ export default function ProjectAgentFab({ currentUser, openProjectOnboarding = f
               }}
               onExpand={(session) => {
                 setOpen(false);
+                const sessionKey = getSkipperAuthEpoch(currentUser);
+                if (sessionKey && session?.adId) {
+                  setWarmSkipperPayload(sessionKey, {
+                    eligible: session.eligible || [],
+                    adId: session.adId,
+                    wallet: session.wallet || null,
+                    threads: session.threads || [],
+                    threadId: session.threadId || null,
+                    messages: session.messages || [],
+                    mode: session.mode || 'agent'
+                  });
+                }
                 const ad = session?.adId ? encodeURIComponent(session.adId) : '';
                 const thread = session?.threadId
                   ? encodeURIComponent(String(session.threadId))
@@ -154,7 +166,7 @@ export default function ProjectAgentFab({ currentUser, openProjectOnboarding = f
                   state: {
                     projectAgentSession: {
                       ...session,
-                      ownerSessionKey: getSkipperAuthEpoch(currentUser)
+                      ownerSessionKey: sessionKey
                     }
                   }
                 });

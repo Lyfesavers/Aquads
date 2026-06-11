@@ -458,6 +458,8 @@ export default function ProjectAgentPanel({
       setMessages(warmedMessages);
       const warmedThreadMode = resolveThreadSkipperMode(warmedMessages);
       setMode(warmedThreadMode || warmed.mode || DEFAULT_SKIPPER_CHAT_MODE);
+      if (warmed.adId) skipAdIdReloadRef.current = warmed.adId;
+      if (warmed.threadId) skipMessagesFetchRef.current = String(warmed.threadId);
       setHydratedEpoch(authEpoch);
       setLoading(false);
       skipperDebugLog('panel applied warm cache (instant)', {
@@ -470,6 +472,10 @@ export default function ProjectAgentPanel({
     }
 
     if (restoredSession) {
+      if (restoredSession.adId) skipAdIdReloadRef.current = restoredSession.adId;
+      if (restoredSession.threadId) {
+        skipMessagesFetchRef.current = String(restoredSession.threadId);
+      }
       setHydratedEpoch(authEpoch);
       setLoading(false);
       return undefined;
