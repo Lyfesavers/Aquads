@@ -95,7 +95,7 @@ export async function warmSkipperSessionForUser(user) {
       threads,
       threadId,
       messages,
-      mode: 'instant'
+      mode: 'agent'
     });
 
     skipperDebugLog('warm cache ready', {

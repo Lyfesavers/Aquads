@@ -41,6 +41,9 @@ import {
 } from './projectAgentVideoEstimates';
 import './ProjectAgent.css';
 
+/** Default chat mode for new Skipper sessions and empty threads. */
+const DEFAULT_SKIPPER_CHAT_MODE = 'agent';
+
 const MODES = [
   { id: 'instant', label: 'Instant', hint: 'Quick responses' },
   { id: 'thinking', label: 'Thinking', hint: 'Deeper reasoning' },
@@ -285,7 +288,7 @@ export default function ProjectAgentPanel({
   const [mode, setMode] = useState(() =>
     projectListingOnboarding || restoredSession?.projectListingOnboarding
       ? 'agent'
-      : restoredSession?.mode || 'instant'
+      : restoredSession?.mode || DEFAULT_SKIPPER_CHAT_MODE
   );
   const [videoSeconds, setVideoSeconds] = useState(15);
   const [input, setInput] = useState('');
@@ -343,7 +346,7 @@ export default function ProjectAgentPanel({
     setThreads([]);
     setThreadId(null);
     setMessages([]);
-    setMode('instant');
+    setMode(DEFAULT_SKIPPER_CHAT_MODE);
     setInput('');
     setSending(false);
     setError('');
@@ -449,10 +452,12 @@ export default function ProjectAgentPanel({
       setWallet(warmed.wallet || null);
       setThreads(filterSkipperThreads(warmed.threads || []));
       setThreadId(warmed.threadId || null);
-      setMessages(
-        warmed.messages?.length ? normalizeAgentMessages(warmed.messages) : []
-      );
-      if (warmed.mode) setMode(warmed.mode);
+      const warmedMessages = warmed.messages?.length
+        ? normalizeAgentMessages(warmed.messages)
+        : [];
+      setMessages(warmedMessages);
+      const warmedThreadMode = resolveThreadSkipperMode(warmedMessages);
+      setMode(warmedThreadMode || warmed.mode || DEFAULT_SKIPPER_CHAT_MODE);
       setHydratedEpoch(authEpoch);
       setLoading(false);
       skipperDebugLog('panel applied warm cache (instant)', {
@@ -620,7 +625,7 @@ export default function ProjectAgentPanel({
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
-          if (threadMode) setMode(threadMode);
+          setMode(threadMode || DEFAULT_SKIPPER_CHAT_MODE);
           trace.mark('messages applied', { count: normalized.length });
         }
 
@@ -899,7 +904,7 @@ export default function ProjectAgentPanel({
           const normalized = normalizeAgentMessages(msgs);
           setMessages(normalized);
           const threadMode = resolveThreadSkipperMode(normalized);
-          if (threadMode) setMode(threadMode);
+          setMode(threadMode || DEFAULT_SKIPPER_CHAT_MODE);
         }
       } catch (e) {
         if (!cancelled && loadStillValid(epochAtStart)) setError(e.message);
@@ -972,11 +977,11 @@ export default function ProjectAgentPanel({
   };
 
   const startNewChat = useCallback(
-    async (nextMode) => {
+    async (nextMode = DEFAULT_SKIPPER_CHAT_MODE) => {
       if (!token || !adId) return null;
       videoPollAbortRef.current = null;
       videoPollRunningRef.current = null;
-      if (nextMode) setMode(nextMode);
+      setMode(nextMode);
       setMessages([]);
       setStreamingContent('');
       setStreamingReasoning('');
