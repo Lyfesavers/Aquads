@@ -354,6 +354,45 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
+}
+
+.project-agent-empty-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.project-agent-empty-watermark img {
+  width: min(128px, 36vw);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.14;
+  filter: saturate(0.9);
+}
+
+.project-agent-empty-watermark-text {
+  max-width: 220px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--pa-muted);
+  opacity: 0.5;
+}
+
+.project-agent-listing-onboarding,
+.project-agent-msg,
+.project-agent-search-status {
+  position: relative;
+  z-index: 1;
 }
 
 .project-agent-msg {

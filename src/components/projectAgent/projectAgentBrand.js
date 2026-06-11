@@ -3,3 +3,4 @@ export const SKIPPER_AGENT_NAME = 'Skipper Agent';
 export const SKIPPER_AGENT_SHORT = 'Skipper';
 export const SKIPPER_AGENT_TAGLINE = 'Your Aquads AI co-pilot';
 export const SKIPPER_AGENT_FAB_TITLE = `${SKIPPER_AGENT_NAME} · verified accounts`;
+export const SKIPPER_AGENT_LOGO_SRC = '/Skipper logo.svg';

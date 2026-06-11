@@ -19,7 +19,7 @@ import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentM
 import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
-import { SKIPPER_AGENT_NAME } from './projectAgentBrand';
+import { SKIPPER_AGENT_LOGO_SRC, SKIPPER_AGENT_NAME, SKIPPER_AGENT_TAGLINE } from './projectAgentBrand';
 import {
   filterSkipperThreads,
   getSkipperAuthEpoch,
@@ -1473,6 +1473,8 @@ export default function ProjectAgentPanel({
     projectListingOnboarding &&
     (adMeta?.scope === 'account' || wallet?.scope === 'account') &&
     messages.length === 0;
+  const showEmptyWatermark =
+    messages.length === 0 && !sending && !showListingOnboardingGreeting;
 
   return (
     <div className={rootClass}>
@@ -1692,6 +1694,12 @@ export default function ProjectAgentPanel({
 
         <div className="project-agent-main">
           <div className="project-agent-messages">
+            {showEmptyWatermark && (
+              <div className="project-agent-empty-watermark" aria-hidden="true">
+                <img src={SKIPPER_AGENT_LOGO_SRC} alt="" />
+                <span className="project-agent-empty-watermark-text">{SKIPPER_AGENT_TAGLINE}</span>
+              </div>
+            )}
             {showListingOnboardingGreeting && (
               <div className="project-agent-listing-onboarding" role="status">
                 <p className="project-agent-listing-onboarding-title">Welcome to Skipper</p>

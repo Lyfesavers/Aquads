@@ -4,6 +4,7 @@ import { fetchProjectAgentEligible } from '../../services/projectAgentApi';
 import ProjectAgentPanel from './ProjectAgentPanel';
 import {
   SKIPPER_AGENT_FAB_TITLE,
+  SKIPPER_AGENT_LOGO_SRC,
   SKIPPER_AGENT_NAME,
   SKIPPER_AGENT_SHORT
 } from './projectAgentBrand';
@@ -13,7 +14,7 @@ import './ProjectAgent.css';
 function SkipperFabIcon() {
   return (
     <img
-      src="/Skipper logo.svg"
+      src={SKIPPER_AGENT_LOGO_SRC}
       alt=""
       className="project-agent-fab-icon"
       aria-hidden
