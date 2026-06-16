@@ -11,7 +11,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
-const { emitRaidUpdate } = require('../socket');
+const { emitRaidUpdate, emitFacebookRaidApproved, emitFacebookRaidRejected, emitNewFacebookRaidCompletion } = require('../socket');
 const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
 
 // Use the imported module function
@@ -429,6 +429,23 @@ router.post('/:raidId/complete', auth, requireEmailVerification, facebookRaidRat
       console.error('Error sending raid completion notification:', err);
     });
 
+    emitNewFacebookRaidCompletion({
+      completionId: raid.completions[raid.completions.length - 1]._id,
+      raidId: raid._id,
+      raidTitle: raid.title,
+      raidDescription: raid.description,
+      raidPoints: raid.points,
+      raidPostUrl: raid.postUrl,
+      userId: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
+      facebookUsername: completion.facebookUsername,
+      postUrl: completion.postUrl,
+      postId: completion.postId,
+      completedAt: completion.completedAt,
+      ipAddress: completion.ipAddress
+    });
+
     res.json({
       message: 'Facebook raid completed successfully! Your submission is pending admin approval.',
       completion
@@ -486,12 +503,25 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
           relatedModel: 'FacebookRaid'
         });
         await notification.save();
-        // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-        await pointsModule.creditReferrerBonus(completion.userId, `Facebook raid approved: ${raid.title}`);
+        const referredUserId = completion.userId;
+        const raidTitleForBonus = raid.title;
+        setImmediate(() => {
+          pointsModule.creditReferrerBonus(referredUserId, `Facebook raid approved: ${raidTitleForBonus}`)
+            .catch(err => console.error('Facebook raid approve: referrer bonus failed', err));
+        });
       }
     }
 
     await raid.save();
+
+    emitFacebookRaidApproved({
+      completionId: completion._id,
+      raidId: raid._id,
+      raidTitle: raid.title,
+      userId: completion.userId,
+      approvedBy: req.user.id,
+      approvedAt: completion.approvedAt
+    });
 
     res.json({
       message: 'Facebook raid completion approved successfully!',
@@ -530,34 +560,49 @@ router.post('/:raidId/reject/:completionId', auth, requireEmailVerification, asy
     completion.approvalStatus = 'rejected';
     completion.rejectionReason = rejectionReason || 'No reason provided';
 
-    // Create notification for user
-    const notification = new Notification({
-      userId: completion.userId,
-      type: 'status',
-      message: `Your Facebook raid completion for "${raid.title}" was rejected. Reason: ${completion.rejectionReason}`,
-      relatedId: raid._id,
-      relatedModel: 'FacebookRaid'
-    });
-    await notification.save();
-
-    // Send Telegram DM if user has linked their account
-    const user = await User.findById(completion.userId).lean();
-    if (user?.telegramId) {
-      try {
-        await telegramService.sendBotMessage(
-          user.telegramId,
-          `❌ Your Facebook raid submission for "${raid.title}" was rejected.\n\nReason: ${completion.rejectionReason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
-        );
-      } catch (tgError) {
-        // Don't block the flow if Telegram fails
-      }
-    }
-
     await raid.save();
+
+    emitFacebookRaidRejected({
+      completionId: completion._id,
+      raidId: raid._id,
+      raidTitle: raid.title,
+      userId: completion.userId,
+      rejectedBy: req.user.id,
+      rejectedAt: new Date(),
+      rejectionReason: completion.rejectionReason
+    });
 
     res.json({
       message: 'Facebook raid completion rejected successfully!',
       completion
+    });
+
+    const rejectedUserId = completion.userId;
+    const rejectedRaidTitle = raid.title;
+    const reason = completion.rejectionReason;
+    setImmediate(() => {
+      (async () => {
+        try {
+          const notification = new Notification({
+            userId: rejectedUserId,
+            type: 'status',
+            message: `Your Facebook raid completion for "${rejectedRaidTitle}" was rejected. Reason: ${reason}`,
+            relatedId: raid._id,
+            relatedModel: 'FacebookRaid'
+          });
+          await notification.save();
+
+          const user = await User.findById(rejectedUserId).lean();
+          if (user?.telegramId) {
+            await telegramService.sendBotMessage(
+              user.telegramId,
+              `❌ Your Facebook raid submission for "${rejectedRaidTitle}" was rejected.\n\nReason: ${reason}\n\nVisit your dashboard for more details: https://aquads.xyz/dashboard`
+            );
+          }
+        } catch (bgError) {
+          console.error('Facebook raid reject background tasks failed:', bgError);
+        }
+      })();
     });
   } catch (error) {
     console.error('Facebook raid rejection error:', error);

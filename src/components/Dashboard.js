@@ -199,6 +199,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const [selectedFacebookRaid, setSelectedFacebookRaid] = useState(null);
   const [facebookRaidRejectionReason, setFacebookRaidRejectionReason] = useState('');
   const [showFacebookRaidRejectModal, setShowFacebookRaidRejectModal] = useState(false);
+  const [facebookRaidSelectedKeys, setFacebookRaidSelectedKeys] = useState([]);
+  const [facebookRaidBulkActionLoading, setFacebookRaidBulkActionLoading] = useState(false);
+  const [facebookRaidBulkRejectTargets, setFacebookRaidBulkRejectTargets] = useState(null);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [hasShownEasterEgg, setHasShownEasterEgg] = useState(false);
   const [pendingListings, setPendingListings] = useState([]);
@@ -316,6 +319,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       setTwitterRaidSelectedKeys([]);
       setTwitterRaidBulkRejectTargets(null);
       setPendingFacebookRaids([]);
+      setFacebookRaidSelectedKeys([]);
+      setFacebookRaidBulkRejectTargets(null);
       setPendingTokenPurchases([]);
       setPendingVoteBoosts([]);
       setPendingServices([]);
@@ -578,27 +583,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     }
   }, [currentUser]);
 
-  // DEFERRED ADMIN LOADING: Only load when admin tab is active (completions + bumps)
-  // Ads, tokens, vote boosts, services are loaded by the admin tab useEffect below
-  useEffect(() => {
-    if (!currentUser?.isAdmin || !socket || activeTab !== 'admin') return;
-    
-    const userId = currentUser.userId || currentUser.id;
-    const timers = [];
-    
-    // Pending completions (250ms after admin tab opens)
-    timers.push(setTimeout(() => {
-      if (socket) {
-        socket.emit('requestPendingCompletions', {
-          isAdmin: currentUser.isAdmin,
-          userId
-        });
-      }
-    }, 250));
-    
-    return () => timers.forEach(t => clearTimeout(t));
-  }, [currentUser, socket, activeTab]);
-
   // Add Socket.io listeners for affiliate data (ALL USERS)
   useEffect(() => {
     if (!socket || !currentUser) return;
@@ -781,6 +765,35 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       setPendingTwitterRaids(prev => [...prev, data]);
     };
 
+    const handleFacebookRaidApproved = (data) => {
+      setPendingFacebookRaids(prev =>
+        prev.filter(completion =>
+          completion.completionId.toString() !== data.completionId.toString()
+        )
+      );
+    };
+
+    const handleFacebookRaidRejected = (data) => {
+      setPendingFacebookRaids(prev =>
+        prev.filter(completion =>
+          completion.completionId.toString() !== data.completionId.toString()
+        )
+      );
+    };
+
+    const handleNewFacebookRaidCompletion = (data) => {
+      setPendingFacebookRaids(prev => [...prev, data]);
+    };
+
+    const handlePendingFacebookCompletionsLoaded = (data) => {
+      setPendingFacebookRaids(data.pendingCompletions);
+      setLoadingFacebookRaids(false);
+    };
+
+    const handlePendingFacebookCompletionsError = () => {
+      setLoadingFacebookRaids(false);
+    };
+
     const handlePendingCompletionsLoaded = (data) => {
       setPendingTwitterRaids(data.pendingCompletions);
       setLoadingTwitterRaids(false);
@@ -910,6 +923,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     socket.on('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
     socket.on('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
     socket.on('pendingCompletionsError', handlePendingCompletionsError);
+    socket.on('facebookRaidCompletionApproved', handleFacebookRaidApproved);
+    socket.on('facebookRaidCompletionRejected', handleFacebookRaidRejected);
+    socket.on('newFacebookRaidCompletion', handleNewFacebookRaidCompletion);
+    socket.on('pendingFacebookCompletionsLoaded', handlePendingFacebookCompletionsLoaded);
+    socket.on('pendingFacebookCompletionsError', handlePendingFacebookCompletionsError);
     // Service approval socket listeners
     socket.on('serviceApproved', handleServiceApproved);
     socket.on('serviceRejected', handleServiceRejected);
@@ -943,6 +961,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       socket.off('newTwitterRaidCompletion', handleNewTwitterRaidCompletion);
       socket.off('pendingCompletionsLoaded', handlePendingCompletionsLoaded);
       socket.off('pendingCompletionsError', handlePendingCompletionsError);
+      socket.off('facebookRaidCompletionApproved', handleFacebookRaidApproved);
+      socket.off('facebookRaidCompletionRejected', handleFacebookRaidRejected);
+      socket.off('newFacebookRaidCompletion', handleNewFacebookRaidCompletion);
+      socket.off('pendingFacebookCompletionsLoaded', handlePendingFacebookCompletionsLoaded);
+      socket.off('pendingFacebookCompletionsError', handlePendingFacebookCompletionsError);
       // Service approval socket cleanup
       socket.off('serviceApproved', handleServiceApproved);
       socket.off('serviceRejected', handleServiceRejected);
@@ -1024,10 +1047,31 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   }, [currentUser, activeTab, socket]);
 
   useEffect(() => {
-    if (currentUser?.isAdmin && activeTab === 'facebookRaids') {
-      fetchPendingFacebookRaids();
-    }
-  }, [currentUser, activeTab]);
+    const valid = new Set(
+      pendingFacebookRaids.map((c) => `${c.raidId}-${c.completionId}`)
+    );
+    setFacebookRaidSelectedKeys((prev) => prev.filter((k) => valid.has(k)));
+  }, [pendingFacebookRaids]);
+
+  useEffect(() => {
+    if (!currentUser?.isAdmin || !socket || activeTab !== 'twitterRaids') return;
+
+    setLoadingTwitterRaids(true);
+    socket.emit('requestPendingCompletions', {
+      isAdmin: currentUser.isAdmin,
+      userId: currentUser.userId || currentUser.id
+    });
+  }, [currentUser, activeTab, socket]);
+
+  useEffect(() => {
+    if (!currentUser?.isAdmin || !socket || activeTab !== 'facebookRaids') return;
+
+    setLoadingFacebookRaids(true);
+    socket.emit('requestPendingFacebookCompletions', {
+      isAdmin: currentUser.isAdmin,
+      userId: currentUser.userId || currentUser.id
+    });
+  }, [currentUser, activeTab, socket]);
 
 
 
@@ -2236,27 +2280,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   };
 
   // Add Facebook raid functions
-  const fetchPendingFacebookRaids = async () => {
-    setLoadingFacebookRaids(true);
-    try {
-      const response = await fetch(`${API_URL}/facebook-raids/completions/pending`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch pending Facebook raid completions');
-      }
-      
-      const data = await response.json();
-      setPendingFacebookRaids(data.pendingCompletions || []);
-    } catch (error) {
-      setPendingFacebookRaids([]);
-    } finally {
-      setLoadingFacebookRaids(false);
-    }
-  };
+  const getFacebookRaidCompletionKey = (completion) =>
+    `${completion.raidId}-${completion.completionId}`;
 
   // points parameter: 20 for regular accounts, 50 for verified (blue checkmark) accounts
   const handleApproveFacebookRaid = async (completion, points = 20) => {
@@ -2276,48 +2301,139 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       }
       
       const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingFacebookRaids();
       const verifiedText = points === 50 ? ' (verified account bonus!)' : '';
-      alert(result.message || `Facebook raid completion approved successfully! ${points} points awarded${verifiedText}`);
+      showNotification(
+        result.message || `Facebook raid approved! ${points} points awarded${verifiedText}`,
+        'success'
+      );
     } catch (error) {
-      alert('Error approving Facebook raid completion: ' + error.message);
+      showNotification('Error approving Facebook raid completion: ' + error.message, 'error');
     }
   };
 
   const handleRejectFacebookRaidClick = (completion) => {
+    setFacebookRaidBulkRejectTargets(null);
     setSelectedFacebookRaid(completion);
     setFacebookRaidRejectionReason('');
     setShowFacebookRaidRejectModal(true);
   };
 
-  const handleRejectFacebookRaid = async () => {
+  const handleBulkRejectFacebookRaidClick = () => {
+    const selected = pendingFacebookRaids.filter((c) =>
+      facebookRaidSelectedKeys.includes(getFacebookRaidCompletionKey(c))
+    );
+    if (selected.length === 0) {
+      showNotification('Select at least one completion', 'info');
+      return;
+    }
+    setSelectedFacebookRaid(null);
+    setFacebookRaidBulkRejectTargets(selected);
+    setFacebookRaidRejectionReason('');
+    setShowFacebookRaidRejectModal(true);
+  };
+
+  const handleBulkApproveFacebookRaids = async (points = 20) => {
+    const selected = pendingFacebookRaids.filter((c) =>
+      facebookRaidSelectedKeys.includes(getFacebookRaidCompletionKey(c))
+    );
+    if (selected.length === 0) {
+      showNotification('Select at least one completion', 'info');
+      return;
+    }
+    setFacebookRaidBulkActionLoading(true);
+    let ok = 0;
+    let fail = 0;
     try {
-      if (!selectedFacebookRaid) return;
-      
-      const response = await fetch(`${API_URL}/facebook-raids/${selectedFacebookRaid.raidId}/reject/${selectedFacebookRaid.completionId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({ rejectionReason: facebookRaidRejectionReason })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reject Facebook raid completion');
+      for (const completion of selected) {
+        try {
+          const response = await fetch(
+            `${API_URL}/facebook-raids/${completion.raidId}/approve/${completion.completionId}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${currentUser.token}`
+              },
+              body: JSON.stringify({ points })
+            }
+          );
+          if (response.ok) ok += 1;
+          else fail += 1;
+        } catch {
+          fail += 1;
+        }
       }
-      
-      const result = await response.json();
-      
-      // Refresh the list of pending completions
-      fetchPendingFacebookRaids();
+      setFacebookRaidSelectedKeys([]);
+      const verifiedText = points === 50 ? ' (verified bonus)' : '';
+      if (fail === 0) {
+        showNotification(
+          `Approved ${ok} Facebook completion(s)${verifiedText}. ${points} pts each.`,
+          'success'
+        );
+      } else {
+        showNotification(
+          `Approved ${ok}, failed ${fail}${verifiedText}.`,
+          fail === selected.length ? 'error' : 'warning'
+        );
+      }
+    } finally {
+      setFacebookRaidBulkActionLoading(false);
+    }
+  };
+
+  const handleRejectFacebookRaid = async () => {
+    const targets =
+      facebookRaidBulkRejectTargets && facebookRaidBulkRejectTargets.length > 0
+        ? facebookRaidBulkRejectTargets
+        : selectedFacebookRaid
+          ? [selectedFacebookRaid]
+          : [];
+    if (targets.length === 0) return;
+
+    setFacebookRaidBulkActionLoading(true);
+    let ok = 0;
+    let fail = 0;
+    try {
+      for (const completion of targets) {
+        try {
+          const response = await fetch(
+            `${API_URL}/facebook-raids/${completion.raidId}/reject/${completion.completionId}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${currentUser.token}`
+              },
+              body: JSON.stringify({ rejectionReason: facebookRaidRejectionReason })
+            }
+          );
+          if (response.ok) ok += 1;
+          else fail += 1;
+        } catch {
+          fail += 1;
+        }
+      }
       setShowFacebookRaidRejectModal(false);
-      alert(result.message || 'Facebook raid completion rejected successfully!');
+      setFacebookRaidBulkRejectTargets(null);
+      setSelectedFacebookRaid(null);
+      setFacebookRaidSelectedKeys([]);
+      if (fail === 0) {
+        showNotification(
+          targets.length > 1
+            ? `Rejected ${ok} Facebook completions.`
+            : 'Facebook raid completion rejected successfully.',
+          'success'
+        );
+      } else {
+        showNotification(
+          `Rejected ${ok}, failed ${fail}.`,
+          fail === targets.length ? 'error' : 'warning'
+        );
+      }
     } catch (error) {
-      alert('Error rejecting Facebook raid completion: ' + error.message);
+      showNotification('Error rejecting Facebook completion(s): ' + error.message, 'error');
+    } finally {
+      setFacebookRaidBulkActionLoading(false);
     }
   };
 
@@ -2621,28 +2737,99 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
   // Add a new function to render the Facebook Raids tab content
   const renderFacebookRaidsTab = () => {
+    const facebookRaidAllKeys = pendingFacebookRaids.map(getFacebookRaidCompletionKey);
+    const facebookRaidAllSelected =
+      facebookRaidAllKeys.length > 0 &&
+      facebookRaidAllKeys.every((k) => facebookRaidSelectedKeys.includes(k));
+
     return (
       <div className="space-y-4">
         <h3 className="text-xl font-semibold mb-4">Facebook Raid Completions Pending Approval</h3>
         
         {loadingFacebookRaids ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="text-gray-400 mt-2">Loading pending Facebook raid completions...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
+            <p className="mt-4 text-gray-400">Loading pending completions...</p>
           </div>
         ) : pendingFacebookRaids.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            No pending Facebook raid completions to review.
-          </div>
+          <p className="text-gray-400 text-center py-4">No pending completions to approve.</p>
         ) : (
           <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 bg-gray-800/80 rounded-lg border border-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={facebookRaidAllSelected}
+                  onChange={() => {
+                    if (facebookRaidAllSelected) setFacebookRaidSelectedKeys([]);
+                    else setFacebookRaidSelectedKeys([...facebookRaidAllKeys]);
+                  }}
+                  disabled={facebookRaidBulkActionLoading}
+                  className="rounded border-gray-600"
+                />
+                Select all ({pendingFacebookRaids.length})
+              </label>
+              <span className="text-sm text-gray-400">
+                {facebookRaidSelectedKeys.length} selected
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveFacebookRaids(20)}
+                  disabled={
+                    facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (20 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveFacebookRaids(50)}
+                  disabled={
+                    facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm rounded hover:from-blue-600 hover:to-cyan-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Use for verified blue checkmark accounts"
+                >
+                  {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (50 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRejectFacebookRaidClick}
+                  disabled={
+                    facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Reject selected…
+                </button>
+              </div>
+            </div>
             {pendingFacebookRaids.map(completion => {
+              const rowKey = getFacebookRaidCompletionKey(completion);
               return (
               <div key={`${completion.raidId}-${completion.completionId}`} className="bg-gray-800 p-4 rounded-lg">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-white">{completion.raidTitle}</h4>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={facebookRaidSelectedKeys.includes(rowKey)}
+                          onChange={() => {
+                            setFacebookRaidSelectedKeys((prev) =>
+                              prev.includes(rowKey)
+                                ? prev.filter((k) => k !== rowKey)
+                                : [...prev, rowKey]
+                            );
+                          }}
+                          disabled={facebookRaidBulkActionLoading}
+                          className="rounded border-gray-600 flex-shrink-0"
+                          aria-label={`Select submission by ${completion.username || 'user'}`}
+                        />
+                        <h4 className="font-medium text-white truncate">{completion.raidTitle}</h4>
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -2724,9 +2911,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
         {showFacebookRaidRejectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Reject Facebook Raid Completion</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {(facebookRaidBulkRejectTargets?.length || 0) > 1
+                  ? `Reject ${facebookRaidBulkRejectTargets.length} completions`
+                  : 'Reject Facebook Raid Completion'}
+              </h3>
               <p className="mb-4 text-gray-300">
-                Are you sure you want to reject this Facebook raid completion? The user will not receive points and this action cannot be undone.
+                {(facebookRaidBulkRejectTargets?.length || 0) > 1
+                  ? 'These users will not receive points. The same rejection reason will be recorded for each selected completion.'
+                  : 'Are you sure you want to reject this Facebook raid completion? The user will not receive points and this action cannot be undone.'}
               </p>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -2742,16 +2935,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
               </div>
               <div className="flex justify-end space-x-2">
                 <button
-                  onClick={() => setShowFacebookRaidRejectModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  onClick={() => {
+                    setShowFacebookRaidRejectModal(false);
+                    setFacebookRaidBulkRejectTargets(null);
+                  }}
+                  disabled={facebookRaidBulkActionLoading}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRejectFacebookRaid}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  disabled={facebookRaidBulkActionLoading}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
                 >
-                  Reject Completion
+                  {facebookRaidBulkActionLoading
+                    ? 'Working…'
+                    : (facebookRaidBulkRejectTargets?.length || 0) > 1
+                      ? `Reject ${facebookRaidBulkRejectTargets.length}`
+                      : 'Reject Completion'}
                 </button>
               </div>
             </div>

@@ -291,6 +291,56 @@ function init(server) {
       }
     });
 
+    // Handle admin requesting pending Facebook raid completions
+    socket.on('requestPendingFacebookCompletions', async (userData) => {
+      if (userData && userData.isAdmin) {
+        try {
+          const FacebookRaid = require('./models/FacebookRaid');
+
+          const raids = await FacebookRaid.find({
+            'completions.approvalStatus': 'pending'
+          })
+            .populate('completions.userId', 'username email')
+            .populate('createdBy', 'username')
+            .sort({ 'completions.completedAt': -1 })
+            .lean();
+
+          const pendingCompletions = [];
+
+          raids.forEach(raid => {
+            raid.completions.forEach(completion => {
+              if (completion.approvalStatus === 'pending' && completion.userId) {
+                pendingCompletions.push({
+                  completionId: completion._id,
+                  raidId: raid._id,
+                  raidTitle: raid.title,
+                  raidDescription: raid.description,
+                  raidPoints: raid.points,
+                  raidPostUrl: raid.postUrl,
+                  userId: completion.userId._id,
+                  username: completion.userId.username,
+                  email: completion.userId.email,
+                  facebookUsername: completion.facebookUsername,
+                  postUrl: completion.postUrl,
+                  postId: completion.postId,
+                  completedAt: completion.completedAt,
+                  ipAddress: completion.ipAddress
+                });
+              }
+            });
+          });
+
+          socket.emit('pendingFacebookCompletionsLoaded', {
+            pendingCompletions,
+            total: pendingCompletions.length
+          });
+        } catch (error) {
+          console.error('Error fetching pending Facebook completions for admin:', error);
+          socket.emit('pendingFacebookCompletionsError', { error: 'Failed to fetch pending Facebook completions' });
+        }
+      }
+    });
+
     // Handle admin requesting pending completions
     socket.on('requestPendingCompletions', async (userData) => {
       if (userData && userData.isAdmin) {
@@ -1213,6 +1263,40 @@ function emitNewTwitterRaidCompletion(completionData) {
   }
 }
 
+function emitFacebookRaidApproved(completionData) {
+  if (io) {
+    io.emit('facebookRaidCompletionApproved', completionData);
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'approved',
+      completionId: completionData.completionId
+    });
+  }
+}
+
+function emitFacebookRaidRejected(completionData) {
+  if (io) {
+    io.emit('facebookRaidCompletionRejected', completionData);
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'rejected',
+      completionId: completionData.completionId
+    });
+  }
+}
+
+function emitNewFacebookRaidCompletion(completionData) {
+  if (io) {
+    io.emit('newFacebookRaidCompletion', completionData);
+    io.emit('raidCompletionCountUpdated', {
+      raidId: completionData.raidId,
+      type: 'submitted',
+      completionId: completionData.completionId,
+      userId: completionData.userId
+    });
+  }
+}
+
 function emitAffiliateEarningUpdate(affiliateData) {
   if (io) {
     io.emit('affiliateEarningUpdate', affiliateData);
@@ -1458,6 +1542,9 @@ module.exports = {
   emitTwitterRaidApproved,
   emitTwitterRaidRejected,
   emitNewTwitterRaidCompletion,
+  emitFacebookRaidApproved,
+  emitFacebookRaidRejected,
+  emitNewFacebookRaidCompletion,
   emitAffiliateEarningUpdate,
   emitServiceApproved,
   emitServiceRejected,
