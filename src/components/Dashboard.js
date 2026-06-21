@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, transferDexFeedOwnership } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -216,6 +216,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const [isLoadingUnclaimedDex, setIsLoadingUnclaimedDex] = useState(false);
   const [transferUsernames, setTransferUsernames] = useState({});
   const [transferringDexAdId, setTransferringDexAdId] = useState(null);
+  const [pendingListingClaims, setPendingListingClaims] = useState([]);
+  const [isLoadingListingClaims, setIsLoadingListingClaims] = useState(false);
+  const [processingClaimId, setProcessingClaimId] = useState(null);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [activeAdminSection, setActiveAdminSection] = useState('listings');
 
@@ -898,6 +901,42 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       }
     };
 
+    const handlePendingListingClaimsLoaded = (data) => {
+      setPendingListingClaims(data.claims || []);
+      setIsLoadingListingClaims(false);
+    };
+
+    const handlePendingListingClaimsError = (error) => {
+      console.error('Error loading listing claims via socket:', error);
+      setIsLoadingListingClaims(false);
+    };
+
+    const handleNewListingClaimPending = (data) => {
+      if (data?.claim) {
+        setPendingListingClaims((prev) => {
+          const id = data.claim._id?.toString?.() || data.claim._id;
+          if (prev.some((c) => (c._id?.toString?.() || c._id) === id)) return prev;
+          return [...prev, data.claim];
+        });
+      }
+    };
+
+    const handleListingClaimApproved = (data) => {
+      if (data?.claimId) {
+        setPendingListingClaims((prev) =>
+          prev.filter((c) => (c._id?.toString?.() || c._id) !== data.claimId)
+        );
+      }
+    };
+
+    const handleListingClaimRejected = (data) => {
+      if (data?.claimId) {
+        setPendingListingClaims((prev) =>
+          prev.filter((c) => (c._id?.toString?.() || c._id) !== data.claimId)
+        );
+      }
+    };
+
     // Token purchase socket handlers
     const handleTokenPurchaseApproved = (data) => {
       // Remove the approved token purchase from the pending list
@@ -982,6 +1021,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     socket.on('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
     socket.on('dexFeedListingCreated', handleDexFeedListingCreated);
 
+    socket.on('pendingListingClaimsLoaded', handlePendingListingClaimsLoaded);
+    socket.on('pendingListingClaimsError', handlePendingListingClaimsError);
+    socket.on('newListingClaimPending', handleNewListingClaimPending);
+    socket.on('listingClaimApproved', handleListingClaimApproved);
+    socket.on('listingClaimRejected', handleListingClaimRejected);
+
     // Token purchase socket listeners
     socket.on('tokenPurchaseApproved', handleTokenPurchaseApproved);
     socket.on('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -1025,6 +1070,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       socket.off('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
       socket.off('dexFeedListingCreated', handleDexFeedListingCreated);
 
+      socket.off('pendingListingClaimsLoaded', handlePendingListingClaimsLoaded);
+      socket.off('pendingListingClaimsError', handlePendingListingClaimsError);
+      socket.off('newListingClaimPending', handleNewListingClaimPending);
+      socket.off('listingClaimApproved', handleListingClaimApproved);
+      socket.off('listingClaimRejected', handleListingClaimRejected);
+
       // Token purchase socket cleanup
       socket.off('tokenPurchaseApproved', handleTokenPurchaseApproved);
       socket.off('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -1059,6 +1110,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     timers.push(setTimeout(() => {
       requestUnclaimedDexAdsViaSocket();
     }, 25));
+
+    timers.push(setTimeout(() => {
+      requestPendingListingClaimsViaSocket();
+    }, 35));
     
     // Step 2: Token purchases (50ms)
     timers.push(setTimeout(() => {
@@ -1099,6 +1154,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     if (!currentUser?.isAdmin || activeTab !== 'admin' || activeAdminSection !== 'dexFeed') return;
     requestUnclaimedDexAdsViaSocket(unclaimedDexSearch);
   }, [currentUser, activeTab, activeAdminSection, unclaimedDexSearch]);
+
+  useEffect(() => {
+    if (!currentUser?.isAdmin || activeTab !== 'admin' || activeAdminSection !== 'claimRequests') return;
+    requestPendingListingClaimsViaSocket();
+  }, [currentUser, activeTab, activeAdminSection]);
 
   useEffect(() => {
     const valid = new Set(
@@ -3059,6 +3119,47 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     });
   };
 
+  const requestPendingListingClaimsViaSocket = () => {
+    if (!socket || !currentUser?.isAdmin) return;
+    setIsLoadingListingClaims(true);
+    socket.emit('requestPendingListingClaims', {
+      userId: currentUser.userId || currentUser.id,
+      isAdmin: currentUser.isAdmin
+    });
+  };
+
+  const handleApproveListingClaim = async (claimId) => {
+    try {
+      setProcessingClaimId(claimId);
+      await approveListingClaim(claimId);
+      setPendingListingClaims((prev) =>
+        prev.filter((c) => (c._id?.toString?.() || c._id) !== claimId)
+      );
+      showNotification('Claim approved — ownership transferred', 'success');
+    } catch (error) {
+      showNotification(error.message || 'Failed to approve claim', 'error');
+    } finally {
+      setProcessingClaimId(null);
+    }
+  };
+
+  const handleRejectListingClaim = async (claimId) => {
+    const reason = window.prompt('Rejection reason (optional):', 'Could not verify X post');
+    if (reason === null) return;
+    try {
+      setProcessingClaimId(claimId);
+      await rejectListingClaim(claimId, reason || 'Rejected by admin');
+      setPendingListingClaims((prev) =>
+        prev.filter((c) => (c._id?.toString?.() || c._id) !== claimId)
+      );
+      showNotification('Claim rejected', 'success');
+    } catch (error) {
+      showNotification(error.message || 'Failed to reject claim', 'error');
+    } finally {
+      setProcessingClaimId(null);
+    }
+  };
+
   const handleTransferDexFeedOwnership = async (adId) => {
     const username = String(transferUsernames[adId] || '').trim();
     if (!username) {
@@ -3476,6 +3577,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     { id: 'giftcards', label: 'Redemptions', icon: '🎁', badge: pendingRedemptions.length },
     { id: 'listings', label: 'Bubble Listings', icon: '🫧', badge: pendingListings.length },
     { id: 'dexFeed', label: 'Dex Feed', icon: '🌊', badge: unclaimedDexAds.length },
+    { id: 'claimRequests', label: 'Claim Requests', icon: '📋', badge: pendingListingClaims.length },
     { id: 'allads', label: 'All Ads', icon: '📱', badge: 0 },
     { id: 'premium', label: 'Premium Requests', icon: '💎', badge: premiumRequests.length },
     { id: 'tokens', label: 'Token Purchases', icon: '🪙', badge: pendingTokenPurchases.length },
@@ -5726,6 +5828,98 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                     Transfer ownership
                                   </button>
                                 </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeAdminSection === 'claimRequests' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-2">Claim Requests</h3>
+                    <p className="text-gray-400 text-sm mb-6">
+                      Review X verification posts and approve ownership transfer to the requester&apos;s account.
+                    </p>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      {isLoadingListingClaims ? (
+                        <div className="text-center py-8">
+                          <div className="spinner"></div>
+                          <p className="mt-2 text-gray-400">Loading claim requests…</p>
+                        </div>
+                      ) : pendingListingClaims.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          No pending claim requests
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {pendingListingClaims.map((claim) => {
+                            const claimId = claim._id?.toString?.() || claim._id;
+                            const ad = claim.ad || {};
+                            return (
+                              <div key={claimId} className="bg-gray-800 rounded-lg p-5 border border-purple-500/30">
+                                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                                  <div className="flex items-start gap-4 min-w-0">
+                                    {ad.logo && (
+                                      <img
+                                        src={ad.logo}
+                                        alt={ad.title}
+                                        className="w-14 h-14 rounded-full object-cover border border-gray-600 shrink-0"
+                                        loading="lazy"
+                                        onError={(e) => { e.target.src = 'https://placehold.co/56x56?text=?'; }}
+                                      />
+                                    )}
+                                    <div className="min-w-0">
+                                      <h4 className="font-bold text-white text-lg">{ad.title || claim.adId}</h4>
+                                      <p className="text-sm text-gray-400">
+                                        Requester: <span className="text-cyan-300">@{claim.requesterUsername}</span>
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        Submitted: {new Date(claim.createdAt).toLocaleString()}
+                                      </p>
+                                      <p className="text-xs text-gray-500 font-mono break-all mt-1">
+                                        Code: <span className="text-purple-300">{claim.verificationCode}</span>
+                                      </p>
+                                      {ad.contractAddress && (
+                                        <p className="text-xs text-gray-500 font-mono break-all">
+                                          CA: {ad.contractAddress}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 shrink-0">
+                                    <button
+                                      onClick={() => handleApproveListingClaim(claimId)}
+                                      disabled={processingClaimId === claimId}
+                                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-sm disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                      {processingClaimId === claimId && <FaSpinner className="animate-spin" />}
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectListingClaim(claimId)}
+                                      disabled={processingClaimId === claimId}
+                                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm disabled:opacity-50"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                </div>
+                                {claim.tweetUrl && (
+                                  <div className="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                                    <p className="text-xs text-gray-500 mb-1">X post</p>
+                                    <a
+                                      href={claim.tweetUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-cyan-400 hover:text-cyan-300 text-sm break-all"
+                                    >
+                                      {claim.tweetUrl}
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

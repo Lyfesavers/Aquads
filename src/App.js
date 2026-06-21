@@ -106,6 +106,7 @@ const AquaPayInfo = lazy(() => import('./components/AquaPayInfo'));
 const HyperSpace = lazy(() => import('./components/HyperSpace'));
 const Documentation = lazy(() => import('./components/Documentation/Documentation'));
 const DashboardPage = lazy(() => import('./components/DashboardPage'));
+const ClaimBubblePage = lazy(() => import('./components/ClaimBubblePage'));
 
 window.Buffer = Buffer;
 
@@ -2820,6 +2821,14 @@ function App() {
               onProfileUpdate={handleProfileUpdate}
             />
           } />
+          <Route path="/claim-bubble" element={
+            <ClaimBubblePage
+              currentUser={currentUser}
+              onLogin={() => setShowLoginModal(true)}
+              onCreateAccount={() => setShowCreateAccountModal(true)}
+              showNotification={showNotification}
+            />
+          } />
           <Route path="/marketplace" element={
             <Marketplace 
               currentUser={currentUser}
@@ -2973,6 +2982,12 @@ function App() {
                         >
                           List token free
                         </Link>
+                        <Link
+                          to="/claim-bubble"
+                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                        >
+                          Claim bubble
+                        </Link>
 
                         {currentUser ? (
                           <>
@@ -3000,6 +3015,13 @@ function App() {
                                       className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                                     >
                                       📊 Dashboard
+                                    </Link>
+                                    <Link
+                                      to="/claim-bubble"
+                                      onClick={() => setShowUserDropdown(false)}
+                                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-teal-600/50 transition-colors"
+                                    >
+                                      🫧 Claim your bubble
                                     </Link>
                                     <button
                                       onClick={() => {
@@ -3129,6 +3151,14 @@ function App() {
                                 >
                                   <span className="text-lg">✨</span>
                                   <span className="font-medium">List token free</span>
+                                </Link>
+                                <Link
+                                  to="/claim-bubble"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-teal-500/10 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">🫧</span>
+                                  <span className="font-medium">Claim your bubble</span>
                                 </Link>
                                 <div className="h-px bg-white/10 my-2" />
                                 <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">

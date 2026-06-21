@@ -730,6 +730,7 @@ process.on('SIGINT', async () => {
 // Routes
 app.use('/api/vote-boosts', voteBoostRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/listing-claims', require('./routes/listingClaims'));
 app.use('/api/ads', require('./routes/ads'));
 app.use('/api/addon-orders', require('./routes/addonOrders'));
 app.use('/api/service-reviews', require('./routes/serviceReviews'));

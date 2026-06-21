@@ -127,6 +127,13 @@ const Footer = () => {
                   <FaFileAlt className="mr-2" />
                   <span>Verify User</span>
                 </Link>
+                <Link
+                  to="/claim-bubble"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Claim your bubble</span>
+                </Link>
                 <a
                   href="mailto:info@aquads.xyz"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"

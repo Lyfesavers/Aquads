@@ -2149,6 +2149,80 @@ export const transferDexFeedOwnership = async (adId, username) => {
   return data;
 };
 
+export const lookupClaimableListing = async (q) => {
+  const response = await fetch(`${API_URL}/listing-claims/lookup?q=${encodeURIComponent(q)}`, {
+    headers: { ...getAuthHeader() }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Listing not found');
+  }
+  return data;
+};
+
+export const prepareListingClaim = async (adId) => {
+  const response = await fetch(`${API_URL}/listing-claims/prepare`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ adId })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to prepare claim');
+  }
+  return data;
+};
+
+export const submitListingClaim = async ({ adId, tweetUrl, verificationCode }) => {
+  const response = await fetch(`${API_URL}/listing-claims/submit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ adId, tweetUrl, verificationCode })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to submit claim');
+  }
+  return data;
+};
+
+export const approveListingClaim = async (claimId) => {
+  const response = await fetch(`${API_URL}/listing-claims/${claimId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to approve claim');
+  }
+  return data;
+};
+
+export const rejectListingClaim = async (claimId, rejectionReason) => {
+  const response = await fetch(`${API_URL}/listing-claims/${claimId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ rejectionReason })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to reject claim');
+  }
+  return data;
+};
+
 // Simple connectivity test for mobile
 export const testConnectivity = async () => {
   try {

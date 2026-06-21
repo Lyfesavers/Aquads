@@ -32,10 +32,10 @@ const {
   getListingTier
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
+const { transferDexFeedListing } = require('../utils/transferDexFeedListing');
 const {
   LISTING_SOURCE_DEX_FEED,
   CLAIM_STATUS_UNCLAIMED,
-  CLAIM_STATUS_CLAIMED,
   DEX_FEED_OWNER_USERNAME
 } = require('../constants/dexFeed');
 
@@ -1167,73 +1167,7 @@ router.post('/admin/transfer-ownership', auth, async (req, res) => {
       return res.status(400).json({ error: 'adId and username are required' });
     }
 
-    if (targetUsername.toLowerCase() === DEX_FEED_OWNER_USERNAME.toLowerCase()) {
-      return res.status(400).json({ error: 'Cannot transfer to the system feed account' });
-    }
-
-    const targetUser = await User.findOne({ username: targetUsername }).select('username').lean();
-    if (!targetUser) {
-      return res.status(404).json({ error: 'Target user not found' });
-    }
-
-    const ad = await Ad.findOne({ id: adId });
-    if (!ad) {
-      return res.status(404).json({ error: 'Listing not found' });
-    }
-
-    if (ad.listingSource !== LISTING_SOURCE_DEX_FEED) {
-      return res.status(400).json({ error: 'Not a dex-feed listing' });
-    }
-
-    if (ad.claimStatus !== CLAIM_STATUS_UNCLAIMED) {
-      return res.status(400).json({ error: 'Listing is not unclaimed' });
-    }
-
-    if (ad.owner !== DEX_FEED_OWNER_USERNAME) {
-      return res.status(400).json({ error: 'Listing is not owned by the dex feed account' });
-    }
-
-    const duplicateOwned = await Ad.findOne({
-      owner: targetUsername,
-      pairAddress: ad.pairAddress,
-      status: { $in: ['active', 'approved', 'pending'] },
-      id: { $ne: ad.id }
-    })
-      .select('id title')
-      .lean();
-
-    if (duplicateOwned) {
-      return res.status(400).json({
-        error: `User already has a listing for this pair (${duplicateOwned.title})`
-      });
-    }
-
-    ad.owner = targetUsername;
-    ad.claimStatus = CLAIM_STATUS_CLAIMED;
-    ad.claimedAt = new Date();
-    ad.claimedBy = targetUsername;
-    await ad.save();
-
-    invalidateAdsCache();
-
-    try {
-      const io = socket.getIO();
-      io.emit('adsUpdated', { type: 'update', ad });
-      const unclaimedCount = await Ad.countDocuments({
-        listingSource: LISTING_SOURCE_DEX_FEED,
-        claimStatus: CLAIM_STATUS_UNCLAIMED,
-        owner: DEX_FEED_OWNER_USERNAME,
-        status: 'active'
-      });
-      io.emit('unclaimedDexAdsUpdated', {
-        action: 'transfer',
-        adId: ad.id,
-        newOwner: targetUsername,
-        total: unclaimedCount
-      });
-    } catch (socketErr) {
-      console.error('[DexFeed] transfer socket emit failed:', socketErr.message);
-    }
+    const ad = await transferDexFeedListing(adId, targetUsername);
 
     res.json({
       message: 'Ownership transferred successfully',
@@ -1241,7 +1175,7 @@ router.post('/admin/transfer-ownership', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('[DexFeed] transfer error:', error);
-    res.status(500).json({ error: 'Failed to transfer ownership' });
+    res.status(400).json({ error: error.message || 'Failed to transfer ownership' });
   }
 });
 

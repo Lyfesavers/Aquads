@@ -720,6 +720,48 @@ function init(server) {
       }
     });
 
+    socket.on('requestPendingListingClaims', async (userData) => {
+      if (!userData || !userData.userId || !userData.isAdmin) {
+        socket.emit('pendingListingClaimsError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const ListingClaimRequest = require('./models/ListingClaimRequest');
+        const Ad = require('./models/Ad');
+
+        const claims = await ListingClaimRequest.find({ status: 'pending' })
+          .sort({ createdAt: 1 })
+          .lean();
+
+        const adIds = [...new Set(claims.map((c) => c.adId))];
+        const ads = await Ad.find({ id: { $in: adIds } }).lean();
+        const adMap = Object.fromEntries(ads.map((a) => [a.id, a]));
+
+        const enriched = claims.map((c) => ({
+          ...c,
+          ad: adMap[c.adId]
+            ? {
+                id: adMap[c.adId].id,
+                title: adMap[c.adId].title,
+                logo: adMap[c.adId].logo,
+                blockchain: adMap[c.adId].blockchain,
+                contractAddress: adMap[c.adId].contractAddress,
+                pairAddress: adMap[c.adId].pairAddress
+              }
+            : null
+        }));
+
+        socket.emit('pendingListingClaimsLoaded', {
+          claims: enriched,
+          total: enriched.length
+        });
+      } catch (error) {
+        console.error('Error fetching pending listing claims:', error);
+        socket.emit('pendingListingClaimsError', { error: 'Failed to fetch claim requests' });
+      }
+    });
+
     // Handle user requesting their token balance
     socket.on('requestTokenBalance', async (userData) => {
       if (!userData || !userData.userId) {
