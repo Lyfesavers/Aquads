@@ -265,11 +265,11 @@ const ClaimBubblePage = ({ currentUser, onLogin, onCreateAccount, showNotificati
             )}
 
             <p className="text-xs text-gray-500 text-center">
-              Only unclaimed dex-feed listings can be claimed. Not an endorsement —{' '}
-              <a href="mailto:support@aquads.xyz" className="text-cyan-500 hover:underline">
-                contact us
+              Only unclaimed automatic listings can be claimed. Not an endorsement — email{' '}
+              <a href="mailto:info@aquads.xyz" className="text-cyan-500 hover:underline">
+                info@aquads.xyz
               </a>{' '}
-              to request removal.
+              to request removal. We aim to respond within 5 business days.
             </p>
           </div>
         )}

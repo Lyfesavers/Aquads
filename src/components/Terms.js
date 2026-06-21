@@ -38,7 +38,7 @@ const Terms = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads.xyz Terms & Conditions</h1>
-          <p className="text-gray-400 mb-8">Effective Date: June 25, 2025</p>
+          <p className="text-gray-400 mb-8">Effective Date: June 25, 2025 · Last updated: June 21, 2026</p>
 
           <div className="space-y-8">
             {/* Welcome Section */}
@@ -67,7 +67,7 @@ const Terms = () => {
                   <li><span className="text-blue-400 font-semibold">AquaPay (Non-Custodial Payments):</span> A payment-link system enabling direct wallet-to-wallet crypto payments across multiple chains. Aquads does not hold or custody user funds; payments go to the recipient's wallet. A 0.5% platform fee applies (see Section 6).</li>
                   <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers LiFi, available on the website and as a Chrome browser extension for swapping tokens from any webpage.</li>
                   <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through MoonPay, Ramp Network, Mercuryo and LiFi.</li>
-                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings with paid advertising placements; bubble bump visibility is driven by community bullish votes (including optional paid vote boost add-ons), not a separate paid bump product.</li>
+                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings with paid advertising placements; bubble bump visibility is driven by community bullish votes (including optional paid vote boost add-ons), not a separate paid bump product. Qualifying projects may also appear through automated discovery from public DEX data (see Section 7.4).</li>
                   <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Campaigns managed by Coinbound.io and other PR partners (Forbes, Yahoo Finance, Benzinga).</li>
                   <li><span className="text-blue-400 font-semibold">Game Hub:</span> Play‑to‑earn events, mini‑games, and token rewards operated by Aquads.</li>
                   <li><span className="text-blue-400 font-semibold">Savings & Staking Hub (AquaFi):</span> Third-party integrations for yield and staking services.</li>
@@ -149,6 +149,7 @@ const Terms = () => {
                 <p><span className="text-blue-400 font-semibold">7.1 Free Listing & Bump Visibility.</span> Projects may list for free. Bump-style visibility on the map follows published rules (e.g. bullish vote thresholds). Optional paid add-ons such as vote boosts or banners are subject to published rates and availability.</p>
                 <p><span className="text-blue-400 font-semibold">7.2 Content Guidelines.</span> You represent that all ad content is accurate, lawful, and non‑infringing. Aquads may reject or remove any listing at its discretion.</p>
                 <p><span className="text-blue-400 font-semibold">7.3 Billing & Refunds.</span> Paid features are non‑refundable except as required by law. Disputes must be submitted in writing within 30 days.</p>
+                <p><span className="text-blue-400 font-semibold">7.4 Automated Discovery Listings.</span> Aquads may automatically display qualifying crypto projects on the bubble map using publicly available on-chain and DEX market data from third-party sources, similar to token indexers and discovery platforms. Such listings are <span className="text-blue-400 font-semibold">informational only</span> and do <span className="text-blue-400 font-semibold">not</span> constitute an endorsement, recommendation, audit, or partnership by Aquads. Aquads does not guarantee the accuracy, completeness, or timeliness of any market data, logos, or metadata shown. Projects may request removal or correction by emailing <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a> with the project name, blockchain, contract address, and reason; Aquads aims to review valid requests within five (5) business days, subject to verification and platform discretion. Aquads may add, modify, or remove any automated listing at any time. Teams may submit an ownership claim through the claim process published on the Site (e.g. X/Twitter verification). Approved claims transfer Starter-tier listing ownership to the verified account; Premium and paid add-ons remain separate purchases. Nothing on the Services is investment advice; users and projects interact with tokens at their own risk.</p>
               </div>
             </section>
 

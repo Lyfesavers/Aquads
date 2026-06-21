@@ -66,6 +66,7 @@ const documentationStructure = [
     icon: FaCoins,
     children: [
       { id: 'listing-token', title: 'Listing Your Token', content: 'listingToken' },
+      { id: 'dex-feed-claim', title: 'Auto Listings & Claims', content: 'dexFeedClaim' },
       { id: 'bubble-ads', title: 'Bubble Ads System', content: 'bubbleAds' },
       { id: 'token-voting', title: 'Token Voting & Rankings', content: 'tokenVoting' },
       { id: 'token-sentiment', title: 'Sentiment & Reviews', content: 'tokenSentiment' },
@@ -856,6 +857,8 @@ Base listing fee: **$0 Starter** or **Premium USDC base** — check the **List P
 3. Admin verifies and approves — **Premium** is fast-tracked (**1 hour** target); **Starter** follows the standard queue (**24–48 hours**)
 4. Your bubble appears on the map!
 
+> ℹ️ **Already listed automatically?** If your project is already on the map from public DEX data, see **[Auto Listings & Claims](/docs#dex-feed-claim)** to claim ownership instead of submitting a duplicate listing.
+
 ### Add Packages to Existing Projects
 
 Already have a listing? You can:
@@ -874,6 +877,110 @@ Already have a listing? You can:
 - Engage with voters to grow your bubble
     `,
     prevPage: { id: 'skipper-overview', title: 'Skipper Agent' },
+    nextPage: { id: 'dex-feed-claim', title: 'Auto Listings & Claims' },
+  },
+
+  dexFeedClaim: {
+    title: 'Automatic Listings & Claiming Ownership',
+    description: 'How qualifying DEX projects may appear on Aquads and how teams claim their bubble.',
+    mockup: <TokenListingMockup />,
+    content: `
+## Automatic Listings & Claiming Ownership
+
+Qualifying crypto projects may appear on the Aquads bubble map **automatically** using **public on-chain and DEX market data** — similar to how blockchain explorers and token indexers surface trading pairs. **Being listed does not mean Aquads endorses, recommends, or has audited your project.**
+
+> ℹ️ **Already on the map?** If your project is listed and you represent the team, you can [claim ownership](/claim-bubble) to unlock free **Starter** owner tools on your Aquads account.
+
+---
+
+### How projects may appear on Aquads
+
+Aquads periodically reviews publicly available DEX data to identify projects that meet **minimum quality thresholds** (for example, sufficient liquidity and market activity). Thresholds may change over time and are applied at Aquads' discretion.
+
+- Listing is **automatic** — you do not need to submit a manual application first
+- **Not every token** will qualify or remain listed
+- Information (name, logo, pair data, etc.) comes from **third-party public sources** and may be incomplete or outdated
+- A listing is **informational visibility only** — not a partnership, paid promotion, or approval by Aquads
+
+---
+
+### What the public sees before ownership is claimed
+
+Even before a team claims their bubble, visitors can typically:
+
+- See the project on the **bubble map**
+- View basic project info and swap via **AquaSwap**
+- Participate in **community votes** and vote-bump mechanics
+
+Full **project owner** features on Aquads (such as editing your listing from the Dashboard, project-scoped growth tools, and related owner workflows) are available after a successful **ownership claim** to a verified Aquads account.
+
+---
+
+### How to claim ownership
+
+If you officially represent a project that is already listed:
+
+1. **Log in** to Aquads (email verification required)
+2. Go to **[Claim your bubble](/claim-bubble)**
+3. **Find your listing** using your token contract address, pair address, or listing ID
+4. **Generate a verification code** and post it in a public post on **X (Twitter)** from an account your team controls
+5. **Submit your claim** with the URL of that X post and the verification code
+6. Aquads **reviews** the request. If approved, the listing is linked to your Aquads username
+
+**Claiming transfers Starter-tier owner access** to your account. It does **not** include paid **Premium** packages, marketing add-ons, or other paid upgrades — those remain separate purchases.
+
+---
+
+### Requesting removal or corrections
+
+If you believe your project was listed in error, or you want a listing removed or corrected:
+
+**Email:** [info@aquads.xyz](mailto:info@aquads.xyz)
+
+Include:
+
+- Project / token name
+- Blockchain network
+- Contract address (and pair address if known)
+- Whether you want **removal** or a **correction**
+- Brief reason for the request
+
+We aim to review and action valid removal or correction requests within **5 business days**. Complex or disputed cases may take longer. Aquads may request additional verification before removing or changing a listing.
+
+---
+
+### Important disclaimers
+
+- **Not investment advice.** Nothing on Aquads is a solicitation to buy or sell any token or security.
+- **No endorsement.** Listing on the map does **not** mean Aquads vouches for a project's team, tokenomics, smart contracts, or future performance.
+- **No audit.** Aquads does **not** audit smart contracts, liquidity locks, team identity, or project legitimacy.
+- **Data accuracy.** Market cap, liquidity, logos, and metadata may be wrong, delayed, or missing. Always **do your own research (DYOR)**.
+- **Your risk.** Users and projects interact with tokens and third-party protocols at their own risk. Aquads is not responsible for trading losses, rug pulls, hacks, or project failures.
+- **Right to manage listings.** Aquads may add, update, or remove listings at any time to protect users and platform integrity.
+
+---
+
+### Frequently asked questions
+
+**Why is my project listed on Aquads?**  
+Public DEX data showed your token met our automated quality thresholds. Many indexers and discovery platforms work the same way.
+
+**I didn't ask to be listed. Can you remove it?**  
+Yes. Email [info@aquads.xyz](mailto:info@aquads.xyz) with the details above. We target a response within **5 business days**.
+
+**Does listing mean Aquads approved my token?**  
+**No.** It means your project appeared in our automated discovery process. It is not an endorsement.
+
+**How do I claim my bubble?**  
+Use **[Claim your bubble](/claim-bubble)** and complete X verification as described above.
+
+**What do I get after claiming?**  
+Ownership of the listing on your Aquads account with **free Starter-tier** project tools. Premium and paid marketing packages are separate.
+
+**Can I list manually instead?**  
+Yes. Teams can always use **List Project** for a manual submission. See [Listing Your Token](/docs#listing-token).
+    `,
+    prevPage: { id: 'listing-token', title: 'Listing Your Token' },
     nextPage: { id: 'bubble-ads', title: 'Bubble Ads System' },
   },
   
@@ -937,7 +1044,7 @@ Users can filter the bubble map by:
 - Sentiment (bullish/bearish)
 - Trending projects
     `,
-    prevPage: { id: 'listing-token', title: 'Listing Your Token' },
+    prevPage: { id: 'dex-feed-claim', title: 'Auto Listings & Claims' },
     nextPage: { id: 'token-voting', title: 'Token Voting & Rankings' },
   },
   

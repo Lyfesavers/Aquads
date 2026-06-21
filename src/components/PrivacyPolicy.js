@@ -38,7 +38,7 @@ const PrivacyPolicy = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads.xyz Privacy Policy</h1>
-          <p className="text-gray-400 mb-8">Effective Date: June 25, 2025</p>
+          <p className="text-gray-400 mb-8">Effective Date: June 25, 2025 · Last updated: June 21, 2026</p>
 
           <div className="space-y-8">
             {/* Welcome Section */}
@@ -59,6 +59,7 @@ const PrivacyPolicy = () => {
                     <li><span className="text-blue-400 font-semibold">Account Information:</span> Name, email address, username.</li>
                     <li><span className="text-blue-400 font-semibold">Profile Details:</span> Bio, skills, portfolio links if you participate in the Freelancer Hub.</li>
                     <li><span className="text-blue-400 font-semibold">Communications:</span> Messages you send through our support channels.</li>
+                    <li><span className="text-blue-400 font-semibold">Listing ownership claims:</span> If you submit a claim for an automatically discovered project listing, we collect your Aquads username, the X (Twitter) post URL you provide, a verification code, and related review metadata (timestamps, approval status).</li>
                   </ul>
                 </div>
 
@@ -76,6 +77,7 @@ const PrivacyPolicy = () => {
                   <ul className="list-disc pl-6 space-y-2">
                     <li><span className="text-blue-400 font-semibold">Service Partners:</span> We receive identity verification and transaction data from MoonPay, Ramp Network, Mercuryo, LiFi, and Reown, and marketing performance data from Coinbound.io.</li>
                     <li><span className="text-blue-400 font-semibold">Public Sources:</span> Information you make publicly available (e.g., social profiles) if you link them to your account.</li>
+                    <li><span className="text-blue-400 font-semibold">Public market & DEX data:</span> Token names, contract addresses, pair information, logos, and market metrics from publicly available third-party sources used for automated project discovery listings on the bubble map.</li>
                   </ul>
                 </div>
               </div>
@@ -91,6 +93,7 @@ const PrivacyPolicy = () => {
                   <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Share provided content with Coinbound.io and PR outlets to execute campaigns.</li>
                   <li><span className="text-blue-400 font-semibold">Analytics & Research:</span> Aggregate usage data to analyze trends and performance.</li>
                   <li><span className="text-blue-400 font-semibold">Communications:</span> Send transactional emails, updates, and promotional messages (opt-out available).</li>
+                  <li><span className="text-blue-400 font-semibold">Automated listings & claims:</span> Display qualifying projects on the bubble map, process ownership claim requests (including manual admin review), prevent fraud, and respond to removal or correction requests.</li>
                 </ul>
               </div>
             </section>
@@ -127,7 +130,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">4. Data Retention</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
-                <p>We retain your personal data only as long as necessary to fulfill the purposes outlined in this Privacy Policy and comply with legal obligations. Removal requests: contact <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a>.</p>
+                <p>We retain your personal data only as long as necessary to fulfill the purposes outlined in this Privacy Policy and comply with legal obligations. Listing removal or correction requests: contact <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a>. We aim to review valid listing removal requests within five (5) business days.</p>
               </div>
             </section>
 
