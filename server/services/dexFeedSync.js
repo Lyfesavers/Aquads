@@ -1,6 +1,5 @@
 const Ad = require('../models/Ad');
 const DexFeedSeen = require('../models/DexFeedSeen');
-const User = require('../models/User');
 const socket = require('../socket');
 const { pickBestPair, normalizeResolvedPair } = require('../utils/tokenLookup');
 const {
@@ -19,13 +18,11 @@ const {
   DEX_FEED_ENABLED,
   DEX_FEED_MIN_MARKET_CAP_USD,
   DEX_FEED_MIN_LIQUIDITY_USD,
-  DEX_FEED_MIN_PAIR_AGE_HOURS,
-  DEX_PROFILES_URL,
+  DEX_FEED_SOURCES,
   DEX_TOKEN_PAIRS_URL
 } = require('../constants/dexFeed');
 
 const MAX_SIZE = 100;
-const MIN_PAIR_AGE_MS = DEX_FEED_MIN_PAIR_AGE_HOURS * 60 * 60 * 1000;
 
 let syncInProgress = false;
 
@@ -64,34 +61,41 @@ function extractWebsiteFromProfile(profile, pair) {
   return String(websiteLink?.url || '').trim();
 }
 
-function evaluateMetrics(pair) {
+function evaluateMetrics(pair, feedConfig = {}) {
+  const minAgeHours = Number(feedConfig.minPairAgeHours) || 24;
+  const minMarketCapUsd = Number(feedConfig.minMarketCapUsd) || DEX_FEED_MIN_MARKET_CAP_USD;
+  const minLiquidityUsd = Number(feedConfig.minLiquidityUsd) || DEX_FEED_MIN_LIQUIDITY_USD;
+  const minAgeMs = minAgeHours * 60 * 60 * 1000;
+
   const failures = [];
   const ageMs = pairAgeMs(pair);
 
   if (ageMs == null) {
     failures.push('missing pairCreatedAt');
-  } else if (ageMs < MIN_PAIR_AGE_MS) {
-    failures.push(`pair age under ${DEX_FEED_MIN_PAIR_AGE_HOURS}h`);
+  } else if (ageMs < minAgeMs) {
+    failures.push(`pair age under ${minAgeHours}h`);
   }
 
   const mc = marketCapUsd(pair);
-  if (mc < DEX_FEED_MIN_MARKET_CAP_USD) {
-    failures.push(`market cap below $${DEX_FEED_MIN_MARKET_CAP_USD}`);
+  if (mc < minMarketCapUsd) {
+    failures.push(`market cap below $${minMarketCapUsd}`);
   }
 
   const liq = liquidityUsd(pair);
-  if (liq < DEX_FEED_MIN_LIQUIDITY_USD) {
-    failures.push(`liquidity below $${DEX_FEED_MIN_LIQUIDITY_USD}`);
+  if (liq < minLiquidityUsd) {
+    failures.push(`liquidity below $${minLiquidityUsd}`);
   }
 
   return {
     pass: failures.length === 0,
     failures,
     snapshot: {
+      feedSource: feedConfig.id || null,
       marketCap: mc,
       liquidity: liq,
       txns24h: txns24h(pair),
-      pairAgeHours: ageMs != null ? ageMs / 3600000 : null
+      pairAgeHours: ageMs != null ? ageMs / 3600000 : null,
+      minPairAgeHours: minAgeHours
     }
   };
 }
@@ -247,7 +251,7 @@ async function createListingFromPair(profile, pair, metrics) {
   };
 }
 
-async function processProfile(profile) {
+async function processProfile(profile, feedConfig) {
   const chainId = String(profile?.chainId || '').trim().toLowerCase();
   const tokenAddress = String(profile?.tokenAddress || '').trim();
   if (!chainId || !tokenAddress) {
@@ -292,8 +296,14 @@ async function processProfile(profile) {
     return { skipped: true, reason: 'duplicate listing' };
   }
 
-  const metrics = evaluateMetrics(best);
+  const metrics = evaluateMetrics(best, feedConfig);
   return createListingFromPair(profile, best, metrics);
+}
+
+function profileKey(profile) {
+  const chainId = String(profile?.chainId || '').trim().toLowerCase();
+  const tokenAddress = String(profile?.tokenAddress || '').trim();
+  return chainId && tokenAddress ? `${chainId}:${tokenAddress}` : null;
 }
 
 async function syncDexFeedListings() {
@@ -307,6 +317,7 @@ async function syncDexFeedListings() {
 
   syncInProgress = true;
   const summary = {
+    sources: [],
     profiles: 0,
     created: 0,
     skipped: 0,
@@ -316,25 +327,68 @@ async function syncDexFeedListings() {
   try {
     await ensureDexFeedUser();
 
-    const profiles = await dexScreenerGetJson(DEX_PROFILES_URL);
-    if (!Array.isArray(profiles)) {
-      throw new Error('token-profiles/latest returned non-array');
-    }
+    const seenThisRun = new Set();
 
-    summary.profiles = profiles.length;
+    for (const source of DEX_FEED_SOURCES) {
+      const sourceSummary = {
+        id: source.id,
+        profiles: 0,
+        created: 0,
+        skipped: 0,
+        errors: 0
+      };
 
-    for (const profile of profiles) {
+      let profiles = [];
       try {
-        const result = await processProfile(profile);
-        if (result?.created) {
-          summary.created += 1;
-        } else {
-          summary.skipped += 1;
-        }
+        profiles = await dexScreenerGetJson(source.url);
       } catch (err) {
         summary.errors += 1;
-        console.error('[DexFeed] Profile error:', err.message);
+        sourceSummary.errors += 1;
+        console.error(`[DexFeed] ${source.id} fetch error:`, err.message);
+        summary.sources.push(sourceSummary);
+        continue;
       }
+
+      if (!Array.isArray(profiles)) {
+        summary.errors += 1;
+        sourceSummary.errors += 1;
+        console.error(`[DexFeed] ${source.id} returned non-array`);
+        summary.sources.push(sourceSummary);
+        continue;
+      }
+
+      sourceSummary.profiles = profiles.length;
+      summary.profiles += profiles.length;
+
+      for (const profile of profiles) {
+        const key = profileKey(profile);
+        if (!key || seenThisRun.has(key)) {
+          sourceSummary.skipped += 1;
+          summary.skipped += 1;
+          continue;
+        }
+        seenThisRun.add(key);
+
+        try {
+          const result = await processProfile(profile, source);
+          if (result?.created) {
+            sourceSummary.created += 1;
+            summary.created += 1;
+          } else {
+            sourceSummary.skipped += 1;
+            summary.skipped += 1;
+          }
+        } catch (err) {
+          sourceSummary.errors += 1;
+          summary.errors += 1;
+          console.error(`[DexFeed] ${source.id} profile error:`, err.message);
+        }
+      }
+
+      console.log(
+        `[DexFeed] ${source.id} — profiles: ${sourceSummary.profiles}, listed: ${sourceSummary.created}, skipped: ${sourceSummary.skipped}, errors: ${sourceSummary.errors} (≥${source.minPairAgeHours}h, MC≥$${DEX_FEED_MIN_MARKET_CAP_USD}, liq≥$${DEX_FEED_MIN_LIQUIDITY_USD})`
+      );
+      summary.sources.push(sourceSummary);
     }
 
     console.log(

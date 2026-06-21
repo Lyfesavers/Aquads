@@ -485,7 +485,7 @@ cron.schedule('30 6 * * *', async () => {
   timezone: 'UTC',
 });
 
-// Dex feed — auto-list qualifying DEX projects (every 5 minutes when enabled)
+// Dex feed — auto-list qualifying DEX projects (twice daily when enabled)
 if (DEX_FEED_ENABLED) {
   setTimeout(async () => {
     try {
@@ -497,13 +497,13 @@ if (DEX_FEED_ENABLED) {
     }
   }, 60000);
 
-  cron.schedule('*/5 * * * *', async () => {
+  cron.schedule('0 6,18 * * *', async () => {
     try {
       await syncDexFeedListings();
     } catch (error) {
       console.error('[DexFeed] Error in scheduled sync:', error);
     }
-  });
+  }, { timezone: 'UTC' });
 } else {
   console.log('[DexFeed] Disabled (set DEX_FEED_ENABLED=true to enable)');
 }

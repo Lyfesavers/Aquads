@@ -11,12 +11,29 @@ const DEX_FEED_OWNER_USERNAME = (
 
 const DEX_FEED_ENABLED = String(process.env.DEX_FEED_ENABLED || '').toLowerCase() === 'true';
 
-const DEX_FEED_MIN_MARKET_CAP_USD = Number(process.env.DEX_FEED_MIN_MARKET_CAP_USD) || 20_000;
-const DEX_FEED_MIN_LIQUIDITY_USD = Number(process.env.DEX_FEED_MIN_LIQUIDITY_USD) || 10_000;
-const DEX_FEED_MIN_PAIR_AGE_HOURS = Number(process.env.DEX_FEED_MIN_PAIR_AGE_HOURS) || 24;
+const DEX_FEED_MIN_MARKET_CAP_USD = Number(process.env.DEX_FEED_MIN_MARKET_CAP_USD) || 50_000;
+const DEX_FEED_MIN_LIQUIDITY_USD = Number(process.env.DEX_FEED_MIN_LIQUIDITY_USD) || 15_000;
 
-const DEX_PROFILES_URL = 'https://api.dexscreener.com/token-profiles/latest/v1';
 const DEX_TOKEN_PAIRS_URL = 'https://api.dexscreener.com/token-pairs/v1';
+
+/** DexScreener feeds — shared MC/liq gates ($50k / $15k), per-source min pair age */
+const DEX_FEED_SOURCES = [
+  {
+    id: 'profiles-latest',
+    url: 'https://api.dexscreener.com/token-profiles/latest/v1',
+    minPairAgeHours: Number(process.env.DEX_FEED_LATEST_MIN_AGE_HOURS) || 12
+  },
+  {
+    id: 'boosts-top',
+    url: 'https://api.dexscreener.com/token-boosts/top/v1',
+    minPairAgeHours: Number(process.env.DEX_FEED_BOOSTS_MIN_AGE_HOURS) || 12
+  },
+  {
+    id: 'recent-updates',
+    url: 'https://api.dexscreener.com/token-profiles/recent-updates/v1',
+    minPairAgeHours: Number(process.env.DEX_FEED_RECENT_MIN_AGE_HOURS) || 24
+  }
+];
 
 module.exports = {
   LISTING_SOURCE_MANUAL,
@@ -28,7 +45,6 @@ module.exports = {
   DEX_FEED_ENABLED,
   DEX_FEED_MIN_MARKET_CAP_USD,
   DEX_FEED_MIN_LIQUIDITY_USD,
-  DEX_FEED_MIN_PAIR_AGE_HOURS,
-  DEX_PROFILES_URL,
+  DEX_FEED_SOURCES,
   DEX_TOKEN_PAIRS_URL
 };
