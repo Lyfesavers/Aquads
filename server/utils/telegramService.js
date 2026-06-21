@@ -8,7 +8,7 @@ const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
-const { creditReferrerBonus } = require('../routes/points');
+const { creditReferrerBonus, BUBBLE_VOTE_POINTS } = require('../routes/points');
 const { getCombinedLeaderboard, rankEmoji } = require('./leaderboardService');
 const {
   isValidBrandingVideoUrl,
@@ -1875,7 +1875,7 @@ Vote on projects and view trending bubbles!
 
 💡 How voting works:
 • Click 👍 Bullish or 👎 Bearish on any project
-• Earn 20 points for your first vote on each project
+• Earn ${BUBBLE_VOTE_POINTS} points for your first vote on each project
 • Help projects climb the rankings!
 
 🌐 Vote on website: https://aquads.xyz`;
@@ -4573,7 +4573,7 @@ Tap to update:`;
       });
 
       message += `🌐 View all bubbles at: https://aquads.xyz\n`;
-      message += `💡 First vote on each bubble earns 20 points (once per bubble); you can change your vote anytime.\n\n`;
+      message += `💡 First vote on each bubble earns ${BUBBLE_VOTE_POINTS} points (once per bubble); you can change your vote anytime.\n\n`;
       message += `📢 Follow our trending channel for AMA updates from your trending projects - https://t.me/aquadstrending`;
 
       // Get the video file path
@@ -5910,7 +5910,7 @@ Tap to update:`;
         return {
           success: true,
           message:
-            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}\n\n💡 20 points are a one-time reward per bubble (first vote only); switching bullish/bearish updates counts only.`
+            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}\n\n💡 ${BUBBLE_VOTE_POINTS} points are a one-time reward per bubble (first vote only); switching bullish/bearish updates counts only.`
         };
       }
 
@@ -5935,17 +5935,17 @@ Tap to update:`;
       let pointsLine = '';
       if (!alreadyReceivedBubblePoints) {
         await User.findByIdAndUpdate(user._id, {
-          $inc: { points: 20 },
+          $inc: { points: BUBBLE_VOTE_POINTS },
           $push: {
             pointsHistory: {
-              amount: 20,
+              amount: BUBBLE_VOTE_POINTS,
               reason: bubblePointsKey,
               createdAt: new Date()
             }
           }
         });
         await creditReferrerBonus(user._id, bubblePointsKey);
-        pointsLine = '\n\n💰 +20 points (one time per bubble — your first vote here)';
+        pointsLine = `\n\n💰 +${BUBBLE_VOTE_POINTS} points (one time per bubble — your first vote here)`;
       }
 
       await telegramService.sendVoteNotificationToGroup(project);
@@ -5953,7 +5953,7 @@ Tap to update:`;
       if (alreadyReceivedBubblePoints) {
         return {
           success: true,
-          message: `✅ Voted ${voteType} on ${project.title}!${tally}\n\n💡 No extra points — you already earned the one-time 20 for this bubble (you can still change your vote anytime).`
+          message: `✅ Voted ${voteType} on ${project.title}!${tally}\n\n💡 No extra points — you already earned the one-time ${BUBBLE_VOTE_POINTS} for this bubble (you can still change your vote anytime).`
         };
       }
       return { success: true, message: `✅ Voted ${voteType} on ${project.title}!${pointsLine}${tally}` };

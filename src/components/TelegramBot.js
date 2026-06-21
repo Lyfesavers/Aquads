@@ -36,10 +36,10 @@ const TelegramBot = () => {
     {
       icon: FaThumbsUp,
       title: 'Voting System',
-      description: 'Vote Bullish or Bearish on any project. Earn 20 points for your first vote on each project. Help projects climb the rankings!',
+      description: 'Vote Bullish or Bearish on any project. Earn 2 points for your first vote on each project. Help projects climb the rankings!',
       command: 'Click 👍 or 👎 buttons',
       color: 'from-purple-500 to-violet-600',
-      details: ['20 points per first vote', 'Bullish/Bearish options', 'Affects rankings']
+      details: ['2 points per first vote', 'Bullish/Bearish options', 'Affects rankings']
     },
     {
       icon: FaPalette,
@@ -56,7 +56,7 @@ const TelegramBot = () => {
       description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your 20 free daily posts (2000 pts each).',
       command: 'Check in /help menu',
       color: 'from-amber-500 to-orange-600',
-      details: ['20 pts per raid completion', '20 pts per first vote', 'Spend 2000 pts for extra raids']
+      details: ['20 pts per raid completion', '2 pts per first vote', 'Spend 2000 pts for extra raids']
     },
     {
       icon: FaNetworkWired,
@@ -102,7 +102,7 @@ const TelegramBot = () => {
       features: [
         { name: 'Account Linking', included: true },
         { name: 'Complete Raids & Earn Points', included: true },
-        { name: 'Vote on Projects (Earn 20 pts)', included: true },
+        { name: 'Vote on Projects (Earn 2 pts)', included: true },
         { name: 'View Top 10 Bubble Rankings', included: true },
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
@@ -124,7 +124,7 @@ const TelegramBot = () => {
       features: [
         { name: 'Account Linking', included: true },
         { name: 'Complete Raids & Earn Points', included: true },
-        { name: 'Vote on Projects (Earn 20 pts)', included: true },
+        { name: 'Vote on Projects (Earn 2 pts)', included: true },
         { name: 'View Top 10 Bubble Rankings', included: true },
         { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
@@ -227,7 +227,7 @@ const TelegramBot = () => {
     {
       icon: FaCoins,
       title: '$100 Per 10K Points',
-      description: 'We pay your community REAL CASH. Participants earn points from raids (e.g. 20 per completion) and a one-time 20 per bubble (first vote only); redeem 10,000 points for $100 CAD.',
+      description: 'We pay your community REAL CASH. Participants earn points from raids (e.g. 20 per completion) and a one-time 2 per bubble (first vote only); redeem 10,000 points for $100 CAD.',
       highlight: 'Real cash payouts'
     }
   ];

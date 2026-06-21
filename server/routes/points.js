@@ -7,6 +7,7 @@ const { emitAffiliateEarningUpdate, emitRedemptionCreated, emitRedemptionProcess
 
 const REFERRER_BONUS_POINTS = 1;
 const LEGACY_REFERRER_BONUS_POINTS = 5;
+const BUBBLE_VOTE_POINTS = 2;
 
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
@@ -812,4 +813,5 @@ module.exports.revokeGameVotePoints = revokeGameVotePoints;
 module.exports.awardSocialMediaPoints = awardSocialMediaPoints;
 module.exports.awardPendingAffiliatePoints = awardPendingAffiliatePoints;
 module.exports.creditReferrerBonus = creditReferrerBonus;
-module.exports.revokeReferrerBonusForGameVote = revokeReferrerBonusForGameVote; 
+module.exports.revokeReferrerBonusForGameVote = revokeReferrerBonusForGameVote;
+module.exports.BUBBLE_VOTE_POINTS = BUBBLE_VOTE_POINTS; 

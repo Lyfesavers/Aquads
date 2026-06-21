@@ -36,7 +36,7 @@ const projectSteps = [
     title: 'Drive activity, earn the bump',
     oneLiner:
       "Bullish votes grow your bubble. Hit 100 votes and you auto-bump to top placement — no extra fees, ever. The more your community shows up, the bigger you appear.",
-    perks: ['Vote-driven bump', '100-vote threshold', '20 pts once per bubble · change anytime', 'Vote boosts'],
+    perks: ['Vote-driven bump', '100-vote threshold', '2 pts once per bubble · change anytime', 'Vote boosts'],
     cta: { label: 'See live bubbles', to: '/home' },
     mockup: 'votes',
   },

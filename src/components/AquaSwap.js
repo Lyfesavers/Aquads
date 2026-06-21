@@ -3069,7 +3069,7 @@ const AquaSwap = ({
               onClick={() => handleChartVote('bearish')}
               disabled={isVotingOnSelectedProject}
               aria-label="Vote bearish"
-              title="20 points once per bubble on your first vote; you can change anytime."
+              title="2 points once per bubble on your first vote; you can change anytime."
             >
               {isVotingOnSelectedProject ? (
                 <span className="aquaswap-vote-fab-spinner" aria-hidden />
@@ -3084,7 +3084,7 @@ const AquaSwap = ({
               onClick={() => handleChartVote('bullish')}
               disabled={isVotingOnSelectedProject}
               aria-label="Vote bullish"
-              title="20 points once per bubble on your first vote; you can change anytime."
+              title="2 points once per bubble on your first vote; you can change anytime."
             >
               {isVotingOnSelectedProject ? (
                 <span className="aquaswap-vote-fab-spinner" aria-hidden />

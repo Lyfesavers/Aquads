@@ -7,7 +7,7 @@ const FacebookRaid = require('../models/FacebookRaid');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { emitAdEvent } = require('../middleware/socketEmitter');
-const { awardListingPoints, creditReferrerBonus } = require('./points');
+const { awardListingPoints, creditReferrerBonus, BUBBLE_VOTE_POINTS } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
@@ -894,7 +894,7 @@ router.post('/:id/vote', auth, async (req, res) => {
     // Flag to determine if we need to award points
     let shouldAwardPoints = false;
     
-    // One-time 20 pts per bubble (web uses `Voted on bubble:`; legacy Telegram used `Voted on project:` + title)
+    // One-time BUBBLE_VOTE_POINTS per bubble (web uses `Voted on bubble:`; legacy Telegram used `Voted on project:` + title)
     const bubblePointsKey = `Voted on bubble: ${adId}`;
     const legacyProjectTitleReason = ad.title ? `Voted on project: ${ad.title}` : null;
     const alreadyReceivedPoints = user.pointsHistory.some(
@@ -952,14 +952,14 @@ router.post('/:id/vote', auth, async (req, res) => {
       shouldAwardPoints = !alreadyReceivedPoints;
       
       if (shouldAwardPoints) {
-        // Award 20 points for voting on this ad
+        // Award points for voting on this ad
         await User.findByIdAndUpdate(
           userId,
           {
-            $inc: { points: 20 },
+            $inc: { points: BUBBLE_VOTE_POINTS },
             $push: {
               pointsHistory: {
-                amount: 20,
+                amount: BUBBLE_VOTE_POINTS,
                 reason: `Voted on bubble: ${adId}`,
                 createdAt: new Date()
               }
@@ -991,7 +991,7 @@ router.post('/:id/vote', auth, async (req, res) => {
         bullishVotes: finalAd.bullishVotes,
         bearishVotes: finalAd.bearishVotes,
         userVote: voteType,
-        pointsAwarded: shouldAwardPoints ? 20 : 0,
+        pointsAwarded: shouldAwardPoints ? BUBBLE_VOTE_POINTS : 0,
         isBumped: finalAd.isBumped,
         size: finalAd.size
       });
@@ -1017,14 +1017,14 @@ router.post('/:id/vote', auth, async (req, res) => {
       shouldAwardPoints = !alreadyReceivedPoints;
       
       if (shouldAwardPoints) {
-        // Award 20 points for voting on this ad
+        // Award points for voting on this ad
         await User.findByIdAndUpdate(
           userId,
           {
-            $inc: { points: 20 },
+            $inc: { points: BUBBLE_VOTE_POINTS },
             $push: {
               pointsHistory: {
-                amount: 20,
+                amount: BUBBLE_VOTE_POINTS,
                 reason: `Voted on bubble: ${adId}`,
                 createdAt: new Date()
               }
@@ -1056,7 +1056,7 @@ router.post('/:id/vote', auth, async (req, res) => {
         bullishVotes: finalAd.bullishVotes,
         bearishVotes: finalAd.bearishVotes,
         userVote: voteType,
-        pointsAwarded: shouldAwardPoints ? 20 : 0,
+        pointsAwarded: shouldAwardPoints ? BUBBLE_VOTE_POINTS : 0,
         isBumped: finalAd.isBumped,
         size: finalAd.size
       });

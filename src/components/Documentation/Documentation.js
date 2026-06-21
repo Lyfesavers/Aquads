@@ -1073,6 +1073,7 @@ The voting system allows the community to express sentiment on projects and infl
 
 - Must be logged in to vote
 - One vote stance per account per project (you may switch bullish ↔ bearish)
+- Earn **2 points** once per bubble on your first vote (switching stance does not award again)
 - Votes are reflected on the project and map
 - Cannot vote on your own project
 
@@ -3984,7 +3985,7 @@ For Facebook raid participation:
 
 - ✅ FREE raid posts (vote bump threshold applies): **Premium**: up to **5**/day before bump, up to **20**/day once bumped · **Starter (free)**: **1**/day before bump, up to **20**/day once bumped
 - ✅ Complete raids & earn 20 points each
-- ✅ Vote on projects (earn 20 pts per first vote)
+- ✅ Vote on projects (earn 2 pts per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after your free daily quota)
 - **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocked **custom** logo/video on notifications via \`/setbranding\` once bumped (**100+ bullish**).
@@ -4011,7 +4012,7 @@ When you list your project as **Premium** and it reaches **bumped** status (**10
 ### Points System
 
 - **Earn**: 20 points per raid completion
-- **Earn**: 20 points per first vote on each project
+- **Earn**: 2 points per first vote on each project
 - **Spend**: 2000 points for additional raids
 - **Redeem**: $100 CAD per 10,000 points
 
@@ -4131,7 +4132,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 
 **Bullish vs Bearish:**
 - Click 👍 (Bullish) or 👎 (Bearish) on any project
-- First vote on each project earns 20 points
+- First vote on each project earns 2 points
 - Votes affect bubble rankings
 - Projects with more bullish votes trend higher
 
@@ -4199,7 +4200,7 @@ Purchase boosts via \`/boostvote\`:
 | Action | Points |
 |--------|--------|
 | Complete a raid | +20 pts |
-| First vote on project | +20 pts |
+| First vote on project | +2 pts |
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
