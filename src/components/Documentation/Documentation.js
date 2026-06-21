@@ -921,7 +921,7 @@ Full **project owner** features on Aquads (such as editing your listing from the
 If you officially represent a project that is already listed:
 
 1. **Log in** to Aquads (email verification required)
-2. Go to **[Claim your bubble](/claim-bubble)**
+2. Go to [Claim your bubble](/claim-bubble)
 3. **Find your listing** using your token contract address, pair address, or listing ID
 4. **Generate a verification code** and post it in a public post on **X (Twitter)** from an account your team controls
 5. **Submit your claim** with the URL of that X post and the verification code
@@ -972,7 +972,7 @@ Yes. Email [info@aquads.xyz](mailto:info@aquads.xyz) with the details above. We 
 **No.** It means your project appeared in our automated discovery process. It is not an endorsement.
 
 **How do I claim my bubble?**  
-Use **[Claim your bubble](/claim-bubble)** and complete X verification as described above.
+Use [Claim your bubble](/claim-bubble) and complete X verification as described above.
 
 **What do I get after claiming?**  
 Ownership of the listing on your Aquads account with **free Starter-tier** project tools. Premium and paid marketing packages are separate.
@@ -5200,6 +5200,15 @@ const Documentation = () => {
         return;
       }
 
+      if (line.startsWith('> ℹ️')) {
+        elements.push(
+          <Callout key={`callout-${index}`} type="info">
+            {renderInlineFormatting(line.replace(/^> ℹ️\s*/, '').trim())}
+          </Callout>
+        );
+        return;
+      }
+
       // Lists
       if (line.startsWith('- ') || line.startsWith('* ')) {
         if (!inList) {
@@ -5276,42 +5285,91 @@ const Documentation = () => {
     return elements;
   };
 
+  const renderDocLink = (label, href, key) => {
+    const className = 'text-cyan-400 hover:text-cyan-300 underline';
+    const isInternal = href.startsWith('/') && !href.startsWith('//');
+
+    if (isInternal) {
+      return (
+        <Link key={key} to={href} className={className}>
+          {label}
+        </Link>
+      );
+    }
+
+    const isMailto = href.startsWith('mailto:');
+    return (
+      <a
+        key={key}
+        href={href}
+        target={isMailto ? undefined : '_blank'}
+        rel={isMailto ? undefined : 'noopener noreferrer'}
+        className={className}
+      >
+        {label}
+        {!isMailto && <> <FaExternalLinkAlt className="inline text-xs" /></>}
+      </a>
+    );
+  };
+
   // Render inline formatting (bold, italic, code, links)
   const renderInlineFormatting = (text) => {
-    // Handle inline code
-    let parts = text.split(/(`[^`]+`)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return (
-          <code key={i} className="bg-gray-800 text-cyan-400 px-1.5 py-0.5 rounded text-sm font-mono">
-            {part.slice(1, -1)}
+    if (!text) return null;
+
+    const elements = [];
+    let key = 0;
+    const inlinePattern = /(\*\*\[[^\]]+\]\([^)]+\)\*\*|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)|`[^`]+`)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = inlinePattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        elements.push(text.slice(lastIndex, match.index));
+      }
+
+      const token = match[0];
+
+      if (token.startsWith('**[') && token.endsWith(')**')) {
+        const inner = token.slice(2, -2);
+        const linkMatch = inner.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+          elements.push(
+            <strong key={key++} className="text-white">
+              {renderDocLink(linkMatch[1], linkMatch[2])}
+            </strong>
+          );
+        } else {
+          elements.push(token);
+        }
+      } else if (token.startsWith('**') && token.endsWith('**')) {
+        elements.push(
+          <strong key={key++} className="text-white">{token.slice(2, -2)}</strong>
+        );
+      } else if (token.startsWith('[')) {
+        const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+          elements.push(renderDocLink(linkMatch[1], linkMatch[2], key++));
+        } else {
+          elements.push(token);
+        }
+      } else if (token.startsWith('`') && token.endsWith('`')) {
+        elements.push(
+          <code key={key++} className="bg-gray-800 text-cyan-400 px-1.5 py-0.5 rounded text-sm font-mono">
+            {token.slice(1, -1)}
           </code>
         );
+      } else {
+        elements.push(token);
       }
-      // Handle bold
-      let boldParts = part.split(/(\*\*[^*]+\*\*)/g);
-      return boldParts.map((boldPart, j) => {
-        if (boldPart.startsWith('**') && boldPart.endsWith('**')) {
-          return <strong key={`${i}-${j}`} className="text-white">{boldPart.slice(2, -2)}</strong>;
-        }
-        // Handle links
-        const linkMatch = boldPart.match(/\[([^\]]+)\]\(([^)]+)\)/);
-        if (linkMatch) {
-          return (
-            <a 
-              key={`${i}-${j}`}
-              href={linkMatch[2]}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-cyan-400 hover:text-cyan-300 underline"
-            >
-              {linkMatch[1]} <FaExternalLinkAlt className="inline text-xs" />
-            </a>
-          );
-        }
-        return boldPart;
-      });
-    });
+
+      lastIndex = inlinePattern.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      elements.push(text.slice(lastIndex));
+    }
+
+    return elements.length === 1 ? elements[0] : elements;
   };
 
   return (
