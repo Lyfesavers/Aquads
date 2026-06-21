@@ -378,6 +378,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 },
                 "areaServed": "Global",
                 "url": "https://www.aquads.xyz/list-token-free",
+                "image": "https://www.aquads.xyz/metalogo.png",
                 "offers": {
                   "@type": "Offer",
                   "price": String(pkg.price),
