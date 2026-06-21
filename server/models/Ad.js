@@ -246,6 +246,38 @@ const adSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  /** manual = user submitted; dex-feed = auto-listed from DexScreener cron */
+  listingSource: {
+    type: String,
+    enum: ['manual', 'dex-feed'],
+    default: 'manual'
+  },
+  claimStatus: {
+    type: String,
+    enum: ['n/a', 'unclaimed', 'claimed'],
+    default: 'n/a'
+  },
+  contractAddress: {
+    type: String,
+    default: null,
+    trim: true
+  },
+  feedListedAt: {
+    type: Date,
+    default: null
+  },
+  feedMetricsSnapshot: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+  claimedAt: {
+    type: Date,
+    default: null
+  },
+  claimedBy: {
+    type: String,
+    default: null
   }
 });
 
@@ -264,6 +296,8 @@ adSchema.index({ pairAddress: 1 }); // For pair address lookups
 adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
 adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
 adSchema.index({ discordChannelId: 1 }, { sparse: true });
+adSchema.index({ listingSource: 1, claimStatus: 1, status: 1 });
+adSchema.index({ contractAddress: 1 }, { sparse: true });
 
 // Fix the double export
 module.exports = mongoose.model('Ad', adSchema); 

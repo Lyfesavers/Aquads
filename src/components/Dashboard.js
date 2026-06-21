@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, transferDexFeedOwnership } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -211,6 +211,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const [isLoadingListings, setIsLoadingListings] = useState(false);
   const [approvingListingId, setApprovingListingId] = useState(null);
   const [isRejectingListing, setIsRejectingListing] = useState(false);
+  const [unclaimedDexAds, setUnclaimedDexAds] = useState([]);
+  const [unclaimedDexSearch, setUnclaimedDexSearch] = useState('');
+  const [isLoadingUnclaimedDex, setIsLoadingUnclaimedDex] = useState(false);
+  const [transferUsernames, setTransferUsernames] = useState({});
+  const [transferringDexAdId, setTransferringDexAdId] = useState(null);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [activeAdminSection, setActiveAdminSection] = useState('listings');
 
@@ -863,6 +868,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       setIsLoadingListings(false);
     };
 
+    const handleUnclaimedDexAdsLoaded = (data) => {
+      setUnclaimedDexAds(data.ads || []);
+      setIsLoadingUnclaimedDex(false);
+    };
+
+    const handleUnclaimedDexAdsError = (error) => {
+      console.error('Error loading unclaimed dex listings via socket:', error);
+      setIsLoadingUnclaimedDex(false);
+    };
+
+    const handleUnclaimedDexAdsUpdated = (data) => {
+      if (data.action === 'transfer' && data.adId) {
+        setUnclaimedDexAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== data.adId));
+        return;
+      }
+      if (data.action === 'create' && data.ad) {
+        setUnclaimedDexAds((prev) => {
+          const id = data.ad.id || data.ad._id;
+          if (prev.some((ad) => (ad.id || ad._id) === id)) return prev;
+          return [data.ad, ...prev];
+        });
+      }
+    };
+
+    const handleDexFeedListingCreated = (data) => {
+      if (data?.ad) {
+        handleUnclaimedDexAdsUpdated({ action: 'create', ad: data.ad });
+      }
+    };
+
     // Token purchase socket handlers
     const handleTokenPurchaseApproved = (data) => {
       // Remove the approved token purchase from the pending list
@@ -942,6 +977,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     socket.on('pendingAdsLoaded', handlePendingAdsLoaded);
     socket.on('pendingAdsError', handlePendingAdsError);
 
+    socket.on('unclaimedDexAdsLoaded', handleUnclaimedDexAdsLoaded);
+    socket.on('unclaimedDexAdsError', handleUnclaimedDexAdsError);
+    socket.on('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
+    socket.on('dexFeedListingCreated', handleDexFeedListingCreated);
+
     // Token purchase socket listeners
     socket.on('tokenPurchaseApproved', handleTokenPurchaseApproved);
     socket.on('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -980,6 +1020,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       socket.off('pendingAdsLoaded', handlePendingAdsLoaded);
       socket.off('pendingAdsError', handlePendingAdsError);
 
+      socket.off('unclaimedDexAdsLoaded', handleUnclaimedDexAdsLoaded);
+      socket.off('unclaimedDexAdsError', handleUnclaimedDexAdsError);
+      socket.off('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
+      socket.off('dexFeedListingCreated', handleDexFeedListingCreated);
+
       // Token purchase socket cleanup
       socket.off('tokenPurchaseApproved', handleTokenPurchaseApproved);
       socket.off('tokenPurchaseRejected', handleTokenPurchaseRejected);
@@ -1010,6 +1055,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     
     // Step 1: Ads (immediate)
     requestPendingAdsViaSocket();
+
+    timers.push(setTimeout(() => {
+      requestUnclaimedDexAdsViaSocket();
+    }, 25));
     
     // Step 2: Token purchases (50ms)
     timers.push(setTimeout(() => {
@@ -1045,6 +1094,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     
     return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, activeTab, socket]);
+
+  useEffect(() => {
+    if (!currentUser?.isAdmin || activeTab !== 'admin' || activeAdminSection !== 'dexFeed') return;
+    requestUnclaimedDexAdsViaSocket(unclaimedDexSearch);
+  }, [currentUser, activeTab, activeAdminSection, unclaimedDexSearch]);
 
   useEffect(() => {
     const valid = new Set(
@@ -2995,6 +3049,47 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     });
   };
 
+  const requestUnclaimedDexAdsViaSocket = (q = '') => {
+    if (!socket || !currentUser?.isAdmin) return;
+    setIsLoadingUnclaimedDex(true);
+    socket.emit('requestUnclaimedDexAds', {
+      userId: currentUser.userId || currentUser.id,
+      isAdmin: currentUser.isAdmin,
+      q: String(q || '').trim()
+    });
+  };
+
+  const handleTransferDexFeedOwnership = async (adId) => {
+    const username = String(transferUsernames[adId] || '').trim();
+    if (!username) {
+      showNotification('Enter a username to transfer ownership', 'error');
+      return;
+    }
+    try {
+      setTransferringDexAdId(adId);
+      await transferDexFeedOwnership(adId, username);
+      setUnclaimedDexAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== adId));
+      setTransferUsernames((prev) => {
+        const next = { ...prev };
+        delete next[adId];
+        return next;
+      });
+      showNotification(`Listing transferred to @${username}`, 'success');
+    } catch (error) {
+      showNotification(error.message || 'Failed to transfer ownership', 'error');
+    } finally {
+      setTransferringDexAdId(null);
+    }
+  };
+
+  const formatDexFeedUsd = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
+    return `$${n.toFixed(0)}`;
+  };
+
   const fetchPendingBubbleListings = async () => {
     if (!currentUser?.isAdmin) return;
     try {
@@ -3380,6 +3475,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
     { id: 'banners', label: 'Banner Mgmt', icon: '🎯', badge: bannerAds.filter(b => b.status === 'pending').length },
     { id: 'giftcards', label: 'Redemptions', icon: '🎁', badge: pendingRedemptions.length },
     { id: 'listings', label: 'Bubble Listings', icon: '🫧', badge: pendingListings.length },
+    { id: 'dexFeed', label: 'Dex Feed', icon: '🌊', badge: unclaimedDexAds.length },
     { id: 'allads', label: 'All Ads', icon: '📱', badge: 0 },
     { id: 'premium', label: 'Premium Requests', icon: '💎', badge: premiumRequests.length },
     { id: 'tokens', label: 'Token Purchases', icon: '🪙', badge: pendingTokenPurchases.length },
@@ -5523,6 +5619,113 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                                 <p className="text-xs text-gray-500">
                                   Submitted: {new Date(listing.createdAt).toLocaleString()}
                                 </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeAdminSection === 'dexFeed' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-2">Dex Feed Listings</h3>
+                    <p className="text-gray-400 text-sm mb-6">
+                      Auto-listed projects owned by <span className="text-cyan-300">aquads-feed</span>. Transfer to a user to claim ownership (Starter tier).
+                    </p>
+                    <div className="mb-4">
+                      <input
+                        type="search"
+                        value={unclaimedDexSearch}
+                        onChange={(e) => setUnclaimedDexSearch(e.target.value)}
+                        placeholder="Search by name, contract, pair, chain, or ID…"
+                        className="w-full md:max-w-md bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      {isLoadingUnclaimedDex ? (
+                        <div className="text-center py-8">
+                          <div className="spinner"></div>
+                          <p className="mt-2 text-gray-400">Loading unclaimed dex listings…</p>
+                        </div>
+                      ) : unclaimedDexAds.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          {unclaimedDexSearch.trim()
+                            ? 'No unclaimed listings match your search'
+                            : 'No unclaimed dex feed listings yet'}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {unclaimedDexAds.map((listing) => {
+                            const listingId = listing.id || listing._id;
+                            const metrics = listing.feedMetricsSnapshot || {};
+                            return (
+                              <div key={listingId} className="bg-gray-800 rounded-lg p-5 border border-teal-500/30">
+                                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                                  <div className="flex items-start gap-4 min-w-0">
+                                    <img
+                                      src={listing.logo}
+                                      alt={listing.title}
+                                      className="w-14 h-14 rounded-full object-cover border border-gray-600 shrink-0"
+                                      loading="lazy"
+                                      onError={(e) => { e.target.src = 'https://placehold.co/56x56?text=?'; }}
+                                    />
+                                    <div className="min-w-0">
+                                      <h4 className="font-bold text-white text-lg truncate">{listing.title}</h4>
+                                      <p className="text-sm text-gray-400 capitalize">
+                                        {listing.blockchain || '—'} · Listed {listing.feedListedAt ? new Date(listing.feedListedAt).toLocaleString() : '—'}
+                                      </p>
+                                      <p className="text-xs text-gray-500 font-mono break-all mt-1">
+                                        CA: {listing.contractAddress || '—'}
+                                      </p>
+                                      <p className="text-xs text-gray-500 font-mono break-all">
+                                        Pair: {listing.pairAddress || '—'}
+                                      </p>
+                                      <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-300">
+                                        Unclaimed · Dex Feed
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 text-sm">
+                                    <div className="bg-gray-900 rounded p-2 text-center">
+                                      <div className="text-gray-500 text-xs">Market cap</div>
+                                      <div className="text-white font-medium">{formatDexFeedUsd(metrics.marketCap)}</div>
+                                    </div>
+                                    <div className="bg-gray-900 rounded p-2 text-center">
+                                      <div className="text-gray-500 text-xs">Liquidity</div>
+                                      <div className="text-white font-medium">{formatDexFeedUsd(metrics.liquidity)}</div>
+                                    </div>
+                                    <div className="bg-gray-900 rounded p-2 text-center">
+                                      <div className="text-gray-500 text-xs">Pair age</div>
+                                      <div className="text-white font-medium">
+                                        {metrics.pairAgeHours != null ? `${Number(metrics.pairAgeHours).toFixed(1)}h` : '—'}
+                                      </div>
+                                    </div>
+                                    <div className="bg-gray-900 rounded p-2 text-center">
+                                      <div className="text-gray-500 text-xs">24h txns</div>
+                                      <div className="text-white font-medium">{metrics.txns24h ?? '—'}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center border-t border-gray-700 pt-4">
+                                  <input
+                                    type="text"
+                                    value={transferUsernames[listingId] || ''}
+                                    onChange={(e) => setTransferUsernames((prev) => ({ ...prev, [listingId]: e.target.value }))}
+                                    placeholder="Transfer to @username"
+                                    className="flex-1 bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    disabled={transferringDexAdId === listingId}
+                                  />
+                                  <button
+                                    onClick={() => handleTransferDexFeedOwnership(listingId)}
+                                    disabled={transferringDexAdId === listingId}
+                                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
+                                  >
+                                    {transferringDexAdId === listingId && <FaSpinner className="animate-spin" />}
+                                    Transfer ownership
+                                  </button>
+                                </div>
                               </div>
                             );
                           })}

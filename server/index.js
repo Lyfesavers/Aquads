@@ -48,6 +48,9 @@ const { syncWeb3CareerJobs } = require('./services/web3CareerJobsSync');
 const { syncMarketNews } = require('./services/marketNewsSync');
 const { syncFreeCourses } = require('./services/freeCoursesSync');
 const { runSuspiciousAffiliatesScan } = require('./services/suspiciousAffiliatesScan');
+const { syncDexFeedListings } = require('./services/dexFeedSync');
+const { ensureDexFeedUser } = require('./utils/ensureDexFeedUser');
+const { DEX_FEED_ENABLED } = require('./constants/dexFeed');
 const { sanitizeForRegex } = require('./utils/security');
 const aquapayRoutes = require('./routes/aquapay');
 const walletAnalyzerRoutes = require('./routes/walletAnalyzer');
@@ -482,6 +485,29 @@ cron.schedule('30 6 * * *', async () => {
   timezone: 'UTC',
 });
 
+// Dex feed — auto-list qualifying DEX projects (every 5 minutes when enabled)
+if (DEX_FEED_ENABLED) {
+  setTimeout(async () => {
+    try {
+      await ensureDexFeedUser();
+      console.log('[DexFeed] Running initial sync on server start...');
+      await syncDexFeedListings();
+    } catch (error) {
+      console.error('[DexFeed] Error in initial sync:', error);
+    }
+  }, 60000);
+
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      await syncDexFeedListings();
+    } catch (error) {
+      console.error('[DexFeed] Error in scheduled sync:', error);
+    }
+  });
+} else {
+  console.log('[DexFeed] Disabled (set DEX_FEED_ENABLED=true to enable)');
+}
+
 // Middleware
 const corsOptions = {
   origin: function (origin, callback) {
@@ -672,6 +698,9 @@ mongoose.connect(process.env.MONGODB_URI, {
   warmupBlogsCache();
   warmupServicesCache();
   warmupRaidsCache();
+  ensureDexFeedUser().catch((err) => {
+    console.error('[DexFeed] ensureDexFeedUser on connect:', err.message);
+  });
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry

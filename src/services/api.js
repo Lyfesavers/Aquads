@@ -2132,6 +2132,23 @@ export const rejectAd = async (adId, rejectionReason) => {
   return await response.json();
 };
 
+/** Admin: transfer unclaimed dex-feed listing to a user account */
+export const transferDexFeedOwnership = async (adId, username) => {
+  const response = await fetch(`${API_URL}/ads/admin/transfer-ownership`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ adId, username })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to transfer ownership');
+  }
+  return data;
+};
+
 // Simple connectivity test for mobile
 export const testConnectivity = async () => {
   try {

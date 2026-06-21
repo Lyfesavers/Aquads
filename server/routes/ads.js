@@ -32,6 +32,12 @@ const {
   getListingTier
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
+const {
+  LISTING_SOURCE_DEX_FEED,
+  CLAIM_STATUS_UNCLAIMED,
+  CLAIM_STATUS_CLAIMED,
+  DEX_FEED_OWNER_USERNAME
+} = require('../constants/dexFeed');
 
 const LAUNCH_CHECKLIST_STEPS = [
   'telegram_bot',
@@ -1108,6 +1114,134 @@ router.get('/pending', auth, async (req, res) => {
     res.json(pendingAds);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch pending ads' });
+  }
+});
+
+// GET unclaimed dex-feed listings (admin only)
+router.get('/admin/unclaimed-dex-feed', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const q = String(req.query.q || '').trim();
+    const filter = {
+      listingSource: LISTING_SOURCE_DEX_FEED,
+      claimStatus: CLAIM_STATUS_UNCLAIMED,
+      owner: DEX_FEED_OWNER_USERNAME,
+      status: 'active'
+    };
+
+    let ads = await Ad.find(filter).sort({ feedListedAt: -1, createdAt: -1 }).lean();
+
+    if (q) {
+      const lower = q.toLowerCase();
+      ads = ads.filter(
+        (ad) =>
+          String(ad.title || '').toLowerCase().includes(lower) ||
+          String(ad.contractAddress || '').toLowerCase().includes(lower) ||
+          String(ad.pairAddress || '').toLowerCase().includes(lower) ||
+          String(ad.blockchain || '').toLowerCase().includes(lower) ||
+          String(ad.id || '').toLowerCase().includes(lower)
+      );
+    }
+
+    res.json({ ads, total: ads.length });
+  } catch (error) {
+    console.error('[DexFeed] unclaimed list error:', error);
+    res.status(500).json({ error: 'Failed to fetch unclaimed dex feed listings' });
+  }
+});
+
+// POST transfer dex-feed listing ownership (admin only)
+router.post('/admin/transfer-ownership', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const adId = String(req.body?.adId || '').trim();
+    const targetUsername = String(req.body?.username || '').trim();
+
+    if (!adId || !targetUsername) {
+      return res.status(400).json({ error: 'adId and username are required' });
+    }
+
+    if (targetUsername.toLowerCase() === DEX_FEED_OWNER_USERNAME.toLowerCase()) {
+      return res.status(400).json({ error: 'Cannot transfer to the system feed account' });
+    }
+
+    const targetUser = await User.findOne({ username: targetUsername }).select('username').lean();
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Target user not found' });
+    }
+
+    const ad = await Ad.findOne({ id: adId });
+    if (!ad) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    if (ad.listingSource !== LISTING_SOURCE_DEX_FEED) {
+      return res.status(400).json({ error: 'Not a dex-feed listing' });
+    }
+
+    if (ad.claimStatus !== CLAIM_STATUS_UNCLAIMED) {
+      return res.status(400).json({ error: 'Listing is not unclaimed' });
+    }
+
+    if (ad.owner !== DEX_FEED_OWNER_USERNAME) {
+      return res.status(400).json({ error: 'Listing is not owned by the dex feed account' });
+    }
+
+    const duplicateOwned = await Ad.findOne({
+      owner: targetUsername,
+      pairAddress: ad.pairAddress,
+      status: { $in: ['active', 'approved', 'pending'] },
+      id: { $ne: ad.id }
+    })
+      .select('id title')
+      .lean();
+
+    if (duplicateOwned) {
+      return res.status(400).json({
+        error: `User already has a listing for this pair (${duplicateOwned.title})`
+      });
+    }
+
+    ad.owner = targetUsername;
+    ad.claimStatus = CLAIM_STATUS_CLAIMED;
+    ad.claimedAt = new Date();
+    ad.claimedBy = targetUsername;
+    await ad.save();
+
+    invalidateAdsCache();
+
+    try {
+      const io = socket.getIO();
+      io.emit('adsUpdated', { type: 'update', ad });
+      const unclaimedCount = await Ad.countDocuments({
+        listingSource: LISTING_SOURCE_DEX_FEED,
+        claimStatus: CLAIM_STATUS_UNCLAIMED,
+        owner: DEX_FEED_OWNER_USERNAME,
+        status: 'active'
+      });
+      io.emit('unclaimedDexAdsUpdated', {
+        action: 'transfer',
+        adId: ad.id,
+        newOwner: targetUsername,
+        total: unclaimedCount
+      });
+    } catch (socketErr) {
+      console.error('[DexFeed] transfer socket emit failed:', socketErr.message);
+    }
+
+    res.json({
+      message: 'Ownership transferred successfully',
+      ad
+    });
+  } catch (error) {
+    console.error('[DexFeed] transfer error:', error);
+    res.status(500).json({ error: 'Failed to transfer ownership' });
   }
 });
 
