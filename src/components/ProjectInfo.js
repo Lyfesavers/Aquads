@@ -350,9 +350,9 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         </script>
 
         {/*
-          ItemList of paid Marketing & PR add-on packages (AquaSplash → AquaStorm).
-          Each tier is a Product with a real Offer so price snippets can show in
-          Google and AI engines can quote pricing for "Aquads PR cost" queries.
+          ItemList of paid Marketing & PR add-on packages (AquaSplash → AquaLegend).
+          Each tier is a partner-delivered Service with a real Offer so price
+          snippets can show in Google without Product review/rating expectations.
         */}
         <script type="application/ld+json">
           {JSON.stringify({
@@ -367,14 +367,17 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               "@type": "ListItem",
               "position": i + 1,
               "item": {
-                "@type": "Product",
+                "@type": "Service",
+                "serviceType": "Crypto press release distribution",
                 "name": `${pkg.name} — ${pkg.partnerName}`,
-                "category": "Crypto press release distribution",
                 "description": `${pkg.idealFor}. Turnaround: ${pkg.turnaround}. Includes: ${pkg.features.join(", ")}.`,
-                "brand": {
-                  "@type": "Brand",
-                  "name": "Aquads"
+                "provider": {
+                  "@type": "Organization",
+                  "name": "Aquads",
+                  "url": "https://www.aquads.xyz"
                 },
+                "areaServed": "Global",
+                "url": "https://www.aquads.xyz/list-token-free",
                 "offers": {
                   "@type": "Offer",
                   "price": String(pkg.price),
