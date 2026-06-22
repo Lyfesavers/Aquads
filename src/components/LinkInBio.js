@@ -442,6 +442,38 @@ const LinkInBio = () => {
     hasBackgroundImage
   });
   const tileFrame = getTilePremiumFrame(accentHex, btnLook.shape);
+  const advertiseBtnStyle = (() => {
+    const btn = normalizeHex(buttonHex);
+    const accent = normalizeHex(accentHex);
+    const textColor = textColorHex || accent;
+    if (btnLook.fill === 'filled') {
+      const sameColor = btn.toLowerCase() === accent.toLowerCase();
+      return {
+        background: btnLook.translucent ? hexToRgba(btn, 0.48) : btn,
+        color: !btnLook.translucent && sameColor ? contrastOnTintHex(btn) : textColor,
+        border: `1px solid ${hexToRgba(accent, 0.72)}`,
+        backdropFilter: btnLook.translucent ? 'blur(12px)' : 'none',
+        boxShadow: `0 4px 18px ${hexToRgba(btn, 0.28)}`
+      };
+    }
+    if (btnLook.fill === 'minimal') {
+      return {
+        background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.18)',
+        color: textColor,
+        border: `2px solid ${hexToRgba(accent, 0.92)}`,
+        backdropFilter: btnLook.translucent ? 'blur(10px)' : 'none'
+      };
+    }
+    return {
+      background: btnLook.translucent
+        ? hexToRgba(btn, hasBackgroundImage ? 0.35 : 0.28)
+        : hexToRgba(btn, hasBackgroundImage ? 0.42 : 0.22),
+      color: textColor,
+      border: `1px solid ${hexToRgba(accent, 0.55)}`,
+      backdropFilter: btnLook.translucent ? 'blur(12px)' : 'none',
+      boxShadow: `0 4px 14px ${hexToRgba(btn, 0.2)}`
+    };
+  })();
 
   return (
     <motion.div
@@ -774,11 +806,8 @@ const LinkInBio = () => {
           >
             <button
               onClick={() => setShowAdModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300 hover:scale-[1.03] text-xs font-semibold shadow-lg hover:brightness-95"
-              style={{
-                background: '#f0ece6',
-                color: theme.accent
-              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300 hover:scale-[1.03] text-xs font-semibold hover:brightness-95"
+              style={advertiseBtnStyle}
             >
               <FaBullhorn className="w-3 h-3" />
               Advertise Here
