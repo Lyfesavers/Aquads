@@ -52,7 +52,7 @@ body {
   justify-content: center;
   backdrop-filter: blur(4px);
   background: rgba(23, 25, 35, 0.8);
-  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite;
+  animation: bubble-float 12s ease-in-out infinite;
   box-shadow: 0 0 10px 2px rgba(230, 0, 255, 0.5), 0 0 20px 5px rgba(230, 0, 255, 0.3), 0 0 30px 7px rgba(230, 0, 255, 0.1);
   transition: all 0.3s ease-in-out;
   pointer-events: auto;
@@ -106,25 +106,15 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-tablet 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
+    animation: bubble-float-tablet 12s ease-in-out infinite;
   }
   
   @keyframes bubble-float-tablet {
     0%, 100% {
-      transform: scale(0.7) translateY(0) rotate(0deg) !important;
-      filter: brightness(1);
-    }
-    25% {
-      transform: scale(0.7) translateY(-10px) rotate(1deg) !important;
-      filter: brightness(1.1);
+      transform: scale(0.7) translateY(0) !important;
     }
     50% {
-      transform: scale(0.7) translateY(0) rotate(0deg) !important;
-      filter: brightness(1);
-    }
-    75% {
-      transform: scale(0.7) translateY(10px) rotate(-1deg) !important;
-      filter: brightness(0.9);
+      transform: scale(0.7) translateY(-4px) !important;
     }
   }
 }
@@ -136,25 +126,15 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-mobile 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
+    animation: bubble-float-mobile 12s ease-in-out infinite;
   }
   
   @keyframes bubble-float-mobile {
     0%, 100% {
-      transform: scale(0.6) translateY(0) rotate(0deg) !important;
-      filter: brightness(1);
-    }
-    25% {
-      transform: scale(0.6) translateY(-10px) rotate(1deg) !important;
-      filter: brightness(1.1);
+      transform: scale(0.6) translateY(0) !important;
     }
     50% {
-      transform: scale(0.6) translateY(0) rotate(0deg) !important;
-      filter: brightness(1);
-    }
-    75% {
-      transform: scale(0.6) translateY(10px) rotate(-1deg) !important;
-      filter: brightness(0.9);
+      transform: scale(0.6) translateY(-4px) !important;
     }
   }
 }
@@ -194,23 +174,13 @@ body {
   }
 }
 
-/* Bubble Animation */
+/* Bubble Animation — gentle float only (pulse/shine removed for perf) */
 @keyframes bubble-float {
   0%, 100% {
-    transform: translateY(0) rotate(0deg);
-    filter: brightness(1);
-  }
-  25% {
-    transform: translateY(-10px) rotate(1deg);
-    filter: brightness(1.1);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(0) rotate(0deg);
-    filter: brightness(1);
-  }
-  75% {
-    transform: translateY(10px) rotate(-1deg);
-    filter: brightness(0.9);
+    transform: translateY(-4px);
   }
 }
 
@@ -228,7 +198,7 @@ body {
   animation-delay: -4s;
 }
 
-/* Add subtle shine effect */
+/* Static highlight (animated shine removed for perf) */
 .bubble::before {
   content: '';
   position: absolute;
@@ -240,19 +210,8 @@ body {
     rgba(255, 255, 255, 0.1) 0%,
     rgba(255, 255, 255, 0.05) 20%,
     transparent 60%);
-  animation: bubble-shine 6s linear infinite;
-  pointer-events: none; /* Make shine effect non-clickable */
-}
-
-@keyframes bubble-shine {
-  0%, 100% {
-    opacity: 0.5;
-    transform: scale(1) rotate(0deg);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1) rotate(180deg);
-  }
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Add subtle pulsing glow */
@@ -381,42 +340,42 @@ body {
 
 /* Blockchain-specific bubble classes */
 .bubble-ethereum {
-  animation: bubble-float 8s ease-in-out infinite, ethereum-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
 }
 
 .bubble-solana {
-  animation: bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
 }
 
 .bubble-bsc {
-  animation: bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
 }
 
 .bubble-polygon {
-  animation: bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
 }
 
 .bubble-pulsechain {
-  animation: bubble-float 8s ease-in-out infinite, pulsechain-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(46, 220, 170, 0.5), 0 0 20px 5px rgba(46, 220, 170, 0.3), 0 0 30px 7px rgba(46, 220, 170, 0.1);
 }
 
 .bubble-avalanche {
-  animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
 }
 
 .bubble-sui {
-  animation: bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
 }
 
 .bubble-base {
-  animation: bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
 }
 
@@ -503,22 +462,22 @@ body {
 }
 
 .bubble-arbitrum {
-  animation: bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
 }
 
 .bubble-kaspa {
-  animation: bubble-float 8s ease-in-out infinite, kaspa-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(133, 66, 230, 0.5), 0 0 20px 5px rgba(133, 66, 230, 0.3), 0 0 30px 7px rgba(133, 66, 230, 0.1);
 }
 
 .bubble-optimism {
-  animation: bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
 }
 
 .bubble-near {
-  animation: bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
 }
 
@@ -1384,42 +1343,42 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-fantom {
-  animation: bubble-float 8s ease-in-out infinite, fantom-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
 }
 
 .bubble-solana {
-  animation: bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
 }
 
 .bubble-bsc {
-  animation: bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
 }
 
 .bubble-polygon {
-  animation: bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
 }
 
 .bubble-pulsechain {
-  animation: bubble-float 8s ease-in-out infinite, pulsechain-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(46, 220, 170, 0.5), 0 0 20px 5px rgba(46, 220, 170, 0.3), 0 0 30px 7px rgba(46, 220, 170, 0.1);
 }
 
 .bubble-avalanche {
-  animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
 }
 
 .bubble-sui {
-  animation: bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
 }
 
 .bubble-base {
-  animation: bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
 }
 
@@ -1506,22 +1465,22 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-arbitrum {
-  animation: bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
 }
 
 .bubble-kaspa {
-  animation: bubble-float 8s ease-in-out infinite, kaspa-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(133, 66, 230, 0.5), 0 0 20px 5px rgba(133, 66, 230, 0.3), 0 0 30px 7px rgba(133, 66, 230, 0.1);
 }
 
 .bubble-optimism {
-  animation: bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
 }
 
 .bubble-near {
-  animation: bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
+  animation: bubble-float 12s ease-in-out infinite !important;
   box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
 }
 

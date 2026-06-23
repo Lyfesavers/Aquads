@@ -3324,7 +3324,6 @@ function App() {
                                 width: '100%',
                                 height: '100%',
                                 transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                                animationDuration: `${8 + Math.random() * 4}s`,
                                 cursor: 'pointer',
                                 touchAction: 'auto'
                               }}
