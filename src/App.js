@@ -99,7 +99,7 @@ const ProjectAgentFab = lazy(() => import('./components/projectAgent/ProjectAgen
 const TelegramBot = lazy(() => import('./components/TelegramBot'));
 const PublicResume = lazy(() => import('./components/PublicResume'));
 const LinkInBio = lazy(() => import('./components/LinkInBio'));
-import LandingPage from './components/LandingPage';
+const LandingPage = lazy(() => import('./components/LandingPage'));
 const AquaPayWithPhantom = lazy(() => import('./components/AquaPayWithPhantom'));
 const CustodialPayment = lazy(() => import('./components/FreelancerEscrow/CustodialPayment'));
 const AquaPayInfo = lazy(() => import('./components/AquaPayInfo'));
@@ -531,6 +531,31 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
     previousPath.current = location.pathname;
   }, [location.pathname, arrangeDesktopGrid, adjustBubblesForMobile]);
   
+  return null;
+};
+
+/** Routes that render the bubble map or pass `ads` into page components — skip fetch on `/` and other marketing pages. */
+function routeNeedsAdsFetch(pathname) {
+  if (pathname === '/home') return true;
+  if (pathname.startsWith('/dashboard')) return true;
+  if (pathname === '/games') return true;
+  if (pathname === '/list-token-free') return true;
+  if (pathname === '/swap' || pathname === '/aquaswap' || pathname === '/share/aquaswap') return true;
+  if (pathname.startsWith('/share/blog/')) return true;
+  if (pathname === '/learn') return true;
+  if (pathname.startsWith('/learn/') && !pathname.startsWith('/learn/courses')) return true;
+  return false;
+}
+
+const AdsFetchOnRoute = ({ loadAdsFromApi }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (routeNeedsAdsFetch(location.pathname)) {
+      loadAdsFromApi();
+    }
+  }, [location.pathname, loadAdsFromApi]);
+
   return null;
 };
 
@@ -978,10 +1003,6 @@ function App() {
       isFirstAdsLoadRef.current = false;
     }
   }, [currentUser?.userId, currentUser?.isAdmin]);
-
-  useEffect(() => {
-    loadAdsFromApi();
-  }, [loadAdsFromApi]);
 
   // Update socket connection handling
   useEffect(() => {
@@ -2786,6 +2807,7 @@ function App() {
           currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
+        <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} />
         <DesktopInstallPrompt />
         {currentUser?.token && (
           <Suspense fallback={null}>

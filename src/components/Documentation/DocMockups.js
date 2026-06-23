@@ -413,7 +413,7 @@ export const LinkInBioMockup = () => (
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: "url('https://i.postimg.cc/8PqxmTrD/Untitled-design-(5).png')",
+              backgroundImage: "url('/images/link-in-bio-mockup-bg.webp')",
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
