@@ -114,57 +114,6 @@ const FAQItem = ({ question, answer, index }) => {
   );
 };
 
-// Floating particle component
-const FloatingParticle = ({ delay, size, color, x, y }) => (
-  <motion.div
-    className="absolute rounded-full pointer-events-none"
-    style={{
-      width: size,
-      height: size,
-      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-      left: `${x}%`,
-      top: `${y}%`,
-    }}
-    animate={{
-      y: [0, -30, 0],
-      x: [0, 15, -15, 0],
-      scale: [1, 1.2, 0.9, 1],
-      opacity: [0.4, 0.8, 0.4],
-    }}
-    transition={{
-      duration: 8,
-      delay,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }}
-  />
-);
-
-// Morphing blob component
-const MorphingBlob = ({ color, size, position, delay }) => (
-  <motion.div
-    className="absolute rounded-full blur-3xl pointer-events-none"
-    style={{
-      width: size,
-      height: size,
-      background: color,
-      ...position,
-    }}
-    animate={{
-      scale: [1, 1.3, 0.9, 1.1, 1],
-      x: [0, 50, -30, 20, 0],
-      y: [0, -40, 30, -20, 0],
-      rotate: [0, 90, 180, 270, 360],
-    }}
-    transition={{
-      duration: 20,
-      delay,
-      repeat: Infinity,
-      ease: "linear"
-    }}
-  />
-);
-
 // Grid line component
 const GridLine = ({ vertical, position }) => (
   <motion.div
@@ -987,7 +936,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/0 via-teal-500/50 to-emerald-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-emerald-500/0 via-teal-500/50 to-emerald-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -1154,7 +1103,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-green-500/0 via-emerald-500/50 to-green-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-green-500/0 via-emerald-500/50 to-green-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -1334,7 +1283,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500/0 via-yellow-500/50 to-amber-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500/0 via-yellow-500/50 to-amber-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -1516,7 +1465,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-rose-500/0 via-pink-500/50 to-rose-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-rose-500/0 via-pink-500/50 to-rose-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -1703,7 +1652,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-violet-500/50 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-violet-500/50 to-purple-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -1890,7 +1839,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-teal-500/0 via-emerald-500/50 to-teal-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-teal-500/0 via-emerald-500/50 to-teal-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2081,7 +2030,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-500/0 via-teal-500/50 to-cyan-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-500/0 via-teal-500/50 to-cyan-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2260,7 +2209,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-sky-500/0 via-blue-500/50 to-sky-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-sky-500/0 via-blue-500/50 to-sky-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2438,7 +2387,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-pink-500/50 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-pink-500/50 to-purple-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2622,7 +2571,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500/0 via-amber-500/50 to-orange-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500/0 via-amber-500/50 to-orange-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2796,7 +2745,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-violet-500/0 via-purple-500/50 to-violet-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-violet-500/0 via-purple-500/50 to-violet-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -2976,7 +2925,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/0 via-purple-500/50 to-indigo-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/0 via-purple-500/50 to-indigo-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -3133,7 +3082,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/0 via-cyan-500/50 to-blue-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/0 via-cyan-500/50 to-blue-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -3288,7 +3237,7 @@ const CarouselCard = ({ feature, index }) => {
             transition={{ duration: 0.7 }}
           >
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-yellow-500/40 to-purple-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/0 via-yellow-500/40 to-purple-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
 
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -3431,7 +3380,7 @@ const CarouselCard = ({ feature, index }) => {
           >
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-3xl opacity-50">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/0 via-rose-500/50 to-pink-500/0 animate-pulse" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/0 via-rose-500/50 to-pink-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
             </div>
             
             <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
@@ -3620,7 +3569,7 @@ const CarouselCard = ({ feature, index }) => {
           {/* Animated border glow */}
           <div className="absolute inset-0 rounded-3xl opacity-50">
             <div 
-              className="absolute inset-0 rounded-3xl animate-pulse" 
+              className="absolute inset-0 rounded-3xl" 
               style={{ 
                 background: `linear-gradient(to right, transparent, ${colors.glowColor}, transparent)`,
                 maskImage: 'linear-gradient(black, transparent)'
@@ -4087,20 +4036,6 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
         Enter →
       </span>
     </motion.div>
-
-    {/* Floating particles */}
-    <div className="absolute inset-0 z-10 pointer-events-none">
-      {[...Array(6)].map((_, i) => (
-        <FloatingParticle
-          key={i}
-          delay={i * 0.5}
-          size={Math.random() * 100 + 50}
-          color={side === 'left' ? 'rgba(34, 211, 238, 0.3)' : 'rgba(192, 132, 252, 0.3)'}
-          x={Math.random() * 80 + 10}
-          y={Math.random() * 60 + 20}
-        />
-      ))}
-    </div>
   </motion.div>
 );
 
@@ -4232,7 +4167,6 @@ const LaunchStackPillars = () => {
 };
 
 const LandingPage = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showContent, setShowContent] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const containerRef = useRef(null);
@@ -4240,14 +4174,6 @@ const LandingPage = () => {
   
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const contentOpacity = useTransform(scrollYProgress, [0.1, 0.3], [0, 1]);
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 500);
@@ -4668,46 +4594,9 @@ const LandingPage = () => {
         }
       `}</style>
 
-      {/* Background effects */}
+      {/* Background — static gradient only (animated blobs/glow removed for perf) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ maxWidth: '100vw' }}>
-        {/* Gradient mesh */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-        
-        {/* Animated blobs - contained within viewport */}
-        <div className="absolute inset-0 overflow-hidden">
-          <MorphingBlob 
-            color="rgba(34, 211, 238, 0.15)" 
-            size="min(600px, 80vw)" 
-            position={{ top: '-200px', left: '-200px' }} 
-            delay={0} 
-          />
-          <MorphingBlob 
-            color="rgba(192, 132, 252, 0.15)" 
-            size="min(500px, 70vw)" 
-            position={{ bottom: '-150px', right: '-150px' }} 
-            delay={5} 
-          />
-          <MorphingBlob 
-            color="rgba(20, 184, 166, 0.1)" 
-            size="min(400px, 60vw)" 
-            position={{ top: '40%', right: '10%' }} 
-            delay={10} 
-          />
-        </div>
-
-        {/* Mouse follow glow - hidden on mobile for performance */}
-        <motion.div
-          className="absolute w-96 h-96 max-w-[80vw] max-h-[80vw] rounded-full blur-3xl opacity-20 hidden md:block"
-          style={{
-            background: 'radial-gradient(circle, rgba(34, 211, 238, 0.4) 0%, transparent 70%)',
-            left: mousePosition.x - 192,
-            top: mousePosition.y - 192,
-          }}
-          animate={{
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
       </div>
 
       {/* Navigation */}

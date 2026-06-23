@@ -158,16 +158,6 @@ const AquaSwapBanner = () => {
       {/* Animated background effects */}
       <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(254, 188, 16, 0.3), transparent)'}}></div>
       
-      {/* Floating blockchain icons */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
-        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
-        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
-        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
-        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
-        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#FEBC10', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
-      </div>
-      
       {/* Animated border glow */}
       <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(254, 188, 16, 0.5), rgba(81, 21, 157, 0.5), rgba(254, 188, 16, 0.5))'}}></div>
       <div className="absolute inset-[2px] rounded-lg backdrop-blur-sm" style={{background: 'rgba(81, 21, 157, 0.9)'}}></div>
@@ -273,16 +263,6 @@ const ChromeExtensionBanner = () => {
     >
       {/* Animated background effects */}
       <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(107, 33, 168, 0.3), transparent)'}}></div>
-      
-      {/* Floating browser/extension icons - featuring Token Advisor */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>🎯</div>
-        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>⚡</div>
-        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>🌐</div>
-        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🚀</div>
-        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>💎</div>
-        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#6B21A8', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>⭐</div>
-      </div>
       
       {/* Animated border glow */}
       <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(107, 33, 168, 0.5), rgba(252, 211, 77, 0.5), rgba(107, 33, 168, 0.5))'}}></div>
@@ -395,16 +375,6 @@ const OnChainResumeBanner = () => {
     >
       {/* Animated background effects */}
       <div className="absolute inset-0 opacity-20" style={{background: 'linear-gradient(to right, transparent, rgba(13, 148, 136, 0.3), transparent)'}}></div>
-      
-      {/* Floating blockchain/credential icons */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1 left-8 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '0s', animationDuration: '3s'}}>⛓️</div>
-        <div className="absolute top-2 right-16 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '1s', animationDuration: '2.5s'}}>📜</div>
-        <div className="absolute bottom-1 left-16 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '2s', animationDuration: '3.5s'}}>✅</div>
-        <div className="absolute bottom-1 right-8 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '0.5s', animationDuration: '2.8s'}}>🏆</div>
-        <div className="absolute top-1/2 left-1/4 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '1.5s', animationDuration: '3.2s'}}>🔗</div>
-        <div className="absolute top-1/3 right-1/3 animate-bounce text-xs sm:text-sm" style={{color: '#0F766E', opacity: 0.6, animationDelay: '2.5s', animationDuration: '2.7s'}}>💎</div>
-      </div>
       
       {/* Animated border glow */}
       <div className="absolute inset-0 rounded-lg border-2 border-transparent opacity-40" style={{background: 'linear-gradient(to right, rgba(13, 148, 136, 0.5), rgba(94, 234, 212, 0.5), rgba(13, 148, 136, 0.5))'}}></div>

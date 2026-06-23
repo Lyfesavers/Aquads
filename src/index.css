@@ -726,14 +726,13 @@ body {
   animation: pulse-glow 3s infinite;
 }
 
-/* Tech Background Animations */
+/* Tech Background — static grid (animation removed for perf) */
 .tech-lines {
   position: absolute;
   inset: 0;
   background: 
     linear-gradient(90deg, rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px,
     linear-gradient(rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px;
-  animation: moveBg 20s linear infinite;
 }
 
 .tech-dots {
@@ -741,7 +740,6 @@ body {
   inset: 0;
   background-image: radial-gradient(circle, rgba(0,100,255,0.1) 1px, transparent 1px);
   background-size: 50px 50px;
-  animation: moveBg 15s linear infinite;
 }
 
 @keyframes moveBg {
@@ -1731,14 +1729,13 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   animation: pulse-glow 3s infinite;
 }
 
-/* Tech Background Animations */
+/* Tech Background — static grid (animation removed for perf) */
 .tech-lines {
   position: absolute;
   inset: 0;
   background: 
     linear-gradient(90deg, rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px,
     linear-gradient(rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px;
-  animation: moveBg 20s linear infinite;
 }
 
 .tech-dots {
@@ -1746,7 +1743,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   inset: 0;
   background-image: radial-gradient(circle, rgba(0,100,255,0.1) 1px, transparent 1px);
   background-size: 50px 50px;
-  animation: moveBg 15s linear infinite;
 }
 
 @keyframes moveBg {
