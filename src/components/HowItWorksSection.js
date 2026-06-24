@@ -587,7 +587,7 @@ const HowItWorksSection = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
           </div>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white font-display leading-tight">
-            Launch your project.{' '}
+            Grow your project.{' '}
             <span className="whitespace-nowrap">Or power someone else&apos;s.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">

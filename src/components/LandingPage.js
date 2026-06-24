@@ -4860,7 +4860,7 @@ const LandingPage = () => {
         <Link to="/home" className="flex-1 h-full">
           <HeroOrb 
             side="left"
-            label="LIST YOUR PROJECT"
+            label="LIST PROJECT"
             sublabel="Token already live? Free bubble listing · grow · convert"
           />
         </Link>
