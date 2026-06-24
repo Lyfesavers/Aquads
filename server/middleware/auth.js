@@ -43,11 +43,9 @@ const auth = async (req, res, next) => {
 
     // Check suspension status
     if (user.suspended) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Account suspended',
-        message: 'Your account has been suspended. Please contact support for more information.',
-        suspendedReason: user.suspendedReason,
-        suspendedAt: user.suspendedAt
+        message: 'Your account has been suspended. Please contact support for more information.'
       });
     }
     

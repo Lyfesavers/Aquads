@@ -479,6 +479,13 @@ router.post('/login', validateLogin, async (req, res) => {
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
+    if (user.suspended) {
+      return res.status(403).json({
+        error: 'Account suspended',
+        message: 'Your account has been suspended. Please contact support for more information.'
+      });
+    }
+
     // Check if email verification is required (ALL users must verify)
     if (user.email && !user.emailVerified) {
       return res.status(403).json({ 
@@ -601,9 +608,7 @@ router.post('/login/google', async (req, res) => {
     if (user.suspended) {
       return res.status(403).json({
         error: 'Account suspended',
-        message: 'Your account has been suspended. Please contact support for more information.',
-        suspendedReason: user.suspendedReason,
-        suspendedAt: user.suspendedAt
+        message: 'Your account has been suspended. Please contact support for more information.'
       });
     }
 
