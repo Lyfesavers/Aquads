@@ -526,10 +526,12 @@ export default function Checkers({ currentUser }) {
             </div>
             <ul className="space-y-2 text-sm text-stone-300 list-disc pl-5">
               <li>You play red (bottom); the CPU plays black.</li>
-              <li>Move diagonally on dark squares. Capture by jumping over an opponent piece.</li>
+              <li>Move diagonally on dark squares. Jump over opponent pieces to capture.</li>
               <li>Captures are mandatory when available.</li>
               <li>Multi-jumps must be completed with the same piece in one turn.</li>
-              <li>Reach the far row to become a king (moves both directions).</li>
+              <li>Reach the opposite end to become a king (shown with a gold crown).</li>
+              <li>Kings move and capture diagonally in any direction, any distance along open squares.</li>
+              <li>Regular pieces move forward only; captures are mandatory when available.</li>
               <li>Win by capturing all CPU pieces or blocking all CPU moves.</li>
             </ul>
             <button

@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Server-authoritative American checkers (8×8, mandatory captures, multi-jump).
+ * Server-authoritative checkers (8×8, mandatory captures, multi-jump, flying kings).
+ * Men move/capture forward one step; crowned kings slide and capture any distance diagonally.
  * Player is always red (bottom); AI is black (top).
  */
 
@@ -117,8 +118,21 @@ function slideMovesFrom(board, r, c, owner) {
   const moves = [];
   const piece = board[r][c];
   if (!piece || piece.owner !== owner) return moves;
-  const dirs = piece.king ? allDirs() : forwardDirs(owner);
-  for (const [dr, dc] of dirs) {
+
+  if (piece.king) {
+    for (const [dr, dc] of allDirs()) {
+      let nr = r + dr;
+      let nc = c + dc;
+      while (inBounds(nr, nc) && isDarkSquare(nr, nc) && !board[nr][nc]) {
+        moves.push({ from: { r, c }, to: { r: nr, c: nc }, captures: [] });
+        nr += dr;
+        nc += dc;
+      }
+    }
+    return moves;
+  }
+
+  for (const [dr, dc] of forwardDirs(owner)) {
     const nr = r + dr;
     const nc = c + dc;
     if (!inBounds(nr, nc) || !isDarkSquare(nr, nc)) continue;
@@ -128,14 +142,13 @@ function slideMovesFrom(board, r, c, owner) {
   return moves;
 }
 
-function captureMovesFrom(board, r, c, owner, captured = [], chainStart = null) {
+function manCaptureMovesFrom(board, r, c, owner, captured = [], chainStart = null) {
   const moves = [];
   const piece = board[r][c];
-  if (!piece || piece.owner !== owner) return moves;
+  if (!piece || piece.owner !== owner || piece.king) return moves;
   const start = chainStart || { r, c };
-  const dirs = piece.king ? allDirs() : forwardDirs(owner);
 
-  for (const [dr, dc] of dirs) {
+  for (const [dr, dc] of forwardDirs(owner)) {
     const mr = r + dr;
     const mc = c + dc;
     const lr = r + dr * 2;
@@ -149,7 +162,7 @@ function captureMovesFrom(board, r, c, owner, captured = [], chainStart = null) 
     const nextBoard = cloneBoard(board);
     nextBoard[r][c] = null;
     nextBoard[mr][mc] = null;
-    nextBoard[lr][lc] = { owner, king: piece.king };
+    nextBoard[lr][lc] = { owner, king: false };
     promoteIfNeeded(nextBoard, lr, lc);
 
     const nextCaptured = captured.concat([{ r: mr, c: mc }]);
@@ -161,6 +174,59 @@ function captureMovesFrom(board, r, c, owner, captured = [], chainStart = null) 
     }
   }
   return moves;
+}
+
+function kingCaptureMovesFrom(board, r, c, owner, captured = [], chainStart = null) {
+  const moves = [];
+  const piece = board[r][c];
+  if (!piece || piece.owner !== owner || !piece.king) return moves;
+  const start = chainStart || { r, c };
+
+  for (const [dr, dc] of allDirs()) {
+    let sr = r + dr;
+    let sc = c + dc;
+    let opponent = null;
+
+    while (inBounds(sr, sc) && isDarkSquare(sr, sc)) {
+      const cell = board[sr][sc];
+      if (cell) {
+        if (cell.owner === owner) break;
+        if (captured.some((p) => p.r === sr && p.c === sc)) break;
+        opponent = { r: sr, c: sc };
+        break;
+      }
+      sr += dr;
+      sc += dc;
+    }
+    if (!opponent) continue;
+
+    let lr = opponent.r + dr;
+    let lc = opponent.c + dc;
+    while (inBounds(lr, lc) && isDarkSquare(lr, lc) && !board[lr][lc]) {
+      const nextBoard = cloneBoard(board);
+      nextBoard[r][c] = null;
+      nextBoard[opponent.r][opponent.c] = null;
+      nextBoard[lr][lc] = { owner, king: true };
+
+      const nextCaptured = captured.concat([opponent]);
+      const further = kingCaptureMovesFrom(nextBoard, lr, lc, owner, nextCaptured, start);
+      if (further.length) {
+        moves.push(...further);
+      } else {
+        moves.push({ from: { r: start.r, c: start.c }, to: { r: lr, c: lc }, captures: nextCaptured });
+      }
+      lr += dr;
+      lc += dc;
+    }
+  }
+  return moves;
+}
+
+function captureMovesFrom(board, r, c, owner, captured = [], chainStart = null) {
+  const piece = board[r][c];
+  if (!piece || piece.owner !== owner) return [];
+  if (piece.king) return kingCaptureMovesFrom(board, r, c, owner, captured, chainStart);
+  return manCaptureMovesFrom(board, r, c, owner, captured, chainStart);
 }
 
 function normalizeJumpFrom(jf) {
@@ -241,28 +307,28 @@ function applyMove(board, mv) {
     return next;
   }
 
-  // Walk the capture chain so mid-jump king promotion matches search logic.
-  let r = mv.from.r;
-  let c = mv.from.c;
-  const moving = { owner: piece.owner, king: !!piece.king };
-
   for (const cap of caps) {
     next[cap.r][cap.c] = null;
-    const dr = cap.r - r;
-    const dc = cap.c - c;
-    if (Math.abs(dr) !== 1 || Math.abs(dc) !== 1) {
-      throw new Error('Invalid capture path');
-    }
-    r = cap.r + dr;
-    c = cap.c + dc;
-    if (!inBounds(r, c) || !isDarkSquare(r, c)) {
-      throw new Error('Invalid capture path');
-    }
-    crownPiece(moving, r);
   }
 
-  if (!sameSquare({ r, c }, mv.to)) {
-    throw new Error('Invalid capture path');
+  const moving = { owner: piece.owner, king: !!piece.king };
+
+  if (caps.length) {
+    let r = mv.from.r;
+    let c = mv.from.c;
+    for (const cap of caps) {
+      const adr = Math.abs(cap.r - r);
+      const adc = Math.abs(cap.c - c);
+      if (adr === 1 && adc === 1) {
+        r = cap.r + (cap.r - r);
+        c = cap.c + (cap.c - c);
+        crownPiece(moving, r);
+      } else {
+        // Flying-king segment (or man that just crowned and continues as king).
+        moving.king = true;
+      }
+    }
+    crownPiece(moving, mv.to.r);
   }
 
   next[mv.to.r][mv.to.c] = { owner: moving.owner, king: moving.king };
@@ -364,7 +430,7 @@ function chooseAiMove(board, difficulty, jumpFrom = null) {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  const depth = difficulty === 'Hard' ? 5 : 3;
+  const depth = difficulty === 'Hard' ? 4 : 3;
   const { move } = minimax(board, depth, -Infinity, Infinity, true, AI);
   return move || moves[0];
 }
