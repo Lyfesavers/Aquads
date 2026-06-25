@@ -75,9 +75,16 @@ function plainValue(val) {
   return val;
 }
 
+function readBoard(doc) {
+  if (doc.boardJson) {
+    return engine.deserializeBoard(doc.boardJson);
+  }
+  return engine.deserializeBoard(plainValue(doc.board));
+}
+
 function hydrateGame(doc) {
   return {
-    board: engine.normalizeBoard(plainValue(doc.board)),
+    board: readBoard(doc),
     turn: doc.turn,
     jumpFrom: normalizeJumpFrom(doc),
     status: doc.status,
@@ -88,7 +95,9 @@ function hydrateGame(doc) {
 }
 
 function persistFromEngine(doc, gameState) {
-  doc.board = engine.normalizeBoard(gameState.board);
+  const board = engine.normalizeBoard(gameState.board);
+  doc.boardJson = engine.serializeBoard(board);
+  doc.board = board;
   doc.turn = gameState.turn;
   doc.jumpFrom = gameState.jumpFrom || { r: null, c: null };
   doc.moveCount = gameState.moveCount;
@@ -153,6 +162,7 @@ router.post('/games/new', auth, async (req, res) => {
       difficulty,
     });
     const doc = new CheckersGame(fresh);
+    doc.boardJson = engine.serializeBoard(fresh.board);
     await doc.save();
     res.status(201).json({ gameId: String(doc._id), state: engine.viewState(hydrateGame(doc)) });
   } catch (err) {

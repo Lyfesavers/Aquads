@@ -44,6 +44,21 @@ function cloneBoard(board) {
   return normalizeBoard(board).map((row) => row.map((cell) => (cell ? { ...cell } : null)));
 }
 
+function deserializeBoard(raw) {
+  if (typeof raw === 'string' && raw.length > 0) {
+    try {
+      return normalizeBoard(JSON.parse(raw));
+    } catch (_) {
+      /* fall through */
+    }
+  }
+  return normalizeBoard(raw);
+}
+
+function serializeBoard(board) {
+  return JSON.stringify(normalizeBoard(board));
+}
+
 function normalizeSquare(sq) {
   if (!sq || sq.r == null || sq.c == null) return null;
   return { r: Number(sq.r), c: Number(sq.c) };
@@ -113,10 +128,11 @@ function slideMovesFrom(board, r, c, owner) {
   return moves;
 }
 
-function captureMovesFrom(board, r, c, owner, captured = []) {
+function captureMovesFrom(board, r, c, owner, captured = [], chainStart = null) {
   const moves = [];
   const piece = board[r][c];
   if (!piece || piece.owner !== owner) return moves;
+  const start = chainStart || { r, c };
   const dirs = piece.king ? allDirs() : forwardDirs(owner);
 
   for (const [dr, dc] of dirs) {
@@ -137,11 +153,11 @@ function captureMovesFrom(board, r, c, owner, captured = []) {
     promoteIfNeeded(nextBoard, lr, lc);
 
     const nextCaptured = captured.concat([{ r: mr, c: mc }]);
-    const further = captureMovesFrom(nextBoard, lr, lc, owner, nextCaptured);
+    const further = captureMovesFrom(nextBoard, lr, lc, owner, nextCaptured, start);
     if (further.length) {
       moves.push(...further);
     } else {
-      moves.push({ from: { r, c }, to: { r: lr, c: lc }, captures: nextCaptured });
+      moves.push({ from: { r: start.r, c: start.c }, to: { r: lr, c: lc }, captures: nextCaptured });
     }
   }
   return moves;
@@ -205,22 +221,61 @@ function findMove(board, owner, jumpFrom, from, to) {
   return mv || null;
 }
 
+function crownPiece(piece, r) {
+  if (!piece || piece.king) return;
+  if (piece.owner === PLAYER && r === 0) piece.king = true;
+  if (piece.owner === AI && r === BOARD_SIZE - 1) piece.king = true;
+}
+
 function applyMove(board, mv) {
   const next = cloneBoard(board);
   const piece = next[mv.from.r][mv.from.c];
   if (!piece) throw new Error('No piece at source');
+
+  const caps = mv.captures || [];
   next[mv.from.r][mv.from.c] = null;
-  next[mv.to.r][mv.to.c] = { owner: piece.owner, king: piece.king };
-  for (const cap of mv.captures || []) {
-    next[cap.r][cap.c] = null;
+
+  if (caps.length === 0) {
+    next[mv.to.r][mv.to.c] = { owner: piece.owner, king: !!piece.king };
+    promoteIfNeeded(next, mv.to.r, mv.to.c);
+    return next;
   }
+
+  // Walk the capture chain so mid-jump king promotion matches search logic.
+  let r = mv.from.r;
+  let c = mv.from.c;
+  const moving = { owner: piece.owner, king: !!piece.king };
+
+  for (const cap of caps) {
+    next[cap.r][cap.c] = null;
+    const dr = cap.r - r;
+    const dc = cap.c - c;
+    if (Math.abs(dr) !== 1 || Math.abs(dc) !== 1) {
+      throw new Error('Invalid capture path');
+    }
+    r = cap.r + dr;
+    c = cap.c + dc;
+    if (!inBounds(r, c) || !isDarkSquare(r, c)) {
+      throw new Error('Invalid capture path');
+    }
+    crownPiece(moving, r);
+  }
+
+  if (!sameSquare({ r, c }, mv.to)) {
+    throw new Error('Invalid capture path');
+  }
+
+  next[mv.to.r][mv.to.c] = { owner: moving.owner, king: moving.king };
   promoteIfNeeded(next, mv.to.r, mv.to.c);
   return next;
 }
 
 function hasMoreJumps(board, mv) {
+  board = normalizeBoard(board);
   if (!mv.captures || mv.captures.length === 0) return false;
-  return captureMovesFrom(board, mv.to.r, mv.to.c, board[mv.to.r][mv.to.c].owner).length > 0;
+  const piece = boardCell(board, mv.to.r, mv.to.c);
+  if (!piece) return false;
+  return captureMovesFrom(board, mv.to.r, mv.to.c, piece.owner).length > 0;
 }
 
 function evaluateBoard(board, perspective = PLAYER) {
@@ -498,4 +553,6 @@ module.exports = {
   chooseAiMove,
   countPieces,
   normalizeBoard,
+  serializeBoard,
+  deserializeBoard,
 };

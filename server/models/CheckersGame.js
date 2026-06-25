@@ -15,6 +15,7 @@ const CheckersGameSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     username: { type: String, required: true },
     difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' },
+    boardJson: { type: String, default: '' },
     board: { type: [[PieceSchema]], default: () => [] },
     turn: { type: String, enum: ['red', 'black'], default: 'red' },
     jumpFrom: {

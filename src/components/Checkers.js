@@ -100,6 +100,7 @@ export default function Checkers({ currentUser }) {
   const [animating, setAnimating] = useState(false);
   const [boardSize, setBoardSize] = useState(computeBoardSize);
   const boardRef = useRef(null);
+  const submitLock = useRef(false);
 
   const loggedIn = !!(currentUser && currentUser.token);
   const cellSize = boardSize / BOARD_SIZE;
@@ -201,47 +202,29 @@ export default function Checkers({ currentUser }) {
     }
   };
 
-  const playAiMoves = async (aiMoves, baseBoard, finalState) => {
-    if (!aiMoves || !aiMoves.length) return;
-    setAnimating(true);
-    let board = baseBoard.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
-
-    for (const mv of aiMoves) {
-      await sleep(320);
-      const piece = board[mv.from.r][mv.from.c];
-      board[mv.from.r][mv.from.c] = null;
-      board[mv.to.r][mv.to.c] = piece ? { ...piece } : null;
-      for (const cap of mv.captures || []) {
-        board[cap.r][cap.c] = null;
-      }
-      if (piece && !piece.king && piece.owner === 'black' && mv.to.r === BOARD_SIZE - 1) {
-        board[mv.to.r][mv.to.c] = { ...board[mv.to.r][mv.to.c], king: true };
-      }
-      setState((prev) => (prev ? {
-        ...prev,
-        board: board.map((row) => row.map((cell) => (cell ? { ...cell } : null))),
-      } : prev));
+  const playAiDelay = async (aiMoves, finalState) => {
+    if (!aiMoves || !aiMoves.length) {
+      setState(finalState);
+      setSelected(normSquare(finalState.jumpFrom));
+      return;
     }
-
+    setAnimating(true);
+    await sleep(Math.min(1200, 260 + aiMoves.length * 220));
     setState(finalState);
+    setSelected(normSquare(finalState.jumpFrom));
     setAnimating(false);
   };
 
-  const mergePlayerState = (prev, afterPlayer, fullState) => {
-    if (!afterPlayer) return fullState;
-    return {
-      ...fullState,
-      board: afterPlayer.board,
-      turn: afterPlayer.turn,
-      jumpFrom: afterPlayer.jumpFrom,
-      captured: afterPlayer.captured,
-      moveCount: afterPlayer.moveCount,
-      legalMoves: fullState.legalMoves,
-    };
+  const applyServerState = (nextState) => {
+    if (!nextState) return;
+    setState(nextState);
+    setSelected(normSquare(nextState.jumpFrom));
   };
 
   const submitMove = async (from, to) => {
-    if (!gameId || busy || animating || !state || state.turn !== 'red' || !gameActive) return;
+    if (submitLock.current || !gameId || busy || animating || !state || state.turn !== 'red' || !gameActive) {
+      return;
+    }
 
     const fromSq = normSquare(from);
     const toSq = normSquare(to);
@@ -254,28 +237,35 @@ export default function Checkers({ currentUser }) {
       return;
     }
 
-    try {
-      setBusy(true);
-      setError('');
-      const r = await checkersMove(gameId, matched.from, matched.to);
-      const interim = mergePlayerState(state, r.stateAfterPlayer, r.state);
-      setState(interim);
-      setSelected(normSquare(r.state.jumpFrom));
+    submitLock.current = true;
+    setBusy(true);
+    setError('');
 
-      if (r.aiMoves && r.aiMoves.length && r.stateAfterPlayer) {
-        await playAiMoves(r.aiMoves, r.stateAfterPlayer.board, r.state);
+    try {
+      const r = await checkersMove(gameId, matched.from, matched.to);
+
+      if (r.stateAfterPlayer && r.aiMoves && r.aiMoves.length) {
+        setState({
+          ...r.state,
+          board: r.stateAfterPlayer.board,
+          turn: 'black',
+          jumpFrom: r.stateAfterPlayer.jumpFrom,
+          captured: r.stateAfterPlayer.captured,
+          moveCount: r.stateAfterPlayer.moveCount,
+          legalMoves: [],
+        });
+        await playAiDelay(r.aiMoves, r.state);
       } else {
-        setState(r.state);
-        setSelected(normSquare(r.state.jumpFrom));
+        applyServerState(r.state);
       }
     } catch (e) {
       if (e.data && e.data.state) {
-        setState(e.data.state);
-        setSelected(normSquare(e.data.state.jumpFrom));
+        applyServerState(e.data.state);
       }
       setError(e.message || 'Move rejected — board synced from server.');
     } finally {
       setBusy(false);
+      submitLock.current = false;
     }
   };
 
