@@ -70,20 +70,25 @@ function normalizeJumpFrom(doc) {
   return null;
 }
 
+function plainValue(val) {
+  if (val && typeof val.toObject === 'function') return val.toObject();
+  return val;
+}
+
 function hydrateGame(doc) {
   return {
-    board: doc.board,
+    board: engine.normalizeBoard(plainValue(doc.board)),
     turn: doc.turn,
     jumpFrom: normalizeJumpFrom(doc),
     status: doc.status,
     difficulty: doc.difficulty,
     moveCount: doc.moveCount,
-    captured: doc.captured,
+    captured: plainValue(doc.captured) || { red: 0, black: 0 },
   };
 }
 
 function persistFromEngine(doc, gameState) {
-  doc.board = gameState.board;
+  doc.board = engine.normalizeBoard(gameState.board);
   doc.turn = gameState.turn;
   doc.jumpFrom = gameState.jumpFrom || { r: null, c: null };
   doc.moveCount = gameState.moveCount;
@@ -201,9 +206,16 @@ router.post('/games/:id/move', auth, async (req, res) => {
       try {
         result = engine.applyPlayerMove(gameState, from, to);
       } catch (e) {
+        const synced = engine.viewState({
+          ...hydrateGame(doc),
+          status: doc.status,
+          difficulty: doc.difficulty,
+          moveCount: doc.moveCount,
+          captured: hydrateGame(doc).captured,
+        });
         return res.status(400).json({
           error: e.message || 'Illegal move',
-          state: engine.viewState(hydrateGame(doc)),
+          state: synced,
           gameId: String(doc._id),
         });
       }

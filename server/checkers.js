@@ -13,8 +13,40 @@ function isDarkSquare(r, c) {
   return (r + c) % 2 === 1;
 }
 
+function boardRow(board, r) {
+  if (!board) return null;
+  if (Array.isArray(board)) return board[r];
+  return board[r] ?? board[String(r)] ?? null;
+}
+
+function boardCell(board, r, c) {
+  const row = boardRow(board, r);
+  if (!row) return null;
+  if (Array.isArray(row)) return row[c] ?? null;
+  return row[c] ?? row[String(c)] ?? null;
+}
+
+/** MongoDB/Mongoose may return sparse or object-keyed boards — always rebuild 8×8. */
+function normalizeBoard(board) {
+  const out = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = boardCell(board, r, c);
+      if (cell && (cell.owner === PLAYER || cell.owner === AI)) {
+        out[r][c] = { owner: cell.owner, king: !!cell.king };
+      }
+    }
+  }
+  return out;
+}
+
 function cloneBoard(board) {
-  return board.map((row) => row.map((cell) => (cell ? { owner: cell.owner, king: !!cell.king } : null)));
+  return normalizeBoard(board).map((row) => row.map((cell) => (cell ? { ...cell } : null)));
+}
+
+function normalizeSquare(sq) {
+  if (!sq || sq.r == null || sq.c == null) return null;
+  return { r: Number(sq.r), c: Number(sq.c) };
 }
 
 function createInitialBoard() {
@@ -44,14 +76,15 @@ function allDirs() {
 
 function pieceAt(board, r, c) {
   if (!inBounds(r, c)) return null;
-  return board[r][c];
+  return boardCell(board, r, c);
 }
 
 function countPieces(board) {
+  const b = normalizeBoard(board);
   const counts = { [PLAYER]: 0, [AI]: 0 };
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
-      const p = board[r][c];
+      const p = b[r][c];
       if (p) counts[p.owner] += 1;
     }
   }
@@ -115,11 +148,11 @@ function captureMovesFrom(board, r, c, owner, captured = []) {
 }
 
 function normalizeJumpFrom(jf) {
-  if (jf && jf.r != null && jf.c != null) return { r: jf.r, c: jf.c };
-  return null;
+  return normalizeSquare(jf);
 }
 
 function getLegalMoves(board, owner, jumpFrom = null) {
+  board = normalizeBoard(board);
   jumpFrom = normalizeJumpFrom(jumpFrom);
   if (jumpFrom) {
     return captureMovesFrom(board, jumpFrom.r, jumpFrom.c, owner);
@@ -147,7 +180,8 @@ function getLegalMoves(board, owner, jumpFrom = null) {
 }
 
 function sameSquare(a, b) {
-  return a.r === b.r && a.c === b.c;
+  if (!a || !b || a.r == null || a.c == null || b.r == null || b.c == null) return false;
+  return Number(a.r) === Number(b.r) && Number(a.c) === Number(b.c);
 }
 
 function moveKey(mv) {
@@ -156,8 +190,19 @@ function moveKey(mv) {
 }
 
 function findMove(board, owner, jumpFrom, from, to) {
-  const legal = getLegalMoves(board, owner, jumpFrom);
-  return legal.find((mv) => sameSquare(mv.from, from) && sameSquare(mv.to, to)) || null;
+  board = normalizeBoard(board);
+  const jf = normalizeJumpFrom(jumpFrom);
+  from = normalizeSquare(from);
+  to = normalizeSquare(to);
+  if (!from || !to) return null;
+
+  const legal = getLegalMoves(board, owner, jf);
+  let mv = legal.find((m) => sameSquare(m.from, from) && sameSquare(m.to, to));
+  // Mid-jump: accept destination if it matches a legal continuation from jumpFrom.
+  if (!mv && jf) {
+    mv = legal.find((m) => sameSquare(m.from, jf) && sameSquare(m.to, to));
+  }
+  return mv || null;
 }
 
 function applyMove(board, mv) {
@@ -254,8 +299,8 @@ function minimax(board, depth, alpha, beta, maximizing, perspective) {
   return { score: best, move: bestMove };
 }
 
-function chooseAiMove(board, difficulty) {
-  const moves = getLegalMoves(board, AI);
+function chooseAiMove(board, difficulty, jumpFrom = null) {
+  const moves = getLegalMoves(board, AI, jumpFrom);
   if (!moves.length) return null;
 
   if (difficulty === 'Easy') {
@@ -298,8 +343,11 @@ function createGame({ userId, username, difficulty = 'Medium' }) {
 }
 
 function applySideMove(game, mv) {
+  game.board = normalizeBoard(game.board);
   const owner = game.turn;
-  const legal = findMove(game.board, owner, game.jumpFrom, mv.from, mv.to);
+  const from = normalizeSquare(mv.from);
+  const to = normalizeSquare(mv.to);
+  const legal = findMove(game.board, owner, game.jumpFrom, from, to);
   if (!legal) throw new Error('Illegal move');
 
   const capsBefore = (legal.captures || []).length;
@@ -322,7 +370,7 @@ function applySideMove(game, mv) {
 function runAiTurn(game) {
   const aiMoves = [];
   while (game.status === 'active' && game.turn === AI) {
-    const mv = chooseAiMove(game.board, game.difficulty);
+    const mv = chooseAiMove(game.board, game.difficulty, game.jumpFrom);
     if (!mv) {
       game.status = 'won';
       game.endedAt = new Date();
@@ -349,6 +397,8 @@ function runAiTurn(game) {
 function applyPlayerMove(game, from, to) {
   if (game.status !== 'active') throw new Error('Game is not active');
   if (game.turn !== PLAYER) throw new Error('Not your turn');
+  game.board = normalizeBoard(game.board);
+  game.jumpFrom = normalizeJumpFrom(game.jumpFrom);
 
   const { continuedJump } = applySideMove(game, { from, to });
   let outcome = resolveOutcome(game.board, game.turn);
@@ -414,12 +464,13 @@ function applyPlayerMove(game, from, to) {
 }
 
 function viewState(game) {
+  const board = normalizeBoard(game.board);
   const legalMoves = game.status === 'active' && game.turn === PLAYER
-    ? getLegalMoves(game.board, PLAYER, game.jumpFrom)
+    ? getLegalMoves(board, PLAYER, game.jumpFrom)
     : [];
 
   return {
-    board: cloneBoard(game.board),
+    board: cloneBoard(board),
     turn: game.turn,
     jumpFrom: normalizeJumpFrom(game.jumpFrom),
     status: game.status,
@@ -427,7 +478,7 @@ function viewState(game) {
     playerColor: PLAYER,
     moveCount: game.moveCount,
     captured: { ...game.captured },
-    pieceCounts: countPieces(game.board),
+    pieceCounts: countPieces(board),
     legalMoves: legalMoves.map((mv) => ({
       from: mv.from,
       to: mv.to,
@@ -446,4 +497,5 @@ module.exports = {
   getLegalMoves,
   chooseAiMove,
   countPieces,
+  normalizeBoard,
 };

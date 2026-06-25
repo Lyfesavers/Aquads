@@ -20,11 +20,29 @@ function isDarkSquare(r, c) {
 }
 
 function sameSquare(a, b) {
-  return a && b && a.r === b.r && a.c === b.c;
+  if (!a || !b || a.r == null || a.c == null || b.r == null || b.c == null) return false;
+  return Number(a.r) === Number(b.r) && Number(a.c) === Number(b.c);
+}
+
+function normSquare(sq) {
+  if (!sq || sq.r == null || sq.c == null) return null;
+  return { r: Number(sq.r), c: Number(sq.c) };
 }
 
 function moveMatches(mv, from, to) {
   return sameSquare(mv.from, from) && sameSquare(mv.to, to);
+}
+
+function findClientMove(legalMoves, from, to, jumpFrom) {
+  const f = normSquare(from);
+  const t = normSquare(to);
+  const jf = normSquare(jumpFrom);
+  if (!f || !t || !legalMoves) return null;
+  let mv = legalMoves.find((m) => moveMatches(m, f, t));
+  if (!mv && jf) {
+    mv = legalMoves.find((m) => sameSquare(m.from, jf) && sameSquare(m.to, t));
+  }
+  return mv;
 }
 
 function sleep(ms) {
@@ -87,12 +105,18 @@ export default function Checkers({ currentUser }) {
   const cellSize = boardSize / BOARD_SIZE;
   const gameActive = !!(state && state.status === 'active');
 
+  const activeFrom = useMemo(() => {
+    if (!state) return null;
+    return normSquare(state.jumpFrom) || normSquare(selected);
+  }, [state, selected]);
+
   const legalTargets = useMemo(() => {
-    if (!state || !selected || state.turn !== 'red' || !gameActive) return [];
+    if (!state || !activeFrom || state.turn !== 'red' || !gameActive) return [];
     return (state.legalMoves || [])
-      .filter((mv) => sameSquare(mv.from, selected))
-      .map((mv) => mv.to);
-  }, [state, selected, gameActive]);
+      .filter((mv) => sameSquare(mv.from, activeFrom))
+      .map((mv) => normSquare(mv.to))
+      .filter(Boolean);
+  }, [state, activeFrom, gameActive]);
 
   const selectableSquares = useMemo(() => {
     const froms = new Set();
@@ -102,6 +126,12 @@ export default function Checkers({ currentUser }) {
     }
     return froms;
   }, [state, gameActive]);
+
+  useEffect(() => {
+    if (state && state.jumpFrom && state.turn === 'red' && gameActive) {
+      setSelected(normSquare(state.jumpFrom));
+    }
+  }, [state?.jumpFrom?.r, state?.jumpFrom?.c, state?.turn, gameActive]);
 
   useEffect(() => {
     const onResize = () => setBoardSize(computeBoardSize());
@@ -212,28 +242,38 @@ export default function Checkers({ currentUser }) {
 
   const submitMove = async (from, to) => {
     if (!gameId || busy || animating || !state || state.turn !== 'red' || !gameActive) return;
-    const legal = (state.legalMoves || []).some((mv) => moveMatches(mv, from, to));
-    if (!legal) return;
+
+    const fromSq = normSquare(from);
+    const toSq = normSquare(to);
+    const effectiveFrom = normSquare(state.jumpFrom) || fromSq;
+    if (!effectiveFrom || !toSq) return;
+
+    const matched = findClientMove(state.legalMoves, effectiveFrom, toSq, state.jumpFrom);
+    if (!matched) {
+      setError('That square is not a legal move right now.');
+      return;
+    }
 
     try {
       setBusy(true);
       setError('');
-      const r = await checkersMove(gameId, from, to);
+      const r = await checkersMove(gameId, matched.from, matched.to);
       const interim = mergePlayerState(state, r.stateAfterPlayer, r.state);
       setState(interim);
-      setSelected(r.state.jumpFrom || null);
+      setSelected(normSquare(r.state.jumpFrom));
 
       if (r.aiMoves && r.aiMoves.length && r.stateAfterPlayer) {
         await playAiMoves(r.aiMoves, r.stateAfterPlayer.board, r.state);
       } else {
         setState(r.state);
+        setSelected(normSquare(r.state.jumpFrom));
       }
     } catch (e) {
       if (e.data && e.data.state) {
         setState(e.data.state);
-        setSelected(e.data.state.jumpFrom || null);
+        setSelected(normSquare(e.data.state.jumpFrom));
       }
-      setError(e.message || 'Move rejected');
+      setError(e.message || 'Move rejected — board synced from server.');
     } finally {
       setBusy(false);
     }
@@ -242,17 +282,18 @@ export default function Checkers({ currentUser }) {
   const onSquareClick = (r, c) => {
     if (busy || animating || !state || !gameActive || state.turn !== 'red') return;
 
-    const piece = state.board[r][c];
+    const click = { r, c };
+    const piece = state.board[r] && state.board[r][c];
     const key = `${r},${c}`;
+    const fromSq = activeFrom;
 
-    if (selected && legalTargets.some((t) => sameSquare(t, { r, c }))) {
-      submitMove(selected, { r, c });
-      if (!state.jumpFrom) setSelected(null);
+    if (fromSq && legalTargets.some((t) => sameSquare(t, click))) {
+      submitMove(fromSq, click);
       return;
     }
 
     if (piece && piece.owner === 'red') {
-      if (state.jumpFrom && !sameSquare(state.jumpFrom, { r, c })) return;
+      if (state.jumpFrom && !sameSquare(state.jumpFrom, click)) return;
       if (!state.jumpFrom && !selectableSquares.has(key)) return;
       setSelected({ r, c });
       return;
@@ -376,7 +417,7 @@ export default function Checkers({ currentUser }) {
                         {Array.from({ length: BOARD_SIZE }).map((_, r) =>
                           Array.from({ length: BOARD_SIZE }).map((__, c) => {
                             const dark = isDarkSquare(r, c);
-                            const piece = state.board[r][c];
+                            const piece = state.board[r] && state.board[r][c];
                             const isSelected = sameSquare(selected, { r, c });
                             const isTarget = legalTargets.some((t) => sameSquare(t, { r, c }));
                             const canSelect = selectableSquares.has(`${r},${c}`);
