@@ -43,8 +43,13 @@ router.get('/:game', async (req, res) => {
     if (difficulty && difficulty !== 'All') query.difficulty = difficulty;
     if (grid && grid !== 'All') query.grid = grid;
 
+    const sort =
+      game === 'checkers'
+        ? { you: -1, moves: 1, createdAt: -1 }
+        : { you: -1, createdAt: -1 };
+
     const entries = await LeaderboardEntry.find(query)
-      .sort({ you: -1, createdAt: -1 }) // Sort by player score (highest first), then newest
+      .sort(sort)
       .limit(Math.min(Number(limit) || 20, 200));
 
     res.json(entries);
@@ -64,6 +69,11 @@ router.post('/:game', auth, async (req, res) => {
     if (game === 'aquataire') {
       return res.status(403).json({
         error: 'Aquataire wins are recorded automatically when you complete a server-validated game.',
+      });
+    }
+    if (game === 'checkers') {
+      return res.status(403).json({
+        error: 'Checkers wins are recorded automatically when you beat the CPU in a server-validated game.',
       });
     }
     const { result, you, ai, grid, difficulty } = req.body || {};

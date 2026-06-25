@@ -751,6 +751,7 @@ app.use('/api/free-courses', require('./routes/freeCourses'));
 app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/aquataire', require('./routes/solitaire'));
+app.use('/api/checkers', require('./routes/checkers'));
 app.use('/api/horse-racing', require('./routes/horse-racing'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/twitter-raids', require('./routes/twitter-raids'));

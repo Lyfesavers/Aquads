@@ -91,6 +91,7 @@ const CrosswordPuzzle = lazy(() => import('./components/CrosswordPuzzle'));
 const BeanstalksAndChutes = lazy(() => import('./components/BeanstalksAndChutes'));
 const Sludo = lazy(() => import('./components/Sludo'));
 const Aquataire = lazy(() => import('./components/Aquataire'));
+const Checkers = lazy(() => import('./components/Checkers'));
 
 const ServicePage = lazy(() => import('./components/ServicePage'));
 const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
@@ -2882,6 +2883,7 @@ function App() {
           } />
           <Route path="/booking-conversation/:bookingId" element={<BookingConversationPage />} />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
+          <Route path="/games/checkers" element={<Checkers currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
           <Route path="/games/crossword" element={<CrosswordPuzzle currentUser={currentUser} />} />
           <Route path="/games/beanstalks-and-chutes" element={<BeanstalksAndChutes currentUser={currentUser} />} />

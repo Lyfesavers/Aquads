@@ -2070,6 +2070,42 @@ export const aquataireLeaderboard = ({ mode = 'klondike-d1', sort = 'score', lim
     });
 };
 
+// ---------- Checkers (server-authoritative vs CPU) ----------
+const checkersFetch = async (path, opts = {}) => {
+  const res = await fetch(`${API_URL}/checkers${path}`, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+      ...getAuthHeader(),
+    },
+  });
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `Checkers request failed (${res.status})`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+};
+
+export const checkersNewGame = (opts = {}) =>
+  checkersFetch('/games/new', { method: 'POST', body: JSON.stringify(opts) });
+
+export const checkersGetActive = () =>
+  checkersFetch('/games/active', { method: 'GET' });
+
+export const checkersMove = (gameId, from, to) =>
+  checkersFetch(`/games/${encodeURIComponent(gameId)}/move`, {
+    method: 'POST',
+    body: JSON.stringify({ from, to }),
+  });
+
+export const checkersAbandon = (gameId) =>
+  checkersFetch(`/games/${encodeURIComponent(gameId)}/abandon`, { method: 'POST' });
+
 // Reconnect socket with the current user's token.
 // If the socket is already connected with a different token, force-disconnect first
 // so the server authenticates the new user on the fresh connection.

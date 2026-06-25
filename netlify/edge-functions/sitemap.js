@@ -41,6 +41,7 @@ export default async (request, context) => {
     { loc: 'https://www.aquads.xyz/games', changefreq: 'weekly', priority: '0.8' },
     { loc: 'https://www.aquads.xyz/games/horse-racing', changefreq: 'weekly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/games/dots-and-boxes', changefreq: 'weekly', priority: '0.7' },
+    { loc: 'https://www.aquads.xyz/games/checkers', changefreq: 'weekly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/games/beanstalks-and-chutes', changefreq: 'weekly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/games/sludo', changefreq: 'weekly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/docs', changefreq: 'weekly', priority: '0.9' },
