@@ -1,0 +1,276 @@
+/* Checkers — realistic wood board + lacquered pieces */
+
+.checkers-page {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(120, 80, 40, 0.15), transparent 55%),
+    linear-gradient(165deg, #1c1410 0%, #0f0d0b 45%, #1a1512 100%);
+}
+
+.checkers-board-frame {
+  position: relative;
+  padding: clamp(10px, 2.5vw, 18px);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, #c4a574 0%, #8b6914 18%, #6b4e12 40%, #9a7332 58%, #5c4010 78%, #3d2a0a 100%);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.55),
+    0 8px 16px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 220, 160, 0.35),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.45);
+}
+
+.checkers-board-frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 220, 160, 0.12);
+  pointer-events: none;
+}
+
+.checkers-board-inner {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.35),
+    inset 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.checkers-square {
+  position: relative;
+  border: none;
+  padding: 0;
+  margin: 0;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.checkers-square--light {
+  background: linear-gradient(160deg, #f0e6d2 0%, #dcc9a8 55%, #c9b08a 100%);
+}
+
+.checkers-square--dark {
+  background: linear-gradient(155deg, #8b1a1a 0%, #6b1212 45%, #4a0c0c 100%);
+  cursor: pointer;
+}
+
+.checkers-square--dark:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.checkers-square--selected {
+  box-shadow: inset 0 0 0 3px rgba(255, 214, 96, 0.95);
+  z-index: 2;
+}
+
+.checkers-square--target {
+  box-shadow: inset 0 0 0 2px rgba(110, 231, 183, 0.7);
+}
+
+.checkers-square--target::after {
+  content: '';
+  position: absolute;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(134, 239, 172, 0.85) 0%, rgba(34, 197, 94, 0.45) 70%, transparent 100%);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+  animation: checkers-target-pulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.checkers-square--can-select:not(.checkers-square--selected)::before {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+@keyframes checkers-target-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.checkers-piece-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76%;
+  height: 76%;
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.checkers-piece-wrap--selected {
+  transform: translateY(-6%) scale(1.06);
+}
+
+.checkers-piece-wrap--animating {
+  transition: transform 0.28s ease;
+}
+
+.checkers-piece {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.45),
+    0 10px 20px rgba(0, 0, 0, 0.35),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.35);
+}
+
+.checkers-piece::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+.checkers-piece::after {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 38%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.checkers-piece--red {
+  background:
+    radial-gradient(circle at 35% 28%, #ff8a80 0%, #e53935 22%, #b71c1c 55%, #7f0000 100%);
+  border: 2px solid #5d0000;
+}
+
+.checkers-piece--black {
+  background:
+    radial-gradient(circle at 35% 28%, #5c6bc0 0%, #37474f 18%, #1a1a1a 50%, #0a0a0a 100%);
+  border: 2px solid #000;
+}
+
+.checkers-piece--king .checkers-piece-crown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.42em;
+  color: #ffd54f;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(255, 193, 7, 0.6);
+  z-index: 1;
+}
+
+.checkers-piece--king::before {
+  inset: 5%;
+  border: 3px double rgba(255, 213, 79, 0.65);
+  box-shadow:
+    inset 0 0 8px rgba(255, 193, 7, 0.25),
+    0 0 10px rgba(255, 193, 7, 0.2);
+}
+
+.checkers-piece-shadow {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 62%;
+  height: 12%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.45) 0%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.checkers-status-bar {
+  background: linear-gradient(180deg, rgba(40, 32, 24, 0.9) 0%, rgba(24, 20, 16, 0.95) 100%);
+  border: 1px solid rgba(196, 165, 116, 0.25);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.checkers-captured-tray {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.checkers-captured-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  opacity: 0.85;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.checkers-captured-dot--red {
+  background: radial-gradient(circle at 35% 30%, #ef5350, #b71c1c);
+  border: 1px solid #5d0000;
+}
+
+.checkers-captured-dot--black {
+  background: radial-gradient(circle at 35% 30%, #546e7a, #212121);
+  border: 1px solid #000;
+}
+
+.checkers-captured-dot--ghost {
+  opacity: 0.2;
+  box-shadow: none;
+}
+
+.checkers-turn-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.checkers-turn-indicator--active {
+  border-color: rgba(255, 214, 96, 0.45);
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.15);
+}
+
+.checkers-turn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.checkers-turn-dot--red {
+  background: radial-gradient(circle at 35% 30%, #ef5350, #b71c1c);
+}
+
+.checkers-turn-dot--black {
+  background: radial-gradient(circle at 35% 30%, #546e7a, #212121);
+}
+
+.checkers-board-coord {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+.checkers-board-coord--file {
+  bottom: 2px;
+}
+
+.checkers-board-coord--rank {
+  left: 3px;
+}
