@@ -37,6 +37,8 @@ import {
   SkipperAgentMockup
 } from './DocMockups';
 
+const SHOW_BUSINESS_PLAN = false;
+
 // Documentation content structure with all Aquads features
 const documentationStructure = [
   {
@@ -164,7 +166,7 @@ const documentationStructure = [
       { id: 'embed-widgets', title: 'Embed Widgets', content: 'embedWidgets' },
     ]
   },
-  {
+  ...(SHOW_BUSINESS_PLAN ? [{
     id: 'whitepaper',
     title: 'Business Plan',
     icon: FaBook,
@@ -180,7 +182,7 @@ const documentationStructure = [
       { id: 'wp-growth-strategy', title: 'Growth & Strategy', content: 'wpGrowthStrategy' },
       { id: 'wp-conclusion', title: 'Conclusion & Contact', content: 'wpConclusion' },
     ]
-  },
+  }] : []),
 ];
 
 // Content for each documentation page
@@ -4412,7 +4414,7 @@ For widget issues:
 > 💡 **Tip**: Use the AquaSwap widget to add swap functionality without building your own.
     `,
     prevPage: { id: 'browser-extension', title: 'Browser Extension' },
-    nextPage: { id: 'wp-executive-summary', title: 'Executive Summary' },
+    ...(SHOW_BUSINESS_PLAN && { nextPage: { id: 'wp-executive-summary', title: 'Executive Summary' } }),
   },
 
   // ===== BUSINESS PLAN (WHITEPAPER) =====
