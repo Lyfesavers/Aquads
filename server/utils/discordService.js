@@ -1647,6 +1647,7 @@ async function startBot() {
               '• No bot/spam accounts (reasonable posting frequency)\n' +
               '• Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet\n' +
               '  Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"\n' +
+              '• Comments must include an image attachment — use an AI-generated image or meme about the project in the post you\'re commenting on\n' +
               '• Twitter account must not be shadow banned or suspended\n' +
               '• Use an Aquads-branded PFP on X: generate one free per week at https://www.aquads.xyz/pfp-generator (includes the Aquads logo) and set it as your profile photo\n\n' +
               'Earn points at https://aquads.xyz'

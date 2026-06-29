@@ -626,6 +626,10 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
+               <span>Comments must include an image attachment — use an AI-generated image or meme about the project in the post you&apos;re commenting on</span>
+             </li>
+             <li className="flex items-start gap-2">
+               <span className="text-blue-400 mt-1">•</span>
                <span>Facebook account must not be shadow banned or suspended</span>
              </li>
              <li className="flex items-start gap-2">

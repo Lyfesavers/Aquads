@@ -1159,6 +1159,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
+                  <span>Comments must include an <strong>image attachment</strong> — use an <strong>AI-generated image or meme</strong> about the project in the post you&apos;re commenting on</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
                   <span>Twitter account must not be <strong>shadow banned</strong> or <strong>suspended</strong></span>
                 </div>
                 <div className="flex items-start">
