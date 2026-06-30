@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FaGamepad, FaPlus, FaTrash } from 'react-icons/fa';
 import { createGame } from '../services/api';
 import { GAME_SOCIAL_PLATFORM_OPTIONS, sanitizeGameSocialsForApi } from './GameSocialLinks';
@@ -213,8 +214,8 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
     formData.bannerUrl.trim() &&
     isValidUrl(formData.bannerUrl.trim());
 
-  return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-50 overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-[210000] overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 shadow-lg shrink-0">
@@ -541,7 +542,8 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
