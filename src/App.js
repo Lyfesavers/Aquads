@@ -47,7 +47,6 @@ import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import DesktopInstallPrompt from './components/DesktopInstallPrompt';
 import { PWAInstallProvider } from './contexts/PWAInstallContext';
-import OnboardingSection from './components/OnboardingSection';
 const HowTo = lazy(() => import('./components/HowTo'));
 const BlogPage = lazy(() => import('./components/BlogPage'));
 const FreeCoursePage = lazy(() => import('./components/FreeCoursePage'));
@@ -3730,11 +3729,6 @@ function App() {
                     Ads loaded: {ads.length}
                   </div>
                 )}
-
-              {/* Onboarding Section - inside scroll so it appears with rest of content */}
-              <div className="relative z-0">
-                <OnboardingSection calendlyUrl="https://calendly.com/aquads-info/15min" />
-              </div>
 
               {/* Footer - inside scroll so it appears with rest of content */}
               <div className="relative z-10">

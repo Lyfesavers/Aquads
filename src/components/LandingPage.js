@@ -6,6 +6,7 @@ import './LandingPage.css';
 import HowItWorksSection from './HowItWorksSection';
 import EtmTagline from './EtmTagline';
 import AsSeenOn from './AsSeenOn';
+import OnboardingSection from './OnboardingSection';
 
 /*
   Landing-page FAQ — single source of truth for both:
@@ -5056,6 +5057,11 @@ const LandingPage = () => {
             Free listing • No wallet required to browse
           </motion.p>
         </motion.div>
+      </section>
+
+      {/* Book onboarding session — between launch CTA and FAQ */}
+      <section className="relative w-full border-t border-white/10">
+        <OnboardingSection calendlyUrl="https://calendly.com/aquads-info/15min" />
       </section>
 
       {/*
