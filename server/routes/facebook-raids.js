@@ -489,7 +489,7 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
       if (user) {
         // Use admin-specified points if provided, otherwise use raid default
         const points = req.body.points || raid.points || 20;
-        const isVerifiedBonus = req.body.points === 50;
+        const isVerifiedBonus = req.body.points === 10 || req.body.points === 50;
         user.points += points;
         await user.save();
         completion.pointsAwarded = true;

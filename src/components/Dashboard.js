@@ -2239,7 +2239,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
 
   // Add these functions to handle Twitter raid completion approvals and rejections
-  // points parameter: 20 for regular accounts, 50 for verified (blue checkmark) accounts
+  // points parameter: 5/10 text-only (unverified/verified), 20/50 image+text (unverified/verified)
+  const isVerifiedRaidPoints = (points) => points === 10 || points === 50;
+
   const handleApproveTwitterRaid = async (completion, points = 20) => {
     try {
       const response = await fetch(`${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
@@ -2257,7 +2259,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       }
       
       const result = await response.json();
-      const verifiedText = points === 50 ? ' (verified account bonus!)' : '';
+      const verifiedText = isVerifiedRaidPoints(points) ? ' (verified account!)' : '';
       alert(result.message || `Completion approved successfully! ${points} points awarded${verifiedText}`);
     } catch (error) {
       alert('Error approving completion: ' + error.message);
@@ -2320,7 +2322,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
         }
       }
       setTwitterRaidSelectedKeys([]);
-      const verifiedText = points === 50 ? ' (verified bonus)' : '';
+      const verifiedText = isVerifiedRaidPoints(points) ? ' (verified)' : '';
       if (fail === 0) {
         showNotification(
           `Approved ${ok} completion(s)${verifiedText}. ${points} pts each.`,
@@ -2397,7 +2399,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
   const getFacebookRaidCompletionKey = (completion) =>
     `${completion.raidId}-${completion.completionId}`;
 
-  // points parameter: 20 for regular accounts, 50 for verified (blue checkmark) accounts
+  // points parameter: 5/10 text-only (unverified/verified), 20/50 image+text (unverified/verified)
   const handleApproveFacebookRaid = async (completion, points = 20) => {
     try {
       const response = await fetch(`${API_URL}/facebook-raids/${completion.raidId}/approve/${completion.completionId}`, {
@@ -2415,7 +2417,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
       }
       
       const result = await response.json();
-      const verifiedText = points === 50 ? ' (verified account bonus!)' : '';
+      const verifiedText = isVerifiedRaidPoints(points) ? ' (verified account!)' : '';
       showNotification(
         result.message || `Facebook raid approved! ${points} points awarded${verifiedText}`,
         'success'
@@ -2478,7 +2480,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
         }
       }
       setFacebookRaidSelectedKeys([]);
-      const verifiedText = points === 50 ? ' (verified bonus)' : '';
+      const verifiedText = isVerifiedRaidPoints(points) ? ' (verified)' : '';
       if (fail === 0) {
         showNotification(
           `Approved ${ok} Facebook completion(s)${verifiedText}. ${points} pts each.`,
@@ -2591,11 +2593,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
+                  onClick={() => handleBulkApproveTwitterRaids(5)}
+                  disabled={
+                    twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded hover:bg-gray-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Unverified, text-only comment"
+                >
+                  {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (5 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveTwitterRaids(10)}
+                  disabled={
+                    twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Verified ✓, text-only comment"
+                >
+                  {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (10 pts)'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleBulkApproveTwitterRaids(20)}
                   disabled={
                     twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
                   }
                   className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Unverified, comment with image"
                 >
                   {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (20 pts)'}
                 </button>
@@ -2606,7 +2631,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                     twitterRaidBulkActionLoading || twitterRaidSelectedKeys.length === 0
                   }
                   className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm rounded hover:from-blue-600 hover:to-cyan-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Use for verified blue checkmark accounts"
+                  title="Verified ✓, comment with image"
                 >
                   {twitterRaidBulkActionLoading ? 'Working…' : 'Approve selected (50 pts)'}
                 </button>
@@ -2756,20 +2781,38 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                   </div>
                   <div className="flex flex-col gap-2">
                     <button
+                      onClick={() => handleApproveTwitterRaid(completion, 5)}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 font-medium"
+                      title="Unverified, text-only comment"
+                    >
+                      ✓ Approve (5 pts)
+                    </button>
+                    <button
+                      onClick={() => handleApproveTwitterRaid(completion, 10)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium flex items-center justify-center gap-1"
+                      title="Verified ✓, text-only comment"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                      </svg>
+                      Verified (10 pts)
+                    </button>
+                    <button
                       onClick={() => handleApproveTwitterRaid(completion, 20)}
                       className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
+                      title="Unverified, comment with image"
                     >
                       ✓ Approve (20 pts)
                     </button>
                     <button
                       onClick={() => handleApproveTwitterRaid(completion, 50)}
                       className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded hover:from-blue-600 hover:to-cyan-600 font-medium flex items-center justify-center gap-1"
-                      title="Use for verified blue checkmark accounts"
+                      title="Verified ✓, comment with image"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
                       </svg>
-                      Verified (50 pts)
+                      Verified + Image (50 pts)
                     </button>
                     <button
                       onClick={() => handleRejectTwitterRaidClick(completion)}
@@ -2889,11 +2932,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
+                  onClick={() => handleBulkApproveFacebookRaids(5)}
+                  disabled={
+                    facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded hover:bg-gray-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Unverified, text-only comment"
+                >
+                  {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (5 pts)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkApproveFacebookRaids(10)}
+                  disabled={
+                    facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
+                  }
+                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Verified ✓, text-only comment"
+                >
+                  {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (10 pts)'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleBulkApproveFacebookRaids(20)}
                   disabled={
                     facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
                   }
                   className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Unverified, comment with image"
                 >
                   {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (20 pts)'}
                 </button>
@@ -2904,7 +2970,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                     facebookRaidBulkActionLoading || facebookRaidSelectedKeys.length === 0
                   }
                   className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm rounded hover:from-blue-600 hover:to-cyan-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Use for verified blue checkmark accounts"
+                  title="Verified ✓, comment with image"
                 >
                   {facebookRaidBulkActionLoading ? 'Working…' : 'Approve selected (50 pts)'}
                 </button>
@@ -2984,20 +3050,38 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                   </div>
                   <div className="flex flex-col gap-2">
                     <button
+                      onClick={() => handleApproveFacebookRaid(completion, 5)}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 font-medium"
+                      title="Unverified, text-only comment"
+                    >
+                      ✓ Approve (5 pts)
+                    </button>
+                    <button
+                      onClick={() => handleApproveFacebookRaid(completion, 10)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium flex items-center justify-center gap-1"
+                      title="Verified ✓, text-only comment"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                      </svg>
+                      Verified (10 pts)
+                    </button>
+                    <button
                       onClick={() => handleApproveFacebookRaid(completion, 20)}
                       className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
+                      title="Unverified, comment with image"
                     >
                       ✓ Approve (20 pts)
                     </button>
                     <button
                       onClick={() => handleApproveFacebookRaid(completion, 50)}
                       className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded hover:from-blue-600 hover:to-cyan-600 font-medium flex items-center justify-center gap-1"
-                      title="Use for verified blue checkmark accounts"
+                      title="Verified ✓, comment with image"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
                       </svg>
-                      Verified (50 pts)
+                      Verified + Image (50 pts)
                     </button>
                     <button
                       onClick={() => handleRejectFacebookRaidClick(completion)}
@@ -4165,7 +4249,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                       <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 2 points for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
-                      <p>• Earn 20 points for completing social media raids (or 50 points with a verified ✓ account)</p>
+                      <p>• Social media raids: you must <strong>Like + Retweet/Share + Comment</strong> (all 3 every time!). Points: 5–50 based on your comment type and verified ✓ status</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
                       <p>• Earn 20 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>

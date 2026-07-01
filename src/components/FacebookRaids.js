@@ -522,7 +522,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Facebook Raids</h1>
-            <p className="text-gray-400 mt-1">Complete Facebook raids to earn points and grow your community</p>
+            <p className="text-gray-400 mt-1">Like, Share, and Comment on posts to earn points. You must do all three — not just comment!</p>
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -571,15 +571,15 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
            <div className="flex items-start gap-2">
              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">2</div>
              <div>
-               <strong>Interact with the Post</strong>
-               <p className="text-gray-400 mt-1">Like, share, and comment on the Facebook post</p>
+               <strong>Do All 3 on the Post</strong>
+               <p className="text-gray-400 mt-1">Like 👍, Share 🔁, AND Comment 💬 — all three required, every time!</p>
              </div>
            </div>
            <div className="flex items-start gap-2">
              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">3</div>
              <div>
                <strong>Earn Points</strong>
-               <p className="text-gray-400 mt-1">Get points after admin approval of your completion</p>
+               <p className="text-gray-400 mt-1">Admin checks you did all 3, then awards 5–50 pts based on your comment</p>
              </div>
            </div>
          </div>
@@ -588,12 +588,22 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
          <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600/50">
            <h3 className="text-md font-semibold text-white mb-3">Facebook Raid Rules</h3>
            
-           {/* Verified Account Points Highlight */}
+           {/* Required actions + points */}
+           <div className="bg-red-500/10 border border-red-400/40 rounded p-3 mb-4">
+             <p className="text-red-200 font-semibold mb-1">You must do ALL 3 things — every time:</p>
+             <p className="text-gray-200 text-sm">👍 <strong>Like</strong> the post · 🔁 <strong>Share</strong> the post · 💬 <strong>Comment</strong> on the post</p>
+             <p className="text-gray-400 text-xs mt-2">Commenting alone does NOT count. You need Like + Share + Comment every time!</p>
+           </div>
+
            <div className="flex items-start bg-blue-500/20 border border-blue-400/30 rounded p-3 mb-4">
              <svg className="w-5 h-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
              </svg>
-             <span className="text-blue-300 text-sm">Earn <strong className="text-cyan-400">50 points</strong> with a verified (blue checkmark ✓) account, or <strong className="text-green-400">20 points</strong> with a non-verified account</span>
+             <div>
+               <p className="text-blue-200 font-semibold mb-1 text-sm">After you do all 3, your points depend on your comment:</p>
+               <p className="text-blue-300 text-sm"><strong className="text-gray-300">5 pts</strong> = text comment only · <strong className="text-blue-400">10 pts</strong> = text comment + verified ✓ · <strong className="text-green-400">20 pts</strong> = comment with image · <strong className="text-cyan-400">50 pts</strong> = comment with image + verified ✓</p>
+               <p className="text-blue-200/80 text-xs mt-1">Tip: Add an AI-generated image or meme to your comment to earn more points!</p>
+             </div>
            </div>
            
            <ul className="text-sm text-gray-300 space-y-2">
@@ -626,7 +636,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
-               <span>Comments must include an image attachment — use an AI-generated image or meme about the project in the post you&apos;re commenting on</span>
+               <span>Want more points? Add an AI-generated image or meme to your comment (20 or 50 pts instead of 5 or 10)</span>
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
@@ -949,11 +959,11 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                    <div className="bg-gray-800/70 rounded p-3 border border-gray-700 mb-4">
                      <h4 className="text-white font-medium mb-2 text-sm">How to Complete:</h4>
                      <ol className="list-decimal list-inside text-gray-400 text-xs space-y-1 ml-2">
-                       <li>Click "Open Facebook Post" to view the post</li>
-                       <li>Like, share, and comment on the Facebook post</li>
-                       <li>Complete all three actions on Facebook</li>
+                       <li><strong className="text-yellow-200">Do all 3 on Facebook:</strong> Like 👍 · Share 🔁 · Comment 💬 (all required!)</li>
+                       <li>Click &quot;Open Facebook Post&quot; to view the post</li>
                        <li>Enter your Facebook username below</li>
-                       <li>Click "Submit for Admin Approval" to earn points</li>
+                       <li>Click &quot;Submit for Admin Approval&quot;</li>
+                       <li>An admin checks you did all 3, then awards your points (5–50 depending on your comment)</li>
                      </ol>
                    </div>
                    

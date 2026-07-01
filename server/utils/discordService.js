@@ -1635,11 +1635,15 @@ async function startBot() {
           const embed = new EmbedBuilder()
             .setTitle('💰 Raids')
             .setDescription(
-              '• `/raids` – List available raids\n' +
-              '• `/complete raid_id username post_url` – Submit completion\n' +
-              '• Or click **Complete** on a raid and fill the form\n\n' +
+              '**How it works:**\n' +
+              '1. Do ALL 3 on every raid: Like + Retweet + Comment (all required!)\n' +
+              '2. `/raids` – List available raids\n' +
+              '3. `/complete raid_id username post_url` – Submit completion\n' +
+              '4. Admin checks you did all 3, then awards points\n\n' +
               '**Raid Rules:**\n' +
-              '• Earn 50 points with a verified (blue checkmark ✓) account, or 20 points with a non-verified account\n' +
+              '• You MUST Like + Retweet + Comment every time — commenting alone does NOT count!\n' +
+              '• Points (after you do all 3): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓\n' +
+              '• Tip: Add an AI image or meme to your comment for more points (20 or 50 instead of 5 or 10)\n' +
               '• Twitter account must be at least 6 months old\n' +
               '• Account must have at least 50 followers\n' +
               '• Must be following @_Aquads_\n' +
@@ -1647,7 +1651,6 @@ async function startBot() {
               '• No bot/spam accounts (reasonable posting frequency)\n' +
               '• Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet\n' +
               '  Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"\n' +
-              '• Comments must include an image attachment — use an AI-generated image or meme about the project in the post you\'re commenting on\n' +
               '• Twitter account must not be shadow banned or suspended\n' +
               '• Use an Aquads-branded PFP on X: generate one free per week at https://www.aquads.xyz/pfp-generator (includes the Aquads logo) and set it as your profile photo\n\n' +
               'Earn points at https://aquads.xyz'

@@ -1824,15 +1824,17 @@ Earn points by completing Twitter & Facebook raids!
   Cancel a raid you created (use the same URL you used to create it)
 
 💡 How it works:
-1. Like, Retweet & Comment on posts
+1. Do ALL 3 on every raid: Like + Retweet + Comment (all required!)
 2. Use /raids to see available raids
 3. Click "Complete in Private Chat" button
-4. Earn points after admin approval
+4. Admin checks you did all 3, then awards points
 
 ⏰ Raids expire after 48 hours
 
 📋 Raid Rules:
-• Earn 50 points with a verified (blue checkmark ✓) account, or 20 points with a non-verified account
+• You MUST Like + Retweet + Comment every time — commenting alone does NOT count!
+• Points (after you do all 3): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓
+• Tip: Add an AI image or meme to your comment for more points (20 or 50 instead of 5 or 10)
 • Twitter account must be at least 6 months old
 • Account must have at least 50 followers
 • Must be following @_Aquads_
@@ -1840,7 +1842,6 @@ Earn points by completing Twitter & Facebook raids!
 • No bot/spam accounts (reasonable posting frequency)
 • Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the tweet
   Example: "Solid update from [Project Name] — this is exactly the kind of build the ecosystem needs. Supporting from Aquads!"
-• Comments must include an image attachment — use an AI-generated image or meme about the project in the post you're commenting on
 • Twitter account must not be shadow banned or suspended
 • Use an Aquads-branded PFP on X: generate one free per week at https://www.aquads.xyz/pfp-generator (includes the Aquads logo) and set it as your profile photo
 

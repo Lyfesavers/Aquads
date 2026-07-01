@@ -728,7 +728,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
       const user = await User.findById(completion.userId);
       if (user) {
         const points = req.body.points || raid.points || 20;
-        const isVerifiedBonus = req.body.points === 50;
+        const isVerifiedBonus = req.body.points === 10 || req.body.points === 50;
         user.points = (user.points || 0) + points;
         user.lastActivity = new Date();
         user.pointsHistory.push({
