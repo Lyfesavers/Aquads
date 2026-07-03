@@ -504,7 +504,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       {globalStats ? formatFullCurrency(globalStats.totalMarketCap) : '—'}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-400">Market Cap</span>
+                      <span className="text-sm text-gray-400">Global Market Cap</span>
                       {globalStats && (
                         <span className={`text-sm font-medium ${
                           globalStats.marketCapChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
@@ -526,7 +526,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       {globalStats ? formatFullCurrency(globalStats.totalVolume24h) : '—'}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-400">24h Trading Volume</span>
+                      <span className="text-sm text-gray-400">Global 24h Trading Volume</span>
                       {globalStats && Number.isFinite(globalStats.volumeChangePercentage24h) && (
                         <span className={`text-sm font-medium ${
                           globalStats.volumeChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
