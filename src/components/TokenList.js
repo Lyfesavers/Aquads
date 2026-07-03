@@ -71,6 +71,11 @@ const formatCurrency = (value) => {
   }
 };
 
+const formatFullCurrency = (value) => {
+  if (!value) return 'N/A';
+  return `$${Math.round(value).toLocaleString('en-US')}`;
+};
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
@@ -88,6 +93,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [fallbackInterval, setFallbackInterval] = useState(null);
+  const [globalStats, setGlobalStats] = useState(null);
   // Prevents request stacking: if a fetch is already in-flight, don't fire another one.
   // Without this, slow server responses cause multiple concurrent requests to pile up.
   const isFetchingTokens = useRef(false);
@@ -219,6 +225,19 @@ const TokenList = ({ currentUser, showNotification }) => {
   useEffect(() => {
     // Initial token fetch
     fetchInitialTokens();
+
+    const fetchGlobalStats = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/tokens/global/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setGlobalStats(data);
+        }
+      } catch (error) {
+        logger.error('Error fetching global market stats:', error);
+      }
+    };
+    fetchGlobalStats();
 
     // WebSocket event handlers
     const handleTokenUpdate = (data) => {
@@ -476,6 +495,55 @@ const TokenList = ({ currentUser, showNotification }) => {
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
         {viewMode === 'tokens' ? (
           <>
+            {/* Global market stats */}
+            <div className="p-4 md:p-6 border-b border-gray-700/30">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 p-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+                      {globalStats ? formatFullCurrency(globalStats.totalMarketCap) : '—'}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-400">Market Cap</span>
+                      {globalStats && (
+                        <span className={`text-sm font-medium ${
+                          globalStats.marketCapChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {globalStats.marketCapChangePercentage24h >= 0 ? '▲' : '▼'}{' '}
+                          {Math.abs(globalStats.marketCapChangePercentage24h).toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {globalStats?.marketCapSparkline?.length >= 2 && (
+                    <TokenSparkline prices={globalStats.marketCapSparkline} width={120} height={40} />
+                  )}
+                </div>
+
+                <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 p-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+                      {globalStats ? formatFullCurrency(globalStats.totalVolume24h) : '—'}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-400">24h Trading Volume</span>
+                      {globalStats && Number.isFinite(globalStats.volumeChangePercentage24h) && (
+                        <span className={`text-sm font-medium ${
+                          globalStats.volumeChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {globalStats.volumeChangePercentage24h >= 0 ? '▲' : '▼'}{' '}
+                          {Math.abs(globalStats.volumeChangePercentage24h).toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {globalStats?.volumeSparkline?.length >= 2 && (
+                    <TokenSparkline prices={globalStats.volumeSparkline} width={120} height={40} />
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Token list header */}
             <div className="p-4 md:p-6 border-b border-gray-700/30">
               <div className="flex items-center justify-between">

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Token = require('../models/Token');
+const GlobalMarketSnapshot = require('../models/GlobalMarketSnapshot');
 const axios = require('axios');
 const { emitTokenUpdate } = require('../socket');
 
@@ -14,6 +15,304 @@ const STARTUP_FETCH_DELAY_MIN_MS = 45 * 1000;
 const STARTUP_FETCH_DELAY_JITTER_MS = 45 * 1000;
 
 let nextCoinGeckoAttemptAt = 0;
+
+let globalStatsCache = null;
+let globalStatsCacheTime = 0;
+const GLOBAL_STATS_CACHE_TTL = 15 * 60 * 1000;
+const GLOBAL_CHART_CACHE_TTL = 60 * 60 * 1000;
+let globalChartCache = null;
+let globalChartCacheTime = 0;
+const GLOBAL_SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000;
+const GLOBAL_SNAPSHOT_RETENTION_MS = 8 * 24 * 60 * 60 * 1000;
+/** Top coins whose market_chart volume history is summed when the global chart endpoint is unavailable. */
+const GLOBAL_CHART_TOP_COINS = 15;
+const GLOBAL_CHART_COIN_DELAY_MS = 1200;
+
+const getCoinGeckoRequestConfig = () => {
+  const apiKey = process.env.COINGECKO_API_KEY || process.env.COINGECKO_PRO_API_KEY;
+  if (apiKey) {
+    return {
+      baseURL: 'https://pro-api.coingecko.com/api/v3',
+      headers: { Accept: 'application/json', 'x-cg-pro-api-key': apiKey }
+    };
+  }
+  return {
+    baseURL: 'https://api.coingecko.com/api/v3',
+    headers: { Accept: 'application/json' }
+  };
+};
+
+const extractChartValues = (pairs) => {
+  if (!Array.isArray(pairs)) return [];
+  return pairs
+    .map((pair) => (Array.isArray(pair) ? parseFloat(pair[1]) : 0))
+    .filter((value) => Number.isFinite(value) && value > 0);
+};
+
+const fetchGlobalMarketCapChart = async () => {
+  const { baseURL, headers } = getCoinGeckoRequestConfig();
+  try {
+    const response = await axios.get(`${baseURL}/global/market_cap_chart`, {
+      params: { days: '7', vs_currency: 'usd' },
+      timeout: 15000,
+      headers
+    });
+
+    const chart = response.data?.market_cap_chart;
+    const marketCapSparkline = extractChartValues(chart?.market_cap);
+    const volumeSparkline = extractChartValues(chart?.volume);
+
+    if (marketCapSparkline.length < 2 || volumeSparkline.length < 2) {
+      return null;
+    }
+
+    return {
+      marketCapSparkline,
+      volumeSparkline,
+      chartSource: 'coingecko_global_chart'
+    };
+  } catch (error) {
+    const errorCode = error.response?.data?.status?.error_code;
+    if (errorCode !== 10005) {
+      console.warn('[Tokens] Global market cap chart fetch failed:', error.message);
+    }
+    return null;
+  }
+};
+
+const recordGlobalSnapshot = async (stats) => {
+  try {
+    const latest = await GlobalMarketSnapshot.findOne().sort({ recordedAt: -1 }).lean();
+    if (latest && Date.now() - new Date(latest.recordedAt).getTime() < GLOBAL_SNAPSHOT_MIN_INTERVAL_MS) {
+      return;
+    }
+
+    await GlobalMarketSnapshot.create({
+      totalMarketCap: stats.totalMarketCap,
+      totalVolume24h: stats.totalVolume24h,
+      marketCapChangePercentage24h: stats.marketCapChangePercentage24h,
+      volumeChangePercentage24h: stats.volumeChangePercentage24h
+    });
+
+    const cutoff = new Date(Date.now() - GLOBAL_SNAPSHOT_RETENTION_MS);
+    await GlobalMarketSnapshot.deleteMany({ recordedAt: { $lt: cutoff } });
+  } catch (error) {
+    console.warn('[Tokens] Failed to record global market snapshot:', error.message);
+  }
+};
+
+const fetchSparklinesFromSnapshots = async () => {
+  try {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const snapshots = await GlobalMarketSnapshot.find({ recordedAt: { $gte: cutoff } })
+      .sort({ recordedAt: 1 })
+      .lean();
+
+    if (snapshots.length < 2) return null;
+
+    return {
+      marketCapSparkline: snapshots.map((s) => s.totalMarketCap),
+      volumeSparkline: snapshots.map((s) => s.totalVolume24h),
+      chartSource: 'coingecko_global_snapshots'
+    };
+  } catch (error) {
+    console.warn('[Tokens] Failed to load global market snapshots:', error.message);
+    return null;
+  }
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const sumSeriesByTimestamp = (seriesList) => {
+  const totals = new Map();
+
+  for (const series of seriesList) {
+    if (!Array.isArray(series)) continue;
+    for (const point of series) {
+      if (!Array.isArray(point) || point.length < 2) continue;
+      const timestamp = Number(point[0]);
+      const value = parseFloat(point[1]);
+      if (!Number.isFinite(timestamp) || !Number.isFinite(value)) continue;
+      totals.set(timestamp, (totals.get(timestamp) || 0) + value);
+    }
+  }
+
+  return [...totals.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, value]) => value)
+    .filter((value) => value > 0);
+};
+
+const buildMarketCapSparklineFromTokens = (tokens) => {
+  const withSpark = tokens.filter(
+    (token) =>
+      Array.isArray(token.sparklineIn7d) &&
+      token.sparklineIn7d.length >= 2 &&
+      Number(token.circulatingSupply) > 0
+  );
+
+  if (!withSpark.length) return [];
+
+  const length = Math.min(...withSpark.map((token) => token.sparklineIn7d.length));
+  const points = [];
+
+  for (let i = 0; i < length; i++) {
+    points.push(
+      withSpark.reduce(
+        (sum, token) => sum + token.sparklineIn7d[i] * Number(token.circulatingSupply),
+        0
+      )
+    );
+  }
+
+  return points.filter((value) => value > 0);
+};
+
+const fetchMarketCapSparklineFromTokenCache = async () => {
+  try {
+    const tokens = tokensReadCache || (await fetchAndCacheTokens());
+    const marketCapSparkline = buildMarketCapSparklineFromTokens(tokens);
+    return marketCapSparkline.length >= 2 ? marketCapSparkline : [];
+  } catch (error) {
+    console.warn('[Tokens] Failed to build market cap sparkline from token cache:', error.message);
+    return [];
+  }
+};
+
+const fetchVolumeSparklineFromTopCoins = async () => {
+  if (Date.now() < nextCoinGeckoAttemptAt) {
+    return [];
+  }
+
+  try {
+    const topTokens = await Token.find({})
+      .sort({ marketCapRank: 1 })
+      .limit(GLOBAL_CHART_TOP_COINS)
+      .select('id')
+      .lean();
+
+    const coinIds = topTokens.map((token) => token.id).filter(Boolean);
+    if (!coinIds.length) return [];
+
+    const { baseURL, headers } = getCoinGeckoRequestConfig();
+    const volumeSeries = [];
+
+    for (const coinId of coinIds) {
+      if (Date.now() < nextCoinGeckoAttemptAt) break;
+
+      try {
+        const response = await axios.get(`${baseURL}/coins/${coinId}/market_chart`, {
+          params: { vs_currency: 'usd', days: '7' },
+          timeout: 15000,
+          headers
+        });
+
+        if (Array.isArray(response.data?.total_volumes)) {
+          volumeSeries.push(response.data.total_volumes);
+        }
+      } catch (error) {
+        if (error.response?.status === 429) {
+          const waitMs = getRetryAfterMsFromError(error);
+          nextCoinGeckoAttemptAt = Date.now() + waitMs;
+          console.warn('[Tokens] CoinGecko rate limited while building global volume sparkline');
+          break;
+        }
+        console.warn(`[Tokens] market_chart failed for ${coinId}:`, error.message);
+      }
+
+      await sleep(GLOBAL_CHART_COIN_DELAY_MS);
+    }
+
+    const volumeSparkline = sumSeriesByTimestamp(volumeSeries);
+    return volumeSparkline.length >= 2 ? volumeSparkline : [];
+  } catch (error) {
+    console.warn('[Tokens] Failed to build global volume sparkline from top coins:', error.message);
+    return [];
+  }
+};
+
+const resolveGlobalChartSparklines = async () => {
+  const now = Date.now();
+  if (globalChartCache && now - globalChartCacheTime < GLOBAL_CHART_CACHE_TTL) {
+    return globalChartCache;
+  }
+
+  const proChart = await fetchGlobalMarketCapChart();
+  if (proChart) {
+    globalChartCache = proChart;
+    globalChartCacheTime = now;
+    return proChart;
+  }
+
+  const [marketCapSparkline, volumeSparkline] = await Promise.all([
+    fetchMarketCapSparklineFromTokenCache(),
+    fetchVolumeSparklineFromTopCoins()
+  ]);
+
+  if (marketCapSparkline.length >= 2 || volumeSparkline.length >= 2) {
+    const chartData = {
+      marketCapSparkline,
+      volumeSparkline,
+      chartSource: 'coingecko_markets_and_market_chart'
+    };
+    globalChartCache = chartData;
+    globalChartCacheTime = now;
+    return chartData;
+  }
+
+  const snapshotChart = await fetchSparklinesFromSnapshots();
+  if (snapshotChart) {
+    globalChartCache = snapshotChart;
+    globalChartCacheTime = now;
+  }
+
+  return snapshotChart;
+};
+
+const fetchGlobalStats = async () => {
+  const now = Date.now();
+  if (globalStatsCache && now - globalStatsCacheTime < GLOBAL_STATS_CACHE_TTL) {
+    return globalStatsCache;
+  }
+
+  try {
+    const { baseURL, headers } = getCoinGeckoRequestConfig();
+    const response = await axios.get(`${baseURL}/global`, {
+      timeout: 15000,
+      headers
+    });
+
+    const data = response.data?.data;
+    if (!data) return globalStatsCache;
+
+    const stats = {
+      totalMarketCap: parseFloat(data.total_market_cap?.usd) || 0,
+      totalVolume24h: parseFloat(data.total_volume?.usd) || 0,
+      marketCapChangePercentage24h: parseFloat(data.market_cap_change_percentage_24h_usd) || 0,
+      volumeChangePercentage24h: parseFloat(data.volume_change_percentage_24h_usd) || 0,
+      marketCapSparkline: [],
+      volumeSparkline: [],
+      chartSource: null,
+      lastUpdated: new Date().toISOString()
+    };
+
+    await recordGlobalSnapshot(stats);
+
+    const chartData = await resolveGlobalChartSparklines();
+    if (chartData) {
+      stats.marketCapSparkline = chartData.marketCapSparkline;
+      stats.volumeSparkline = chartData.volumeSparkline;
+      stats.chartSource = chartData.chartSource;
+    }
+
+    globalStatsCache = stats;
+    globalStatsCacheTime = now;
+    return stats;
+  } catch (error) {
+    console.error('[Tokens] Global stats fetch failed:', error.message);
+    return globalStatsCache;
+  }
+};
 
 const formatTokenForResponse = (token) => ({
   id: token.id,
@@ -66,8 +365,9 @@ const updateTokenCache = async (force = false) => {
   }
 
   try {
+    const { baseURL, headers } = getCoinGeckoRequestConfig();
     const response = await axios.get(
-      'https://api.coingecko.com/api/v3/coins/markets',
+      `${baseURL}/coins/markets`,
       {
         params: {
           vs_currency: 'usd',
@@ -78,9 +378,7 @@ const updateTokenCache = async (force = false) => {
           locale: 'en'
         },
         timeout: 15000,
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers
       }
     );
 
@@ -253,6 +551,19 @@ const fetchAndCacheTokens = async () => {
   tokensReadCacheTime = Date.now();
   return tokens;
 };
+
+router.get('/global/stats', async (req, res) => {
+  try {
+    const stats = await fetchGlobalStats();
+    if (!stats) {
+      return res.status(503).json({ error: 'Global market stats unavailable' });
+    }
+    res.json(stats);
+  } catch (error) {
+    console.error('Error in /api/tokens/global/stats:', error);
+    res.status(500).json({ error: 'Failed to fetch global market stats' });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {
