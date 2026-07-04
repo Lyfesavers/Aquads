@@ -4,6 +4,7 @@ import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCir
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
+import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
 
 // Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
 // All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
@@ -448,6 +449,39 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 Read Our Documentation
               </Link>
             </div>
+
+            <section
+              className="mt-10 max-w-3xl mx-auto text-left"
+              aria-label="Listing guides from the Aquads blog"
+            >
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-sm p-5 sm:p-6">
+                <h2 className="text-lg font-semibold text-emerald-300 mb-1">
+                  New to listing?
+                </h2>
+                <p className="text-gray-300 text-sm mb-4">
+                  Step-by-step guides from the Aquads blog — free listing, post-launch growth, and DexScreener trending.
+                </p>
+                <ul className="space-y-2.5">
+                  {LISTING_GUIDE_POSTS.map((guide) => (
+                    <li key={guide._id}>
+                      <Link
+                        to={blogPath(guide)}
+                        className="text-sm sm:text-base text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline transition-colors leading-snug"
+                      >
+                        {guide.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-xs text-gray-500">
+                  More articles on{' '}
+                  <Link to="/learn" className="text-emerald-500/80 hover:text-emerald-400 underline">
+                    Aquads Learn
+                  </Link>
+                  .
+                </p>
+              </div>
+            </section>
 
           </div>
         </div>

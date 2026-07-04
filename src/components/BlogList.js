@@ -3,26 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import BlogContentRenderer from './BlogContentRenderer';
 import { isMarkdownBlogContent, sanitizeBlogHtml, getBlogAuthorId } from '../utils/blogEditor';
-
-// Helper function to create URL-friendly slugs
-const createSlug = (title) => {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  
-  // Limit slug length to prevent extremely long URLs (keep first 50 characters)
-  // This helps prevent 5xx errors due to URL length limits
-  const maxLength = 50;
-  if (slug.length > maxLength) {
-    // Find the last complete word within the limit to avoid cutting words in half
-    const truncated = slug.substring(0, maxLength);
-    const lastDash = truncated.lastIndexOf('-');
-    return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
-  }
-  
-  return slug;
-};
+import { blogPath } from '../utils/blogRelatedPosts';
 
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId = null }) => {
 
@@ -42,7 +23,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
     // /share/blog/:id wrapper while also being the URL Google indexes and
     // ranks. The /share/blog/:id route still exists for backward compatibility
     // with links already shared in the wild.
-    const shareUrl = `${window.location.origin}/learn/${createSlug(blog.title)}-${blog._id}`;
+    const shareUrl = `${window.location.origin}${blogPath(blog)}`;
 
     // Add referral code if user is logged in (as a separate parameter)
     const finalUrl = currentUser?.username
@@ -86,26 +67,35 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
 
   return (
     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {blogs.map((blog) => (
-        <div
+      {blogs.map((blog) => {
+        const postUrl = blogPath(blog);
+
+        return (
+        <article
           key={blog._id}
           id={`blog-${blog._id}`}
-          className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden hover:bg-gray-800/70 transition-all duration-300"
+          className="relative bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden hover:bg-gray-800/70 hover:border-emerald-500/40 transition-all duration-300 group"
         >
+          <Link
+            to={postUrl}
+            className="absolute inset-0 z-10 rounded-lg"
+            aria-label={`Read: ${blog.title}`}
+          />
+
           {/* Banner Image */}
-          <div className="aspect-video">
+          <div className="aspect-video pointer-events-none">
             <img
               src={blog.bannerImage}
               alt={blog.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             />
           </div>
 
           {/* Content */}
-          <div className="p-4">
+          <div className="p-4 relative">
             <div className="flex items-start justify-between mb-4">
               {/* Author Info */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 pointer-events-none">
                 <div className="w-10 h-10 rounded-full overflow-hidden">
                   <img
                     src={blog.authorImage || `https://ui-avatars.com/api/?name=${blog.authorUsername}&background=random`}
@@ -120,9 +110,13 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
               </div>
 
               {/* Action Buttons */}
-              <div className="flex space-x-2">
+              <div className="relative z-20 flex space-x-2 pointer-events-auto">
                 <button
-                  onClick={() => handleShare(blog)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleShare(blog);
+                  }}
                   className="text-blue-400 hover:text-blue-300 transition-colors"
                   title="Share"
                 >
@@ -131,7 +125,11 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
                 {currentUser && (currentUser.userId === getBlogAuthorId(blog.author) || currentUser.isAdmin) && (
                   <>
                     <button
-                      onClick={() => onEditBlog(blog)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEditBlog(blog);
+                      }}
                       disabled={deletingBlogId === blog._id}
                       className={`text-blue-400 transition-colors ${
                         deletingBlogId === blog._id ? 'opacity-50 cursor-not-allowed' : 'hover:text-blue-300'
@@ -141,8 +139,10 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
                       <FaEdit size={18} />
                     </button>
                     <button
-                      onClick={() => {
-                        if (deletingBlogId) return; // Prevent if already deleting
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (deletingBlogId) return;
                         if (window.confirm('Are you sure you want to delete this blog post?')) {
                           onDeleteBlog(blog._id);
                         }
@@ -172,7 +172,9 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-bold text-yellow-400 mb-2">{blog.title}</h2>
+            <h2 className="text-xl font-bold text-yellow-400 mb-2 group-hover:text-emerald-300 transition-colors pointer-events-none">
+              {blog.title}
+            </h2>
 
             {/* Content Preview - always show truncated version */}
             {isMarkdownContent(blog.content) ? (
@@ -316,15 +318,13 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
               legacy /share/blog/:id wrapper still exists as a backward-compat
               route for links already shared in the wild.
             */}
-            <Link
-              to={`/learn/${createSlug(blog.title)}-${blog._id}`}
-              className="mt-2 text-blue-400 hover:text-blue-300 transition-colors inline-block"
-            >
-              Read More
-            </Link>
+            <span className="mt-2 text-blue-400 group-hover:text-blue-300 transition-colors inline-block pointer-events-none">
+              Read more →
+            </span>
           </div>
-        </div>
-      ))}
+        </article>
+        );
+      })}
     </div>
   );
 };

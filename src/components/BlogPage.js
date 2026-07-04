@@ -12,26 +12,7 @@ import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
-
-// Helper function to create URL-friendly slugs
-const createSlug = (title) => {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  
-  // Limit slug length to prevent extremely long URLs (keep first 50 characters)
-  // This helps prevent 5xx errors due to URL length limits
-  const maxLength = 50;
-  if (slug.length > maxLength) {
-    // Find the last complete word within the limit to avoid cutting words in half
-    const truncated = slug.substring(0, maxLength);
-    const lastDash = truncated.lastIndexOf('-');
-    return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
-  }
-  
-  return slug;
-};
+import { createBlogSlug as createSlug, getRelatedBlogs, blogPath, getFeatureLinkForBlog } from '../utils/blogRelatedPosts';
 
 // Helper function to extract blogId from slug
 const extractBlogIdFromSlug = (slug) => {
@@ -94,8 +75,29 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     }
 
     fetchBlog();
-    fetchRelatedBlogs();
   }, [blogId]);
+
+  useEffect(() => {
+    if (!blog || !blog._id) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${API_URL}/blogs`);
+        if (!response.ok || cancelled) return;
+        const allBlogs = await response.json();
+        if (!cancelled) {
+          setRelatedBlogs(getRelatedBlogs(blog, allBlogs, 3));
+        }
+      } catch (err) {
+        console.error('Failed to fetch related blogs:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blog]);
 
   // SEO: keep the browser URL on the canonical /learn/{slug}-{id} when the
   // user arrived there directly. The previous behavior of rewriting to
@@ -153,22 +155,6 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchRelatedBlogs = async () => {
-    try {
-      const response = await fetch(`${API_URL}/blogs`);
-      if (response.ok) {
-        const allBlogs = await response.json();
-        // Get related blogs (excluding current blog)
-        const related = allBlogs
-          .filter(b => b._id !== blogId)
-          .slice(0, 3);
-        setRelatedBlogs(related);
-      }
-    } catch (err) {
-      console.error('Failed to fetch related blogs:', err);
     }
   };
 
@@ -366,6 +352,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
 
   const canonicalUrl = `${window.location.origin}/learn/${createSlug(blog.title)}-${blog._id}`;
   const plainTextContent = extractPlainText(blog.content);
+  const featureLink = getFeatureLinkForBlog(blog);
 
   return (
     <div className="min-h-screen bg-gray-900 text-yellow-400">
@@ -390,6 +377,17 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <meta name="twitter:description" content={plainTextContent} />
         <meta name="twitter:image" content={blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'} />
         {/* BlogPosting JSON-LD is injected server-side by learn-blog edge only */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.aquads.xyz/' },
+              { '@type': 'ListItem', position: 2, name: 'Learn', item: 'https://www.aquads.xyz/learn' },
+              { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
+            ],
+          })}
+        </script>
       </Helmet>
 
       {/* Header Navigation */}
@@ -672,6 +670,27 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <div className="lg:flex lg:gap-8">
           {/* Main Content Column */}
           <div className="lg:flex-1 lg:max-w-4xl">
+            {/* Breadcrumb */}
+            <nav className="mb-6" aria-label="Breadcrumb">
+              <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400">
+                <li>
+                  <Link to="/home" className="hover:text-blue-300 transition-colors">
+                    Home
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="text-gray-600">/</li>
+                <li>
+                  <Link to="/learn" className="hover:text-blue-300 transition-colors">
+                    Learn
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="text-gray-600">/</li>
+                <li className="text-gray-300 line-clamp-1" aria-current="page">
+                  {blog.title}
+                </li>
+              </ol>
+            </nav>
+
             {/* Navigation */}
             <nav className="mb-8">
               <Link
@@ -766,6 +785,24 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               </div>
             </article>
 
+            {featureLink && (
+              <section
+                className="mb-12 rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-5 sm:p-6"
+                aria-label="Related Aquads feature"
+              >
+                <p className="text-xs uppercase tracking-wide text-cyan-400/80 mb-1">Try it on Aquads</p>
+                <h2 className="text-lg font-semibold text-white mb-2">{featureLink.label}</h2>
+                <p className="text-gray-300 text-sm mb-4">{featureLink.description}</p>
+                <Link
+                  to={featureLink.to}
+                  className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                >
+                  Open {featureLink.label}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </section>
+            )}
+
             {/* Mobile Ad Widget - Shows below content on mobile only */}
             <div 
               className="mb-12 flex justify-center lg:hidden"
@@ -782,7 +819,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                   {relatedBlogs.map((relatedBlog) => (
                     <Link
                       key={relatedBlog._id}
-                      to={`/learn/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
+                      to={blogPath(relatedBlog)}
                       className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
                     >
                       <div className="aspect-video">

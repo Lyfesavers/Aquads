@@ -3,6 +3,7 @@ import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaChartLine, FaTwitter, F
 
 const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
 import { Link } from 'react-router-dom';
+import { TELEGRAM_RAID_BOTS_ARTICLE, blogPath } from '../utils/blogRelatedPosts';
 
 const TelegramBot = () => {
   const [activeTab, setActiveTab] = useState('features');
@@ -326,6 +327,21 @@ const TelegramBot = () => {
                   <FaCrown className="mr-2" />
                   List & Bump Project
                 </Link>
+              </div>
+
+              <div className="mt-8 max-w-2xl mx-auto lg:mx-0 text-left">
+                <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/5 px-5 py-4">
+                  <p className="text-sm text-gray-300 mb-2">
+                    Comparing raid bots? Read our 2026 breakdown — Aquads is built for crypto projects with
+                    free daily raids, points, and bubble boosts.
+                  </p>
+                  <Link
+                    to={blogPath(TELEGRAM_RAID_BOTS_ARTICLE)}
+                    className="text-sm sm:text-base text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline transition-colors leading-snug"
+                  >
+                    {TELEGRAM_RAID_BOTS_ARTICLE.title}
+                  </Link>
+                </div>
               </div>
 
               {/* Quick stats */}
