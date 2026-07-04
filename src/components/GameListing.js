@@ -134,54 +134,60 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     currentUser.isAdmin || 
     currentUser.role === 'admin'
   );
+
+  const iconBtnBase =
+    'inline-flex shrink-0 items-center justify-center rounded-lg border transition-all duration-200 active:scale-95';
+  const iconBtnSm = `${iconBtnBase} h-9 w-9 sm:h-8 sm:w-8`;
+  const actionBtnBase =
+    'inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 sm:min-h-[40px] sm:py-2';
   
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-gray-900/60 shadow-lg shadow-black/30 ring-1 ring-white/5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:bg-gray-900/90 hover:shadow-xl hover:shadow-blue-500/10">
       {/* Banner (video or image) */}
-      <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-gray-950">
         {isVideo ? (
           <>
             {isUnsupportedExternalUrl ? (
-              <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-gray-800">
-                <FaExclamationTriangle className="text-yellow-500 text-3xl mb-2" />
-                <p className="text-gray-300 text-sm">Non-YouTube content cannot be embedded</p>
+              <div className="flex h-full w-full flex-col items-center justify-center bg-gray-900/80 p-4 text-center">
+                <FaExclamationTriangle className="mb-2 text-3xl text-yellow-500" />
+                <p className="text-sm text-gray-300">Non-YouTube content cannot be embedded</p>
                 <button
                   onClick={handlePlay}
-                  className="mt-3 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
                 >
                   Open Game Directly
                 </button>
                 {isOwnerOrAdmin && (
-                  <p className="text-red-400 text-xs mt-2">
+                  <p className="mt-2 text-xs text-red-400">
                     Admin: Please edit this entry and use YouTube for video previews
                   </p>
                 )}
               </div>
             ) : (
-              <Link to={`/games/${game._id}`} className="block w-full h-full group relative">
+              <Link to={`/games/${game._id}`} className="group/banner relative block h-full w-full">
                 <img
                   src={youtubeThumbnail}
                   alt={game.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/banner:scale-105"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://via.placeholder.com/640x360?text=Video+Preview';
                   }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                  <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <FaPlay className="text-white text-lg ml-0.5" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25 transition-colors duration-300 group-hover/banner:bg-black/40">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600/90 shadow-lg shadow-red-900/40 backdrop-blur-sm transition-transform duration-300 group-hover/banner:scale-110 sm:h-14 sm:w-14">
+                    <FaPlay className="ml-0.5 text-base text-white sm:text-lg" />
                   </div>
                 </div>
               </Link>
             )}
           </>
         ) : (
-          <Link to={`/games/${game._id}`} className="block w-full h-full">
+          <Link to={`/games/${game._id}`} className="group/banner relative block h-full w-full">
             <img 
               src={game.bannerUrl} 
               alt={game.title} 
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover/banner:scale-105"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://via.placeholder.com/640x360?text=Game+Banner+Not+Available';
@@ -189,70 +195,76 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
             />
           </Link>
         )}
-      </div>
-      
-      {/* Category and blockchain tags - moved below the banner */}
-      <div className="flex justify-between items-center px-4 pt-3 pb-1">
-        <div className="bg-blue-600/80 text-white text-xs px-2.5 py-1 rounded-full shadow-sm border border-blue-400/30 backdrop-blur-sm">
-          {game.category}
-        </div>
-        
-        <div className="bg-purple-600/80 text-white text-xs px-2.5 py-1 rounded-full shadow-sm border border-purple-400/30 backdrop-blur-sm">
-          {game.blockchain}
+
+        {/* Category & blockchain badges overlaid on banner */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-3 pb-3 pt-10 sm:px-4">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-md border border-blue-400/30 bg-blue-600/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm sm:text-xs">
+              {game.category}
+            </span>
+            <span className="rounded-md border border-purple-400/30 bg-purple-600/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm sm:text-xs">
+              {game.blockchain}
+            </span>
+          </div>
         </div>
       </div>
       
       {/* Content */}
-      <div className="px-4 pt-1 pb-4 flex-grow flex flex-col">
-        <div className="flex justify-between items-start mb-2">
-          <Link
-            to={`/games/${game._id}`}
-            className="text-xl font-bold text-white hover:text-yellow-400 transition-colors"
-          >
-            {game.title}
-          </Link>
-          
-          <div className="flex items-center gap-1.5">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        {/* Top meta row */}
+        <div className="mb-3 flex items-start justify-between gap-3 border-b border-white/5 pb-3">
+          <p className="min-w-0 text-xs text-gray-400 sm:text-sm">
+            By <span className="font-medium text-blue-300">{game.projectName}</span>
+          </p>
+
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+            <div className="inline-flex items-center gap-1 rounded-lg border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-xs font-semibold text-blue-200">
+              <FaThumbsUp className="text-[10px] sm:text-xs" />
+              <span>{voteCount}</span>
+            </div>
+
+            <button
+              onClick={handleShare}
+              className={`${iconBtnSm} ${
+                copied
+                  ? 'border-green-500/40 bg-green-600/20 text-green-300'
+                  : 'border-white/10 bg-white/5 text-gray-300 hover:border-white/20 hover:bg-white/10 hover:text-white'
+              }`}
+              title={copied ? 'Link copied!' : 'Copy share link'}
+              aria-label={copied ? 'Link copied' : 'Copy share link'}
+            >
+              <FaShare className="text-xs sm:text-sm" />
+            </button>
+
             {isOwnerOrAdmin && (
               <>
                 <button
                   onClick={handleEdit}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white p-1.5 rounded-full flex items-center justify-center"
+                  className={`${iconBtnSm} border-yellow-500/30 bg-yellow-600/20 text-yellow-200 hover:bg-yellow-600/35`}
                   title="Edit game"
+                  aria-label="Edit game"
                 >
-                  <FaEdit size={14} />
+                  <FaEdit className="text-xs sm:text-sm" />
                 </button>
                 <button
                   onClick={handleDeleteClick}
-                  className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full flex items-center justify-center"
+                  className={`${iconBtnSm} border-red-500/30 bg-red-600/20 text-red-200 hover:bg-red-600/35`}
                   title="Delete game"
+                  aria-label="Delete game"
                 >
-                  <FaTrash size={14} />
+                  <FaTrash className="text-xs sm:text-sm" />
                 </button>
               </>
             )}
-
-            {/* Share icon — visible to everyone */}
-            <button
-              onClick={handleShare}
-              className={`p-1.5 rounded-full flex items-center justify-center transition-colors ${
-                copied ? 'bg-green-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
-              }`}
-              title={copied ? 'Link copied!' : 'Copy share link'}
-            >
-              <FaShare size={14} />
-            </button>
-
-            <div className="flex items-center bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm">
-              <FaThumbsUp className="mr-1" />
-              <span>{voteCount}</span>
-            </div>
           </div>
         </div>
-        
-        <p className="text-sm text-gray-400 mb-2">
-          By <span className="text-blue-400">{game.projectName}</span>
-        </p>
+
+        <Link
+          to={`/games/${game._id}`}
+          className="mb-2 block text-lg font-bold leading-snug text-white transition-colors duration-200 line-clamp-2 group-hover:text-blue-200 sm:text-xl"
+        >
+          {game.title}
+        </Link>
 
         {game.socials && game.socials.length > 0 && (
           <GameSocialLinks socials={game.socials} size="sm" className="mb-3" />
@@ -260,7 +272,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         
         <div className="mb-4 flex-grow">
           <div
-            className={`text-gray-300 text-sm whitespace-pre-wrap ${showFullDescription ? '' : 'line-clamp-3'}`}
+            className={`text-sm leading-relaxed text-gray-300 whitespace-pre-wrap ${showFullDescription ? '' : 'line-clamp-3'}`}
           >
             {showFullDescription ? game.description : truncateDescription(game.description)}
           </div>
@@ -268,7 +280,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
           {game.description.length > 150 && (
             <button
               onClick={() => setShowFullDescription(!showFullDescription)}
-              className="text-blue-400 text-sm mt-1 hover:underline focus:outline-none"
+              className="mt-1.5 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300 focus:outline-none"
             >
               {showFullDescription ? 'Show less' : 'Read more'}
             </button>
@@ -277,11 +289,11 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         
         {/* Tags */}
         {game.tags && game.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
+          <div className="mb-4 flex flex-wrap gap-1.5">
             {game.tags.map((tag, index) => (
               <span
                 key={index}
-                className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full"
+                className="rounded-md border border-white/5 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-gray-400 sm:text-xs"
               >
                 #{tag}
               </span>
@@ -289,59 +301,63 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
           </div>
         )}
         
-        {/* Actions */}
-        <div className="flex justify-between items-center mt-auto gap-2">
-          <div className="flex items-center gap-2">
+        {/* Actions — Play first on mobile; Vote/View + Play row on desktop */}
+        <div className="mt-auto border-t border-white/5 pt-4">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
             <button
-              onClick={handleVote}
-              disabled={loading}
-              className={`flex items-center px-3 py-2 rounded text-sm ${
-                voted
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              } transition-colors disabled:opacity-50`}
+              onClick={handlePlay}
+              className={`${actionBtnBase} order-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-green-900/30 hover:from-emerald-400 hover:to-green-500 lg:order-2 lg:w-auto lg:shrink-0 lg:px-6`}
             >
-              <FaThumbsUp className={`mr-1 ${voted ? 'text-white' : 'text-gray-400'}`} />
-              {loading ? 'Processing...' : voted ? 'Voted' : 'Vote'}
+              <FaGamepad className="text-sm" />
+              <span>Play Game</span>
+              <FaExternalLinkAlt className="text-[10px] opacity-80" />
             </button>
 
-            <Link
-              to={`/games/${game._id}`}
-              className="flex items-center px-3 py-2 rounded text-sm bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
-            >
-              <FaEye className="mr-1" />
-              View Page
-            </Link>
-          </div>
+            <div className="order-2 grid grid-cols-2 gap-2 lg:order-1 lg:flex-1">
+              <button
+                onClick={handleVote}
+                disabled={loading}
+                className={`${actionBtnBase} ${
+                  voted
+                    ? 'border border-blue-500/40 bg-blue-600/30 text-blue-100 hover:bg-blue-600/40'
+                    : 'border border-white/10 bg-white/5 text-gray-200 hover:border-white/20 hover:bg-white/10'
+                }`}
+              >
+                <FaThumbsUp className={`text-sm ${voted ? 'text-blue-200' : 'text-gray-400'}`} />
+                <span className="truncate">{loading ? '…' : voted ? 'Voted' : 'Vote'}</span>
+              </button>
 
-          <button
-            onClick={handlePlay}
-            className="flex items-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded text-sm transition-colors"
-          >
-            <FaGamepad className="mr-1" />
-            Play Game
-            <FaExternalLinkAlt className="ml-1 text-xs" />
-          </button>
+              <Link
+                to={`/games/${game._id}`}
+                className={`${actionBtnBase} border border-white/10 bg-white/5 text-gray-200 hover:border-white/20 hover:bg-white/10`}
+              >
+                <FaEye className="text-sm text-gray-400" />
+                <span className="truncate">View Page</span>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
       
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Confirm Delete</h3>
-            <p className="text-gray-300 mb-6">Are you sure you want to delete "{game.title}"? This action cannot be undone.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="mx-auto w-full max-w-md rounded-xl border border-white/10 bg-gray-900 p-6 shadow-2xl">
+            <h3 className="mb-2 text-xl font-bold text-white">Confirm Delete</h3>
+            <p className="mb-6 text-sm leading-relaxed text-gray-300">
+              Are you sure you want to delete &ldquo;{game.title}&rdquo;? This action cannot be undone.
+            </p>
             
-            <div className="flex justify-end space-x-4">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 onClick={handleDeleteCancel}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="min-h-[44px] rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-gray-200 transition-colors hover:bg-white/10 sm:min-h-0"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="min-h-[44px] rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 sm:min-h-0"
               >
                 Delete
               </button>
@@ -353,4 +369,4 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   );
 };
 
-export default GameListing; 
+export default GameListing;
