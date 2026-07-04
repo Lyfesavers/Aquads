@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
@@ -14,6 +14,7 @@ import './Checkers.css';
 const BOARD_SIZE = 8;
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const FRAME_PAD = 36;
 
 function isDarkSquare(r, c) {
   return (r + c) % 2 === 1;
@@ -49,13 +50,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function computeBoardSize() {
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 800;
-  if (vw < 640) return Math.min(vw - 32, 360);
-  if (vw < 1024) return Math.min(vw * 0.58, 480);
-  return Math.min(520, vw * 0.4);
-}
-
 function Piece({ owner, king, selected, animating }) {
   const isRed = owner === 'red';
   return (
@@ -72,18 +66,53 @@ function Piece({ owner, king, selected, animating }) {
   );
 }
 
-function CapturedTray({ captured, total, color }) {
-  const dots = [];
-  for (let i = 0; i < total; i += 1) {
-    dots.push(
-      <span
-        key={i}
-        className={`checkers-captured-dot checkers-captured-dot--${color} ${i < captured ? '' : 'checkers-captured-dot--ghost'}`}
-        aria-hidden="true"
-      />
-    );
-  }
-  return <div className="checkers-captured-tray">{dots}</div>;
+function LeaderboardPanel({ leaderboard, filterDifficulty, setFilterDifficulty, onRefresh }) {
+  const filteredLeaderboard = useMemo(() => {
+    return leaderboard.filter((row) => filterDifficulty === 'All' || row.difficulty === filterDifficulty);
+  }, [leaderboard, filterDifficulty]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-bold text-amber-200">Leaderboard</h2>
+        <button type="button" onClick={onRefresh} className="text-xs text-stone-400 hover:text-white">Refresh</button>
+      </div>
+      <select
+        className="w-full bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs mb-3"
+        value={filterDifficulty}
+        onChange={(e) => setFilterDifficulty(e.target.value)}
+      >
+        <option>All</option>
+        {DIFFICULTIES.map((d) => <option key={d}>{d}</option>)}
+      </select>
+      <div className="max-h-72 overflow-y-auto rounded border border-stone-800">
+        <table className="w-full text-xs">
+          <thead className="bg-stone-800/80 text-stone-300 sticky top-0">
+            <tr>
+              <th className="text-left px-2 py-1">Player</th>
+              <th className="text-left px-2 py-1">Cap.</th>
+              <th className="text-left px-2 py-1 hidden sm:table-cell">Moves</th>
+              <th className="text-left px-2 py-1 hidden sm:table-cell">Diff</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLeaderboard.length === 0 ? (
+              <tr><td colSpan={4} className="px-2 py-3 text-stone-500">No wins yet.</td></tr>
+            ) : (
+              filteredLeaderboard.map((row) => (
+                <tr key={row._id} className="odd:bg-stone-900/40">
+                  <td className="px-2 py-1 truncate max-w-[6rem]">{row.username || 'Guest'}</td>
+                  <td className="px-2 py-1 text-emerald-400 font-medium">{row.you}</td>
+                  <td className="px-2 py-1 hidden sm:table-cell">{row.moves ?? '—'}</td>
+                  <td className="px-2 py-1 hidden sm:table-cell">{row.difficulty}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 export default function Checkers({ currentUser }) {
@@ -95,14 +124,16 @@ export default function Checkers({ currentUser }) {
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [animating, setAnimating] = useState(false);
-  const [boardSize, setBoardSize] = useState(computeBoardSize);
-  const boardRef = useRef(null);
+  const [boardSize, setBoardSize] = useState(360);
+  const boardStageRef = useRef(null);
   const submitLock = useRef(false);
 
   const loggedIn = !!(currentUser && currentUser.token);
+  const inGame = !!state;
   const cellSize = boardSize / BOARD_SIZE;
   const gameActive = !!(state && state.status === 'active');
 
@@ -134,11 +165,41 @@ export default function Checkers({ currentUser }) {
     }
   }, [state?.jumpFrom?.r, state?.jumpFrom?.c, state?.turn, gameActive]);
 
+  useLayoutEffect(() => {
+    if (!inGame) return undefined;
+
+    const el = boardStageRef.current;
+    if (!el) return undefined;
+
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const narrow = r.width < 640;
+      const framePad = narrow ? 28 : FRAME_PAD;
+      const pad = narrow ? 8 : 16;
+      const maxInner = Math.min(r.width, r.height) - framePad - pad;
+      setBoardSize(Math.max(240, Math.floor(maxInner)));
+    };
+
+    update();
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
+  }, [inGame]);
+
   useEffect(() => {
-    const onResize = () => setBoardSize(computeBoardSize());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    if (!showMenu) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showMenu]);
 
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -189,6 +250,7 @@ export default function Checkers({ currentUser }) {
       setBusy(true);
       setError('');
       setSelected(null);
+      setShowMenu(false);
       if (gameId) {
         try { await checkersAbandon(gameId); } catch (_) {}
       }
@@ -292,14 +354,10 @@ export default function Checkers({ currentUser }) {
     if (!state.jumpFrom) setSelected(null);
   };
 
-  const filteredLeaderboard = useMemo(() => {
-    return leaderboard.filter((row) => filterDifficulty === 'All' || row.difficulty === filterDifficulty);
-  }, [leaderboard, filterDifficulty]);
-
   const statusMessage = useMemo(() => {
     if (!state) return '';
-    if (state.status === 'won') return 'You win! Great game.';
-    if (state.status === 'lost') return 'CPU wins. Try again!';
+    if (state.status === 'won') return 'You win!';
+    if (state.status === 'lost') return 'CPU wins';
     if (animating || (busy && state.turn === 'black')) return 'CPU is thinking…';
     if (state.turn === 'red') {
       if (state.jumpFrom) return 'Continue your jump';
@@ -309,34 +367,141 @@ export default function Checkers({ currentUser }) {
   }, [state, busy, animating]);
 
   const capturedRed = state?.captured?.red ?? 0;
-  const capturedBlack = state?.captured?.black ?? 0;
+  const gameEnded = state && (state.status === 'won' || state.status === 'lost');
+
+  const renderBoard = () => (
+    <div
+      className="checkers-board-frame touch-manipulation select-none shrink-0"
+      style={{ width: boardSize + FRAME_PAD, height: boardSize + FRAME_PAD }}
+    >
+      <div
+        className="checkers-board-inner mx-auto"
+        style={{ width: boardSize, height: boardSize }}
+      >
+        <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
+          {Array.from({ length: BOARD_SIZE }).map((_, r) =>
+            Array.from({ length: BOARD_SIZE }).map((__, c) => {
+              const dark = isDarkSquare(r, c);
+              const piece = state.board[r] && state.board[r][c];
+              const isSelected = sameSquare(selected, { r, c });
+              const isTarget = legalTargets.some((t) => sameSquare(t, { r, c }));
+              const canSelect = selectableSquares.has(`${r},${c}`);
+              const displayRow = BOARD_SIZE - r;
+
+              return (
+                <button
+                  key={`${r}-${c}`}
+                  type="button"
+                  aria-label={piece ? `${piece.owner} ${piece.king ? 'king' : 'piece'}` : dark ? `square ${FILES[c]}${displayRow}` : 'light square'}
+                  disabled={!dark || busy || animating}
+                  onClick={() => dark && onSquareClick(r, c)}
+                  className={[
+                    'checkers-square',
+                    dark ? 'checkers-square--dark' : 'checkers-square--light',
+                    isSelected ? 'checkers-square--selected' : '',
+                    isTarget ? 'checkers-square--target' : '',
+                    canSelect && !isSelected ? 'checkers-square--can-select' : '',
+                  ].filter(Boolean).join(' ')}
+                  style={{ width: cellSize, height: cellSize }}
+                >
+                  {c === 0 && dark && (
+                    <span className="checkers-board-coord checkers-board-coord--rank">{displayRow}</span>
+                  )}
+                  {r === BOARD_SIZE - 1 && (
+                    <span className="checkers-board-coord checkers-board-coord--file">{FILES[c]}</span>
+                  )}
+                  {piece && (
+                    <Piece
+                      owner={piece.owner}
+                      king={piece.king}
+                      selected={isSelected}
+                      animating={animating && piece.owner === 'black'}
+                    />
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="checkers-page min-h-screen text-white">
+    <div
+      className={`checkers-page text-white overflow-x-hidden relative ${
+        inGame ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden' : 'min-h-screen'
+      }`}
+    >
       <Helmet>
         <title>Checkers | Aquads</title>
         <meta name="description" content="Play checkers against the CPU on Aquads. Server-validated moves and leaderboard." />
       </Helmet>
 
-      <div className="container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-6xl">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-              <div>
-                <Link to="/" className="text-xs text-stone-400 hover:text-white mb-1 inline-block">← Aquads</Link>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  <span className="bg-gradient-to-r from-amber-200 via-yellow-500 to-orange-600 text-transparent bg-clip-text">Checkers</span>
-                </h1>
-                <p className="text-stone-400 text-sm mt-1">Classic draughts on a tournament board — vs CPU.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowInstructions(true)}
-                className="self-start text-sm bg-stone-800/80 hover:bg-stone-700 border border-amber-900/40 rounded-lg px-3 py-2"
-              >
-                How to play
-              </button>
-            </div>
+      <nav
+        className={`checkers-nav relative z-20 flex items-center gap-2 border-b border-amber-900/30 bg-stone-950/80 backdrop-blur-md shrink-0 ${
+          inGame ? 'min-h-[44px] px-2 py-1.5 sm:px-3' : 'px-3 py-2 sm:py-3'
+        }`}
+      >
+        <Link
+          to="/games"
+          className={`relative z-30 text-stone-400 hover:text-white border border-stone-700/60 bg-stone-800/60 rounded-lg shrink-0 ${
+            inGame ? 'px-2 py-1 text-[10px] sm:text-xs' : 'px-3 py-1.5 text-xs'
+          }`}
+        >
+          ← Hub
+        </Link>
+        <h1
+          className={`font-extrabold tracking-tight bg-gradient-to-r from-amber-200 via-yellow-500 to-orange-600 text-transparent bg-clip-text ${
+            inGame
+              ? 'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs sm:text-sm z-10'
+              : 'flex-1 text-center text-lg sm:text-xl'
+          }`}
+        >
+          Checkers
+        </h1>
+        {inGame ? (
+          <div className="relative z-30 ml-auto flex items-center gap-1.5 sm:gap-2">
+            <span
+              className={`hidden sm:inline-flex checkers-turn-indicator text-[10px] ${
+                state.turn === 'red' && gameActive ? 'checkers-turn-indicator--active' : ''
+              }`}
+            >
+              <span className={`checkers-turn-dot checkers-turn-dot--${state.turn === 'red' ? 'red' : 'black'}`} />
+              <span className="text-stone-300 max-w-[8rem] truncate">{statusMessage}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowMenu(true)}
+              className="text-xs sm:text-sm bg-stone-800/90 hover:bg-stone-700 border border-amber-900/40 rounded-lg px-2.5 py-1.5 font-medium"
+              aria-label="Open game menu"
+            >
+              Menu
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowInstructions(true)}
+            className="relative z-30 text-xs bg-stone-800/80 hover:bg-stone-700 border border-amber-900/40 rounded-lg px-3 py-1.5 shrink-0"
+          >
+            How to play
+          </button>
+        )}
+      </nav>
+
+      <div className={`relative z-10 w-full ${inGame ? 'flex-1 min-h-0 flex flex-col' : 'container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-4xl'}`}>
+        {error && (
+          <div className={`rounded-lg border border-red-500/40 bg-red-950/30 px-3 py-2 text-sm text-red-200 shrink-0 ${inGame ? 'mx-2 mt-1' : 'mb-4'}`}>
+            {error}
+          </div>
+        )}
+
+        {!inGame && (
+          <>
+            <p className="text-stone-400 text-sm text-center mb-6">
+              Classic draughts on a tournament board — vs CPU.
+            </p>
 
             {!loggedIn && (
               <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-100">
@@ -344,181 +509,172 @@ export default function Checkers({ currentUser }) {
               </div>
             )}
 
-            {error && (
-              <div className="mb-4 rounded-lg border border-red-500/40 bg-red-950/30 px-3 py-2 text-sm text-red-200">
-                {error}
+            <div className="rounded-xl border border-amber-900/30 bg-stone-900/70 p-5 shadow-xl mb-6">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <label className="text-xs text-stone-400">Difficulty</label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  disabled={busy || loading}
+                  className="bg-stone-800 border border-stone-600 rounded-lg px-2 py-1.5 text-sm"
+                >
+                  {DIFFICULTIES.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => startNewGame(difficulty)}
+                  disabled={!loggedIn || busy || loading}
+                  className="ml-auto bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-lg"
+                >
+                  Start game
+                </button>
+              </div>
+              {loading && loggedIn && (
+                <p className="text-stone-500 text-sm text-center py-4">Loading your game…</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-amber-900/30 bg-stone-900/70 p-4 shadow-xl">
+              <LeaderboardPanel
+                leaderboard={leaderboard}
+                filterDifficulty={filterDifficulty}
+                setFilterDifficulty={setFilterDifficulty}
+                onRefresh={loadLeaderboard}
+              />
+            </div>
+          </>
+        )}
+
+        {inGame && loading && (
+          <div className="flex-1 flex items-center justify-center text-stone-400">Loading…</div>
+        )}
+
+        {inGame && !loading && (
+          <div className="relative flex-1 min-h-0 flex flex-col">
+            <div
+              ref={boardStageRef}
+              className="flex-1 min-h-0 min-w-0 flex items-center justify-center p-2 sm:p-3 overflow-hidden"
+            >
+              {renderBoard()}
+            </div>
+
+            <div className="checkers-mobile-status sm:hidden shrink-0 flex justify-center px-2 pt-1">
+              <div
+                className={`checkers-turn-indicator ${
+                  state.turn === 'red' && gameActive ? 'checkers-turn-indicator--active' : ''
+                }`}
+              >
+                <span className={`checkers-turn-dot checkers-turn-dot--${state.turn === 'red' ? 'red' : 'black'}`} />
+                <span className="text-stone-300 text-xs">{statusMessage}</span>
+              </div>
+            </div>
+
+            {gameEnded && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]">
+                <div className="checkers-end-overlay rounded-2xl border border-amber-900/40 bg-stone-900/95 px-6 py-5 text-center shadow-2xl max-w-sm w-full">
+                  <p className={`text-2xl font-bold ${state.status === 'won' ? 'text-emerald-400' : 'text-red-300'}`}>
+                    {state.status === 'won' ? 'Victory!' : 'Defeat'}
+                  </p>
+                  <p className="text-sm text-stone-400 mt-2">{statusMessage}</p>
+                  {state.status === 'won' && loggedIn && (
+                    <p className="text-xs text-stone-500 mt-2">
+                      Captured {capturedRed} pieces in {state.moveCount} moves — recorded on the leaderboard.
+                    </p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-2 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => startNewGame(difficulty)}
+                      disabled={busy}
+                      className="flex-1 bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 rounded-lg px-4 py-2.5 text-sm font-semibold"
+                    >
+                      Play again
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMenu(true)}
+                      className="flex-1 bg-stone-800 hover:bg-stone-700 border border-stone-600 rounded-lg px-4 py-2.5 text-sm"
+                    >
+                      Menu
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
-
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <label className="text-xs text-stone-400">Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                disabled={busy || (gameActive && !!gameId)}
-                className="bg-stone-800 border border-stone-600 rounded-lg px-2 py-1.5 text-sm"
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => startNewGame(difficulty)}
-                disabled={!loggedIn || busy || loading}
-                className="ml-auto sm:ml-0 bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-semibold shadow-lg"
-              >
-                {gameId ? 'New game' : 'Start game'}
-              </button>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center h-64 text-stone-400">Loading…</div>
-            ) : state ? (
-              <>
-                <div className="checkers-status-bar flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3 py-2.5 mb-4 text-sm">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-stone-500 uppercase tracking-wide w-14">You</span>
-                      <CapturedTray captured={capturedRed} total={12} color="black" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-stone-500 uppercase tracking-wide w-14">CPU</span>
-                      <CapturedTray captured={capturedBlack} total={12} color="red" />
-                    </div>
-                  </div>
-                  <div className={`checkers-turn-indicator ${state.turn === 'red' && gameActive ? 'checkers-turn-indicator--active' : ''}`}>
-                    <span className={`checkers-turn-dot checkers-turn-dot--${state.turn === 'red' ? 'red' : 'black'}`} />
-                    <span className="text-stone-300">{statusMessage}</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <div
-                    ref={boardRef}
-                    className="checkers-board-frame touch-manipulation select-none"
-                    style={{ width: boardSize + 36, maxWidth: '100%' }}
-                  >
-                    <div
-                      className="checkers-board-inner mx-auto"
-                      style={{ width: boardSize, height: boardSize }}
-                    >
-                      <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
-                        {Array.from({ length: BOARD_SIZE }).map((_, r) =>
-                          Array.from({ length: BOARD_SIZE }).map((__, c) => {
-                            const dark = isDarkSquare(r, c);
-                            const piece = state.board[r] && state.board[r][c];
-                            const isSelected = sameSquare(selected, { r, c });
-                            const isTarget = legalTargets.some((t) => sameSquare(t, { r, c }));
-                            const canSelect = selectableSquares.has(`${r},${c}`);
-                            const displayRow = BOARD_SIZE - r;
-
-                            return (
-                              <button
-                                key={`${r}-${c}`}
-                                type="button"
-                                aria-label={piece ? `${piece.owner} ${piece.king ? 'king' : 'piece'}` : dark ? `square ${FILES[c]}${displayRow}` : 'light square'}
-                                disabled={!dark || busy || animating}
-                                onClick={() => dark && onSquareClick(r, c)}
-                                className={[
-                                  'checkers-square',
-                                  dark ? 'checkers-square--dark' : 'checkers-square--light',
-                                  isSelected ? 'checkers-square--selected' : '',
-                                  isTarget ? 'checkers-square--target' : '',
-                                  canSelect && !isSelected ? 'checkers-square--can-select' : '',
-                                ].filter(Boolean).join(' ')}
-                                style={{ width: cellSize, height: cellSize }}
-                              >
-                                {c === 0 && dark && (
-                                  <span className="checkers-board-coord checkers-board-coord--rank">{displayRow}</span>
-                                )}
-                                {r === BOARD_SIZE - 1 && (
-                                  <span className="checkers-board-coord checkers-board-coord--file">{FILES[c]}</span>
-                                )}
-                                {piece && (
-                                  <Piece
-                                    owner={piece.owner}
-                                    king={piece.king}
-                                    selected={isSelected}
-                                    animating={animating && piece.owner === 'black'}
-                                  />
-                                )}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {(state.status === 'won' || state.status === 'lost') && (
-                  <div className="mt-5 text-center">
-                    <p className={`text-xl font-bold ${state.status === 'won' ? 'text-emerald-400' : 'text-red-300'}`}>
-                      {state.status === 'won' ? 'Victory!' : 'Defeat'}
-                    </p>
-                    {state.status === 'won' && loggedIn && (
-                      <p className="text-sm text-stone-400 mt-1">
-                        Captured {capturedRed} pieces in {state.moveCount} moves — recorded on the leaderboard.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : loggedIn ? (
-              <div className="text-center py-16 text-stone-400">
-                <p className="mb-4">No active game. Start a new match against the CPU.</p>
-              </div>
-            ) : null}
           </div>
-
-          <aside className="w-full lg:w-80 shrink-0">
-            <div className="rounded-xl border border-amber-900/30 bg-stone-900/70 p-4 shadow-xl">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-bold text-amber-200">Leaderboard</h2>
-                <button type="button" onClick={loadLeaderboard} className="text-xs text-stone-400 hover:text-white">Refresh</button>
-              </div>
-              <select
-                className="w-full bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs mb-3"
-                value={filterDifficulty}
-                onChange={(e) => setFilterDifficulty(e.target.value)}
-              >
-                <option>All</option>
-                {DIFFICULTIES.map((d) => <option key={d}>{d}</option>)}
-              </select>
-              <div className="max-h-72 overflow-y-auto rounded border border-stone-800">
-                <table className="w-full text-xs">
-                  <thead className="bg-stone-800/80 text-stone-300 sticky top-0">
-                    <tr>
-                      <th className="text-left px-2 py-1">Player</th>
-                      <th className="text-left px-2 py-1">Cap.</th>
-                      <th className="text-left px-2 py-1 hidden sm:table-cell">Moves</th>
-                      <th className="text-left px-2 py-1 hidden sm:table-cell">Diff</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLeaderboard.length === 0 ? (
-                      <tr><td colSpan={4} className="px-2 py-3 text-stone-500">No wins yet.</td></tr>
-                    ) : (
-                      filteredLeaderboard.map((row) => (
-                        <tr key={row._id} className="odd:bg-stone-900/40">
-                          <td className="px-2 py-1 truncate max-w-[6rem]">{row.username || 'Guest'}</td>
-                          <td className="px-2 py-1 text-emerald-400 font-medium">{row.you}</td>
-                          <td className="px-2 py-1 hidden sm:table-cell">{row.moves ?? '—'}</td>
-                          <td className="px-2 py-1 hidden sm:table-cell">{row.difficulty}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </aside>
-        </div>
+        )}
       </div>
 
+      {showMenu && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            aria-label="Close menu"
+            onClick={() => setShowMenu(false)}
+          />
+          <div className="relative z-10 w-full max-w-sm h-full bg-stone-900 border-l border-amber-900/30 shadow-2xl flex flex-col overflow-hidden animate-[checkers-slide-in_0.2s_ease-out]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-800 shrink-0">
+              <h2 className="font-bold text-amber-200">Game menu</h2>
+              <button
+                type="button"
+                onClick={() => setShowMenu(false)}
+                className="text-stone-400 hover:text-white text-2xl leading-none px-1"
+                aria-label="Close menu"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              <div>
+                <label className="text-xs text-stone-400 block mb-1.5">Difficulty</label>
+                <div className="flex flex-wrap gap-2">
+                  <select
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value)}
+                    disabled={busy || (gameActive && !!gameId)}
+                    className="flex-1 min-w-0 bg-stone-800 border border-stone-600 rounded-lg px-2 py-2 text-sm"
+                  >
+                    {DIFFICULTIES.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => startNewGame(difficulty)}
+                    disabled={!loggedIn || busy}
+                    className="shrink-0 bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-semibold"
+                  >
+                    New game
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { setShowMenu(false); setShowInstructions(true); }}
+                className="w-full text-left text-sm bg-stone-800/80 hover:bg-stone-700 border border-stone-700 rounded-lg px-3 py-2.5"
+              >
+                How to play
+              </button>
+
+              <div className="rounded-xl border border-stone-800 bg-stone-950/50 p-3">
+                <LeaderboardPanel
+                  leaderboard={leaderboard}
+                  filterDifficulty={filterDifficulty}
+                  setFilterDifficulty={setFilterDifficulty}
+                  onRefresh={loadLeaderboard}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showInstructions && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-stone-900 rounded-2xl border border-amber-900/40 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6">
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-bold text-amber-300">How to play</h2>

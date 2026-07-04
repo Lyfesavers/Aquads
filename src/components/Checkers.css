@@ -6,6 +6,30 @@
     linear-gradient(165deg, #1c1410 0%, #0f0d0b 45%, #1a1512 100%);
 }
 
+.checkers-nav {
+  padding-top: max(0.375rem, env(safe-area-inset-top, 0px));
+  padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+}
+
+.checkers-mobile-status {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+@keyframes checkers-slide-in {
+  from { transform: translateX(100%); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.checkers-end-overlay {
+  animation: checkers-fade-up 0.25s ease-out;
+}
+
+@keyframes checkers-fade-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .checkers-board-frame {
   position: relative;
   padding: clamp(10px, 2.5vw, 18px);
