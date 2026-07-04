@@ -450,39 +450,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </Link>
             </div>
 
-            <section
-              className="mt-10 max-w-3xl mx-auto text-left"
-              aria-label="Listing guides from the Aquads blog"
-            >
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-sm p-5 sm:p-6">
-                <h2 className="text-lg font-semibold text-emerald-300 mb-1">
-                  New to listing?
-                </h2>
-                <p className="text-gray-300 text-sm mb-4">
-                  Step-by-step guides from the Aquads blog — free listing, post-launch growth, and DexScreener trending.
-                </p>
-                <ul className="space-y-2.5">
-                  {LISTING_GUIDE_POSTS.map((guide) => (
-                    <li key={guide._id}>
-                      <Link
-                        to={blogPath(guide)}
-                        className="text-sm sm:text-base text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline transition-colors leading-snug"
-                      >
-                        {guide.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4 text-xs text-gray-500">
-                  More articles on{' '}
-                  <Link to="/learn" className="text-emerald-500/80 hover:text-emerald-400 underline">
-                    Aquads Learn
-                  </Link>
-                  .
-                </p>
-              </div>
-            </section>
-
           </div>
         </div>
       </div>
@@ -1243,11 +1210,46 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
         </div>
       </div>
 
+      <section
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8"
+        aria-label="Listing guides from the Aquads blog"
+      >
+        <div className="max-w-3xl mx-auto text-left">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-sm p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-emerald-300 mb-1">
+              New to listing?
+            </h2>
+            <p className="text-gray-300 text-sm mb-4">
+              Step-by-step guides from the Aquads blog — free listing, post-launch growth, and DexScreener trending.
+            </p>
+            <ul className="space-y-2.5">
+              {LISTING_GUIDE_POSTS.map((guide) => (
+                <li key={guide._id}>
+                  <Link
+                    to={blogPath(guide)}
+                    className="text-sm sm:text-base text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline transition-colors leading-snug"
+                  >
+                    {guide.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-xs text-gray-500">
+              More articles on{' '}
+              <Link to="/learn" className="text-emerald-500/80 hover:text-emerald-400 underline">
+                Aquads Learn
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Launch Your Project?
+            Ready to Grow Your Project?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join hundreds of successful projects that have already discovered the Aquads advantage. Start building your community today.
