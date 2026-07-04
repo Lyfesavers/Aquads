@@ -721,7 +721,7 @@ In **Agent** mode, you can submit a **free Starter** listing without filling the
 3. Optionally add a **website URL** (or skip if you do not have a site yet — you can add it later from your dashboard)
 4. Skipper submits the listing → status **pending admin approval** → bubble goes live after approval
 
-Same rules apply as the normal List Project flow: accurate pair data, professional logo, and honest project info.
+Same rules apply as the normal List Project flow: accurate pair data, professional logo, honest project info, and Aquads' **global listing requirements** ($50k market cap, $15k liquidity, 12+ hour pair age, valid logo).
 
 ### Wallet, credits & top-ups
 
@@ -775,7 +775,7 @@ Skipper uses a **prepaid USD wallet** (separate from affiliate points):
     content: `
 ## Listing Your Token
 
-Get your crypto project visible to thousands of users by listing it on the Aquads bubble map.
+Get your crypto project visible to thousands of users by listing it on the Aquads bubble map. **Every listing path** — List Project, Skipper Agent, or automatic DEX discovery — must meet the same **global listing requirements**.
 
 ### Accessing the Listing Form
 
@@ -795,6 +795,15 @@ Fill in the required fields (website is optional):
 | **Blockchain** | Select from 30+ chains | Yes |
 | **Logo URL** | Direct link to GIF or PNG image | Yes |
 | **Website URL** | Your project's official website (optional — add anytime from Dashboard) | No |
+
+All projects on Aquads must meet these **global listing requirements** — whether you submit via **List Project**, **Skipper Agent**, or appear through **automatic DEX discovery**. Projects that fall short may be declined or removed:
+
+- **Market cap:** at least **$50,000** USD (higher of market cap or fully diluted valuation from public DEX data)
+- **Liquidity:** at least **$15,000** USD in the primary trading pair
+- **Pair age:** trading pair live for at least **12 hours** on a public DEX
+- **Logo:** valid direct HTTPS image (PNG, JPG, GIF, or WebP) that loads correctly
+
+Thresholds may change over time at Aquads' discretion.
 
 ### Supported Blockchains
 
@@ -856,7 +865,7 @@ Base listing fee: **$0 Starter** or **Premium USDC base** — check the **List P
 
 1. Your listing is submitted for admin review
 2. Complete payment in the opened window (Premium) or submit free Starter
-3. Admin verifies and approves — **Premium** is fast-tracked (**1 hour** target); **Starter** follows the standard queue (**24–48 hours**)
+3. Admin verifies your project meets the **global listing requirements** above and approves — **Premium** is fast-tracked (**1 hour** target); **Starter** follows the standard queue (**24–48 hours**)
 4. Your bubble appears on the map!
 
 > ℹ️ **Already listed automatically?** If your project is already on the map from public DEX data, see **[Auto Listings & Claims](/docs#dex-feed-claim)** to claim ownership instead of submitting a duplicate listing.
@@ -876,6 +885,7 @@ Already have a listing? You can:
 - Use a high-quality, transparent PNG or animated GIF logo
 - Add a website when you have one (optional at listing time)
 - Have your pair address ready
+- Confirm your project meets Aquads' **global listing requirements** ($50k market cap, $15k liquidity, 12+ hour pair age) before submitting
 - Engage with voters to grow your bubble
     `,
     prevPage: { id: 'skipper-overview', title: 'Skipper Agent' },
@@ -897,9 +907,16 @@ Qualifying crypto projects may appear on the Aquads bubble map **automatically**
 
 ### How projects may appear on Aquads
 
-Aquads periodically reviews publicly available DEX data to identify projects that meet **minimum quality thresholds** (for example, sufficient liquidity and market activity). Thresholds may change over time and are applied at Aquads' discretion.
+Aquads applies the same **global listing requirements** to every project on the bubble map — including those discovered automatically from public DEX data. See [Listing Your Token](/docs#listing-token) for the full list:
 
-- Listing is **automatic** — you do not need to submit a manual application first
+- **Market cap:** at least **$50,000** USD (higher of market cap or FDV)
+- **Liquidity:** at least **$15,000** USD in the primary trading pair
+- **Pair age:** at least **12 hours** live on a public DEX
+- **Required data:** token name, pair address, blockchain, contract address, and a valid logo URL (website optional)
+
+Thresholds may change over time and are applied at Aquads' discretion.
+
+- Listing is **automatic** for qualifying projects — you do not need to submit a manual application first
 - **Not every token** will qualify or remain listed
 - Information (name, logo, pair data, etc.) comes from **third-party public sources** and may be incomplete or outdated
 - A listing is **informational visibility only** — not a partnership, paid promotion, or approval by Aquads
@@ -965,7 +982,7 @@ We aim to review and action valid removal or correction requests within **5 busi
 ### Frequently asked questions
 
 **Why is my project listed on Aquads?**  
-Public DEX data showed your token met our automated quality thresholds. Many indexers and discovery platforms work the same way.
+Your token met Aquads' **global listing requirements** on public DEX data (e.g. **$50k+ market cap**, **$15k+ liquidity**, **12+ hour** pair age, valid logo). Many indexers and discovery platforms work the same way.
 
 **I didn't ask to be listed. Can you remove it?**  
 Yes. Email [info@aquads.xyz](mailto:info@aquads.xyz) with the details above. We target a response within **5 business days**.
@@ -980,7 +997,7 @@ Use [Claim your bubble](/claim-bubble) and complete X verification as described 
 Ownership of the listing on your Aquads account with **free Starter-tier** project tools. Premium and paid marketing packages are separate.
 
 **Can I list manually instead?**  
-Yes. Teams can always use **List Project** for a manual submission. See [Listing Your Token](/docs#listing-token).
+Yes. Teams can always use **List Project** for a manual submission — the same **global listing requirements** apply. See [Listing Your Token](/docs#listing-token).
     `,
     prevPage: { id: 'listing-token', title: 'Listing Your Token' },
     nextPage: { id: 'bubble-ads', title: 'Bubble Ads System' },
