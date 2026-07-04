@@ -376,18 +376,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <meta name="twitter:title" content={`${blog.title} - Aquads Blog`} />
         <meta name="twitter:description" content={plainTextContent} />
         <meta name="twitter:image" content={blog.bannerImage || 'https://www.aquads.xyz/metalogo.png'} />
-        {/* BlogPosting JSON-LD is injected server-side by learn-blog edge only */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.aquads.xyz/' },
-              { '@type': 'ListItem', position: 2, name: 'Learn', item: 'https://www.aquads.xyz/learn' },
-              { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
-            ],
-          })}
-        </script>
+        {/* BlogPosting + BreadcrumbList JSON-LD injected server-side by learn-blog edge only */}
       </Helmet>
 
       {/* Header Navigation */}

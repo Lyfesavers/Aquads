@@ -26,6 +26,15 @@
 //     the noindex hint. <link rel="canonical"> points at itself.
 //   - BlogPosting JSON-LD (with articleBody) lives here only — not in React
 //     Helmet — so Google never sees duplicate structured data on direct loads.
+//   - Static internal links (breadcrumbs, feature CTAs, related posts) are
+//     injected inside #aquads-seo-content so crawlers see them without JS.
+//     Logic is shared with BlogPage via src/utils/blogRelatedPostsCore.js.
+
+import {
+  blogPath,
+  getFeatureLinkForBlog,
+  getRelatedBlogs,
+} from '../../src/utils/blogRelatedPostsCore.js';
 
 const BLOG_API_BASE = 'https://aquads-production.up.railway.app/api/blogs';
 const CANONICAL_HOST = 'https://www.aquads.xyz';
@@ -109,6 +118,16 @@ function buildMetaBlock(blog, canonicalUrl) {
     },
   };
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${CANONICAL_HOST}/` },
+      { '@type': 'ListItem', position: 2, name: 'Learn', item: `${CANONICAL_HOST}/learn` },
+      { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
+    ],
+  };
+
   return `
     <title>${escapeHtml(title)}</title>
     <meta name="description" content="${escapeHtml(description)}">
@@ -133,15 +152,68 @@ function buildMetaBlock(blog, canonicalUrl) {
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
 
     <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+    <script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>
   `;
 }
 
+function absoluteUrl(path) {
+  if (!path) return CANONICAL_HOST;
+  if (path.startsWith('http')) return path;
+  return `${CANONICAL_HOST}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function buildInternalLinksBlock(relatedBlogs, featureLink) {
+  let featureBlock = '';
+  if (featureLink) {
+    featureBlock = `
+  <section class="aquads-seo-feature" aria-label="Related Aquads feature">
+    <p>Try it on Aquads</p>
+    <h2>${escapeHtml(featureLink.label)}</h2>
+    <p>${escapeHtml(featureLink.description)}</p>
+    <p><a href="${escapeHtml(absoluteUrl(featureLink.to))}">Open ${escapeHtml(featureLink.label)}</a></p>
+  </section>`;
+  }
+
+  let relatedBlock = '';
+  if (relatedBlogs.length > 0) {
+    const items = relatedBlogs
+      .map((related) => {
+        const href = absoluteUrl(blogPath(related));
+        return `<li><a href="${escapeHtml(href)}">${escapeHtml(related.title)}</a></li>`;
+      })
+      .join('\n      ');
+    relatedBlock = `
+  <section class="aquads-seo-related" aria-label="Related posts">
+    <h2>Related Posts</h2>
+    <ul>
+      ${items}
+    </ul>
+  </section>`;
+  }
+
+  return `${featureBlock}${relatedBlock}`;
+}
+
+function buildBreadcrumbBlock(blog) {
+  return `
+  <nav aria-label="Breadcrumb" class="aquads-seo-breadcrumb">
+    <ol>
+      <li><a href="${CANONICAL_HOST}/">Home</a></li>
+      <li><a href="${CANONICAL_HOST}/learn">Learn</a></li>
+      <li>${escapeHtml(blog.title)}</li>
+    </ol>
+  </nav>`;
+}
+
 // Admin-authored HTML; injected for crawlers. BlogPage removes this on mount.
-function buildArticleBlock(blog) {
+function buildArticleBlock(blog, relatedBlogs, featureLink) {
   const content = blog.content || '';
+  const footerLinks = buildInternalLinksBlock(relatedBlogs, featureLink);
   return `<article id="aquads-seo-content" data-seo-prerender="true">
+  ${buildBreadcrumbBlock(blog)}
   <h1>${escapeHtml(blog.title)}</h1>
   <div class="aquads-seo-article-body">${content}</div>
+  ${footerLinks}
 </article>`;
 }
 
@@ -195,19 +267,30 @@ export default async (request, context) => {
   const blogId = match[2];
 
   let blog;
+  let allBlogs = [];
   try {
-    const apiResponse = await fetch(`${BLOG_API_BASE}/${blogId}`, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Aquads-Edge-Function/1.0',
-      },
-    });
-    if (!apiResponse.ok) {
+    const headers = {
+      Accept: 'application/json',
+      'User-Agent': 'Aquads-Edge-Function/1.0',
+    };
+    const [blogResponse, listResponse] = await Promise.all([
+      fetch(`${BLOG_API_BASE}/${blogId}`, { headers }),
+      fetch(BLOG_API_BASE, { headers }),
+    ]);
+
+    if (!blogResponse.ok) {
       return context.next();
     }
-    blog = await apiResponse.json();
+    blog = await blogResponse.json();
     if (!blog || !blog.title || !blog._id) {
       return context.next();
+    }
+
+    if (listResponse.ok) {
+      const listData = await listResponse.json();
+      if (Array.isArray(listData)) {
+        allBlogs = listData;
+      }
     }
   } catch (err) {
     console.error('learn-blog: blog fetch failed', err);
@@ -237,8 +320,10 @@ export default async (request, context) => {
 
   const titleSlug = createSlug(blog.title) || 'post';
   const canonicalUrl = `${CANONICAL_HOST}/learn/${titleSlug}-${blog._id}`;
+  const relatedBlogs = getRelatedBlogs(blog, allBlogs, 3);
+  const featureLink = getFeatureLinkForBlog(blog);
   const metaBlock = buildMetaBlock(blog, canonicalUrl);
-  const articleBlock = buildArticleBlock(blog);
+  const articleBlock = buildArticleBlock(blog, relatedBlogs, featureLink);
 
   const cleaned = stripExistingHeadDefaults(html);
   let modified = cleaned.includes('<head>')
