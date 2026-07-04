@@ -178,7 +178,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit plus the bundled <strong className="text-white">BNB/Sol trending + volume</strong> program, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -1005,7 +1005,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · BNB/Sol trending+volume · PR/AMA · 7-day banner · ad credit · custom branding when bumped · 5 raids/day → 20 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · PR/AMA · 7-day banner · ad credit · custom branding when bumped · 5 raids/day → 20 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1287,7 +1287,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, BNB/Sol program, custom branding when bumped · 5→20 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, custom branding when bumped · 5→20 raids/day</p>
                   </button>
                 </div>
 
@@ -1389,7 +1389,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   <div className="mt-6 p-4 bg-green-900/25 border border-green-500/45 rounded-lg">
                     <p className="text-green-200 text-sm leading-relaxed">
                       ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
-                      ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds done-for-you trending/volume + launch bundle<br/>
+                      ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds the full launch bundle<br/>
                       ✓ <strong className="text-green-100">1 complimentary 24-hour homepage banner</strong> ad spot after approval<br/>
                       ✓ Same fair-play rules and bump mechanics as Premium listings
                     </p>
@@ -1484,16 +1484,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div>
                       <h4 className="font-semibold text-white">Community Twitter & Facebook raids</h4>
                       <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free coordinated raids per day before your bubble is bumped, then up to <strong className="text-white">20</strong>/day once you reach <strong className="text-white">100+</strong> bullish votes.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-amber-900/20 rounded-lg border border-amber-500/40">
-                    <div className="bg-gradient-to-r from-amber-500 to-violet-500 p-2 rounded-full">
-                      <FaFire className="text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white">BNB & Solana Volume + Trending</h4>
-                      <p className="text-gray-300 text-sm">Volume and trending exposure for BNB Chain and Solana tokens—2 hours per week for 4 weeks, included in your base listing fee. <strong className="text-white">Stacks with</strong> AquaSwap/Bex click-through, Telegram bot trending boost, HyperSpace, raids and the rest of Aquads—this is the paid scheduled sprint, not organic-only bumps.</p>
                     </div>
                   </div>
                   

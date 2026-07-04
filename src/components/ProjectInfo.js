@@ -633,19 +633,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               Get your bumped bubble promoted live on X Spaces, YouTube, Twitch, Kick, and more! Community yappers host and pitch your project to active audiences across all major streaming platforms - free organic exposure that drives real engagement.
             </p>
           </div>
-
-          {/* Advantage 14 */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-amber-500/60 transition-all duration-300">
-            <div className="flex items-center mb-4">
-              <div className="bg-gradient-to-r from-amber-500 to-violet-500 p-3 rounded-lg">
-                <FaFire className="text-white text-xl" />
-              </div>
-              <h3 className="text-xl font-semibold text-white ml-4">BNB & Solana Trending + Volume</h3>
-            </div>
-            <p className="text-gray-300">
-              <strong className="text-white">Premium</strong> listings include real trending and volume exposure for BNB Chain or Solana tokens—right where degens look for momentum—alongside our Telegram bot’s trending boost and HyperSpace, votes, raids, live streams, yappers, and AquaSwap & BexTools.
-            </p>
-          </div>
         </div>
       </div>
 
@@ -672,7 +659,7 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
             </ul>
             <p className="text-gray-400 text-xs mt-3">
-              <strong className="text-white">Paid Premium</strong> also includes the bundled <strong className="text-white">BNB/Sol trending + volume</strong> sprint, PR tier‑1 rails, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
+              <strong className="text-white">Paid Premium</strong> also includes the bundled PR tier‑1 rails, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
             </p>
           </div>
         </div>
@@ -784,12 +771,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">Free AMA, ad campaign exposure, $50 ad credit</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Included <strong className="text-white">BNB / Sol trending + volume</strong> program—scheduled exposure that stacks with AquaSwap/Bex/bot boosts (not organic-only)
-                </span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
