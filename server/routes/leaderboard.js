@@ -43,10 +43,32 @@ router.get('/:game', async (req, res) => {
     if (difficulty && difficulty !== 'All') query.difficulty = difficulty;
     if (grid && grid !== 'All') query.grid = grid;
 
-    const sort =
-      game === 'checkers'
-        ? { you: -1, moves: 1, createdAt: -1 }
-        : { you: -1, createdAt: -1 };
+    if (game === 'checkers') {
+      const match = { ...query };
+      const rows = await LeaderboardEntry.aggregate([
+        { $match: match },
+        {
+          $addFields: {
+            difficultyRank: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$difficulty', 'Hard'] }, then: 3 },
+                  { case: { $eq: ['$difficulty', 'Medium'] }, then: 2 },
+                  { case: { $eq: ['$difficulty', 'Easy'] }, then: 1 },
+                ],
+                default: 0,
+              },
+            },
+          },
+        },
+        { $sort: { difficultyRank: -1, you: -1, moves: 1, createdAt: -1 } },
+        { $limit: Math.min(Number(limit) || 20, 200) },
+        { $project: { difficultyRank: 0 } },
+      ]);
+      return res.json(rows);
+    }
+
+    const sort = { you: -1, createdAt: -1 };
 
     const entries = await LeaderboardEntry.find(query)
       .sort(sort)

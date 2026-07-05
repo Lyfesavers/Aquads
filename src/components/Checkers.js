@@ -67,10 +67,6 @@ function Piece({ owner, king, selected, animating }) {
 }
 
 function LeaderboardPanel({ leaderboard, filterDifficulty, setFilterDifficulty, onRefresh }) {
-  const filteredLeaderboard = useMemo(() => {
-    return leaderboard.filter((row) => filterDifficulty === 'All' || row.difficulty === filterDifficulty);
-  }, [leaderboard, filterDifficulty]);
-
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -96,10 +92,10 @@ function LeaderboardPanel({ leaderboard, filterDifficulty, setFilterDifficulty, 
             </tr>
           </thead>
           <tbody>
-            {filteredLeaderboard.length === 0 ? (
+            {leaderboard.length === 0 ? (
               <tr><td colSpan={4} className="px-2 py-3 text-stone-500">No wins yet.</td></tr>
             ) : (
-              filteredLeaderboard.map((row) => (
+              leaderboard.map((row) => (
                 <tr key={row._id} className="odd:bg-stone-900/40">
                   <td className="px-2 py-1 truncate max-w-[6rem]">{row.username || 'Guest'}</td>
                   <td className="px-2 py-1 text-emerald-400 font-medium">{row.you}</td>
@@ -111,6 +107,9 @@ function LeaderboardPanel({ leaderboard, filterDifficulty, setFilterDifficulty, 
           </tbody>
         </table>
       </div>
+      <p className="text-[10px] text-stone-500 mt-2 leading-relaxed">
+        Ranked by difficulty (Hard → Medium → Easy), then pieces captured, then fewest moves.
+      </p>
     </div>
   );
 }
@@ -203,10 +202,14 @@ export default function Checkers({ currentUser }) {
 
   const loadLeaderboard = useCallback(async () => {
     try {
-      const rows = await getLeaderboard('checkers', { limit: 25 });
+      const params = { limit: 25 };
+      if (filterDifficulty && filterDifficulty !== 'All') {
+        params.difficulty = filterDifficulty;
+      }
+      const rows = await getLeaderboard('checkers', params);
       setLeaderboard(Array.isArray(rows) ? rows : []);
     } catch (_) {}
-  }, []);
+  }, [filterDifficulty]);
 
   useEffect(() => {
     loadLeaderboard();
