@@ -78,10 +78,25 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  // Legacy single-slot default group. Kept for backward compatibility with older
+  // code paths (twitter-raids/facebook-raids fallback, DM broadcasts, etc.).
+  // Always mirrors the current default entry inside telegramGroups[] when that
+  // array is populated. Prefer using getDefaultTelegramGroupId() in new code.
   telegramGroupId: {
     type: String,
     default: null
   },
+  // Multi-group support: one user can have many Telegram groups linked to their
+  // account (raidin/raidout, /createraid-from-group, /linkproject all append here).
+  // Exactly one entry should have isDefault=true at any time. The default group
+  // is used as the fallback source chat for raids created from the website / DM.
+  telegramGroups: [{
+    groupId: { type: String, required: true, trim: true },
+    groupTitle: { type: String, default: null, trim: true, maxlength: 200 },
+    isDefault: { type: Boolean, default: false },
+    addedAt: { type: Date, default: Date.now },
+    lastActiveAt: { type: Date, default: Date.now }
+  }],
   discordId: {
     type: String,
     default: null
@@ -839,6 +854,133 @@ userSchema.methods.useFreeRaid = async function(dailyLimit = 20) {
   };
 };
 
+// ============================================================================
+// Multi-group Telegram helpers
+// ============================================================================
+// A user can have many Telegram groups linked to their account. Exactly one
+// entry in telegramGroups[] is flagged isDefault=true; that group is used as
+// the fallback "source chat" for raids/space alerts created from the website
+// or DM (i.e. where the bot has no chat context to infer from).
+//
+// The legacy `telegramGroupId` field is kept in sync with the current default
+// so all existing code paths continue to work with zero changes.
+
+// Return the user's default Telegram group ID (or null if none linked).
+userSchema.methods.getDefaultTelegramGroupId = function() {
+  if (Array.isArray(this.telegramGroups) && this.telegramGroups.length > 0) {
+    const def = this.telegramGroups.find(g => g && g.isDefault);
+    if (def && def.groupId) return def.groupId.toString();
+    // No default flag anywhere but array has entries — fall back to first
+    if (this.telegramGroups[0] && this.telegramGroups[0].groupId) {
+      return this.telegramGroups[0].groupId.toString();
+    }
+  }
+  // Backward compat: pre-migration users only have the flat field
+  return this.telegramGroupId ? this.telegramGroupId.toString() : null;
+};
+
+// Sync the legacy telegramGroupId field to point at whichever group is currently
+// flagged default (or the first entry, or null). Callers must .save() after.
+userSchema.methods._syncTelegramGroupIdToDefault = function() {
+  this.telegramGroupId = this.getDefaultTelegramGroupId() || null;
+};
+
+// Add (or refresh) a Telegram group on the user account. Dedupes by groupId.
+// - If this is the user's first group and no default is set, marks it default.
+// - If `makeDefault` is true, promotes it to default and demotes all others.
+// - Updates groupTitle if a non-empty new title is provided (so `/mygroups`
+//   can show human-readable names).
+// - Bumps lastActiveAt on the existing/new entry.
+// Callers must .save() the user after this call.
+userSchema.methods.addTelegramGroup = function(groupId, options = {}) {
+  if (!groupId) return this;
+  const gid = groupId.toString();
+  const title = options.groupTitle != null ? String(options.groupTitle).trim().slice(0, 200) : null;
+  const makeDefault = options.makeDefault === true;
+
+  if (!Array.isArray(this.telegramGroups)) this.telegramGroups = [];
+
+  // Backfill: if the legacy telegramGroupId points at a group not yet in the
+  // array, seed it in first so existing users don't lose their default when
+  // they interact via the new writers.
+  if (this.telegramGroupId && !this.telegramGroups.some(g => g && g.groupId === this.telegramGroupId.toString())) {
+    this.telegramGroups.push({
+      groupId: this.telegramGroupId.toString(),
+      groupTitle: null,
+      isDefault: true,
+      addedAt: new Date(),
+      lastActiveAt: new Date()
+    });
+  }
+
+  let entry = this.telegramGroups.find(g => g && g.groupId === gid);
+  if (entry) {
+    if (title && !entry.groupTitle) entry.groupTitle = title;
+    if (title && entry.groupTitle !== title) entry.groupTitle = title;
+    entry.lastActiveAt = new Date();
+  } else {
+    entry = {
+      groupId: gid,
+      groupTitle: title,
+      isDefault: false,
+      addedAt: new Date(),
+      lastActiveAt: new Date()
+    };
+    this.telegramGroups.push(entry);
+  }
+
+  const hasDefault = this.telegramGroups.some(g => g && g.isDefault);
+  if (makeDefault || !hasDefault) {
+    this.telegramGroups.forEach(g => { if (g) g.isDefault = false; });
+    // Re-find (Mongoose subdoc identity is stable, but be safe)
+    const target = this.telegramGroups.find(g => g && g.groupId === gid);
+    if (target) target.isDefault = true;
+  }
+
+  this._syncTelegramGroupIdToDefault();
+  return this;
+};
+
+// Promote a linked group to be the user's default. Returns true if found.
+userSchema.methods.setDefaultTelegramGroup = function(groupId) {
+  if (!groupId || !Array.isArray(this.telegramGroups)) return false;
+  const gid = groupId.toString();
+  const target = this.telegramGroups.find(g => g && g.groupId === gid);
+  if (!target) return false;
+  this.telegramGroups.forEach(g => { if (g) g.isDefault = false; });
+  target.isDefault = true;
+  this._syncTelegramGroupIdToDefault();
+  return true;
+};
+
+// Remove a group from the user's linked groups. If the removed group was the
+// default, promotes the most-recently-active remaining group as the new
+// default (or clears the field if none remain).
+userSchema.methods.removeTelegramGroup = function(groupId) {
+  if (!groupId || !Array.isArray(this.telegramGroups)) return false;
+  const gid = groupId.toString();
+  const idx = this.telegramGroups.findIndex(g => g && g.groupId === gid);
+  if (idx === -1) return false;
+  const wasDefault = this.telegramGroups[idx].isDefault;
+  this.telegramGroups.splice(idx, 1);
+
+  if (wasDefault && this.telegramGroups.length > 0) {
+    // Promote most-recently-active as new default
+    const sorted = [...this.telegramGroups].sort((a, b) => {
+      const at = a && a.lastActiveAt ? a.lastActiveAt.getTime() : 0;
+      const bt = b && b.lastActiveAt ? b.lastActiveAt.getTime() : 0;
+      return bt - at;
+    });
+    const promote = sorted[0];
+    if (promote) {
+      const target = this.telegramGroups.find(g => g && g.groupId === promote.groupId);
+      if (target) target.isDefault = true;
+    }
+  }
+  this._syncTelegramGroupIdToDefault();
+  return true;
+};
+
 // Add performance indexes for better query performance
 userSchema.index({ isAdmin: 1 }); // For admin checks
 userSchema.index({ userType: 1 }); // For user type filtering
@@ -850,6 +992,7 @@ userSchema.index({ suspended: 1 }); // For suspension checks
 // Additional performance indexes
 // Note: username, email, and referralCode already have unique indexes from schema
 userSchema.index({ telegramId: 1 }); // For Telegram lookups
+userSchema.index({ 'telegramGroups.groupId': 1 }); // For per-group user lookups
 userSchema.index({ discordId: 1 }); // For Discord lookups
 userSchema.index({ twitterUsername: 1 }); // For Twitter username lookups
 userSchema.index({ facebookUsername: 1 }); // For Facebook username lookups

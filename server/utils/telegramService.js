@@ -1344,6 +1344,9 @@ const telegramService = {
     const username = message.from.username;
     const chatType = message.chat.type;
     const isGroupChat = chatType === 'group' || chatType === 'supergroup';
+    // Human-readable group title (used when we persist a new linked group).
+    // Undefined in private chats — that's fine, handlers ignore it there.
+    const chatTitle = isGroupChat ? (message.chat.title || null) : null;
 
     // Track group chats for notifications
     if (isGroupChat) {
@@ -1395,16 +1398,19 @@ const telegramService = {
 
     // Handle group-only commands first (raidin/raidout)
     if (text.startsWith('/raidin')) {
-      await telegramService.handleRaidInCommand(chatId, userId, chatType);
+      await telegramService.handleRaidInCommand(chatId, userId, chatType, chatTitle);
       return;
     } else if (text.startsWith('/raidout')) {
-      await telegramService.handleRaidOutCommand(chatId, userId, chatType);
+      await telegramService.handleRaidOutCommand(chatId, userId, chatType, chatTitle);
       return;
     } else if (text.startsWith('/linkproject')) {
-      await telegramService.handleLinkProjectCommand(chatId, userId, chatType);
+      await telegramService.handleLinkProjectCommand(chatId, userId, chatType, chatTitle);
       return;
     } else if (text.startsWith('/unlinkproject')) {
       await telegramService.handleUnlinkProjectCommand(chatId, userId, chatType);
+      return;
+    } else if (text.startsWith('/mygroups')) {
+      await telegramService.handleMyGroupsCommand(chatId, userId);
       return;
     }
 
@@ -1412,7 +1418,8 @@ const telegramService = {
     if (isGroupChat) {
       // In group chats, redirect most commands to private chat, but allow /bubbles, /leaders, /raidin, /raidout
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
-          text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
+          text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel') ||
+          text.startsWith('/mygroups')) {
         const fullDmText =
           `💬 Please use bot commands in private chat to keep group conversations clean.\n\n` +
           `🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n` +
@@ -1459,7 +1466,7 @@ const telegramService = {
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/createraid')) {
-      await telegramService.handleCreateRaidCommand(chatId, userId, text, chatType);
+      await telegramService.handleCreateRaidCommand(chatId, userId, text, chatType, chatTitle);
     } else if (text.startsWith('/cancelraid')) {
       await telegramService.handleCancelRaidCommand(chatId, userId, text);
     } else if (!text.startsWith('/')) {
@@ -1479,7 +1486,9 @@ const telegramService = {
           chatType === 'group' || chatType === 'supergroup' ? chatId.toString() : null;
         const notifySourceChatId =
           sourceChatId ||
-          (linkedUser.telegramGroupId ? linkedUser.telegramGroupId.toString() : null);
+          (typeof linkedUser.getDefaultTelegramGroupId === 'function'
+            ? linkedUser.getDefaultTelegramGroupId()
+            : (linkedUser.telegramGroupId ? linkedUser.telegramGroupId.toString() : null));
         const { broadcastSpacesAlert } = require('./spacesAlertBroadcast');
         const result = await broadcastSpacesAlert(spaceUrl, { sourceChatId: notifySourceChatId });
         const total = (result.telegram?.count || 0) + (result.discord?.count || 0);
@@ -1503,7 +1512,7 @@ const telegramService = {
       // Auto-create raid when a Twitter/X URL is posted (group or private chat, no command needed)
       const tweetUrlMatch = text.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
       if (tweetUrlMatch && tweetUrlMatch[1]) {
-        await telegramService.handleCreateRaidCommand(chatId, userId, '/createraid ' + tweetUrlMatch[1].trim(), chatType);
+        await telegramService.handleCreateRaidCommand(chatId, userId, '/createraid ' + tweetUrlMatch[1].trim(), chatType, chatTitle);
         return;
       }
     } else if (text.startsWith('/setbranding')) {
@@ -1791,6 +1800,9 @@ Link your Aquads account to use the bot:
 • /facebook USERNAME
   Set your Facebook username for raids
 
+• /mygroups
+  Manage your linked Telegram groups — pick which one is your default (used for raids from the website / DM) or remove one you no longer want to receive alerts in
+
 📱 Example:
 /link myusername
 /twitter mytwitter
@@ -1958,7 +1970,7 @@ https://aquads.xyz`;
     const message = `📋 All Commands
 
 🔗 Account:
-/link /twitter /facebook
+/link /twitter /facebook /mygroups
 
 💰 Raids:
 /raids /createraid /cancelraid
@@ -1968,6 +1980,9 @@ https://aquads.xyz`;
 
 🎨 Branding:
 /setbranding /removebranding
+
+👥 Groups:
+/raidin /raidout /linkproject /unlinkproject /mygroups
 
 🔧 Other:
 /help /cancel
@@ -3132,6 +3147,25 @@ ${platformEmoji} ${platformName} Raid
         const adId = callbackQuery.data.slice('linkproj_'.length);
         await telegramService.handleLinkProjectCallback(chatId, userId, messageId, adId);
       }
+      // /mygroups — set-default / remove-group buttons
+      else if (callbackQuery.data.startsWith('mygroup_default_')) {
+        const gid = callbackQuery.data.slice('mygroup_default_'.length);
+        await telegramService.handleMyGroupSetDefaultCallback(chatId, userId, messageId, gid);
+      }
+      else if (callbackQuery.data.startsWith('mygroup_remove_')) {
+        const gid = callbackQuery.data.slice('mygroup_remove_'.length);
+        await telegramService.handleMyGroupRemoveCallback(chatId, userId, messageId, gid);
+      }
+      // /setbranding — project picker when the user owns multiple bumped projects
+      else if (callbackQuery.data.startsWith('setbrand_')) {
+        const adId = callbackQuery.data.slice('setbrand_'.length);
+        await telegramService.handleSetBrandingProjectCallback(chatId, userId, messageId, adId);
+      }
+      // /removebranding — project picker when the user has multiple branded projects
+      else if (callbackQuery.data.startsWith('rmbrand_')) {
+        const adId = callbackQuery.data.slice('rmbrand_'.length);
+        await telegramService.handleRemoveBrandingProjectCallback(chatId, userId, messageId, adId);
+      }
       // Check if it's a vote callback
       else if (callbackQuery.data.startsWith('vote_')) {
         // Handle simplified vote callbacks
@@ -3234,7 +3268,9 @@ ${platformEmoji} ${platformName} Raid
           createdAt: new Date()
         });
         await Promise.all([raid.save(), user.save()]);
-        const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
+        const notifySourceChatId = sourceChatId || (typeof user.getDefaultTelegramGroupId === 'function'
+          ? user.getDefaultTelegramGroupId()
+          : (user.telegramGroupId ? user.telegramGroupId.toString() : null));
         await telegramService.sendRaidNotification({
           raidId: raid._id.toString(),
           tweetUrl: raid.tweetUrl,
@@ -3251,13 +3287,16 @@ ${platformEmoji} ${platformName} Raid
           else successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private to your group only.`;
           successMessage += `\n\n✅ Raid sent to your group!`;
         } else {
-          if (!user.telegramGroupId) {
+          const defaultGroupId = typeof user.getDefaultTelegramGroupId === 'function'
+            ? user.getDefaultTelegramGroupId()
+            : (user.telegramGroupId || null);
+          if (!defaultGroupId) {
             successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin or /raidout to link and enable raids.`;
           } else {
-            const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
+            const isOptedIn = telegramService.raidCrossPostingGroups.has(defaultGroupId);
             if (isOptedIn) successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
             else successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
-            successMessage += `\n\n✅ Raid sent to your linked group!`;
+            successMessage += `\n\n✅ Raid sent to your default linked group!`;
           }
         }
         successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
@@ -4876,6 +4915,9 @@ Tap to update:`;
     );
   },
 
+  // Note: /linkproject is triggered from a group by its creator; the actual
+  // user.telegramGroups[] append happens in handleLinkProjectCallback below,
+  // once the creator has picked which project to bind to this group.
   handleUnlinkProjectCommand: async (chatId, telegramUserId, chatType) => {
     const html = { parseMode: 'HTML' };
     if (chatType !== 'group' && chatType !== 'supergroup') {
@@ -4916,13 +4958,16 @@ Tap to update:`;
     }
     linked.telegramGroupId = null;
     await linked.save();
-    if (user.telegramGroupId === groupIdStr) {
-      user.telegramGroupId = null;
-      await user.save();
-    }
+    // NOTE: we intentionally do NOT remove this group from user.telegramGroups[].
+    // /unlinkproject only breaks the PROJECT ↔ GROUP binding — the user may
+    // still be using this group for community raids (/raidin), so we keep it
+    // in their linked-groups list. Use /mygroups to fully remove a group.
     await telegramService.sendBotMessage(
       chatId,
-      `✅ Unlinked <b>${escapeTelegramHtml(linked.title)}</b> from this group.\n\nYou can run <code>/linkproject</code> to attach a different project.`,
+      `✅ Unlinked <b>${escapeTelegramHtml(linked.title)}</b> from this group.\n\n` +
+      `This group is still linked to your account for community raids and other alerts. ` +
+      `Use <code>/mygroups</code> in DM to fully remove it if you no longer want any raids fired here.\n\n` +
+      `Run <code>/linkproject</code> to attach a different project.`,
       html
     );
   },
@@ -4981,7 +5026,22 @@ Tap to update:`;
       }
       ad.telegramGroupId = groupIdStr;
       await ad.save();
-      user.telegramGroupId = groupIdStr;
+      // Register this group under the user's linked groups (multi-group aware).
+      // Best-effort title fetch — non-fatal if it fails.
+      let chatTitleForLink = null;
+      try {
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        if (botToken) {
+          const chatInfoRes = await axios.get(`https://api.telegram.org/bot${botToken}/getChat`, {
+            params: { chat_id: chatId },
+            timeout: 5000
+          });
+          if (chatInfoRes.data && chatInfoRes.data.ok && chatInfoRes.data.result) {
+            chatTitleForLink = chatInfoRes.data.result.title || null;
+          }
+        }
+      } catch (_) { /* non-fatal */ }
+      user.addTelegramGroup(groupIdStr, { groupTitle: chatTitleForLink });
       await user.save();
       await telegramService.editMessageWithKeyboard(
         chatId,
@@ -5052,7 +5112,7 @@ Tap to update:`;
   },
 
   // Handle /createraid command
-  handleCreateRaidCommand: async (chatId, telegramUserId, text, chatType) => {
+  handleCreateRaidCommand: async (chatId, telegramUserId, text, chatType, chatTitle = null) => {
     try {
       // Check if user is linked
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
@@ -5065,12 +5125,18 @@ Tap to update:`;
 
       // Determine source chat ID (only if called from a group)
       const sourceChatId = (chatType === 'group' || chatType === 'supergroup') ? chatId.toString() : null;
-      
-      // If called from a group, link the group to user account
+
+      // If called from a group, register the group on the user (multi-group).
+      // We do NOT promote it to default here — the user's chosen default (or
+      // first-linked group) stays put. Running /createraid in Group B while
+      // Group A is default just tracks Group B; the raid still fires in B
+      // because sourceChatId is passed through directly below.
       if (sourceChatId) {
-        if (!user.telegramGroupId || user.telegramGroupId !== sourceChatId) {
-          user.telegramGroupId = sourceChatId;
-          await user.save();
+        const beforeCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+        user.addTelegramGroup(sourceChatId, { groupTitle: chatTitle });
+        await user.save();
+        const afterCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+        if (afterCount > beforeCount) {
           console.log(`✅ Linked group ${sourceChatId} to user account ${user.username} via /createraid`);
         }
       }
@@ -5136,8 +5202,11 @@ Tap to update:`;
 
         await raid.save();
 
-        // Send Telegram notification: use source group when from group, else user's linked group so raidin broadcast works
-        const notifySourceChatId = sourceChatId || (user.telegramGroupId ? user.telegramGroupId.toString() : null);
+        // Send Telegram notification: use source group when from group, else
+        // user's default linked group so /raidin broadcast still works.
+        const notifySourceChatId = sourceChatId || (typeof user.getDefaultTelegramGroupId === 'function'
+          ? user.getDefaultTelegramGroupId()
+          : (user.telegramGroupId ? user.telegramGroupId.toString() : null));
         await telegramService.sendRaidNotification({
           raidId: raid._id.toString(),
           tweetUrl: raid.tweetUrl,
@@ -5161,18 +5230,25 @@ Tap to update:`;
           }
           successMessage += `\n\n✅ Raid sent to your group!`;
         } else {
-          // No group linked (raid created from private chat)
-          if (!user.telegramGroupId) {
+          // No group linked (raid created from private chat) — resolve default
+          const defaultGroupId = typeof user.getDefaultTelegramGroupId === 'function'
+            ? user.getDefaultTelegramGroupId()
+            : (user.telegramGroupId || null);
+          if (!defaultGroupId) {
             successMessage += `\n\n⚠️ No group linked to your account!\n\n💡 To receive raids in your group:\n1. Go to your Telegram group\n2. Use /raidin to enable community raids\n   OR /raidout to keep raids private\n\nThis will link your group and allow raids to be sent there.`;
           } else {
-            // Group is linked but raid wasn't created from group
-            const isOptedIn = telegramService.raidCrossPostingGroups.has(user.telegramGroupId);
+            const isOptedIn = telegramService.raidCrossPostingGroups.has(defaultGroupId);
             if (isOptedIn) {
               successMessage += `\n\n📢 Your raid has been sent to all community groups (you're opted-in)!`;
             } else {
               successMessage += `\n\n💡 Tip: Use /raidin in your group to share raids with other groups, or /raidout to keep raids private.`;
             }
-            successMessage += `\n\n✅ Raid sent to your linked group!`;
+            const linkedCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+            if (linkedCount > 1) {
+              successMessage += `\n\n✅ Raid sent to your default linked group. (You have ${linkedCount} linked — use /mygroups to change the default.)`;
+            } else {
+              successMessage += `\n\n✅ Raid sent to your linked group!`;
+            }
           }
         }
         
@@ -5320,7 +5396,7 @@ Tap to update:`;
   },
 
   // Handle /raidin command (group-only, opts group into community raids)
-  handleRaidInCommand: async (chatId, telegramUserId, chatType) => {
+  handleRaidInCommand: async (chatId, telegramUserId, chatType, chatTitle = null) => {
     try {
       // This command only works in groups
       if (chatType !== 'group' && chatType !== 'supergroup') {
@@ -5339,12 +5415,16 @@ Tap to update:`;
       }
 
       const groupIdStr = chatId.toString();
-      
-      // Link group ID to user account
-      if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
-        user.telegramGroupId = groupIdStr;
-        await user.save();
-        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
+
+      // Register this group on the user (multi-group aware). First group ever
+      // becomes the default automatically; subsequent groups are added without
+      // demoting the existing default. Users can change default via /mygroups.
+      const beforeCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+      user.addTelegramGroup(groupIdStr, { groupTitle: chatTitle });
+      await user.save();
+      const afterCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+      if (afterCount > beforeCount) {
+        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username} (now ${afterCount} groups)`);
       }
 
       // Add group to opted-in list if not already
@@ -5354,14 +5434,27 @@ Tap to update:`;
         console.log(`✅ Group ${groupIdStr} opted-in to community raids`);
       }
 
+      const totalLinked = afterCount;
+      const defaultId = user.getDefaultTelegramGroupId();
+      const isDefaultHere = defaultId === groupIdStr;
+      let extraLine = '';
+      if (totalLinked > 1) {
+        extraLine = isDefaultHere
+          ? `\n📌 This group is your <b>default</b> (used for website/DM-created raids).`
+          : `\n📌 You have ${totalLinked} linked groups. Use <code>/mygroups</code> in DM to pick which one is your default.`;
+      }
+
       await telegramService.sendBotMessage(chatId, 
         `✅ Community Raids Enabled!\n\n` +
         `📢 Your group is now part of the community raid network:\n\n` +
         `✅ Your raids will be sent to all other opted-in groups\n` +
         `✅ You'll receive raids from all other opted-in groups\n` +
-        `✅ Your group is registered to your account: @${user.username}\n\n` +
-        `💡 Use /raidout to disable this feature anytime\n` +
-        `🌐 Manage your account: https://aquads.xyz`);
+        `✅ Your group is registered to your account: @${user.username}` +
+        extraLine +
+        `\n\n💡 Use /raidout to disable this feature anytime\n` +
+        `🌐 Manage your account: https://aquads.xyz`,
+        { parseMode: 'HTML' }
+      );
     } catch (error) {
       console.error('RaidIn command error:', error);
       await telegramService.sendBotMessage(chatId, 
@@ -5370,7 +5463,7 @@ Tap to update:`;
   },
 
   // Handle /raidout command (group-only, opts group out of community raids)
-  handleRaidOutCommand: async (chatId, telegramUserId, chatType) => {
+  handleRaidOutCommand: async (chatId, telegramUserId, chatType, chatTitle = null) => {
     try {
       // This command only works in groups
       if (chatType !== 'group' && chatType !== 'supergroup') {
@@ -5389,12 +5482,15 @@ Tap to update:`;
       }
 
       const groupIdStr = chatId.toString();
-      
-      // Link group ID to user account (even when opting out, we still track the group)
-      if (!user.telegramGroupId || user.telegramGroupId !== groupIdStr) {
-        user.telegramGroupId = groupIdStr;
-        await user.save();
-        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username}`);
+
+      // /raidout still tracks the group under the user's account — opting out
+      // of community raids does NOT mean they left the group. Multi-group aware.
+      const beforeCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+      user.addTelegramGroup(groupIdStr, { groupTitle: chatTitle });
+      await user.save();
+      const afterCount = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+      if (afterCount > beforeCount) {
+        console.log(`✅ Linked group ${groupIdStr} to user account ${user.username} (now ${afterCount} groups)`);
       }
 
       // Remove group from opted-in list if it was opted-in
@@ -5416,6 +5512,149 @@ Tap to update:`;
       console.error('RaidOut command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error disabling community raids. Please try again later.");
+    }
+  },
+
+  // Handle /mygroups — lists the user's linked Telegram groups with buttons
+  // to switch which group is their "default" (used as source chat for
+  // website/DM-created raids) and to remove a group entirely.
+  // DM-only for privacy (a user's group list shouldn't be dumped in a shared chat).
+  handleMyGroupsCommand: async (chatId, telegramUserId) => {
+    try {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(telegramUserId,
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Backfill telegramGroups[] from legacy telegramGroupId if empty
+      if ((!Array.isArray(user.telegramGroups) || user.telegramGroups.length === 0) && user.telegramGroupId) {
+        user.addTelegramGroup(user.telegramGroupId, { groupTitle: null, makeDefault: true });
+        await user.save();
+      }
+
+      const groups = Array.isArray(user.telegramGroups) ? user.telegramGroups : [];
+
+      if (groups.length === 0) {
+        await telegramService.sendBotMessage(telegramUserId,
+          "📭 <b>No Telegram groups linked yet.</b>\n\n" +
+          "To link a group:\n" +
+          "1. Add @aquadsbumpbot to your Telegram group\n" +
+          "2. In the group, run <code>/raidin</code> (community raids on) or <code>/raidout</code> (community raids off)\n\n" +
+          "That group will then show up here and be usable for website- and DM-created raids.",
+          { parseMode: 'HTML' });
+        return;
+      }
+
+      const defaultId = user.getDefaultTelegramGroupId();
+      const optedInSet = telegramService.raidCrossPostingGroups;
+
+      // Sort: default first, then most-recently-active
+      const sorted = [...groups].sort((a, b) => {
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+        const at = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
+        const bt = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
+        return bt - at;
+      });
+
+      let message = `🔗 <b>Your Linked Telegram Groups (${groups.length})</b>\n\n`;
+      message += `The <b>default</b> group is used when you create raids from the website or from DM with the bot. Raids created inside a specific group always go to that group regardless.\n\n`;
+
+      const rows = [];
+      for (let i = 0; i < sorted.length; i++) {
+        const g = sorted[i];
+        const rawTitle = g.groupTitle && g.groupTitle.trim() ? g.groupTitle.trim() : `Group ${g.groupId}`;
+        const isDefault = g.groupId === defaultId;
+        const isOptedIn = optedInSet.has(g.groupId);
+        message += `${isDefault ? '⭐️' : '▫️'} <b>${escapeTelegramHtml(rawTitle)}</b>\n`;
+        message += `   ID: <code>${escapeTelegramHtml(g.groupId)}</code>\n`;
+        message += `   Community raids: ${isOptedIn ? '✅ ON' : '⛔️ OFF'}\n`;
+        if (isDefault) message += `   <i>Current default</i>\n`;
+        message += `\n`;
+
+        // Button labels render as plain text — do NOT HTML-escape them.
+        const shortLabel = rawTitle.length > 20 ? rawTitle.slice(0, 18) + '…' : rawTitle;
+        const row = [];
+        if (!isDefault) {
+          row.push({ text: `⭐️ Default: ${shortLabel}`, callback_data: `mygroup_default_${g.groupId}` });
+        }
+        row.push({ text: `🗑 Remove: ${shortLabel}`, callback_data: `mygroup_remove_${g.groupId}` });
+        rows.push(row);
+      }
+
+      message += `💡 Removing a group only unlinks it from <b>your account</b>. The bot stays in the group — anyone else with commands can re-link it.`;
+
+      await telegramService.sendBotMessageWithKeyboard(
+        telegramUserId,
+        message,
+        { inline_keyboard: rows },
+        { parseMode: 'HTML' }
+      );
+    } catch (error) {
+      console.error('MyGroups command error:', error);
+      await telegramService.sendBotMessage(telegramUserId,
+        "❌ Error loading your linked groups. Please try again later.");
+    }
+  },
+
+  // Handle "set default group" callback from /mygroups
+  handleMyGroupSetDefaultCallback: async (chatId, telegramUserId, messageId, groupId) => {
+    try {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ Account not linked. Use /link to connect.");
+        return;
+      }
+      const ok = user.setDefaultTelegramGroup(groupId);
+      if (!ok) {
+        await telegramService.sendBotMessage(chatId, "❌ That group isn't linked to your account anymore. Use /mygroups to refresh.");
+        return;
+      }
+      await user.save();
+      const entry = (user.telegramGroups || []).find(g => g && g.groupId === groupId);
+      const displayTitle = entry && entry.groupTitle ? entry.groupTitle : `Group ${groupId}`;
+      await telegramService.sendBotMessage(chatId,
+        `✅ Default group updated to <b>${escapeTelegramHtml(displayTitle)}</b>.\n\n` +
+        `Raids created from the website or DM will now fire in this group.\n\n` +
+        `Run <code>/mygroups</code> to see the updated list.`,
+        { parseMode: 'HTML' });
+    } catch (error) {
+      console.error('MyGroup set default error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error updating default group. Please try again.");
+    }
+  },
+
+  // Handle "remove group" callback from /mygroups
+  handleMyGroupRemoveCallback: async (chatId, telegramUserId, messageId, groupId) => {
+    try {
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ Account not linked. Use /link to connect.");
+        return;
+      }
+      const ok = user.removeTelegramGroup(groupId);
+      if (!ok) {
+        await telegramService.sendBotMessage(chatId, "❌ That group isn't linked to your account anymore. Use /mygroups to refresh.");
+        return;
+      }
+      await user.save();
+
+      const remaining = Array.isArray(user.telegramGroups) ? user.telegramGroups.length : 0;
+      let msg = `✅ Group removed from your linked groups.\n\n`;
+      if (remaining === 0) {
+        msg += `You have no linked groups anymore. Website- and DM-created raids won't fire in any group until you run <code>/raidin</code> or <code>/raidout</code> in a group again.`;
+      } else {
+        const newDefault = (user.telegramGroups || []).find(g => g && g.isDefault);
+        const newTitle = newDefault && newDefault.groupTitle ? newDefault.groupTitle : (newDefault ? `Group ${newDefault.groupId}` : 'none');
+        msg += `You have ${remaining} linked group${remaining === 1 ? '' : 's'} remaining. New default: <b>${escapeTelegramHtml(newTitle)}</b>.\n\n` +
+               `Run <code>/mygroups</code> to see the updated list.`;
+      }
+      await telegramService.sendBotMessage(chatId, msg, { parseMode: 'HTML' });
+    } catch (error) {
+      console.error('MyGroup remove error:', error);
+      await telegramService.sendBotMessage(chatId, "❌ Error removing group. Please try again.");
     }
   },
 
@@ -5991,7 +6230,25 @@ Tap to update:`;
     }
   },
 
-  // Handle /setbranding command
+  // Prompt the user to send a photo or paste a branding video URL for a
+  // specific project. Sets the conversation state consumed by the branding
+  // upload / URL handlers.
+  _startBrandingConversation: async (chatId, telegramUserId, project) => {
+    telegramService.setConversationState(telegramUserId, {
+      action: 'waiting_branding_image',
+      projectId: project._id.toString()
+    });
+    const title = escapeTelegramHtml(project.title || 'your project');
+    await telegramService.sendBotMessage(chatId,
+      `🎨 <b>Set custom branding for ${title}</b>\n\n` +
+      `📷 <b>Image:</b> send a photo (max 500KB, JPG/PNG)\n${BRANDING_VIDEO_URL_GUIDANCE}\n` +
+      `We only store the link (not the file).\n\n` +
+      `This appears in vote notifications, /mybubble, /bubbles, and raid messages when you're the creator.\n\n` +
+      `📤 Send a <b>photo</b> or <b>video URL</b> now, or /cancel to abort.`,
+      { parseMode: 'HTML' });
+  },
+
+  // Handle /setbranding command — picks project silently if 1 eligible, else picker.
   handleSetBrandingCommand: async (chatId, telegramUserId) => {
     try {
       // Check if user is linked
@@ -6012,9 +6269,9 @@ Tap to update:`;
         .limit(12)
         .lean();
 
-      const bumpedProject = candidates.find((a) => allowsCustomBranding(a));
+      const eligible = candidates.filter((a) => allowsCustomBranding(a));
 
-      if (!bumpedProject) {
+      if (eligible.length === 0) {
         const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
         if (starterBump) {
           await telegramService.sendBotMessage(chatId,
@@ -6026,14 +6283,33 @@ Tap to update:`;
         return;
       }
 
-      // Set conversation state to wait for image upload
-      telegramService.setConversationState(telegramUserId, {
-        action: 'waiting_branding_image',
-        projectId: bumpedProject._id.toString()
+      // Single project → keep the old silent flow so the fast path stays fast.
+      if (eligible.length === 1) {
+        await telegramService._startBrandingConversation(chatId, telegramUserId, eligible[0]);
+        return;
+      }
+
+      // Multiple eligible projects → show picker so we never silently overwrite
+      // the wrong bubble's branding (previous behavior always targeted the
+      // most-recently-updated project).
+      const rows = eligible.slice(0, 12).map((p) => {
+        const rawTitle = (p.title && p.title.trim()) ? p.title.trim() : `Project ${p._id.toString().slice(-4)}`;
+        const label = rawTitle.length > 40 ? rawTitle.slice(0, 37) + '…' : rawTitle;
+        const hasBranding = projectHasCustomBrandingMedia(p);
+        return [{
+          text: `${hasBranding ? '🎨' : '⚪️'} ${label}`,
+          callback_data: 'setbrand_' + p._id.toString()
+        }];
       });
 
-      await telegramService.sendBotMessage(chatId, 
-        `🎨 Set your custom branding\n\n📷 **Image:** send a photo (max 500KB, JPG/PNG)\n${BRANDING_VIDEO_URL_GUIDANCE}\nWe only store the link (not the file).\n\nThis appears in vote notifications, /mybubble, /bubbles, and raid messages when you're the creator.\n\n📤 Send a **photo** or **video URL** now:`);
+      await telegramService.sendBotMessageWithKeyboard(
+        chatId,
+        `🎨 <b>Pick which project to set branding on</b>\n\n` +
+        `You have <b>${eligible.length}</b> Premium bumped projects eligible for custom branding. Choose which one below — the bot will then ask you for the image or video URL.\n\n` +
+        `🎨 = already has custom branding · ⚪️ = default branding`,
+        { inline_keyboard: rows },
+        { parseMode: 'HTML' }
+      );
 
     } catch (error) {
       console.error('SetBranding command error:', error);
@@ -6042,7 +6318,44 @@ Tap to update:`;
     }
   },
 
-  // Handle /removebranding command
+  // Callback: user picked a project from the /setbranding picker
+  handleSetBrandingProjectCallback: async (chatId, telegramUserId, messageId, adId) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(adId)) {
+        await telegramService.sendBotMessage(chatId, "❌ Invalid project selection. Use /setbranding again.");
+        return;
+      }
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ Account not linked. Use /link to connect.");
+        return;
+      }
+      const project = await Ad.findOne({
+        _id: adId,
+        owner: user.username,
+        isBumped: true,
+        status: { $in: ['active', 'approved'] }
+      });
+      if (!project || !allowsCustomBranding(project)) {
+        await telegramService.sendBotMessage(chatId,
+          "❌ That project isn't eligible for custom branding anymore. Run /setbranding to see your current options.");
+        return;
+      }
+      // Clear the picker keyboard so it can't be re-clicked, then start upload flow
+      try {
+        await telegramService.editMessageWithKeyboard(chatId, messageId,
+          `🎨 Selected: <b>${escapeTelegramHtml(project.title || 'your project')}</b>`,
+          { inline_keyboard: [] });
+      } catch (_) { /* editing may fail if message is old; non-fatal */ }
+      await telegramService._startBrandingConversation(chatId, telegramUserId, project);
+    } catch (error) {
+      console.error('SetBranding picker callback error:', error);
+      await telegramService.sendBotMessage(chatId,
+        "❌ Error selecting project. Please try /setbranding again.");
+    }
+  },
+
+  // Handle /removebranding command — picks silently if 1 branded project, else picker.
   handleRemoveBrandingCommand: async (chatId, telegramUserId) => {
     try {
       // Check if user is linked
@@ -6067,29 +6380,92 @@ Tap to update:`;
         .limit(12)
         .exec();
 
-      const project = projects.find((p) => allowsCustomBranding(p));
-      
-      if (!project) {
+      const branded = projects.filter((p) => allowsCustomBranding(p) && projectHasCustomBrandingMedia(p));
+
+      if (branded.length === 0) {
         await telegramService.sendBotMessage(chatId, 
           "❌ You don't have any custom branding set.");
         return;
       }
 
-      // Remove branding
-      project.customBrandingImage = null;
-      project.customBrandingImageSize = 0;
-      project.customBrandingUploadedAt = null;
-      project.customBrandingVideoUrl = null;
-      await project.save();
+      // Single branded project → keep old fast path
+      if (branded.length === 1) {
+        await telegramService._removeBrandingFromProject(chatId, branded[0]);
+        return;
+      }
 
-      await telegramService.sendBotMessage(chatId, 
-        "✅ Custom branding removed! Default branding will be used for your project.");
+      // Multiple → picker
+      const rows = branded.slice(0, 12).map((p) => {
+        const rawTitle = (p.title && p.title.trim()) ? p.title.trim() : `Project ${p._id.toString().slice(-4)}`;
+        const label = rawTitle.length > 40 ? rawTitle.slice(0, 37) + '…' : rawTitle;
+        return [{
+          text: `🗑 ${label}`,
+          callback_data: 'rmbrand_' + p._id.toString()
+        }];
+      });
+
+      await telegramService.sendBotMessageWithKeyboard(
+        chatId,
+        `🗑 <b>Pick which project to remove branding from</b>\n\n` +
+        `You have <b>${branded.length}</b> projects with custom branding set. Choose the one to reset to default.`,
+        { inline_keyboard: rows },
+        { parseMode: 'HTML' }
+      );
 
     } catch (error) {
       console.error('RemoveBranding command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error removing branding. Please try again later.");
     }
+  },
+
+  // Callback: user picked a project from the /removebranding picker
+  handleRemoveBrandingProjectCallback: async (chatId, telegramUserId, messageId, adId) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(adId)) {
+        await telegramService.sendBotMessage(chatId, "❌ Invalid project selection. Use /removebranding again.");
+        return;
+      }
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, "❌ Account not linked. Use /link to connect.");
+        return;
+      }
+      const project = await Ad.findOne({
+        _id: adId,
+        owner: user.username,
+        isBumped: true,
+        status: { $in: ['active', 'approved'] }
+      });
+      if (!project) {
+        await telegramService.sendBotMessage(chatId,
+          "❌ That project isn't yours anymore. Run /removebranding to refresh.");
+        return;
+      }
+      try {
+        await telegramService.editMessageWithKeyboard(chatId, messageId,
+          `🗑 Removing branding from <b>${escapeTelegramHtml(project.title || 'your project')}</b>...`,
+          { inline_keyboard: [] });
+      } catch (_) { /* non-fatal */ }
+      await telegramService._removeBrandingFromProject(chatId, project);
+    } catch (error) {
+      console.error('RemoveBranding picker callback error:', error);
+      await telegramService.sendBotMessage(chatId,
+        "❌ Error removing branding. Please try /removebranding again.");
+    }
+  },
+
+  // Shared: actually clear branding fields and confirm to the user.
+  _removeBrandingFromProject: async (chatId, project) => {
+    project.customBrandingImage = null;
+    project.customBrandingImageSize = 0;
+    project.customBrandingUploadedAt = null;
+    project.customBrandingVideoUrl = null;
+    await project.save();
+    const title = escapeTelegramHtml(project.title || 'your project');
+    await telegramService.sendBotMessage(chatId,
+      `✅ Custom branding removed from <b>${title}</b>. Default branding will be used from now on.`,
+      { parseMode: 'HTML' });
   },
 
   // Handle /boostvote command - Show vote boost packages with buttons

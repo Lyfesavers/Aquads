@@ -216,8 +216,11 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       user.save()
     ]);
     
-    // Send Telegram notification (use user's linked group if available)
-    const sourceChatId = user.telegramGroupId || null;
+    // Send Telegram notification (use user's default linked group if any).
+    // Multi-group users can pick which group is default via /mygroups.
+    const sourceChatId = (typeof user.getDefaultTelegramGroupId === 'function'
+      ? user.getDefaultTelegramGroupId()
+      : (user.telegramGroupId || null)) || null;
     telegramService.sendRaidNotification({
       raidId: raid._id.toString(),
       postUrl: raid.postUrl,
@@ -321,8 +324,11 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
 
     await raid.save();
     
-    // Send Telegram notification (use user's linked group if available)
-    const sourceChatId = user.telegramGroupId || null;
+    // Send Telegram notification (use user's default linked group if any).
+    // Multi-group users can pick which group is default via /mygroups.
+    const sourceChatId = (typeof user.getDefaultTelegramGroupId === 'function'
+      ? user.getDefaultTelegramGroupId()
+      : (user.telegramGroupId || null)) || null;
     telegramService.sendRaidNotification({
       raidId: raid._id.toString(),
       postUrl: raid.postUrl,
