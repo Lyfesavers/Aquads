@@ -97,6 +97,7 @@ const ExtensionAuth = lazy(() => import('./components/ExtensionAuth'));
 const ProjectAgentPage = lazy(() => import('./components/projectAgent/ProjectAgentPage'));
 const ProjectAgentFab = lazy(() => import('./components/projectAgent/ProjectAgentFab'));
 const TelegramBot = lazy(() => import('./components/TelegramBot'));
+const BotControlPanel = lazy(() => import('./components/BotControlPanel'));
 const PublicResume = lazy(() => import('./components/PublicResume'));
 const LinkInBio = lazy(() => import('./components/LinkInBio'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
@@ -3935,6 +3936,7 @@ function App() {
             <Route path="/why-list" element={<Navigate to="/list-token-free" replace />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
             <Route path="/telegram-bot" element={<TelegramBot />} />
+            <Route path="/telegram-bot/panel" element={<BotControlPanel currentUser={currentUser} />} />
             <Route path="/aquapay" element={<AquaPayInfo />} />
             <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />
             <Route path="/docs" element={<Documentation />} />

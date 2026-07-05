@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaChartLine, FaTwitter, FaFacebook, FaPalette, FaTrophy, FaBolt, FaShieldAlt, FaCheckCircle, FaCoins, FaBullhorn, FaLink, FaGlobe, FaStar, FaCrown, FaGem, FaFire, FaEye, FaNetworkWired, FaHandshake, FaBell, FaLock, FaUnlock, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown, FaImage, FaListAlt, FaComments, FaRetweet, FaHeart, FaUserCog, FaExternalLinkAlt } from 'react-icons/fa';
 
 const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
 import { Link } from 'react-router-dom';
@@ -258,15 +258,31 @@ const TelegramBot = () => {
         ></div>
       </div>
 
-      {/* Back Button */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 z-10">
-        <Link
-          to="/home"
-          className="inline-flex items-center text-gray-400 hover:text-cyan-400 transition-all duration-300 group"
-        >
-          <FaArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-          <span>Back to Home</span>
-        </Link>
+      {/* Top Header — Back button on the left, prominent Control Panel launcher on the right */}
+      <div className="sticky top-0 z-30 backdrop-blur-md bg-[#0a0a0f]/70 border-b border-white/5">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+          <Link
+            to="/home"
+            className="inline-flex items-center text-gray-400 hover:text-cyan-400 transition-all duration-300 group text-sm sm:text-base"
+          >
+            <FaArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+            <span className="hidden sm:inline">Back to Home</span>
+            <span className="sm:hidden">Back</span>
+          </Link>
+
+          <Link
+            to="/telegram-bot/panel"
+            className="group relative inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full font-semibold text-sm text-white overflow-hidden shadow-lg shadow-cyan-500/30 transition-transform hover:scale-105 active:scale-95"
+          >
+            <span className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500" />
+            <span className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <span className="absolute inset-0 rounded-full ring-1 ring-white/10" />
+            <FaUserCog className="relative text-lg" />
+            <span className="relative hidden sm:inline">Open Control Panel</span>
+            <span className="relative sm:hidden">Panel</span>
+            <FaRocket className="relative text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
+        </div>
       </div>
 
       {/* Hero Section */}
@@ -295,18 +311,28 @@ const TelegramBot = () => {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center lg:justify-start">
+                <Link
+                  to="/telegram-bot/panel"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/30"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className="relative flex items-center gap-2 text-white">
+                    <FaUserCog className="text-xl" />
+                    Open Control Panel
+                    <FaRocket className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+                  </span>
+                </Link>
                 <a
                   href="https://t.me/aquadsbumpbot"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 border border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative flex items-center gap-2 text-white">
+                  <span className="relative flex items-center gap-2 text-cyan-200 group-hover:text-white">
                     <FaTelegram className="text-xl" />
                     Launch Telegram Bot
-                    <FaRocket className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+                    <FaExternalLinkAlt className="text-sm opacity-70" />
                   </span>
                 </a>
                 <a
@@ -326,6 +352,23 @@ const TelegramBot = () => {
                 >
                   <FaCrown className="mr-2" />
                   List & Bump Project
+                </Link>
+              </div>
+
+              {/* Highlight banner drawing attention to the new panel */}
+              <div className="mt-6 max-w-2xl mx-auto lg:mx-0">
+                <Link
+                  to="/telegram-bot/panel"
+                  className="group flex items-center gap-3 rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 px-4 py-3 hover:from-cyan-500/15 hover:to-purple-500/15 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                    <FaUserCog className="text-white text-lg" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-cyan-200 font-semibold text-sm">New: Web Control Panel</p>
+                    <p className="text-gray-400 text-xs">Manage groups, create raids, toggle community raids & set branding — all with buttons, no commands needed.</p>
+                  </div>
+                  <FaRocket className="text-cyan-400 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
               </div>
 
@@ -880,15 +923,22 @@ const TelegramBot = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
+                <Link
+                  to="/telegram-bot/panel"
+                  className="group inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-400 hover:via-blue-400 hover:to-purple-400 text-white transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/30"
+                >
+                  <FaUserCog className="mr-2 text-xl" />
+                  Open Control Panel
+                  <FaRocket className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+                </Link>
                 <a
                   href="https://t.me/aquadsbumpbot"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/25"
+                  className="group inline-flex items-center justify-center px-8 py-4 font-bold text-lg rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 hover:text-white border border-cyan-500/40 transition-all duration-300 transform hover:scale-105"
                 >
                   <FaTelegram className="mr-2 text-xl" />
                   Launch Telegram Bot
-                  <FaRocket className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
                 </a>
                 <a
                   href={DISCORD_BOT_INVITE}
