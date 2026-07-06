@@ -18,7 +18,12 @@ let nextCoinGeckoAttemptAt = 0;
 
 let globalStatsCache = null;
 let globalStatsCacheTime = 0;
-const GLOBAL_STATS_CACHE_TTL = 15 * 60 * 1000;
+/**
+ * Kept short so the "Global Market Cap" and "24h Trading Volume" numbers stay close to
+ * CoinGecko's live figures — /global is a single cheap CG call, comfortably within free
+ * tier rate limits at this TTL.
+ */
+const GLOBAL_STATS_CACHE_TTL = 5 * 60 * 1000;
 const GLOBAL_CHART_CACHE_TTL = 60 * 60 * 1000;
 let globalChartCache = null;
 let globalChartCacheTime = 0;
@@ -91,7 +96,11 @@ const recordGlobalSnapshot = async (stats) => {
       totalMarketCap: stats.totalMarketCap,
       totalVolume24h: stats.totalVolume24h,
       marketCapChangePercentage24h: stats.marketCapChangePercentage24h,
-      volumeChangePercentage24h: stats.volumeChangePercentage24h
+      // stats.volumeChangePercentage24h may be null when we lack ~24h of history;
+      // the snapshot schema wants a Number, so persist 0 in that case.
+      volumeChangePercentage24h: Number.isFinite(stats.volumeChangePercentage24h)
+        ? stats.volumeChangePercentage24h
+        : 0
     });
 
     const cutoff = new Date(Date.now() - GLOBAL_SNAPSHOT_RETENTION_MS);
@@ -99,6 +108,90 @@ const recordGlobalSnapshot = async (stats) => {
   } catch (error) {
     console.warn('[Tokens] Failed to record global market snapshot:', error.message);
   }
+};
+
+/**
+ * CoinGecko's public /global endpoint does NOT expose `volume_change_percentage_24h_usd`
+ * (that number on coingecko.com is derived from their own historical data). We derive it
+ * ourselves from the GlobalMarketSnapshot collection we already record every 10 min.
+ * Returns null when we don't yet have a snapshot in the ~22–26h window.
+ */
+const computeVolumeChangePercentage24h = async (currentVolume) => {
+  if (!Number.isFinite(currentVolume) || currentVolume <= 0) return null;
+  try {
+    const now = Date.now();
+    const windowStart = new Date(now - 26 * 60 * 60 * 1000);
+    const windowEnd = new Date(now - 22 * 60 * 60 * 1000);
+    const target = new Date(now - 24 * 60 * 60 * 1000);
+
+    const candidates = await GlobalMarketSnapshot.find({
+      recordedAt: { $gte: windowStart, $lte: windowEnd },
+      totalVolume24h: { $gt: 0 }
+    })
+      .select('totalVolume24h recordedAt')
+      .lean();
+
+    if (!candidates.length) return null;
+
+    let best = candidates[0];
+    let bestDelta = Math.abs(new Date(best.recordedAt).getTime() - target.getTime());
+    for (const snap of candidates) {
+      const delta = Math.abs(new Date(snap.recordedAt).getTime() - target.getTime());
+      if (delta < bestDelta) {
+        best = snap;
+        bestDelta = delta;
+      }
+    }
+
+    const previous = Number(best.totalVolume24h);
+    if (!Number.isFinite(previous) || previous <= 0) return null;
+    return ((currentVolume - previous) / previous) * 100;
+  } catch (error) {
+    console.warn('[Tokens] Failed to compute 24h volume change from snapshots:', error.message);
+    return null;
+  }
+};
+
+/**
+ * Derive a Buy / Sell / Hold sentiment signal from CoinGecko's live 24h market-cap change
+ * and our derived 24h volume change. Weighted score in [-100, 100]:
+ *   market cap change  → 65% (broadest gauge of market direction)
+ *   volume change      → 35% (momentum: rising volume amplifies whatever mcap is doing)
+ * Bands are intentionally symmetric so the badge flips cleanly around 0.
+ */
+const buildMarketSignal = ({ marketCapChange24h, volumeChange24h }) => {
+  const mcap = Number.isFinite(marketCapChange24h) ? marketCapChange24h : 0;
+  const vol = Number.isFinite(volumeChange24h) ? volumeChange24h : null;
+
+  // Clamp each contributor so a wild outlier (e.g. volume spike +300%) can't dominate.
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const mcapPart = clamp(mcap, -10, 10) * 10; // ±10% mcap swing → ±100
+  const volPart = vol == null ? 0 : clamp(vol, -30, 30) * (100 / 30); // ±30% vol swing → ±100
+
+  const score = vol == null
+    ? mcapPart
+    : mcapPart * 0.65 + volPart * 0.35;
+
+  let label;
+  let strength;
+  if (score >= 25) { label = 'Buy'; strength = 'strong'; }
+  else if (score >= 8) { label = 'Buy'; strength = 'moderate'; }
+  else if (score > -8) { label = 'Hold'; strength = 'neutral'; }
+  else if (score > -25) { label = 'Sell'; strength = 'moderate'; }
+  else { label = 'Sell'; strength = 'strong'; }
+
+  const parts = [
+    `Market cap 24h: ${mcap >= 0 ? '+' : ''}${mcap.toFixed(2)}%`
+  ];
+  if (vol != null) parts.push(`Volume 24h: ${vol >= 0 ? '+' : ''}${vol.toFixed(2)}%`);
+
+  return {
+    label,
+    strength,
+    score: Math.round(score * 10) / 10,
+    reason: parts.join(' · '),
+    hasVolumeSignal: vol != null
+  };
 };
 
 const fetchSparklinesFromSnapshots = async () => {
@@ -285,11 +378,22 @@ const fetchGlobalStats = async () => {
     const data = response.data?.data;
     if (!data) return globalStatsCache;
 
+    const totalVolume24h = parseFloat(data.total_volume?.usd) || 0;
+    // /global does not include a real volume change %, so derive it from our own snapshots.
+    // Falls back to null (not 0) so the UI can hide the badge until we have >=24h of data.
+    const derivedVolumeChange = await computeVolumeChangePercentage24h(totalVolume24h);
+
+    const marketCapChangePercentage24h = parseFloat(data.market_cap_change_percentage_24h_usd) || 0;
+
     const stats = {
       totalMarketCap: parseFloat(data.total_market_cap?.usd) || 0,
-      totalVolume24h: parseFloat(data.total_volume?.usd) || 0,
-      marketCapChangePercentage24h: parseFloat(data.market_cap_change_percentage_24h_usd) || 0,
-      volumeChangePercentage24h: parseFloat(data.volume_change_percentage_24h_usd) || 0,
+      totalVolume24h,
+      marketCapChangePercentage24h,
+      volumeChangePercentage24h: derivedVolumeChange, // may be null when we lack history
+      marketSignal: buildMarketSignal({
+        marketCapChange24h: marketCapChangePercentage24h,
+        volumeChange24h: derivedVolumeChange
+      }),
       marketCapSparkline: [],
       volumeSparkline: [],
       chartSource: null,

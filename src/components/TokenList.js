@@ -76,6 +76,115 @@ const formatFullCurrency = (value) => {
   return `$${Math.round(value).toLocaleString('en-US')}`;
 };
 
+/**
+ * Live market-sentiment badge that replaces the old inaccurate global sparklines.
+ * The `signal` payload is computed server-side from CoinGecko's live 24h market-cap
+ * change and our derived 24h volume change (see `buildMarketSignal` in server/routes/tokens.js).
+ * Purely informational — the tooltip makes clear it's a sentiment indicator, not advice.
+ */
+const MarketSignalBadge = ({ signal }) => {
+  if (!signal || !signal.label) return null;
+
+  const label = signal.label;
+  const strength = signal.strength || 'neutral';
+
+  const styles =
+    label === 'Buy'
+      ? {
+          wrap: 'bg-green-500/10 border-green-500/40 text-green-300',
+          dot: 'bg-green-400',
+          arrow: '▲'
+        }
+      : label === 'Sell'
+      ? {
+          wrap: 'bg-red-500/10 border-red-500/40 text-red-300',
+          dot: 'bg-red-400',
+          arrow: '▼'
+        }
+      : {
+          wrap: 'bg-gray-500/10 border-gray-500/40 text-gray-300',
+          dot: 'bg-gray-400',
+          arrow: '•'
+        };
+
+  const strengthLabel =
+    strength === 'strong' ? 'Strong' : strength === 'moderate' ? 'Moderate' : '';
+
+  const tooltip = `${strengthLabel ? strengthLabel + ' ' : ''}${label} signal${
+    signal.reason ? ` — ${signal.reason}` : ''
+  }. Sentiment indicator based on 24h market data. Not financial advice.`;
+
+  return (
+    <div
+      className={`shrink-0 flex flex-col items-end gap-1 rounded-md border px-3 py-2 ${styles.wrap}`}
+      title={tooltip}
+    >
+      <div className="flex items-center gap-1.5 text-sm font-semibold leading-none">
+        <span className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dot}`} />
+        <span>{styles.arrow}</span>
+        <span>{label}</span>
+      </div>
+      {strengthLabel && (
+        <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none">
+          {strengthLabel}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Volume-side companion to the market signal. Uses only the derived 24h volume change
+ * so users get a direct read on trading activity — Rising when volume is meaningfully
+ * up, Falling when meaningfully down, Steady otherwise. Renders nothing until we have
+ * ~24h of snapshots to compare against.
+ */
+const VolumeTrendBadge = ({ volumeChange }) => {
+  if (typeof volumeChange !== 'number' || !Number.isFinite(volumeChange)) return null;
+
+  const styles =
+    volumeChange >= 10
+      ? {
+          wrap: 'bg-green-500/10 border-green-500/40 text-green-300',
+          dot: 'bg-green-400',
+          arrow: '▲',
+          label: 'Rising'
+        }
+      : volumeChange <= -10
+      ? {
+          wrap: 'bg-red-500/10 border-red-500/40 text-red-300',
+          dot: 'bg-red-400',
+          arrow: '▼',
+          label: 'Falling'
+        }
+      : {
+          wrap: 'bg-gray-500/10 border-gray-500/40 text-gray-300',
+          dot: 'bg-gray-400',
+          arrow: '•',
+          label: 'Steady'
+        };
+
+  const tooltip = `Volume ${styles.label.toLowerCase()} — 24h change ${
+    volumeChange >= 0 ? '+' : ''
+  }${volumeChange.toFixed(2)}% vs. 24h ago.`;
+
+  return (
+    <div
+      className={`shrink-0 flex flex-col items-end gap-1 rounded-md border px-3 py-2 ${styles.wrap}`}
+      title={tooltip}
+    >
+      <div className="flex items-center gap-1.5 text-sm font-semibold leading-none">
+        <span className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dot}`} />
+        <span>{styles.arrow}</span>
+        <span>{styles.label}</span>
+      </div>
+      <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none">
+        24h volume
+      </div>
+    </div>
+  );
+};
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
@@ -515,8 +624,8 @@ const TokenList = ({ currentUser, showNotification }) => {
                       )}
                     </div>
                   </div>
-                  {globalStats?.marketCapSparkline?.length >= 2 && (
-                    <TokenSparkline prices={globalStats.marketCapSparkline} width={120} height={40} />
+                  {globalStats?.marketSignal && (
+                    <MarketSignalBadge signal={globalStats.marketSignal} />
                   )}
                 </div>
 
@@ -527,7 +636,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-sm text-gray-400">Global 24h Trading Volume</span>
-                      {globalStats && Number.isFinite(globalStats.volumeChangePercentage24h) && (
+                      {globalStats && typeof globalStats.volumeChangePercentage24h === 'number' && Number.isFinite(globalStats.volumeChangePercentage24h) && (
                         <span className={`text-sm font-medium ${
                           globalStats.volumeChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
@@ -537,9 +646,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       )}
                     </div>
                   </div>
-                  {globalStats?.volumeSparkline?.length >= 2 && (
-                    <TokenSparkline prices={globalStats.volumeSparkline} width={120} height={40} />
-                  )}
+                  <VolumeTrendBadge volumeChange={globalStats?.volumeChangePercentage24h} />
                 </div>
               </div>
             </div>
