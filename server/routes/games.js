@@ -171,6 +171,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     });
     
     await game.save();
+    await game.populate('owner', 'username image');
     invalidateGamesCache();
     res.status(201).json(game);
   } catch (error) {
@@ -200,6 +201,7 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
     });
     
     await game.save();
+    await game.populate('owner', 'username image');
     invalidateGamesCache();
     res.json(game);
   } catch (error) {
