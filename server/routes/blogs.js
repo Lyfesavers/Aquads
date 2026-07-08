@@ -218,12 +218,6 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     }
 
     const { title, content, bannerImage } = req.body;
-    
-    // Validate content length (max 10000 words)
-    const wordCount = content.trim().split(/\s+/).length;
-    if (wordCount > 10000) {
-      return res.status(400).json({ error: 'Content exceeds 10000 words limit' });
-    }
 
     // Get the full user information including image
     const user = await User.findById(req.user.userId);
@@ -261,14 +255,6 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
     // Check if user is either the author or an admin
     if (blog.author.toString() !== req.user.userId && !req.user.isAdmin) {
       return res.status(403).json({ error: 'Not authorized to edit this blog' });
-    }
-
-    // Validate content length if it's being updated
-    if (req.body.content) {
-      const wordCount = req.body.content.trim().split(/\s+/).length;
-      if (wordCount > 10000) {
-        return res.status(400).json({ error: 'Content exceeds 10000 words limit' });
-      }
     }
 
     // Get the user's current image

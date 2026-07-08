@@ -638,7 +638,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
           <div className="border border-gray-600 rounded flex flex-col">
             <div className="rounded-t bg-gray-800/95 border-b border-gray-600 shadow-lg shrink-0">
               <div className="flex flex-wrap justify-between items-center gap-2 px-3 pt-3 pb-1">
-                <label className="block text-sm font-medium text-gray-200">Content (Max 10000 words)</label>
+                <label className="block text-sm font-medium text-gray-200">Content</label>
                 <div className="flex gap-2 items-center">
                   <span className="text-xs text-gray-400">Format Preservation:</span>
                   <button

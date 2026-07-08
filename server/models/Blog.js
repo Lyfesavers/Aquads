@@ -9,8 +9,7 @@ const blogSchema = new Schema({
   },
   content: {
     type: String,
-    required: true,
-    maxLength: 60000 // ~10000 words
+    required: true
   },
   bannerImage: {
     type: String,
