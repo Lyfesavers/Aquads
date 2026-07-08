@@ -199,7 +199,7 @@ const telegramService = {
   
   // Store message IDs for cleanup
   lastTrendingMessages: [],
-  lastVoteMessages: [], // Store vote notification message IDs for cleanup
+  lastVoteMessages: [], // Deprecated: no longer used — vote notifications are kept in the trending channel as history
   
   // Queue system for vote notifications to prevent race conditions
   voteNotificationQueue: [],
@@ -5888,17 +5888,8 @@ Tap to update:`;
       }
 
       // Also send to trending channel
-      // First, clean up ALL old vote messages - snapshot them to avoid race conditions
-      const messagesToDelete = [...telegramService.lastVoteMessages];
-      telegramService.lastVoteMessages = [];
-      
-      // Delete old messages in parallel for faster cleanup
-      await Promise.all(
-        messagesToDelete.map(msgId => 
-          telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, msgId)
-            .catch(err => console.error(`Failed to delete message ${msgId}:`, err))
-        )
-      );
+      // Note: We intentionally do NOT delete previous vote messages here so the
+      // trending channel keeps a full history/thread of vote notifications.
 
       let trendingMessageId = null;
       
@@ -5964,10 +5955,8 @@ Tap to update:`;
         console.error('Error sending to trending channel:', error.message);
       }
 
-      // Store the message ID for future cleanup
-      if (trendingMessageId) {
-        telegramService.lastVoteMessages.push(trendingMessageId);
-      }
+      // Note: trendingMessageId is no longer tracked for deletion — vote
+      // messages are kept in the trending channel as a running history.
 
       // Mirror to Discord if channel configured
       try {
