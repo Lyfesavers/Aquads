@@ -164,18 +164,18 @@ const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account
 
 /**
  * Largest column count ≤ maxPrefer whose row fits at minimum bubble diameter.
- * Actual bumped/unbumped sizes clamp into each lane via getMobileBubbleMapDisplaySize — column count must not use the pre-clamp bumped diameter or we never reach 4-up on typical phones (~103px discs).
+ * Actual bumped/unbumped sizes clamp into each lane via getMobileBubbleMapDisplaySize — column count must not use the pre-clamp bumped diameter or we never reach the target column count on typical phones (~103px discs).
  */
 function mobileBubbleMapMaxFeasibleColumns(
   innerUsablePx,
   gapPx,
-  maxPrefer = 4,
+  maxPrefer = 5,
   minBubblePx = MIN_SIZE
 ) {
   const g = Math.max(0, gapPx);
   const b = Math.max(MIN_SIZE, minBubblePx);
   if (innerUsablePx <= 0) return 1;
-  let cMax = Math.min(maxPrefer, 4);
+  let cMax = Math.min(maxPrefer, 5);
   for (let c = cMax; c >= 1; c -= 1) {
     const packed = c * b + Math.max(0, c - 1) * g;
     if (packed <= innerUsablePx + 1) return c;
@@ -183,7 +183,7 @@ function mobileBubbleMapMaxFeasibleColumns(
   return 1;
 }
 
-/** Resolved column count + usable inner width — prefer 4 columns on mobile whenever min-size lanes fit. */
+/** Resolved column count + usable inner width — prefer 5 columns on mobile whenever min-size lanes fit (5×50 + 4×2 = 258px, fits any phone ≥ ~265px wide). */
 function resolveMobileBubbleMapColumns(viewportWidth, _maxDimGuessPx) {
   if (viewportWidth > 480) {
     return { columns: 5, usableWidth: Math.max(0, viewportWidth - BUBBLE_PADDING * 2) };
@@ -192,7 +192,7 @@ function resolveMobileBubbleMapColumns(viewportWidth, _maxDimGuessPx) {
   const cols = mobileBubbleMapMaxFeasibleColumns(
     uw,
     MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
-    4,
+    5,
     MIN_SIZE
   );
   return { columns: cols, usableWidth: uw };
@@ -223,7 +223,7 @@ function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
       columns > 0
         ? (usableWidth - Math.max(0, columns - 1) * G) / columns
         : usableWidth;
-    /** Tight fit into lane — only 1px inset so bumped discs use almost full uniform span when 4-up. */
+    /** Tight fit into lane — only 1px inset so bumped discs use almost full uniform span at the resolved column count. */
     const laneCeil = Math.max(MIN_SIZE, Math.floor(uniformSpan - 1));
     return Math.min(raw, laneCeil);
   }
