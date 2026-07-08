@@ -159,6 +159,8 @@ const MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX = 2;
 const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 84;
 /** Gap between successive bubble rows — disc bottom to next row disc top after per-row tallest bubble (votes/BUY untouched in CSS). */
 const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 14;
+/** Minimum viewport width (px) to switch pure-unbumped rows to 5-across on mobile — narrower phones (iPhone SE 320px) stay 4-across to preserve current disc sizes without shrinkage. Bumped rows always stay 4-across regardless of viewport (~93px discs cannot pack 5 per row on any phone). */
+const MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT = 360;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
@@ -2373,8 +2375,8 @@ function App() {
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
 
-    // Size-aware grid: horizontal stride uses viewport max bubble so columns align; vertical
-    // pitch uses each row's tallest bubble so smaller unbumped rows pack under bumped rows cleanly.
+    // Per-bubble pixel size (already computed with 4-col reference math via getMobileBubbleMapDisplaySize,
+    // so disc sizes stay unchanged when a row is switched to 5-across).
     const sizesPx = sortedBubbles.map(el => {
       const fromDom = parseInt(el.style.width, 10);
       if (!Number.isNaN(fromDom) && fromDom > 0) return fromDom;
@@ -2383,26 +2385,45 @@ function App() {
         ? getMobileBubbleMapDisplaySize(linked, screenWidth)
         : getMaxSize();
     });
-    const maxDim = Math.max(MIN_SIZE, ...sizesPx);
-    const { columns, usableWidth } = resolveMobileBubbleMapColumns(screenWidth, maxDim);
+    const isBumpedFlags = sortedBubbles.map(el => {
+      const linked = ads.find(ad => ad.id === el.id);
+      return !!(linked && linked.isBumped);
+    });
+
+    // Split lane references: bumped rows use the tallest bumped disc as lane width (~93px),
+    // pure-unbumped rows use the tallest unbumped disc as lane width (~65px). This lets
+    // unbumped rows pack 5-across at their smaller natural stride without ever affecting
+    // bumped disc size or their 4-across layout.
+    const bumpedSizes = sizesPx.filter((_, i) => isBumpedFlags[i]);
+    const unbumpedSizes = sizesPx.filter((_, i) => !isBumpedFlags[i]);
+    const maxBumpedDim = bumpedSizes.length ? Math.max(MIN_SIZE, ...bumpedSizes) : MIN_SIZE;
+    const maxUnbumpedDim = unbumpedSizes.length ? Math.max(MIN_SIZE, ...unbumpedSizes) : MIN_SIZE;
     const INTER_GAP = MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX;
-    const slotStride = maxDim + INTER_GAP;
     const rowGap = MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
+    const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
+    const canFiveCol = screenWidth >= MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT;
 
     let cumulativeY = TOP_PADDING;
     let idx = 0;
 
     while (idx < sortedBubbles.length) {
+      // Row mode is determined by the first bubble: bumped-mode rows may fill trailing
+      // slots with unbumped bubbles when the bumped run ends mid-row (matches pre-existing behavior).
+      const rowIsBumped = isBumpedFlags[idx];
+      const rowColumns = (!rowIsBumped && canFiveCol) ? 5 : 4;
+      const rowLaneDim = rowIsBumped ? maxBumpedDim : maxUnbumpedDim;
+      const rowStride = rowLaneDim + INTER_GAP;
+
       const remaining = sortedBubbles.length - idx;
-      const rowBubbleCount = Math.min(columns, remaining);
+      const rowBubbleCount = Math.min(rowColumns, remaining);
 
       let rowMaxDim = MIN_SIZE;
       for (let j = 0; j < rowBubbleCount; j += 1) {
-        rowMaxDim = Math.max(rowMaxDim, sizesPx[idx + j] ?? maxDim);
+        rowMaxDim = Math.max(rowMaxDim, sizesPx[idx + j] ?? rowLaneDim);
       }
 
       const rowPackedWidth =
-        rowBubbleCount * maxDim +
+        rowBubbleCount * rowLaneDim +
         Math.max(0, rowBubbleCount - 1) * INTER_GAP;
       const rowClusterStart =
         horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
@@ -2410,12 +2431,12 @@ function App() {
       for (let col = 0; col < rowBubbleCount; col += 1) {
         const index = idx + col;
         const bubble = sortedBubbles[index];
-        const bubbleW = sizesPx[index] ?? maxDim;
+        const bubbleW = sizesPx[index] ?? rowLaneDim;
 
         let x =
           rowClusterStart +
-          col * slotStride +
-          (maxDim - bubbleW) / 2;
+          col * rowStride +
+          (rowLaneDim - bubbleW) / 2;
 
         let y = cumulativeY;
 
