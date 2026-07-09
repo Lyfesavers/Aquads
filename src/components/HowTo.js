@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -54,6 +54,31 @@ const createBlogSlug = (title) => {
     return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
   }
   return slug;
+};
+
+const stripBlogContentForSearch = (content) =>
+  (content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const filterAndSortBlogs = (blogs, searchQuery, sortOrder) => {
+  const query = searchQuery.trim().toLowerCase();
+  let result = [...blogs];
+
+  if (query) {
+    result = result.filter((blog) => {
+      const title = (blog.title || '').toLowerCase();
+      const author = (blog.authorUsername || '').toLowerCase();
+      const content = stripBlogContentForSearch(blog.content).toLowerCase();
+      return title.includes(query) || author.includes(query) || content.includes(query);
+    });
+  }
+
+  result.sort((a, b) => {
+    const aTime = new Date(a.createdAt).getTime();
+    const bTime = new Date(b.createdAt).getTime();
+    return sortOrder === 'oldest' ? aTime - bTime : bTime - aTime;
+  });
+
+  return result;
 };
 
 // Side panel definition for the Learn page. Order here = order in the sidebar.
@@ -119,6 +144,8 @@ const VALID_TAB_IDS = LEARN_TABS.map((t) => t.id);
 
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform, ads = [] }) => {
   const [blogs, setBlogs] = useState([]);
+  const [blogSearch, setBlogSearch] = useState('');
+  const [blogSortOrder, setBlogSortOrder] = useState('newest');
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
@@ -171,6 +198,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [freeCoursesCategory, setFreeCoursesCategory] = useState('all');
   const [freeCoursesSearch, setFreeCoursesSearch] = useState('');
   const [freeCoursesSearchDebounced, setFreeCoursesSearchDebounced] = useState('');
+
+  const filteredBlogs = useMemo(
+    () => filterAndSortBlogs(blogs, blogSearch, blogSortOrder),
+    [blogs, blogSearch, blogSortOrder]
+  );
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -1459,6 +1491,52 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 </button>
               )}
             </div>
+
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Sort blog posts">
+                {[
+                  { id: 'newest', label: 'Newest first' },
+                  { id: 'oldest', label: 'Oldest first' },
+                ].map(({ id, label }) => {
+                  const active = blogSortOrder === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setBlogSortOrder(id)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border ${
+                        active
+                          ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/50'
+                          : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700 border-white/10'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <input
+                  type="search"
+                  value={blogSearch}
+                  onChange={(e) => setBlogSearch(e.target.value)}
+                  placeholder="Search blog posts…"
+                  className="w-full rounded-lg border border-white/10 bg-gray-950/60 px-3 py-2 pl-9 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+                <svg
+                  className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path strokeLinecap="round" d="M21 21l-3.5-3.5" />
+                </svg>
+              </div>
+            </div>
             
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
@@ -1473,14 +1551,35 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   <p className="text-gray-400 text-sm">Loading blog posts...</p>
                 </div>
               </div>
+            ) : filteredBlogs.length === 0 && blogs.length > 0 ? (
+              <div className="text-center py-16 text-gray-400 max-w-lg mx-auto">
+                <p className="mb-2 text-lg text-gray-300">No blog posts match your search</p>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Try a different keyword or clear the search.
+                </p>
+              </div>
             ) : (
-              <BlogList
-                blogs={blogs}
-                currentUser={currentUser}
-                onEditBlog={handleBlogEdit}
-                onDeleteBlog={handleDeleteBlog}
-                deletingBlogId={deletingBlogId}
-              />
+              <>
+                {(blogSearch.trim() || blogSortOrder === 'oldest') && blogs.length > 0 && (
+                  <p className="text-xs text-gray-500 mb-4">
+                    Showing{' '}
+                    <span className="text-gray-300 font-semibold">{filteredBlogs.length}</span>
+                    {blogSearch.trim() ? (
+                      <>
+                        {' '}of <span className="text-gray-300 font-semibold">{blogs.length}</span>
+                      </>
+                    ) : null}{' '}
+                    posts
+                  </p>
+                )}
+                <BlogList
+                  blogs={filteredBlogs}
+                  currentUser={currentUser}
+                  onEditBlog={handleBlogEdit}
+                  onDeleteBlog={handleDeleteBlog}
+                  deletingBlogId={deletingBlogId}
+                />
+              </>
             )}
           </div>
         )}
