@@ -25,6 +25,8 @@ const BLOCKCHAIN_ALIASES = {
   'merlin chain': 'merlinchain',
   'op bnb': 'opbnb',
   zksyncera: 'zksync',
+  'robinhood chain': 'robinhood',
+  hood: 'robinhood',
 };
 
 /** DexScreener “top of list” chains — shown first in dropdowns */
@@ -57,6 +59,7 @@ export const POPULAR_BLOCKCHAIN_VALUES = [
   'linea',
   'algorand',
   'berachain',
+  'robinhood',
   'seiv2',
   'plasma',
   'polkadot',
@@ -140,6 +143,7 @@ const BLOCKCHAIN_LABELS = {
   polkadot: 'Polkadot',
   polygon: 'Polygon',
   pulsechain: 'PulseChain',
+  robinhood: 'Robinhood Chain',
   scroll: 'Scroll',
   seiv2: 'Sei V2',
   solana: 'Solana',

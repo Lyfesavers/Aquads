@@ -187,6 +187,7 @@ const CHAIN_TO_BLOCKCHAIN_PARAM = {
   'zkfair': 'zkfair',
   'dogechain': 'dogechain',
   'apechain': 'apechain',
+  'robinhood': 'robinhood',
 };
 
 const BUMP_VOTE_THRESHOLD = 100;
@@ -996,6 +997,7 @@ const AquaSwap = ({
       'zkfair': 'zkfair',
       'dogechain': 'dogechain',
       'apechain': 'apechain',
+      'robinhood': 'robinhood',
 
       // Alternative naming variations
       'binance smart chain': 'bnb',
@@ -1204,7 +1206,8 @@ const AquaSwap = ({
       'cardano': 'cardano',
       'polkadot': 'polkadot',
       'cosmos': 'cosmos',
-      'kaspa': 'kaspa'
+      'kaspa': 'kaspa',
+      'robinhood': 'robinhood'
     };
     
     const mappedChain = chainMapping[result.chainId] || 'ether';
@@ -1289,7 +1292,8 @@ const AquaSwap = ({
       'cardano': 'cardano',
       'polkadot': 'polkadot',
       'cosmos': 'cosmos',
-      'kaspa': 'kaspa'
+      'kaspa': 'kaspa',
+      'robinhood': 'robinhood'
     };
 
     const mappedChain = chainMapping[pair.chainId] || 'ether';
@@ -1606,7 +1610,8 @@ const AquaSwap = ({
         'polkadot': 'polkadot',
         'cosmos': 'cosmos',
         'kaspa': 'kaspa',
-        'multiversx': 'elrond'
+        'multiversx': 'elrond',
+        'robinhood': 'robinhood'
       };
       
       const dexScreenerChain = dexScreenerChainMap[selectedChain] || 'ethereum';
@@ -2255,6 +2260,7 @@ const AquaSwap = ({
                       <option value="celestia">Celestia</option>
                       <option value="berachain">Berachain</option>
                       <option value="monad">Monad</option>
+                      <option value="robinhood">Robinhood Chain</option>
                       <option value="fuel">Fuel</option>
                       <option value="eclipse">Eclipse</option>
                       <option value="zeta">ZetaChain</option>

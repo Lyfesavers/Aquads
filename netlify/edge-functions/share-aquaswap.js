@@ -24,6 +24,7 @@ const chainMapping = {
   'linea': 'linea',
   'scroll': 'scroll',
   'zksync': 'zksync',
+  'robinhood': 'robinhood',
 };
 
 // Chain display names and icons
@@ -38,6 +39,7 @@ const chainInfo = {
   'optimism': { name: 'Optimism', icon: '🔴' },
   'fantom': { name: 'Fantom', icon: '👻' },
   'blast': { name: 'Blast', icon: '💥' },
+  'robinhood': { name: 'Robinhood Chain', icon: '🟢' },
 };
 
 export default async (request, context) => {

@@ -81,6 +81,12 @@ const CHAIN_CONFIGS = {
     unit: 'Gwei',
     rpcUrl: 'https://rpc.api.moonriver.moonbeam.network'
   },
+  robinhood: {
+    name: 'Robinhood Chain',
+    type: 'rpc',
+    unit: 'Gwei',
+    rpcUrl: 'https://rpc.mainnet.chain.robinhood.com'
+  },
   // Non-EVM Chains - all using FREE public endpoints
   solana: {
     name: 'Solana',

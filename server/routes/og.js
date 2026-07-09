@@ -64,6 +64,7 @@ const chainMapping = {
   'linea': 'linea',
   'scroll': 'scroll',
   'zksync': 'zksync',
+  'robinhood': 'robinhood',
 };
 
 // Chain display info
@@ -78,6 +79,7 @@ const chainInfo = {
   'optimism': { name: 'Optimism', color: '#FF0420' },
   'fantom': { name: 'Fantom', color: '#1969FF' },
   'blast': { name: 'Blast', color: '#FCFC03' },
+  'robinhood': { name: 'Robinhood Chain', color: '#00C805' },
 };
 
 // Simple in-memory cache for generated images (5 min TTL)

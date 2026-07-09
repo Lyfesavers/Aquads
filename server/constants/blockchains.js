@@ -26,7 +26,7 @@ const VALID_SLUGS = new Set([
   'icp', 'ink', 'injective', 'katana', 'kadena', 'kaspa', 'kava', 'linea', 'mantle',
   'manta', 'megaeth', 'merlinchain', 'metis', 'mode', 'monad', 'moonbeam', 'moonriver',
   'movement', 'multiversx', 'near', 'neonevm', 'optimism', 'opbnb', 'osmosis', 'oasis',
-  'plasma', 'polkadot', 'polygon', 'pulsechain', 'scroll', 'seiv2', 'solana', 'soneium',
+  'plasma', 'polkadot', 'polygon', 'pulsechain', 'robinhood', 'scroll', 'seiv2', 'solana', 'soneium',
   'sonic', 'stacks', 'starknet', 'stellar', 'step', 'story', 'sui', 'taiko', 'telos',
   'tezos', 'ton', 'tron', 'unichain', 'vana', 'venom', 'worldchain', 'xrpl', 'zilliqa',
   'zircuit', 'zkfair', 'zksync', 'zora',

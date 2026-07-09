@@ -62,7 +62,8 @@ const mapChainToDexScreener = (chain) => {
       'cardano': 'cardano',
       'polkadot': 'polkadot',
       'cosmos': 'cosmos',
-      'kaspa': 'kaspa'
+      'kaspa': 'kaspa',
+      'robinhood': 'robinhood'
     };
     
     return chainMap[chain?.toLowerCase()] || 'ethereum';
