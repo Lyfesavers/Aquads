@@ -1522,7 +1522,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   value={blogSearch}
                   onChange={(e) => setBlogSearch(e.target.value)}
                   placeholder="Search blog posts…"
-                  className="w-full rounded-lg border border-white/10 bg-gray-950/60 px-3 py-2 pl-9 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-white/10 bg-gray-950/60 py-2 pr-3 pl-10 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
                 <svg
                   className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"
