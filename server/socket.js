@@ -1290,6 +1290,20 @@ function emitRaidUpdate(type, raid, platform) {
   io.emit('raidListUpdated', { type, raid, platform });
 }
 
+// Utility function to emit bounty list updates (created/updated/cancelled/completed).
+// Optionally notifies the poster room about a new submission on their bounty.
+function emitBountyUpdate(type, bounty, extra = {}) {
+  if (!io) {
+    return;
+  }
+  io.emit('bountyListUpdated', { type, bounty, ...extra });
+
+  // Direct notification to the poster when a hunter submits.
+  if (extra.notifyUserId) {
+    io.to(`user_${extra.notifyUserId}`).emit('bountyActivity', { type, bounty, ...extra });
+  }
+}
+
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -1647,6 +1661,7 @@ module.exports = {
   emitBookingMessageRead,
   emitBookingMessagesRead,
   emitRaidUpdate,
+  emitBountyUpdate,
   emitVoteBoostUpdate,
   emitVoteBoostApproved,
   emitVoteBoostRejected,

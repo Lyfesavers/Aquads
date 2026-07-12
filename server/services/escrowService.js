@@ -567,5 +567,12 @@ module.exports = {
   getEvmRpc,
   getUsdcAddress,
   getSolanaUsdcMint,
-  ESCROW_MODE
+  ESCROW_MODE,
+  // Generic on-chain primitives reused by bountyEscrowService (operate on any
+  // escrow-shaped doc + payee user object; do not touch Booking/Invoice).
+  solanaRpcCall,
+  releaseSolana,
+  releaseEvm,
+  refundSolana,
+  refundEvm
 };

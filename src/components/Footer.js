@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown, FaBook, FaImage } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium, FaFacebook, FaGift, FaApple, FaGooglePlay, FaMobileAlt, FaChevronUp, FaChevronDown, FaBook, FaImage, FaTrophy } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import usePWAInstall from '../hooks/usePWAInstall';
 
@@ -180,6 +180,13 @@ const Footer = () => {
                 >
                   <FaFileAlt className="mr-2" />
                   <span>Freelancer Hub</span>
+                </Link>
+                <Link
+                  to="/bounties"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaTrophy className="mr-2" />
+                  <span>Bounties</span>
                 </Link>
                 <Link
                   to="/games"

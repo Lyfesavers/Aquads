@@ -766,6 +766,8 @@ app.use('/api/click-tracking', require('./routes/clickTracking'));
 app.use('/api/on-chain-resume', require('./routes/onChainResume'));
 app.use('/api/aquapay', aquapayRoutes);
 app.use('/api/freelancer-escrow', require('./routes/freelancerEscrow'));
+app.use('/api/bounties', require('./routes/bounties'));
+app.use('/api/bounty-escrow', require('./routes/bountyEscrow'));
 app.use('/api/wallet-analyzer', walletAnalyzerRoutes);
 app.use('/api/pfp-generator', require('./routes/pfpGenerator'));
 app.use('/api/hyperspace', require('./routes/hyperspace'));

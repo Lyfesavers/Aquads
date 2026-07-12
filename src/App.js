@@ -39,6 +39,7 @@ import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
 const Marketplace = lazy(() => import('./components/Marketplace'));
+const Bounties = lazy(() => import('./components/Bounties'));
 const PartnerMarketplace = lazy(() => import('./components/PartnerMarketplace'));
 const GameHub = lazy(() => import('./components/GameHub'));
 const GamePage = lazy(() => import('./components/GamePage'));
@@ -2883,6 +2884,18 @@ function App() {
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
+          <Route path="/bounties" element={
+            <Bounties
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+              showNotification={showNotification}
+            />
+          } />
+          <Route path="/bounty-pay/:escrowId" element={
+            <CustodialPayment currentUser={currentUser} showNotification={showNotification} escrowType="bounty" />
+          } />
           <Route path="/partner-rewards" element={
             <PartnerMarketplace 
               currentUser={currentUser}
@@ -3008,6 +3021,12 @@ function App() {
                           className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                         >
                           Games
+                        </Link>
+                        <Link
+                          to="/bounties"
+                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                        >
+                          Bounties
                         </Link>
                         <button
                           onClick={openMintFunnelPlatform}
@@ -3173,6 +3192,14 @@ function App() {
                                 >
                                   <span className="text-lg">🎮</span>
                                   <span className="font-medium">GameHub</span>
+                                </Link>
+                                <Link
+                                  to="/bounties"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                  <span className="text-lg">🏆</span>
+                                  <span className="font-medium">Bounties</span>
                                 </Link>
                                 <button
                                   onClick={() => { openMintFunnelPlatform(); setIsMobileMenuOpen(false); }}

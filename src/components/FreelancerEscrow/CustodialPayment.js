@@ -108,7 +108,7 @@ const CHAINS = {
 function getEvmChains() { return ESCROW_MODE === 'mainnet' ? EVM_CHAINS : EVM_CHAINS_TESTNET; }
 function getUsdcAddress(chain) { return (ESCROW_MODE === 'mainnet' ? USDC_ADDRESSES.mainnet : USDC_ADDRESSES.testnet)[chain]; }
 
-const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain, navigate }) => {
+const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain, navigate, redirectTo = '/dashboard/bookings' }) => {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
@@ -116,10 +116,10 @@ const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain,
       setCountdown(prev => prev - 1);
     }, 1000);
     const timer = setTimeout(() => {
-      navigate('/dashboard/bookings');
+      navigate(redirectTo);
     }, 5000);
     return () => { clearTimeout(timer); clearInterval(interval); };
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
@@ -148,9 +148,15 @@ const SuccessScreen = ({ escrow, feeDetails, txHash, chainConfig, selectedChain,
   );
 };
 
-const CustodialPayment = ({ currentUser, showNotification }) => {
+const CustodialPayment = ({ currentUser, showNotification, escrowType = 'freelancer' }) => {
   const { escrowId } = useParams();
   const navigate = useNavigate();
+
+  // Bounty escrow reuses this exact funding flow against a parallel API + redirect.
+  const isBounty = escrowType === 'bounty';
+  const escrowApiBase = isBounty ? 'bounty-escrow' : 'freelancer-escrow';
+  const redirectTo = isBounty ? '/bounties' : '/dashboard/bookings';
+  const recipientLabel = isBounty ? 'Bounty' : 'Seller';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -190,7 +196,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
     const fetchEscrow = async () => {
       if (!currentUser?.token) { setError('Please log in to make a payment'); setLoading(false); return; }
       try {
-        const response = await axios.get(`${API_URL}/api/freelancer-escrow/${escrowId}`, {
+        const response = await axios.get(`${API_URL}/api/${escrowApiBase}/${escrowId}`, {
           headers: { Authorization: `Bearer ${currentUser.token}` }
         });
         if (response.data.success) {
@@ -375,7 +381,7 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
 
   const recordDeposit = async (hash, token) => {
     try {
-      const res = await axios.post(`${API_URL}/api/freelancer-escrow/deposit`, {
+      const res = await axios.post(`${API_URL}/api/${escrowApiBase}/deposit`, {
         escrowId: escrow._id,
         txHash: hash,
         chain: selectedChain,
@@ -386,16 +392,18 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
 
       // Fire receipt emails in background — never block payment flow
       const emailPayload = {
-        recipientName: escrow?.sellerId?.username || 'Seller',
+        recipientName: isBounty ? (escrow?.bountyId?.title || 'Bounty') : (escrow?.sellerId?.username || 'Seller'),
         amount: escrow?.amount,
         token: 'USDC',
         chain: selectedChain,
         senderAddress: walletAddress,
         txHash: hash,
-        message: `Escrow payment for Invoice #${escrow?.invoiceId?.invoiceNumber || ''}`
+        message: isBounty
+          ? `Bounty escrow funding: ${escrow?.bountyId?.title || ''}`
+          : `Escrow payment for Invoice #${escrow?.invoiceId?.invoiceNumber || ''}`
       };
 
-      if (escrow?.sellerId?.email) {
+      if (!isBounty && escrow?.sellerId?.email) {
         emailService.sendAquaPayPaymentNotification(escrow.sellerId.email, emailPayload).catch(() => {});
       }
       if (payerEmail && payerEmail.trim()) {
@@ -441,16 +449,16 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
           <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
         </div>
         <h1 className="text-2xl font-bold text-white mb-2">Escrow Funded</h1>
-        <p className="text-slate-400 mb-6">Your payment is securely held in escrow until the work is completed.</p>
+        <p className="text-slate-400 mb-6">{isBounty ? 'Your bounty is now live. The reward is held in escrow until you approve a winner.' : 'Your payment is securely held in escrow until the work is completed.'}</p>
         <div className="bg-slate-800/50 rounded-xl p-4 mb-6 text-left space-y-3">
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Amount</span><span className="text-white font-semibold">{escrow.amount} USDC</span></div>
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Escrow Fee ({feeDetails?.feePercentageDisplay}%)</span><span className="text-amber-400">{feeDetails?.feeAmount?.toFixed(6)} USDC</span></div>
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Total Paid</span><span className="text-cyan-400 font-semibold">{feeDetails?.totalAmount?.toFixed(6)} USDC</span></div>
           <div className="flex justify-between"><span className="text-slate-500 text-sm">Network</span><span className="text-white">{chainConfig?.name}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500 text-sm">Seller</span><span className="text-white">{escrow.sellerId?.username}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 text-sm">{recipientLabel}</span><span className="text-white">{isBounty ? (escrow?.bountyId?.title || 'Bounty') : escrow.sellerId?.username}</span></div>
         </div>
         {txHash && <a href={`${chainConfig?.explorerUrl}${txHash}${selectedChain === 'solana' && ESCROW_MODE === 'testnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm mb-6">View on Explorer <span>↗</span></a>}
-        <button onClick={() => navigate('/dashboard/bookings')} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">Back to Bookings</button>
+        <button onClick={() => navigate(redirectTo)} className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl transition-all">{isBounty ? 'Back to Bounties' : 'Back to Bookings'}</button>
         <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-2">
           <img src="/alogo.png" alt="Aquads logo" className="h-4 w-auto opacity-60" />
           <span className="text-slate-600 text-xs">Secured by Aquads Escrow</span>
@@ -493,8 +501,8 @@ const CustodialPayment = ({ currentUser, showNotification }) => {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-white font-semibold text-lg">{escrow?.sellerId?.username}</h2>
-                  <p className="text-cyan-400 text-sm">Invoice #{escrow?.invoiceId?.invoiceNumber}</p>
+                  <h2 className="text-white font-semibold text-lg">{isBounty ? (escrow?.bountyId?.title || 'Bounty') : escrow?.sellerId?.username}</h2>
+                  <p className="text-cyan-400 text-sm">{isBounty ? 'Bounty reward escrow' : `Invoice #${escrow?.invoiceId?.invoiceNumber}`}</p>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-slate-800/50 space-y-2">
